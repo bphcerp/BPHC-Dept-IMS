@@ -7,5 +7,5 @@ export const refreshTokenCookieOptions = (
     httpOnly: true,
     secure: PROD,
     expires: new Date(expiresAt),
-    sameSite: "none",
+    sameSite: PROD ? "none" : undefined,
 });

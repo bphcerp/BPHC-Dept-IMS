@@ -68,11 +68,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logOut = useCallback(() => {
     api
       .post("/auth/logout")
-      .then(() => {
+      .catch(() => {})
+      .finally(() => {
         updateAuthState(null);
         queryClient.clear();
-      })
-      .catch(() => {});
+      });
   }, [updateAuthState, queryClient]);
 
   const value: AuthContextType = {
