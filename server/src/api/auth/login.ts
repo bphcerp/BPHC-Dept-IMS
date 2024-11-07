@@ -76,7 +76,7 @@ router.post(
                 );
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(
-                ticketPayload.sub,
+                ticketPayload.email,
                 tx
             );
             const accessToken = generateAccessToken(

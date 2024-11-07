@@ -22,8 +22,8 @@ services:
             DB_PORT: 5432
             REDIS_URL: redis://redis:6379
             JWT_PRIVATE_KEY: jwt_private_key
-            AUTH_REFRESH_TOKEN_SECRET: refresh_token_secret
-            AUTH_ACCESS_TOKEN_SECRET: access_token_secret
+            REFRESH_TOKEN_SECRET: refresh_token_secret
+            ACCESS_TOKEN_SECRET: access_token_secret
             TZ: Asia/Kolkata
             DOCKER_ENVIRONMENT: true
         networks:

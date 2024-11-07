@@ -1,3 +1,4 @@
+import assert from "assert";
 import path from "path";
 
 /**
@@ -19,7 +20,9 @@ export const HOSTNAME = PROD ? process.env.HOSTNAME : "http://localhost:9000/";
 */
 
 export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
+assert(ACCESS_TOKEN_SECRET.length > 0);
 export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+assert(REFRESH_TOKEN_SECRET.length > 0);
 export const REFRESH_TOKEN_COOKIE = "amogus";
 export const ACCESS_TOKEN_EXPIRY = "30m";
 export const REFRESH_TOKEN_EXPIRY = "7d";
