@@ -1,0 +1,79 @@
+services:
+    api:
+        build:
+            dockerfile: ./deployment/api/Dockerfile
+            context: .
+        container_name: phoenixerp-api
+        volumes:
+            - .:/app
+        restart: unless-stopped
+        ports:
+            - 9000:9000
+        depends_on:
+            - postgres
+            - redis
+        environment:
+            GOOGLE_CLIENT_ID: 484775019864-594isf7nr01e2gdo95dmv6g66seq6b3k.apps.googleusercontent.com
+            PORT: 9000
+            NODE_ENV: development
+            DB_HOST: localhost
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+            DB_PORT: 5432
+            REDIS_URL: redis://redis:6379
+            JWT_PRIVATE_KEY: jwt_private_key
+            AUTH_REFRESH_TOKEN_SECRET: refresh_token_secret
+            AUTH_ACCESS_TOKEN_SECRET: access_token_secret
+            TZ: Asia/Kolkata
+            DOCKER_ENVIRONMENT: true
+        networks:
+            - api-network
+
+    postgres:
+        image: postgres:latest
+        container_name: phoenixerp-db
+        restart: no
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            TZ: "Asia/Kolkata"
+        ports:
+            - 5432:5432
+        volumes:
+            - postgres_db:/var/lib/postgresql/data
+        networks:
+            - api-network
+
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        container_name: phoenixerp-pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@example.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+            TZ: Asia/Kolkata
+            GUNICORN_ACCESS_LOGFILE: "/dev/null"
+            PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
+        ports:
+            - "5050:80"
+        depends_on:
+            - postgres
+        networks:
+            - api-network
+        logging:
+            driver: none
+
+    redis:
+        image: redis:6.2.5
+        container_name: phoenixerp-redis
+        restart: no
+        ports:
+            - 6379:6379
+        networks:
+            - api-network
+
+volumes:
+    postgres_db:
+
+networks:
+    api-network:
+        driver: bridge
