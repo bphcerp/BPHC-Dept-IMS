@@ -6,6 +6,7 @@ services:
         container_name: phoenixerp-api
         volumes:
             - .:/app
+            - /app/node_modules
         restart: unless-stopped
         ports:
             - 9000:9000
