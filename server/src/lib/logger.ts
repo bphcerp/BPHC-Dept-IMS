@@ -12,16 +12,15 @@ const logLevels = {
 
 const customFormatter = format.printf(({ level, message, timestamp }) => {
     if (typeof message !== "string") {
-        message = JSON.stringify(message);
+        if (message instanceof Error) message = message.stack;
+        else message = JSON.stringify(message);
     }
     return `[${timestamp}] => ${level}: ${message}`;
 });
 
 const logger = winston.createLogger({
     levels: logLevels,
-    transports: [
-        new winston.transports.File({ filename: "./logs/webapi.log" }),
-    ],
+    transports: [new winston.transports.File({ filename: "./logs/log.txt" })],
     format: format.combine(
         format.timestamp({
             format: "DD-MM-YYYY T hh:mm:ss.sss A",

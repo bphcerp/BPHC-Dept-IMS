@@ -14,8 +14,8 @@ import type {
     RoleAccessMap,
 } from "@/types/auth";
 import type { Transaction } from "@/types/custom";
-import redisClient from "../redis";
-import db from "../db";
+import redisClient, { REDIS_TTL } from "@/lib/redis";
+import db from "@/lib/db";
 
 /**
  * Generates an access token for the given email, session expiry, and operations.
@@ -87,7 +87,9 @@ export async function getRoleAccessMap() {
         },
         {} as RoleAccessMap
     );
-    await redisClient.set("roleAccessMap", JSON.stringify(roleAccessMap));
+    await redisClient.set("roleAccessMap", JSON.stringify(roleAccessMap), {
+        EX: REDIS_TTL.ROLES,
+    });
     return roleAccessMap;
 }
 

@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
-import { ACCESS_TOKEN_SECRET, REDIS_KEYS } from "@/config/environment";
+import { ACCESS_TOKEN_SECRET } from "@/config/environment";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import redisClient from "@/lib/redis";
+import redisClient, { REDIS_KEYS } from "@/lib/redis";
 import logger from "@/lib/logger";
 import { AppError, HttpCode } from "@/config/errors";
 import { matchWildcard } from "@/lib/auth";

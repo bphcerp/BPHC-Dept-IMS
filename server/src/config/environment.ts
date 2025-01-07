@@ -61,8 +61,3 @@ export const CONFIG_PG = {
 export const REDIS_URL = DOCKER
     ? "redis://redis:6379"
     : (process.env.REDIS_URL ?? "redis://localhost:6379");
-
-export const REDIS_KEYS = {
-    lastSessionInvalidation: (userId: string) =>
-        `lastSessionInvalidation:${userId}`,
-};

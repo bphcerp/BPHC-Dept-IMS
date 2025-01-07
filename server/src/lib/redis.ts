@@ -2,6 +2,15 @@ import redis from "redis";
 import logger from "./logger";
 import { REDIS_URL } from "@/config/environment";
 
+export const REDIS_TTL = {
+    ROLES: 30,
+};
+
+export const REDIS_KEYS = {
+    lastSessionInvalidation: (userId: string) =>
+        `lastSessionInvalidation:${userId}`,
+};
+
 const redisClient = redis.createClient({
     url: REDIS_URL,
 });

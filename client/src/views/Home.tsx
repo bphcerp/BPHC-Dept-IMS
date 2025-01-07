@@ -25,7 +25,7 @@ function Home() {
         <GoogleLogin onSuccess={onSuccess} />
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="whitespace-pre text-left">
+          <p className="whitespace-pre text-left font-mono">
             {JSON.stringify(authState, null, 4)}
           </p>
           <button className="self-center" onClick={() => logOut()}>

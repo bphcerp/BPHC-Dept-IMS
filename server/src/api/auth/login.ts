@@ -71,7 +71,7 @@ router.post(
                 return next(
                     new AppError({
                         httpCode: HttpCode.FORBIDDEN,
-                        description: "This login isn't for you :)",
+                        description: "User not in database",
                     })
                 );
 
