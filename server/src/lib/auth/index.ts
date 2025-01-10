@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { refreshTokens } from "@/lib/db/schema/users";
+import { refreshTokens } from "@/config/db/schema/users";
 import {
     ACCESS_TOKEN_EXPIRY,
     ACCESS_TOKEN_SECRET,
@@ -14,8 +14,7 @@ import type {
     RoleAccessMap,
 } from "@/types/auth";
 import type { Transaction } from "@/types/custom";
-import redisClient, { REDIS_TTL } from "@/lib/redis";
-import db from "@/lib/db";
+import db from "@/config/db";
 
 /**
  * Generates an access token for the given email, session expiry, and operations.
@@ -75,8 +74,6 @@ export const generateRefreshToken = async (
  * @returns Role access map.
  */
 export async function getRoleAccessMap() {
-    const cached = await redisClient.get("roleAccessMap");
-    if (cached) return JSON.parse(cached) as RoleAccessMap;
     const roleAccessMap = (await db.query.roles.findMany()).reduce(
         (acc, role) => {
             acc[role.role] = {
@@ -87,9 +84,6 @@ export async function getRoleAccessMap() {
         },
         {} as RoleAccessMap
     );
-    await redisClient.set("roleAccessMap", JSON.stringify(roleAccessMap), {
-        EX: REDIS_TTL.ROLES,
-    });
     return roleAccessMap;
 }
 

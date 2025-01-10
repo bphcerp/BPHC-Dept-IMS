@@ -4,8 +4,8 @@ import express from "express";
 import { type LoginTicket, OAuth2Client } from "google-auth-library";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import db from "@/lib/db";
-import { users } from "@/lib/db/schema/users";
+import db from "@/config/db";
+import { users } from "@/config/db/schema/users";
 import { eq } from "drizzle-orm";
 import {
     generateAccessToken,
@@ -80,7 +80,7 @@ router.post(
                 tx
             );
             const accessToken = generateAccessToken(
-                ticketPayload.sub,
+                ticketPayload.email,
                 sessionExpiry,
                 await getAccess(user.role ? [user.role] : [])
             );

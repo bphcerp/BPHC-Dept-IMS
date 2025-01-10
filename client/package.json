@@ -3,22 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "phoenixerp frontend",
-  "lint-staged": {
-    "*.{json,js,ts,jsx,tsx,d.ts,css}": [
-      "prettier --write --ignore-unknown ."
-    ],
-    "*.{ts,tsx,d.ts}": [
-      "eslint --fix"
-    ]
-  },
+  "description": "EEE ERP frontend",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint --fix .",
     "preview": "vite preview",
-    "format": "prettier --write src",
-    "prep-husky": "cd .. && husky client/.husky"
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.5",

@@ -24,7 +24,7 @@ assert(ACCESS_TOKEN_SECRET.length > 0);
 export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
 assert(REFRESH_TOKEN_SECRET.length > 0);
 export const REFRESH_TOKEN_COOKIE = "amogus";
-export const ACCESS_TOKEN_EXPIRY = "30m";
+export const ACCESS_TOKEN_EXPIRY = "5m";
 export const REFRESH_TOKEN_EXPIRY = "7d";
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 
@@ -51,13 +51,3 @@ export const CONFIG_PG = {
     database: "phoenixerp",
     ssl: false,
 };
-
-/**
-|----------------------------------------------------------------------------------------|
-|    Redis
-|----------------------------------------------------------------------------------------|
-*/
-
-export const REDIS_URL = DOCKER
-    ? "redis://redis:6379"
-    : (process.env.REDIS_URL ?? "redis://localhost:6379");

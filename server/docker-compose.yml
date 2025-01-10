@@ -14,7 +14,7 @@ services:
             - postgres
             - redis
         environment:
-            GOOGLE_CLIENT_ID: 888864556269-4gnqlfah0h53pko03dp01dg2dfarj7s2.apps.googleusercontent.com
+            GOOGLE_CLIENT_ID: 924517788787-qv8p8v7i3hqg08daesnagu0ikcu8qrv0.apps.googleusercontent.com
             PORT: 9000
             NODE_ENV: development
             DB_HOST: localhost

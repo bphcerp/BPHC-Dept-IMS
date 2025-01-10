@@ -6,7 +6,7 @@ import { AppError, HttpCode } from "@/config/errors";
 import express from "express";
 import { asyncHandler } from "@/middleware/errorhandler";
 import { z } from "zod";
-import db from "@/lib/db";
+import db from "@/config/db";
 import { eq } from "drizzle-orm";
 import {
     generateAccessToken,
@@ -14,22 +14,13 @@ import {
     getAccess,
 } from "@/lib/auth";
 import { refreshTokenCookieOptions } from "@/config/auth";
-import { refreshTokens } from "@/lib/db/schema/users";
+import { refreshTokens } from "@/config/db/schema/users";
 import jwt, { type VerifyErrors } from "jsonwebtoken";
-import { rateLimit } from "@/config/ratelimit";
 
 const router = express.Router();
 
 router.post(
     "/",
-    rateLimit(
-        {
-            windowMs: 10 * 1000,
-            limit: 1,
-            message: "Please wait before generating another token",
-        },
-        "refresh"
-    ),
     asyncHandler(async (req, res, next) => {
         await db.transaction(
             async (tx) => {
@@ -110,8 +101,7 @@ router.post(
                     newRefreshToken,
                     refreshTokenCookieOptions(sessionExpiry * 1000)
                 );
-                res.status(200);
-                res.json({ token: accessToken });
+                return res.status(200).json({ token: accessToken });
             },
             { isolationLevel: "serializable" }
         );

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type express from "express";
 import { AppError, HttpCode } from "@/config/errors";
-import logger from "@/lib/logger";
+import logger from "@/config/logger";
 import { PROD } from "@/config/environment";
 import type core from "express-serve-static-core";
 

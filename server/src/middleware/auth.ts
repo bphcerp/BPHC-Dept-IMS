@@ -2,8 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { ACCESS_TOKEN_SECRET } from "@/config/environment";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import redisClient, { REDIS_KEYS } from "@/lib/redis";
-import logger from "@/lib/logger";
+import logger from "@/config/logger";
 import { AppError, HttpCode } from "@/config/errors";
 import { matchWildcard } from "@/lib/auth";
 
@@ -82,19 +81,6 @@ export const authMiddleware = (
             logger.debug("Invalid JWT access token payload");
             return next();
         }
-
-        // check if sessions were invalidated
-        const lastSessionInvalidation = await redisClient.get(
-            REDIS_KEYS.lastSessionInvalidation(parsed.data.email)
-        );
-        if (
-            lastSessionInvalidation &&
-            parsed.data.iat <= +lastSessionInvalidation
-        ) {
-            logger.debug("Access token expired");
-            return next();
-        }
-
         req.user = parsed.data;
         return next();
     });

@@ -9,9 +9,8 @@ import type { ErrorRequestHandler } from "express";
 import api from "@/api";
 import { AppError, HttpCode } from "@/config/errors";
 import { errorHandler } from "@/middleware/errorhandler";
-import logger from "@/lib/logger";
+import logger from "@/config/logger";
 import { DOCKER } from "@/config/environment";
-import { rateLimit } from "@/config/ratelimit";
 
 const app = express();
 if (DOCKER) {
@@ -26,7 +25,6 @@ app.disable("x-powered-by");
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(rateLimit());
 
 app.use("/api/", api);
 

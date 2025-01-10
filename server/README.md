@@ -1,5 +1,5 @@
 ### Server setup
 
-`bun i`  
+`pnpm i`  
 `docker compose up`  
-`bun db:push`  
+`pnpm db:push`

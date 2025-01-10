@@ -1,7 +1,7 @@
 import { REFRESH_TOKEN_COOKIE } from "@/config/environment";
 import { AppError, HttpCode } from "@/config/errors";
-import db from "@/lib/db";
-import { refreshTokens } from "@/lib/db/schema/users";
+import db from "@/config/db";
+import { refreshTokens } from "@/config/db/schema/users";
 import { asyncHandler } from "@/middleware/errorhandler";
 import assert from "assert";
 import { eq } from "drizzle-orm";

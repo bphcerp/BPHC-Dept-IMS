@@ -6,13 +6,20 @@ import {
   useCallback,
 } from "react";
 import { jwtDecode } from "jwt-decode";
-import { ACCESS_TOKEN_KEY } from "@/lib/constants";
+import { ACCESS_TOKEN_KEY, REFRESH_ENDPOINT } from "@/lib/constants";
 import api from "@/lib/axios-instance";
 import { useQueryClient } from "@tanstack/react-query";
 
+export interface Operations {
+  allowed: string[];
+  disallowed: string[];
+}
+
 interface AuthState {
-  userId: string;
+  email: string;
+  operations: Operations;
   sessionExpiry: number;
+  exp: number;
 }
 
 interface AuthContextType {
@@ -28,9 +35,11 @@ const parseJwt = (token: string) => {
   try {
     const decoded = jwtDecode<AuthState>(token);
     const curTime = Date.now() / 1000;
-    if (!decoded.sessionExpiry || decoded.sessionExpiry < curTime) {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      return null;
+    if (!decoded.sessionExpiry || decoded.exp < curTime) {
+      api
+        .post<{ token: string }>(REFRESH_ENDPOINT)
+        .then((resp) => localStorage.setItem(ACCESS_TOKEN_KEY, resp.data.token))
+        .catch(() => null); // TODO: find out a way to refresh auth state after calling refresh endpoint
     }
     return decoded;
   } catch {

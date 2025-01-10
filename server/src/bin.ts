@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import app from "../app";
+import app from "./app";
 import http from "http";
-import { PORT } from "../config/environment";
-import logger from "../lib/logger";
+import { PORT } from "./config/environment";
+import logger from "./config/logger";
 import { type Duplex } from "stream";
 
 function normalizePort(val: string) {

@@ -1,9 +1,9 @@
 import { PROD } from "@/config/environment";
-import logger from "@/lib/logger";
+import logger from "@/config/logger";
 import type { CorsOptions } from "cors";
 import { AppError, HttpCode } from "./errors";
 
-const allowedOrigins = ["https://phoenix-bphc.vercel.app/"];
+const allowedOrigins: string[] = [];
 
 if (!PROD)
     allowedOrigins.push("http://localhost:5173", "http://localhost:9000");

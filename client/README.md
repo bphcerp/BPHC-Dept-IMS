@@ -1,3 +1,3 @@
 ## React + TypeScript + Vite
 
-`bun dev`  
+`pnpm dev`

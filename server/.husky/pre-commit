@@ -1,2 +1,0 @@
-cd server
-bun run lint-staged
