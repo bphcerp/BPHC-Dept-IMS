@@ -11,11 +11,12 @@ const logLevels = {
 };
 
 const customFormatter = format.printf(({ level, message, timestamp }) => {
+    let msg: string;
     if (typeof message !== "string") {
-        if (message instanceof Error) message = message.stack;
-        else message = JSON.stringify(message);
-    }
-    return `[${timestamp}] => ${level}: ${message}`;
+        if (message instanceof Error) msg = message.stack ?? "No stack trace";
+        else msg = JSON.stringify(message);
+    } else msg = message;
+    return `[${timestamp as string}] => ${level}: ${msg}`;
 });
 
 const logger = winston.createLogger({

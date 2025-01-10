@@ -5,7 +5,7 @@ import { type LoginTicket, OAuth2Client } from "google-auth-library";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import db from "@/config/db";
-import { users } from "@/config/db/schema/users";
+import { users } from "@/config/db/schema/admin";
 import { eq } from "drizzle-orm";
 import {
     generateAccessToken,
@@ -82,7 +82,7 @@ router.post(
             const accessToken = generateAccessToken(
                 ticketPayload.email,
                 sessionExpiry,
-                await getAccess(user.role ? [user.role] : [])
+                await getAccess(user.roles)
             );
 
             res.status(200);

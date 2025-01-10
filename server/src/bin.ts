@@ -27,21 +27,6 @@ server.listen(port, () => {
 });
 server.on("clientError", onClientError);
 
-if (import.meta.hot) {
-    function closeServer() {
-        process.removeAllListeners();
-        server.close();
-    }
-    import.meta.hot.on("vite:beforeFullReload", () => {
-        closeServer();
-        logger.info("HMR: FULL RELOAD");
-    });
-    import.meta.hot.dispose(() => {
-        closeServer();
-        logger.info("HMR: DISPOSE");
-    });
-}
-
 function onClientError(err: Error, socket: Duplex) {
     logger.error("HTTP Error: " + err.message);
     socket.end("HTTP/1.1 400 Bad Request\r\n");

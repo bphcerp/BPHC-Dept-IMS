@@ -14,7 +14,7 @@ import {
     getAccess,
 } from "@/lib/auth";
 import { refreshTokenCookieOptions } from "@/config/auth";
-import { refreshTokens } from "@/config/db/schema/users";
+import { refreshTokens } from "@/config/db/schema/admin";
 import jwt, { type VerifyErrors } from "jsonwebtoken";
 
 const router = express.Router();
@@ -90,11 +90,7 @@ router.post(
                 const accessToken = generateAccessToken(
                     parsed.data.email,
                     sessionExpiry,
-                    await getAccess(
-                        storedTokenData.user.role
-                            ? [storedTokenData.user.role]
-                            : []
-                    )
+                    await getAccess(storedTokenData.user.roles)
                 );
                 res.cookie(
                     REFRESH_TOKEN_COOKIE,

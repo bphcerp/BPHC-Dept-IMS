@@ -2,4 +2,4 @@
 
 `pnpm i`  
 `docker compose up`  
-`pnpm db:push`
+`pnpm db:migrate`

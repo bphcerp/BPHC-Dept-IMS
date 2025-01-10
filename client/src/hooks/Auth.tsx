@@ -39,7 +39,7 @@ const parseJwt = (token: string) => {
       api
         .post<{ token: string }>(REFRESH_ENDPOINT)
         .then((resp) => localStorage.setItem(ACCESS_TOKEN_KEY, resp.data.token))
-        .catch(() => null); // TODO: find out a way to refresh auth state after calling refresh endpoint
+        .catch(() => localStorage.removeItem(ACCESS_TOKEN_KEY)); // TODO: find out a way to refresh auth state after calling refresh endpoint
     }
     return decoded;
   } catch {

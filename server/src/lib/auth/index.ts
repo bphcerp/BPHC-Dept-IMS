@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { refreshTokens } from "@/config/db/schema/users";
+import { refreshTokens } from "@/config/db/schema/admin";
 import {
     ACCESS_TOKEN_EXPIRY,
     ACCESS_TOKEN_SECRET,

@@ -15,7 +15,10 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
     email: text("email").primaryKey(),
-    role: text("role").references(() => roles.role, { onDelete: "set null" }),
+    roles: text("roles")
+        .array()
+        .notNull()
+        .default(sql`'{}'::text[]`),
 });
 
 export const refreshTokens = pgTable("refresh_tokens", {
@@ -27,4 +30,16 @@ export const refreshTokens = pgTable("refresh_tokens", {
     expiresAt: timestamp("expires_at", {
         withTimezone: true,
     }).notNull(),
+});
+
+export const faculty = pgTable("faculty", {
+    email: text("email")
+        .primaryKey()
+        .references(() => users.email, { onDelete: "restrict" }),
+});
+
+export const phd = pgTable("phd", {
+    email: text("email")
+        .primaryKey()
+        .references(() => users.email, { onDelete: "restrict" }),
 });
