@@ -1,53 +1,38 @@
-import assert from "assert";
-import path from "path";
+import { z } from "zod";
 
-/**
-|----------------------------------------------------------------------------------------|
-|    App Configuration
-|----------------------------------------------------------------------------------------|
-*/
-export const ENVIRONMENT = process.env.NODE_ENV;
-export const PROD = ENVIRONMENT === "production";
-export const PORT = process.env.PORT ?? "9000";
-export const DOCKER = process.env.DOCKER_ENVIRONMENT ? true : false;
-export const FILES_DIR = path.join(__dirname, "..", "..", "files");
-export const HOSTNAME = PROD ? process.env.HOSTNAME : "http://localhost:9000/";
+const serverSchema = z.object({
+    NODE_ENV: z
+        .enum(["development", "test", "production"])
+        .default("development"),
+    DB_HOST: z.string().min(1),
+    POSTGRES_USER: z.string().min(1),
+    POSTGRES_PASSWORD: z.string().min(1),
+    POSTGRES_DB: z.string().min(1),
+    PGPORT: z.coerce.number().default(5432),
+    SERVER_URL: z.string().url().min(1),
+    FRONTEND_URL: z.string().url().min(1),
+    SERVER_PORT: z.coerce.number().default(9000),
+    GOOGLE_CLIENT_ID: z
+        .string()
+        .regex(/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/),
+    ACCESS_TOKEN_SECRET: z.string().min(1),
+    REFRESH_TOKEN_SECRET: z.string().min(1),
+    LOG_LEVEL: z
+        .enum(["silent", "fatal", "error", "warn", "info", "debug", "trace"])
+        .default("debug"),
+});
 
-/**
-|----------------------------------------------------------------------------------------|
-|    Authentication Configuration
-|----------------------------------------------------------------------------------------|
-*/
+const parsed = serverSchema.parse(process.env);
 
-export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
-assert(ACCESS_TOKEN_SECRET.length > 0);
-export const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
-assert(REFRESH_TOKEN_SECRET.length > 0);
+export const PROD = parsed.NODE_ENV === "production";
 export const REFRESH_TOKEN_COOKIE = "amogus";
 export const ACCESS_TOKEN_EXPIRY = "5m";
 export const REFRESH_TOKEN_EXPIRY = "7d";
-export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 
-/**
-|----------------------------------------------------------------------------------------|
-|    Databases Configuration
-|----------------------------------------------------------------------------------------|
-*/
-
-const defaultPort = 5432;
-function normalizePort(val: string | undefined) {
-    if (!val) return defaultPort;
-    const port = parseInt(val, 10);
-    if (isNaN(port)) return defaultPort;
-    if (port >= 0) return port;
-    return defaultPort;
-}
-
-export const CONFIG_PG = {
-    host: DOCKER ? "postgres" : (process.env.DB_HOST ?? "localhost"),
-    user: process.env.DB_USER ?? "postgres",
-    password: process.env.DB_PASSWORD ?? "postgres",
-    port: normalizePort(process.env.DB_PORT),
-    database: "phoenixerp",
-    ssl: false,
+export default {
+    PROD,
+    REFRESH_TOKEN_COOKIE,
+    ACCESS_TOKEN_EXPIRY,
+    REFRESH_TOKEN_EXPIRY,
+    ...parsed,
 };

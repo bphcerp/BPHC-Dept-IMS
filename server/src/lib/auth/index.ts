@@ -1,11 +1,6 @@
 import jwt from "jsonwebtoken";
 import { refreshTokens } from "@/config/db/schema/admin";
-import {
-    ACCESS_TOKEN_EXPIRY,
-    ACCESS_TOKEN_SECRET,
-    REFRESH_TOKEN_EXPIRY,
-    REFRESH_TOKEN_SECRET,
-} from "@/config/environment";
+import env from "@/config/environment";
 import { eq } from "drizzle-orm";
 import type {
     Access,
@@ -33,8 +28,8 @@ export const generateAccessToken = (
         sessionExpiry,
         operations,
     };
-    const accessToken = jwt.sign(jwtPayload, ACCESS_TOKEN_SECRET, {
-        expiresIn: ACCESS_TOKEN_EXPIRY,
+    const accessToken = jwt.sign(jwtPayload, env.ACCESS_TOKEN_SECRET, {
+        expiresIn: env.ACCESS_TOKEN_EXPIRY,
     });
     return accessToken;
 };
@@ -54,8 +49,8 @@ export const generateRefreshToken = async (
     refreshToken: string;
     sessionExpiry: number;
 }> => {
-    const token = jwt.sign({ email }, REFRESH_TOKEN_SECRET, {
-        expiresIn: REFRESH_TOKEN_EXPIRY,
+    const token = jwt.sign({ email }, env.REFRESH_TOKEN_SECRET, {
+        expiresIn: env.REFRESH_TOKEN_EXPIRY,
     });
     const sessionExpiry = (jwt.decode(token) as { exp: number }).exp;
     const expiresAt = new Date(sessionExpiry * 1000);

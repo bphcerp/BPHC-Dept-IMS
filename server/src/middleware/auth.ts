@@ -1,9 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
-import { ACCESS_TOKEN_SECRET } from "@/config/environment";
+import env from "@/config/environment";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import logger from "@/config/logger";
-import { AppError, HttpCode } from "@/config/errors";
+import { HttpError, HttpCode } from "@/config/errors";
 import { matchWildcard } from "@/lib/auth";
 
 /**
@@ -16,10 +16,7 @@ export function checkAccess(requiredOperation?: string) {
     return (req: Request, _res: Response, next: NextFunction) => {
         if (!req.user) {
             return next(
-                new AppError({
-                    httpCode: HttpCode.UNAUTHORIZED,
-                    description: "Unauthenticated",
-                })
+                new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated")
             );
         }
         if (!requiredOperation) return next();
@@ -28,11 +25,11 @@ export function checkAccess(requiredOperation?: string) {
             access.disallowed.some((op) => matchWildcard(requiredOperation, op))
         ) {
             return next(
-                new AppError({
-                    httpCode: HttpCode.FORBIDDEN,
-                    description: "Operation not allowed",
-                    feedback: "Explicitly disallowed",
-                })
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "Operation not allowed",
+                    "Explicitly disallowed"
+                )
             );
         }
         if (
@@ -42,11 +39,11 @@ export function checkAccess(requiredOperation?: string) {
             return next();
 
         return next(
-            new AppError({
-                httpCode: HttpCode.FORBIDDEN,
-                description: "Operation not allowed",
-                feedback: "Insufficient permissions",
-            })
+            new HttpError(
+                HttpCode.FORBIDDEN,
+                "Operation not allowed",
+                "Insufficient permissions"
+            )
         );
     };
 }
@@ -65,7 +62,7 @@ export const authMiddleware = (
     if (parts.length !== 2 || parts[0] !== "Bearer") return next();
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    jwt.verify(parts[1], ACCESS_TOKEN_SECRET, async (err, decoded) => {
+    jwt.verify(parts[1], env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
         if (err) return next();
         const jwtPayloadSchema = z.object({
             email: z.string(),

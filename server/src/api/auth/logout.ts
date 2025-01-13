@@ -1,8 +1,8 @@
 import { REFRESH_TOKEN_COOKIE } from "@/config/environment";
-import { AppError, HttpCode } from "@/config/errors";
+import { HttpError, HttpCode } from "@/config/errors";
 import db from "@/config/db";
 import { refreshTokens } from "@/config/db/schema/admin";
-import { asyncHandler } from "@/middleware/errorhandler";
+import { asyncHandler } from "@/middleware/routeHandler";
 import assert from "assert";
 import { eq } from "drizzle-orm";
 import express from "express";
@@ -19,10 +19,7 @@ router.post(
             : undefined;
         if (!refreshToken)
             return next(
-                new AppError({
-                    httpCode: HttpCode.BAD_REQUEST,
-                    description: "Refresh token not found",
-                })
+                new HttpError(HttpCode.BAD_REQUEST, "Refresh token not found")
             );
         await db
             .delete(refreshTokens)

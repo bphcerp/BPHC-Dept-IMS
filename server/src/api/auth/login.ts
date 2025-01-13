@@ -1,5 +1,5 @@
-import { GOOGLE_CLIENT_ID, REFRESH_TOKEN_COOKIE } from "@/config/environment";
-import { AppError, HttpCode } from "@/config/errors";
+import env from "@/config/environment";
+import { HttpError, HttpCode } from "@/config/errors";
 import express from "express";
 import { type LoginTicket, OAuth2Client } from "google-auth-library";
 import { z } from "zod";
@@ -14,9 +14,9 @@ import {
 } from "@/lib/auth";
 import { refreshTokenCookieOptions } from "@/config/auth";
 import assert from "assert";
-import { asyncHandler } from "@/middleware/errorhandler";
+import { asyncHandler } from "@/middleware/routeHandler";
 
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 const router = express.Router();
 
 const bodySchema = z.object({
@@ -29,11 +29,11 @@ router.post(
         const parseResult = bodySchema.safeParse(req.body);
         if (!parseResult.success) {
             next(
-                new AppError({
-                    httpCode: HttpCode.BAD_REQUEST,
-                    description: "token not found in body",
-                    feedback: fromError(parseResult.error).toString(),
-                })
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "token not found in body",
+                    fromError(parseResult.error).toString()
+                )
             );
             return;
         }
@@ -41,24 +41,19 @@ router.post(
         try {
             ticket = await client.verifyIdToken({
                 idToken: parseResult.data.token,
-                audience: GOOGLE_CLIENT_ID,
+                audience: env.GOOGLE_CLIENT_ID,
             });
         } catch {
-            return next(
-                new AppError({
-                    httpCode: HttpCode.UNAUTHORIZED,
-                    description: "Invalid token",
-                })
-            );
+            return next(new HttpError(HttpCode.UNAUTHORIZED, "Invalid token"));
         }
         const ticketPayload = ticket.getPayload()!;
         if (!ticketPayload.email)
             return next(
-                new AppError({
-                    httpCode: HttpCode.BAD_REQUEST,
-                    description: "Login failed",
-                    feedback: "Invalid scope - email was not provided",
-                })
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Login failed",
+                    "Invalid scope - email was not provided"
+                )
             );
         await db.transaction(async (tx) => {
             assert(ticketPayload.email);
@@ -69,10 +64,7 @@ router.post(
 
             if (!user)
                 return next(
-                    new AppError({
-                        httpCode: HttpCode.FORBIDDEN,
-                        description: "User not in database",
-                    })
+                    new HttpError(HttpCode.FORBIDDEN, "User not in database")
                 );
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(
@@ -87,7 +79,7 @@ router.post(
 
             res.status(200);
             res.cookie(
-                REFRESH_TOKEN_COOKIE,
+                env.REFRESH_TOKEN_COOKIE,
                 refreshToken,
                 refreshTokenCookieOptions(sessionExpiry * 1000)
             );

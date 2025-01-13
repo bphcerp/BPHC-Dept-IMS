@@ -1,0 +1,47 @@
+services:
+    server:
+        build:
+            dockerfile: ./server/deployment/Dockerfile
+            context: .
+        env_file:
+            - .env
+        ports:
+            - ${SERVER_PORT}:${SERVER_PORT}
+        depends_on:
+            db:
+                condition: service_healthy
+        volumes:
+            - ./server:/usr/local/app/server
+
+    db:
+        image: postgres:15.3-bookworm
+        env_file:
+            - .env
+        ports:
+            - ${PGPORT}:${PGPORT}
+        healthcheck:
+            test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}"]
+            interval: 5s
+            timeout: 30s
+            retries: 3
+        volumes:
+            - postgres_db:/var/lib/postgresql/data
+
+    client:
+        build:
+            context: .
+            dockerfile: ./client/docker/Dockerfile
+        ports: 
+            - ${FRONTEND_PORT}:${FRONTEND_PORT}
+        env_file:
+            - .env
+        volumes:
+            - ./client:/usr/local/app/client
+            - /usr/local/app/client/node_modules
+
+volumes:
+    postgres_db:
+
+networks:
+    default:
+        name: "erp_net"

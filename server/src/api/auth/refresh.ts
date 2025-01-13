@@ -1,10 +1,7 @@
-import {
-    REFRESH_TOKEN_COOKIE,
-    REFRESH_TOKEN_SECRET,
-} from "@/config/environment";
-import { AppError, HttpCode } from "@/config/errors";
+import env from "@/config/environment";
+import { HttpError, HttpCode } from "@/config/errors";
 import express from "express";
-import { asyncHandler } from "@/middleware/errorhandler";
+import { asyncHandler } from "@/middleware/routeHandler";
 import { z } from "zod";
 import db from "@/config/db";
 import { eq } from "drizzle-orm";
@@ -26,29 +23,32 @@ router.post(
             async (tx) => {
                 const cookies = req.cookies as Record<string, string>;
                 const refreshToken = cookies
-                    ? cookies[REFRESH_TOKEN_COOKIE]
+                    ? cookies[env.REFRESH_TOKEN_COOKIE]
                     : undefined;
                 if (!refreshToken)
                     return next(
-                        new AppError({
-                            httpCode: HttpCode.UNAUTHORIZED,
-                            description: "Refresh token not found",
-                        })
+                        new HttpError(
+                            HttpCode.UNAUTHORIZED,
+                            "Refresh token not found"
+                        )
                     );
                 let decoded: string | jwt.JwtPayload;
                 try {
-                    decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
+                    decoded = jwt.verify(
+                        refreshToken,
+                        env.REFRESH_TOKEN_SECRET
+                    );
                 } catch (e) {
                     const err = e as VerifyErrors;
                     return next(
-                        new AppError({
-                            httpCode: HttpCode.UNAUTHORIZED,
-                            description: err
+                        new HttpError(
+                            HttpCode.UNAUTHORIZED,
+                            err
                                 ? err.name === "TokenExpiredError"
                                     ? "Refresh token expired"
                                     : "Invalid refresh token"
-                                : "Unknown Error",
-                        })
+                                : "Unknown Error"
+                        )
                     );
                 }
                 const jwtPayloadSchema = z.object({
@@ -56,13 +56,13 @@ router.post(
                 });
                 const parsed = jwtPayloadSchema.safeParse(decoded);
                 if (!parsed.success) {
-                    res.clearCookie(REFRESH_TOKEN_COOKIE);
+                    res.clearCookie(env.REFRESH_TOKEN_COOKIE);
                     return next(
-                        new AppError({
-                            httpCode: HttpCode.INTERNAL_SERVER_ERROR,
-                            description: "An error occurred",
-                            feedback: "Invalid refresh token payload",
-                        })
+                        new HttpError(
+                            HttpCode.INTERNAL_SERVER_ERROR,
+                            "An error occurred",
+                            "Invalid refresh token payload"
+                        )
                     );
                 }
                 const storedTokenData = await tx.query.refreshTokens.findFirst({
@@ -72,12 +72,12 @@ router.post(
                     },
                 });
                 if (!storedTokenData) {
-                    res.clearCookie(REFRESH_TOKEN_COOKIE);
+                    res.clearCookie(env.REFRESH_TOKEN_COOKIE);
                     return next(
-                        new AppError({
-                            httpCode: HttpCode.UNAUTHORIZED,
-                            description: "Invalid refresh token",
-                        })
+                        new HttpError(
+                            HttpCode.UNAUTHORIZED,
+                            "Invalid refresh token"
+                        )
                     );
                 }
                 const { refreshToken: newRefreshToken, sessionExpiry } =
@@ -93,7 +93,7 @@ router.post(
                     await getAccess(storedTokenData.user.roles)
                 );
                 res.cookie(
-                    REFRESH_TOKEN_COOKIE,
+                    env.REFRESH_TOKEN_COOKIE,
                     newRefreshToken,
                     refreshTokenCookieOptions(sessionExpiry * 1000)
                 );

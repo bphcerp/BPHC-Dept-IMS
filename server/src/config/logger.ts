@@ -1,5 +1,6 @@
 import winston, { format } from "winston";
 import { PROD } from "@/config/environment";
+import { HttpError } from "./errors";
 
 const logLevels = {
     fatal: 0,
@@ -11,12 +12,7 @@ const logLevels = {
 };
 
 const customFormatter = format.printf(({ level, message, timestamp }) => {
-    let msg: string;
-    if (typeof message !== "string") {
-        if (message instanceof Error) msg = message.stack ?? "No stack trace";
-        else msg = JSON.stringify(message);
-    } else msg = message;
-    return `[${timestamp as string}] => ${level}: ${msg}`;
+    return `[${timestamp as string}] => ${level}: ${message as string}`;
 });
 
 const logger = winston.createLogger({
@@ -26,7 +22,7 @@ const logger = winston.createLogger({
         format.timestamp({
             format: "DD-MM-YYYY T hh:mm:ss.sss A",
         }),
-        customFormatter
+        format.splat()
     ),
 });
 
