@@ -7,7 +7,7 @@
 `pnpm i`
 
 `cd ..`  
-`docker compose up --build -d`
+`docker compose up --build`
 
 `cd server`  
 `pnpm db:migrate`

@@ -12,6 +12,7 @@ services:
                 condition: service_healthy
         volumes:
             - ./server:/usr/local/app/server
+            - /usr/local/app/server/node_modules
 
     db:
         image: postgres:15.3-bookworm
