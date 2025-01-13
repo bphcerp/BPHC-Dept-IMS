@@ -9,3 +9,7 @@ dist
 logs
 
 files/*
+
+
+#pnpm
+pnpm-lock.yaml

@@ -28,3 +28,7 @@ dist-ssr
 # Lock files
 bun.lockb
 package-lock.json
+
+
+# pnpm
+pnpm-lock.yaml
