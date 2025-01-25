@@ -1,6 +1,11 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
 
+export const permissions = pgTable("permissions", {
+    permission: text("permission").primaryKey(),
+    description: text("description"),
+});
+
 export const roles = pgTable("roles", {
     role: text("role").primaryKey(),
     allowed: text("allowed")
