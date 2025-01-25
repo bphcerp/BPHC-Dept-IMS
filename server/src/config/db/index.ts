@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import * as relations from "./schema/relations";
+import * as adminRelations from "./schema/adminRelations";
 import * as admin from "./schema/admin";
 import env from "../environment";
 import pg from "pg";
@@ -18,7 +18,7 @@ const pool = new Pool({
 const db = drizzle(pool, {
     schema: {
         ...admin,
-        ...relations,
+        ...adminRelations,
     },
 });
 
