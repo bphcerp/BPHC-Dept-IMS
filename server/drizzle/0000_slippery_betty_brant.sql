@@ -43,10 +43,17 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION check_roles() RETURNS TRIGGER AS $$
+DECLARE
+	valid_roles text[];
 BEGIN
-	IF NOT (SELECT array_agg(role) @> NEW.roles FROM roles) THEN
+	-- Fetch all roles into an array
+	SELECT COALESCE(array_agg(role), '{}') INTO valid_roles FROM roles;
+
+	-- Check NEW.roles
+	IF NOT (valid_roles @> NEW.roles) THEN
 		RAISE EXCEPTION 'Role does not exist in roles table';
 	END IF;
+
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
