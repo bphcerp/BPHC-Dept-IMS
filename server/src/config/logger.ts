@@ -1,6 +1,5 @@
 import winston, { format } from "winston";
 import { PROD } from "@/config/environment";
-import { HttpError } from "./errors";
 
 const logLevels = {
     fatal: 0,
@@ -22,7 +21,8 @@ const logger = winston.createLogger({
         format.timestamp({
             format: "DD-MM-YYYY T hh:mm:ss.sss A",
         }),
-        format.splat()
+        format.splat(),
+        customFormatter
     ),
 });
 
