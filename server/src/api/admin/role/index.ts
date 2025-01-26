@@ -3,6 +3,6 @@ import editRouter from "./editRole"
 
 const router = express.Router();
 
-router.use("/", editRouter);
+router.use("/editRoles", editRouter);
 
 export default router;

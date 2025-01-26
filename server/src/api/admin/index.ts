@@ -3,7 +3,7 @@ import roleRouter from "./role";
 import MemberRouter from "./member"
 const router = express.Router();
 
-router.use("/", roleRouter);
-router.use("/", MemberRouter);
+router.use("/role", roleRouter);
+router.use("/member", MemberRouter);
 
 export default router;

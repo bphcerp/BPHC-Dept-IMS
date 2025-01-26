@@ -21,7 +21,7 @@ const updateRoleBodySchema = z.object({
 // if user exists, updates their roles
 // returns an error if the user doesn't exist
 router.put(
-    "/editRoles",
+    "/",
     checkAccess("role:edit"),
     asyncHandler(async (req, res, next) => {
         const parseResult = updateRoleBodySchema.safeParse(req.body);

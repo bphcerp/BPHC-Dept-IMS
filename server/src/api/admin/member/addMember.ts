@@ -24,7 +24,7 @@ const addMemberBodySchema = z.object({
 // uses nodemailer to send emails, used an app password for it
 // if error occurs while sending email, the user is deleted
 router.post(
-    "/add-member",
+    "/",
     checkAccess("user:create"),
     
     asyncHandler(async (req, res, next) => {

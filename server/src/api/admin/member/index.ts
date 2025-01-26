@@ -3,6 +3,6 @@ import addMemberRouter from "./addMember"
 
 const router = express.Router();
 
-router.use("/", addMemberRouter);
+router.use("/add-member", addMemberRouter);
 
 export default router;
