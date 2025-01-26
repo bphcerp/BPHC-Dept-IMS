@@ -9,24 +9,19 @@ import { asyncHandler } from "@/middleware/routeHandler";
 import nodemailer from "nodemailer";
 import env from "@/config/environment";
 import { checkAccess } from "@/middleware/auth";
+
 const router = express.Router();
 
 // Define the request body schema
 const addMemberBodySchema = z.object({
     email: z.string().email(),
-    role: z.string(),
+    role: z.string().optional(), // Allow role to be optional
 });
 
 // POST /add-member
-// validate the request of the body (email and role)
-// checks for any existing user
-// if user exists then adds to the database else returns
-// uses nodemailer to send emails, used an app password for it
-// if error occurs while sending email, the user is deleted
 router.post(
     "/",
-    checkAccess("user:create"),
-    
+    checkAccess("role:addMember"),
     asyncHandler(async (req, res, next) => {
         const parseResult = addMemberBodySchema.safeParse(req.body);
         if (!parseResult.success) {
@@ -39,7 +34,7 @@ router.post(
             );
         }
 
-        const { email } = parseResult.data;
+        const { email, role } = parseResult.data;
 
         try {
             const existingUser = await db.query.users.findFirst({
@@ -50,8 +45,13 @@ router.post(
                 return next(new HttpError(HttpCode.CONFLICT, "User already exists"));
             }
 
-            await db.insert(users).values({ email });
+            // Insert into the database
+            await db.insert(users).values({
+                email,
+                roles: [], // Default to an empty array for roles
+            });
 
+            // Send invitation email
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
@@ -70,9 +70,9 @@ router.post(
 
             res.status(200).json({ message: "User added and invitation sent" });
         } catch (error) {
-            
             console.error("Error occurred:", error);
 
+            // Rollback database changes if email sending fails
             try {
                 await db.delete(users).where(eq(users.email, email));
             } catch (deleteError) {
