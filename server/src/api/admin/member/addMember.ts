@@ -34,7 +34,7 @@ router.post(
             );
         }
 
-        const { email, role } = parseResult.data;
+        const { email } = parseResult.data;
 
         try {
             const existingUser = await db.query.users.findFirst({
