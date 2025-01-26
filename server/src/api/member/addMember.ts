@@ -18,10 +18,14 @@ const addMemberBodySchema = z.object({
 });
 
 // POST /add-member
+// validate the request of the body (email and role)
+// checks for any existing user
+// if user exists then adds to the database else returns
+// uses nodemailer to send emails, used an app password for it
+// if error occurs while sending email, the user is deleted
 router.post(
     "/add-member",
     asyncHandler(async (req, res, next) => {
-        // Validate the request body
         const parseResult = addMemberBodySchema.safeParse(req.body);
         if (!parseResult.success) {
             return next(
@@ -36,7 +40,6 @@ router.post(
         const { email, role } = parseResult.data;
 
         try {
-            // Check if the user already exists
             const existingUser = await db.query.users.findFirst({
                 where: eq(users.email, email),
             });
@@ -45,10 +48,8 @@ router.post(
                 return next(new HttpError(HttpCode.CONFLICT, "User already exists"));
             }
 
-            // Add the new user to the database (INSERT operation)
             await db.insert(users).values({ email, roles: [role] });
 
-            // Send an invitation email
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
@@ -65,21 +66,17 @@ router.post(
                 text: `Hello! You've been added as a ${role}. Click here to join: ${invitationLink}`,
             });
 
-            // Respond with success if everything is fine
             res.status(200).json({ message: "User added and invitation sent" });
         } catch (error) {
-            // If there is an error (like email sending), rollback the database operation
-            // Manually delete the user from the database (rollback behavior)
+            
             console.error("Error occurred:", error);
 
             try {
-                // Attempt to remove the user from the database
                 await db.delete(users).where(eq(users.email, email));
             } catch (deleteError) {
                 console.error("Error rolling back the database:", deleteError);
             }
 
-            // Send an appropriate error response to the client
             if (error instanceof HttpError) {
                 return next(error);
             }

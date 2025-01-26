@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "@/lib/axios-instance";
-import { ADD_MEMBER_ENDPOINT } from "@/lib/constants"; // Import endpoint
-
+import { ADD_MEMBER_ENDPOINT } from "@/lib/constants"; 
+// creates types for member data and its response
 interface AddMemberData {
   email: string;
   role: string;
@@ -13,13 +13,14 @@ interface UseAddMemberResponse {
   error: string | null;
 }
 
+// created useAddMember api which can be directly used on frontend to add the members
 const useAddMember = (): UseAddMemberResponse => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const addMember = async (data: AddMemberData) => {
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null); 
 
     try {
       // Use the endpoint from constants

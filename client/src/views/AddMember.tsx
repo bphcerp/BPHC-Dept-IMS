@@ -1,34 +1,31 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAddMember from "@/hooks/UseAddMember"; // Import the custom hook
+import useAddMember from "@/hooks/UseAddMember"; 
 import { useAuth } from "@/hooks/Auth";
 
 const AddMember = () => {
-  const { authState } = useAuth(); // To check if user is logged in
+  const { authState } = useAuth(); 
   const navigate = useNavigate();
   
-  // States to store the form data
+
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
 
-  // Use the custom hook to add a member
+
   const { addMember, isLoading, error } = useAddMember();
 
-  // Handler for form submission
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !role) {
-      // Validate input
       return;
     }
 
-    // Call the addMember function from the hook
     await addMember({ email, role });
 
-    // If successful, navigate to the home page or show success message
     if (!isLoading && !error) {
-      navigate("/"); // Redirect to home after successful submission
+      navigate("/"); 
     }
   };
 
