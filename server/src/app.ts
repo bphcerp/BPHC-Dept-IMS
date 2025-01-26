@@ -32,7 +32,12 @@ app.use((_req, _res, next) => {
 const expressErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     if (err instanceof HttpError && !err.route) err.route = req.url;
     if (err instanceof HttpError) {
-        logger.info(`[${err.status}] ${err.route}: - ${err.message}`);
+        logger.info("%o", {
+            status: err.status,
+            message: err.message,
+            route: err.route,
+            feedback: err.feedback,
+        });
     } else {
         logger.error("%o", err);
     }
