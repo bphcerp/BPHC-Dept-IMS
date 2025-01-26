@@ -8,7 +8,7 @@ import { HttpError, HttpCode } from "@/config/errors";
 import { asyncHandler } from "@/middleware/routeHandler";
 import nodemailer from "nodemailer";
 import env from "@/config/environment";
-
+import { checkAccess } from "@/middleware/auth";
 const router = express.Router();
 
 // Define the request body schema
@@ -25,6 +25,8 @@ const addMemberBodySchema = z.object({
 // if error occurs while sending email, the user is deleted
 router.post(
     "/add-member",
+    checkAccess("user:create"),
+    
     asyncHandler(async (req, res, next) => {
         const parseResult = addMemberBodySchema.safeParse(req.body);
         if (!parseResult.success) {
@@ -37,7 +39,7 @@ router.post(
             );
         }
 
-        const { email, role } = parseResult.data;
+        const { email } = parseResult.data;
 
         try {
             const existingUser = await db.query.users.findFirst({
@@ -48,7 +50,7 @@ router.post(
                 return next(new HttpError(HttpCode.CONFLICT, "User already exists"));
             }
 
-            await db.insert(users).values({ email, roles: [role] });
+            await db.insert(users).values({ email });
 
             const transporter = nodemailer.createTransport({
                 service: "gmail",
@@ -63,7 +65,7 @@ router.post(
                 from: env.BPHCERP_EMAIL,
                 to: email,
                 subject: "You're Invited!",
-                text: `Hello! You've been added as a ${role}. Click here to join: ${invitationLink}`,
+                text: `Hello! You've been added as a member. Click here to join: ${invitationLink}`,
             });
 
             res.status(200).json({ message: "User added and invitation sent" });
