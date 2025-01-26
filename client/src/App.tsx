@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "@/views/Home";
+import AddMember from "./views/AddMember";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/Auth";
@@ -15,6 +16,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/add-member" element={<AddMember />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

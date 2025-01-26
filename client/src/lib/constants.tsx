@@ -13,3 +13,6 @@ export const BASE_API_URL = BASE_URL + "api/";
 
 export const LOGIN_ENDPOINT = "/auth/login";
 export const REFRESH_ENDPOINT = "/auth/refresh";
+
+
+export const ADD_MEMBER_ENDPOINT = "add-member";
