@@ -1,6 +1,6 @@
 export class HttpError extends Error {
     constructor(
-        public status: number,
+        public status: HttpCode,
         public msg: string,
         public feedback?: string,
         public route?: string

@@ -16,7 +16,12 @@ const customFormatter = format.printf(({ level, message, timestamp }) => {
 
 const logger = winston.createLogger({
     levels: logLevels,
-    transports: [new winston.transports.File({ filename: "./logs/log.txt" })],
+    transports: [
+        new winston.transports.File({
+            filename: "./logs/log.txt",
+            level: "error",
+        }),
+    ],
     format: format.combine(
         format.timestamp({
             format: "DD-MM-YYYY T hh:mm:ss.sss A",
@@ -33,7 +38,7 @@ if (!PROD) {
             format: format.combine(
                 format.colorize(),
                 format.timestamp({
-                    format: "DD-MM-YYYY T hh:mm:ss.sss A",
+                    format: "DD-MM-YYYY hh:mm:ss.sss A",
                 }),
                 customFormatter
             ),

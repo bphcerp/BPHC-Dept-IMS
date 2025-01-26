@@ -1,8 +1,10 @@
 import express from "express";
-import addMemberRouter from "./addMember"
+import inviteRouter from "./invite";
+import editRolesRouter from "./edit-roles";
 
 const router = express.Router();
 
-router.use("/add-member", addMemberRouter);
+router.use("/invite", inviteRouter);
+router.use("/edit-roles", editRolesRouter);
 
 export default router;

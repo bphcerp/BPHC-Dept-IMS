@@ -20,8 +20,8 @@ const serverSchema = z.object({
     LOG_LEVEL: z
         .enum(["silent", "fatal", "error", "warn", "info", "debug", "trace"])
         .default("debug"),
-        BPHCERP_EMAIL: z.string(),
-        BPHCERP_PASSWORD: z.string(),
+    BPHCERP_EMAIL: z.string(),
+    BPHCERP_PASSWORD: z.string(),
 });
 
 const parsed = serverSchema.parse(process.env);
