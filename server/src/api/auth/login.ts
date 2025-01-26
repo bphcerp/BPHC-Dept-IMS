@@ -3,7 +3,6 @@ import { HttpError, HttpCode } from "@/config/errors";
 import express from "express";
 import { type LoginTicket, OAuth2Client } from "google-auth-library";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
 import db from "@/config/db";
 import { users } from "@/config/db/schema/admin";
 import { eq } from "drizzle-orm";
@@ -26,21 +25,11 @@ const bodySchema = z.object({
 router.post(
     "/",
     asyncHandler(async (req, res, next) => {
-        const parseResult = bodySchema.safeParse(req.body);
-        if (!parseResult.success) {
-            next(
-                new HttpError(
-                    HttpCode.BAD_REQUEST,
-                    "token not found in body",
-                    fromError(parseResult.error).toString()
-                )
-            );
-            return;
-        }
+        const parsed = bodySchema.parse(req.body);
         let ticket: LoginTicket;
         try {
             ticket = await client.verifyIdToken({
-                idToken: parseResult.data.token,
+                idToken: parsed.token,
                 audience: env.GOOGLE_CLIENT_ID,
             });
         } catch {
