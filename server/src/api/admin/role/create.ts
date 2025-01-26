@@ -20,19 +20,18 @@ router.post(
             res.status(400).json({ error: "invalid body" });
             return next();
         }
-        
-        const existingRole = await db.query.roles.findFirst({
-            where: (roles, { eq }) => eq(roles.role, parsed.data.name)
-        });
 
-        if (existingRole) {
-            res.status(401).json({ error: "Role already exists" });
+        const insertedRoles = await db.insert(roles)
+            .values({
+                role: parsed.data.name,
+            })
+            .onConflictDoNothing()
+            .returning(); 
+
+        if (insertedRoles.length === 0) {
+            res.status(400).json({ error: "role already exists" });
             return next();
         }
-
-        await db.insert(roles).values({
-            role: parsed.data.name,
-        }).onConflictDoNothing();
         
         res.json({ success: true });
     })
