@@ -19,7 +19,7 @@ const pathSchema = z.object({
         .max(128),
 });
 
-router.post(
+router.get(
     "/",
     checkAccess("role:read"),
     asyncHandler(async (req, res, next) => {
