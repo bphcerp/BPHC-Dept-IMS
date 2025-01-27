@@ -27,9 +27,15 @@ interface AuthContextType {
   updateAuthState: (accessToken?: string | null) => void;
   refreshAuthState: () => void;
   logOut: () => void;
+  checkAccess: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const matchWildcard = (resource: string, pattern: string): boolean => {
+  const regex = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`);
+  return regex.test(resource);
+};
 
 const parseJwt = (token: string) => {
   try {
@@ -84,11 +90,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
   }, [updateAuthState, queryClient]);
 
+  const checkAccess = useCallback(
+    (permission: string) => {
+      if (!authState) return false;
+      const access = authState.operations;
+      if (access.disallowed.some((op) => matchWildcard(permission, op))) {
+        return false;
+      }
+      if (
+        access.allowed.includes("*") ||
+        access.allowed.some((op) => matchWildcard(permission, op))
+      )
+        return true;
+      return false;
+    },
+    [authState]
+  );
+
   const value: AuthContextType = {
     authState,
     updateAuthState,
     refreshAuthState,
     logOut,
+    checkAccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
