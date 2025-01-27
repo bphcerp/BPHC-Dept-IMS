@@ -7,10 +7,17 @@ import db from "@/config/db";
 import { roles } from "@/config/db/schema/admin";
 import { HttpCode, HttpError } from "@/config/errors";
 import { eq } from "drizzle-orm";
+
 const router = express.Router();
 const bodySchema = z.object({
-    role: z.string().trim().nonempty().max(48),
+    role: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
 });
+
 router.post(
     "/",
     checkAccess("role:delete"),
