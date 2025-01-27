@@ -2,61 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Helvectia";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Helvectia/Helvetica.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvectia";
+  font-style: oblique;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Helvectia/Helvetica-Oblique.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvectia";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Helvectia/Helvetica-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvectia";
+  font-style: oblique;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Helvectia/Helvetica-Bold Oblique.woff2") format("woff2");
+}
+
 @layer base {
   :root {
+    /* BITS BRANDING COLORS */
+
+    /* Base colors converted to HSL */
+    --primary-orange: 35 81% 55%; /* #E9972F */
+    --primary-blue: 243 58% 28%; /* #211D70 */
+
+    /* Highlight colors in HSL */
+    --highlight-red: 357 86% 52%; /* #ED1C24 */
+    --highlight-blue: 201 67% 68%; /* #76C2E5 */
+    --highlight-orange: 35 97% 54%; /* #FCB017 */
+    --highlight-yellow: 49 95% 58%; /* #FAC92E */
+
+    /* Neutral colors in HSL */
+    --neutral-black: 0 0% 0%; /* #000000 */
+    --neutral-dark: 345 2% 19%; /* #333132 */
+    --neutral-medium: 240 1% 30%; /* #4D4D4F */
+    --neutral-light: 220 2% 51%; /* #808285 */
+    --neutral-white: 0 0% 100%; /* #FFFFFF */
+
+    /* System semantic tokens - Light theme */
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 345 2% 19%;
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 357.69 83.87% 51.37%;
-    --success: 134 61% 41%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --card-foreground: 345 2% 19%;
+
+    --primary: 243 58% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 35 81% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 2% 51%;
+    --muted-foreground: 240 1% 30%;
+
+    --accent: 201 67% 68%;
+    --accent-foreground: 243 58% 28%;
+
+    --destructive: 357 86% 52%;
+    --success: 142 76% 36%;
+
+    --border: 220 2% 51%;
+    --input: 220 2% 51%;
+    --ring: 243 58% 28%;
+
     --radius: 0.5rem;
   }
   .dark {
-    --background: 235 21% 9%;
-    --foreground: 0 0% 98%;
-    --card: 235 21% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 357.69 83.87% 51.37%;
-    --success: 134 61% 41%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 357.69 83.87% 18%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 243 58% 15%;
+    --foreground: 0 0% 100%;
+
+    --card: 243 58% 18%;
+    --card-foreground: 0 0% 100%;
+
+    --primary: 35 81% 55%;
+    --primary-foreground: 243 58% 28%;
+
+    --secondary: 243 58% 28%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 243 58% 25%;
+    --muted-foreground: 220 2% 51%;
+
+    --accent: 201 67% 42%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 357 86% 42%;
+    --success: 142 76% 32%;
+
+    --border: 243 58% 35%;
+    --input: 243 58% 35%;
+    --ring: 35 81% 55%;
   }
 
   * {
