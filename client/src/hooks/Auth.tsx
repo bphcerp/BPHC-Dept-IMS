@@ -8,7 +8,7 @@ import {
 import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN_KEY, REFRESH_ENDPOINT } from "@/lib/constants";
 import api from "@/lib/axios-instance";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface Operations {
   allowed: string[];
@@ -60,6 +60,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!accessToken) return null;
     return parseJwt(accessToken);
   });
+  const logOutMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/auth/logout");
+    },
+    onSettled: () => {
+      updateAuthState(null);
+      queryClient.clear();
+    },
+  });
 
   const updateAuthState = useCallback(
     (accessToken?: string | null) => {
@@ -80,15 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthState(parseJwt(accessToken));
   }, [setAuthState]);
 
-  const logOut = useCallback(() => {
-    api
-      .post("/auth/logout")
-      .catch(() => {})
-      .finally(() => {
-        updateAuthState(null);
-        queryClient.clear();
-      });
-  }, [updateAuthState, queryClient]);
+  const logOut = logOutMutation.mutate;
 
   const checkAccess = useCallback(
     (permission: string) => {

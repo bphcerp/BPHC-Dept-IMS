@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
@@ -25,12 +26,12 @@ function Home() {
         <GoogleLogin onSuccess={onSuccess} />
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="whitespace-pre text-left">
+          <p className="whitespace-pre text-left font-mono">
             {JSON.stringify(authState, null, 4)}
           </p>
-          <button className="self-center" onClick={() => logOut()}>
+          <Button className="self-center" onClick={() => logOut()}>
             Logout
-          </button>
+          </Button>
         </div>
       )}
     </div>
