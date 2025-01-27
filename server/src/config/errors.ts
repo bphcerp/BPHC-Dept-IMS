@@ -1,6 +1,6 @@
 export class HttpError extends Error {
     constructor(
-        public status: number,
+        public status: HttpCode,
         public msg: string,
         public feedback?: string,
         public route?: string
@@ -19,5 +19,6 @@ export enum HttpCode {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     NOT_FOUND = 404,
+
     INTERNAL_SERVER_ERROR = 500,
 }

@@ -32,7 +32,11 @@ app.use((_req, _res, next) => {
 const expressErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     if (err instanceof HttpError && !err.route) err.route = req.url;
     if (err instanceof HttpError) {
-        logger.info("%o", {
+        const log =
+            err.status === HttpCode.INTERNAL_SERVER_ERROR
+                ? logger.error
+                : logger.info;
+        log("%o", {
             status: err.status,
             message: err.message,
             route: err.route,
