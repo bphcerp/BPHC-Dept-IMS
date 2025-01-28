@@ -52,10 +52,7 @@ export const faculty = pgTable("faculty", {
         .array()
         .notNull()
         .default(sql`'{}'::text[]`),
-    room: text("room")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),    
+    room: text("room"),
     phone: text("phone"),
 });
 
