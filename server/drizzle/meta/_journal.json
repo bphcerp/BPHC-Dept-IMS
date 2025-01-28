@@ -15,6 +15,13 @@
       "when": 1737794054356,
       "tag": "0001_ambiguous_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1738067119014,
+      "tag": "0002_lying_carnage",
+      "breakpoints": true
     }
   ]
 }
