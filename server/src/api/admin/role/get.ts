@@ -6,12 +6,12 @@ import z from "zod";
 import db from "@/config/db";
 import { roles } from "@/config/db/schema/admin";
 import { HttpCode, HttpError } from "@/config/errors";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-// Check if role name is in kebab case
-const bodySchema = z.object({
-    name: z
+const pathSchema = z.object({
+    role: z
         .string()
         .trim()
         .nonempty()
@@ -19,27 +19,29 @@ const bodySchema = z.object({
         .max(128),
 });
 
-router.post(
-    "/",
-    checkAccess("role:create"),
+router.get(
+    "/:role",
+    checkAccess("role:read"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-        const parsed = bodySchema.parse(req.body);
-        const insertedRoles = await db
-            .insert(roles)
-            .values({
-                role: parsed.name,
-            })
-            .onConflictDoNothing()
-            .returning();
+        const parsed = pathSchema.parse(req.params);
+        const role = await db
+            .select()
+            .from(roles)
+            .where(eq(roles.role, parsed.role))
+            .limit(1)
+            .execute();
 
-        if (insertedRoles.length === 0) {
+        if (role.length === 0) {
             return next(
-                new HttpError(HttpCode.CONFLICT, "Role already exists")
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    `Role '${parsed.role}' not found`
+                )
             );
         }
 
-        res.json({ success: true });
+        res.json(role[0]);
     })
 );
 
