@@ -1,8 +1,8 @@
-import { REFRESH_TOKEN_COOKIE } from "@/config/environment";
-import { HttpError, HttpCode } from "@/config/errors";
-import db from "@/config/db";
-import { refreshTokens } from "@/config/db/schema/admin";
-import { asyncHandler } from "@/middleware/routeHandler";
+import { REFRESH_TOKEN_COOKIE } from "@/config/environment.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
+import db from "@/config/db/index.ts";
+import { refreshTokens } from "@/config/db/schema/admin.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import { eq } from "drizzle-orm";
 import express from "express";

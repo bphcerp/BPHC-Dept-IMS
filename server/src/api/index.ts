@@ -1,7 +1,7 @@
 import express from "express";
-import authRouter from "./auth";
-import { checkAccess } from "@/middleware/auth";
-import adminRouter from "./admin";
+import authRouter from "./auth/index.ts";
+import { checkAccess } from "@/middleware/auth.ts";
+import adminRouter from "./admin/index.ts";
 
 const router = express.Router();
 
@@ -14,7 +14,6 @@ router.get("/hello", (_req, res) => {
 
 // Auth routes and middleware
 router.use(authRouter);
-
 
 // protected example, only roles with access to resourcekey can access
 router.get("/protected", checkAccess("resourcekey"), (_req, res) => {

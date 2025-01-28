@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
-import env from "@/config/environment";
+import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import logger from "@/config/logger";
-import { HttpError, HttpCode } from "@/config/errors";
-import { matchWildcard } from "@/lib/auth";
+import logger from "@/config/logger.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
+import { matchWildcard } from "@/lib/auth/index.ts";
 
 /**
  * Middleware function to check if a user has access to a given operation.
@@ -20,7 +20,10 @@ export function checkAccess(requiredOperation?: string) {
             );
         }
         if (!requiredOperation) return next();
-        const access = req.user.operations;
+        const access = req.user.operations as {
+            allowed: string[];
+            disallowed: string[];
+        };
         if (
             access.disallowed.some((op) => matchWildcard(requiredOperation, op))
         ) {

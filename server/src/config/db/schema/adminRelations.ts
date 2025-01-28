@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { refreshTokens, users } from "./admin";
+import { refreshTokens, users } from "./admin.ts";
 
 export const usersRelations = relations(users, ({ many }) => ({
     refreshTokens: many(refreshTokens, {

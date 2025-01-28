@@ -1,17 +1,17 @@
-import env from "@/config/environment";
-import { HttpError, HttpCode } from "@/config/errors";
+import env from "@/config/environment.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 import express from "express";
-import { asyncHandler } from "@/middleware/routeHandler";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { z } from "zod";
-import db from "@/config/db";
+import db from "@/config/db/index.ts";
 import { eq } from "drizzle-orm";
 import {
     generateAccessToken,
     generateRefreshToken,
     getAccess,
-} from "@/lib/auth";
-import { refreshTokenCookieOptions } from "@/config/auth";
-import { refreshTokens } from "@/config/db/schema/admin";
+} from "@/lib/auth/index.ts";
+import { refreshTokenCookieOptions } from "@/config/auth.ts";
+import { refreshTokens } from "@/config/db/schema/admin.ts";
 import jwt, { type VerifyErrors } from "jsonwebtoken";
 
 const router = express.Router();

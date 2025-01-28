@@ -1,10 +1,10 @@
-import { asyncHandler } from "@/middleware/routeHandler";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
-import { checkAccess } from "@/middleware/auth";
+import { checkAccess } from "@/middleware/auth.ts";
 import z from "zod";
-import db from "@/config/db";
-import { roles } from "@/config/db/schema/admin";
+import db from "@/config/db/index.ts";
+import { roles } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors";
 import { eq } from "drizzle-orm";
 const router = express.Router();

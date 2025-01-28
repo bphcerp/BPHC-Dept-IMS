@@ -1,6 +1,6 @@
 import express from "express";
-import inviteRouter from "./invite";
-import editRolesRouter from "./edit";
+import inviteRouter from "./invite.ts";
+import editRolesRouter from "./edit.ts";
 
 const router = express.Router();
 

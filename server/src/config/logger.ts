@@ -1,5 +1,5 @@
 import winston, { format } from "winston";
-import { PROD } from "@/config/environment";
+import { PROD } from "@/config/environment.ts";
 
 const logLevels = {
     fatal: 0,

@@ -1,9 +1,9 @@
-import { asyncHandler } from "@/middleware/routeHandler";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
-import { checkAccess } from "@/middleware/auth";
-import { roles } from "@/config/db/schema/admin";
-import db from "@/config/db";
+import { checkAccess } from "@/middleware/auth.ts";
+import { roles } from "@/config/db/schema/admin.ts";
+import db from "@/config/db/index.ts";
 const router = express.Router();
 
 router.get(

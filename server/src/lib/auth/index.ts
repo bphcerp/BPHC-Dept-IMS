@@ -1,15 +1,15 @@
 import jwt from "jsonwebtoken";
-import { refreshTokens } from "@/config/db/schema/admin";
-import env from "@/config/environment";
+import { refreshTokens } from "@/config/db/schema/admin.ts";
+import env from "@/config/environment.ts";
 import { eq } from "drizzle-orm";
 import type {
     Access,
     JwtPayload,
     Operations,
     RoleAccessMap,
-} from "@/types/auth";
-import type { Transaction } from "@/types/custom";
-import db from "@/config/db";
+} from "@/types/auth.ts";
+import type { Transaction } from "@/types/custom.ts";
+import db from "@/config/db/index.ts";
 
 /**
  * Generates an access token for the given email, session expiry, and operations.
