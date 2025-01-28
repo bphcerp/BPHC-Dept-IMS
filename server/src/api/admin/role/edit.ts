@@ -30,7 +30,7 @@ const bodySchema = z.object({
 });
 
 router.post(
-    "/",
+    "/:role",
     checkAccess("role:edit"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
