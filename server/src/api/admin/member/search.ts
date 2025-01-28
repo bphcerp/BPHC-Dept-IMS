@@ -22,6 +22,7 @@ router.post(
             .where(
                 or(
                     ilike(users.email, `%${searchQuery}%`),
+                    ilike(users.name, `%${searchQuery}%`),
                     sql`lower(${searchQuery}) = ANY(users.roles)`
                 )
             );
