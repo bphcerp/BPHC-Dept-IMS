@@ -16,10 +16,3 @@ export interface Access {
 }
 
 export type RoleAccessMap = Record<string, Access>;
-
-export interface User {
-    email: string;
-    name: string;
-    deactivated: boolean;
-    operations: Access;
-}
