@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: "Helvectia";
+  font-family: "Helvetica";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -11,27 +11,27 @@
 }
 
 @font-face {
-  font-family: "Helvectia";
+  font-family: "Helvetica";
   font-style: oblique;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/Helvectia/Helvetica-Oblique.woff2") format("woff2");
+  src: url("/fonts/Helvetica/Helvetica-Oblique.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Helvectia";
+  font-family: "Helvetica";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/Helvectia/Helvetica-Bold.woff2") format("woff2");
+  src: url("/fonts/Helvetica/Helvetica-Bold.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Helvectia";
+  font-family: "Helvetica";
   font-style: oblique;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/Helvectia/Helvetica-Bold Oblique.woff2") format("woff2");
+  src: url("/fonts/Helvetica/Helvetica-Bold Oblique.woff2") format("woff2");
 }
 
 @layer base {

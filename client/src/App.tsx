@@ -16,6 +16,7 @@ const App = () => {
       <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <AuthProvider>
           <BrowserRouter
+            // react-router future version flags, prevents console warnings
             future={{
               v7_relativeSplatPath: true,
               v7_startTransition: true,

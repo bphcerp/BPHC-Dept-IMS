@@ -13,7 +13,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Helvectia", "Arial", ...defaultTheme.fontFamily.sans],
+        sans: ["Helvetica", "Arial", ...defaultTheme.fontFamily.sans],
       },
       colors: {
         background: "hsl(var(--background))",
