@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { libTest } from "lib";
 
 function Home() {
   const { authState, updateAuthState, logOut } = useAuth();
@@ -27,6 +28,9 @@ function Home() {
         <div className="flex flex-col gap-4">
           <p className="whitespace-pre text-left font-mono">
             {JSON.stringify(authState, null, 4)}
+          </p>
+          <p>
+            {libTest("client")}
           </p>
           <button className="self-center" onClick={() => logOut()}>
             Logout
