@@ -4,7 +4,7 @@ import express from "express";
 import { checkAccess } from "@/middleware/auth";
 import z from "zod";
 import db from "@/config/db";
-import { roles } from "@/config/db/schema/admin";
+import { roles, permissions } from "@/config/db/schema/admin";
 import { HttpCode, HttpError } from "@/config/errors";
 import { eq } from "drizzle-orm";
 
@@ -47,6 +47,20 @@ router.post(
                     `Role '${parsedPath.role}' not found`
                 )
             );
+        }
+
+        if (parsedBody.permission) {
+            const permission = await db.query.permissions.findFirst({
+                where: eq(permissions.permission, parsedBody.permission),
+            });
+            if (!permission) {
+                return next(
+                    new HttpError(
+                        HttpCode.NOT_FOUND,
+                        `Permission '${parsedBody.permission}' not found`
+                    )
+                );
+            }
         }
 
         // Check if permission is already in allowed or disallowed list, and handle accordingly
