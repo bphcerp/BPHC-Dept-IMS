@@ -5,6 +5,7 @@ export interface Operations {
 
 export interface JwtPayload {
     email: string;
+    name: string;
     operations: Operations;
     sessionExpiry: number;
 }
@@ -17,7 +18,8 @@ export interface Access {
 export type RoleAccessMap = Record<string, Access>;
 
 export interface User {
-    userId: string;
     email: string;
+    name: string;
+    deactivated: boolean;
     operations: Access;
 }
