@@ -8,25 +8,27 @@ import { ilike, or, sql } from "drizzle-orm";
 
 const router = express.Router();
 
-const searchSchema = z.object({
-    searchQuery: z.string().trim().nonempty(),
+const querySchema = z.object({
+    q: z.string().trim().optional(),
 });
 
-router.post(
+router.get(
     "/",
     asyncHandler(async (req, res, next) => {
-        const { searchQuery } = searchSchema.parse(req.body);
+        const { q: searchQuery } = querySchema.parse(req.query);
         const results = await db
             .select()
             .from(users)
             .where(
-                or(
-                    ilike(users.email, `%${searchQuery}%`),
-                    ilike(users.name, `%${searchQuery}%`),
-                    sql`lower(${searchQuery}) = ANY(users.roles)`
-                )
+                searchQuery?.length
+                    ? or(
+                          ilike(users.email, `%${searchQuery}%`),
+                          ilike(users.name, `%${searchQuery}%`),
+                          sql`lower(${searchQuery}) = ANY(users.roles)`
+                      )
+                    : undefined
             );
-        res.status(200).json({ success: true, searchResults: results });
+        res.status(200).json(results);
     })
 );
 
