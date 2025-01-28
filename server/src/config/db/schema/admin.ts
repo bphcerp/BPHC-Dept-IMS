@@ -48,7 +48,10 @@ export const faculty = pgTable("faculty", {
         .primaryKey()
         .references(() => users.email, { onDelete: "restrict" }),
     department: text("department"),
-    designation: text("designation"),
+    designation: text("designation")
+        .array()
+        .notNull()
+        .default(sql`'{}'::text[]`),
     room: text("room"),
     phone: text("phone"),
 });
