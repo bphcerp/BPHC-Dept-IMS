@@ -49,18 +49,16 @@ router.post(
             );
         }
 
-        if (parsedBody.permission) {
-            const permission = await db.query.permissions.findFirst({
-                where: eq(permissions.permission, parsedBody.permission),
-            });
-            if (!permission) {
-                return next(
-                    new HttpError(
-                        HttpCode.NOT_FOUND,
-                        `Permission '${parsedBody.permission}' not found`
-                    )
-                );
-            }
+        const permission = await db.query.permissions.findFirst({
+            where: eq(permissions.permission, parsedBody.permission),
+        });
+        if (!permission) {
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    `Permission '${parsedBody.permission}' not found`
+                )
+            );
         }
 
         // Check if permission is already in allowed or disallowed list, and handle accordingly
