@@ -20,11 +20,13 @@ import db from "@/config/db";
  */
 export const generateAccessToken = (
     email: string,
+    name: string,
     sessionExpiry: number,
     operations: Operations
 ): string => {
     const jwtPayload: JwtPayload = {
         email,
+        name,
         sessionExpiry,
         operations,
     };
