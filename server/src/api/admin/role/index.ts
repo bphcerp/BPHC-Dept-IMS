@@ -8,6 +8,6 @@ const router = express.Router();
 router.use("/create", createRouter);
 router.use("/all", getAllRouter);
 router.use("/delete", deleteRouter);
-router.use("/:role", getPermissionsRouter);
+router.use("/", getPermissionsRouter);
 
 export default router;

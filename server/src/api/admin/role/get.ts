@@ -20,7 +20,7 @@ const pathSchema = z.object({
 });
 
 router.get(
-    "/",
+    "/:role",
     checkAccess("role:read"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
