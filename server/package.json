@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
+    "lib": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.33.0",
