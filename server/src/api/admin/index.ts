@@ -1,7 +1,7 @@
 import express from "express";
 import roleRouter from "./role";
 import memberRouter from "./member";
-import permissionRouter from "./permissions";
+import permissionRouter from "./permission";
 const router = express.Router();
 
 router.use("/role", roleRouter);
