@@ -94,23 +94,14 @@ router.post(
             newDisallowed.push(parsedBody.permission);
         }
 
-        try {
-            await db
-                .update(roles)
-                .set({
-                    allowed: newAllowed,
-                    disallowed: newDisallowed,
-                })
-                .where(eq(roles.role, parsedPath.role))
-                .execute();
-        } catch {
-            return next(
-                new HttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Failed to update role"
-                )
-            );
-        }
+        await db
+            .update(roles)
+            .set({
+                allowed: newAllowed,
+                disallowed: newDisallowed,
+            })
+            .where(eq(roles.role, parsedPath.role))
+            .execute();
 
         res.json({ success: true });
     })
