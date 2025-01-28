@@ -2,7 +2,6 @@ import express from "express";
 import { z } from "zod";
 import db from "@/config/db";
 import { asyncHandler } from "@/middleware/routeHandler";
-import { HttpCode, HttpError } from "@/config/errors";
 import { users } from "@/config/db/schema/admin";
 import { ilike, or, sql } from "drizzle-orm";
 
