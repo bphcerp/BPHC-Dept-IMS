@@ -24,32 +24,14 @@ router.get(
                 phd: true,
             },
         });
-
         if (!user) {
-            next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
-            return;
+            return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
         }
-
         const { faculty, phd, ...userData } = user;
-        
-        // If user is faculty type, include designation and room
-        if (user.type === 'faculty' && faculty) {
-            const { designation, room, ...otherFacultyData } = faculty;
-            res.status(200).json({
-                ...userData,
-                ...otherFacultyData,
-                designation,
-                room,
-            });
-            return;
-        }
-
-        // For phd users
         res.status(200).json({
             ...userData,
-            ...phd,
+            ...(faculty || phd),
         });
-        return;
     })
 );
 
