@@ -1,6 +1,6 @@
 {
-  "id": "e5607226-a383-4aff-8ae2-ff66fae6778a",
-  "prevId": "be3c0267-eff3-4e87-91c3-f0028fb841c0",
+  "id": "0ba81f46-e46a-418b-9401-e61798f3677a",
+  "prevId": "e5607226-a383-4aff-8ae2-ff66fae6778a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -28,9 +28,10 @@
         },
         "designation": {
           "name": "designation",
-          "type": "text",
+          "type": "text[]",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'{}'::text[]"
         },
         "room": {
           "name": "room",

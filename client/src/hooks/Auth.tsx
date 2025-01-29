@@ -8,7 +8,7 @@ import {
 import { jwtDecode } from "jwt-decode";
 import { ACCESS_TOKEN_KEY, REFRESH_ENDPOINT } from "@/lib/constants";
 import api from "@/lib/axios-instance";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface Operations {
   allowed: string[];
@@ -27,9 +27,15 @@ interface AuthContextType {
   updateAuthState: (accessToken?: string | null) => void;
   refreshAuthState: () => void;
   logOut: () => void;
+  checkAccess: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const matchWildcard = (resource: string, pattern: string): boolean => {
+  const regex = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`);
+  return regex.test(resource);
+};
 
 const parseJwt = (token: string) => {
   try {
@@ -54,6 +60,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!accessToken) return null;
     return parseJwt(accessToken);
   });
+  const logOutMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/auth/logout");
+    },
+    onSettled: () => {
+      updateAuthState(null);
+      queryClient.clear();
+    },
+  });
 
   const updateAuthState = useCallback(
     (accessToken?: string | null) => {
@@ -74,21 +89,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuthState(parseJwt(accessToken));
   }, [setAuthState]);
 
-  const logOut = useCallback(() => {
-    api
-      .post("/auth/logout")
-      .catch(() => {})
-      .finally(() => {
-        updateAuthState(null);
-        queryClient.clear();
-      });
-  }, [updateAuthState, queryClient]);
+  const logOut = logOutMutation.mutate;
+
+  const checkAccess = useCallback(
+    (permission: string) => {
+      if (!authState) return false;
+      const access = authState.operations;
+      if (access.disallowed.some((op) => matchWildcard(permission, op))) {
+        return false;
+      }
+      if (
+        access.allowed.includes("*") ||
+        access.allowed.some((op) => matchWildcard(permission, op))
+      )
+        return true;
+      return false;
+    },
+    [authState]
+  );
 
   const value: AuthContextType = {
     authState,
     updateAuthState,
     refreshAuthState,
     logOut,
+    checkAccess,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

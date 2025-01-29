@@ -6,12 +6,11 @@ import z from "zod";
 import db from "@/config/db";
 import { roles } from "@/config/db/schema/admin";
 import { HttpCode, HttpError } from "@/config/errors";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
-
-// Check if role name is in kebab case
 const bodySchema = z.object({
-    name: z
+    role: z
         .string()
         .trim()
         .nonempty()
@@ -21,21 +20,21 @@ const bodySchema = z.object({
 
 router.post(
     "/",
-    checkAccess("role:create"),
+    checkAccess("role:delete"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = bodySchema.parse(req.body);
-        const insertedRoles = await db
-            .insert(roles)
-            .values({
-                role: parsed.name,
-            })
-            .onConflictDoNothing()
+        const deletedRoles = await db
+            .delete(roles)
+            .where(eq(roles.role, parsed.role))
             .returning();
 
-        if (insertedRoles.length === 0) {
+        if (deletedRoles.length === 0) {
             return next(
-                new HttpError(HttpCode.CONFLICT, "Role already exists")
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    `Role '${parsed.role}' not found`
+                )
             );
         }
 

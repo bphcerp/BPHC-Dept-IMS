@@ -2,6 +2,7 @@ import express from "express";
 import authRouter from "./auth";
 import { checkAccess } from "@/middleware/auth";
 import adminRouter from "./admin";
+
 const router = express.Router();
 
 // Public routes

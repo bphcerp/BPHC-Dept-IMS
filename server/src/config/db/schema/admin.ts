@@ -7,7 +7,6 @@ export const permissions = pgTable("permissions", {
     permission: text("permission").primaryKey(),
     description: text("description"),
 });
-
 export const roles = pgTable("roles", {
     role: text("role").primaryKey(),
     allowed: text("allowed")
@@ -48,7 +47,10 @@ export const faculty = pgTable("faculty", {
         .primaryKey()
         .references(() => users.email, { onDelete: "restrict" }),
     department: text("department"),
-    desgination: text("desgination"),
+    designation: text("designation")
+        .array()
+        .notNull()
+        .default(sql`'{}'::text[]`),
     room: text("room"),
     phone: text("phone"),
 });
