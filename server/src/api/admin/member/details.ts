@@ -16,7 +16,7 @@ router.get(
     "/",
     checkAccess("member:read"),
     asyncHandler(async (req, res, next) => {
-        const parsed = querySchema.parse(req.body);
+        const parsed = querySchema.parse(req.query);
         const user = await db.query.users.findMany({
             where: eq(users.email, parsed.email),
             with: {
