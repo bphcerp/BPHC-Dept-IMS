@@ -17,17 +17,39 @@ router.get(
     checkAccess("member:read"),
     asyncHandler(async (req, res, next) => {
         const parsed = querySchema.parse(req.query);
-        const user = await db.query.users.findMany({
+        const user = await db.query.users.findFirst({
             where: eq(users.email, parsed.email),
             with: {
                 faculty: true,
                 phd: true,
-            }
-        })
-        if (user.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
+            },
+        });
+
+        if (!user) {
+            next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
+            return;
         }
-        res.status(200).json(user[0]);
+
+        const { faculty, phd, ...userData } = user;
+        
+        // If user is faculty type, include designation and room
+        if (user.type === 'faculty' && faculty) {
+            const { designation, room, ...otherFacultyData } = faculty;
+            res.status(200).json({
+                ...userData,
+                ...otherFacultyData,
+                designation,
+                room,
+            });
+            return;
+        }
+
+        // For phd users
+        res.status(200).json({
+            ...userData,
+            ...phd,
+        });
+        return;
     })
 );
 
