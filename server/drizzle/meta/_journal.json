@@ -15,6 +15,20 @@
       "when": 1737794054356,
       "tag": "0001_ambiguous_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1738069376241,
+      "tag": "0002_many_loa",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1738096848615,
+      "tag": "0003_lethal_killraven",
+      "breakpoints": true
     }
   ]
 }

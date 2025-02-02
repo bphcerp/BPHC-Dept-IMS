@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import app from "./app";
-import env from "./config/environment";
-import logger from "./config/logger";
+import app from "./app.ts";
+import env from "./config/environment.ts";
+import logger from "./config/logger.ts";
 
 app.set("port", env.SERVER_PORT);
 

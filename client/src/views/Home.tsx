@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
@@ -32,9 +33,9 @@ function Home() {
           <p>
             {libTest("client")}
           </p>
-          <button className="self-center" onClick={() => logOut()}>
+          <Button className="self-center" onClick={() => logOut()}>
             Logout
-          </button>
+          </Button>
         </div>
       )}
     </div>

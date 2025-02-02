@@ -55,6 +55,10 @@ router.post(
                 return next(
                     new HttpError(HttpCode.FORBIDDEN, "User not in database")
                 );
+            if (user.deactivated)
+                return next(
+                    new HttpError(HttpCode.FORBIDDEN, "User is deactivated")
+                );
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(
                 ticketPayload.email,
@@ -62,6 +66,7 @@ router.post(
             );
             const accessToken = generateAccessToken(
                 ticketPayload.email,
+                user.name,
                 sessionExpiry,
                 await getAccess(user.roles)
             );

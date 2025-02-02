@@ -12,7 +12,7 @@
         "isolatedModules": true,
         "moduleDetection": "force",
         "emitDeclarationOnly": true,
-        "verbatimModuleSyntax": true,
+        "verbatimModuleSyntax": false,
 
         /* Linting */
         "strict": true,

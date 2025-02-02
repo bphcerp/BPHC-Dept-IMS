@@ -14,6 +14,7 @@ export class HttpError extends Error {
 export enum HttpCode {
     OK = 200,
     NO_CONTENT = 204,
+    NOT_MODIFIED = 304,
     BAD_REQUEST = 400,
     CONFLICT = 409,
     UNAUTHORIZED = 401,
