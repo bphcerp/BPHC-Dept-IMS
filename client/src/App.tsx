@@ -7,6 +7,8 @@ import { GOOGLE_CLIENT_ID } from "@/lib/constants";
 import ProtectedLayout from "@/layouts/Protected";
 import Admin from "@/views/Admin";
 import AdminLayout from "@/layouts/Admin";
+import MembersView from "@/views/Admin/Members";
+import MemberDetailsView from "./views/Admin/Members/[member]";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => {
               <Route path="/" element={<ProtectedLayout />}>
                 <Route path="admin" element={<AdminLayout />}>
                   <Route index element={<Admin />} />
+                  <Route path="members" element={<MembersView />} />
+                  <Route path="members/:member" element={<MemberDetailsView />} />
                 </Route>
               </Route>
             </Routes>
