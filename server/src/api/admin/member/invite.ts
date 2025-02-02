@@ -21,7 +21,7 @@ const bodySchema = z.intersection(
     z.discriminatedUnion("type", [
         z.object({
             type: z.literal(userType.enumValues[0]), // Faculty
-            designation: z.string().trim().optional(),
+            designation: z.string().trim().array().optional(),
             room: z.string().trim().optional(),
         }),
         z.object({

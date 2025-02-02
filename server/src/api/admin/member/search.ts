@@ -13,7 +13,7 @@ const querySchema = z.object({
 
 router.get(
     "/",
-    asyncHandler(async (req, res, next) => {
+    asyncHandler(async (req, res) => {
         const { q: searchQuery } = querySchema.parse(req.query);
         const results = await db
             .select()
