@@ -1,8 +1,8 @@
 import express from "express";
 import { z } from "zod";
-import db from "@/config/db";
-import { asyncHandler } from "@/middleware/routeHandler";
-import { users } from "@/config/db/schema/admin";
+import db from "@/config/db/index.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { users } from "@/config/db/schema/admin.ts";
 import { ilike, or, sql } from "drizzle-orm";
 
 const router = express.Router();

@@ -1,7 +1,7 @@
-import { PROD } from "@/config/environment";
-import logger from "@/config/logger";
+import { PROD } from "@/config/environment.ts";
+import logger from "@/config/logger.ts";
 import type { CorsOptions } from "cors";
-import { HttpCode, HttpError } from "./errors";
+import { HttpCode, HttpError } from "./errors.ts";
 
 const allowedOrigins: string[] = [];
 

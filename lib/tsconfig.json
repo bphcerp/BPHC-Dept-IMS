@@ -4,19 +4,18 @@
         "lib": ["ESNext"],
         "module": "NodeNext",
         "skipLibCheck": true,
+        "composite": true,
 
         "esModuleInterop": true,
         "moduleResolution": "nodenext",
         "allowImportingTsExtensions": true,
         "isolatedModules": true,
         "moduleDetection": "force",
-        "noEmit": true,
-        "resolveJsonModule": true,
+        "emitDeclarationOnly": true,
+        "verbatimModuleSyntax": false,
 
         /* Linting */
         "strict": true,
-        "forceConsistentCasingInFileNames": true,
-        "noImplicitAny": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,

@@ -1,9 +1,11 @@
 import express from "express";
-import inviteRouter from "./invite";
-import editRolesRouter from "./edit";
-import searchRouter from "./search";
-import deactivateRouter from "./deactivate";
-import detailsRouter from "./details";
+
+import inviteRouter from "./invite.ts";
+import editRolesRouter from "./edit.ts";
+import searchRouter from "./search.ts";
+import deactivateRouter from "./deactivate.ts";
+import detailsRouter from "./details.ts";
+
 const router = express.Router();
 
 router.use("/invite", inviteRouter);

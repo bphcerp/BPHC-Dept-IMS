@@ -1,12 +1,12 @@
 import express from "express";
 import { z } from "zod";
-import db from "@/config/db";
-import { faculty, phd, users, userType } from "@/config/db/schema/admin";
-import { HttpError, HttpCode } from "@/config/errors";
-import { asyncHandler } from "@/middleware/routeHandler";
+import db from "@/config/db/index.ts";
+import { faculty, phd, users, userType } from "@/config/db/schema/admin.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
 import nodemailer from "nodemailer";
-import env from "@/config/environment";
-import { checkAccess } from "@/middleware/auth";
+import env from "@/config/environment.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 

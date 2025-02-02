@@ -4,13 +4,16 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
-import corsOptions from "@/config/cors";
+import corsOptions from "@/config/cors.ts";
 import type { ErrorRequestHandler } from "express";
-import api from "@/api";
-import { HttpCode, HttpError } from "@/config/errors";
-import logger from "@/config/logger";
+import api from "@/api/index.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import logger from "@/config/logger.ts";
+import { libTest } from "lib";
 
 const app = express();
+
+console.log(libTest("server"));
 
 app.use(cors(corsOptions));
 app.use(helmet());

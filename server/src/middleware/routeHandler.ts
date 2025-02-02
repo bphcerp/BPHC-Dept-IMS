@@ -1,5 +1,5 @@
 import type express from "express";
-import { HttpCode, HttpError } from "@/config/errors";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 import type core from "express-serve-static-core";
 import { ZodError } from "zod";
 import { fromError } from "zod-validation-error";

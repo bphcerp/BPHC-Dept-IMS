@@ -1,11 +1,11 @@
 import express from "express";
 import { z } from "zod";
-import db from "@/config/db";
-import { users } from "@/config/db/schema/admin";
+import db from "@/config/db/index.ts";
+import { users } from "@/config/db/schema/admin.ts";
 import { eq, sql } from "drizzle-orm";
-import { HttpError, HttpCode } from "@/config/errors";
-import { asyncHandler } from "@/middleware/routeHandler";
-import { checkAccess } from "@/middleware/auth";
+import { HttpError, HttpCode } from "@/config/errors.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 

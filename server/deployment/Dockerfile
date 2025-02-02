@@ -1,14 +1,21 @@
 FROM node:20.14.0-slim
 ENV NODE_ENV development
+WORKDIR /usr/local/app
+
+COPY ./lib ./lib
+
 WORKDIR /usr/local/app/server
 
 RUN npm install -g pnpm
 
 COPY ./server/package.json ./
-COPY ./server/pnpm-lock.yaml ./
 COPY ./server/tsconfig.json ./
 
-RUN pnpm fetch
-RUN pnpm install -r --offline
+WORKDIR /usr/local/app
+COPY ./pnpm-lock.yaml ./
+COPY ./pnpm-workspace.yaml ./
+RUN pnpm install -r
+
+WORKDIR /usr/local/app/server
 
 CMD ["pnpm", "tsx", "watch", "--clear-screen=false", "src/bin.ts"]

@@ -1,8 +1,8 @@
 import express from "express";
-import loginRouter from "./login";
-import refreshRouter from "./refresh";
-import logoutRouter from "./logout";
-import { authMiddleware } from "@/middleware/auth";
+import loginRouter from "./login.ts";
+import refreshRouter from "./refresh.ts";
+import logoutRouter from "./logout.ts";
+import { authMiddleware } from "@/middleware/auth.ts";
 
 const router = express.Router();
 

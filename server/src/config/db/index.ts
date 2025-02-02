@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import * as adminRelations from "./schema/adminRelations";
-import * as admin from "./schema/admin";
-import env from "../environment";
+import * as adminRelations from "./schema/adminRelations.ts";
+import * as admin from "./schema/admin.ts";
+import env from "../environment.ts";
 import pg from "pg";
 
 const { Pool } = pg;

@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { refreshTokens, users, faculty, phd } from "./admin";
+import { refreshTokens, users, faculty, phd } from "./admin.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -24,18 +24,19 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
         relationName: "user",
     }),
 }));
+
 export const facultyRelations = relations(faculty, ({ one }) => ({
     user: one(users, {
         fields: [faculty.email],
         references: [users.email],
         relationName: "faculty",
-    })
+    }),
 }));
+
 export const phdRelations = relations(phd, ({ one }) => ({
     user: one(users, {
         fields: [phd.email],
         references: [users.email],
         relationName: "phd",
-    })
+    }),
 }));
-
