@@ -12,7 +12,7 @@ import api from "@/lib/axios-instance";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import {
   Form,
@@ -42,6 +42,7 @@ type FormFields = z.infer<typeof schema>;
 
 const InviteDialog = () => {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<FormFields>({
     resolver: zodResolver(schema),
@@ -56,6 +57,8 @@ const InviteDialog = () => {
     },
     onSuccess: () => {
       setOpen(false);
+      form.reset();
+      void queryClient.refetchQueries(["members"]);
     },
     onError: (error) => {
       if (isAxiosError(error)) {

@@ -1,11 +1,50 @@
+import React from 'react';
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { UserDetails } from "@/components/admin/MemberDetails";
+import { LoadingSpinner } from "@/components/ui/spinner";
+interface UserData {
+    email: string;
+    type: string;
+    name: string;
+    [key: string]: string[] | number | boolean | string;
+}
 
-const MemberDetailsView = () => {
-  const params = useParams();
+const MemberDetailsView: React.FC = () => {
+  const { member } = useParams<{ member: string }>();
+    // Fetch member details
+    const { data, isLoading, isError } = useQuery<UserData>({
+        queryKey: ["member", member],
+        queryFn: async () => {
+            if (!member) throw new Error("No member email provided");
+            const response = await api.get<UserData>(`/admin/member/details`, {
+                params: { email: member },
+            });
+            return response.data;
+        },
+        enabled: !!member,
+    });
+
+    // Render loading and error states
+    if (isLoading) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 w-full">
+            <LoadingSpinner />
+        </div>
+    );
+
+    if (isError) return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 w-full">
+            <div>Error fetching member details</div>
+        </div>
+    );
+
   return (
-    <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
-      <h1 className="text-3xl font-bold text-primary">Member details</h1>
-      <p>{params["member"]}</p>
+        // Render member details
+    <div className="min-h-screen flex items-center bg-gray-100 p-8 w-full">
+      <div className="w-full max-w-2xl mx-auto">
+                {data && <UserDetails data={data} />}
+      </div>
     </div>
   );
 };
