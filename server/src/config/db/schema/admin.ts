@@ -23,13 +23,11 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
     email: text("email").primaryKey(),
-    name: text("name").notNull(),
     roles: text("roles")
         .array()
         .notNull()
         .default(sql`'{}'::text[]`),
     deactivated: boolean("deactivated").notNull().default(false),
-    type: userType("type").notNull(),
 });
 
 export const refreshTokens = pgTable("refresh_tokens", {
