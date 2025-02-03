@@ -110,7 +110,7 @@ const RoleDetailsView = () => {
       {isFetchingPermissions ? (
         <LoadingSpinner />
       ) : isErrorPermissions ? (
-        <p>An error ocurred.</p>
+        <p>An error occurred.</p>
       ) : (
         allPermissions && (
           <div className="flex flex-col gap-2">
