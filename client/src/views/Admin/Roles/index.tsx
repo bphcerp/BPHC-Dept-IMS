@@ -1,3 +1,4 @@
+import { CreateRoleDialog } from "@/components/admin/CreateRoleDialog";
 import RoleList, { type Role } from "@/components/admin/RoleList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,7 @@ const RolesView = () => {
           </div>
           <Button onClick={() => void refetch()}>Search</Button>
         </div>
-        <Button onClick={() => setSearch("")}>Create role</Button>
+        <CreateRoleDialog />
       </div>
       {isFetching ? (
         <LoadingSpinner />
