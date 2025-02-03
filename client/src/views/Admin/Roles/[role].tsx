@@ -79,7 +79,7 @@ const RoleDetailsView = () => {
   });
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-1 flex-col justify-center gap-4 p-4">
+    <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
       <h1 className="text-3xl font-bold text-primary">Role details</h1>
       <div className="flex flex-col text-lg">
         <div>
