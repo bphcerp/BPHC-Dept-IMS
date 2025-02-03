@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, serial, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
 export const userType = pgEnum("user_type", ["faculty", "phd"]);
 
@@ -10,6 +10,7 @@ export const permissions = pgTable("permissions", {
 
 export const roles = pgTable("roles", {
     role: text("role").primaryKey(),
+    memberCount: integer("member_count").notNull().default(0),
     allowed: text("allowed")
         .array()
         .notNull()
