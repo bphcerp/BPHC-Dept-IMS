@@ -1,3 +1,4 @@
+import InviteDialog from "@/components/admin/InviteDialog";
 import MemberList, { type Member } from "@/components/admin/MemberList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,18 +32,21 @@ const MembersView = () => {
   return (
     <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
       <h1 className="text-3xl font-bold text-primary">Members</h1>
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Search members..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64 pl-9"
-          />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Search members..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-64 pl-9"
+            />
+          </div>
+          <Button onClick={() => void refetch()}>Search</Button>
         </div>
-        <Button onClick={() => void refetch()}>Search</Button>
+        <InviteDialog />
       </div>
       {isFetching ? (
         <LoadingSpinner />

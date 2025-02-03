@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useAllPermissions } from "@/hooks/Admin/AllPermissions";
 import api from "@/lib/axios-instance";

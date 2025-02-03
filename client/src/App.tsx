@@ -28,7 +28,6 @@ const App = () => {
               v7_startTransition: true,
             }}
           >
-            {" "}
             <SidebarProvider>
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -45,7 +44,7 @@ const App = () => {
                     <Route path="roles/:role" element={<RoleDetailsView />} />
                   </Route>
                 </Route>
-              </Routes>{" "}
+              </Routes>
             </SidebarProvider>
             <Toaster />
           </BrowserRouter>
