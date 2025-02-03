@@ -71,7 +71,7 @@ const RoleDetailsView = () => {
     onError: (_err, _variables, context) => {
       // If mutation fails, use context from onMutate to rollback
       queryClient.setQueryData<Role>(["role", role], context?.previousData);
-      toast.error("An error ocurred while updating role permissions.");
+      toast.error("An error occurred while updating role permissions.");
     },
     onSettled: () => {
       void queryClient.refetchQueries(["role", role]);
