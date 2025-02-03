@@ -8,7 +8,7 @@ import {
   CardFooter,
 } from "../ui/card";
 import { UserCircle2 } from "lucide-react";
-import { Button } from "../ui/button";
+import { DeactivateUserDialog } from "./DeactivateUserDialog";
 
 interface UserData {
   email: string;
@@ -25,6 +25,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
   const renderValue = (value?: string[] | number | boolean | string | null) => {
     if (value === undefined || value === null) return "-";
     if (Array.isArray(value)) {
+      if (value.length === 0) return "-";
       return (
         <div className="flex flex-wrap gap-2">
           {value.map((item, index) => (
@@ -41,10 +42,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
     }
 
     return String(value);
-  };
-
-  const handleDeactivate = () => {
-    console.log("User has been deactivated");
   };
 
   return (
@@ -81,13 +78,12 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
         </div>
       </CardContent>
       <CardFooter>
-        <Button
-          variant="destructive"
-          onClick={handleDeactivate}
-          className="text-white"
-        >
-          Deactivate User
-        </Button>
+        <DeactivateUserDialog
+          email={data.email}
+          onDeactivateSuccess={() => {
+            window.location.reload();
+           }}
+        />
       </CardFooter>
     </Card>
   );
