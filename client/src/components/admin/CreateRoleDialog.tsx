@@ -110,7 +110,11 @@ export function CreateRoleDialog() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="self-end">
+            <Button
+              type="submit"
+              className="self-end"
+              disabled={submitMutation.isLoading}
+            >
               Create Role
             </Button>
           </form>
