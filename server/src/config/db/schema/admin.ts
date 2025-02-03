@@ -23,7 +23,6 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
     email: text("email").primaryKey(),
-    name: text("name").notNull(),
     roles: text("roles")
         .array()
         .notNull()
@@ -41,6 +40,7 @@ export const refreshTokens = pgTable("refresh_tokens", {
     expiresAt: timestamp("expires_at", {
         withTimezone: true,
     }).notNull(),
+    type: userType("type").notNull(),
 });
 
 export const faculty = pgTable("faculty", {
@@ -48,20 +48,37 @@ export const faculty = pgTable("faculty", {
     email: text("email")
         .primaryKey()
         .references(() => users.email, { onDelete: "restrict" }),
+    name: text("name"),
     department: text("department"),
     designation: text("designation")
         .array()
-        .notNull()
         .default(sql`'{}'::text[]`),
     room: text("room"),
     phone: text("phone"),
 });
 
 export const phd = pgTable("phd", {
-    psrn: text("psrn").unique(),
     email: text("email")
         .primaryKey()
         .references(() => users.email, { onDelete: "restrict" }),
     department: text("department"),
     phone: text("phone"),
+
+    idNumber: text("id_number"),
+    erpId: text("erp_id"),
+    name: text("name"),
+    instituteEmail: text("institute_email"),
+    mobile: text("mobile"),
+    personalEmail: text("personal_email"),
+
+    notionalSupervisorEmail: text("notional_supervisor_email"),
+    supervisorEmail: text("supervisor_email"),
+    coSupervisorEmail: text("co_supervisor_email"),
+    coSupervisorEmail2: text("co_supervisor_email_2"),
+    dac1Email: text("dac_1_email"),
+    dac2Email: text("dac_2_email"),
+
+    natureOfPhD: text("nature_of_phd"),
+    qualifyingExam1: text("qualifying_exam_1"),
+    qualifyingExam2: boolean("qualifying_exam_date_2"),
 });
