@@ -76,6 +76,7 @@ router.post(
                             psrn: parsed.psrn,
                             email: insertedUser[0].email,
                             phone: parsed.phone,
+                            department: parsed.department,
                         })
                         .onConflictDoNothing()
                         .returning();
