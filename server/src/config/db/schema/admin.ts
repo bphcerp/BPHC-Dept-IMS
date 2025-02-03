@@ -40,7 +40,6 @@ export const refreshTokens = pgTable("refresh_tokens", {
     expiresAt: timestamp("expires_at", {
         withTimezone: true,
     }).notNull(),
-    type: userType("type").notNull(),
 });
 
 export const faculty = pgTable("faculty", {

@@ -2,8 +2,6 @@ import express from "express";
 import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { users } from "@/config/db/schema/admin.ts";
-import { ilike, or, sql } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -15,18 +13,57 @@ router.get(
     "/",
     asyncHandler(async (req, res) => {
         const { q: searchQuery } = querySchema.parse(req.query);
-        const results = await db
-            .select()
-            .from(users)
-            .where(
-                searchQuery?.length
-                    ? or(
-                          ilike(users.email, `%${searchQuery}%`),
-                          ilike(users.name, `%${searchQuery}%`),
-                          sql`lower(${searchQuery}) = ANY(users.roles)`
-                      )
-                    : undefined
-            );
+        const faculty = (
+            await db.query.faculty.findMany({
+                columns: {
+                    email: true,
+                    name: true,
+                },
+                where: (fields, { or, ilike, sql }) =>
+                    searchQuery?.length
+                        ? or(
+                              ilike(fields.email, `%${searchQuery}%`),
+                              ilike(fields.name, `%${searchQuery}%`),
+                              sql`lower(${searchQuery}) = ANY(users.roles)`
+                          )
+                        : undefined,
+                with: {
+                    user: {
+                        columns: {
+                            roles: true,
+                        },
+                    },
+                },
+            })
+        ).map(({ user, ...f }) => ({
+            ...f,
+            type: "faculty",
+            roles: user.roles,
+        }));
+        const phd = (
+            await db.query.phd.findMany({
+                columns: {
+                    email: true,
+                    name: true,
+                },
+                where: (fields, { or, ilike, sql }) =>
+                    searchQuery?.length
+                        ? or(
+                              ilike(fields.email, `%${searchQuery}%`),
+                              ilike(fields.name, `%${searchQuery}%`),
+                              sql`lower(${searchQuery}) = ANY(users.roles)`
+                          )
+                        : undefined,
+                with: {
+                    user: {
+                        columns: {
+                            roles: true,
+                        },
+                    },
+                },
+            })
+        ).map(({ user, ...p }) => ({ ...p, type: "phd", roles: user.roles }));
+        const results = [...faculty, ...phd];
         res.status(200).json(results);
     })
 );

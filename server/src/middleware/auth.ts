@@ -79,7 +79,6 @@ export const authMiddleware = (
         }
         const jwtPayloadSchema = z.object({
             email: z.string(),
-            name: z.string(),
             operations: z.object({
                 allowed: z.array(z.string()),
                 disallowed: z.array(z.string()),

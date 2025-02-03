@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export interface Member {
-  name: string;
+  name: string | null;
   email: string;
   roles: string[];
+  type: string;
 }
 
 export default function MemberList({ members }: { members: Member[] }) {
@@ -16,7 +17,9 @@ export default function MemberList({ members }: { members: Member[] }) {
         <Link to={`${member.email}`} key={member.email}>
           <Card className="h-full transition-shadow duration-200 hover:shadow-md">
             <CardContent className="flex flex-col gap-2 p-4">
-              <h2 className="text-xl font-semibold">{member.name}</h2>
+              <h2 className="text-xl font-semibold">
+                {member.name ?? "Invite pending"}
+              </h2>
               <p className="text-muted-foreground">{member.email}</p>
               <div className="flex flex-wrap gap-2">
                 {member.roles.map((role) => (

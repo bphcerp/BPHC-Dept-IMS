@@ -260,13 +260,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "user_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},

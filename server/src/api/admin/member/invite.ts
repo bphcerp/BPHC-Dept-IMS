@@ -10,25 +10,10 @@ import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
-const bodySchema = z.intersection(
-    z.object({
-        email: z.string().email(),
-        name: z.string().trim().nonempty(),
-        psrn: z.string().trim().nonempty(),
-        phone: z.string().trim().optional(),
-        department: z.string().trim().optional(),
-    }),
-    z.discriminatedUnion("type", [
-        z.object({
-            type: z.literal(userType.enumValues[0]), // Faculty
-            designation: z.string().trim().array().optional(),
-            room: z.string().trim().optional(),
-        }),
-        z.object({
-            type: z.literal(userType.enumValues[1]), // PhD
-        }),
-    ])
-);
+const bodySchema = z.object({
+    email: z.string().email(),
+    type: z.enum(userType.enumValues),
+});
 
 router.post(
     "/",
@@ -42,7 +27,6 @@ router.post(
                     .insert(users)
                     .values({
                         email: parsed.email,
-                        name: parsed.name,
                         type: parsed.type,
                         roles: [], // Default to an empty array for roles
                     })
@@ -55,34 +39,21 @@ router.post(
                     );
                 }
                 // Insert user details
-                let insertedDetails;
-                if (parsed.type === userType.enumValues[0]) {
-                    insertedDetails = await db
-                        .insert(faculty)
-                        .values({
-                            psrn: parsed.psrn,
-                            email: insertedUser[0].email,
-                            department: parsed.department,
-                            designation: parsed.designation,
-                            room: parsed.room,
-                            phone: parsed.phone,
-                        })
-                        .onConflictDoNothing()
-                        .returning();
-                } else {
-                    insertedDetails = await db
-                        .insert(phd)
-                        .values({
-                            psrn: parsed.psrn,
-                            email: insertedUser[0].email,
-                            phone: parsed.phone,
-                            department: parsed.department,
-                        })
-                        .onConflictDoNothing()
-                        .returning();
-                }
+                const insertedDetails = await db
+                    .insert(
+                        parsed.type === userType.enumValues[0] ? faculty : phd
+                    )
+                    .values({
+                        email: insertedUser[0].email,
+                    })
+                    .onConflictDoNothing()
+                    .returning();
+
                 if (insertedDetails.length === 0) {
-                    throw new HttpError(HttpCode.CONFLICT, "Duplicate PSRN");
+                    throw new HttpError(
+                        HttpCode.CONFLICT,
+                        "User details already exist"
+                    );
                 }
                 // Send invitation email
                 if (env.PROD) {
