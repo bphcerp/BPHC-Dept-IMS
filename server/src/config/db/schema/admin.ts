@@ -23,7 +23,6 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
     email: text("email").primaryKey(),
-    name: text("name").notNull(),
     roles: text("roles")
         .array()
         .notNull()

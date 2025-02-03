@@ -1,6 +1,6 @@
 {
-  "id": "1d15b1c6-ae3e-4852-9847-5cb0b8979d90",
-  "prevId": "fa625cd8-be94-4aba-82d2-802466b1a4eb",
+  "id": "09e26d17-9719-4c57-b2b2-f15aee1b9d25",
+  "prevId": "1d15b1c6-ae3e-4852-9847-5cb0b8979d90",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -333,12 +333,6 @@
           "name": "email",
           "type": "text",
           "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
           "notNull": true
         },
         "roles": {
