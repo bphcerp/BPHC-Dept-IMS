@@ -9,6 +9,8 @@ import Admin from "@/views/Admin";
 import AdminLayout from "@/layouts/Admin";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "./views/Admin/Members/[member]";
+import RoleDetailsView from "./views/Admin/Roles/[role]";
+import { Toaster } from "./components/ui/sonner";
 
 const queryClient = new QueryClient();
 
@@ -32,10 +34,15 @@ const App = () => {
                 <Route path="admin" element={<AdminLayout />}>
                   <Route index element={<Admin />} />
                   <Route path="members" element={<MembersView />} />
-                  <Route path="members/:member" element={<MemberDetailsView />} />
+                  <Route
+                    path="members/:member"
+                    element={<MemberDetailsView />}
+                  />
+                  <Route path="roles/:role" element={<RoleDetailsView />} />
                 </Route>
               </Route>
             </Routes>
+            <Toaster />
           </BrowserRouter>
         </AuthProvider>
       </GoogleOAuthProvider>
