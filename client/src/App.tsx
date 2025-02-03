@@ -24,7 +24,6 @@ const App = () => {
           >
             <Routes>
               <Route path="/" element={<Home />} />
-
               {/* Protected Routes (requires authentication) */}
               <Route path="/" element={<ProtectedLayout />}>
                 <Route path="admin" element={<AdminLayout />}>
