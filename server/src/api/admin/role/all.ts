@@ -17,13 +17,14 @@ router.get(
         const allRoles = await db.query.roles.findMany({
             columns: {
                 role: true,
+                memberCount: true,
             },
             where: (fields, { ilike }) =>
                 searchQuery?.length
                     ? ilike(fields.role, `%${searchQuery}%`)
                     : undefined,
         });
-        res.json(allRoles.map((role) => role.role));
+        res.json(allRoles);
     })
 );
 
