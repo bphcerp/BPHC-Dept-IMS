@@ -10,7 +10,7 @@ import {
     DialogDescription,
     DialogFooter,
     DialogClose,
-  } from "@/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
@@ -18,27 +18,22 @@ import { isAxiosError } from "axios";
 
 interface DeactivateUserDialogProps {
     email: string;
-    onDeactivateSuccess?: () => void;
 }
 
-export const DeactivateUserDialog: FC<DeactivateUserDialogProps> = ({ 
-    email, 
-    onDeactivateSuccess 
+export const DeactivateUserDialog: FC<DeactivateUserDialogProps> = ({
+    email,
 }) => {
     const [open, setOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const deactivateMutation = useMutation({
-        mutationFn: async () => {
-            await api.post("/admin/member/deactivate", {
-                email,
-            });
+        mutationFn: (email: string) => {
+            return api.post("/admin/member/deactivate", { email });
         },
-        onSuccess: () => {
+        onSuccess: (_, email) => {
             toast.success("User deactivated successfully");
-            void queryClient.refetchQueries(["users"]);
+            void queryClient.refetchQueries(["member", email]);
             setOpen(false);
-            onDeactivateSuccess?.();
         },
         onError: (error) => {
             if (isAxiosError(error)) {
@@ -53,7 +48,7 @@ export const DeactivateUserDialog: FC<DeactivateUserDialogProps> = ({
     });
 
     const handleDeactivate = () => {
-        deactivateMutation.mutate();
+        deactivateMutation.mutate(email);
     };
 
     return (
@@ -75,8 +70,8 @@ export const DeactivateUserDialog: FC<DeactivateUserDialogProps> = ({
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button 
-                        variant="destructive" 
+                    <Button
+                        variant="destructive"
                         onClick={handleDeactivate}
                         disabled={deactivateMutation.isLoading}
                     >

@@ -80,9 +80,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       <CardFooter>
         <DeactivateUserDialog
           email={data.email}
-          onDeactivateSuccess={() => {
-            window.location.reload();
-           }}
         />
       </CardFooter>
     </Card>
