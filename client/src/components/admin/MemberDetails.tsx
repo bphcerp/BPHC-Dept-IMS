@@ -141,7 +141,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                 <div key={key} className="space-y-1">
                   <div className="flex gap-2 text-sm uppercase text-muted-foreground">
                     {key.replace(/_/g, " ").toUpperCase()}
-                    {key === "roles" && (
+                    {key === "roles" && !data.deactivated && (
                       <AssignRoleComboBox
                         existing={data.roles}
                         callback={(role) => {

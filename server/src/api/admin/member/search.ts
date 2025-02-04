@@ -30,6 +30,7 @@ router.get(
                 with: {
                     user: {
                         columns: {
+                            deactivated: true,
                             roles: true,
                         },
                     },
@@ -57,12 +58,18 @@ router.get(
                 with: {
                     user: {
                         columns: {
+                            deactivated: true,
                             roles: true,
                         },
                     },
                 },
             })
-        ).map(({ user, ...p }) => ({ ...p, type: "phd", roles: user.roles }));
+        ).map(({ user, ...p }) => ({
+            ...p,
+            type: "phd",
+            roles: user.roles,
+            deactivated: user.deactivated,
+        }));
         const results = [...faculty, ...phd];
         res.status(200).json(results);
     })

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { badgeVariants } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
 import { Button, buttonVariants } from "../ui/button";
 import { Pencil, Plus, X } from "lucide-react";
@@ -14,6 +14,7 @@ export interface Member {
   email: string;
   roles: string[];
   type: string;
+  deactivated: boolean;
 }
 
 export default function MemberList({ members }: { members: Member[] }) {
@@ -78,40 +79,51 @@ export default function MemberList({ members }: { members: Member[] }) {
             </h2>
             <p className="text-muted-foreground">{member.email}</p>
             <div className="flex flex-wrap gap-2">
-              {member.roles.map((role) => (
-                <Link
-                  key={role}
-                  className={badgeVariants({
-                    variant: "secondary",
-                    className: "flex gap-1 pt-1",
-                  })}
-                  to={`../roles/${role}`}
+              {member.deactivated ? (
+                <Badge
+                  variant="destructive"
+                  className="absolute bottom-2 right-2"
                 >
-                  {role}
-                  <button
-                    className="p-1 pr-0"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      editRoleMutation.mutate({
-                        email: member.email,
-                        remove: role,
-                      });
-                    }}
+                  Deactivated
+                </Badge>
+              ) : (
+                member.roles.map((role) => (
+                  <Link
+                    key={role}
+                    className={badgeVariants({
+                      variant: "secondary",
+                      className: "flex gap-1 pt-1",
+                    })}
+                    to={`../roles/${role}`}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Link>
-              ))}
-              <AssignRoleComboBox
-                existing={member.roles}
-                callback={(role) => {
-                  editRoleMutation.mutate({ email: member.email, add: role });
-                }}
-              >
-                <Button variant="outline" size="icon" className="h-7 w-7">
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </AssignRoleComboBox>
+                    {role}
+                    <button
+                      className="p-1 pr-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        editRoleMutation.mutate({
+                          email: member.email,
+                          remove: role,
+                        });
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Link>
+                ))
+              )}
+              {!member.deactivated && (
+                <AssignRoleComboBox
+                  existing={member.roles}
+                  callback={(role) => {
+                    editRoleMutation.mutate({ email: member.email, add: role });
+                  }}
+                >
+                  <Button variant="outline" size="icon" className="h-7 w-7">
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </AssignRoleComboBox>
+              )}
             </div>
           </CardContent>
         </Card>
