@@ -80,4 +80,14 @@ export const phd = pgTable("phd", {
     natureOfPhD: text("nature_of_phd"),
     qualifyingExam1: boolean("qualifying_exam_1"),
     qualifyingExam2: boolean("qualifying_exam_date_2"),
+
+    qualifyingExam1Date: timestamp("qualifying_exam_1_date", {
+        withTimezone: true,
+        mode: "date",
+    }).default(sql`NULL`),
+
+    qualifyingExam2Date: timestamp("qualifying_exam_2_date", {
+        withTimezone: true,
+        mode: "date",
+    }).default(sql`NULL`),
 });
