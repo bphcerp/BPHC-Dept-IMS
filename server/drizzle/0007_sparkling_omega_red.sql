@@ -1,0 +1,2 @@
+ALTER TABLE "phd" ADD COLUMN "qualifying_exam_1_date" timestamp with time zone DEFAULT NULL;--> statement-breakpoint
+ALTER TABLE "phd" ADD COLUMN "qualifying_exam_2_date" timestamp with time zone DEFAULT NULL;
