@@ -20,7 +20,7 @@ const editRolesBodySchema = z
         "Specify either add or remove"
     );
 
-router.put(
+router.post(
     "/",
     checkAccess("member:edit-roles"),
     asyncHandler(async (req, res, next) => {

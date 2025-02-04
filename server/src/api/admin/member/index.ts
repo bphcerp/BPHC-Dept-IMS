@@ -13,4 +13,5 @@ router.use("/editroles", editRolesRouter);
 router.use("/search", searchRouter);
 router.use("/deactivate", deactivateRouter);
 router.use("/details", detailsRouter);
+
 export default router;
