@@ -1,0 +1,1 @@
+ALTER TABLE "phd" ALTER COLUMN "qualifying_exam_1" SET DATA TYPE boolean USING ("qualifying_exam_1"::boolean);
