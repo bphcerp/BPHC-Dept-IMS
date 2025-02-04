@@ -17,7 +17,7 @@ const bodySchema = z.object({
 
 router.post(
     "/",
-    checkAccess("member:invite"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         const parsed = bodySchema.parse(req.body);
         try {

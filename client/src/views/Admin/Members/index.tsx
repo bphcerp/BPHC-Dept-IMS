@@ -10,23 +10,20 @@ import { useState } from "react";
 
 const MembersView = () => {
   const [search, setSearch] = useState("");
+  const [queryKey, setQueryKey] = useState("");
 
-  const {
-    data: members,
-    isFetching,
-    refetch,
-  } = useQuery({
-    queryKey: ["members"],
+  const { data: members, isFetching } = useQuery({
+    queryKey: queryKey.length ? ["members", queryKey] : ["members"],
     queryFn: async () => {
       const response = await api.get<Member[]>("/admin/member/search", {
         params: {
-          q: search,
+          q: queryKey,
         },
       });
       return response.data;
     },
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
   });
 
   return (
@@ -44,7 +41,7 @@ const MembersView = () => {
               className="w-64 pl-9"
             />
           </div>
-          <Button onClick={() => void refetch()}>Search</Button>
+          <Button onClick={() => setQueryKey(search)}>Search</Button>
         </div>
         <InviteDialog />
       </div>

@@ -5,6 +5,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 const AdminLayout = () => {
   const { checkAccess } = useAuth();
+
   // Only allow access to the admin layout if the user has the "admin" permission
   return checkAccess("admin") ? (
     <>
@@ -14,14 +15,14 @@ const AdminLayout = () => {
             title: "Admin",
             items: [
               {
-                title: "Roles",
-                icon: <PersonIcon />,
-                url: "/admin/roles",
-              },
-              {
                 title: "Members",
                 icon: <PersonIcon />,
                 url: "/admin/members",
+              },
+              {
+                title: "Roles",
+                icon: <PersonIcon />,
+                url: "/admin/roles",
               },
             ],
           },

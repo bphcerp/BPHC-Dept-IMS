@@ -10,23 +10,20 @@ import { useState } from "react";
 
 const RolesView = () => {
   const [search, setSearch] = useState("");
+  const [queryKey, setQueryKey] = useState("");
 
-  const {
-    data: roles,
-    isFetching,
-    refetch,
-  } = useQuery({
-    queryKey: ["roles"],
+  const { data: roles, isFetching } = useQuery({
+    queryKey: queryKey.length ? ["roles", queryKey] : ["roles"],
     queryFn: async () => {
       const response = await api.get<Role[]>("/admin/role/all", {
         params: {
-          q: search,
+          q: queryKey,
         },
       });
       return response.data;
     },
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
   });
 
   return (
@@ -44,7 +41,7 @@ const RolesView = () => {
               className="w-64 pl-9"
             />
           </div>
-          <Button onClick={() => void refetch()}>Search</Button>
+          <Button onClick={() => setQueryKey(search)}>Search</Button>
         </div>
         <CreateRoleDialog />
       </div>
