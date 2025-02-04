@@ -5,6 +5,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import z from "zod";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ const phdSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("phd-create"),
+    checkAccess("phd-inputDetails"),
     asyncHandler(async (req, res, next) => {
         if (!req.user?.email) {
             return next(new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated"));
@@ -32,15 +33,21 @@ router.post(
             return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input data"));
         }
 
-        const dataToInsert = { ...parsed.data, email: req.user.email };
+        const existingPhd = await db.query.phd.findFirst({
+            where: eq(phd.email, req.user.email),
+        });
 
-        const inserted = await db.insert(phd).values(dataToInsert).onConflictDoNothing().returning();
-
-        if (inserted.length === 0) {
-            return next(new HttpError(HttpCode.CONFLICT, "PhD record already exists"));
+        if (!existingPhd) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
         }
 
-        res.json({ success: true, phd: inserted[0] });
+        const updated = await db
+            .update(phd)
+            .set(parsed.data)
+            .where(eq(phd.email, req.user.email))
+            .returning();
+
+        res.json({ success: true, phd: updated[0] });
     })
 );
 
