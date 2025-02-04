@@ -15,7 +15,7 @@ const deactivateSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("member:deactivate"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         const parsed = deactivateSchema.parse(req.body);
 

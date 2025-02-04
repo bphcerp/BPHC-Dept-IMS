@@ -20,7 +20,7 @@ const bodySchema = z.object({
 
 router.post(
     "/",
-    checkAccess("role:delete"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = bodySchema.parse(req.body);

@@ -21,7 +21,7 @@ const pathSchema = z.object({
 
 router.get(
     "/:role",
-    checkAccess("role:read"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = pathSchema.parse(req.params);
