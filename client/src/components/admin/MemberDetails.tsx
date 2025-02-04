@@ -20,6 +20,7 @@ interface UserData {
   email: string;
   roles: string[];
   type: string;
+  deactivated: boolean;
   name: string | null;
   [key: string]: string[] | number | boolean | string | null | undefined;
 }
@@ -166,9 +167,12 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
           )}
         </div>
       </CardContent>
-      <CardFooter>
-        <DeactivateUserDialog email={data.email} />
-      </CardFooter>
+
+      {!data.deactivated && (
+        <CardFooter>
+          <DeactivateUserDialog email={data.email} />
+        </CardFooter>
+      )}
     </Card>
   );
 };
