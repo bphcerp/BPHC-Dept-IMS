@@ -16,7 +16,7 @@ const examStatusSchema = z.object({
 
 router.put(
     "/",
-    checkAccess("phd:update-exam"),
+    checkAccess("drc:update-exam"),
     asyncHandler(async (req, res, next) => {
         const parsed = examStatusSchema.parse(req.body);
 
