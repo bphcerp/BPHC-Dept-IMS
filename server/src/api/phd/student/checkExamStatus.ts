@@ -9,7 +9,7 @@ import {  eq } from "drizzle-orm";
 const router = express.Router();
 
 router.get(
-    "/exam-status/:email",
+    "/phd-examStatus",
     checkAccess("drc-checkExamStatus"),
     asyncHandler(async (req, res, next) => {
         const { email } = req.params;
