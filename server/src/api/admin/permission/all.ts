@@ -12,7 +12,7 @@ const querySchema = z.object({
 
 router.get(
     "/",
-    checkAccess("permissions:read"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, _) => {
         const { q: searchQuery } = querySchema.parse(req.query);
         const allPermissions = await db.query.permissions.findMany({

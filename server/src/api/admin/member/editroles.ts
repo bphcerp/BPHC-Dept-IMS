@@ -22,7 +22,7 @@ const editRolesBodySchema = z
 
 router.post(
     "/",
-    checkAccess("member:edit-roles"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         const parsed = editRolesBodySchema.parse(req.body);
         if (!parsed.add?.length && !parsed.remove?.length) {

@@ -31,7 +31,7 @@ const bodySchema = z.object({
 
 router.post(
     "/:role",
-    checkAccess("role:edit"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsedPath = pathSchema.parse(req.params);
