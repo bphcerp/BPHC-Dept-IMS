@@ -6,6 +6,7 @@ import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import z from "zod";
 import { eq } from "drizzle-orm";
+import assert from "assert";
 
 const router = express.Router();
 
@@ -24,28 +25,19 @@ router.post(
     "/",
     checkAccess("phd-inputDetails"),
     asyncHandler(async (req, res, next) => {
-        if (!req.user?.email) {
-            return next(new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated"));
-        }
-
-        const parsed = phdSchema.safeParse(req.body);
-        if (!parsed.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input data"));
-        }
-
-        const existingPhd = await db.query.phd.findFirst({
-            where: eq(phd.email, req.user.email),
-        });
-
-        if (!existingPhd) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
-        }
+        assert(req.user);
+        
+        const parsed = phdSchema.parse(req.body);
 
         const updated = await db
             .update(phd)
-            .set(parsed.data)
+            .set(parsed)
             .where(eq(phd.email, req.user.email))
             .returning();
+
+        if (updated.length === 0) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+        }
 
         res.json({ success: true, phd: updated[0] });
     })
