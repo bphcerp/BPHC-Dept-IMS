@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/phd-examStatus",
-    checkAccess("drc-checkExamStatus"),
+    checkAccess("drc-check-exam-status"),
     asyncHandler(async (req, res, next) => {
         const { email } = req.params;
 

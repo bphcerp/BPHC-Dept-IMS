@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get(
     "/faculty-names",
-    checkAccess("drc-viewFaculty"),
+    checkAccess("drc-view-faculty"),
     asyncHandler(async (_req, res) => {
         const facultyList = await db
             .select({

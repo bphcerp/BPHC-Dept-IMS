@@ -17,7 +17,7 @@ const updateExamDatesSchema = z.object({
 
 router.put(
     "/",
-    checkAccess("drc-updateExamDates"),
+    checkAccess("drc-update-exam-dates"),
     asyncHandler(async (req, res, next) => {
         const parsed = updateExamDatesSchema.parse(req.body);
 

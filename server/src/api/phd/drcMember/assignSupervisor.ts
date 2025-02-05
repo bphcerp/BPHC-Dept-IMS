@@ -16,7 +16,7 @@ const assignSupervisorSchema = z.object({
 
 router.put(
     "/assign-supervisor",
-    checkAccess("drc-assignSupervisor"),
+    checkAccess("drc-assign-supervisor"),
     asyncHandler(async (req, res, next) => {
         const parsed = assignSupervisorSchema.parse(req.body);
 

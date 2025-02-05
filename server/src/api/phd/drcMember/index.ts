@@ -1,5 +1,5 @@
 import express from "express";
-import getPhDRecords from "./getPhDRecords.ts";
+import getPhDRecords from "./getPhD.ts";
 import updateExamDates from "./updateExamDates.ts";
 import updateExamRouter from './updateExam.ts';
 import getFacultyDetails from "./getFacultyDetails.ts"

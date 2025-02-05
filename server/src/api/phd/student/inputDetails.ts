@@ -23,7 +23,7 @@ const phdSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("phd:input-details"),
+    checkAccess("phd-input-details"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         

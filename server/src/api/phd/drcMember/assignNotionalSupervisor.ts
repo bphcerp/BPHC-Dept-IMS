@@ -16,7 +16,7 @@ const assignNotionalSupervisorSchema = z.object({
 
 router.put(
     "/assign-notional-supervisor",
-    checkAccess("drc-assignNotionalSupervisor"),
+    checkAccess("drc-assign-notional-supervisor"),
     asyncHandler(async (req, res, next) => {
         const parsed = assignNotionalSupervisorSchema.parse(req.body);
 
