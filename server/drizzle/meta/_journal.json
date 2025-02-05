@@ -43,6 +43,20 @@
       "when": 1738596678749,
       "tag": "0005_nasty_quentin_quire",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1738684208101,
+      "tag": "0006_even_hex",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1738692704258,
+      "tag": "0007_sparkling_omega_red",
+      "breakpoints": true
     }
   ]
 }

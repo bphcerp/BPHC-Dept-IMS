@@ -2,7 +2,7 @@ import express from "express";
 import authRouter from "./auth/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import adminRouter from "./admin/index.ts";
-import phdRouter from "./phd/index.ts"
+import phdRouter from "./phd/index.ts";
 const router = express.Router();
 
 // Public routes

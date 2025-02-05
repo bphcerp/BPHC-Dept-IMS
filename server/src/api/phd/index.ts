@@ -1,9 +1,11 @@
-import inputDetails from "./inputDetails.ts"
-import express from "express";
+import express from 'express';
+import studentRouter from './student/index.ts';
+import drcMemberRouter from "./drcMember/index.ts"
+const router  = express.Router();
 
 
-const router = express.Router();
+router.use('/student', studentRouter);
+router.use('/drcMember', drcMemberRouter);
 
-router.use("/inputDetails", inputDetails);
 
 export default router;
