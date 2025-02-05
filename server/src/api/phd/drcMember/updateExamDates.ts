@@ -15,7 +15,7 @@ const updateExamDatesSchema = z.object({
     qualifyingExam2Date: z.string().datetime().optional().nullable(),
 });
 
-router.put(
+router.post(
     "/",
     checkAccess("drc-update-exam-dates"),
     asyncHandler(async (req, res, next) => {

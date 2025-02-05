@@ -7,7 +7,7 @@ import { faculty } from "@/config/db/schema/admin.ts";
 const router = express.Router();
 
 router.get(
-    "/faculty-names",
+    "/",
     checkAccess("drc-view-faculty"),
     asyncHandler(async (_req, res) => {
         const facultyList = await db

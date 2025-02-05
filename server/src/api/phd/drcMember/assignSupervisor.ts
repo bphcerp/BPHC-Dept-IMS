@@ -14,8 +14,8 @@ const assignSupervisorSchema = z.object({
     supervisorEmail: z.string().email(),
 });
 
-router.put(
-    "/assign-supervisor",
+router.post(
+    "/",
     checkAccess("drc-assign-supervisor"),
     asyncHandler(async (req, res, next) => {
         const parsed = assignSupervisorSchema.parse(req.body);

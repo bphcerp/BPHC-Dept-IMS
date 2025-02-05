@@ -4,8 +4,8 @@ import inputDetails from './inputDetails.ts';
 import checkExamStatus from "./checkExamStatus.ts"
 const router  = express.Router();
 
-router.use("/input-details", inputDetails);
-router.use("/check-exam-status", checkExamStatus);
+router.use("/inputDetails", inputDetails);
+router.use("/checkExamStatus", checkExamStatus);
 
 router.use(authMiddleware);
 

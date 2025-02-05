@@ -14,8 +14,8 @@ const assignNotionalSupervisorSchema = z.object({
     notionalSupervisorEmail: z.string().email(),
 });
 
-router.put(
-    "/assign-notional-supervisor",
+router.post(
+    "/",
     checkAccess("drc-assign-notional-supervisor"),
     asyncHandler(async (req, res, next) => {
         const parsed = assignNotionalSupervisorSchema.parse(req.body);

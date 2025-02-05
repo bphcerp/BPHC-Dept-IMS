@@ -14,7 +14,7 @@ const examStatusSchema = z.object({
     ifPass: z.boolean(),
 });
 
-router.put(
+router.post(
     "/",
     checkAccess("drc-update-exam"),
     asyncHandler(async (req, res, next) => {

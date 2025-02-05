@@ -7,11 +7,11 @@ import assignSuperviosr from "./assignSupervisor.ts"
 import assignNotionalSupervisor from "./assignNotionalSupervisor.ts"
 const router = express.Router();
 
-router.use("/get-phd", getPhDRecords);
-router.use("/update-exam-dates", updateExamDates);
-router.use('/update-exam', updateExamRouter);
-router.use('/get-faculty-details', getFacultyDetails);
-router.use('/assign-supervisor', assignSuperviosr);
-router.use('/assign-notional-supervisor', assignNotionalSupervisor);
+router.use("/getPhD", getPhDRecords);
+router.use("/updateExamDates", updateExamDates);
+router.use('/updateExam', updateExamRouter);
+router.use('/getFacultyDetails', getFacultyDetails);
+router.use('/assignSupervisor', assignSuperviosr);
+router.use('/assignNotionalSupervisor', assignNotionalSupervisor);
 
 export default router;
