@@ -1,4 +1,4 @@
-import { pgTable, text, serial, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, pgEnum, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -37,9 +37,10 @@ export const phdApplicationStatusType = pgEnum("phd_application_status_type", [
 ]);
 
 export const phdApplicationStatus = pgTable("phd_application_status", {
-    applicationId: serial("application_id")
-        .primaryKey()
-        .references(() => phdApplications.applicationId, { onDelete: "cascade" }),
+    id: serial("id").primaryKey(), // Unique primary key for the table
+    applicationId: integer("application_id")
+        .notNull()
+        .references(() => phdApplications.applicationId, { onDelete: "cascade" }), // Foreign key
     status_drc_convenor: phdApplicationStatusType("status_drc_convenor")
         .notNull()
         .default("pending"),
