@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { phdApplications, phdStatus } from "./phd.ts";
+import { phdApplications, phdApplicationStatus } from "./phd.ts";
 import { phd } from "./admin.ts";
 
 export const phdApplicationsRelations = relations(phdApplications, ({ one }) => ({
@@ -10,10 +10,10 @@ export const phdApplicationsRelations = relations(phdApplications, ({ one }) => 
     }),
 }));
 
-export const phdStatusRelations = relations(phdStatus, ({ one }) => ({
+export const phdApplicationStatusRelations = relations(phdApplicationStatus, ({ one }) => ({
     phdApplication: one(phdApplications, {
-        fields: [phdStatus.applicationId],
+        fields: [phdApplicationStatus.applicationId],
         references: [phdApplications.applicationId],
-        relationName: "phd_status",
+        relationName: "phd_application_status",
     }),
 }));
