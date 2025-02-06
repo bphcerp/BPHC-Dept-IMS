@@ -24,6 +24,7 @@ router.post(
     asyncHandler(async (req, res, next) => {
     const parsed = notificationSchema.parse(req.body);
 
+    // Verify PhD student exists
     const phdStudent = await db.query.phd.findFirst({
         where: eq(phd.email, parsed.email),
     });
@@ -42,11 +43,16 @@ router.post(
                 },
             });
 
+        const emailText = [
+            parsed.body,
+            parsed.link && `\nAccess link: ${parsed.link}`
+        ].filter(Boolean).join('\n');
+
             await transporter.sendMail({
                 from: env.BPHCERP_EMAIL,
                 to: parsed.email,
                 subject: parsed.subject,
-                text: `${parsed.body}\n\n${parsed.link ? `Access link: ${parsed.link}` : ""}`,
+                text: emailText,
             });
         } catch (e) {
         throw new HttpError(
