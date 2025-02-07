@@ -1,8 +1,7 @@
 import type express from "express";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import type core from "express-serve-static-core";
-import { ZodError } from "zod";
-import { fromError } from "zod-validation-error";
+import { fromError, isZodErrorLike } from "zod-validation-error";
 
 export const asyncHandler = <
     P = core.ParamsDictionary,
@@ -25,7 +24,7 @@ export const asyncHandler = <
         const fnReturn = fn(...args);
         const next = args[args.length - 1] as express.NextFunction;
         return Promise.resolve(fnReturn).catch((e) => {
-            if (e instanceof ZodError) {
+            if (isZodErrorLike(e)) {
                 return next(
                     new HttpError(
                         HttpCode.BAD_REQUEST,
