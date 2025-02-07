@@ -1,6 +1,4 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingSpinner } from "@/components/ui/spinner"
@@ -15,6 +13,7 @@ const MembersView = () => {
   const [search, setSearch] = useState("")
   const [queryKey, setQueryKey] = useState("")
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
 
   const { data: members, isFetching } = useQuery({
     queryKey: queryKey.length ? ["members", queryKey] : ["members"],
@@ -30,7 +29,14 @@ const MembersView = () => {
     staleTime: 1000 * 60 * 5,
   })
 
-  const filteredMembers = members?.filter((member) => selectedTypes.length === 0 || selectedTypes.includes(member.type))
+  useEffect(() => {
+    if (members) {
+      const filtered = members.filter(
+        (member) => selectedTypes.length === 0 || selectedTypes.includes(member.type)
+      )
+      setFilteredMembers(filtered)
+    }
+  }, [members, selectedTypes])
 
   const types = ["faculty", "staff", "phd"]
 
@@ -76,7 +82,7 @@ const MembersView = () => {
       </div>
       {isFetching ? (
         <LoadingSpinner />
-      ) : !filteredMembers?.length ? (
+      ) : !filteredMembers.length ? (
         <p>No members found</p>
       ) : (
         <MemberList members={filteredMembers} />
@@ -86,4 +92,3 @@ const MembersView = () => {
 }
 
 export default MembersView
-
