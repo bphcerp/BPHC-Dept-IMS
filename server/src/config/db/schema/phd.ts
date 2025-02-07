@@ -1,4 +1,11 @@
-import { pgTable, text, serial, pgEnum, integer } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    text,
+    serial,
+    pgEnum,
+    integer,
+    timestamp,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -36,21 +43,22 @@ export const phdApplicationStatusType = pgEnum("phd_application_status_type", [
     "pending",
 ]);
 
+export const phdApplicationReviewerType = pgEnum(
+    "phd_application_reviewer_type",
+    ["DAC_Member", "DRC_Member", "DRC_Convenor"]
+);
+
 export const phdApplicationStatus = pgTable("phd_application_status", {
-    id: serial("id").primaryKey(), // Unique primary key for the table
+    id: serial("id").primaryKey(),
     applicationId: integer("application_id")
         .notNull()
-        .references(() => phdApplications.applicationId, { onDelete: "cascade" }), // Foreign key
-    status_drc_convenor: phdApplicationStatusType("status_drc_convenor")
+        .references(() => phdApplications.applicationId, {
+            onDelete: "cascade",
+        }),
+    reviewer: phdApplicationReviewerType("reviewer").notNull(),
+    status: phdApplicationStatusType("status").notNull().default("pending"),
+    comment: text("comment"),
+    createdAt: timestamp("created_at")
         .notNull()
-        .default("pending"),
-    drc_convenor_comment: text("drc_convenor_comment"),
-    status_drc_member: phdApplicationStatusType("status_drc_member")
-        .notNull()
-        .default("pending"),
-    drc_member_comment: text("drc_member_comment"),
-    status_dac_member: phdApplicationStatusType("status_dac_member")
-        .notNull()
-        .default("pending"),
-    dac_member_comment: text("dac_member_comment"),
+        .default(sql`now()`),
 });
