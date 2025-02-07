@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
-export const userType = pgEnum("user_type", ["faculty", "phd"]);
+export const userType = pgEnum("user_type", ["faculty", "phd", "staff"]);
 
 export const permissions = pgTable("permissions", {
     permission: text("permission").primaryKey(),
@@ -90,4 +90,16 @@ export const phd = pgTable("phd", {
         withTimezone: true,
         mode: "date",
     }).default(sql`NULL`),
+});
+
+export const staff = pgTable("staff", {
+    email: text("email")
+        .primaryKey()
+        .references(() => users.email, { onDelete: "restrict" }),
+    name: text("name"),
+    department: text("department"),
+    phone: text("phone"),
+    designation: text("designation")
+        .array()
+        .default(sql`'{}'::text[]`)
 });
