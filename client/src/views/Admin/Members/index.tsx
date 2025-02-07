@@ -1,16 +1,19 @@
-import InviteDialog from "@/components/admin/InviteDialog";
-import MemberList, { type Member } from "@/components/admin/MemberList";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import api from "@/lib/axios-instance";
-import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import InviteDialog from "@/components/admin/InviteDialog";
+import MemberList, { type Member } from "@/components/admin/MemberList";
+import api from "@/lib/axios-instance";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const MembersView = () => {
   const [search, setSearch] = useState("");
   const [queryKey, setQueryKey] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
 
   const { data: members, isFetching } = useQuery({
     queryKey: queryKey.length ? ["members", queryKey] : ["members"],
@@ -25,6 +28,22 @@ const MembersView = () => {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
+
+  useEffect(() => {
+    if (members) {
+      const filtered = members.filter(
+        (member) =>
+          selectedTypes.length === 0 || selectedTypes.includes(member.type)
+      );
+      setFilteredMembers(filtered);
+    }
+  }, [members, selectedTypes]);
+
+  const types = ["faculty", "staff", "phd"];
+
+  const handleTypeChange = (types: string[]) => {
+    setSelectedTypes(types);
+  };
 
   return (
     <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
@@ -42,15 +61,32 @@ const MembersView = () => {
             />
           </div>
           <Button onClick={() => setQueryKey(search)}>Search</Button>
+          <ToggleGroup
+            type="multiple"
+            value={selectedTypes}
+            onValueChange={handleTypeChange}
+            className="bg-transparent"
+          >
+            {types.map((type) => (
+              <ToggleGroupItem
+                key={type}
+                value={type}
+                aria-label={`Filter by ${type}`}
+                className="border border-gray-300"
+              >
+                <span className="capitalize">{type}</span>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
         <InviteDialog />
       </div>
       {isFetching ? (
         <LoadingSpinner />
-      ) : !members?.length ? (
+      ) : !filteredMembers.length ? (
         <p>No members found</p>
       ) : (
-        <MemberList members={members} />
+        <MemberList members={filteredMembers} />
       )}
     </div>
   );
