@@ -1,19 +1,19 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { LoadingSpinner } from "@/components/ui/spinner"
-import { Search } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
-import InviteDialog from "@/components/admin/InviteDialog"
-import MemberList, { type Member } from "@/components/admin/MemberList"
-import api from "@/lib/axios-instance"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import InviteDialog from "@/components/admin/InviteDialog";
+import MemberList, { type Member } from "@/components/admin/MemberList";
+import api from "@/lib/axios-instance";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const MembersView = () => {
-  const [search, setSearch] = useState("")
-  const [queryKey, setQueryKey] = useState("")
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([])
-  const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
+  const [search, setSearch] = useState("");
+  const [queryKey, setQueryKey] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
 
   const { data: members, isFetching } = useQuery({
     queryKey: queryKey.length ? ["members", queryKey] : ["members"],
@@ -22,27 +22,28 @@ const MembersView = () => {
         params: {
           q: queryKey,
         },
-      })
-      return response.data
+      });
+      return response.data;
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
-  })
+  });
 
   useEffect(() => {
     if (members) {
       const filtered = members.filter(
-        (member) => selectedTypes.length === 0 || selectedTypes.includes(member.type)
-      )
-      setFilteredMembers(filtered)
+        (member) =>
+          selectedTypes.length === 0 || selectedTypes.includes(member.type)
+      );
+      setFilteredMembers(filtered);
     }
-  }, [members, selectedTypes])
+  }, [members, selectedTypes]);
 
-  const types = ["faculty", "staff", "phd"]
+  const types = ["faculty", "staff", "phd"];
 
   const handleTypeChange = (types: string[]) => {
-    setSelectedTypes(types)
-  }
+    setSelectedTypes(types);
+  };
 
   return (
     <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
@@ -88,7 +89,7 @@ const MembersView = () => {
         <MemberList members={filteredMembers} />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default MembersView
+export default MembersView;
