@@ -19,12 +19,11 @@ router.get(
                     email: true,
                     name: true,
                 },
-                where: (fields, { or, ilike, sql }) =>
+                where: (fields, { or, ilike }) =>
                     searchQuery?.length
                         ? or(
                               ilike(fields.email, `%${searchQuery}%`),
-                              ilike(fields.name, `%${searchQuery}%`),
-                              sql`lower(${searchQuery}) = ANY(users.roles)`
+                              ilike(fields.name, `%${searchQuery}%`)
                           )
                         : undefined,
                 with: {
@@ -40,6 +39,7 @@ router.get(
             ...f,
             type: "faculty",
             roles: user.roles,
+            deactivated: user.deactivated,
         }));
         const phd = (
             await db.query.phd.findMany({
@@ -47,12 +47,11 @@ router.get(
                     email: true,
                     name: true,
                 },
-                where: (fields, { or, ilike, sql }) =>
+                where: (fields, { or, ilike }) =>
                     searchQuery?.length
                         ? or(
                               ilike(fields.email, `%${searchQuery}%`),
-                              ilike(fields.name, `%${searchQuery}%`),
-                              sql`lower(${searchQuery}) = ANY(users.roles)`
+                              ilike(fields.name, `%${searchQuery}%`)
                           )
                         : undefined,
                 with: {
@@ -70,7 +69,35 @@ router.get(
             roles: user.roles,
             deactivated: user.deactivated,
         }));
-        const results = [...faculty, ...phd];
+        const staff = (
+            await db.query.staff.findMany({
+                columns: {
+                    email: true,
+                    name: true,
+                },
+                where: (fields, { or, ilike }) =>
+                    searchQuery?.length
+                        ? or(
+                              ilike(fields.email, `%${searchQuery}%`),
+                              ilike(fields.name, `%${searchQuery}%`)
+                          )
+                        : undefined,
+                with: {
+                    user: {
+                        columns: {
+                            deactivated: true,
+                            roles: true,
+                        },
+                    },
+                },
+            })
+        ).map(({ user, ...s }) => ({
+            ...s,
+            type: "staff",
+            roles: user.roles,
+            deactivated: user.deactivated,
+        }));
+        const results = [...faculty, ...phd, ...staff];
         res.status(200).json(results);
     })
 );
