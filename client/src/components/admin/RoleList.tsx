@@ -1,5 +1,20 @@
 import { Link } from "react-router-dom";
 import { Edit, Trash } from "lucide-react";
+import api from "@/lib/axios-instance.ts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { isAxiosError } from "axios";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "../ui/alert-dialog.tsx";
 
 export interface Role {
   role: string;
@@ -7,6 +22,26 @@ export interface Role {
 }
 
 export default function RoleList({ roles }: { roles: Role[] }) {
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: (role: string) => api.post("/admin/role/delete", { role }),
+    onSuccess: (_, role) => {
+      toast.success(`Role "${role}" deleted successfully`);
+      void queryClient.invalidateQueries(["roles"]);
+    },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        const { response } = error;
+        if (response?.status === 404) {
+          toast.error("Role does not exist");
+        } else {
+          toast.error("Failed to delete role");
+        }
+      }
+    },
+  });
+
   return (
     <div className="flex flex-col gap-2">
       {roles.map(({ role, memberCount }) => (
@@ -16,18 +51,28 @@ export default function RoleList({ roles }: { roles: Role[] }) {
             {memberCount} {memberCount !== 1 ? "members" : "member"}
           </p>
           <div className="ml-auto flex gap-1">
-            <Link
-              to={`${role}`}
-              className="rounded-md p-1 hover:bg-muted/50 data-[state=on]:bg-destructive data-[state=on]:text-white"
-            >
+            <Link to={`${role}`} className="rounded-md p-1 hover:bg-muted/50">
               <Edit className="h-5 w-5" />
             </Link>
-            <button
-              onClick={() => {}}
-              className="rounded-md p-1 hover:bg-muted/50 data-[state=on]:bg-muted/70 data-[state=on]:text-muted-foreground"
-            >
-              <Trash className="h-5 w-5" />
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger className="rounded-md p-1 hover:bg-muted/50">
+                <Trash className="h-5 w-5" />
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this role?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteMutation.mutate(role)}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       ))}
