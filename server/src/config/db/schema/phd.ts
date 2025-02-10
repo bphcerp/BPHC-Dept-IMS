@@ -29,7 +29,7 @@ export const phdApplications = pgTable("phd_applications", {
         .default(sql`'{}'::text[]`),
 });
 
-export const phdCourses = pgTable("courses", {
+export const phdCourses = pgTable("phdCourses", {
     id: serial("id").primaryKey(),
     studentEmail: text("student_email")
         .notNull()
@@ -39,7 +39,7 @@ export const phdCourses = pgTable("courses", {
     courseUnits: integer("course_units").array(),
 });
 
-export const configPhd = pgTable("config_phd", {
+export const phdConfig  = pgTable("phd_config", {
     key: text("key").notNull(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
