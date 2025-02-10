@@ -82,7 +82,7 @@ router.post(
                 await db
                     .update(userType)
                     .set({ name: ticketPayload.name })
-                    .where(eq(faculty.email, user.email));
+                    .where(eq(userType.email, user.email));
             }
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(
