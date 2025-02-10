@@ -1,8 +1,8 @@
 import express from "express";
-import getPhDRecords from "./getPhd.ts";
+import getPhdRecords from "./getPhd.ts";
 
 const router = express.Router();
 
-router.use("/getPhD", getPhDRecords);
+router.use("/getPhd", getPhdRecords);
 
 export default router;
