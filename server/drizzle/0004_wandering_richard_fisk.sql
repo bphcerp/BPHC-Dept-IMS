@@ -2,12 +2,12 @@ ALTER TABLE "roles" ADD COLUMN "member_count" integer DEFAULT 0 NOT NULL;
 -- --> statement-breakpoint
 CREATE OR REPLACE FUNCTION update_role_member_count() RETURNS trigger AS $$
 DECLARE
-    new_roles text[];
-    old_roles text[];
-    added_roles text[];
-    removed_roles text[];
-    added_role text;
-    removed_role text;
+    new_roles integer[];
+    old_roles integer[];
+    added_roles integer[];
+    removed_roles integer[];
+    added_role integer;
+    removed_role integer;
 BEGIN
 -- Get the old and new roles
     new_roles := COALESCE(NEW.roles, '{}');
@@ -28,13 +28,13 @@ BEGIN
     FOREACH added_role IN ARRAY added_roles LOOP
         UPDATE roles
         SET member_count = member_count + 1
-        WHERE role = added_role;
+        WHERE id = added_role;
     END LOOP;
 	-- Decrement member_count for each removed role
     FOREACH removed_role IN ARRAY removed_roles LOOP
         UPDATE roles
         SET member_count = GREATEST(member_count - 1, 0)  -- Ensure it doesn't go below 0
-        WHERE role = removed_role;
+        WHERE id = removed_role;
     END LOOP;
 	RETURN NEW;
 END;

@@ -92,8 +92,8 @@ function StatusList({
         <CommandGroup>
           {roles &&
             roles
-              .filter(({ role }) => !existing.includes(role))
-              .map(({ role }) => (
+              .filter(({ roleName }) => !existing.includes(roleName))
+              .map(({ roleName: role }) => (
                 <CommandItem key={role} value={role} onSelect={callback}>
                   {role}
                 </CommandItem>

@@ -17,7 +17,7 @@ import {
 } from "../ui/alert-dialog.tsx";
 
 export interface Role {
-  role: string;
+  roleName: string;
   memberCount: number;
 }
 
@@ -44,7 +44,7 @@ export default function RoleList({ roles }: { roles: Role[] }) {
 
   return (
     <div className="flex flex-col gap-2">
-      {roles.map(({ role, memberCount }) => (
+      {roles.map(({ roleName: role, memberCount }) => (
         <div key={role} className="grid grid-cols-3 gap-4 border-b pb-2">
           <p className="text-lg font-bold">{role}</p>
           <p className="mx-auto text-lg text-muted-foreground">
@@ -67,7 +67,9 @@ export default function RoleList({ roles }: { roles: Role[] }) {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteMutation.mutate(role)}>
+                  <AlertDialogAction
+                    onClick={() => deleteMutation.mutate(role)}
+                  >
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

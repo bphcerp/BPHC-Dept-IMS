@@ -71,7 +71,7 @@ export const generateRefreshToken = async (
 export async function getRoleAccessMap() {
     const roleAccessMap = (await db.query.roles.findMany()).reduce(
         (acc, role) => {
-            acc[role.role] = {
+            acc[role.id] = {
                 allowed: role.allowed,
                 disallowed: role.disallowed,
             };
@@ -92,12 +92,12 @@ export function matchWildcard(resource: string, pattern: string): boolean {
  * @param roles - The list of roles to check access for.
  * @returns Access object containing allowed and disallowed operations.
  */
-export async function getAccess(roles: string[]): Promise<Access> {
+export async function getAccess(roles: number[]): Promise<Access> {
     const allowed = new Set<string>();
     const disallowed = new Set<string>();
     const roleAccessMap = await getRoleAccessMap();
-    roles.forEach((role) => {
-        const roleAccess = roleAccessMap[role];
+    roles.forEach((roleId) => {
+        const roleAccess = roleAccessMap[roleId];
         if (roleAccess) {
             roleAccess.disallowed.forEach((op) => {
                 if (![...allowed].some((pat) => matchWildcard(op, pat)))

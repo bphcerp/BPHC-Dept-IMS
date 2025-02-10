@@ -14,4 +14,4 @@ export interface Access {
     disallowed: string[];
 }
 
-export type RoleAccessMap = Record<string, Access>;
+export type RoleAccessMap = Record<number, Access>;

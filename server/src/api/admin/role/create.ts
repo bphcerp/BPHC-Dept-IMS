@@ -28,7 +28,7 @@ router.post(
         const insertedRoles = await db
             .insert(roles)
             .values({
-                role: parsed.name,
+                roleName: parsed.name,
             })
             .onConflictDoNothing()
             .returning();

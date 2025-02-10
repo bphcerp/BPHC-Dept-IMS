@@ -8,6 +8,8 @@ interface UserData {
   email: string;
   type: string;
   name: string;
+  roles: string[];
+  deactivated: boolean;
   [key: string]: string[] | number | boolean | string;
 }
 
