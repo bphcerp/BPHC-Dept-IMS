@@ -4,7 +4,7 @@ import express from "express";
 import { type LoginTicket, OAuth2Client } from "google-auth-library";
 import { z } from "zod";
 import db from "@/config/db/index.ts";
-import { users } from "@/config/db/schema/admin.ts";
+import { faculty, phd, staff, users } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
 import {
     generateAccessToken,
@@ -49,6 +49,11 @@ router.post(
 
             const user = await db.query.users.findFirst({
                 where: eq(users.email, ticketPayload.email),
+                with: {
+                    phd: true,
+                    staff: true,
+                    faculty: true,
+                },
             });
 
             if (!user)
@@ -59,6 +64,26 @@ router.post(
                 return next(
                     new HttpError(HttpCode.FORBIDDEN, "User is deactivated")
                 );
+
+            const name =
+                user?.faculty?.name ??
+                user?.phd?.name ??
+                user?.staff?.name ??
+                null;
+
+            if (name == null) {
+                const userType =
+                    user.type == "faculty"
+                        ? faculty
+                        : user.type == "phd"
+                          ? phd
+                          : staff;
+
+                await db
+                    .update(userType)
+                    .set({ name: ticketPayload.name })
+                    .where(eq(faculty.email, user.email));
+            }
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(
                 ticketPayload.email,
