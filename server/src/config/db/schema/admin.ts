@@ -11,7 +11,8 @@ export const permissions = pgTable("permissions", {
 });
 
 export const roles = pgTable("roles", {
-    role: text("role").primaryKey(),
+    id: serial("id").primaryKey(),
+    roleName: text("role_name").unique().notNull(),
     memberCount: integer("member_count").notNull().default(0),
     allowed: text("allowed")
         .array()
@@ -25,10 +26,10 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
     email: text("email").primaryKey(),
-    roles: text("roles")
+    roles: integer("roles")
         .array()
         .notNull()
-        .default(sql`'{}'::text[]`),
+        .default(sql`'{}'::integer[]`),
     deactivated: boolean("deactivated").notNull().default(false),
     type: userType("type").notNull(),
 });

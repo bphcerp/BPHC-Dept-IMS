@@ -13,6 +13,13 @@ router.get(
     "/",
     asyncHandler(async (req, res) => {
         const { q: searchQuery } = querySchema.parse(req.query);
+        const roles = (await db.query.roles.findMany()).reduce(
+            (acc, role) => {
+                acc[role.id] = role.roleName;
+                return acc;
+            },
+            {} as Record<number, string>
+        );
         const faculty = (
             await db.query.faculty.findMany({
                 columns: {
@@ -97,7 +104,10 @@ router.get(
             roles: user.roles,
             deactivated: user.deactivated,
         }));
-        const results = [...faculty, ...phd, ...staff];
+        const results = [...faculty, ...phd, ...staff].map((r) => ({
+            ...r,
+            roles: r.roles.map((role) => roles[role]),
+        }));
         res.status(200).json(results);
     })
 );

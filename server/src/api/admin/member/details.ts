@@ -17,20 +17,29 @@ router.get(
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         const parsed = querySchema.parse(req.query);
+        const roles = (await db.query.roles.findMany()).reduce(
+            (acc, role) => {
+                acc[role.id] = role.roleName;
+                return acc;
+            },
+            {} as Record<number, string>
+        );
         const user = await db.query.users.findFirst({
             where: eq(users.email, parsed.email),
             with: {
                 faculty: true,
                 phd: true,
+                staff: true,
             },
         });
         if (!user) {
             return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
         }
-        const { faculty, phd, ...userData } = user;
+        const { faculty, phd, staff, ...userData } = user;
         res.status(200).json({
             ...userData,
-            ...(faculty || phd),
+            roles: userData.roles.map((role) => roles[role]),
+            ...(faculty || phd || staff),
         });
     })
 );

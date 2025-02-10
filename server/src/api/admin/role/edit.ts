@@ -38,7 +38,7 @@ router.post(
         const parsedBody = bodySchema.parse(req.body);
 
         const role = await db.query.roles.findFirst({
-            where: eq(roles.role, parsedPath.role),
+            where: eq(roles.roleName, parsedPath.role),
         });
         if (!role) {
             return next(
@@ -102,7 +102,7 @@ router.post(
                 allowed: newAllowed,
                 disallowed: newDisallowed,
             })
-            .where(eq(roles.role, parsedPath.role))
+            .where(eq(roles.roleName, parsedPath.role))
             .execute();
 
         res.json({ success: true });

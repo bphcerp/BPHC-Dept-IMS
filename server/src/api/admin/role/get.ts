@@ -28,7 +28,7 @@ router.get(
         const role = await db
             .select()
             .from(roles)
-            .where(eq(roles.role, parsed.role))
+            .where(eq(roles.roleName, parsed.role))
             .limit(1)
             .execute();
 

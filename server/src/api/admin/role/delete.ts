@@ -26,7 +26,7 @@ router.post(
         const parsed = bodySchema.parse(req.body);
         const deletedRoles = await db
             .delete(roles)
-            .where(eq(roles.role, parsed.role))
+            .where(eq(roles.roleName, parsed.role))
             .returning();
 
         if (deletedRoles.length === 0) {

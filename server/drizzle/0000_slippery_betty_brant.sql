@@ -44,10 +44,10 @@ END $$;
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION check_roles() RETURNS TRIGGER AS $$
 DECLARE
-	valid_roles text[];
+	valid_roles integer[];
 BEGIN
 	-- Fetch all roles into an array
-	SELECT COALESCE(array_agg(role), '{}') INTO valid_roles FROM roles;
+	SELECT COALESCE(array_agg(id), '{}') INTO valid_roles FROM roles;
 
 	-- Check NEW.roles
 	IF NOT (valid_roles @> NEW.roles) THEN
@@ -65,8 +65,8 @@ FOR EACH ROW EXECUTE FUNCTION check_roles();
 CREATE OR REPLACE FUNCTION handle_role_deletion() RETURNS trigger AS $$
 BEGIN
     UPDATE users
-    SET roles = array_remove(roles, OLD.role)
-    WHERE OLD.role = ANY(roles);
+    SET roles = array_remove(roles, OLD.id)
+    WHERE OLD.id = ANY(roles);
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
