@@ -29,7 +29,7 @@ export const phdApplications = pgTable("phd_applications", {
         .default(sql`'{}'::text[]`),
 });
 
-export const phdCourses = pgTable("phdCourses", {
+export const phdCourses = pgTable("phd_courses", {
     id: serial("id").primaryKey(),
     studentEmail: text("student_email")
         .notNull()
