@@ -16,7 +16,7 @@ const updatePhdCoursesSchema = z.object({
     courseUnits: z.array(z.number()),
 });
 
-router.post(
+export default router.post(
     "/",
     checkAccess("notional-supervisor-update-courses"),
     asyncHandler(async (req, res, next) => {
