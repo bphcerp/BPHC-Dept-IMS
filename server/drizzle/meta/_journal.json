@@ -64,6 +64,13 @@
       "when": 1739174478984,
       "tag": "0008_ancient_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1739210730820,
+      "tag": "0009_chemical_thunderbolt",
+      "breakpoints": true
     }
   ]
 }
