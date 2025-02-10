@@ -1,6 +1,6 @@
-import { pgTable, text, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, date } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { phd } from "./admin.ts";
+import { phd, faculty } from "./admin.ts";
 
 export const phdApplications = pgTable("phd_applications", {
     applicationId: serial("application_id").primaryKey(),
@@ -28,3 +28,22 @@ export const phdApplications = pgTable("phd_applications", {
         .notNull()
         .default(sql`'{}'::text[]`),
 });
+
+
+export const courses = pgTable("courses", {
+    id: serial("id").primaryKey(),
+    studentEmail: text("student_email")
+        .notNull()
+        .references(() => phd.email, { onDelete: "cascade" }),
+    courseNames: text("course_names").array(),
+    courseGrades: text("course_grades").array(),
+    courseUnits: integer("course_units").array(),
+});
+
+export const deadline = pgTable("deadline", {
+    drcMember: text("drc_member")
+        .notNull()
+        .references(() => faculty.email, { onDelete: "cascade" }),
+    deadline: date("deadline").notNull(),
+});
+
