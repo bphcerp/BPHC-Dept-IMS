@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
-export const userType = pgEnum("user_type", ["faculty", "phd", "staff"]);
+import { adminSchemas } from "lib";
+
+export const userType = pgEnum("user_type", adminSchemas.userTypes);
 
 export const permissions = pgTable("permissions", {
     permission: text("permission").primaryKey(),
@@ -101,5 +103,5 @@ export const staff = pgTable("staff", {
     phone: text("phone"),
     designation: text("designation")
         .array()
-        .default(sql`'{}'::text[]`)
+        .default(sql`'{}'::text[]`),
 });
