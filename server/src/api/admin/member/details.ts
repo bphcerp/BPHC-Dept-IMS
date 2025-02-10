@@ -14,7 +14,7 @@ const querySchema = z.object({
 
 router.get(
     "/",
-    checkAccess("member:read"),
+    checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         const parsed = querySchema.parse(req.query);
         const user = await db.query.users.findFirst({

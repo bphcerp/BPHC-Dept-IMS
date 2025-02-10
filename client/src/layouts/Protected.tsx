@@ -9,15 +9,7 @@ import { Navigate, Outlet } from "react-router-dom";
  */
 const ProtectedLayout = () => {
   const { authState } = useAuth();
-  return authState ? (
-    <>
-      <div className="flex">
-        <Outlet />
-      </div>
-    </>
-  ) : (
-    <Navigate to="/" />
-  );
+  return authState ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default ProtectedLayout;

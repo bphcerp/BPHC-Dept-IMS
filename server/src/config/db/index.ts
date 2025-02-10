@@ -1,6 +1,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as adminRelations from "./schema/adminRelations.ts";
 import * as admin from "./schema/admin.ts";
+import * as phdRelations from "./schema/phdRelations.ts";
+import * as phd from "./schema/phd.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
@@ -19,6 +21,8 @@ const db = drizzle(pool, {
     schema: {
         ...admin,
         ...adminRelations,
+        ...phd,
+        ...phdRelations,
     },
 });
 

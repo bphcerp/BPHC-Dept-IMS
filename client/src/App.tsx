@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/Auth";
 import { GOOGLE_CLIENT_ID } from "@/lib/constants";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import ProtectedLayout from "@/layouts/Protected";
 import Admin from "@/views/Admin";
 import AdminLayout from "@/layouts/Admin";
@@ -27,23 +28,24 @@ const App = () => {
               v7_startTransition: true,
             }}
           >
-            <Routes>
-              <Route path="/" element={<Home />} />
-
-              {/* Protected Routes (requires authentication) */}
-              <Route path="/" element={<ProtectedLayout />}>
-                <Route path="admin" element={<AdminLayout />}>
-                  <Route index element={<Admin />} />
-                  <Route path="members" element={<MembersView />} />
-                  <Route
-                    path="members/:member"
-                    element={<MemberDetailsView />}
-                  />
-                  <Route path="roles" element={<RolesView />} />
-                  <Route path="roles/:role" element={<RoleDetailsView />} />
+            <SidebarProvider>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                {/* Protected Routes (requires authentication) */}
+                <Route path="/" element={<ProtectedLayout />}>
+                  <Route path="admin" element={<AdminLayout />}>
+                    <Route index element={<Admin />} />
+                    <Route path="members" element={<MembersView />} />
+                    <Route
+                      path="members/:member"
+                      element={<MemberDetailsView />}
+                    />
+                    <Route path="roles" element={<RolesView />} />
+                    <Route path="roles/:role" element={<RoleDetailsView />} />
+                  </Route>
                 </Route>
-              </Route>
-            </Routes>
+              </Routes>
+            </SidebarProvider>
             <Toaster />
           </BrowserRouter>
         </AuthProvider>

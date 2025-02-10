@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { refreshTokens, users, faculty, phd } from "./admin.ts";
+import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -15,6 +15,11 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         references: [phd.email],
         relationName: "phd",
     }),
+    staff : one(staff, {
+        fields: [users.email],
+        references: [staff.email],
+        relationName: "staff",
+    })
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -38,5 +43,13 @@ export const phdRelations = relations(phd, ({ one }) => ({
         fields: [phd.email],
         references: [users.email],
         relationName: "phd",
+    }),
+}));
+
+export const staffRelations = relations(staff, ({ one }) => ({
+    user: one(users, {
+        fields: [staff.email],
+        references: [users.email],
+        relationName: "staff",
     }),
 }));

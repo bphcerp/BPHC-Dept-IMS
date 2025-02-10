@@ -1,3 +1,4 @@
+import { CreateRoleDialog } from "@/components/admin/CreateRoleDialog";
 import RoleList, { type Role } from "@/components/admin/RoleList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,27 +10,24 @@ import { useState } from "react";
 
 const RolesView = () => {
   const [search, setSearch] = useState("");
+  const [queryKey, setQueryKey] = useState("");
 
-  const {
-    data: roles,
-    isFetching,
-    refetch,
-  } = useQuery({
-    queryKey: ["roles"],
+  const { data: roles, isFetching } = useQuery({
+    queryKey: queryKey.length ? ["roles", queryKey] : ["roles"],
     queryFn: async () => {
       const response = await api.get<Role[]>("/admin/role/all", {
         params: {
-          q: search,
+          q: queryKey,
         },
       });
       return response.data;
     },
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
+    staleTime: 1000 * 60 * 5,
   });
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-1 flex-col justify-center gap-4 p-4">
+    <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
       <h1 className="text-3xl font-bold text-primary">Roles</h1>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -43,9 +41,9 @@ const RolesView = () => {
               className="w-64 pl-9"
             />
           </div>
-          <Button onClick={() => void refetch()}>Search</Button>
+          <Button onClick={() => setQueryKey(search)}>Search</Button>
         </div>
-        <Button onClick={() => setSearch("")}>Create role</Button>
+        <CreateRoleDialog />
       </div>
       {isFetching ? (
         <LoadingSpinner />

@@ -5,7 +5,6 @@ export interface Operations {
 
 export interface JwtPayload {
     email: string;
-    name: string;
     operations: Operations;
     sessionExpiry: number;
 }
