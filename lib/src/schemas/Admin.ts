@@ -12,3 +12,20 @@ export const editRolesBodySchema = z
     );
 
 export type EditRolesBody = z.infer<typeof editRolesBodySchema>;
+
+export const renameRoleBodySchema = z.object({
+    oldName: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+    newName: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+});
+
+export type RenameRoleBody = z.infer<typeof renameRoleBodySchema>;
