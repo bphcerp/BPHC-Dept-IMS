@@ -7,6 +7,7 @@ import { phdCourses } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
 import assert from "assert";
 import z from "zod";
+import {phd} from "@/config/db/schema/admin.ts"
 
 const router = express.Router();
 
@@ -15,13 +16,28 @@ const updatePhdGradesSchema = z.object({
     courseGrades: z.array(z.string()),
 });
 
-export default router.put(
-    "/grades",
+export default router.post(
+    "/",
     checkAccess("notional-supervisor-update-grades"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
 
         const parsed = updatePhdGradesSchema.parse(req.body);
+
+        const phdStudent = await db
+            .select()
+            .from(phd)
+            .where(eq(phd.email, parsed.studentEmail))
+            .limit(1);
+
+        if (phdStudent.length === 0) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+        }
+        
+        // checks if user is the correct notional supervisor
+        if (phdStudent[0].notionalSupervisorEmail !== req.user.email) {
+            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+        }
 
         const updated = await db
             .update(phdCourses)
