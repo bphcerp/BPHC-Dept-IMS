@@ -2,29 +2,19 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
-import z from "zod";
 import db from "@/config/db/index.ts";
 import { roles } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { adminSchemas } from "lib";
 
 const router = express.Router();
-
-// Check if role name is in kebab case
-const bodySchema = z.object({
-    name: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
-});
 
 router.post(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-        const parsed = bodySchema.parse(req.body);
+        const parsed = adminSchemas.roleCreateBodySchema.parse(req.body);
         const insertedRoles = await db
             .insert(roles)
             .values({
