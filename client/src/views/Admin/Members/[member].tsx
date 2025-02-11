@@ -1,9 +1,11 @@
-import React from "react";
-import { useParams } from "react-router-dom";
+import type React from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { UserDetails } from "@/components/admin/MemberDetails";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 interface UserData {
   email: string;
   type: string;
@@ -15,6 +17,8 @@ interface UserData {
 
 const MemberDetailsView: React.FC = () => {
   const { member } = useParams<{ member: string }>();
+  const navigate = useNavigate();
+
   // Fetch member details
   const { data, isLoading, isError } = useQuery<UserData>({
     queryKey: ["member", member],
@@ -27,6 +31,10 @@ const MemberDetailsView: React.FC = () => {
     },
     enabled: !!member,
   });
+
+  const handleBack = () => {
+    navigate(-1); // Navigate back to the previous page
+  };
 
   // Render loading and error states
   if (isLoading)
@@ -45,7 +53,15 @@ const MemberDetailsView: React.FC = () => {
 
   return (
     // Render member details
-    <div className="flex min-h-screen w-full items-center bg-gray-100 p-8">
+    <div className="relative flex min-h-screen w-full items-center bg-gray-100 p-8">
+      <Button
+        onClick={handleBack}
+        variant="outline"
+        className="absolute left-4 top-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
       <div className="mx-auto w-full max-w-2xl">
         {data && <UserDetails data={data} />}
       </div>
