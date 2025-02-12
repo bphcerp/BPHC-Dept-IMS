@@ -1,4 +1,10 @@
 import { z } from "zod";
+import dotenv from "dotenv";
+import path from "path";
+// Trying to load .env if running outside docker and cwd is server
+dotenv.config({
+    path: path.resolve(process.cwd(), "../.env"),
+});
 
 const serverSchema = z.object({
     NODE_ENV: z
