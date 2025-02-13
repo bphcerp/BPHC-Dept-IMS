@@ -1,6 +1,9 @@
-import { pgTable, text, serial } from "drizzle-orm/pg-core";
-import { users } from "./admin.ts";
+import { pgTable, text, serial, pgEnum } from "drizzle-orm/pg-core";
 import { boolean } from "drizzle-orm/pg-core";
+import { users } from "./admin.ts";
+import { modules } from "lib";
+
+export const modulesEnum = pgEnum("modules", modules);
 
 export const textFields = pgTable("text_fields", {
     id: serial("id").primaryKey(),
@@ -12,7 +15,7 @@ export const fileFields = pgTable("file_fields", {
     file: serial("file")
         .notNull()
         .references(() => files.id, { onDelete: "cascade" }),
-    module: text("module").notNull(),
+    module: modulesEnum("module").notNull(),
 });
 
 export const textFieldStatus = pgTable("text_field_status", {
