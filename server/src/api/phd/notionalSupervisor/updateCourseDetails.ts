@@ -6,16 +6,9 @@ import db from "@/config/db/index.ts";
 import {  phd } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
 import assert from "assert";
-import z from "zod";
 import {phdCourses} from "@/config/db/schema/phd.ts"
-
+import { phdSchemas } from "lib";
 const router = express.Router();
-
-const updatePhdCoursesSchema = z.object({
-    studentEmail: z.string().email(),
-    courseNames: z.array(z.string()),
-    courseUnits: z.array(z.number()),
-});
 
 export default router.post(
     "/",
@@ -23,7 +16,7 @@ export default router.post(
     asyncHandler(async (req, res, next) => {
         assert(req.user);
 
-        const parsed = updatePhdCoursesSchema.parse(req.body);
+        const parsed = phdSchemas.updatePhdCoursesBodySchema.parse(req.body);
 
         const phdStudent = await db
             .select()
