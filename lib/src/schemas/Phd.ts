@@ -5,7 +5,7 @@ export const updatePhdGradeBodySchema = z.object({
     courseGrades: z.array(z.string()).nonempty(),
 });
 
-export type PhdCourses = z.infer<typeof updatePhdGradeBodySchema>;
+export type UpdatePhdGradeBody = z.infer<typeof updatePhdGradeBodySchema>;
 
 export const updatePhdCoursesBodySchema = z.object({
     studentEmail: z.string().email(),
@@ -13,4 +13,4 @@ export const updatePhdCoursesBodySchema = z.object({
     courseUnits: z.array(z.number()).nonempty(),
 });
 
-export type UpdatePhdCourses = z.infer<typeof updatePhdCoursesBodySchema>;
+export type UpdatePhdCoursesBody = z.infer<typeof updatePhdCoursesBodySchema>;
