@@ -2,18 +2,16 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { z } from "zod";
+import { adminSchemas } from "lib";
 const router = express.Router();
-
-const querySchema = z.object({
-    q: z.string().trim().optional(),
-});
 
 router.get(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, _) => {
-        const { q: searchQuery } = querySchema.parse(req.query);
+        const { q: searchQuery } = adminSchemas.roleSearchQuerySchema.parse(
+            req.query
+        );
         const allRoles = await db.query.roles.findMany({
             columns: {
                 roleName: true,

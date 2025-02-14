@@ -2,21 +2,17 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import { z } from "zod";
 import { users } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { eq } from "drizzle-orm";
+import { adminSchemas } from "lib";
 const router = express.Router();
-
-const querySchema = z.object({
-    email: z.string().email(),
-});
 
 router.get(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
-        const parsed = querySchema.parse(req.query);
+        const parsed = adminSchemas.memberDetailsQuerySchema.parse(req.query);
         const roles = (await db.query.roles.findMany()).reduce(
             (acc, role) => {
                 acc[role.id] = role.roleName;

@@ -1,5 +1,4 @@
 import express from "express";
-import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { faculty, phd, users, userType } from "@/config/db/schema/admin.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
@@ -7,19 +6,15 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import nodemailer from "nodemailer";
 import env from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { adminSchemas } from "lib";
 
 const router = express.Router();
-
-const bodySchema = z.object({
-    email: z.string().email(),
-    type: z.enum(userType.enumValues),
-});
 
 router.post(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
-        const parsed = bodySchema.parse(req.body);
+        const parsed = adminSchemas.inviteMemberBodySchema.parse(req.body);
         try {
             await db.transaction(async (db) => {
                 // Insert the user into the database
