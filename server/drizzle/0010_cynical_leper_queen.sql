@@ -9,13 +9,13 @@ CREATE TABLE IF NOT EXISTS "file_field_status" (
 	"user_email" text NOT NULL,
 	"comments" text NOT NULL,
 	"updated_as" text NOT NULL,
-	"text_field" text NOT NULL,
+	"file_field" integer NOT NULL,
 	"status" boolean NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "file_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"file" serial NOT NULL,
+	"file" integer NOT NULL,
 	"module" "modules" NOT NULL
 );
 --> statement-breakpoint
@@ -31,13 +31,14 @@ CREATE TABLE IF NOT EXISTS "text_field_status" (
 	"user_email" text NOT NULL,
 	"comments" text NOT NULL,
 	"updated_as" text NOT NULL,
-	"text_field" text NOT NULL,
+	"text_field" integer NOT NULL,
 	"status" boolean NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "text_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"value" text NOT NULL
+	"value" text NOT NULL,
+	"module" "modules" NOT NULL
 );
 --> statement-breakpoint
 DO $$ BEGIN
@@ -47,7 +48,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "file_field_status" ADD CONSTRAINT "file_field_status_text_field_file_fields_id_fk" FOREIGN KEY ("text_field") REFERENCES "public"."file_fields"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "file_field_status" ADD CONSTRAINT "file_field_status_file_field_file_fields_id_fk" FOREIGN KEY ("file_field") REFERENCES "public"."file_fields"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

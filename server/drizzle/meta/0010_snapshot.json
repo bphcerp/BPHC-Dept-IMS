@@ -1,5 +1,5 @@
 {
-  "id": "793aecac-5df3-42fd-bb64-28fbace2aa4e",
+  "id": "5ba3be07-3c4f-4daf-a3e2-76418b4e8417",
   "prevId": "d9d0f127-4c2a-44ef-ac96-d2effa138c4b",
   "version": "7",
   "dialect": "postgresql",
@@ -472,9 +472,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "text_field": {
-          "name": "text_field",
-          "type": "text",
+        "file_field": {
+          "name": "file_field",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -500,12 +500,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "file_field_status_text_field_file_fields_id_fk": {
-          "name": "file_field_status_text_field_file_fields_id_fk",
+        "file_field_status_file_field_file_fields_id_fk": {
+          "name": "file_field_status_file_field_file_fields_id_fk",
           "tableFrom": "file_field_status",
           "tableTo": "file_fields",
           "columnsFrom": [
-            "text_field"
+            "file_field"
           ],
           "columnsTo": [
             "id"
@@ -529,7 +529,7 @@
         },
         "file": {
           "name": "file",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -638,7 +638,7 @@
         },
         "text_field": {
           "name": "text_field",
-          "type": "text",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -694,6 +694,13 @@
         "value": {
           "name": "value",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         }

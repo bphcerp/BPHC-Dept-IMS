@@ -1,4 +1,4 @@
-import { pgTable, text, serial, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, pgEnum, integer } from "drizzle-orm/pg-core";
 import { boolean } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { modules } from "lib";
@@ -8,11 +8,12 @@ export const modulesEnum = pgEnum("modules", modules);
 export const textFields = pgTable("text_fields", {
     id: serial("id").primaryKey(),
     value: text("value").notNull(),
+    module: modulesEnum("module").notNull(),
 });
 
 export const fileFields = pgTable("file_fields", {
     id: serial("id").primaryKey(),
-    file: serial("file")
+    file: integer("file")
         .notNull()
         .references(() => files.id, { onDelete: "cascade" }),
     module: modulesEnum("module").notNull(),
@@ -25,7 +26,7 @@ export const textFieldStatus = pgTable("text_field_status", {
         .references(() => users.email, { onDelete: "cascade" }),
     comments: text("comments").notNull(),
     updatedAs: text("updated_as").notNull(),
-    textField: text("text_field")
+    textField: integer("text_field")
         .notNull()
         .references(() => textFields.id, { onDelete: "cascade" }),
     status: boolean("status").notNull(),
@@ -38,7 +39,7 @@ export const fileFieldStatus = pgTable("file_field_status", {
         .references(() => users.email, { onDelete: "cascade" }),
     comments: text("comments").notNull(),
     updatedAs: text("updated_as").notNull(),
-    fileField: text("text_field")
+    fileField: integer("file_field")
         .notNull()
         .references(() => fileFields.id, { onDelete: "cascade" }),
     status: boolean("status").notNull(),
