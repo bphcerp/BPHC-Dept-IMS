@@ -1,30 +1,19 @@
 import express from "express";
-import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { roles, users } from "@/config/db/schema/admin.ts";
 import { eq, sql } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { adminSchemas } from "lib";
 
 const router = express.Router();
-
-const editRolesBodySchema = z
-    .object({
-        email: z.string().email(),
-        add: z.string().trim().nonempty().optional(),
-        remove: z.string().trim().nonempty().optional(),
-    })
-    .refine(
-        (data) => !!data.add !== !!data.remove,
-        "Specify either add or remove"
-    );
 
 router.post(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
-        const parsed = editRolesBodySchema.parse(req.body);
+        const parsed = adminSchemas.editRolesBodySchema.parse(req.body);
         if (!parsed.add?.length && !parsed.remove?.length) {
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "No roles to add or remove")

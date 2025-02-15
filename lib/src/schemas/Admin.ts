@@ -2,6 +2,16 @@ import z from "zod";
 
 export const userTypes = ["faculty", "phd", "staff"] as const;
 
+export const deactivateMemberBodySchema = z.object({
+    email: z.string().email(),
+});
+export type DeactivateMemberBody = z.infer<typeof deactivateMemberBodySchema>;
+
+export const memberDetailsQuerySchema = z.object({
+    email: z.string().email(),
+});
+export type MemberDetailsQuery = z.infer<typeof memberDetailsQuerySchema>;
+
 export const editRolesBodySchema = z
     .object({
         email: z.string().email(),
@@ -12,8 +22,74 @@ export const editRolesBodySchema = z
         (data) => !!data.add !== !!data.remove,
         "Specify either add or remove"
     );
-
 export type EditRolesBody = z.infer<typeof editRolesBodySchema>;
+
+export const inviteMemberBodySchema = z.object({
+    email: z.string().email(),
+    type: z.enum(userTypes),
+});
+export type InviteMemberBody = z.infer<typeof inviteMemberBodySchema>;
+
+export const memberSearchQuerySchema = z.object({
+    q: z.string().trim().optional(),
+});
+export type MemberSearchQuery = z.infer<typeof memberSearchQuerySchema>;
+
+export const permissionSearchQuerySchema = memberSearchQuerySchema;
+export type PermissionSearchQuery = z.infer<typeof permissionSearchQuerySchema>;
+
+export const roleSearchQuerySchema = memberSearchQuerySchema;
+export type RoleSearchQuery = z.infer<typeof roleSearchQuerySchema>;
+
+export const roleCreateBodySchema = z.object({
+    name: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+});
+export type RoleCreateBody = z.infer<typeof roleCreateBodySchema>;
+
+export const roleDeleteBodySchema = z.object({
+    role: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+});
+export type RoleDeleteBody = z.infer<typeof roleDeleteBodySchema>;
+
+export const roleEditPathSchema = z.object({
+    role: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+});
+export type RoleEditPath = z.infer<typeof roleEditPathSchema>;
+
+export const roleEditBodySchema = z.object({
+    permission: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-:]+$/),
+    action: z.enum(["allow", "disallow", "none"]),
+});
+export type RoleEditBody = z.infer<typeof roleEditBodySchema>;
+
+export const roleGetPathSchema = z.object({
+    role: z
+        .string()
+        .trim()
+        .nonempty()
+        .regex(/^[a-z0-9-]+$/)
+        .max(128),
+});
+export type RoleGetPath = z.infer<typeof roleGetPathSchema>;
 
 export const renameRoleBodySchema = z.object({
     oldName: z
@@ -29,7 +105,6 @@ export const renameRoleBodySchema = z.object({
         .regex(/^[a-z0-9-]+$/)
         .max(128),
 });
-
 export type RenameRoleBody = z.infer<typeof renameRoleBodySchema>;
 
 export const editDetailsBodySchema = z.intersection(
@@ -71,5 +146,4 @@ export const editDetailsBodySchema = z.intersection(
         }),
     ])
 );
-
 export type EditDetailsBody = z.infer<typeof editDetailsBodySchema>;

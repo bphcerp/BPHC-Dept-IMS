@@ -1,23 +1,19 @@
 import express from "express";
-import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 import { users } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { adminSchemas } from "lib";
 
 const router = express.Router();
-
-const deactivateSchema = z.object({
-    email: z.string().email(),
-});
 
 router.post(
     "/",
     checkAccess("admin"),
     asyncHandler(async (req, res, next) => {
-        const parsed = deactivateSchema.parse(req.body);
+        const parsed = adminSchemas.deactivateMemberBodySchema.parse(req.body);
 
         // Checking if user exists before deactivating
 

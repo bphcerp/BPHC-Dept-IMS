@@ -1,18 +1,16 @@
 import express from "express";
-import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { adminSchemas } from "lib";
 
 const router = express.Router();
-
-const querySchema = z.object({
-    q: z.string().trim().optional(),
-});
 
 router.get(
     "/",
     asyncHandler(async (req, res) => {
-        const { q: searchQuery } = querySchema.parse(req.query);
+        const { q: searchQuery } = adminSchemas.memberSearchQuerySchema.parse(
+            req.query
+        );
         const roles = (await db.query.roles.findMany()).reduce(
             (acc, role) => {
                 acc[role.id] = role.roleName;
