@@ -5,19 +5,15 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
-import z from "zod";
+import { phdSchemas } from "lib";
 
 const router = express.Router();
-
-const paramsSchema = z.object({
-    email: z.string().email(),
-});
 
 router.get(
     "/:email",
     checkAccess("drc-view-qualifying-form"),
     asyncHandler(async (req, res, next) => {
-        const parsed = paramsSchema.parse(req.params);
+        const parsed = phdSchemas.getQualifyingExamFormParamsSchema.parse(req.params);
         
         const phdRecord = await db
             .select({
