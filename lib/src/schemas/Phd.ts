@@ -14,3 +14,9 @@ export const updatePhdCoursesBodySchema = z.object({
 });
 
 export type UpdatePhdCoursesBody = z.infer<typeof updatePhdCoursesBodySchema>;
+
+export const getQualifyingExamFormParamsSchema = z.object({
+    email: z.string().email(),
+});
+
+export type GetQualifyingExamFormParams = z.infer<typeof getQualifyingExamFormParamsSchema>;
