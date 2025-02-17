@@ -20,3 +20,9 @@ export const getQualifyingExamFormParamsSchema = z.object({
 });
 
 export type GetQualifyingExamFormParams = z.infer<typeof getQualifyingExamFormParamsSchema>;
+
+export const updateQualifyingDeadlineBodySchema = z.object({
+    deadline: z.string().datetime()
+});
+
+export type UpdateQualifyingDeadlineBody = z.infer<typeof updateQualifyingDeadlineBodySchema>;
