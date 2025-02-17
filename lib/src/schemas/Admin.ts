@@ -12,6 +12,18 @@ export const memberDetailsQuerySchema = z.object({
 });
 export type MemberDetailsQuery = z.infer<typeof memberDetailsQuerySchema>;
 
+export const roleNameSchema = z
+    .string()
+    .trim()
+    .nonempty()
+    .regex(/^[a-zA-Z0-9 _-]+$/)
+    .max(64);
+export const permissionNameSchema = z
+    .string()
+    .trim()
+    .nonempty()
+    .regex(/^[a-z0-9-:\*]+$/);
+
 export const editRolesBodySchema = z
     .object({
         email: z.string().email(),
@@ -42,68 +54,34 @@ export const roleSearchQuerySchema = memberSearchQuerySchema;
 export type RoleSearchQuery = z.infer<typeof roleSearchQuerySchema>;
 
 export const roleCreateBodySchema = z.object({
-    name: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
+    name: roleNameSchema,
 });
 export type RoleCreateBody = z.infer<typeof roleCreateBodySchema>;
 
 export const roleDeleteBodySchema = z.object({
-    role: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
+    role: roleNameSchema,
 });
 export type RoleDeleteBody = z.infer<typeof roleDeleteBodySchema>;
 
 export const roleEditPathSchema = z.object({
-    role: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
+    role: roleNameSchema,
 });
 export type RoleEditPath = z.infer<typeof roleEditPathSchema>;
 
 export const roleEditBodySchema = z.object({
-    permission: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-:]+$/),
+    permission: permissionNameSchema,
     action: z.enum(["allow", "disallow", "none"]),
 });
 export type RoleEditBody = z.infer<typeof roleEditBodySchema>;
 
 export const roleGetPathSchema = z.object({
-    role: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
+    role: roleNameSchema,
 });
 export type RoleGetPath = z.infer<typeof roleGetPathSchema>;
 
 export const renameRoleBodySchema = z.object({
-    oldName: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
-    newName: z
-        .string()
-        .trim()
-        .nonempty()
-        .regex(/^[a-z0-9-]+$/)
-        .max(128),
+    oldName: roleNameSchema,
+    newName: roleNameSchema,
 });
 export type RenameRoleBody = z.infer<typeof renameRoleBodySchema>;
 
