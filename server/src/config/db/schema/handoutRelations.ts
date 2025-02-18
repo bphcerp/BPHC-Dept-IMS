@@ -3,13 +3,13 @@ import { textFields, fileFields } from "./form.ts";
 import { users } from "./admin.ts";
 import { courseHandoutRequests } from "./handout.ts";
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersHandoutsRelations = relations(users, ({ many }) => ({
     courseHandoutRequests: many(courseHandoutRequests, {
         relationName: "handoutUserEmail",
     }),
 }));
 
-export const textFieldsRelations = relations(textFields, ({ one }) => ({
+export const textFieldsHandoutsRelations = relations(textFields, ({ one }) => ({
     courseCode: one(courseHandoutRequests, {
         fields: [textFields.id],
         references: [courseHandoutRequests.courseCode],
@@ -57,7 +57,7 @@ export const textFieldsRelations = relations(textFields, ({ one }) => ({
     }),
 }));
 
-export const fileFieldsRelations = relations(fileFields, ({ one }) => ({
+export const fileFieldsHandoutsRelations = relations(fileFields, ({ one }) => ({
     filePath: one(courseHandoutRequests, {
         fields: [fileFields.id],
         references: [courseHandoutRequests.handoutFilePath],
