@@ -37,6 +37,7 @@ export const phdCourses = pgTable("phd_courses", {
     courseNames: text("course_names").array(),
     courseGrades: text("course_grades").array(),
     courseUnits: integer("course_units").array(),
+    courseId: text("course_id").array(),
 });
 
 export const phdConfig  = pgTable("phd_config", {
