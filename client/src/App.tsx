@@ -13,7 +13,8 @@ import MemberDetailsView from "./views/Admin/Members/[member]";
 import RoleDetailsView from "./views/Admin/Roles/[role]";
 import { Toaster } from "./components/ui/sonner";
 import RolesView from "./views/Admin/Roles";
-
+import NotionalSupervisorLayout from "./views/Phd/NotionalSupervisor/NotionalSupervisorLayout";
+import UpdateGrade from "./views/Phd/NotionalSupervisor/UpdateGrade";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -43,6 +44,12 @@ const App = () => {
                     <Route path="roles" element={<RolesView />} />
                     <Route path="roles/:role" element={<RoleDetailsView />} />
                   </Route>
+                </Route>
+                <Route
+                  path="/phd/notionalsupervisor"
+                  element={<NotionalSupervisorLayout />}
+                >
+                  <Route path="updategrade" element={<UpdateGrade />} />
                 </Route>
               </Routes>
             </SidebarProvider>
