@@ -47,7 +47,7 @@ export default router.post(
         }
 
         const courseRecord = existingCourses[0];
-        const currentCourseIds = courseRecord.courseId || [];
+        const currentCourseIds = courseRecord.courseIds || [];
         const currentGrades = courseRecord.courseGrades || Array(currentCourseIds.length).fill(null);
         
         const updatedGrades = [...currentGrades];
