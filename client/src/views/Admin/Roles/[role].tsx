@@ -9,17 +9,16 @@ import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { adminSchemas } from "lib";
+import { Button } from "@/components/ui/button";
 
 interface Role {
   role: string;
@@ -46,17 +45,15 @@ const RoleDetailsView = () => {
   } = useAllPermissions();
 
   // ✅ Mutation for updating role name
-  const updateRoleMutation = useMutation({
-    mutationFn: async (newRoleName: string) => {
-      await api.post(`admin/role/rename`, {
-        oldName: role,
-        newName: newRoleName,
-      });
+  const renameRoleMutation = useMutation({
+    mutationFn: async (data: adminSchemas.RenameRoleBody) => {
+      await api.post(`admin/role/rename`, data);
     },
     onSuccess: () => {
+      setIsDialogOpen(false);
       toast.success("Role updated successfully!");
-      queryClient.invalidateQueries(["role", role]);
       navigate(`/admin/roles/${newRole}`);
+      setTimeout(() => void queryClient.removeQueries(["role", role]), 100);
     },
     onError: () => {
       toast.error("Failed to update role.");
@@ -121,13 +118,19 @@ const RoleDetailsView = () => {
   };
 
   const handleConfirmRename = () => {
-    console.log(newRole);
-    if (!newRole.trim()) {
-      toast.error("Role name cannot be empty.");
+    const parsed = adminSchemas.renameRoleBodySchema.safeParse({
+      oldName: role,
+      newName: newRole,
+    });
+    if (parsed.error) {
+      toast.error("Invalid role name");
       return;
     }
-    updateRoleMutation.mutate(newRole);
-    setIsDialogOpen(false);
+    if (parsed.data.oldName === parsed.data.newName) {
+      toast.error("New role name cannot be the same as the old role name.");
+      return;
+    }
+    renameRoleMutation.mutate(parsed.data);
   };
 
   return (
@@ -239,14 +242,14 @@ const RoleDetailsView = () => {
       )}
 
       {/* ✅ Confirmation Dialog for Renaming Role */}
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Edit Role Name</AlertDialogTitle>
-            <AlertDialogDescription>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Role Name</DialogTitle>
+            <DialogDescription>
               Enter a new name for the role below.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
           <Input
             type="text"
             placeholder="New Role Name"
@@ -254,16 +257,19 @@ const RoleDetailsView = () => {
             onChange={(e) => setNewRole(e.target.value)}
             className="mt-2"
           />
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+          <DialogFooter>
+            <Button onClick={() => setIsDialogOpen(false)} variant="outline">
               Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRename}>
+            </Button>
+            <Button
+              onClick={handleConfirmRename}
+              disabled={renameRoleMutation.isLoading}
+            >
               Save
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
