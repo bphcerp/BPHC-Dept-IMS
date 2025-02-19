@@ -1,11 +1,25 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useAllPermissions } from "@/hooks/Admin/AllPermissions";
 import api from "@/lib/axios-instance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Minus, X } from "lucide-react";
+import { Check, Edit, Minus, X } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 interface Role {
   role: string;
@@ -16,6 +30,7 @@ interface Role {
 const RoleDetailsView = () => {
   const params = useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const role = params["role"];
   const { data: roleData } = useQuery({
     queryKey: ["role", role],
@@ -29,6 +44,26 @@ const RoleDetailsView = () => {
     isFetching: isFetchingPermissions,
     isError: isErrorPermissions,
   } = useAllPermissions();
+
+  // ✅ Mutation for updating role name
+  const updateRoleMutation = useMutation({
+    mutationFn: async (newRoleName: string) => {
+      await api.post(`admin/role/rename`, {
+        oldName: role,
+        newName: newRoleName,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Role updated successfully!");
+      queryClient.invalidateQueries(["role", role]);
+      navigate(`/admin/roles/${newRole}`);
+    },
+    onError: () => {
+      toast.error("Failed to update role.");
+    },
+  });
+
+  // ✅ Mutation for updating permissions
   const updatePermissionMutation = useMutation({
     mutationFn: async (data: {
       permission: string;
@@ -77,12 +112,34 @@ const RoleDetailsView = () => {
     },
   });
 
+  // role rename dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newRole, setNewRole] = useState("");
+
+  const handleRenameClick = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleConfirmRename = () => {
+    console.log(newRole);
+    if (!newRole.trim()) {
+      toast.error("Role name cannot be empty.");
+      return;
+    }
+    updateRoleMutation.mutate(newRole);
+    setIsDialogOpen(false);
+  };
+
   return (
     <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
       <h1 className="text-3xl font-bold text-primary">Role details</h1>
       <div className="flex flex-col text-lg">
-        <div>
+        <div className="flex items-center gap-2">
           Role: <span className="font-bold text-primary">{role}</span>
+          <Edit
+            className="ml-2 h-5 w-5 cursor-pointer"
+            onClick={handleRenameClick}
+          />
         </div>
         <div>
           Allowed permissions:{" "}
@@ -180,6 +237,33 @@ const RoleDetailsView = () => {
           </div>
         )
       )}
+
+      {/* ✅ Confirmation Dialog for Renaming Role */}
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Role Name</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter a new name for the role below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            type="text"
+            placeholder="New Role Name"
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
+            className="mt-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRename}>
+              Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
