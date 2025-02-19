@@ -42,3 +42,8 @@ export const courseworkFormSchema = z.array(
 );
 
 export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
+export const deletePhdCourseBodySchema = z.object({
+    studentEmail: z.string(),
+    courseId: z.string(),
+});
+export type DeletePhdCourseBody = z.infer<typeof deletePhdCourseBodySchema>;
