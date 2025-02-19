@@ -5,7 +5,7 @@ import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { libTest } from "lib";
-import { Computer } from "lucide-react";
+import { Computer, Book } from "lucide-react";
 
 function Home() {
   const { authState, updateAuthState, logOut, checkAccess } = useAuth();
@@ -37,6 +37,12 @@ function Home() {
                           title: "Admin",
                           icon: <Computer />,
                           url: "/admin",
+                        },
+                        // Keeping PhD related items in admin for now
+                        {
+                          title: "PhD",
+                          icon: <Book />,
+                          url: "/phd",
                         },
                       ]
                     : [],
