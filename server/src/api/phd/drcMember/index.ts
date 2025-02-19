@@ -8,6 +8,7 @@ import assignNotionalSupervisor from "./assignNotionalSupervisor.ts"
 import getQualifyingExamForm from "./getQualifyingExamForm.ts"
 import generateCourseworkForm from "./generateCourseworkForm.ts"
 import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
+import generateCourseworkForm from "./generateCourseworkForm.ts"
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/assignNotionalSupervisor', assignNotionalSupervisor);
 router.use('/getQualifyingExamForm', getQualifyingExamForm);
 router.use('/generateCourseworkForm', generateCourseworkForm);
 router.use('/updateQualifyingExamDeadline', updateQualifyingExamDeadline);
+router.use('/generateCourseworkForm', generateCourseworkForm);
 
 export default router;

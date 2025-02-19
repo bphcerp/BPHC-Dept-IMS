@@ -52,3 +52,18 @@ export const updateExamDeadlineBodySchema = z.object({
     deadline: z.string().datetime(),
 });
 export type UpdateExamDeadlineBody = z.infer<typeof updateExamDeadlineBodySchema>;
+export const courseworkFormSchema = z.array(
+    z.object({
+        name: z.string(),
+        email: z.string().email(),
+        courses: z.array(
+            z.object({
+                name: z.string(),
+                units: z.number().nullable(),
+                grade: z.string().nullable(),
+            })
+        ),
+    })
+);
+
+export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
