@@ -34,13 +34,21 @@ export const phdCourses = pgTable("phd_courses", {
     studentEmail: text("student_email")
         .notNull()
         .references(() => phd.email, { onDelete: "cascade" }),
-    courseNames: text("course_names").array(),
-    courseGrades: text("course_grades").array(),
-    courseUnits: integer("course_units").array(),
-    courseId: text("course_id").array(),
+    courseNames: text("course_names")
+        .array()
+        .default(sql`'{}'::text[]`),
+    courseGrades: text("course_grades")
+        .array()
+        .default(sql`'{}'::text[]`),
+    courseUnits: integer("course_units")
+        .array()
+        .default(sql`'{}'::integer[]`),
+    courseIds: text("course_ids")
+        .array()
+        .default(sql`'{}'::text[]`),
 });
 
-export const phdConfig  = pgTable("phd_config", {
+export const phdConfig = pgTable("phd_config", {
     key: text("key").notNull(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),

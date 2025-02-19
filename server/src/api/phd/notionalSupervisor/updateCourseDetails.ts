@@ -4,7 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import {  phd } from "@/config/db/schema/admin.ts";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import assert from "assert";
 import {phdCourses} from "@/config/db/schema/phd.ts"
 import { phdSchemas } from "lib";
@@ -42,9 +42,9 @@ export default router.post(
         const updated = await db
             .update(phdCourses)
             .set({
-                courseNames,
-                courseUnits,
-                courseId: courseIds
+                courseNames: sql `array_append(${phdCourses.courseNames}, ${courseNames})`,
+                courseUnits: sql `array_append(${phdCourses.courseUnits}, ${courseUnits})`,
+                courseIds: sql `array_append(${phdCourses.courseIds}, ${courseIds})`
             })
             .where(eq(phdCourses.studentEmail, parsed.data.studentEmail))
             .returning();

@@ -1,0 +1,1 @@
+ALTER TABLE "phd_courses" RENAME COLUMN "course_id" TO "course_ids";

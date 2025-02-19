@@ -14,34 +14,38 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useMutation } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
 const formSchema = z.object({
-  id: z.string().nonempty(),
+  courseId: z.string().nonempty(),
   name: z.string().nonempty(),
-  units: z.number(),
+  units: z.coerce.number(),
 });
 type FormValues = z.infer<typeof formSchema>;
-export function AddCourseForm() {
+export function AddCourseForm({ studentEmail }: { studentEmail: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: "",
+      courseId: "",
       name: "",
-      units: 0,
+      units: 3,
     },
   });
   const submitMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-        /* */
+      api.post("/phd/notionalSupervisor/updateCourseDetails", {
+        studentEmail,
+        courses: [data],
+      });
     },
     onSuccess: () => {
-        form.reset();
-        alert("Course added successfully");
+      form.reset();
+      alert("Course added successfully");
     },
     onError: (error) => {
-        if (error instanceof Error) {
-            alert(error.message);
-        }
-    }
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    },
   });
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     submitMutation.mutate(data);
@@ -57,7 +61,7 @@ export function AddCourseForm() {
       >
         <FormField
           control={form.control}
-          name="id"
+          name="courseId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Course ID</FormLabel>
@@ -95,64 +99,4 @@ export function AddCourseForm() {
       </form>
     </Form>
   );
-  //   const [courseId, setCourseId] = useState("");
-  //   const [courseName, setCourseName] = useState("");
-  //   const [units, setUnits] = useState("");
-  //   const [grade, setGrade] = useState("");
-
-  //   const handleSubmit = async (e: React.FormEvent) => {
-  //     e.preventDefault();
-
-  //     console.log("New course:", { courseId, courseName, units, grade });
-
-  //     // Clear the form
-  //     setCourseId("");
-  //     setCourseName("");
-  //     setUnits("");
-  //     setGrade("");
-
-  //   };
-
-  //   return (
-  //     <form onSubmit={handleSubmit} className="space-y-4">
-  //       <div>
-  //         <Label htmlFor="courseId">Course ID</Label>
-  //         <Input
-  //           id="courseId"
-  //           value={courseId}
-  //           onChange={(e) => setCourseId(e.target.value)}
-  //           required
-  //         />
-  //       </div>
-  //       <div>
-  //         <Label htmlFor="courseName">Course Name</Label>
-  //         <Input
-  //           id="courseName"
-  //           value={courseName}
-  //           onChange={(e) => setCourseName(e.target.value)}
-  //           required
-  //         />
-  //       </div>
-  //       <div>
-  //         <Label htmlFor="units">Units</Label>
-  //         <Input
-  //           id="units"
-  //           type="number"
-  //           value={units}
-  //           onChange={(e) => setUnits(e.target.value)}
-  //           required
-  //         />
-  //       </div>
-  //       <div>
-  //         <Label htmlFor="grade">Grade</Label>
-  //         <Input
-  //           id="grade"
-  //           value={grade}
-  //           onChange={(e) => setGrade(e.target.value)}
-  //           required
-  //         />
-  //       </div>
-  //       <Button type="submit">Add Course</Button>
-  //     </form>
-  //   );
 }

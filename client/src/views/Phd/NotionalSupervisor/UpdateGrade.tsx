@@ -11,7 +11,7 @@ interface PhdStudent {
 }
 const UpdateGrade: React.FC = () => {
   const [selected, setSelected] = React.useState<PhdStudent | null>(null);
-  const { data: students, isFetching } = useQuery({
+  const { data: students, isFetching: isStudentsFetching } = useQuery({
     queryKey: ["phd-students"],
     queryFn: async () => {
       const response = await api.get<{ phdRecords: PhdStudent[] }>(
@@ -23,22 +23,20 @@ const UpdateGrade: React.FC = () => {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
-  interface Course {
-    id: string;
-    name: string;
-    units: number;
-    grade: string;
-  }
-  const initialCourses: Course[] = [
-    {
-      id: "CS101",
-      name: "Introduction to Computer Science",
-      units: 3,
-      grade: "A",
+  const { data: studentDetails, isFetching } = useQuery({
+    queryKey: ["phd-student-details"],
+    queryFn: async () => {
+      if (!selected) return null;
+      const response = await api.get(
+        `/phd/notionalSupervisor/getPhdCourseDetails`,
+        { params: { studentEmail: selected.email } }
+      );
+      console.log(response.data);
+      return response.data?.courses;
     },
-    { id: "MATH201", name: "Linear Algebra", units: 4, grade: "B+" },
-    { id: "PHYS101", name: "Physics I", units: 4, grade: "A-" },
-  ];
+    enabled: !!selected, // Only fetch when a student is selected
+  });
+
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       {selected ? (
@@ -54,11 +52,11 @@ const UpdateGrade: React.FC = () => {
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
               <h2 className="mb-4 text-xl font-semibold">Current Courses</h2>
-              <CourseList courses={initialCourses} />
+              {studentDetails && <CourseList courses={studentDetails} />}
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
               <h2 className="mb-4 text-xl font-semibold">Add New Course</h2>
-              <AddCourseForm />
+              <AddCourseForm studentEmail={selected.email} />
             </div>
           </div>
         </div>
@@ -67,7 +65,11 @@ const UpdateGrade: React.FC = () => {
           <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
             PhD Students
           </h1>
-          {isFetching ? <LoadingSpinner className="mx-auto" /> : <div></div>}
+          {isStudentsFetching ? (
+            <LoadingSpinner className="mx-auto" />
+          ) : (
+            <div></div>
+          )}
           {students && (
             <ul className="overflow-hidden bg-white shadow hover:cursor-pointer sm:rounded-xl">
               {students?.map((student, index) => (

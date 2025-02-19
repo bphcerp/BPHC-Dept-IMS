@@ -14,11 +14,13 @@ export default router.get(
     "/",
     checkAccess("notional-supervisor-view-courses"),
     asyncHandler(async (req, res, next) => {
-        assert(req.user); 
+        assert(req.user);
         const { studentEmail } = req.query;
 
         if (!studentEmail) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Student email is required"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Student email is required")
+            );
         }
         const phdStudent = await db
             .select()
@@ -27,11 +29,18 @@ export default router.get(
             .limit(1);
 
         if (phdStudent.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         if (phdStudent[0].notionalSupervisorEmail !== req.user.email) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not the notional supervisor of this student"
+                )
+            );
         }
 
         const studentCourses = await db
@@ -41,9 +50,35 @@ export default router.get(
             .limit(1);
 
         if (studentCourses.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "No courses found for this student"));
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "No courses found for this student"
+                )
+            );
         }
-
-        res.json({ success: true, courses: studentCourses[0] });
+        if (!studentCourses[0].courseNames) {
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "No course names found for this student"
+                )
+            );
+        }
+        const courses = studentCourses[0].courseNames.map(
+            (courseName, index) => ({
+                name: courseName,
+                grade: studentCourses[0].courseGrades
+                    ? studentCourses[0].courseGrades[index]
+                    : null,
+                units: studentCourses[0].courseUnits
+                    ? studentCourses[0].courseUnits[index]
+                    : null,
+                id: studentCourses[0].courseIds
+                    ? studentCourses[0].courseIds[index]
+                    : null,
+            })
+        );
+        res.json({ success: true, courses: courses });
     })
 );

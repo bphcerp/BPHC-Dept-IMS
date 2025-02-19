@@ -36,9 +36,15 @@ export function CourseList({ courses }: { courses: Course[] }) {
               <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                 {course.units}
               </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                {course.grade}
-              </td>
+              {course.grade != null ? (
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                  {course.grade}
+                </td>
+              ) : (
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 italic">
+                  Not Graded
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
