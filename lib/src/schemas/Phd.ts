@@ -47,3 +47,8 @@ export const deletePhdCourseBodySchema = z.object({
     courseId: z.string(),
 });
 export type DeletePhdCourseBody = z.infer<typeof deletePhdCourseBodySchema>;
+
+export const updateExamDeadlineBodySchema = z.object({
+    deadline: z.string().datetime(),
+});
+export type UpdateExamDeadlineBody = z.infer<typeof updateExamDeadlineBodySchema>;
