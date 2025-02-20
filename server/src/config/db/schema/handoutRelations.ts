@@ -3,12 +3,6 @@ import { textFields, fileFields } from "./form.ts";
 import { users } from "./admin.ts";
 import { courseHandoutRequests } from "./handout.ts";
 
-export const usersHandoutsRelations = relations(users, ({ many }) => ({
-    courseHandoutRequests: many(courseHandoutRequests, {
-        relationName: "handoutUserEmail",
-    }),
-}));
-
 export const textFieldsHandoutsRelations = relations(textFields, ({ one }) => ({
     courseCode: one(courseHandoutRequests, {
         fields: [textFields.id],

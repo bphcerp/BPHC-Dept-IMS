@@ -73,12 +73,27 @@ export const phd = pgTable("phd", {
     mobile: text("mobile"),
     personalEmail: text("personal_email"),
 
-    notionalSupervisorEmail: text("notional_supervisor_email"),
-    supervisorEmail: text("supervisor_email"),
-    coSupervisorEmail: text("co_supervisor_email"),
-    coSupervisorEmail2: text("co_supervisor_email_2"),
-    dac1Email: text("dac_1_email"),
-    dac2Email: text("dac_2_email"),
+    notionalSupervisorEmail: text("notional_supervisor_email").references(
+        () => users.email,
+        { onDelete: "restrict" }
+    ),
+    supervisorEmail: text("supervisor_email").references(() => users.email, {
+        onDelete: "restrict",
+    }),
+    coSupervisorEmail: text("co_supervisor_email").references(
+        () => users.email,
+        { onDelete: "restrict" }
+    ),
+    coSupervisorEmail2: text("co_supervisor_email_2").references(
+        () => users.email,
+        { onDelete: "restrict" }
+    ),
+    dac1Email: text("dac_1_email").references(() => users.email, {
+        onDelete: "restrict",
+    }),
+    dac2Email: text("dac_2_email").references(() => users.email, {
+        onDelete: "restrict",
+    }),
 
     natureOfPhD: text("nature_of_phd"),
     qualifyingExam1: boolean("qualifying_exam_1"),

@@ -8,22 +8,6 @@ import {
 } from "./form.ts";
 import { users } from "./admin.ts";
 
-export const usersFormsRelations = relations(users, ({ many, one }) => ({
-    textFieldStatus: one(textFieldStatus, {
-        fields: [users.email],
-        references: [textFieldStatus.userEmail],
-        relationName: "textFieldStatus",
-    }),
-    fileFieldStatus: one(fileFieldStatus, {
-        fields: [users.email],
-        references: [fileFieldStatus.userEmail],
-        relationName: "fileFieldStatus",
-    }),
-    files: many(files, {
-        relationName: "files",
-    }),
-}));
-
 export const textFieldsFormsRelations = relations(textFields, ({ many }) => ({
     textFields: many(textFieldStatus, {
         relationName: "textFields",
