@@ -69,7 +69,9 @@ export default router.get(
             (courseName, index) => ({
                 name: courseName,
                 grade: studentCourses[0].courseGrades
-                    ? studentCourses[0].courseGrades[index]
+                    ? studentCourses[0].courseGrades[index] == "NULL"
+                        ? null
+                        : studentCourses[0].courseGrades[index]
                     : null,
                 units: studentCourses[0].courseUnits
                     ? studentCourses[0].courseUnits[index]

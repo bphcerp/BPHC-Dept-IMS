@@ -52,7 +52,12 @@ const UpdateGrade: React.FC = () => {
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
               <h2 className="mb-4 text-xl font-semibold">Current Courses</h2>
-              {studentDetails && <CourseList courses={studentDetails} />}
+              {studentDetails && (
+                <CourseList
+                  courses={studentDetails}
+                  studentEmail={selected.email}
+                />
+              )}
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
               <h2 className="mb-4 text-xl font-semibold">Add New Course</h2>

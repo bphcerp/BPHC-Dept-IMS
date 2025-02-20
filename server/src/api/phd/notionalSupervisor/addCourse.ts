@@ -15,11 +15,9 @@ export default router.post(
     checkAccess("notional-supervisor-update-courses"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-        const parsed = phdSchemas.updatePhdCoursesBodySchema.safeParse(
-            req.body
-        );
+        console.log(req.body, phdSchemas);
+        const parsed = phdSchemas.addPhdCourseBodySchema.safeParse(req.body);
         if (!parsed.success) {
-            console.log(parsed.error.format());
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "Invalid request body")
             );
@@ -46,23 +44,16 @@ export default router.post(
             );
         }
 
-        const courseNames =
-            parsed.data.courses?.map((course) => course.name) ?? [];
-        const courseUnits =
-            parsed.data.courses?.map((course) => course.units) ?? [];
-        const courseIds = parsed.data.courses?.map((course) => course.id) ?? [];
-        const courseGrades =
-            parsed.data.courses?.map((course) =>
-                course.grade ? course.grade : "NULL"
-            ) ?? [];
+        const courseNames = parsed.data.courses.map((course) => course.name);
+        const courseUnits = parsed.data.courses.map((course) => course.units);
+        const courseIds = parsed.data.courses.map((course) => course.courseId);
 
         const updated = await db
             .update(phdCourses)
             .set({
-                courseNames,
-                courseUnits,
-                courseIds,
-                courseGrades,
+                courseNames: sql`array_append(${phdCourses.courseNames}, ${courseNames})`,
+                courseUnits: sql`array_append(${phdCourses.courseUnits}, ${courseUnits})`,
+                courseIds: sql`array_append(${phdCourses.courseIds}, ${courseIds})`,
             })
             .where(eq(phdCourses.studentEmail, parsed.data.studentEmail))
             .returning();
