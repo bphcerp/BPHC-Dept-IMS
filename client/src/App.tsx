@@ -15,8 +15,10 @@ import { Toaster } from "./components/ui/sonner";
 import RolesView from "./views/Admin/Roles";
 import Phd from "@/views/Phd";
 import NotionalSupervisorLayout from "./layouts/Phd/NotionalSupervisor";
+import DrcConvenorLayout from "./layouts/Phd/DrcConvenor";
 import UpdateGrade from "./views/Phd/NotionalSupervisor/UpdateGrade";
 import PhdLayout from "./layouts/Phd/Phd";
+import StudentsSittingForQualifyingExam from "./views/Phd/DrcConvenor/StudentsSittingForQualifyingExam";
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -54,6 +56,12 @@ const App = () => {
                       element={<NotionalSupervisorLayout />}
                     >
                       <Route path="update-grade" element={<UpdateGrade />} />
+                    </Route>
+                    <Route
+                      path="drc-convenor"
+                      element={<DrcConvenorLayout />}
+                    >
+                      <Route path="students-sitting-for-qualifying-exam" element={<StudentsSittingForQualifyingExam />} />
                     </Route>
                   </Route>
                 </Route>
