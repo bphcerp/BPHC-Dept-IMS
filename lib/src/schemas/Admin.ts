@@ -128,17 +128,6 @@ export const editDetailsBodySchema = z.intersection(
             instituteEmail: z.string().email().nullish(),
             mobile: z.string().trim().nonempty().nullish(),
             personalEmail: z.string().email().nullish(),
-            notionalSupervisorEmail: z.string().email().nullish(),
-            supervisorEmail: z.string().email().nullish(),
-            coSupervisorEmail: z.string().email().nullish(),
-            coSupervisorEmail2: z.string().email().nullish(),
-            dac1Email: z.string().email().nullish(),
-            dac2Email: z.string().email().nullish(),
-            natureOfPhD: z.string().trim().nonempty().nullish(),
-            qualifyingExam1: z.boolean().nullish(),
-            qualifyingExam2: z.boolean().nullish(),
-            qualifyingExam1Date: z.string().date().nullish(),
-            qualifyingExam2Date: z.string().date().nullish(),
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
@@ -147,3 +136,21 @@ export const editDetailsBodySchema = z.intersection(
     ])
 );
 export type EditDetailsBody = z.infer<typeof editDetailsBodySchema>;
+
+export interface MemberDetailsResponse {
+    email: string;
+    type: (typeof userTypes)[number];
+    name: string | null;
+    roles: string[];
+    deactivated: boolean;
+    psrn?: string | null;
+    department?: string | null;
+    designation?: string[] | null;
+    room?: string | null;
+    phone?: string | null;
+    idNumber?: string | null;
+    erpId?: string | null;
+    instituteEmail?: string | null;
+    mobile?: string | null;
+    personalEmail?: string | null;
+}
