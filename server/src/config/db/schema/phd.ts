@@ -49,7 +49,7 @@ export const phdCourses = pgTable("phd_courses", {
 });
 
 export const phdConfig = pgTable("phd_config", {
-    key: text("key").notNull(),
+    key: text("key").notNull().unique(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });

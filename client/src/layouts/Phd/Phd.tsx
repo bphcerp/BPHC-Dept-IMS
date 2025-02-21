@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/Auth";
 import { PersonIcon, ListBulletIcon } from "@radix-ui/react-icons";
+import { CalendarClockIcon } from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 import { SidebarMenuGroup } from "@/components/AppSidebar";
 const NotionalSupervisorLayout = () => {
@@ -27,6 +28,11 @@ const NotionalSupervisorLayout = () => {
           title: "Coursework Form",
           icon: <ListBulletIcon />,
           url: "/phd/drc-convenor/coursework-form",
+        },
+        {
+          title: "Update Qualifying Exam Deadline",
+          icon: <CalendarClockIcon />,
+          url: "/phd/drc-convenor/update-qualifying-exam-deadline",
         },
       ],
     });

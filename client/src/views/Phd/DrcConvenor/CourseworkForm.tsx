@@ -21,7 +21,7 @@ interface IPhdCourseworkQuery {
   formLink: string;
 }
 
-const StudentsSittingForQualifyingExam: React.FC = () => {
+const CourseworkForm: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["phd-students-coursework"],
     queryFn: async () => {
@@ -101,4 +101,4 @@ const StudentsSittingForQualifyingExam: React.FC = () => {
   );
 };
 
-export default StudentsSittingForQualifyingExam;
+export default CourseworkForm;
