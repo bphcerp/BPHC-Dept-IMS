@@ -19,6 +19,17 @@ const NotionalSupervisorLayout = () => {
         },
       ],
     });
+
+    items.push({
+      title: "DRC Convenor",
+      items: [
+        {
+          title: "Qualifying Exam Students",
+          icon: <PersonIcon />,
+          url: "/phd/drc-convenor/students-sitting-for-qualifying-exam",
+        },
+      ],
+    });
   }
 
   return items.length !== 0 ? (

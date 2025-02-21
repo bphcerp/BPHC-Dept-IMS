@@ -1,88 +1,102 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { LoadingSpinner } from "@/components/ui/spinner";
-import { CourseList } from "@/components/phd/CourseList";
-import { AddCourseForm } from "@/components/phd/AddCourseForm";
-import { Button } from "@/components/ui/button";
 import { phdSchemas } from "lib";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface IPhdCourseworkQuery {
-    success: boolean;
-    formData: phdSchemas.CourseworkFormData[];
-    formLink: string;
+  success: boolean;
+  formData: phdSchemas.CourseworkFormData;
+  formLink: string;
 }
 
 const StudentsSittingForQualifyingExam: React.FC = () => {
-
-    const generateCourseworkFormQuery = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["phd-students-coursework"],
     queryFn: async () => {
       const response = await api.get<IPhdCourseworkQuery>(
         "/phd/drcMember/generateCourseworkForm"
       );
-      console.log(response.data);
       return response.data;
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
 
+  if (isLoading) {
+    return <LoadingSpinner className="mx-auto mt-10" />;
+  }
+
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      {/* {selected ? (
-        <div className="min-h-screen bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl space-y-8">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Student Courses
-              </h1>
-              <Button onClick={() => setSelected(null)} variant="outline">
-                Back
-              </Button>
-            </div>
-            <div className="bg-white p-6 shadow sm:rounded-lg">
-              <h2 className="mb-4 text-xl font-semibold">Current Courses</h2>
-              {studentDetails && <CourseList courses={studentDetails} />}
-            </div>
-            <div className="bg-white p-6 shadow sm:rounded-lg">
-              <h2 className="mb-4 text-xl font-semibold">Add New Course</h2>
-              <AddCourseForm studentEmail={selected.email} />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="mx-auto max-w-3xl">
-          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
-            PhD Students
-          </h1>
-          {isStudentsFetching ? (
-            <LoadingSpinner className="mx-auto" />
-          ) : (
-            <div></div>
-          )}
-          {students && (
-            <ul className="overflow-hidden bg-white shadow hover:cursor-pointer sm:rounded-xl">
-              {students?.map((student, index) => (
-                <li
-                  key={index}
-                  className={index > 0 ? "border-t border-gray-200" : ""}
-                  onClick={() => setSelected(student)}
-                >
-                  <div className="px-4 py-5 sm:px-6">
-                    <h3 className="text-xl font-medium leading-6 text-gray-900">
-                      {student.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {student.email}
-                    </p>
-                  </div>
-                </li>
+      <Card>
+        <CardContent className="p-6">
+          <h2 className="mb-4 text-xl font-bold">
+            PhD Students Coursework
+            <Button
+              disabled
+              onClick={() => window.print()}
+              className="m-2 bg-blue-600 text-white hover:bg-blue-700 ml-3"
+            >
+              <Printer className="inline-block h-6 w-6" />
+            </Button>
+          </h2>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-1/4">Student Name</TableHead>
+                <TableHead className="w-1/4">Course</TableHead>
+                <TableHead className="w-1/4">Units</TableHead>
+                <TableHead className="w-1/4">Grade</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.formData.map((student) => (
+                <React.Fragment key={student.email}>
+                  {student.courses.length > 0 ? (
+                    student.courses.map((course, index) => (
+                      <TableRow key={`${student.email}-${index}`}>
+                        {index === 0 && (
+                          <TableCell
+                            rowSpan={student.courses.length}
+                            className="font-medium"
+                          >
+                            {student.name}
+                          </TableCell>
+                        )}
+                        <TableCell>{course.name}</TableCell>
+                        <TableCell>{course.units ?? "N/A"}</TableCell>
+                        <TableCell>{course.grade}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell className="font-medium">
+                        {student.name}
+                      </TableCell>
+                      <TableCell colSpan={3} className="text-center">
+                        No coursework available
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
-            </ul>
-          )}
-        </div>
-      )} */}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
