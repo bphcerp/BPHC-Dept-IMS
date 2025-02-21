@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/Auth";
-import { PersonIcon } from "@radix-ui/react-icons";
+import { PersonIcon, ListBulletIcon } from "@radix-ui/react-icons";
 import { Navigate, Outlet } from "react-router-dom";
 import { SidebarMenuGroup } from "@/components/AppSidebar";
 const NotionalSupervisorLayout = () => {
@@ -24,9 +24,9 @@ const NotionalSupervisorLayout = () => {
       title: "DRC Convenor",
       items: [
         {
-          title: "Qualifying Exam Students",
-          icon: <PersonIcon />,
-          url: "/phd/drc-convenor/students-sitting-for-qualifying-exam",
+          title: "Coursework Form",
+          icon: <ListBulletIcon />,
+          url: "/phd/drc-convenor/coursework-form",
         },
       ],
     });

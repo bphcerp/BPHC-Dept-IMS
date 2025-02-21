@@ -18,7 +18,9 @@ import NotionalSupervisorLayout from "./layouts/Phd/NotionalSupervisor";
 import DrcConvenorLayout from "./layouts/Phd/DrcConvenor";
 import UpdateGrade from "./views/Phd/NotionalSupervisor/UpdateGrade";
 import PhdLayout from "./layouts/Phd/Phd";
-import StudentsSittingForQualifyingExam from "./views/Phd/DrcConvenor/StudentsSittingForQualifyingExam";
+import CourseworkForm from "./views/Phd/DrcConvenor/CourseworkForm";
+import UpdateQualifyingExamDate from "./views/Phd/DrcConvenor/UpdateQualifyingExamDate";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -57,11 +59,15 @@ const App = () => {
                     >
                       <Route path="update-grade" element={<UpdateGrade />} />
                     </Route>
-                    <Route
-                      path="drc-convenor"
-                      element={<DrcConvenorLayout />}
-                    >
-                      <Route path="students-sitting-for-qualifying-exam" element={<StudentsSittingForQualifyingExam />} />
+                    <Route path="drc-convenor" element={<DrcConvenorLayout />}>
+                      <Route
+                        path="coursework-form"
+                        element={<CourseworkForm />}
+                      />
+                      <Route
+                        path="update-qualifying-exam-date"
+                        element={<UpdateQualifyingExamDate />}
+                      />
                     </Route>
                   </Route>
                 </Route>
