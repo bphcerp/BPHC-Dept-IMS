@@ -5,10 +5,12 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { CourseList } from "@/components/phd/CourseList";
 import { AddCourseForm } from "@/components/phd/AddCourseForm";
 import { Button } from "@/components/ui/button";
+import { Course } from "@/components/phd/CourseList";
 interface PhdStudent {
   name: string;
   email: string;
 }
+
 const UpdateGrade: React.FC = () => {
   const [selected, setSelected] = React.useState<PhdStudent | null>(null);
   const { data: students, isFetching: isStudentsFetching } = useQuery({
@@ -23,11 +25,12 @@ const UpdateGrade: React.FC = () => {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
+
   const { data: studentDetails, isFetching } = useQuery({
-    queryKey: ["phd-student-details"],
+    queryKey: ["phd-student-details", selected?.email],
     queryFn: async () => {
       if (!selected) return null;
-      const response = await api.get(
+      const response = await api.get<{ courses: Course[] }>(
         `/phd/notionalSupervisor/getPhdCourseDetails`,
         { params: { studentEmail: selected.email } }
       );
@@ -52,11 +55,15 @@ const UpdateGrade: React.FC = () => {
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
               <h2 className="mb-4 text-xl font-semibold">Current Courses</h2>
-              {studentDetails && (
+              {isFetching ? (
+                <LoadingSpinner className="mx-auto" />
+              ) : studentDetails && studentDetails.length > 0 ? (
                 <CourseList
                   courses={studentDetails}
                   studentEmail={selected.email}
                 />
+              ) : (
+                <p className="text-center text-gray-500">No courses taken</p>
               )}
             </div>
             <div className="bg-white p-6 shadow sm:rounded-lg">
@@ -75,9 +82,9 @@ const UpdateGrade: React.FC = () => {
           ) : (
             <div></div>
           )}
-          {students && (
+          {students && students.length > 0 ? (
             <ul className="overflow-hidden bg-white shadow hover:cursor-pointer sm:rounded-xl">
-              {students?.map((student, index) => (
+              {students.map((student, index) => (
                 <li
                   key={index}
                   className={index > 0 ? "border-t border-gray-200" : ""}
@@ -94,6 +101,10 @@ const UpdateGrade: React.FC = () => {
                 </li>
               ))}
             </ul>
+          ) : (
+            <p className="text-center text-gray-500">
+              No PhD students under your supervision
+            </p>
           )}
         </div>
       )}

@@ -1,6 +1,6 @@
 import React from "react";
 import { Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
-interface Course {
+export interface Course {
   id: string;
   name: string;
   units: number;
@@ -93,6 +93,9 @@ export function CourseList({
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
               Grade
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              Actions
             </th>
           </tr>
         </thead>
