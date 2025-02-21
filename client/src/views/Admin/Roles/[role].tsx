@@ -1,11 +1,24 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useAllPermissions } from "@/hooks/Admin/AllPermissions";
 import api from "@/lib/axios-instance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Minus, X } from "lucide-react";
+import { Check, Edit, Minus, X } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { adminSchemas } from "lib";
+import { Button } from "@/components/ui/button";
 
 interface Role {
   role: string;
@@ -16,6 +29,7 @@ interface Role {
 const RoleDetailsView = () => {
   const params = useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const role = params["role"];
   const { data: roleData } = useQuery({
     queryKey: ["role", role],
@@ -29,6 +43,24 @@ const RoleDetailsView = () => {
     isFetching: isFetchingPermissions,
     isError: isErrorPermissions,
   } = useAllPermissions();
+
+  // ✅ Mutation for updating role name
+  const renameRoleMutation = useMutation({
+    mutationFn: async (data: adminSchemas.RenameRoleBody) => {
+      await api.post(`admin/role/rename`, data);
+    },
+    onSuccess: () => {
+      setIsDialogOpen(false);
+      toast.success("Role updated successfully!");
+      navigate(`/admin/roles/${newRole}`);
+      setTimeout(() => void queryClient.removeQueries(["role", role]), 100);
+    },
+    onError: () => {
+      toast.error("Failed to update role.");
+    },
+  });
+
+  // ✅ Mutation for updating permissions
   const updatePermissionMutation = useMutation({
     mutationFn: async (data: {
       permission: string;
@@ -77,12 +109,40 @@ const RoleDetailsView = () => {
     },
   });
 
+  // role rename dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newRole, setNewRole] = useState("");
+
+  const handleRenameClick = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleConfirmRename = () => {
+    const parsed = adminSchemas.renameRoleBodySchema.safeParse({
+      oldName: role,
+      newName: newRole,
+    });
+    if (parsed.error) {
+      toast.error("Invalid role name");
+      return;
+    }
+    if (parsed.data.oldName === parsed.data.newName) {
+      toast.error("New role name cannot be the same as the old role name.");
+      return;
+    }
+    renameRoleMutation.mutate(parsed.data);
+  };
+
   return (
     <div className="mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4">
       <h1 className="text-3xl font-bold text-primary">Role details</h1>
       <div className="flex flex-col text-lg">
-        <div>
+        <div className="flex items-center gap-2">
           Role: <span className="font-bold text-primary">{role}</span>
+          <Edit
+            className="ml-2 h-5 w-5 cursor-pointer"
+            onClick={handleRenameClick}
+          />
         </div>
         <div>
           Allowed permissions:{" "}
@@ -180,6 +240,36 @@ const RoleDetailsView = () => {
           </div>
         )
       )}
+
+      {/* ✅ Confirmation Dialog for Renaming Role */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Role Name</DialogTitle>
+            <DialogDescription>
+              Enter a new name for the role below.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="text"
+            placeholder="New Role Name"
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
+            className="mt-2"
+          />
+          <DialogFooter>
+            <Button onClick={() => setIsDialogOpen(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmRename}
+              disabled={renameRoleMutation.isLoading}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
