@@ -60,7 +60,6 @@ export function CourseList({
 
   const editMutation = useMutation({
     mutationFn: (courses: Course[]) => {
-      console.log(courses);
       return api.post("/phd/notionalSupervisor/updateCourseDetails", {
         studentEmail: studentEmail,
         courses,
@@ -74,7 +73,6 @@ export function CourseList({
     },
   });
   const handleChanges = () => {
-    console.log(studentCourses);
     editMutation.mutate(studentCourses);
   };
   return (

@@ -19,7 +19,6 @@ export default router.post(
             req.body
         );
         if (!parsed.success) {
-            console.log(parsed.error.format());
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "Invalid request body")
             );

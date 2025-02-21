@@ -19,7 +19,6 @@ const UpdateGrade: React.FC = () => {
       const response = await api.get<{ phdRecords: PhdStudent[] }>(
         "/phd/notionalSupervisor/getPhd"
       );
-      console.log(response.data);
       return response.data?.phdRecords;
     },
     refetchOnWindowFocus: false,
@@ -34,7 +33,6 @@ const UpdateGrade: React.FC = () => {
         `/phd/notionalSupervisor/getPhdCourseDetails`,
         { params: { studentEmail: selected.email } }
       );
-      console.log(response.data);
       return response.data?.courses;
     },
     enabled: !!selected, // Only fetch when a student is selected

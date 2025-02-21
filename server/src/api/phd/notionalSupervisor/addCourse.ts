@@ -15,7 +15,6 @@ export default router.post(
     checkAccess("notional-supervisor-update-courses"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-        console.log(req.body, phdSchemas);
         const parsed = phdSchemas.addPhdCourseBodySchema.safeParse(req.body);
         if (!parsed.success) {
             return next(
