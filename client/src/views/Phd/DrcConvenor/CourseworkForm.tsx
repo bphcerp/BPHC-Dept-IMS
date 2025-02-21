@@ -17,18 +17,38 @@ import { Button } from "@/components/ui/button";
 
 interface IPhdCourseworkQuery {
   success: boolean;
-  formData: phdSchemas.CourseworkFormData;
+  formData: {
+    name: string;
+    email: string;
+    courses: {
+      name: string;
+      units: string;
+    }[];
+  }[];
   formLink: string;
 }
 
-const CourseworkForm: React.FC = () => {
+
+
+const StudentsSittingForQualifyingExam: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["phd-students-coursework"],
     queryFn: async () => {
       const response = await api.get<IPhdCourseworkQuery>(
         "/phd/drcMember/generateCourseworkForm"
       );
-      return response.data;
+      const modifiedData: IPhdCourseworkQuery = {
+        ...response.data,
+        formData: response.data.formData.map((student) => ({
+          name: student.name,
+          email: student.email,
+          courses: student.courses.map(({ name, units }) => ({
+            name,
+            units,
+          })),
+        })),
+      };
+      return modifiedData;
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
@@ -39,15 +59,15 @@ const CourseworkForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <Card>
+    <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="w-[1000px]">
         <CardContent className="p-6">
           <h2 className="mb-4 text-xl font-bold">
             PhD Students Coursework
             <Button
               disabled
               onClick={() => window.print()}
-              className="m-2 bg-blue-600 text-white hover:bg-blue-700 ml-3"
+              className="m-2 ml-3 bg-blue-600 text-white hover:bg-blue-700"
             >
               <Printer className="inline-block h-6 w-6" />
             </Button>
@@ -59,7 +79,6 @@ const CourseworkForm: React.FC = () => {
                 <TableHead className="w-1/4">Student Name</TableHead>
                 <TableHead className="w-1/4">Course</TableHead>
                 <TableHead className="w-1/4">Units</TableHead>
-                <TableHead className="w-1/4">Grade</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -78,7 +97,6 @@ const CourseworkForm: React.FC = () => {
                         )}
                         <TableCell>{course.name}</TableCell>
                         <TableCell>{course.units ?? "N/A"}</TableCell>
-                        <TableCell>{course.grade}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -101,4 +119,4 @@ const CourseworkForm: React.FC = () => {
   );
 };
 
-export default CourseworkForm;
+export default StudentsSittingForQualifyingExam;
