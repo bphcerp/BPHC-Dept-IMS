@@ -3,6 +3,7 @@ import authRouter from "./auth/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
+import handoutRouter from "./handout/index.ts";
 const router = express.Router();
 
 // Public routes
@@ -24,5 +25,6 @@ router.get("/protected", checkAccess("resourcekey"), (_req, res) => {
 
 router.use("/admin", adminRouter);
 router.use("/phd", phdRouter);
+router.use("/handout", handoutRouter);
 
 export default router;
