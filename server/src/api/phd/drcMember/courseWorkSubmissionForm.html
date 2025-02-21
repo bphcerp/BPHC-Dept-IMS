@@ -1,86 +1,164 @@
-<!doctype html>
-<html>
-    <head>
-        <meta charset="UTF-8" />
-        <title>Course Work Submission Form</title>
-        <style>
-            body {
-                margin: 40px;
-                line-height: 1.5;
-            }
-            table {
-                width: 100%;
-                margin: 20px 0;
-            }
-            table,
-            th,
-            td {
-                border: 1px solid black;
-            }
-            th,
-            td {
-                padding: 8px;
-                text-align: center;
-            }
-            .header-section {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header-section">
-            <h2>Course Work Submission Form</h2>
-            <p>
-                BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE PILANI,<br />
-                CAMPUS<br />
-                DEPARTMENT OF &emsp;
-            </p>
-            <p>Date: ___________________</p>
-            <p>
-                To,<br />
-                Associate Dean, AGSRD<br />
-                BITS Pilani, &emsp; campus.
-            </p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhD Coursework Form</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        * {
+        padding: 5px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 21cm; /* A4 width */
+            margin: auto;
+            padding: 2cm;
+        }
+
+        .header {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .sub-header {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .department {
+            text-align: center;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .date {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .content {
+            margin-top: 20px;
+        }
+
+        .table-container {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #f2f2f2;
+        }
+
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            text-align: left;
+            width: 45%;
+        }
+
+        .signature-box span {
+            display: block;
+            margin-top: 50px;
+            border-top: 1px solid black;
+            width: 100%;
+        }
+
+        .footer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE PILANI, __________</div>
+        <div class="sub-header">CAMPUS</div>
+        <div class="department">DEPARTMENT OF __________________</div>
+
+        <div class="date">Date: ______________</div>
+
+        <div class="content">
+            To,<br>
+            Associate Dean, AGSRD<br>
+            BITS Pilani, ______________ campus.<br><br>
+            The suggested course package for the following PhD candidates is given below:
         </div>
-        <p>
-            The suggested course package for following PhD candidates is given
-            below:
-        </p>
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2">Sr. No.</th>
-                    <th rowspan="2">Application no./ID No.</th>
-                    <th rowspan="2">Name of the candidate</th>
-                    <th colspan="2">I/II semester 20-20</th>
-                    <th colspan="2">I/II semester 20<br />20</th>
-                </tr>
-                <tr>
-                    <th>Courses</th>
-                    <th>Units</th>
-                    <th>Courses</th>
-                    <th>Units</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                </tr>
-            </tbody>
-        </table>
-        <p>
-            (Name) ___________________<br />
-            (DRC Convener) ___________________<br />
-            (Name) ___________________<br />
-            (HOD)
-        </p>
-        <p>Date: ___________________</p>
-    </body>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sr. No.</th>
+                        <th>Application no./ID No.</th>
+                        <th>Name of the Candidate</th>
+                        <th colspan="2">I/II Semester 20 - 20</th>
+                        <th colspan="2">I/II Semester 20 - 20</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th>Courses</th>
+                        <th>Units</th>
+                        <th>Courses</th>
+                        <th>Units</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-box">
+                <span>(Name) ____________</span>
+                (DRC Convener)<br>
+                Date: ______________
+            </div>
+            <div class="signature-box">
+                <span>(Name) ____________</span>
+                (HOD)
+            </div>
+        </div>
+    </div>
+</body>
 </html>
