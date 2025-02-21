@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
 
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersAdminRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
         relationName: "user",
     }),
@@ -15,11 +15,11 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         references: [phd.email],
         relationName: "phd",
     }),
-    staff : one(staff, {
+    staff: one(staff, {
         fields: [users.email],
         references: [staff.email],
         relationName: "staff",
-    })
+    }),
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -30,7 +30,7 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
     }),
 }));
 
-export const facultyRelations = relations(faculty, ({ one }) => ({
+export const facultyAdminRelations = relations(faculty, ({ one }) => ({
     user: one(users, {
         fields: [faculty.email],
         references: [users.email],
@@ -38,7 +38,7 @@ export const facultyRelations = relations(faculty, ({ one }) => ({
     }),
 }));
 
-export const phdRelations = relations(phd, ({ one }) => ({
+export const phdAdminRelations = relations(phd, ({ one }) => ({
     user: one(users, {
         fields: [phd.email],
         references: [users.email],
@@ -46,7 +46,7 @@ export const phdRelations = relations(phd, ({ one }) => ({
     }),
 }));
 
-export const staffRelations = relations(staff, ({ one }) => ({
+export const staffAdminRelations = relations(staff, ({ one }) => ({
     user: one(users, {
         fields: [staff.email],
         references: [users.email],

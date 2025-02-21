@@ -8,7 +8,7 @@ import {
 } from "./form.ts";
 import { users } from "./admin.ts";
 
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersFormsRelations = relations(users, ({ many, one }) => ({
     textFieldStatus: one(textFieldStatus, {
         fields: [users.email],
         references: [textFieldStatus.userEmail],
@@ -24,13 +24,13 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     }),
 }));
 
-export const textFieldsRelations = relations(textFields, ({ many }) => ({
+export const textFieldsFormsRelations = relations(textFields, ({ many }) => ({
     textFields: many(textFieldStatus, {
         relationName: "textFields",
     }),
 }));
 
-export const fileFieldsRelations = relations(fileFields, ({ many }) => ({
+export const fileFieldsFormsRelations = relations(fileFields, ({ many }) => ({
     fileFieldStatus: many(fileFieldStatus, {
         relationName: "fileFields",
     }),
@@ -39,7 +39,7 @@ export const fileFieldsRelations = relations(fileFields, ({ many }) => ({
     }),
 }));
 
-export const textFieldStatusRelations = relations(
+export const textFieldStatusFormsRelations = relations(
     textFieldStatus,
     ({ one }) => ({
         textFieldStatus: one(users, {
@@ -55,7 +55,7 @@ export const textFieldStatusRelations = relations(
     })
 );
 
-export const fileFieldStatusRelations = relations(
+export const fileFieldStatusFormsRelations = relations(
     fileFieldStatus,
     ({ one }) => ({
         fileFieldStatus: one(users, {
@@ -71,7 +71,7 @@ export const fileFieldStatusRelations = relations(
     })
 );
 
-export const fileRelations = relations(files, ({ one }) => ({
+export const filesFormsRelations = relations(files, ({ one }) => ({
     files: one(users, {
         fields: [files.uploaded_by],
         references: [users.email],
