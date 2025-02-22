@@ -32,7 +32,7 @@ export function AddCourseForm({ studentEmail }: { studentEmail: string }) {
   });
   const submitMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      api.post("/phd/notionalSupervisor/updateCourseDetails", {
+      api.post("/phd/notionalSupervisor/addCourse", {
         studentEmail,
         courses: [data],
       });
@@ -43,7 +43,7 @@ export function AddCourseForm({ studentEmail }: { studentEmail: string }) {
     },
     onError: (error) => {
       if (error instanceof Error) {
-        alert(error.message);
+        alert(error.message); 
       }
     },
   });

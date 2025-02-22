@@ -36,6 +36,17 @@ const NotionalSupervisorLayout = () => {
         },
       ],
     });
+
+    items.push({
+      title: "PhD Student",
+      items: [
+        {
+          title: "Exam Form Deadline",
+          icon: <PersonIcon />,
+          url: "/phd/phd-student/form-deadline",
+        },
+      ],
+    });
   }
 
   return items.length !== 0 ? (

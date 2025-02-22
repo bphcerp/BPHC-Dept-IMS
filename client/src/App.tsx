@@ -10,12 +10,14 @@ import Admin from "@/views/Admin";
 import AdminLayout from "@/layouts/Admin";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "./views/Admin/Members/[member]";
+import FormDeadline from "./views/Phd/Student/FormDeadline";
 import RoleDetailsView from "./views/Admin/Roles/[role]";
 import { Toaster } from "./components/ui/sonner";
 import RolesView from "./views/Admin/Roles";
 import Phd from "@/views/Phd";
 import NotionalSupervisorLayout from "./layouts/Phd/NotionalSupervisor";
 import DrcConvenorLayout from "./layouts/Phd/DrcConvenor";
+import PhDStudentLayout from "./layouts/Phd/Student";
 import UpdateGrade from "./views/Phd/NotionalSupervisor/UpdateGrade";
 import PhdLayout from "./layouts/Phd/Phd";
 import CourseworkForm from "./views/Phd/DrcConvenor/CourseworkForm";
@@ -67,6 +69,12 @@ const App = () => {
                       <Route
                         path="update-qualifying-exam-deadline"
                         element={<UpdateQualifyingExamDeadline />}
+                      >
+                    </Route>
+                    <Route path="phd-student" element={<PhDStudentLayout />}>
+                      <Route
+                        path="form-deadline"
+                        element={<FormDeadline />}
                       />
                     </Route>
                   </Route>
