@@ -5,6 +5,7 @@ import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { textFields } from "@/config/db/schema/form.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ const createApplicationBodySchema = z.object({
 
 router.post(
     "/",
+    checkAccess("ic"),
     asyncHandler(async (req, res, next) => {
         const parsed = createApplicationBodySchema.parse(req.body);
 
