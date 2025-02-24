@@ -5,7 +5,7 @@ import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
 import RoleDetailsView from "@/views/Admin/Roles/[role]";
-import { Home } from "lucide-react";
+import Home from "@/views/Home";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 const Routing = () => {
