@@ -53,15 +53,15 @@ api.interceptors.response.use(
             isRefreshing = true;
             originalRequest._retried = true;
             try {
-              const response = await api.post<{ token: string }>(
-                REFRESH_ENDPOINT
+              const response = await axios.post<{ token: string }>(
+                BASE_API_URL + REFRESH_ENDPOINT,
+                undefined,
+                { withCredentials: true }
               );
               const accessToken = response.data.token;
               localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
               onRefresh(accessToken);
               isRefreshing = false;
-
               originalRequest.headers["Authorization"] =
                 `Bearer ${accessToken}`;
               return api(originalRequest);

@@ -3,7 +3,7 @@ import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { matchWildcard } from "@/lib/auth/index.ts";
+import { authUtils } from "lib";
 
 /**
  * Middleware function to check if a user has access to a given operation.
@@ -19,34 +19,20 @@ export function checkAccess(requiredOperation?: string) {
             );
         }
         if (!requiredOperation) return next();
-        const access = req.user.operations as {
-            allowed: string[];
-            disallowed: string[];
-        };
-        if (
-            access.disallowed.some((op) => matchWildcard(requiredOperation, op))
-        ) {
+        const allowed = authUtils.checkAccess(
+            requiredOperation,
+            req.user.permissions
+        );
+        if (!allowed) {
             return next(
                 new HttpError(
                     HttpCode.FORBIDDEN,
                     "Operation not allowed",
-                    "Explicitly disallowed"
+                    "Insufficient permissions"
                 )
             );
         }
-        if (
-            access.allowed.includes("*") ||
-            access.allowed.some((op) => matchWildcard(requiredOperation, op))
-        )
-            return next();
-
-        return next(
-            new HttpError(
-                HttpCode.FORBIDDEN,
-                "Operation not allowed",
-                "Insufficient permissions"
-            )
-        );
+        return next();
     };
 }
 
@@ -79,11 +65,10 @@ export const authMiddleware = (
         }
         const jwtPayloadSchema = z.object({
             email: z.string(),
-            operations: z.object({
+            permissions: z.object({
                 allowed: z.array(z.string()),
                 disallowed: z.array(z.string()),
             }),
-            iat: z.number(),
             sessionExpiry: z.number(),
         });
         const parsed = jwtPayloadSchema.safeParse(decoded);

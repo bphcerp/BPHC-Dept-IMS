@@ -1,13 +1,7 @@
-export interface Operations {
-    allowed: string[];
-    disallowed: string[];
-}
+import type { authTypes } from "lib";
 
-export interface JwtPayload {
-    email: string;
-    operations: Operations;
-    sessionExpiry: number;
-}
+export type Permissions = authTypes.Permissions;
+export type JwtPayload = authTypes.JwtPayload;
 
 export interface Access {
     allowed: string[];

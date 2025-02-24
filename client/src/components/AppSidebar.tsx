@@ -30,14 +30,14 @@ export interface SidebarMenuGroup {
 }
 
 export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
-  const { authState, logOut, updateAuthState } = useAuth();
+  const { authState, logOut, setNewAuthToken } = useAuth();
   const onSuccess = (credentialResponse: CredentialResponse) => {
     api
       .post<{ token: string }>(LOGIN_ENDPOINT, {
         token: credentialResponse.credential,
       })
       .then((response) => {
-        updateAuthState(response.data.token);
+        setNewAuthToken(response.data.token);
       })
       .catch(() => {
         // notify login failed

@@ -4,11 +4,10 @@ import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { libTest } from "lib";
 import { Computer } from "lucide-react";
 
 function Home() {
-  const { authState, updateAuthState, logOut, checkAccess } = useAuth();
+  const { authState, setNewAuthToken, logOut, checkAccess } = useAuth();
 
   const onSuccess = (credentialResponse: CredentialResponse) => {
     api
@@ -16,7 +15,7 @@ function Home() {
         token: credentialResponse.credential,
       })
       .then((response) => {
-        updateAuthState(response.data.token);
+        setNewAuthToken(response.data.token);
       })
       .catch(() => {
         // notify login failed
@@ -53,7 +52,6 @@ function Home() {
             <p className="whitespace-pre text-left font-mono">
               {JSON.stringify(authState, null, 4)}
             </p>
-            <p>{libTest("client")}</p>
             <Button className="self-center" onClick={() => logOut()}>
               Logout
             </Button>
