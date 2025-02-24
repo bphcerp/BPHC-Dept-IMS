@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin:role:delete"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = adminSchemas.roleDeleteBodySchema.parse(req.body);

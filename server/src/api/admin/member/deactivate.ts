@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin:member:update"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = adminSchemas.deactivateMemberBodySchema.parse(req.body);
 

@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post(
     "/:role",
-    checkAccess("admin:role:update"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsedPath = adminSchemas.roleEditPathSchema.parse(req.params);

@@ -3,13 +3,18 @@ import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { authUtils } from "lib";
+import { authUtils, permissions } from "lib";
+const permissionsMap: Record<string, string> = permissions;
 
 /**
- * Middleware function to check if a user has access to a given operation.
- * If the operation is not allowed, it will return a 403 Forbidden error.
- * @param requiredOperation - The operation to check access for.
- * @returns Express middleware function.
+ * Middleware to check if the user has access to a specific operation.
+ *
+ * @param {string} [requiredOperation] - The operation that needs to be checked for access. If not provided, it will be derived from the request's base URL.
+ * @returns {Function} Middleware function that checks user access.
+ *
+ * @throws {HttpError} If the user is unauthenticated, an error with status code 401 (UNAUTHORIZED) is thrown.
+ * @throws {HttpError} If no permissions are found for the route, an error with status code 500 (INTERNAL_SERVER_ERROR) is thrown.
+ * @throws {HttpError} If the user does not have sufficient permissions, an error with status code 403 (FORBIDDEN) is thrown.
  */
 export function checkAccess(requiredOperation?: string) {
     return (req: Request, _res: Response, next: NextFunction) => {
@@ -18,7 +23,16 @@ export function checkAccess(requiredOperation?: string) {
                 new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated")
             );
         }
-        if (!requiredOperation) return next();
+        if (!requiredOperation)
+            requiredOperation = permissionsMap[req.baseUrl.slice(4)];
+        if (!requiredOperation)
+            return next(
+                new HttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "An error occurred",
+                    "No permissions found for this route"
+                )
+            );
         const allowed = authUtils.checkAccess(
             requiredOperation,
             req.user.permissions

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("admin:member:read"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = adminSchemas.memberDetailsQuerySchema.parse(req.query);
         const roles = (await db.query.roles.findMany()).reduce(

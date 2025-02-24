@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin:role:create"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = adminSchemas.roleCreateBodySchema.parse(req.body);
