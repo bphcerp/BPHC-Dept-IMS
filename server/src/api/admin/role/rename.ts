@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin"),
+    checkAccess("admin:role:update"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = adminSchemas.renameRoleBodySchema.parse(req.body);

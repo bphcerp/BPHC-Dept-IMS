@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get(
     "/:role",
-    checkAccess("admin"),
+    checkAccess("admin:role:read"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = adminSchemas.roleGetPathSchema.parse(req.params);

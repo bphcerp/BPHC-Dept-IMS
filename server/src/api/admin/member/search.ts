@@ -2,11 +2,13 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { adminSchemas } from "lib";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("admin:member:read"),
     asyncHandler(async (req, res) => {
         const { q: searchQuery } = adminSchemas.memberSearchQuerySchema.parse(
             req.query
