@@ -1,13 +1,12 @@
-import { AppSidebar } from "@/components/AppSidebar";
+import { AppSidebar, type SidebarMenuGroup } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { Computer } from "lucide-react";
 
-function Home() {
-  const { authState, setNewAuthToken, logOut, checkAccess } = useAuth();
+function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
+  const { authState, setNewAuthToken, logOut } = useAuth();
 
   const onSuccess = (credentialResponse: CredentialResponse) => {
     api
@@ -25,26 +24,7 @@ function Home() {
 
   return (
     <>
-      <AppSidebar
-        items={
-          authState
-            ? [
-                {
-                  title: "Modules",
-                  items: checkAccess("admin")
-                    ? [
-                        {
-                          title: "Admin",
-                          icon: <Computer />,
-                          url: "/admin",
-                        },
-                      ]
-                    : [],
-                },
-              ]
-            : []
-        }
-      />
+      <AppSidebar items={sidebarItems ?? []} />
       <div className="mx-auto flex max-w-5xl flex-1 flex-col items-center justify-center gap-8 p-8 text-center">
         {!authState ? (
           <GoogleLogin onSuccess={onSuccess} />

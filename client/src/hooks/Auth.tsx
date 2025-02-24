@@ -102,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAccessAnyOne = useCallback(
     (requiredPermissions: string[]) => {
       if (!authState) return false;
+      if (!requiredPermissions.length) return true;
       const hasPermissions = authState.permissions;
       return requiredPermissions.some((permission) =>
         authUtils.checkAccess(permission, hasPermissions)

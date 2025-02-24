@@ -6,10 +6,27 @@ import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
 import RoleDetailsView from "@/views/Admin/Roles/[role]";
 import Home from "@/views/Home";
+import { permissions } from "lib";
+import { Computer } from "lucide-react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+const adminModulePermissions = [
+  permissions["/admin/member/search"],
+  permissions["/admin/member/details"],
+  permissions["/admin/role"],
+];
+
 const Routing = () => {
-  const { authState, checkAccess } = useAuth();
+  const { authState, checkAccess, checkAccessAnyOne } = useAuth();
+
+  const modules = [
+    {
+      title: "Admin",
+      icon: <Computer />,
+      url: "/admin",
+      requiredPermissions: adminModulePermissions,
+    },
+  ];
 
   return (
     <BrowserRouter
@@ -20,17 +37,44 @@ const Routing = () => {
       }}
     >
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route
+          path="/"
+          element={
+            <Home
+              sidebarItems={
+                authState
+                  ? [
+                      {
+                        title: "Modules",
+                        items: modules,
+                      },
+                    ]
+                  : []
+              }
+            />
+          }
+        />
 
         {authState && (
           <>
-            {checkAccess("admin:frontend") && (
+            {checkAccessAnyOne(adminModulePermissions) && (
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Admin />} />
-                <Route path="members" element={<MembersView />} />
-                <Route path="members/:member" element={<MemberDetailsView />} />
-                <Route path="roles" element={<RolesView />} />
-                <Route path="roles/:role" element={<RoleDetailsView />} />
+                {checkAccess(permissions["/admin/member/details"]) && (
+                  <>
+                    <Route path="members" element={<MembersView />} />
+                    <Route
+                      path="members/:member"
+                      element={<MemberDetailsView />}
+                    />
+                  </>
+                )}
+                {checkAccess(permissions["/admin/role"]) && (
+                  <>
+                    <Route path="roles" element={<RolesView />} />
+                    <Route path="roles/:role" element={<RoleDetailsView />} />
+                  </>
+                )}
               </Route>
             )}
           </>
