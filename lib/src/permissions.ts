@@ -7,8 +7,7 @@ export default {
     "/admin/member/deactivate": "admin:member:update",
 
     "/admin/role/create": "admin:role:create",
-    "/admin/role/all": "admin:role:read",
-    "/admin/role/get": "admin:role:read",
+    "/admin/role": "admin:role:read",
     "/admin/role/edit": "admin:role:update",
     "/admin/role/rename": "admin:role:update",
     "/admin/role/delete": "admin:role:delete",
