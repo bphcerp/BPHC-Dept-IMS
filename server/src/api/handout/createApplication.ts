@@ -9,21 +9,42 @@ import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
-const createApplicationBodySchema = z.object({
-    courseCode: z.string().nonempty(),
-    courseName: z.string().nonempty(),
-    openBook: z.string().nonempty(),
-    closedBook: z.string().nonempty(),
-    midSem: z.string().nonempty(),
-    compre: z.string().nonempty(),
-    frequency: z.string().nonempty(),
-    numComponents: z
-        .string()
-        .nonempty()
-        .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-            message: "Number of components must be a positive number",
-        }),
-});
+const createApplicationBodySchema = z
+    .object({
+        courseCode: z.string().nonempty(),
+        courseName: z.string().nonempty(),
+        openBook: z
+            .string()
+            .nonempty()
+            .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+                message: "Open Book percentage should be a non negative number",
+            }),
+        closedBook: z
+            .string()
+            .nonempty()
+            .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+                message:
+                    "Closed Book percentage should be a non negative number",
+            }),
+        midSem: z.string().nonempty(),
+        compre: z.string().nonempty(),
+        frequency: z
+            .string()
+            .nonempty()
+            .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+                message: "Frequency must be a non negative number",
+            }),
+        numComponents: z
+            .string()
+            .nonempty()
+            .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+                message: "Number of components must be a positive number",
+            }),
+    })
+    .refine((val) => Number(val.openBook) + Number(val.closedBook) === 100, {
+        message: "Open Book and Closed Book percentages must add up to 100",
+        path: ["openBook", "closedBook"],
+    });
 
 router.post(
     "/",
