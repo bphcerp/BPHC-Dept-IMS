@@ -22,7 +22,7 @@ const submittedData = [
 
 const statuses = ["New", "Ongoing", "Approved"];
 
-function FicSubmission() {
+const FicSubmissionView = () => {
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["New"]); // Default to "New" selected
 
@@ -101,6 +101,6 @@ function FicSubmission() {
       )}
     </div>
   );
-}
+};
 
-export default FicSubmission;
+export default FicSubmissionView;

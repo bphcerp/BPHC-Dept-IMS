@@ -2,7 +2,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { FileText } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-function QpReview() {
+const QpReviewLayout = () => {
   return (
     <>
       <AppSidebar
@@ -22,6 +22,6 @@ function QpReview() {
       <Outlet />
     </>
   );
-}
+};
 
-export default QpReview;
+export default QpReviewLayout;
