@@ -9,11 +9,8 @@ import type { ErrorRequestHandler } from "express";
 import api from "@/api/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import logger from "@/config/logger.ts";
-import { libTest } from "lib";
 
 const app = express();
-
-console.log(libTest("server"));
 
 app.use(cors(corsOptions));
 app.use(helmet());
