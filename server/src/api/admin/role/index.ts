@@ -2,7 +2,7 @@ import express from "express";
 import createRouter from "./create.ts";
 import deleteRouter from "./delete.ts";
 import editRouter from "./edit.ts";
-import getRouter from "./:role.ts";
+import getRouter from "./[role].ts";
 import renameRouter from "./rename.ts";
 
 const router = express.Router();
