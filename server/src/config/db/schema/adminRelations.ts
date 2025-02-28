@@ -3,8 +3,14 @@ import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
 import {
     applications,
     applicationStatus,
+    dateFields,
+    dateFieldStatus,
+    fileFields,
     fileFieldStatus,
     files,
+    numberFields,
+    numberFieldStatus,
+    textFields,
     textFieldStatus,
 } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
@@ -31,17 +37,31 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     applications: many(applications, {
         relationName: "applications",
     }),
-    applicationStatus: many(applicationStatus, {
+    applicationStatuses: many(applicationStatus, {
         relationName: "applicationStatus",
     }),
-    textFieldStatus: one(textFieldStatus, {
-        fields: [users.email],
-        references: [textFieldStatus.userEmail],
+    textFields: many(textFields, {
+        relationName: "textFields",
+    }),
+    numberFileds: many(numberFields, {
+        relationName: "numberFields",
+    }),
+    dateFields: many(dateFields, {
+        relationName: "dateFields",
+    }),
+    fileFields: many(fileFields, {
+        relationName: "fileFields",
+    }),
+    textFieldStatuses: many(textFieldStatus, {
         relationName: "textFieldStatus",
     }),
-    fileFieldStatus: one(fileFieldStatus, {
-        fields: [users.email],
-        references: [fileFieldStatus.userEmail],
+    numberFieldStatuses: many(numberFieldStatus, {
+        relationName: "numberFieldStatus",
+    }),
+    dateFieldStatuses: many(dateFieldStatus, {
+        relationName: "dateFieldStatus",
+    }),
+    fileFieldStatuses: many(fileFieldStatus, {
         relationName: "fileFieldStatus",
     }),
     files: many(files, {

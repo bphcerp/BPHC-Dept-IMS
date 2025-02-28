@@ -7,6 +7,10 @@ import {
     files,
     applications,
     applicationStatus,
+    numberFields,
+    numberFieldStatus,
+    dateFields,
+    dateFieldStatus,
 } from "./form.ts";
 import { users } from "./admin.ts";
 
@@ -40,15 +44,56 @@ export const applicationStatusFormsRelations = relations(
     })
 );
 
-export const textFieldsFormsRelations = relations(textFields, ({ many }) => ({
-    textFields: many(textFieldStatus, {
-        relationName: "textFields",
-    }),
-}));
+export const textFieldsFormsRelations = relations(
+    textFields,
+    ({ one, many }) => ({
+        user: one(users, {
+            fields: [textFields.userEmail],
+            references: [users.email],
+            relationName: "textFields",
+        }),
+        statuses: many(textFieldStatus, {
+            relationName: "textFields",
+        }),
+    })
+);
+
+export const numberFieldsFormsRelations = relations(
+    numberFields,
+    ({ one, many }) => ({
+        user: one(users, {
+            fields: [numberFields.userEmail],
+            references: [users.email],
+            relationName: "numberFields",
+        }),
+        statuses: many(numberFieldStatus, {
+            relationName: "numberFields",
+        }),
+    })
+);
+
+export const dateFieldsFormsRelations = relations(
+    dateFields,
+    ({ one, many }) => ({
+        user: one(users, {
+            fields: [dateFields.userEmail],
+            references: [users.email],
+            relationName: "dateFields",
+        }),
+        statuses: many(dateFieldStatus, {
+            relationName: "dateFields",
+        }),
+    })
+);
 
 export const fileFieldsFormsRelations = relations(
     fileFields,
     ({ one, many }) => ({
+        user: one(users, {
+            fields: [fileFields.userEmail],
+            references: [users.email],
+            relationName: "fileFields",
+        }),
         statuses: many(fileFieldStatus, {
             relationName: "fileFields",
         }),
@@ -72,6 +117,38 @@ export const textFieldStatusFormsRelations = relations(
             fields: [textFieldStatus.textField],
             references: [textFields.id],
             relationName: "textFields",
+        }),
+    })
+);
+
+export const numberFieldStatusFormsRelations = relations(
+    numberFieldStatus,
+    ({ one }) => ({
+        user: one(users, {
+            fields: [numberFieldStatus.userEmail],
+            references: [users.email],
+            relationName: "numberFieldStatus",
+        }),
+        numberField: one(numberFields, {
+            fields: [numberFieldStatus.numberField],
+            references: [numberFields.id],
+            relationName: "numberFields",
+        }),
+    })
+);
+
+export const dateFieldStatusFormsRelations = relations(
+    dateFieldStatus,
+    ({ one }) => ({
+        user: one(users, {
+            fields: [dateFieldStatus.userEmail],
+            references: [users.email],
+            relationName: "dateFieldStatus",
+        }),
+        dateField: one(dateFields, {
+            fields: [dateFieldStatus.dateField],
+            references: [dateFields.id],
+            relationName: "dateFields",
         }),
     })
 );
