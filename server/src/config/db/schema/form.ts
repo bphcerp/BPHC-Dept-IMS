@@ -11,6 +11,27 @@ export const textFields = pgTable("text_fields", {
     module: modulesEnum("module").notNull(),
 });
 
+export const applications = pgTable("applications", {
+    id: serial("id").primaryKey(),
+    module: modulesEnum("module").notNull(),
+    userEmail: text("user_email")
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
+});
+
+export const applicationStatus = pgTable("application_status", {
+    id: serial("id").primaryKey(),
+    applicationId: integer("application_id")
+        .notNull()
+        .references(() => applications.id, { onDelete: "cascade" }),
+    userEmail: text("user_email")
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
+    comments: text("comments").notNull(),
+    updatedAs: text("updated_as").notNull(),
+    status: boolean("status").notNull(),
+});
+
 export const fileFields = pgTable("file_fields", {
     id: serial("id").primaryKey(),
     file: integer("file")
@@ -48,8 +69,8 @@ export const fileFieldStatus = pgTable("file_field_status", {
 export const files = pgTable("files", {
     id: serial("id").primaryKey(),
     filePath: text("file_path").notNull(),
-    created_at: text("created_at").notNull(),
-    uploaded_by: text("uploaded_by")
+    createdAt: text("created_at").notNull(),
+    uploadedBy: text("uploaded_by")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
 });

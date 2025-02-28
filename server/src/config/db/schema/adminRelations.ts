@@ -1,6 +1,12 @@
 import { relations } from "drizzle-orm";
 import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
-import { fileFieldStatus, files, textFieldStatus } from "./form.ts";
+import {
+    applications,
+    applicationStatus,
+    fileFieldStatus,
+    files,
+    textFieldStatus,
+} from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -21,6 +27,12 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         fields: [users.email],
         references: [staff.email],
         relationName: "staff",
+    }),
+    applications: many(applications, {
+        relationName: "applications",
+    }),
+    applicationStatus: many(applicationStatus, {
+        relationName: "applicationStatus",
     }),
     textFieldStatus: one(textFieldStatus, {
         fields: [users.email],
