@@ -71,7 +71,7 @@ function StatusList({
   const { data: roles, isFetching } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => {
-      const response = await api.get<Role[]>("/admin/role/all");
+      const response = await api.get<Role[]>("/admin/role");
       return response.data;
     },
     refetchOnWindowFocus: false,

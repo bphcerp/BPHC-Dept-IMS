@@ -65,6 +65,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
     },
     onSettled: () => {
       void queryClient.invalidateQueries(["member", data.email]);
+      void queryClient.invalidateQueries(["members"]);
       void queryClient.invalidateQueries(["roles"]);
     },
   });
