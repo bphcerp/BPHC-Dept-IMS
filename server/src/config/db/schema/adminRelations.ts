@@ -13,7 +13,6 @@ import {
     textFields,
     textFieldStatus,
 } from "./form.ts";
-import { courseHandoutRequests } from "./handout.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -38,19 +37,19 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         relationName: "applications",
     }),
     applicationStatuses: many(applicationStatus, {
-        relationName: "applicationStatus",
+        relationName: "applicationStatusUser",
     }),
     textFields: many(textFields, {
-        relationName: "textFields",
+        relationName: "textFieldsUser",
     }),
     numberFileds: many(numberFields, {
-        relationName: "numberFields",
+        relationName: "numberFieldsUser",
     }),
     dateFields: many(dateFields, {
-        relationName: "dateFields",
+        relationName: "dateFieldsUser",
     }),
     fileFields: many(fileFields, {
-        relationName: "fileFields",
+        relationName: "fileFieldsUser",
     }),
     textFieldStatuses: many(textFieldStatus, {
         relationName: "textFieldStatus",
@@ -66,9 +65,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     }),
     files: many(files, {
         relationName: "files",
-    }),
-    courseHandoutRequests: many(courseHandoutRequests, {
-        relationName: "handoutUserEmail",
     }),
 }));
 
