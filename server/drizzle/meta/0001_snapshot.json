@@ -1,6 +1,6 @@
 {
-  "id": "1b0c41cb-a566-4151-8d63-456447f8266a",
-  "prevId": "f1aeecd9-51c7-4c31-a16a-7b40067ff23d",
+  "id": "b8ee97be-354a-46c9-80d0-f05160f1c7cf",
+  "prevId": "543d4b33-8ab8-451e-843a-a8fdf56b9760",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1575,9 +1575,9 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_email": {
-          "name": "user_email",
-          "type": "text",
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -1644,15 +1644,15 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "course_handout_requests_user_email_users_email_fk": {
-          "name": "course_handout_requests_user_email_users_email_fk",
+        "course_handout_requests_application_id_applications_id_fk": {
+          "name": "course_handout_requests_application_id_applications_id_fk",
           "tableFrom": "course_handout_requests",
           "columnsFrom": [
-            "user_email"
+            "application_id"
           ],
-          "tableTo": "users",
+          "tableTo": "applications",
           "columnsTo": [
-            "email"
+            "id"
           ],
           "onUpdate": "no action",
           "onDelete": "cascade"
