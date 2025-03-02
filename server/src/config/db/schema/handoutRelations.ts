@@ -1,55 +1,6 @@
 import { relations } from "drizzle-orm";
-import { textFields, fileFields } from "./form.ts";
-import { users } from "./admin.ts";
+import { textFields, fileFields, applications } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
-
-export const textFieldsHandoutsRelations = relations(textFields, ({ one }) => ({
-    courseCode: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.courseCode],
-        relationName: "handoutCourseCode",
-    }),
-    courseName: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.courseName],
-        relationName: "handoutCourseName",
-    }),
-    courseStrength: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.courseStrength],
-        relationName: "handoutCourseStrength",
-    }),
-    openBook: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.openBook],
-        relationName: "handoutOpenBook",
-    }),
-    closedBook: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.closedBook],
-        relationName: "handoutClosedBook",
-    }),
-    midSem: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.midSem],
-        relationName: "handoutMidSem",
-    }),
-    compre: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.compre],
-        relationName: "handoutCompre",
-    }),
-    numComponents: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.numComponents],
-        relationName: "HandoutNumComponents",
-    }),
-    frequency: one(courseHandoutRequests, {
-        fields: [textFields.id],
-        references: [courseHandoutRequests.frequency],
-        relationName: "handoutFrequency",
-    }),
-}));
 
 export const fileFieldsHandoutsRelations = relations(fileFields, ({ one }) => ({
     filePath: one(courseHandoutRequests, {
@@ -62,10 +13,10 @@ export const fileFieldsHandoutsRelations = relations(fileFields, ({ one }) => ({
 export const courseHandoutRequestsRelations = relations(
     courseHandoutRequests,
     ({ one }) => ({
-        courseHandoutRequests: one(users, {
-            fields: [courseHandoutRequests.userEmail],
-            references: [users.email],
-            relationName: "handoutUserEmail",
+        application: one(applications, {
+            fields: [courseHandoutRequests.applicationId],
+            references: [applications.id],
+            relationName: "courseHandoutRequests",
         }),
         courseCode: one(textFields, {
             fields: [courseHandoutRequests.courseCode],

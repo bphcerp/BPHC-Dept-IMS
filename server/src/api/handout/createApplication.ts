@@ -3,9 +3,10 @@ import assert from "assert";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { z } from "zod";
 import db from "@/config/db/index.ts";
-import { textFields } from "@/config/db/schema/form.ts";
+import { applications, textFields } from "@/config/db/schema/form.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ const createApplicationBodySchema = z
 router.post(
     "/",
     checkAccess("ic"),
-    asyncHandler(async (req, res, next) => {
+    asyncHandler(async (req, res) => {
         const parsed = createApplicationBodySchema.parse(req.body);
 
         await db.transaction(async (tx) => {
@@ -62,24 +63,36 @@ router.post(
                     .insert(textFields)
                     .values({
                         value,
-                        module: "Course Handout",
+                        userEmail: req.user.email,
+                        module: modules[1],
                     })
                     .returning();
 
                 insertedIds[key] = inserted[0].id;
             }
 
-            await tx.insert(courseHandoutRequests).values({
-                courseCode: insertedIds.courseCode,
-                courseName: insertedIds.courseName,
-                openBook: insertedIds.openBook,
-                closedBook: insertedIds.closedBook,
-                midSem: insertedIds.midSem,
-                compre: insertedIds.compre,
-                numComponents: insertedIds.numComponents,
-                frequency: insertedIds.frequency,
-                userEmail: req.user.email,
-            });
+            const insertedApplication = await tx
+                .insert(applications)
+                .values({
+                    module: modules[1],
+                    userEmail: req.user.email,
+                })
+                .returning();
+
+            return await tx
+                .insert(courseHandoutRequests)
+                .values({
+                    applicationId: insertedApplication[0].id,
+                    courseCode: insertedIds.courseCode,
+                    courseName: insertedIds.courseName,
+                    openBook: insertedIds.openBook,
+                    closedBook: insertedIds.closedBook,
+                    midSem: insertedIds.midSem,
+                    compre: insertedIds.compre,
+                    numComponents: insertedIds.numComponents,
+                    frequency: insertedIds.frequency,
+                })
+                .returning();
         });
 
         res.status(201).json({ success: true });

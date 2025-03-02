@@ -1,6 +1,6 @@
 {
-  "id": "be3c0267-eff3-4e87-91c3-f0028fb841c0",
-  "prevId": "a473f700-c976-44fc-8920-d8ecf1e8a4cb",
+  "id": "b8ee97be-354a-46c9-80d0-f05160f1c7cf",
+  "prevId": "543d4b33-8ab8-451e-843a-a8fdf56b9760",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -8,11 +8,48 @@
       "name": "faculty",
       "schema": "",
       "columns": {
+        "psrn": {
+          "name": "psrn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "email": {
           "name": "email",
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "designation": {
+          "name": "designation",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        },
+        "room": {
+          "name": "room",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -20,19 +57,27 @@
         "faculty_email_users_email_fk": {
           "name": "faculty_email_users_email_fk",
           "tableFrom": "faculty",
-          "tableTo": "users",
           "columnsFrom": [
             "email"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "email"
           ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "faculty_psrn_unique": {
+          "name": "faculty_psrn_unique",
+          "columns": [
+            "psrn"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
     },
     "public.permissions": {
       "name": "permissions",
@@ -65,6 +110,128 @@
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_number": {
+          "name": "id_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "erp_id": {
+          "name": "erp_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "institute_email": {
+          "name": "institute_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile": {
+          "name": "mobile",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "personal_email": {
+          "name": "personal_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notional_supervisor_email": {
+          "name": "notional_supervisor_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supervisor_email": {
+          "name": "supervisor_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "co_supervisor_email": {
+          "name": "co_supervisor_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "co_supervisor_email_2": {
+          "name": "co_supervisor_email_2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dac_1_email": {
+          "name": "dac_1_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dac_2_email": {
+          "name": "dac_2_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nature_of_phd": {
+          "name": "nature_of_phd",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifying_exam_1": {
+          "name": "qualifying_exam_1",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifying_exam_2": {
+          "name": "qualifying_exam_2",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifying_exam_1_date": {
+          "name": "qualifying_exam_1_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "NULL"
+        },
+        "qualifying_exam_2_date": {
+          "name": "qualifying_exam_2_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "NULL"
+        },
+        "qualifying_area_1": {
+          "name": "qualifying_area_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -72,15 +239,93 @@
         "phd_email_users_email_fk": {
           "name": "phd_email_users_email_fk",
           "tableFrom": "phd",
-          "tableTo": "users",
           "columnsFrom": [
             "email"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "email"
           ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_notional_supervisor_email_users_email_fk": {
+          "name": "phd_notional_supervisor_email_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "notional_supervisor_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_supervisor_email_users_email_fk": {
+          "name": "phd_supervisor_email_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "supervisor_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_co_supervisor_email_users_email_fk": {
+          "name": "phd_co_supervisor_email_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "co_supervisor_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_co_supervisor_email_2_users_email_fk": {
+          "name": "phd_co_supervisor_email_2_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "co_supervisor_email_2"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_dac_1_email_users_email_fk": {
+          "name": "phd_dac_1_email_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "dac_1_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "phd_dac_2_email_users_email_fk": {
+          "name": "phd_dac_2_email_users_email_fk",
+          "tableFrom": "phd",
+          "columnsFrom": [
+            "dac_2_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
         }
       },
       "compositePrimaryKeys": {},
@@ -120,15 +365,15 @@
         "refresh_tokens_user_email_users_email_fk": {
           "name": "refresh_tokens_user_email_users_email_fk",
           "tableFrom": "refresh_tokens",
-          "tableTo": "users",
           "columnsFrom": [
             "user_email"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "email"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -138,11 +383,24 @@
       "name": "roles",
       "schema": "",
       "columns": {
-        "role": {
-          "name": "role",
-          "type": "text",
+        "id": {
+          "name": "id",
+          "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "role_name": {
+          "name": "role_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_count": {
+          "name": "member_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "allowed": {
           "name": "allowed",
@@ -162,6 +420,69 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "roles_role_name_unique": {
+          "name": "roles_role_name_unique",
+          "columns": [
+            "role_name"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.staff": {
+      "name": "staff",
+      "schema": "",
+      "columns": {
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "designation": {
+          "name": "designation",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "staff_email_users_email_fk": {
+          "name": "staff_email_users_email_fk",
+          "tableFrom": "staff",
+          "columnsFrom": [
+            "email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
     "public.users": {
@@ -176,6 +497,1346 @@
         },
         "roles": {
           "name": "roles",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::integer[]"
+        },
+        "deactivated": {
+          "name": "deactivated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "type": {
+          "name": "type",
+          "type": "user_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.conference_approval_applications": {
+      "name": "conference_approval_applications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content_title": {
+          "name": "content_title",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_name": {
+          "name": "event_name",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "venue": {
+          "name": "venue",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "name": "date",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "organized_by": {
+          "name": "organized_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mode_of_event": {
+          "name": "mode_of_event",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "travel_reimbursement": {
+          "name": "travel_reimbursement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registration_fee_reimbursement": {
+          "name": "registration_fee_reimbursement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daily_allowance_reimbursement": {
+          "name": "daily_allowance_reimbursement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accomodation_reimbursement": {
+          "name": "accomodation_reimbursement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_reimbursement": {
+          "name": "other_reimbursement",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "letter_of_invitation": {
+          "name": "letter_of_invitation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_page_of_paper": {
+          "name": "first_page_of_paper",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewers_comments": {
+          "name": "reviewers_comments",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "details_of_event": {
+          "name": "details_of_event",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "other_documents": {
+          "name": "other_documents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "conference_approval_applications_application_id_applications_id_fk": {
+          "name": "conference_approval_applications_application_id_applications_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "tableTo": "applications",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "conference_approval_applications_purpose_text_fields_id_fk": {
+          "name": "conference_approval_applications_purpose_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "purpose"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_content_title_text_fields_id_fk": {
+          "name": "conference_approval_applications_content_title_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "content_title"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_event_name_text_fields_id_fk": {
+          "name": "conference_approval_applications_event_name_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "event_name"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_venue_text_fields_id_fk": {
+          "name": "conference_approval_applications_venue_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "venue"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_date_date_fields_id_fk": {
+          "name": "conference_approval_applications_date_date_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "date"
+          ],
+          "tableTo": "date_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_organized_by_text_fields_id_fk": {
+          "name": "conference_approval_applications_organized_by_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "organized_by"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_mode_of_event_text_fields_id_fk": {
+          "name": "conference_approval_applications_mode_of_event_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "mode_of_event"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_description_text_fields_id_fk": {
+          "name": "conference_approval_applications_description_text_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "description"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_travel_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_travel_reimbursement_number_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "travel_reimbursement"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_registration_fee_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_registration_fee_reimbursement_number_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "registration_fee_reimbursement"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_daily_allowance_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_daily_allowance_reimbursement_number_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "daily_allowance_reimbursement"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_accomodation_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_accomodation_reimbursement_number_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "accomodation_reimbursement"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_other_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_other_reimbursement_number_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "other_reimbursement"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_letter_of_invitation_file_fields_id_fk": {
+          "name": "conference_approval_applications_letter_of_invitation_file_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "letter_of_invitation"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_first_page_of_paper_file_fields_id_fk": {
+          "name": "conference_approval_applications_first_page_of_paper_file_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "first_page_of_paper"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_reviewers_comments_file_fields_id_fk": {
+          "name": "conference_approval_applications_reviewers_comments_file_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "reviewers_comments"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_details_of_event_file_fields_id_fk": {
+          "name": "conference_approval_applications_details_of_event_file_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "details_of_event"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "conference_approval_applications_other_documents_file_fields_id_fk": {
+          "name": "conference_approval_applications_other_documents_file_fields_id_fk",
+          "tableFrom": "conference_approval_applications",
+          "columnsFrom": [
+            "other_documents"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.application_status": {
+      "name": "application_status",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_as": {
+          "name": "updated_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "application_status_user_email_users_email_fk": {
+          "name": "application_status_user_email_users_email_fk",
+          "tableFrom": "application_status",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "application_status_application_id_applications_id_fk": {
+          "name": "application_status_application_id_applications_id_fk",
+          "tableFrom": "application_status",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "tableTo": "applications",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.applications": {
+      "name": "applications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "applications_user_email_users_email_fk": {
+          "name": "applications_user_email_users_email_fk",
+          "tableFrom": "applications",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.date_field_status": {
+      "name": "date_field_status",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_as": {
+          "name": "updated_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_field": {
+          "name": "date_field",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "date_field_status_user_email_users_email_fk": {
+          "name": "date_field_status_user_email_users_email_fk",
+          "tableFrom": "date_field_status",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "date_field_status_date_field_date_fields_id_fk": {
+          "name": "date_field_status_date_field_date_fields_id_fk",
+          "tableFrom": "date_field_status",
+          "columnsFrom": [
+            "date_field"
+          ],
+          "tableTo": "date_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.date_fields": {
+      "name": "date_fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "date_fields_user_email_users_email_fk": {
+          "name": "date_fields_user_email_users_email_fk",
+          "tableFrom": "date_fields",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.file_field_status": {
+      "name": "file_field_status",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_as": {
+          "name": "updated_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_field": {
+          "name": "file_field",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "file_field_status_user_email_users_email_fk": {
+          "name": "file_field_status_user_email_users_email_fk",
+          "tableFrom": "file_field_status",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "file_field_status_file_field_file_fields_id_fk": {
+          "name": "file_field_status_file_field_file_fields_id_fk",
+          "tableFrom": "file_field_status",
+          "columnsFrom": [
+            "file_field"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.file_fields": {
+      "name": "file_fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file": {
+          "name": "file",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "file_fields_user_email_users_email_fk": {
+          "name": "file_fields_user_email_users_email_fk",
+          "tableFrom": "file_fields",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "file_fields_file_files_id_fk": {
+          "name": "file_fields_file_files_id_fk",
+          "tableFrom": "file_fields",
+          "columnsFrom": [
+            "file"
+          ],
+          "tableTo": "files",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.files": {
+      "name": "files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_by": {
+          "name": "uploaded_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "files_uploaded_by_users_email_fk": {
+          "name": "files_uploaded_by_users_email_fk",
+          "tableFrom": "files",
+          "columnsFrom": [
+            "uploaded_by"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.number_field_status": {
+      "name": "number_field_status",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_as": {
+          "name": "updated_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number_field": {
+          "name": "number_field",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "number_field_status_user_email_users_email_fk": {
+          "name": "number_field_status_user_email_users_email_fk",
+          "tableFrom": "number_field_status",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "number_field_status_number_field_number_fields_id_fk": {
+          "name": "number_field_status_number_field_number_fields_id_fk",
+          "tableFrom": "number_field_status",
+          "columnsFrom": [
+            "number_field"
+          ],
+          "tableTo": "number_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.number_fields": {
+      "name": "number_fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "number_fields_user_email_users_email_fk": {
+          "name": "number_fields_user_email_users_email_fk",
+          "tableFrom": "number_fields",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.text_field_status": {
+      "name": "text_field_status",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_as": {
+          "name": "updated_as",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text_field": {
+          "name": "text_field",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "text_field_status_user_email_users_email_fk": {
+          "name": "text_field_status_user_email_users_email_fk",
+          "tableFrom": "text_field_status",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "text_field_status_text_field_text_fields_id_fk": {
+          "name": "text_field_status_text_field_text_fields_id_fk",
+          "tableFrom": "text_field_status",
+          "columnsFrom": [
+            "text_field"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.text_fields": {
+      "name": "text_fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "module": {
+          "name": "module",
+          "type": "modules",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "text_fields_user_email_users_email_fk": {
+          "name": "text_fields_user_email_users_email_fk",
+          "tableFrom": "text_fields",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.course_handout_requests": {
+      "name": "course_handout_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "course_code": {
+          "name": "course_code",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_name": {
+          "name": "course_name",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_strength": {
+          "name": "course_strength",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "open_book": {
+          "name": "open_book",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closed_book": {
+          "name": "closed_book",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mid_sem": {
+          "name": "mid_sem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compre": {
+          "name": "compre",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "num_components": {
+          "name": "num_components",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "handout_file_path": {
+          "name": "handout_file_path",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "course_handout_requests_application_id_applications_id_fk": {
+          "name": "course_handout_requests_application_id_applications_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "tableTo": "applications",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "course_handout_requests_course_code_text_fields_id_fk": {
+          "name": "course_handout_requests_course_code_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "course_code"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_course_name_text_fields_id_fk": {
+          "name": "course_handout_requests_course_name_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "course_name"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_course_strength_text_fields_id_fk": {
+          "name": "course_handout_requests_course_strength_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "course_strength"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_open_book_text_fields_id_fk": {
+          "name": "course_handout_requests_open_book_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "open_book"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_closed_book_text_fields_id_fk": {
+          "name": "course_handout_requests_closed_book_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "closed_book"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_mid_sem_text_fields_id_fk": {
+          "name": "course_handout_requests_mid_sem_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "mid_sem"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_compre_text_fields_id_fk": {
+          "name": "course_handout_requests_compre_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "compre"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_num_components_text_fields_id_fk": {
+          "name": "course_handout_requests_num_components_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "num_components"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_frequency_text_fields_id_fk": {
+          "name": "course_handout_requests_frequency_text_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "frequency"
+          ],
+          "tableTo": "text_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        },
+        "course_handout_requests_handout_file_path_file_fields_id_fk": {
+          "name": "course_handout_requests_handout_file_path_file_fields_id_fk",
+          "tableFrom": "course_handout_requests",
+          "columnsFrom": [
+            "handout_file_path"
+          ],
+          "tableTo": "file_fields",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.phd_applications": {
+      "name": "phd_applications",
+      "schema": "",
+      "columns": {
+        "application_id": {
+          "name": "application_id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_id_1": {
+          "name": "file_id_1",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "file_id_2": {
+          "name": "file_id_2",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "file_id_3": {
+          "name": "file_id_3",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "file_id_4": {
+          "name": "file_id_4",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "file_id_5": {
+          "name": "file_id_5",
           "type": "text[]",
           "primaryKey": false,
           "notNull": true,
@@ -183,12 +1844,133 @@
         }
       },
       "indexes": {},
+      "foreignKeys": {
+        "phd_applications_email_phd_email_fk": {
+          "name": "phd_applications_email_phd_email_fk",
+          "tableFrom": "phd_applications",
+          "columnsFrom": [
+            "email"
+          ],
+          "tableTo": "phd",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.phd_config": {
+      "name": "phd_config",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.phd_courses": {
+      "name": "phd_courses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "student_email": {
+          "name": "student_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "course_names": {
+          "name": "course_names",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_grades": {
+          "name": "course_grades",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_units": {
+          "name": "course_units",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "phd_courses_student_email_phd_email_fk": {
+          "name": "phd_courses_student_email_phd_email_fk",
+          "tableFrom": "phd_courses",
+          "columnsFrom": [
+            "student_email"
+          ],
+          "tableTo": "phd",
+          "columnsTo": [
+            "email"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }
   },
-  "enums": {},
+  "enums": {
+    "public.user_type": {
+      "name": "user_type",
+      "schema": "public",
+      "values": [
+        "faculty",
+        "phd",
+        "staff"
+      ]
+    },
+    "public.modules": {
+      "name": "modules",
+      "schema": "public",
+      "values": [
+        "Conference Approval",
+        "Course Handout",
+        "PhD Progress",
+        "PhD Proposal",
+        "Question Paper",
+        "SFC Meeting",
+        "Project Info",
+        "Patent Info"
+      ]
+    }
+  },
   "schemas": {},
   "sequences": {},
   "_meta": {

@@ -1,55 +1,102 @@
-import { pgTable, text, serial, pgEnum, integer } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    text,
+    serial,
+    pgEnum,
+    integer,
+    decimal,
+    timestamp,
+} from "drizzle-orm/pg-core";
 import { boolean } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { modules } from "lib";
 
 export const modulesEnum = pgEnum("modules", modules);
 
-export const textFields = pgTable("text_fields", {
+const baseField = {
     id: serial("id").primaryKey(),
-    value: text("value").notNull(),
     module: modulesEnum("module").notNull(),
+    userEmail: text("user_email")
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
+};
+
+const baseStatus = {
+    id: serial("id").primaryKey(),
+    userEmail: text("user_email")
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
+    comments: text("comments").notNull(),
+    updatedAs: text("updated_as").notNull(),
+    status: boolean("status").notNull(),
+};
+
+export const applications = pgTable("applications", {
+    ...baseField,
+});
+
+export const textFields = pgTable("text_fields", {
+    ...baseField,
+    value: text("value").notNull(),
+});
+
+export const numberFields = pgTable("number_fields", {
+    ...baseField,
+    value: decimal("value").notNull(),
+});
+
+export const dateFields = pgTable("date_fields", {
+    ...baseField,
+    value: timestamp("value", { withTimezone: true }).notNull(),
 });
 
 export const fileFields = pgTable("file_fields", {
-    id: serial("id").primaryKey(),
+    ...baseField,
     file: integer("file")
         .notNull()
         .references(() => files.id, { onDelete: "cascade" }),
-    module: modulesEnum("module").notNull(),
+});
+
+export const applicationStatus = pgTable("application_status", {
+    ...baseStatus,
+    applicationId: integer("application_id")
+        .notNull()
+        .references(() => applications.id, { onDelete: "cascade" }),
 });
 
 export const textFieldStatus = pgTable("text_field_status", {
-    id: serial("id").primaryKey(),
-    userEmail: text("user_email")
-        .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
-    comments: text("comments").notNull(),
-    updatedAs: text("updated_as").notNull(),
+    ...baseStatus,
     textField: integer("text_field")
         .notNull()
         .references(() => textFields.id, { onDelete: "cascade" }),
-    status: boolean("status").notNull(),
+});
+
+export const numberFieldStatus = pgTable("number_field_status", {
+    ...baseStatus,
+    numberField: integer("number_field")
+        .notNull()
+        .references(() => numberFields.id, { onDelete: "cascade" }),
+});
+
+export const dateFieldStatus = pgTable("date_field_status", {
+    ...baseStatus,
+    dateField: integer("date_field")
+        .notNull()
+        .references(() => dateFields.id, { onDelete: "cascade" }),
 });
 
 export const fileFieldStatus = pgTable("file_field_status", {
-    id: serial("id").primaryKey(),
-    userEmail: text("user_email")
-        .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
-    comments: text("comments").notNull(),
-    updatedAs: text("updated_as").notNull(),
+    ...baseStatus,
     fileField: integer("file_field")
         .notNull()
         .references(() => fileFields.id, { onDelete: "cascade" }),
-    status: boolean("status").notNull(),
 });
 
 export const files = pgTable("files", {
     id: serial("id").primaryKey(),
     filePath: text("file_path").notNull(),
-    created_at: text("created_at").notNull(),
-    uploaded_by: text("uploaded_by")
+    createdAt: text("created_at").notNull(),
+    uploadedBy: text("uploaded_by")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
 });
