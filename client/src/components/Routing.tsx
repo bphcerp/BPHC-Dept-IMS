@@ -1,7 +1,9 @@
 import { useAuth } from "@/hooks/Auth";
 import AdminLayout from "@/layouts/Admin";
 import QpReviewLayout from "@/layouts/QpReview";
+import CourseHandoutLayout from "@/layouts/CourseHandoutLayout";
 import Admin from "@/views/Admin";
+import FacultyView from "@/views/CourseHandouts/Faculty/FacultyView";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
@@ -9,7 +11,7 @@ import RoleDetailsView from "@/views/Admin/Roles/[role]";
 import Home from "@/views/Home";
 import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import { permissions } from "lib";
-import { Computer, FileText } from "lucide-react";
+import { Computer, FileText,BookOpen } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 const adminModulePermissions = [
@@ -35,6 +37,11 @@ const Routing = () => {
       icon: <FileText />,
       url: "/qpReview",
       requiredPermissions: qpReviewModulePermissions,
+    },
+    {
+      title: "Course Handouts",
+      icon: <BookOpen />,
+      url: "/handouts",
     },
   ];
 
@@ -97,6 +104,12 @@ const Routing = () => {
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
               </Route>
             )}
+            {checkAccessAnyOne(qpReviewModulePermissions) && (
+              <Route path="/handouts" element={<CourseHandoutLayout />}>
+                <Route index element={<Navigate to="/handouts/faculty" />} />
+                <Route path="faculty" element={<FacultyView />} />
+              </Route>
+            )}            
           </>
         )}
       </Routes>
