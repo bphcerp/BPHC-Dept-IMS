@@ -88,28 +88,28 @@ export type RenameRoleBody = z.infer<typeof renameRoleBodySchema>;
 export const editDetailsBodySchema = z.intersection(
     z.object({
         email: z.string().email(),
-        name: z.string().trim().nonempty().nullish(),
-        phone: z.string().trim().nonempty().nullish(),
-        department: z.string().trim().nonempty().nullish(),
+        name: z.string().trim().nonempty().optional(),
+        phone: z.string().trim().nonempty().optional(),
+        department: z.string().trim().nonempty().optional(),
     }),
     z.discriminatedUnion("type", [
         z.object({
             type: z.literal(userTypes[0]), // Faculty
-            designation: z.string().trim().array().nullish(),
-            room: z.string().trim().nullish(),
-            psrn: z.string().trim().nonempty().nullish(),
+            designation: z.string().trim().array().optional(),
+            room: z.string().trim().optional(),
+            psrn: z.string().trim().nonempty().optional(),
         }),
         z.object({
             type: z.literal(userTypes[1]), // PhD
-            idNumber: z.string().trim().nonempty().nullish(),
-            erpId: z.string().trim().nonempty().nullish(),
-            instituteEmail: z.string().email().nullish(),
-            mobile: z.string().trim().nonempty().nullish(),
-            personalEmail: z.string().email().nullish(),
+            idNumber: z.string().trim().nonempty().optional(),
+            erpId: z.string().trim().nonempty().optional(),
+            instituteEmail: z.string().email().optional(),
+            mobile: z.string().trim().nonempty().optional(),
+            personalEmail: z.string().email().optional(),
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
-            designation: z.string().trim().array().nullish(),
+            designation: z.string().trim().array().optional(),
         }),
     ])
 );
