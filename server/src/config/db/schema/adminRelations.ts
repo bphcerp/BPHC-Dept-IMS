@@ -1,7 +1,18 @@
 import { relations } from "drizzle-orm";
 import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
-import { fileFieldStatus, files, textFieldStatus } from "./form.ts";
-import { courseHandoutRequests } from "./handout.ts";
+import {
+    applications,
+    applicationStatus,
+    dateFields,
+    dateFieldStatus,
+    fileFields,
+    fileFieldStatus,
+    files,
+    numberFields,
+    numberFieldStatus,
+    textFields,
+    textFieldStatus,
+} from "./form.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -22,21 +33,38 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         references: [staff.email],
         relationName: "staff",
     }),
-    textFieldStatus: one(textFieldStatus, {
-        fields: [users.email],
-        references: [textFieldStatus.userEmail],
+    applications: many(applications, {
+        relationName: "applications",
+    }),
+    applicationStatuses: many(applicationStatus, {
+        relationName: "applicationStatusUser",
+    }),
+    textFields: many(textFields, {
+        relationName: "textFieldsUser",
+    }),
+    numberFileds: many(numberFields, {
+        relationName: "numberFieldsUser",
+    }),
+    dateFields: many(dateFields, {
+        relationName: "dateFieldsUser",
+    }),
+    fileFields: many(fileFields, {
+        relationName: "fileFieldsUser",
+    }),
+    textFieldStatuses: many(textFieldStatus, {
         relationName: "textFieldStatus",
     }),
-    fileFieldStatus: one(fileFieldStatus, {
-        fields: [users.email],
-        references: [fileFieldStatus.userEmail],
+    numberFieldStatuses: many(numberFieldStatus, {
+        relationName: "numberFieldStatus",
+    }),
+    dateFieldStatuses: many(dateFieldStatus, {
+        relationName: "dateFieldStatus",
+    }),
+    fileFieldStatuses: many(fileFieldStatus, {
         relationName: "fileFieldStatus",
     }),
     files: many(files, {
         relationName: "files",
-    }),
-    courseHandoutRequests: many(courseHandoutRequests, {
-        relationName: "handoutUserEmail",
     }),
 }));
 

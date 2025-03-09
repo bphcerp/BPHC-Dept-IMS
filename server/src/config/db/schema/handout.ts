@@ -1,12 +1,11 @@
-import { pgTable, text, serial, integer } from "drizzle-orm/pg-core";
-import { users } from "./admin.ts";
-import { textFields, fileFields } from "./form.ts";
+import { pgTable, serial, integer } from "drizzle-orm/pg-core";
+import { textFields, fileFields, applications } from "./form.ts";
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
-    userEmail: text("user_email")
+    applicationId: integer("application_id")
         .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
+        .references(() => applications.id, { onDelete: "cascade" }),
     courseCode: integer("course_code").references(() => textFields.id, {
         onDelete: "set null",
     }),
@@ -34,7 +33,10 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     frequency: integer("frequency").references(() => textFields.id, {
         onDelete: "set null",
     }),
-    handoutFilePath: integer("handout_file_path").references(() => fileFields.id, {
-        onDelete: "set null",
-    }),
+    handoutFilePath: integer("handout_file_path").references(
+        () => fileFields.id,
+        {
+            onDelete: "set null",
+        }
+    ),
 });

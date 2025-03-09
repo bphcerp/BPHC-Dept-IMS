@@ -1,11 +1,11 @@
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import {
   ACCESS_TOKEN_KEY,
   BASE_API_URL,
   LOGIN_ENDPOINT,
   REFRESH_ENDPOINT,
 } from "@/lib/constants";
-let isRefreshing = false;
+
 let refreshSubscribers: ((newToken: string) => void)[] = [];
 
 const onRefresh = (token: string) => {
@@ -13,10 +13,15 @@ const onRefresh = (token: string) => {
   refreshSubscribers = [];
 };
 
-const api = axios.create({
+interface CustomAxiosInstance extends AxiosInstance {
+  isRefreshing?: boolean;
+}
+
+const api: CustomAxiosInstance = axios.create({
   baseURL: BASE_API_URL,
   withCredentials: true,
 });
+api.isRefreshing = false;
 
 api.interceptors.request.use(
   (config) => {
@@ -49,25 +54,25 @@ api.interceptors.response.use(
           originalRequest.url !== REFRESH_ENDPOINT &&
           originalRequest.url !== LOGIN_ENDPOINT
         ) {
-          if (!isRefreshing) {
-            isRefreshing = true;
+          if (!api.isRefreshing) {
+            api.isRefreshing = true;
             originalRequest._retried = true;
             try {
-              const response = await api.post<{ token: string }>(
-                REFRESH_ENDPOINT
+              const response = await axios.post<{ token: string }>(
+                BASE_API_URL + REFRESH_ENDPOINT,
+                undefined,
+                { withCredentials: true }
               );
               const accessToken = response.data.token;
               localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-
               onRefresh(accessToken);
-              isRefreshing = false;
-
+              api.isRefreshing = false;
               originalRequest.headers["Authorization"] =
                 `Bearer ${accessToken}`;
               return api(originalRequest);
             } catch (error) {
               localStorage.removeItem(ACCESS_TOKEN_KEY);
-              isRefreshing = false;
+              api.isRefreshing = false;
               refreshSubscribers = [];
               window.location.reload();
               return Promise.reject(error as Error);

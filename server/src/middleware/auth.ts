@@ -3,13 +3,18 @@ import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { matchWildcard } from "@/lib/auth/index.ts";
+import { authUtils, permissions } from "lib";
+const permissionsMap: Record<string, string> = permissions;
 
 /**
- * Middleware function to check if a user has access to a given operation.
- * If the operation is not allowed, it will return a 403 Forbidden error.
- * @param requiredOperation - The operation to check access for.
- * @returns Express middleware function.
+ * Middleware to check if the user has access to a specific operation.
+ *
+ * @param {string} [requiredOperation] - The operation that needs to be checked for access. If not provided, it will be derived from the request's base URL.
+ * @returns {Function} Middleware function that checks user access.
+ *
+ * @throws {HttpError} If the user is unauthenticated, an error with status code 401 (UNAUTHORIZED) is thrown.
+ * @throws {HttpError} If no permissions are found for the route, an error with status code 500 (INTERNAL_SERVER_ERROR) is thrown.
+ * @throws {HttpError} If the user does not have sufficient permissions, an error with status code 403 (FORBIDDEN) is thrown.
  */
 export function checkAccess(requiredOperation?: string) {
     return (req: Request, _res: Response, next: NextFunction) => {
@@ -18,35 +23,30 @@ export function checkAccess(requiredOperation?: string) {
                 new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated")
             );
         }
-        if (!requiredOperation) return next();
-        const access = req.user.operations as {
-            allowed: string[];
-            disallowed: string[];
-        };
-        if (
-            access.disallowed.some((op) => matchWildcard(requiredOperation, op))
-        ) {
+        if (!requiredOperation)
+            requiredOperation = permissionsMap[req.baseUrl.slice(4)];
+        if (!requiredOperation)
+            return next(
+                new HttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "An error occurred",
+                    "No permissions found for this route"
+                )
+            );
+        const allowed = authUtils.checkAccess(
+            requiredOperation,
+            req.user.permissions
+        );
+        if (!allowed) {
             return next(
                 new HttpError(
                     HttpCode.FORBIDDEN,
                     "Operation not allowed",
-                    "Explicitly disallowed"
+                    "Insufficient permissions"
                 )
             );
         }
-        if (
-            access.allowed.includes("*") ||
-            access.allowed.some((op) => matchWildcard(requiredOperation, op))
-        )
-            return next();
-
-        return next(
-            new HttpError(
-                HttpCode.FORBIDDEN,
-                "Operation not allowed",
-                "Insufficient permissions"
-            )
-        );
+        return next();
     };
 }
 
@@ -79,11 +79,10 @@ export const authMiddleware = (
         }
         const jwtPayloadSchema = z.object({
             email: z.string(),
-            operations: z.object({
+            permissions: z.object({
                 allowed: z.array(z.string()),
                 disallowed: z.array(z.string()),
             }),
-            iat: z.number(),
             sessionExpiry: z.number(),
         });
         const parsed = jwtPayloadSchema.safeParse(decoded);

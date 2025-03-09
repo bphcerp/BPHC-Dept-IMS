@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("admin"),
+    checkAccess(),
     asyncHandler(async (req, res, _) => {
         const { q: searchQuery } =
             adminSchemas.permissionSearchQuerySchema.parse(req.query);
