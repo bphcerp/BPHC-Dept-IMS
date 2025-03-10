@@ -9,7 +9,7 @@ import { eq, isNull, or } from "drizzle-orm";
 
 const router = express.Router();
 
-interface resultType {
+interface ResultType {
     applicationId: number;
     status: string;
     courseName: string;
@@ -40,7 +40,7 @@ router.get(
                 )
             );
 
-        const results: resultType[] = [];
+        const results: ResultType[] = [];
         for (const application of applicationResults) {
             const courseNameId =
                 application.course_handout_requests?.courseName;
