@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { BookOpen } from "lucide-react";
+import { BookLockIcon, BookOpen } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const CourseHandoutLayout = () => {
@@ -14,6 +14,11 @@ const CourseHandoutLayout = () => {
                 title: "Faculty View", 
                 icon: <BookOpen />,
                 url: "/handouts/faculty",
+              },
+              {
+                title: "DCA Member View", 
+                icon: <BookLockIcon/>,
+                url: "/handouts/DCA",
               },
             ],
           },

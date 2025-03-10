@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,25 +11,27 @@ import FileUploader from "@/components/coursehandouts/FileUploader";
 const schema = z.object({
   courseCode: z.string().nonempty("Course Code is required"),
   courseName: z.string().nonempty("Course Name is required"),
-  openBookPercentage: z.string().nonempty("Open Book % is required"),
-  closedBookPercentage: z.string().nonempty("Closed Book % is required"),
-  midsemesterWeightage: z.string().nonempty("Midsemester Weightage is required"),
-  comprehensiveWeightage: z.string().nonempty("Comprehensive Weightage is required"),
+  openBook: z.string().nonempty("Open Book % is required"),
+  closedBook: z.string().nonempty("Closed Book % is required"),
+  midSem: z.string().nonempty("Midsemester Weightage is required"),
+  compre: z.string().nonempty("Comprehensive Weightage is required"),
+  frequency: z.string().nonempty("Frequency is required"),
+  numberOfComponents: z.string().nonempty("Number of Components is required"),
   approximateStrength: z.string().nonempty("Approximate Course Strength is required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
-
-
 const fieldConfigs = [
-  {name: "courseCode",label: "Course Code",placeholder: "e.g. CS101",type: "text",},
-  {name: "courseName",label: "Course Name",placeholder: "e.g. Computer Programming",type: "text",},
-  {name: "openBookPercentage",label: "Open Book Percentage",placeholder: "e.g. 30",type: "text",},
-  {name: "closedBookPercentage",label: "Closed Book Percentage",placeholder: "e.g. 70",type: "text",},
-  {name: "midsemesterWeightage",label: "Midsemester Weightage (in %)",placeholder: "e.g. 30",type: "text",},
-  {name: "comprehensiveWeightage",label: "Comprehensive Weightage (in %)",placeholder: "e.g. 70",type: "text",},
-  {name: "approximateStrength",label: "Approximate Course Strength",placeholder: "e.g. 120",type: "number",},
+  { name: "courseCode", label: "Course Code", placeholder: "e.g. CS101", type: "text" },
+  { name: "courseName", label: "Course Name", placeholder: "e.g. Computer Programming", type: "text" },
+  { name: "openBook", label: "Open Book Percentage", placeholder: "e.g. 30", type: "text" },
+  { name: "closedBook", label: "Closed Book Percentage", placeholder: "e.g. 70", type: "text" },
+  { name: "midSem", label: "Midsemester Weightage (in %)", placeholder: "e.g. 30", type: "text" },
+  { name: "compre", label: "Comprehensive Weightage (in %)", placeholder: "e.g. 70", type: "text" },
+  { name: "frequency", label: "Frequency", placeholder: "e.g. 2", type: "text" },
+  { name: "numberOfComponents", label: "Number of Components", placeholder: "e.g. 3", type: "text" },
+  { name: "approximateStrength", label: "Approximate Course Strength", placeholder: "e.g. 120", type: "text" },
 ];
 
 export default function CourseHandouts() {
@@ -40,10 +42,12 @@ export default function CourseHandouts() {
     defaultValues: {
       courseCode: "",
       courseName: "",
-      openBookPercentage: "",
-      closedBookPercentage: "",
-      midsemesterWeightage: "",
-      comprehensiveWeightage: "",
+      openBook: "",
+      closedBook: "",
+      midSem: "",
+      compre: "",
+      frequency: "",
+      numberOfComponents: "",
       approximateStrength: "",
     },
   });

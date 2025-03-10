@@ -4,6 +4,7 @@ import QpReviewLayout from "@/layouts/QpReview";
 import CourseHandoutLayout from "@/layouts/CourseHandoutLayout";
 import Admin from "@/views/Admin";
 import FacultyView from "@/views/CourseHandouts/Faculty/FacultyView";
+import { DcaMemberView } from "@/views/CourseHandouts/DcaMember/DcaMemberview";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
@@ -108,6 +109,7 @@ const Routing = () => {
               <Route path="/handouts" element={<CourseHandoutLayout />}>
                 <Route index element={<Navigate to="/handouts/faculty" />} />
                 <Route path="faculty" element={<FacultyView />} />
+                <Route path="DCA" element={<DcaMemberView />} />
               </Route>
             )}            
           </>
