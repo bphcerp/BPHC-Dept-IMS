@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer , varchar, uuid} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -52,4 +52,13 @@ export const phdConfig = pgTable("phd_config", {
     key: text("key").notNull().unique(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const phdDocuments = pgTable("phdDocuments", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: varchar("email", { length: 255 }).notNull(),
+    fileUrl: text("fileUrl").notNull(),
+    formName: varchar("formName", { length: 255 }).notNull(),
+    applicationType: varchar("applicationType", { length: 100 }).notNull(),
+    uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });
