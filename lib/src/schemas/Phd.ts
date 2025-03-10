@@ -1,11 +1,23 @@
 import z from "zod";
 
+export const updateExamStatusSchema = z.array(
+    z.object({
+        email: z.string().email(),
+        ifPass: z.boolean(),
+    })
+);
+export type UpdateExamStatusSchemaBody = z.infer<typeof updateExamStatusSchema>;
 
 export const updateQualifyingExamStatusSchema = z.record(z.string(), z.enum(["pass", "fail"]));
 
 export type UpdateQualifyingExamStatusBody = z.infer<typeof updateQualifyingExamStatusSchema>;
 
-export const updateQualificationDateSchema = z.record(z.string(), z.string().datetime());
+export const updateQualificationDateSchema = z.array(
+    z.object({
+        email: z.string().email(),
+        qualificationDate: z.string().datetime(),
+    })
+);
 
 export type UpdateQualificationDateBody = z.infer<typeof updateQualificationDateSchema>;
 
