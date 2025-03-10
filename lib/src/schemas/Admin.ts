@@ -106,6 +106,7 @@ export const editDetailsBodySchema = z.intersection(
             instituteEmail: z.string().email().optional(),
             mobile: z.string().trim().nonempty().optional(),
             personalEmail: z.string().email().optional(),
+            notionalSupervisorEmail: z.string().email().optional(),
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
