@@ -23,7 +23,7 @@ type FormData = z.infer<typeof schema>;
 
 const fieldConfigs = [
   { name: "courseCode", label: "Course Code", value: "CS101" },
-  { name: "courseName", label: "Course Name", value:"Computer Programming" },
+  { name: "courseName", label: "Course Name", value: "Computer Programming" },
   { name: "openBook", label: "Open Book Percentage", value: "30" },
   { name: "closedBook", label: "Closed Book Percentage", value: "70" },
   { name: "midSem", label: "Midsemester Weightage (in %)", value: "30" },
@@ -53,14 +53,14 @@ export const DcaMemberView = () => {
   const handleApprovalChange = (fieldName: string, value: string) => {
     setApprovals(prev => ({
       ...prev,
-      [fieldName]: value === "yes"
+      [fieldName]: value === "yes",
     }));
   };
 
   const handleCommentChange = (fieldName: string, value: string) => {
     setComments(prev => ({
       ...prev,
-      [fieldName]: value
+      [fieldName]: value,
     }));
   };
 
@@ -83,12 +83,7 @@ export const DcaMemberView = () => {
       </h1>
       <FormProvider {...methods}>
         <Form {...methods}>
-          <form
-            onSubmit={(e) => {
-              void methods.handleSubmit(onSubmit)(e);
-            }}
-            className="space-y-6"
-          >
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             {fieldConfigs.map((field) => (
               <div key={field.name} className="flex flex-col sm:flex-row items-start gap-4 p-4">
                 <div className="w-full sm:w-2/5">
@@ -96,7 +91,9 @@ export const DcaMemberView = () => {
                   <div className="p-2 bg-gray-100 rounded">{field.value}</div>
                 </div>
                 <div className="w-full sm:w-2/5">
-                  <label htmlFor={`comment-${field.name}`} className="block font-medium mb-1">Comments</label>
+                  <label htmlFor={`comment-${field.name}`} className="block font-medium mb-1">
+                    Comments
+                  </label>
                   <Input
                     id={`comment-${field.name}`}
                     placeholder="Add your comments here..."
@@ -107,17 +104,15 @@ export const DcaMemberView = () => {
                 </div>
                 <div className="w-full sm:w-1/5">
                   <label className="block font-medium mb-1">Approve</label>
-                  <div className="flex items-center space-x-2">
-                    <select 
-                      id={`approval-${field.name}`}
-                      value={approvals[field.name] ? "yes" : "no"}
-                      onChange={(e) => handleApprovalChange(field.name, e.target.value)}
-                      className="p-2 border rounded h-[38px] w-full"
-                    >
-                      <option value="no">No</option>
-                      <option value="yes">Yes</option>
-                    </select>
-                  </div>
+                  <select
+                    id={`approval-${field.name}`}
+                    value={approvals[field.name] ? "yes" : "no"}
+                    onChange={(e) => handleApprovalChange(field.name, e.target.value)}
+                    className="p-2 border rounded h-[38px] w-full"
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
                 </div>
               </div>
             ))}
@@ -126,20 +121,17 @@ export const DcaMemberView = () => {
               <div>
                 <label className="block font-medium mb-1">Course Handout Document</label>
                 <div className="mt-1 p-2 bg-gray-100 rounded">
-                  <a className="text-blue-500 hover:underline">View Course Handout.pdf</a>
+                  <a href="#" className="text-blue-600 hover:text-blue-800">View Course Handout.pdf</a>
                 </div>
               </div>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-6 py-2"
-              >
-                {isSubmitting ? (
-                  <LoadingSpinner className="h-5 w-5" />
-                ) : (
-                  "SUBMIT REVIEW"
-                )}
-              </Button>
+              <div className="flex items-center gap-4">
+                <Button type="button" variant="outline" className="px-6 py-2">
+                  Reject
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="px-6 py-2">
+                  {isSubmitting ? <LoadingSpinner className="h-5 w-5" /> : "Approve"}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
