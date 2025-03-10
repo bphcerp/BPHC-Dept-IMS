@@ -20,17 +20,30 @@ router.post(
                 : parsed.type === userType.enumValues[1]
                   ? phd
                   : staff;
-        const updated = await db
-            .update(toUpdate)
-            .set({
-                ...parsed,
-            })
-            .where(eq(toUpdate.email, parsed.email))
-            .returning();
-        if (updated.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
+        try {
+            const updated = await db
+                .update(toUpdate)
+                .set({
+                    ...parsed,
+                })
+                .where(eq(toUpdate.email, parsed.email))
+                .returning();
+            if (updated.length === 0) throw new Error("User not found");
+            res.status(200).json(updated[0]);
+        } catch (e) {
+            if (
+                (e as Error)?.message ===
+                'insert or update on table "phd" violates foreign key constraint "phd_notional_supervisor_email_users_email_fk"'
+            ) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Invalid Notional Supervisor Email"
+                    )
+                );
+            }
+            return next(e);
         }
-        res.status(200).json(updated[0]);
     })
 );
 

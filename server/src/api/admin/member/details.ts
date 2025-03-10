@@ -32,6 +32,7 @@ router.get(
                         instituteEmail: true,
                         mobile: true,
                         personalEmail: true,
+                        notionalSupervisorEmail: true,
                     },
                 },
                 staff: true,
