@@ -27,6 +27,7 @@ import api from "@/lib/axios-instance";
 import { adminSchemas } from "lib";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isAxiosError } from "axios";
 
 interface UserDetailsProps {
   data: adminSchemas.MemberDetailsResponse;
@@ -44,6 +45,7 @@ const editableFields = [
   "instituteEmail",
   "mobile",
   "personalEmail",
+  "notionalSupervisorEmail",
 ] as const;
 
 export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
@@ -115,13 +117,18 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       );
       return { previousData };
     },
-    onError: (_err, _variables, context) => {
+    onError: (err, _variables, context) => {
       // If mutation fails, use context from onMutate to rollback
       queryClient.setQueryData<adminSchemas.MemberDetailsResponse>(
         ["member", data.email],
         context?.previousData
       );
-      toast.error("An error occurred while editing details");
+      const errorMessage = "An error occurred while editing details";
+      toast.error(
+        isAxiosError(err)
+          ? ((err.response?.data as string) ?? errorMessage)
+          : errorMessage
+      );
     },
     onSettled: () => {
       void queryClient.invalidateQueries(["member", data.email]);
