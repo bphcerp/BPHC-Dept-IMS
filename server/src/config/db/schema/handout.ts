@@ -1,5 +1,12 @@
-import { pgTable, serial, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, pgEnum } from "drizzle-orm/pg-core";
 import { textFields, fileFields, applications } from "./form.ts";
+
+export const statusEnum = pgEnum("status", [
+    "Not Verified",
+    "Marked for Resubmission",
+    "Verification Pending",
+    "Verified",
+]);
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
@@ -39,4 +46,5 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
             onDelete: "set null",
         }
     ),
+    status: statusEnum("status").default("Not Verified"),
 });
