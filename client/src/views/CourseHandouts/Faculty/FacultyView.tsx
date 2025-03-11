@@ -16,7 +16,7 @@ const schema = z.object({
   midSem: z.string().nonempty("Midsemester Weightage is required"),
   compre: z.string().nonempty("Comprehensive Weightage is required"),
   frequency: z.string().nonempty("Frequency is required"),
-  numberOfComponents: z.string().nonempty("Number of Components is required"),
+  numComponents: z.string().nonempty("Number of Components is required"),
   approximateStrength: z.string().nonempty("Approximate Course Strength is required"),
 });
 
@@ -25,13 +25,13 @@ type FormData = z.infer<typeof schema>;
 const fieldConfigs = [
   { name: "courseCode", label: "Course Code", placeholder: "e.g. CS101", type: "text" },
   { name: "courseName", label: "Course Name", placeholder: "e.g. Computer Programming", type: "text" },
-  { name: "openBook", label: "Open Book Percentage", placeholder: "e.g. 30", type: "text" },
-  { name: "closedBook", label: "Closed Book Percentage", placeholder: "e.g. 70", type: "text" },
-  { name: "midSem", label: "Midsemester Weightage (in %)", placeholder: "e.g. 30", type: "text" },
-  { name: "compre", label: "Comprehensive Weightage (in %)", placeholder: "e.g. 70", type: "text" },
-  { name: "frequency", label: "Frequency", placeholder: "e.g. 2", type: "text" },
-  { name: "numberOfComponents", label: "Number of Components", placeholder: "e.g. 3", type: "text" },
-  { name: "approximateStrength", label: "Approximate Course Strength", placeholder: "e.g. 120", type: "text" },
+  { name: "openBook", label: "Open Book Percentage", placeholder: "e.g. 30", type: "number" },
+  { name: "closedBook", label: "Closed Book Percentage", placeholder: "e.g. 70", type: "number" },
+  { name: "midSem", label: "Midsemester Weightage (in %)", placeholder: "e.g. 30", type: "number" },
+  { name: "compre", label: "Comprehensive Weightage (in %)", placeholder: "e.g. 70", type: "number" },
+  { name: "frequency", label: "Frequency", placeholder: "e.g. 2", type: "number" },
+  { name: "numComponents", label: "Number of Components", placeholder: "e.g. 3", type: "number" },
+  { name: "approximateStrength", label: "Approximate Course Strength", placeholder: "e.g. 120", type: "number" },
 ];
 
 export default function CourseHandouts() {
@@ -47,7 +47,7 @@ export default function CourseHandouts() {
       midSem: "",
       compre: "",
       frequency: "",
-      numberOfComponents: "",
+      numComponents: "",
       approximateStrength: "",
     },
   });
