@@ -13,6 +13,7 @@ import Home from "@/views/Home";
 import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import { permissions } from "lib";
 import { Computer, FileText,BookOpen } from "lucide-react";
+import { HodView } from "@/views/CourseHandouts/HOD/HODview";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 const adminModulePermissions = [
@@ -110,6 +111,7 @@ const Routing = () => {
                 <Route index element={<Navigate to="/handouts/faculty" />} />
                 <Route path="faculty" element={<FacultyView />} />
                 <Route path="DCA" element={<DcaMemberView />} />
+                <Route path="HOD" element={<HodView />} />
               </Route>
             )}            
           </>
