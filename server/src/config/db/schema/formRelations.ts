@@ -179,7 +179,7 @@ export const fileFieldStatusFormsRelations = relations(
 
 export const filesFormsRelations = relations(files, ({ one, many }) => ({
     user: one(users, {
-        fields: [files.uploadedBy],
+        fields: [files.userEmail],
         references: [users.email],
         relationName: "files",
     }),

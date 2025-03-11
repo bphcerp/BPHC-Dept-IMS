@@ -1,6 +1,6 @@
 {
-  "id": "b8ee97be-354a-46c9-80d0-f05160f1c7cf",
-  "prevId": "543d4b33-8ab8-451e-843a-a8fdf56b9760",
+  "id": "9654b3d4-27e5-44d2-96fe-5eab8280eba3",
+  "prevId": "19f76a3f-f997-480f-b5fe-edb63f99de31",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -985,16 +985,37 @@
         },
         "module": {
           "name": "module",
-          "type": "modules",
+          "type": "modules_enum",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_email": {
           "name": "user_email",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "application_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -1101,10 +1122,16 @@
         },
         "module": {
           "name": "module",
-          "type": "modules",
+          "type": "modules_enum",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_email": {
           "name": "user_email",
@@ -1223,10 +1250,16 @@
         },
         "module": {
           "name": "module",
-          "type": "modules",
+          "type": "modules_enum",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_email": {
           "name": "user_email",
@@ -1283,32 +1316,64 @@
           "primaryKey": true,
           "notNull": true
         },
+        "module": {
+          "name": "module",
+          "type": "modules_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_name": {
+          "name": "original_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mimetype": {
+          "name": "mimetype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "file_path": {
           "name": "file_path",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
-          "type": "text",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
-        },
-        "uploaded_by": {
-          "name": "uploaded_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "files_uploaded_by_users_email_fk": {
-          "name": "files_uploaded_by_users_email_fk",
+        "files_user_email_users_email_fk": {
+          "name": "files_user_email_users_email_fk",
           "tableFrom": "files",
           "columnsFrom": [
-            "uploaded_by"
+            "user_email"
           ],
           "tableTo": "users",
           "columnsTo": [
@@ -1406,10 +1471,16 @@
         },
         "module": {
           "name": "module",
-          "type": "modules",
+          "type": "modules_enum",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_email": {
           "name": "user_email",
@@ -1528,10 +1599,16 @@
         },
         "module": {
           "name": "module",
-          "type": "modules",
+          "type": "modules_enum",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_email": {
           "name": "user_email",
@@ -1956,8 +2033,17 @@
         "staff"
       ]
     },
-    "public.modules": {
-      "name": "modules",
+    "public.application_status_enum": {
+      "name": "application_status_enum",
+      "schema": "public",
+      "values": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    },
+    "public.modules_enum": {
+      "name": "modules_enum",
       "schema": "public",
       "values": [
         "Conference Approval",
