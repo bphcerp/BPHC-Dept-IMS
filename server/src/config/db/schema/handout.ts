@@ -2,9 +2,9 @@ import { pgTable, serial, integer, pgEnum } from "drizzle-orm/pg-core";
 import { textFields, fileFields, applications } from "./form.ts";
 
 export const statusEnum = pgEnum("status", [
-    "Not Verified",
-    "Marked for Resubmission",
     "Verification Pending",
+    "Marked for Resubmission",
+    "Verification in Progress",
     "Verified",
 ]);
 
