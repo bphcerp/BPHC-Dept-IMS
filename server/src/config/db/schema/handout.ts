@@ -46,5 +46,5 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
             onDelete: "set null",
         }
     ),
-    status: statusEnum("status").default("Not Verified"),
+    status: statusEnum("status").default("Verification Pending"),
 });
