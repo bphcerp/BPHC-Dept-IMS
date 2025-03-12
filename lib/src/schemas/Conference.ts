@@ -25,3 +25,7 @@ export const applyForConferenceBodySchema = z.object({
     accomodationReimbursement: z.coerce.number().positive().finite().optional(),
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
+
+export const finalizeApproveApplicationSchema = z.object({
+    approve: z.boolean(),
+});
