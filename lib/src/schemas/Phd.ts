@@ -26,7 +26,7 @@ export const updateFinalDacSchema = z.object({
 });
 export type UpdateFinalDacBody = z.infer<typeof updateFinalDacSchema>;
 
-export const uploadApplicationSchema = z.object({
+export const    uploadApplicationSchema = z.object({
     fileUrl: z.string().url(),
     formName: z.string().min(1),
     applicationType: z.string().min(1),

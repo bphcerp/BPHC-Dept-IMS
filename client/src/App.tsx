@@ -70,12 +70,9 @@ const App = () => {
                         path="update-qualifying-exam-deadline"
                         element={<UpdateQualifyingExamDeadline />}
                       ></Route>
-                      <Route path="phd-student" element={<PhDStudentLayout />}>
-                        <Route
-                          path="form-deadline"
-                          element={<FormDeadline />}
-                        />
-                      </Route>
+                    </Route>
+                    <Route path="phd-student" element={<PhDStudentLayout />}>
+                      <Route path="form-deadline" element={<FormDeadline />} />
                     </Route>
                   </Route>
                 </Route>
