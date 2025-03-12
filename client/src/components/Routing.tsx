@@ -12,6 +12,8 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import { permissions } from "lib";
 import { Computer, FileText } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import ConferenceLayout from "@/layouts/Conference";
+import ConferenceApplyView from "@/views/Conference/Apply";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -35,6 +37,12 @@ const Routing = () => {
       title: "QP Review",
       icon: <FileText />,
       url: "/qpReview",
+      requiredPermissions: qpReviewModulePermissions,
+    },
+    {
+      title: "Conference Approval",
+      icon: <FileText />,
+      url: "/conference",
       requiredPermissions: qpReviewModulePermissions,
     },
   ];
@@ -96,6 +104,13 @@ const Routing = () => {
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
                 <Route path="dcarequests" element={<DCARequestsView />} />
+              </Route>
+            )}
+
+            {checkAccessAnyOne([]) && (
+              <Route path="/conference" element={<ConferenceLayout />}>
+                <Route index element={<Navigate to="/conference/apply" />} />
+                <Route path="apply" element={<ConferenceApplyView />} />
               </Route>
             )}
           </>
