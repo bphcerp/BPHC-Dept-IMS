@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const applyForConferenceBodySchema = z.object({
+export const createApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
     eventName: z.string().nonempty(),
@@ -25,3 +25,5 @@ export const applyForConferenceBodySchema = z.object({
     accomodationReimbursement: z.coerce.number().positive().finite().optional(),
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
+
+export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;

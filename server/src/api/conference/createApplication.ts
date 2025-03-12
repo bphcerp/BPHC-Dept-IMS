@@ -35,7 +35,7 @@ router.post(
         });
     }),
     asyncHandler(async (req, res) => {
-        const body = conferenceSchemas.applyForConferenceBodySchema.parse(
+        const body = conferenceSchemas.createApplicationBodySchema.parse(
             req.body
         );
         await db.transaction(async (tx) => {
