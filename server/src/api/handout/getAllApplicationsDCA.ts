@@ -1,11 +1,9 @@
 import express from "express";
 import assert from "assert";
 import db from "@/config/db/index.ts";
-import { applications } from "@/config/db/schema/form.ts";
-import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { eq, inArray } from "drizzle-orm";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -15,44 +13,37 @@ router.get(
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
-        const results = await db
-            .select({
-                id: courseHandoutRequests.applicationId,
-            })
-            .from(courseHandoutRequests)
-            .leftJoin(applications, eq(applications.status, "pending"));
-
-        const data = await db.query.courseHandoutRequests.findMany({
-            with: {
-                courseCode: true,
-                courseName: true,
-                application: {
-                    with: {
-                        user: {
-                            with: {
-                                faculty: true,
-                            },
+        const applications = (
+            await db.query.applications.findMany({
+                where({ status, module }, { and, eq }) {
+                    return and(eq(module, modules[1]), eq(status, "pending"));
+                },
+                with: {
+                    courseHandoutRequests: {
+                        with: {
+                            courseCode: true,
+                            courseName: true,
+                        },
+                    },
+                    user: {
+                        with: {
+                            faculty: true,
                         },
                     },
                 },
-            },
-            where: inArray(
-                courseHandoutRequests.id,
-                results.map((el) => el.id)
-            ),
-        });
-
-        const apps = data.map((app) => {
+            })
+        ).map((app) => {
+            const courseHandoutRequest = app.courseHandoutRequests[0];
             return {
-                id: app.applicationId,
-                courseCode: app.courseCode?.value,
-                courseName: app.courseName?.value,
-                professorName: app.application.user.faculty.name,
-                status: app.application.status,
+                id: app.id,
+                courseCode: courseHandoutRequest.courseCode?.value,
+                courseName: courseHandoutRequest.courseName?.value,
+                professorName: app.user.faculty.name,
+                status: app.status,
             };
         });
 
-        res.status(200).json({ status: true, applications: apps });
+        res.status(200).json({ success: true, applications });
     })
 );
 
