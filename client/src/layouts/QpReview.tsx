@@ -15,6 +15,11 @@ const QpReviewLayout = () => {
                 icon: <FileText />,
                 url: "/qpReview/ficSubmission",
               },
+              {
+                title: "Faculty Review",
+                icon: <FileText />,
+                url: "/qpReview/facultyReview",
+              },
             ],
           },
         ]}
