@@ -14,7 +14,7 @@ router.get(
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
-        const parsed = handoutSchemas.getApplicationFacultyBodySchema.parse(
+        const parsed = handoutSchemas.getApplicationFacultyQuerySchema.parse(
             req.query
         );
         const { applicationId } = parsed;
