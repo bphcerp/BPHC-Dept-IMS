@@ -36,6 +36,7 @@ export const PROD = parsed.NODE_ENV === "production";
 export const REFRESH_TOKEN_COOKIE = "amogus";
 export const ACCESS_TOKEN_EXPIRY = "5m";
 export const REFRESH_TOKEN_EXPIRY = "7d";
+export const FILES_DIR = path.join(import.meta.dirname ?? "", "../../files");
 
 export default {
     PROD,
