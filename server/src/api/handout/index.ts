@@ -5,4 +5,6 @@ const router = express.Router();
 
 router.use("/create", createApplication);
 router.use("/getApplicationFaculty", getApplicationFaculty);
+router.use("/getAllApplicationsDCA", getAllApplicationsDCA);
+
 export default router;
