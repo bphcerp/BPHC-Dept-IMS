@@ -1,7 +1,9 @@
 import React from "react";
 import HandoutRow from "./HandoutRow";
+import HandoutRowWithDetails from "./HandoutRowDetails";
 
-interface HandoutItem {
+export interface HandoutItem {
+  id: number;
   handoutName: string;
   professorName: string;
   status: string;
@@ -11,16 +13,20 @@ interface HandoutListProps {
   handouts: HandoutItem[];
   search: string;
   selectedStatuses: string[];
+  onViewDetails?: (handout: HandoutItem) => void;
 }
 
-function HandoutList({ handouts, search, selectedStatuses }: HandoutListProps) {
+function HandoutList({
+  handouts,
+  search,
+  selectedStatuses,
+  onViewDetails,
+}: HandoutListProps) {
   const filteredHandouts = handouts.filter((item) => {
     const matchesSearch =
       item.handoutName.toLowerCase().includes(search.toLowerCase()) ||
       item.professorName.toLowerCase().includes(search.toLowerCase());
-
     const matchesStatus = selectedStatuses.includes(item.status);
-
     return matchesSearch && matchesStatus;
   });
 
@@ -34,14 +40,24 @@ function HandoutList({ handouts, search, selectedStatuses }: HandoutListProps) {
 
   return (
     <div className="flex flex-col divide-y-2 border-t border-b border-gray-200">
-      {filteredHandouts.map((item, index) => (
-        <HandoutRow
-          key={index}
-          handoutName={item.handoutName}
-          professorName={item.professorName}
-          status={item.status}
-        />
-      ))}
+      {filteredHandouts.map((item) =>
+        onViewDetails ? (
+          <HandoutRowWithDetails
+            key={item.id}
+            handoutName={item.handoutName}
+            professorName={item.professorName}
+            status={item.status}
+            onViewDetails={() => onViewDetails(item)}
+          />
+        ) : (
+          <HandoutRow
+            key={item.id}
+            handoutName={item.handoutName}
+            professorName={item.professorName}
+            status={item.status}
+          />
+        )
+      )}
     </div>
   );
 }

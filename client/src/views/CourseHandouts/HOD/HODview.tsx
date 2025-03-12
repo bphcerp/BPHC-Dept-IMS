@@ -8,33 +8,38 @@ import HandoutList from "@/components/coursehandouts/HandoutList";
 /** Example data to demonstrate the statuses. */
 const handoutData = [
   {
+    id: 1,
     handoutName: "Handout Name",
     professorName: "Professor Name",
-    status: "Verified",
+    status: "Approved",
   },
   {
+    id: 2,
     handoutName: "Handout Name",
     professorName: "Professor Name",
-    status: "Not Verified",
+    status: "Pending",
   },
   {
+    id: 3,
     handoutName: "Handout Name",
     professorName: "Professor Name",
-    status: "Resubmission",
+    status: "Rejected",
   },
   {
+    id: 4,
     handoutName: "Handout Name",
     professorName: "Professor Another",
-    status: "Verified",
+    status: "Approved",
   },
   {
+    id: 5,
     handoutName: "Handout Name",
     professorName: "Professor Another",
-    status: "Not Verified",
+    status: "Pending",
   },
 ];
 
-const statuses = ["Verified", "Not Verified", "Resubmission"];
+const statuses = ["Approved", "Pending", "Rejected"];
 
 export const HodView = () => {
   const [search, setSearch] = useState("");
@@ -42,7 +47,7 @@ export const HodView = () => {
 
   const handleStatusChange = (values: string[]) => {
     if (values.length === 0) {
-      setSelectedStatuses(["Verified"]);
+      setSelectedStatuses(["Approved"]);
     } else {
       setSelectedStatuses(values);
     }

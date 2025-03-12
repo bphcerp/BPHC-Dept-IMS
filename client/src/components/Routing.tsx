@@ -15,6 +15,7 @@ import { permissions } from "lib";
 import { Computer, FileText,BookOpen } from "lucide-react";
 import { HodView } from "@/views/CourseHandouts/HOD/HODview";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import DCAlist from "@/views/CourseHandouts/DcaMember/DcaMemberList";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -110,7 +111,7 @@ const Routing = () => {
               <Route path="/handouts" element={<CourseHandoutLayout />}>
                 <Route index element={<Navigate to="/handouts/faculty" />} />
                 <Route path="faculty" element={<FacultyView />} />
-                <Route path="DCA" element={<DcaMemberView />} />
+                <Route path="DCA" element={<DCAlist />} />
                 <Route path="HOD" element={<HodView />} />
               </Route>
             )}            

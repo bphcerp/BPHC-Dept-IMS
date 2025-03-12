@@ -9,12 +9,11 @@ interface HandoutRowProps {
 }
 
 function HandoutRow({ handoutName, professorName, status }: HandoutRowProps) {
-  const isResubmission = status === "Resubmission";
+  const isResubmission = status === "Pending";
 
   return (
     <div className="flex items-center justify-between p-4">
       <div className="flex items-center gap-3">
-        {/* Status Icon */}
         {getStatusIcon(status)}
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
