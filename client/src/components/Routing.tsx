@@ -95,16 +95,8 @@ const Routing = () => {
                   element={<Navigate to="/qpReview/ficSubmission" />}
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
+                <Route path="dcarequests" element={<DCARequestsView />} />
               </Route>
-            )}
-            {checkAccessAnyOne(qpReviewModulePermissions) && (
-              <Route path="/qpReview" element={<QpReviewLayout />}>
-              <Route
-                index
-                element={<Navigate to="/qpReview/dcarequests" />}
-              />
-              <Route path="dcarequests" element={<DCARequestsView />} />
-            </Route>
             )}
           </>
         )}
