@@ -38,6 +38,7 @@ export default router.post(
                 qualifyingArea1,
                 qualifyingArea2,
                 numberOfQeApplication: sql`${phd.numberOfQeApplication} + 1`, 
+                qualifyingAreasUpdatedAt: new Date(),
             })
             .where(eq(phd.email, email));
 

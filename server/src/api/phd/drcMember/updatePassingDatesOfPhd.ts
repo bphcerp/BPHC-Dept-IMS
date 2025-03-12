@@ -18,25 +18,33 @@ router.patch(
             return;
         }
 
-        const updates: Record<string, string> = req.body; 
+        const updates = validationResult.data;
+        const updateQueries = [];
 
-        for (const [email, dateString] of Object.entries(updates)) {
-            const parsedDate = new Date(dateString);
-
+        for (const { email, qualificationDate } of updates) {
+            const parsedDate = new Date(qualificationDate);
             if (isNaN(parsedDate.getTime())) {
-                res.status(400).json({ success: false, error: `Invalid date format for ${email}` });
-                return;
+                continue; // Skip invalid dates
             }
 
-            await db
-                .update(phd)
-                .set({ qualificationDate: parsedDate })
-                .where(sql`${phd.email} = ${email}`);
+            updateQueries.push(
+                db
+                    .update(phd)
+                    .set({ qualificationDate: parsedDate })
+                    .where(sql`${phd.email} = ${email}`)
+            );
         }
 
-        res.status(200).json({ success: true, message: "Qualification dates updated successfully" });
+        if (updateQueries.length > 0) {
+            await Promise.all(updateQueries);
+        }
+
+        res.status(200).json({
+            success: true,
+            updatedCount: updateQueries.length,
+            message: `${updateQueries.length} qualification dates updated successfully.`,
+        });
     })
 );
-
 
 export default router;
