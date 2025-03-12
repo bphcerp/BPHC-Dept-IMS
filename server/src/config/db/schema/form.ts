@@ -11,11 +11,17 @@ import { boolean } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { modules } from "lib";
 
-export const modulesEnum = pgEnum("modules", modules);
+export const modulesEnum = pgEnum("modules_enum", modules);
+export const applicationStatusEnum = pgEnum("application_status_enum", [
+    "pending",
+    "approved",
+    "rejected",
+]);
 
 const baseField = {
     id: serial("id").primaryKey(),
     module: modulesEnum("module").notNull(),
+    fieldName: text("field_name"),
     userEmail: text("user_email")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
@@ -33,6 +39,10 @@ const baseStatus = {
 
 export const applications = pgTable("applications", {
     ...baseField,
+    status: applicationStatusEnum("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .notNull()
+        .defaultNow(),
 });
 
 export const textFields = pgTable("text_fields", {
@@ -55,6 +65,17 @@ export const fileFields = pgTable("file_fields", {
     file: integer("file")
         .notNull()
         .references(() => files.id, { onDelete: "cascade" }),
+});
+
+export const files = pgTable("files", {
+    ...baseField,
+    originalName: text("original_name"),
+    mimetype: text("mimetype"),
+    filePath: text("file_path").notNull(),
+    size: integer("size"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .notNull()
+        .defaultNow(),
 });
 
 export const applicationStatus = pgTable("application_status", {
@@ -90,13 +111,4 @@ export const fileFieldStatus = pgTable("file_field_status", {
     fileField: integer("file_field")
         .notNull()
         .references(() => fileFields.id, { onDelete: "cascade" }),
-});
-
-export const files = pgTable("files", {
-    id: serial("id").primaryKey(),
-    filePath: text("file_path").notNull(),
-    createdAt: text("created_at").notNull(),
-    uploadedBy: text("uploaded_by")
-        .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
 });
