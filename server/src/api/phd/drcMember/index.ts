@@ -6,7 +6,7 @@ import getFacultyDetails from "./getFacultyDetails.ts"
 import assignSupervisor from "./assignSupervisor.ts"
 import assignNotionalSupervisor from "./assignNotionalSupervisor.ts"
 import getQualifyingExamForm from "./getQualifyingExamForm.ts"
-import updateDeadlineRouter from "./updateDeadline.ts"
+
 import generateCourseworkForm from "./generateCourseworkForm.ts"
 import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
 import updateQePassFailStatus from "./updateQePassFailStatus.ts";
@@ -29,7 +29,6 @@ router.use('/getFacultyDetails', getFacultyDetails);
 router.use('/assignSupervisor', assignSupervisor);
 router.use('/assignNotionalSupervisor', assignNotionalSupervisor);
 router.use('/getQualifyingExamForm', getQualifyingExamForm);
-router.use('/updateDeadline', updateDeadlineRouter);
 router.use('/generateCourseworkForm', generateCourseworkForm);
 router.use('/updateQualifyingExamDeadline', updateQualifyingExamDeadline);
 router.use('/updateQePassFailStatus', updateQePassFailStatus);
