@@ -5,13 +5,14 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { handoutSchemas } from "lib";
 import { eq } from "drizzle-orm";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
     checkAccess("get-handout-faculty"),
-    asyncHandler(async (req, res, _next) => {
+    asyncHandler(async (req, res, next) => {
         assert(req.user);
 
         const parsed = handoutSchemas.getApplicationFacultyQuerySchema.parse(
@@ -38,21 +39,13 @@ router.get(
         });
 
         if (!application) {
-            res.status(404).json({
-                success: false,
-                message: "Application not found",
-            });
-            return;
+            return next( new HttpError(HttpCode.NOT_FOUND, "Application Not Found") );
         }
 
         const handoutRequest = application.courseHandoutRequests[0];
 
         if (!handoutRequest) {
-            res.status(404).json({
-                success: false,
-                message: "Course handout request not found",
-            });
-            return;
+            return next( new HttpError(HttpCode.NOT_FOUND, "Course Handout Request Not Found") );;
         }
 
         const result = {
