@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 import { SidebarMenuGroup } from "@/components/AppSidebar";
+import { ListBulletIcon } from "@radix-ui/react-icons";
 const NotionalSupervisorLayout = () => {
   const { checkAccess } = useAuth();
   const items: SidebarMenuGroup[] = [];
@@ -81,8 +82,13 @@ const NotionalSupervisorLayout = () => {
       items: [
         {
           title: "QE Form Deadline",
-          icon: <CalendarX2 />,
+          icon: <CalendarClockIcon />,
           url: "/phd/phd-student/form-deadline",
+        },
+        {
+          title: "Qualifying Exam Status",
+          icon: <ListBulletIcon />,
+          url: "/phd/phd-student/exam-status",
         },
       ],
     });
