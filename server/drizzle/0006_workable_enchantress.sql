@@ -1,0 +1,1 @@
+ALTER TABLE "file_fields" ALTER COLUMN "file" SET NOT NULL;

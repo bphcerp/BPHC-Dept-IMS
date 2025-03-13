@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ToSubmit from "@/components/qp_review/ToSubmit";
 import Submitted from "@/components/qp_review/Submitted";
+import api from "@/lib/axios-instance";
 
 const toSubmitData = [
   { course: "EEE 101", deadline: "30/11/2025" },
@@ -39,6 +40,16 @@ const FicSubmissionView = () => {
       item.status !== "New" && // Exclude "New" status from submitted
       (selectedStatuses.length === 0 || selectedStatuses.includes(item.status))
   );
+
+  // const checkBackend = async () => {
+  //   console.log("Checking backend...");
+  //   try {
+  //     const res = await api.post("qpReview/dca/createReq");
+  //     console.log(res.data);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   return (
     <div className="flex w-full flex-col gap-4 px-10 pt-4">

@@ -15,6 +15,48 @@
       "when": 1741695266298,
       "tag": "0001_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1741888244420,
+      "tag": "0002_dark_wraith",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1741890433799,
+      "tag": "0003_late_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1741896181631,
+      "tag": "0004_woozy_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1741896388295,
+      "tag": "0005_sad_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1741897172357,
+      "tag": "0006_workable_enchantress",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1741897214436,
+      "tag": "0007_daily_bromley",
+      "breakpoints": true
     }
   ]
 }

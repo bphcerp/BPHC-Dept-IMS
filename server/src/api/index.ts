@@ -5,6 +5,7 @@ import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
 import handoutRouter from "./handout/index.ts";
 import conferenceRouter from "./conference/index.ts";
+import qpReview from "./qpReview/index.ts";
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router.use("/admin", adminRouter);
 router.use("/phd", phdRouter);
 router.use("/handout", handoutRouter);
 router.use("/conference", conferenceRouter);
+router.use("/qpReview", qpReview);
 
 export default router;
