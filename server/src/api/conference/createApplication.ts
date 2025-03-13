@@ -21,19 +21,19 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, next) => {
-        pdfUpload.fields([
-            { name: "letterOfInvitation", maxCount: 1 },
-            { name: "firstPageOfPaper", maxCount: 1 },
-            { name: "reviewersComments", maxCount: 1 },
-            { name: "detailsOfEvent", maxCount: 1 },
-            { name: "otherDocuments", maxCount: 1 },
-        ])(req, res, (err) => {
-            if (err instanceof multer.MulterError)
-                return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
-            next(err);
-        });
-    }),
+    asyncHandler(
+        async (req, res, next) =>
+            await pdfUpload.fields(
+                conferenceSchemas.multerFileFields
+                // @ts-expect-error Type incompatibility between multer req and express req for some reason
+            )(req, res, (err) => {
+                if (err instanceof multer.MulterError)
+                    return next(
+                        new HttpError(HttpCode.BAD_REQUEST, err.message)
+                    );
+                next(err);
+            })
+    ),
     asyncHandler(async (req, res) => {
         const body = conferenceSchemas.applyForConferenceBodySchema.parse(
             req.body
