@@ -18,6 +18,7 @@ import getPhdDataToGeneratePhdQualifyingExamForm from "./getPhdDataOfWhoFilledAp
 import getSuggestedDacMember from "./getSuggestedDacMember.ts";
 import suggestTwoBestDacMember from "./suggestTwoBestDacMember.ts";
 import updateFinalDac from "./updateFinalDac.ts";
+import updateQualifyingExamResultsOfAllStudents from "./updateQualifyingExamResultsOfAllStudents.ts";
 
 
 const router = express.Router();
@@ -41,5 +42,6 @@ router.use('/getPhdDataToGeneratePhdQualifyingExamForm', getPhdDataToGeneratePhd
 router.use('/getSuggestedDacMember', getSuggestedDacMember);
 router.use('/updateFinalDac', updateFinalDac);
 router.use('/suggestTwoBestDacMember', suggestTwoBestDacMember);
+router.use('/updateQualifyingExamResultsOfAllStudents', updateQualifyingExamResultsOfAllStudents);
 
 export default router;

@@ -43,7 +43,12 @@ const NotionalSupervisorLayout = () => {
           title: "Phd Qualifying Exam Applications",
           icon: <PersonIcon />,
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
-        }
+        },
+        {
+          title: "Update Qualifying Exam Results",
+          icon: <PersonIcon />,
+          url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
+        },
       ],
     });
 

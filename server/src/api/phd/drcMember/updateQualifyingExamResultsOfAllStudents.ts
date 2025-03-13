@@ -9,13 +9,13 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 
 const router = express.Router();
 
-
-
-
 router.post(
     "/",
     checkAccess("drc-update-exam"),
     asyncHandler(async (req, res, next) => {
+
+        console.log(req.body, "amogussss");
+
         const parsed = phdSchemas.updateExamStatusSchema.safeParse(req.body);
 
         if (!parsed.success) {
@@ -24,9 +24,13 @@ router.post(
 
         const studentsToUpdate = parsed.data;
 
-        // Get student records for all provided emails
+        if (studentsToUpdate.length === 0) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "No students to update"));
+        }
+
+        // Fix: Use sql.join() for correct formatting in the IN clause
         const studentRecords = await db.query.phd.findMany({
-            where: sql`${phd.email} IN (${studentsToUpdate.map((s) => s.email)})`,
+            where: sql`${phd.email} IN (${sql.join(studentsToUpdate.map((s) => s.email), sql`, `)})`,
         });
 
         if (studentRecords.length === 0) {
@@ -38,9 +42,7 @@ router.post(
         for (const student of studentsToUpdate) {
             const existingStudent = studentRecords.find((s) => s.email === student.email);
 
-            if (!existingStudent) {
-                continue; // Skip if student not found
-            }
+            if (!existingStudent) continue;
 
             if (existingStudent.qualifyingExam1 != null && existingStudent.qualifyingExam2 != null) {
                 continue; // Skip if both exams are already given
@@ -68,5 +70,6 @@ router.post(
         res.status(200).json({ status: "success", updatedCount: updates.length });
     })
 );
+
 
 export default router;
