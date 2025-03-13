@@ -14,8 +14,6 @@ router.post(
     checkAccess("drc-update-exam"),
     asyncHandler(async (req, res, next) => {
 
-        console.log(req.body, "amogussss");
-
         const parsed = phdSchemas.updateExamStatusSchema.safeParse(req.body);
 
         if (!parsed.success) {

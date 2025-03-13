@@ -1,7 +1,15 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/hooks/Auth";
-import { PersonIcon, ListBulletIcon } from "@radix-ui/react-icons";
-import { CalendarClockIcon } from "lucide-react";
+import {
+  CalendarClockIcon,
+  FileCheck,
+  CalendarCheck2,
+  List,
+  Users,
+  CaseUpper,
+  NotepadText,
+  CalendarX2,
+} from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 import { SidebarMenuGroup } from "@/components/AppSidebar";
 const NotionalSupervisorLayout = () => {
@@ -15,7 +23,7 @@ const NotionalSupervisorLayout = () => {
       items: [
         {
           title: "Update Grade",
-          icon: <PersonIcon />,
+          icon: <CaseUpper />,
           url: "/phd/notional-supervisor/update-grade",
         },
       ],
@@ -26,28 +34,33 @@ const NotionalSupervisorLayout = () => {
       items: [
         {
           title: "Coursework Form",
-          icon: <ListBulletIcon />,
+          icon: <List />,
           url: "/phd/drc-convenor/coursework-form",
         },
         {
-          title: "Update Qualifying Exam Deadline",
+          title: "Update QE Deadline",
           icon: <CalendarClockIcon />,
           url: "/phd/drc-convenor/update-qualifying-exam-deadline",
         },
         {
-          title: "Generate Qualifying Exam Form",
-          icon: <PersonIcon />,
+          title: "Generate QE Application List",
+          icon: <Users />,
           url: "/phd/drc-convenor/generate-qualifying-exam-form",
         },
         {
-          title: "Phd Qualifying Exam Applications",
-          icon: <PersonIcon />,
+          title: "QE Application details",
+          icon: <NotepadText />,
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
         },
         {
-          title: "Update Qualifying Exam Results",
-          icon: <PersonIcon />,
+          title: "Update QE Results",
+          icon: <FileCheck />,
           url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
+        },
+        {
+          title: "Update QE Passing Dates",
+          icon: <CalendarCheck2 />,
+          url: "/phd/drc-convenor/update-qualifying-exam-passing-dates",
         },
       ],
     });
@@ -56,8 +69,8 @@ const NotionalSupervisorLayout = () => {
       title: "PhD Student",
       items: [
         {
-          title: "Exam Form Deadline",
-          icon: <PersonIcon />,
+          title: "QE Form Deadline",
+          icon: <CalendarX2 />,
           url: "/phd/phd-student/form-deadline",
         },
       ],

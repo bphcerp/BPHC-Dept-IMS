@@ -25,6 +25,7 @@ import UpdateQualifyingExamDeadline from "./views/Phd/DrcConvenor/UpdateQualifyi
 import GenerateQualifyingExamForm from "./views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "./views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
 import UpdateQualifyingExamResultsOfAllStudents from "./views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
+import UpdateQualifyingExamPassingDates from "./views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,10 @@ const App = () => {
                       <Route
                         path="update-qualifying-exam-results-of-all-students"
                         element={<UpdateQualifyingExamResultsOfAllStudents />}
+                      ></Route>
+                      <Route
+                        path="update-qualifying-exam-passing-dates"
+                        element={<UpdateQualifyingExamPassingDates />}
                       ></Route>
                     </Route>
                     <Route path="phd-student" element={<PhDStudentLayout />}>

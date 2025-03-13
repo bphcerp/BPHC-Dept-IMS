@@ -19,13 +19,19 @@ router.get(
             .limit(1);
 
         if (!deadlineEntry.length) {
-            res.status(400).json({ success: false, message: "Qualifying exam deadline not set" });
+            res.status(400).json({
+                success: false,
+                message: "Qualifying exam deadline not set",
+            });
             return;
         }
 
         const deadlineDate = new Date(deadlineEntry[0].deadline);
         if (isNaN(deadlineDate.getTime())) {
-            res.status(500).json({ success: false, message: "Invalid deadline date in database" });
+            res.status(500).json({
+                success: false,
+                message: "Invalid deadline date in database",
+            });
             return;
         }
 
@@ -41,11 +47,18 @@ router.get(
                 qualifyingExam2Date: phd.qualifyingExam2Date,
             })
             .from(phd)
+            // .where(
+            //     sql`(
+            //         (${phd.qualifyingExam1} = true AND ${phd.qualifyingExam1Date} BETWEEN ${deadlineDate} AND ${currentDate})
+            //         OR
+            //         (${phd.qualifyingExam2} = true AND ${phd.qualifyingExam2Date} BETWEEN ${deadlineDate} AND ${currentDate})
+            //     )`
+            // );
             .where(
                 sql`(
-                    (${phd.qualifyingExam1} = true AND ${phd.qualifyingExam1Date} BETWEEN ${deadlineDate} AND ${currentDate})
+                    (${phd.qualifyingExam1} = true)
                     OR
-                    (${phd.qualifyingExam2} = true AND ${phd.qualifyingExam2Date} BETWEEN ${deadlineDate} AND ${currentDate})
+                    (${phd.qualifyingExam2} = true)
                 )`
             );
 
