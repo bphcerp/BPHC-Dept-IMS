@@ -9,14 +9,15 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("ic"),
+    checkAccess("faculty-get-all-handouts"),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
-        const parsed = handoutSchemas.getAllFacultyApplicationsQuerySchema.parse(
-            req.query
-        );
-        
+        const parsed =
+            handoutSchemas.getAllFacultyApplicationsQuerySchema.parse(
+                req.query
+            );
+
         const { email } = parsed;
 
         const applications = (
