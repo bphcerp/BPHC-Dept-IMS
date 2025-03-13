@@ -34,6 +34,11 @@ const NotionalSupervisorLayout = () => {
           icon: <CalendarClockIcon />,
           url: "/phd/drc-convenor/update-qualifying-exam-deadline",
         },
+        {
+          title: "PhD that filled Exam Form",
+          icon: <PersonIcon />,
+          url: "/phd/drc-convenor/phd-that-filled-qualifying-exam-form",
+        }
       ],
     });
 

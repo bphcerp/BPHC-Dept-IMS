@@ -1,7 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { phdSchemas } from "lib";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Table,
