@@ -10,11 +10,13 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
 import { conferenceSchemas } from "lib";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/:type/:id",
+    checkAccess("drc-manage-conference-application"),
     asyncHandler(async (req, res, next) => {
         const id = parseInt(req.params.id);
         if (isNaN(id)) {
