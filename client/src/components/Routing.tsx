@@ -12,8 +12,10 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]"
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import { permissions } from "lib";
-import { Computer, FileText } from "lucide-react";
+import { Computer, FileText,BookOpen } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Faculty from "@/views/Handouts/Faculty/FacultyView";
+import CourseHandoutLayout from "@/layouts/CourseHandoutLayout";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -38,6 +40,11 @@ const Routing = () => {
       icon: <FileText />,
       url: "/qpReview",
       requiredPermissions: qpReviewModulePermissions,
+    },
+    {
+      title: "Course Handouts",
+      icon: <BookOpen />,
+      url: "/handouts",
     },
   ];
 
@@ -103,6 +110,12 @@ const Routing = () => {
                       path="facultyReview/:course"
                       element={<FacultyReview />}
                     />
+              </Route>
+            )}
+            {checkAccessAnyOne(qpReviewModulePermissions) && (
+              <Route path="/handouts" element={<CourseHandoutLayout />}>
+                <Route index element={<Navigate to="/handouts/faculty"/>}/>
+                <Route path="faculty" element={<Faculty />} />
               </Route>
             )}
           </>
