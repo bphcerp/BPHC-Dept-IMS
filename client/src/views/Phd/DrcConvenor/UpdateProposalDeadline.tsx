@@ -7,29 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-interface IUpdateExamDeadlineResponse {
+interface IUpdateProposalDeadlineResponse {
   success: boolean;
   deadline: string;
 }
 
-const UpdateQualifyingExamDeadline: React.FC = () => {
+const UpdateProposalDeadline: React.FC = () => {
   const [deadline, setDeadline] = useState("");
 
   const mutation = useMutation({
     mutationFn: async (newDeadline: string) => {
-      const response = await api.post<IUpdateExamDeadlineResponse>(
-        "/phd/drcMember/updateQualifyingExamDeadline",
+      const response = await api.post<IUpdateProposalDeadlineResponse>(
+        "/phd/drcMember/updateProposalDeadline",
         { deadline: newDeadline }
       );
       return response.data;
     },
     onSuccess: (data) => {
       toast.success(
-        `Deadline updated to: ${new Date(data.deadline).toLocaleString()}`
+        `Proposal deadline updated to: ${new Date(data.deadline).toLocaleString()}`
       );
     },
     onError: () => {
-      toast.error("Failed to update deadline. Please try again.");
+      toast.error("Failed to update proposal deadline. Please try again.");
     },
   });
 
@@ -44,11 +44,11 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-start justify-center w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="max-w-md">
+    <div className="flex h-screen w-full justify-center items-start bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md h-auto">
         <CardContent className="p-6">
-          <h2 className="mb-4 text-xl font-bold">
-            Update Qualifying Exam Deadline
+          <h2 className="mb-4 text-center text-xl font-bold">
+            Update Proposal Deadline
           </h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
@@ -75,4 +75,4 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   );
 };
 
-export default UpdateQualifyingExamDeadline;
+export default UpdateProposalDeadline;

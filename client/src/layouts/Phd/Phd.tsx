@@ -62,6 +62,11 @@ const NotionalSupervisorLayout = () => {
           icon: <CalendarCheck2 />,
           url: "/phd/drc-convenor/update-qualifying-exam-passing-dates",
         },
+        {
+          title: "Update Proposal Deadline",
+          icon: <CalendarX2 />,
+          url: "/phd/drc-convenor/update-proposal-deadline",
+        },
       ],
     });
 
