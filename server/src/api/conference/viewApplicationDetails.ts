@@ -125,28 +125,38 @@ router.get(
             },
         });
 
+        if (!application || application.conferenceApplications.length === 0) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Application not found")
+            );
+        }
+
         for (const fileFieldName of conferenceSchemas.fileFieldNames) {
+            const fileField =
+                application.conferenceApplications[0][
+                    fileFieldName as keyof typeof ConferenceTables.conferenceApprovalApplications.$inferSelect
+                ];
+            if (fileField === null) continue;
+            if (typeof fileField === "number") {
+                return next(
+                    new HttpError(
+                        HttpCode.INTERNAL_SERVER_ERROR,
+                        `Could not find fileField ${fileFieldName}`
+                    )
+                );
+            }
             // Weird bug in drizzle where the joined values doesn't have the correct types
             const fileID = (
-                (
-                    application?.conferenceApplications[0][
-                        fileFieldName as keyof typeof ConferenceTables.conferenceApprovalApplications.$inferSelect
-                    ] as typeof FormTables.fileFields.$inferSelect
-                ).file as unknown as typeof FormTables.files.$inferSelect
+                (fileField as typeof FormTables.fileFields.$inferSelect)
+                    .file as unknown as typeof FormTables.files.$inferSelect
             ).id;
             (
                 (
-                    application?.conferenceApplications[0][
+                    application.conferenceApplications[0][
                         fileFieldName as keyof typeof ConferenceTables.conferenceApprovalApplications.$inferSelect
                     ] as typeof FormTables.fileFields.$inferSelect
                 ).file as unknown as typeof FormTables.files.$inferSelect
             ).filePath = environment.SERVER_URL + "/api/f/" + fileID;
-        }
-
-        if (!application) {
-            return next(
-                new HttpError(HttpCode.NOT_FOUND, "Application not found")
-            );
         }
 
         res.status(200).send(application);
