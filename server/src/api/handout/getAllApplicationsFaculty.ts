@@ -45,7 +45,6 @@ router.get(
                 id: app.id,
                 courseCode: courseHandoutRequest?.courseCode?.value,
                 courseName: courseHandoutRequest?.courseName?.value,
-                professorName: app.user.faculty.name,
                 status: app.status,
             };
         });
