@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
+import api from "@/lib/axios-instance";
+import { useMutation } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
+import { toast } from "sonner";
 
 export default function ExamForm() {
   const [subArea1, setSubArea1] = useState("");
@@ -22,10 +26,39 @@ export default function ExamForm() {
     }
   };
 
+  interface Application {
+    fileUrl: string;
+    formName: string;
+    applicationType: string;
+    qualifyingArea1: string;
+    qualifyingArea2: string;
+  }
+
+  const submitMutation = useMutation({
+    mutationFn: async (data: Application) => {
+      return api.post("/phd/student/uploadQeApplicationForm",  data );
+    },
+    onSuccess: (_) => {
+      toast.success("Qualifying Exam form submitted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to submit Qualifying Exam form");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ subArea1, subArea2, file });
-    alert("Form submitted successfully!");
+    if (!file || !subArea1 || !subArea2) {
+      alert("Please fill out all the fields!");
+      return;
+    }
+    submitMutation.mutate({
+      fileUrl: file.name,
+      formName: "Qualifying Exam",
+      applicationType: "qualifying_exam",
+      qualifyingArea1: subArea1,
+      qualifyingArea2: subArea2,
+    });
   };
 
   return (
@@ -48,7 +81,7 @@ export default function ExamForm() {
             <Input
               id="subArea2"
               value={subArea2}
-              onChange={(e) => setSubArea1(e.target.value)}
+              onChange={(e) => setSubArea2(e.target.value)}
               placeholder="Enter sub area 2"
               required
             />

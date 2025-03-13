@@ -113,6 +113,13 @@
       "when": 1741593381705,
       "tag": "0015_wealthy_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1741806270943,
+      "tag": "0016_short_karen_page",
+      "breakpoints": true
     }
   ]
 }
