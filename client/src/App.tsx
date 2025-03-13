@@ -27,6 +27,7 @@ import PhdThatAppliedForQualifyingExam from "./views/Phd/DrcConvenor/PhdThatAppl
 import UpdateQualifyingExamResultsOfAllStudents from "./views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
 import UpdateQualifyingExamPassingDates from "./views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
 import UpdateProposalDeadline from "./views/Phd/DrcConvenor/UpdateProposalDeadline";
+import AssignDacMembers from "./views/Phd/DrcConvenor/AssignDacMemberes";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,10 @@ const App = () => {
                       <Route
                         path="update-proposal-deadline"
                         element={<UpdateProposalDeadline />}
+                      ></Route>
+                      <Route
+                        path="assign-dac-members"
+                        element={<AssignDacMembers />}
                       ></Route>
                     </Route>
                     <Route path="phd-student" element={<PhDStudentLayout />}>

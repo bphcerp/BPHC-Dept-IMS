@@ -9,6 +9,7 @@ import {
   CaseUpper,
   NotepadText,
   CalendarX2,
+  UserRoundPlus,
 } from "lucide-react";
 import { Navigate, Outlet } from "react-router-dom";
 import { SidebarMenuGroup } from "@/components/AppSidebar";
@@ -67,6 +68,11 @@ const NotionalSupervisorLayout = () => {
           icon: <CalendarX2 />,
           url: "/phd/drc-convenor/update-proposal-deadline",
         },
+        {
+          title: "Assign DAC Members",
+          icon: <UserRoundPlus />,
+          url: "/phd/drc-convenor/assign-dac-members",
+        }
       ],
     });
 
