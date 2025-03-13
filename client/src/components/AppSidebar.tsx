@@ -13,7 +13,7 @@ import {
 import logo from "/logo/bitspilanilogo.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
@@ -22,6 +22,7 @@ export interface SidebarMenuItem {
   title: string;
   icon: React.ReactNode;
   url: string;
+  requiredPermissions?: string[];
 }
 
 export interface SidebarMenuGroup {
@@ -30,14 +31,15 @@ export interface SidebarMenuGroup {
 }
 
 export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
-  const { authState, logOut, updateAuthState } = useAuth();
+  const { authState, logOut, setNewAuthToken, checkAccessAnyOne } = useAuth();
+  const { pathname } = useLocation();
   const onSuccess = (credentialResponse: CredentialResponse) => {
     api
       .post<{ token: string }>(LOGIN_ENDPOINT, {
         token: credentialResponse.credential,
       })
       .then((response) => {
-        updateAuthState(response.data.token);
+        setNewAuthToken(response.data.token);
       })
       .catch(() => {
         // notify login failed
@@ -58,16 +60,23 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link to={item.url}>
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {group.items
+                  .filter((item) =>
+                    checkAccessAnyOne(item.requiredPermissions ?? [])
+                  )
+                  .map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname.includes(item.url)}
+                      >
+                        <Link to={item.url}>
+                          {item.icon}
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

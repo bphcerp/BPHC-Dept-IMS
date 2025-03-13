@@ -5,78 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1736537840366,
-      "tag": "0000_slippery_betty_brant",
+      "when": 1740766529618,
+      "tag": "0000_special_rattler",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1737794054356,
-      "tag": "0001_ambiguous_talos",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1738069376241,
-      "tag": "0002_many_loa",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1738096848615,
-      "tag": "0003_lethal_killraven",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1738579244367,
-      "tag": "0004_wandering_richard_fisk",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1738596678749,
-      "tag": "0005_nasty_quentin_quire",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1738684208101,
-      "tag": "0006_even_hex",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1738692704258,
-      "tag": "0007_sparkling_omega_red",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1739182102581,
-      "tag": "0008_tranquil_morg",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1739349508959,
-      "tag": "0009_lush_darwin",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1739513956741,
-      "tag": "0010_cynical_leper_queen",
+      "when": 1740766571182,
+      "tag": "0001_triggers",
       "breakpoints": true
     },
     {

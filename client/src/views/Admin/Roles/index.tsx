@@ -15,7 +15,7 @@ const RolesView = () => {
   const { data: roles, isFetching } = useQuery({
     queryKey: queryKey.length ? ["roles", queryKey] : ["roles"],
     queryFn: async () => {
-      const response = await api.get<Role[]>("/admin/role/all", {
+      const response = await api.get<Role[]>("/admin/role", {
         params: {
           q: queryKey,
         },

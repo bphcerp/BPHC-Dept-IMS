@@ -2,31 +2,27 @@ import jwt from "jsonwebtoken";
 import { refreshTokens } from "@/config/db/schema/admin.ts";
 import env from "@/config/environment.ts";
 import { eq } from "drizzle-orm";
-import type {
-    Access,
-    JwtPayload,
-    Operations,
-    RoleAccessMap,
-} from "@/types/auth.ts";
+import type { JwtPayload, Permissions, RoleAccessMap } from "@/types/auth.ts";
 import type { Transaction } from "@/types/custom.ts";
 import db from "@/config/db/index.ts";
+import { authUtils } from "lib";
 
 /**
  * Generates an access token for the given email, session expiry, and operations.
  * @param email - The email associated with the access token.
  * @param sessionExpiry - The expiry time of the session in milliseconds.
- * @param operations - The operations allowed for the access token.
+ * @param permissions - The Permissions allowed for the access token.
  * @returns The generated access token.
  */
 export const generateAccessToken = (
     email: string,
     sessionExpiry: number,
-    operations: Operations
+    permissions: Permissions
 ): string => {
     const jwtPayload: JwtPayload = {
         email,
         sessionExpiry,
-        operations,
+        permissions,
     };
     const accessToken = jwt.sign(jwtPayload, env.ACCESS_TOKEN_SECRET, {
         expiresIn: env.ACCESS_TOKEN_EXPIRY,
@@ -82,17 +78,12 @@ export async function getRoleAccessMap() {
     return roleAccessMap;
 }
 
-export function matchWildcard(resource: string, pattern: string): boolean {
-    const regex = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`);
-    return regex.test(resource);
-}
-
 /**
- * Get accessible resources for a given list of roles
+ * Get flattened permissions for a given list of roles
  * @param roles - The list of roles to check access for.
  * @returns Access object containing allowed and disallowed operations.
  */
-export async function getAccess(roles: number[]): Promise<Access> {
+export async function getAccess(roles: number[]): Promise<Permissions> {
     const allowed = new Set<string>();
     const disallowed = new Set<string>();
     const roleAccessMap = await getRoleAccessMap();
@@ -100,7 +91,11 @@ export async function getAccess(roles: number[]): Promise<Access> {
         const roleAccess = roleAccessMap[roleId];
         if (roleAccess) {
             roleAccess.disallowed.forEach((op) => {
-                if (![...allowed].some((pat) => matchWildcard(op, pat)))
+                if (
+                    ![...allowed].some((pat) =>
+                        authUtils.matchWildcard(op, pat)
+                    )
+                )
                     disallowed.add(op);
             });
             roleAccess.allowed.forEach((op) => allowed.add(op));

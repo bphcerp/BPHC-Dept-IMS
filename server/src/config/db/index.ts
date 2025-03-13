@@ -5,6 +5,8 @@ import * as phdRelations from "./schema/phdRelations.ts";
 import * as phd from "./schema/phd.ts";
 import * as form from "./schema/form.ts";
 import * as formRelations from "./schema/formRelations.ts";
+import * as handout from "./schema/handout.ts";
+import * as hadnoutRelations from "./schema/handoutRelations.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
@@ -27,6 +29,8 @@ const db = drizzle(pool, {
         ...phdRelations,
         ...form,
         ...formRelations,
+        ...handout,
+        ...hadnoutRelations,
     },
 });
 

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("admin"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = adminSchemas.memberDetailsQuerySchema.parse(req.query);
         const roles = (await db.query.roles.findMany()).reduce(
@@ -24,7 +24,16 @@ router.get(
             where: eq(users.email, parsed.email),
             with: {
                 faculty: true,
-                phd: true,
+                phd: {
+                    columns: {
+                        idNumber: true,
+                        erpId: true,
+                        name: true,
+                        instituteEmail: true,
+                        mobile: true,
+                        personalEmail: true,
+                    },
+                },
                 staff: true,
             },
         });
@@ -32,11 +41,12 @@ router.get(
             return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
         }
         const { faculty, phd, staff, ...userData } = user;
-        res.status(200).json({
+        const data: adminSchemas.MemberDetailsResponse = {
             ...userData,
             roles: userData.roles.map((role) => roles[role]),
-            ...(faculty || phd || staff),
-        });
+            ...(phd || faculty || staff),
+        };
+        res.status(200).json(data);
     })
 );
 

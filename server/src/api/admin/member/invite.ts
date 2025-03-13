@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = adminSchemas.inviteMemberBodySchema.parse(req.body);
         try {
