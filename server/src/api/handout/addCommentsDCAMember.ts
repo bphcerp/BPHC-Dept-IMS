@@ -2,7 +2,7 @@ import express from "express";
 import assert from "assert";
 import { handoutSchemas } from "lib";
 import db from "@/config/db/index.ts";
-import { textFieldStatus } from "@/config/db/schema/form.ts";
+import { applicationStatus, textFieldStatus } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -28,18 +28,31 @@ router.post(
 
         await db.transaction(async (tx) => {
             assert(req.user);
-            for (const [key, value] of Object.entries(parsed.body)) {
+            for (const [key, value] of Object.entries(
+                parsed.body.fieldReviews as Record<
+                    string,
+                    { comments: string; approved: boolean }
+                >
+            )) {
                 await tx.insert(textFieldStatus).values({
                     comments: value.comments,
                     status: value.approved,
-                    userEmail: req.user.email,
+                    userEmail: req.user?.email,
                     updatedAs: "dca-member",
                     textField: handout[key as keyof typeof handout]!,
                 });
             }
+
+            await tx.insert(applicationStatus).values({
+                applicationId: handout.applicationId,
+                comments: parsed.body.review as string,
+                status: parsed.body.status as boolean,
+                updatedAs: "dca-member",
+                userEmail: req.user?.email,
+            });
         });
 
-        res.status(201).json({ sucess: true });
+        res.status(201).json({ success: true });
     })
 );
 

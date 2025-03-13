@@ -18,38 +18,42 @@ export type GetAllFacultyApplicationsQuery = z.infer<
 
 export const dcaMemberCommentsRequestSchema = z.object({
     body: z.object({
-        courseCode: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
+        fieldReviews: z.object({
+            courseCode: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            courseName: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            openBook: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            closedBook: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            midSem: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            compre: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            numComponents: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
+            frequency: z.object({
+                comments: z.string(),
+                approved: z.boolean(),
+            }),
         }),
-        courseName: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        openBook: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        closedBook: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        midSem: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        compre: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        numComponents: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
-        frequency: z.object({
-            comments: z.string(),
-            approved: z.boolean(),
-        }),
+        review: z.string().nonempty(),
+        status: z.boolean(),
     }),
     params: z.object({
         appid: z.coerce.number().refine((val) => !isNaN(Number(val))),
