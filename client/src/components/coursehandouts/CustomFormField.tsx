@@ -1,41 +1,38 @@
 import { FC } from "react";
-import { useFormContext } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { useFormContext, FieldValues } from "react-hook-form";
+import { FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { UseFormRegisterReturn } from "react-hook-form";
 
-interface CustomFormFieldProps {
+type CustomFormFieldProps = {
   name: string;
   label: string;
-  placeholder?: string;
+  placeholder: string;
   type?: string;
-}
+  register: UseFormRegisterReturn;
+};
 
 export const CustomFormField: FC<CustomFormFieldProps> = ({
   name,
   label,
   placeholder,
   type = "text",
+  register,
 }) => {
-  const { control } = useFormContext();
+  const {
+    formState: { errors },
+  } = useFormContext<FieldValues>();
+
   return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-gray-900">{label}</FormLabel>
-          <FormControl>
-            <Input type={type} placeholder={placeholder} {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <FormItem>
+      <FormLabel className="text-gray-900">{label}</FormLabel>
+      <FormControl>
+        <Input type={type} placeholder={placeholder} {...register} />
+      </FormControl>
+      <FormMessage>
+        {errors[name] ? (errors[name]?.message as string) : ""}
+      </FormMessage>
+    </FormItem>
   );
 };
+

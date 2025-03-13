@@ -1,6 +1,5 @@
 import React from "react";
 import { getStatusIcon, getStatusColor } from "./handoutUtils";
-import ResubmissionDialog from "./ResubmissionDialogue";
 
 interface HandoutRowProps {
   handoutName: string;
@@ -9,7 +8,6 @@ interface HandoutRowProps {
 }
 
 function HandoutRow({ handoutName, professorName, status }: HandoutRowProps) {
-  const isResubmission = status === "Pending";
 
   return (
     <div className="flex items-center justify-between p-4">
@@ -25,12 +23,6 @@ function HandoutRow({ handoutName, professorName, status }: HandoutRowProps) {
           </p>
         </div>
       </div>
-
-      {isResubmission ? (
-        <ResubmissionDialog />
-      ) : (
-        <div className="w-6" /> // Empty div for spacing
-      )}
     </div>
   );
 }
