@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { FileText } from "lucide-react";
+import { FileText, FileQuestion } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const QpReviewLayout = () => {
@@ -17,9 +17,14 @@ const QpReviewLayout = () => {
               },
               {
                 title: "DCARequests",
-                icon: <FileText/>,
-                url: "/qpReview/dcarequests"
-              }
+                icon: <FileText />,
+                url: "/qpReview/dcarequests",
+              },
+              {
+                title: "DcaRequestList",
+                icon: <FileQuestion />,
+                url: "/qpReview/dcaRequestList",
+              },
             ],
           },
         ]}
