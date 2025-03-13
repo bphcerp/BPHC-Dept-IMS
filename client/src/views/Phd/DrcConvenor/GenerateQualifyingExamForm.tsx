@@ -25,7 +25,7 @@ interface IPhdQualifyingExamQuery {
   }[];
 }
 
-const StudentsFillingQualifyingExam: React.FC = () => {
+const GenerateQualifyingExamForm: React.FC = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["phd-qualifying-exam-students"],
     queryFn: async () => {
@@ -85,4 +85,4 @@ const StudentsFillingQualifyingExam: React.FC = () => {
   );
 };
 
-export default StudentsFillingQualifyingExam;
+export default GenerateQualifyingExamForm;
