@@ -1,10 +1,9 @@
 import db from "@/config/db/index.ts";
-import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { conferenceSchemas } from "lib";
 import { applications } from "@/config/db/schema/form.ts";
 
@@ -22,24 +21,14 @@ router.post(
             next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
         }
 
-        const application = await db
-            .select()
-            .from(conferenceApprovalApplications)
-            .innerJoin(
-                applications,
-                eq(
-                    conferenceApprovalApplications.applicationId,
-                    applications.id
-                )
-            )
-            .where(
-                and(
-                    eq(applications.status, "pending"),
-                    eq(conferenceApprovalApplications.id, id)
-                )
-            );
+        const application = await db.query.applications.findFirst({
+            where: (app) => eq(app.id, id),
+            with: {
+                conferenceApplications: true,
+            },
+        });
 
-        if (application.length === 0) {
+        if (!application || application.conferenceApplications.length === 0) {
             next(new HttpError(HttpCode.NOT_FOUND, "Application not found"));
         }
 
@@ -48,7 +37,7 @@ router.post(
             .set({
                 status: parsed.approve ? "approved" : "rejected",
             })
-            .where(eq(applications.id, application[0].applications.id));
+            .where(eq(applications.id, id));
 
         res.status(HttpCode.OK).send();
     })
