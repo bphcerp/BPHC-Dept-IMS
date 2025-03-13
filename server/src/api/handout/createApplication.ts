@@ -49,7 +49,7 @@ const createApplicationBodySchema = z
 
 router.post(
     "/",
-    checkAccess("ic"),
+    //checkAccess("ic"),
     asyncHandler(async (req, res) => {
         const parsed = createApplicationBodySchema.parse(req.body);
 
