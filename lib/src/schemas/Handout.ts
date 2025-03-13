@@ -1,6 +1,13 @@
 import { z } from "zod";
-export const getApplicationFacultyQuerySchema = z.object({
+
+export const getFacultyApplicationQuerySchema = z.object({
     applicationId: z.coerce.number(),
 });
 
-export type GetApplicationFacultyQuery = z.infer<typeof getApplicationFacultyQuerySchema>;
+export type GetFacultyApplicationQuery = z.infer<typeof getFacultyApplicationQuerySchema>;
+
+export const getAllFacultyApplicationsQuerySchema = z.object({
+    email: z.string().email(),
+});
+
+export type GetAllFacultyApplicationsQuery = z.infer<typeof getAllFacultyApplicationsQuerySchema>
