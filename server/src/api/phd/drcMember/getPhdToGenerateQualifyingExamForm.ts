@@ -38,6 +38,7 @@ router.get(
                 area1: phd.qualifyingArea1,
                 area2: phd.qualifyingArea2,
                 idNumber: phd.idNumber,
+                examAttempt: phd.numberOfQeApplication,
             })
             .from(phd)
             .where(

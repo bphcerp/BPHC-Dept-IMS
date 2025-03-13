@@ -58,7 +58,7 @@ export const phdDocuments = pgTable("phdDocuments", {
     id: uuid("id").defaultRandom().primaryKey(),
     email: varchar("email", { length: 255 }).notNull(),
     fileUrl: text("fileUrl").notNull(),
-    formName: varchar("formName", { length: 255 }).notNull(),
-    applicationType: varchar("applicationType", { length: 100 }).notNull(),
+    formName: text("formName").notNull(),
+    applicationType: text("applicationType").notNull(),
     uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });

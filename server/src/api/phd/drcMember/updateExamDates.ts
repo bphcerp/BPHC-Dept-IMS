@@ -9,32 +9,70 @@ import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-const updateExamDatesSchema = z.object({
-    email: z.string().email(),
-    qualifyingExam1Date: z.string().datetime().optional().nullable(),
-    qualifyingExam2Date: z.string().datetime().optional().nullable(),
+// Schema for batch update with email-to-date mapping
+const updateBatchExamDatesSchema = z.object({
+    examDates: z.record(z.string().email(), z.string().datetime()),
+    roomNumber: z.string()
 });
 
 router.post(
     "/",
     checkAccess("drc-update-exam-dates"),
     asyncHandler(async (req, res, next) => {
-        const parsed = updateExamDatesSchema.parse(req.body);
-
-        const updated = await db
-            .update(phd)
-            .set({
-                qualifyingExam1Date: parsed.qualifyingExam1Date ? new Date(parsed.qualifyingExam1Date) : null,
-                qualifyingExam2Date: parsed.qualifyingExam2Date ? new Date(parsed.qualifyingExam2Date) : null,
-            })
-            .where(eq(phd.email, parsed.email))
-            .returning();
-
-        if (updated.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+        const parsed = updateBatchExamDatesSchema.parse(req.body);
+        
+        const emails = Object.keys(parsed.examDates);
+        
+        if (emails.length === 0) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "No student emails provided"));
         }
 
-        res.json({ success: true, phd: updated[0] });
+        // Process each student individually to handle different attempt numbers
+        const updatePromises = emails.map(async (email) => {
+            const examDate = new Date(parsed.examDates[email]);
+            
+            // Get the student to check the attempt number
+            const student = await db
+                .select({
+                    numberOfQeApplication: phd.numberOfQeApplication
+                })
+                .from(phd)
+                .where(eq(phd.email, email))
+                .limit(1);
+            
+            if (student.length === 0) {
+                return null;
+            }
+            
+            const attemptNumber = student[0].numberOfQeApplication || 0;
+            
+            // Update based on attempt number
+            let updateData = {};
+            if (attemptNumber <= 1) {
+                updateData = { qualifyingExam1Date: examDate };
+            } else {
+                updateData = { qualifyingExam2Date: examDate };
+            }
+            
+            return db
+                .update(phd)
+                .set(updateData)
+                .where(eq(phd.email, email))
+                .returning();
+        });
+        
+        const results = await Promise.all(updatePromises);
+        const updatedStudents = results.filter(Boolean).flat();
+        
+        if (updatedStudents.length === 0) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "No PhD records found"));
+        }
+
+        res.json({ 
+            success: true, 
+            count: updatedStudents.length,
+            students: updatedStudents
+        });
     })
 );
 
