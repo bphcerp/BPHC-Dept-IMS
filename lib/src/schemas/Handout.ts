@@ -63,3 +63,10 @@ export const dcaMemberCommentsRequestSchema = z.object({
 export type DCAMemberCommentsRequest = z.infer<
     typeof dcaMemberCommentsRequestSchema
 >;
+
+export const getReviewDCAMemberQuerySchema = z.object({
+    email: z.string().email(),
+    applicationId: z.coerce.number()
+})
+
+export type GetReviewDCAMemberQuery = z.infer<typeof getReviewDCAMemberQuerySchema>
