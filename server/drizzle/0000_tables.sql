@@ -5,7 +5,13 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- CREATE TYPE "public"."modules" AS ENUM('Conference Approval', 'Course Handout', 'PhD Progress', 'PhD Proposal', 'Question Paper', 'SFC Meeting', 'Project Info', 'Patent Info');
+ CREATE TYPE "public"."application_status_enum" AS ENUM('pending', 'approved', 'rejected');
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ CREATE TYPE "public"."modules_enum" AS ENUM('Conference Approval', 'Course Handout', 'PhD Progress', 'PhD Proposal', 'Question Paper', 'SFC Meeting', 'Project Info', 'Patent Info');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -115,8 +121,11 @@ CREATE TABLE IF NOT EXISTS "application_status" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "applications" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module" "modules" NOT NULL,
-	"user_email" text NOT NULL
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
+	"user_email" text NOT NULL,
+	"status" "application_status_enum" DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "date_field_status" (
@@ -130,7 +139,8 @@ CREATE TABLE IF NOT EXISTS "date_field_status" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "date_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module" "modules" NOT NULL,
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
 	"user_email" text NOT NULL,
 	"value" timestamp with time zone NOT NULL
 );
@@ -146,16 +156,22 @@ CREATE TABLE IF NOT EXISTS "file_field_status" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "file_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module" "modules" NOT NULL,
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
 	"user_email" text NOT NULL,
 	"file" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "files" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
+	"user_email" text NOT NULL,
+	"original_name" text,
+	"mimetype" text,
 	"file_path" text NOT NULL,
-	"created_at" text NOT NULL,
-	"uploaded_by" text NOT NULL
+	"size" integer,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "number_field_status" (
@@ -169,7 +185,8 @@ CREATE TABLE IF NOT EXISTS "number_field_status" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "number_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module" "modules" NOT NULL,
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
 	"user_email" text NOT NULL,
 	"value" numeric NOT NULL
 );
@@ -185,7 +202,8 @@ CREATE TABLE IF NOT EXISTS "text_field_status" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "text_fields" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"module" "modules" NOT NULL,
+	"module" "modules_enum" NOT NULL,
+	"field_name" text,
 	"user_email" text NOT NULL,
 	"value" text NOT NULL
 );
@@ -464,7 +482,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "files" ADD CONSTRAINT "files_uploaded_by_users_email_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."users"("email") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "files" ADD CONSTRAINT "files_user_email_users_email_fk" FOREIGN KEY ("user_email") REFERENCES "public"."users"("email") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

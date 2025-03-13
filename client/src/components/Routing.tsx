@@ -8,6 +8,9 @@ import RolesView from "@/views/Admin/Roles";
 import RoleDetailsView from "@/views/Admin/Roles/[role]";
 import Home from "@/views/Home";
 import FicSubmissionView from "@/views/QpReview/FicSubmission";
+import DCARequestsView from "@/views/QpReview/DCARequests";
+import FacultyReview from "@/views/QpReview/FacultyReview/[course]"
+import ReviewPage from "@/views/QpReview/FacultyReview";
 import { permissions } from "lib";
 import { Computer, FileText } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -64,7 +67,6 @@ const Routing = () => {
             />
           }
         />
-
         {authState && (
           <>
             {checkAccessAnyOne(adminModulePermissions) && (
@@ -95,6 +97,12 @@ const Routing = () => {
                   element={<Navigate to="/qpReview/ficSubmission" />}
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
+                <Route path="dcarequests" element={<DCARequestsView />} />
+                <Route path="facultyReview" element={<ReviewPage />} />
+                <Route
+                      path="facultyReview/:course"
+                      element={<FacultyReview />}
+                    />
               </Route>
             )}
           </>
