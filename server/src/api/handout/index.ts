@@ -1,6 +1,6 @@
 import express from "express";
 import createApplication from "./createApplication.ts";
-import getAllPendingAppFaculty from "./getAllPendingAppFaculty.ts";
+import getAllPendingAppFaculty from "./getAllApplicationsFaculty.ts";
 import getApplicationFaculty from "./getApplicationFaculty.ts";
 import getAllApplicationsDCA from "./getAllApplicationsDCA.ts"
 const router = express.Router();
