@@ -19,4 +19,8 @@ export default {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
+
+    // PhD
+
+    "/phdAll": "*"
 };
