@@ -11,17 +11,17 @@ const CourseHandoutLayout = () => {
             title: "Course Handouts", 
             items: [
               {
-                title: "Faculty View", 
+                title: "Faculty", 
                 icon: <BookOpen />,
                 url: "/handouts/faculty",
               },
               {
-                title: "DCA Member View", 
+                title: "DCA Member", 
                 icon: <BookLockIcon/>,
                 url: "/handouts/DCA",
               },
               {
-                title: "HOD View",
+                title: "HOD",
                 icon: <GraduationCap />,
                 url: "/handouts/HOD",
               },
