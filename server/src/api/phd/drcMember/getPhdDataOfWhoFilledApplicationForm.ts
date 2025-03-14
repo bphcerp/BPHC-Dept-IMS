@@ -20,17 +20,20 @@ export default router.get(
                 createdAt: phdConfig.createdAt,
             })
             .from(phdConfig)
-            .where(sql`TRIM(BOTH '"' FROM ${phdConfig.key}) = 'qualifying_exam_deadline'`)
+            .where(
+                sql`TRIM(BOTH '"' FROM ${phdConfig.key}) = 'qualifying_exam_deadline'`
+            )
             .orderBy(desc(phdConfig.createdAt))
             .limit(1);
 
         if (!latestDeadline.length) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "No deadline found"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "No deadline found")
+            );
         }
 
-        // const { value: deadlineCreatedAt, createdAt: deadlineTimestamp } = latestDeadline[0];
-
-
+        const { value: deadlineCreatedAt, createdAt: deadlineTimestamp } =
+            latestDeadline[0];
 
         // Get all students who have submitted qualifying exam applications within the deadline window
         const students = await db
@@ -49,14 +52,18 @@ export default router.get(
                     // sql`${phdDocuments.uploadedAt} >= ${deadlineCreatedAt}`,
                     // sql`${phdDocuments.uploadedAt} <= ${deadlineTimestamp}`,
                     sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType}) = 'qualifying_exam'`
-                    
                 )
             )
             .orderBy(desc(phdDocuments.uploadedAt));
 
+        console.log("hiiiii", students);
+
         if (!students.length) {
             return next(
-                new HttpError(HttpCode.NOT_FOUND, "No qualifying exam applications found")
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "No qualifying exam applications found"
+                )
             );
         }
 
