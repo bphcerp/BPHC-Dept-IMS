@@ -38,6 +38,7 @@ router.post(
         const body = conferenceSchemas.applyForConferenceBodySchema.parse(
             req.body
         );
+        // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
             const insertedIds: Record<string, number> = {};
