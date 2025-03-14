@@ -66,7 +66,21 @@ export type DCAMemberCommentsRequest = z.infer<
 
 export const getReviewDCAMemberQuerySchema = z.object({
     email: z.string().email(),
-    applicationId: z.coerce.number()
-})
+    applicationId: z.coerce.number(),
+});
 
-export type GetReviewDCAMemberQuery = z.infer<typeof getReviewDCAMemberQuerySchema>
+export type GetReviewDCAMemberQuery = z.infer<
+    typeof getReviewDCAMemberQuerySchema
+>;
+
+export const dcaConvenorCommentsSchema = z.object({
+    body: z.object({
+        review: z.string().nonempty(),
+        status: z.boolean(),
+    }),
+    params: z.object({
+        appid: z.coerce.number().refine((val) => !isNaN(Number(val))),
+    }),
+});
+
+export type DCAConvenorComments = z.infer<typeof dcaConvenorCommentsSchema>;
