@@ -16,6 +16,7 @@ import { Computer, FileText,BookOpen } from "lucide-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Faculty from "@/views/Handouts/Faculty/FacultyView";
 import CourseHandoutLayout from "@/layouts/CourseHandoutLayout";
+import DCAlist from "@/views/Handouts/DcaMember/DcaMemberList";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -116,6 +117,7 @@ const Routing = () => {
               <Route path="/handouts" element={<CourseHandoutLayout />}>
                 <Route index element={<Navigate to="/handouts/faculty"/>}/>
                 <Route path="faculty" element={<Faculty />} />
+                <Route path="DCA" element={<DCAlist />} />
               </Route>
             )}
           </>
