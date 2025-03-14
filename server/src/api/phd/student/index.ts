@@ -7,6 +7,7 @@ import getProposalDeadline from './getProposalDeadline.ts';
 import getQualifyingExamStatus from './getQualifyingExamStatus.ts'; 
 import uploadQeApplicationForm from './uploadQeApplicationForm.ts'; 
 import uploadProposalDocuments from './uploadProposalDocuments.ts'; 
+import getQualifyingExamPassingDate from './getQualifyingExamPassingDate.ts'; 
 const router  = express.Router();
 
 router.use("/inputDetails", inputDetails);
@@ -16,6 +17,7 @@ router.use("/getQualifyingExamStatus", getQualifyingExamStatus);
 router.use("/getProposalDeadline", getProposalDeadline);
 router.use("/uploadQeApplicationForm", uploadQeApplicationForm);
 router.use("/uploadProposalDocuments", uploadProposalDocuments);
+router.use("/getQualifyingExamPassingDate", getQualifyingExamPassingDate);
 
 router.use(authMiddleware);
 
