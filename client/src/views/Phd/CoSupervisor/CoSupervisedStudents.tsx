@@ -4,11 +4,11 @@ const CoSupervisedStudents: React.FC = () => {
   const { data, isFetching } = useQuery({
     queryKey: ["phd-co-supervised-students"],
     queryFn: async () => {
-      const response = await api.get<{ status: any }>(
+      const response = await api.get<{ students: any }>(
         "/phd/coSupervisor/getCoSupervisedStudents"
       );
       console.log(response.data);
-      return response.data?.status;
+      return response.data?.students;
     },
   });
   return (
