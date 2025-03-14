@@ -10,7 +10,7 @@ const handoutData: HandoutItem[] = [
   { id: 1, handoutName: "Handout 1", status: "Approved" },
   { id: 2, handoutName: "Handout 2", status: "Pending" },
   { id: 3, handoutName: "Handout 3", status: "Rejected" },
-  ];
+];
 
 const statuses = ["Approved", "Pending", "Rejected"];
 
@@ -36,6 +36,11 @@ const Faculty = () => {
   const handleBack = () => {
     setShowDetail(false);
     setSelectedHandout(null);
+  };
+
+  const handleCreateApplication = () => {
+    setSelectedHandout(null);
+    setShowDetail(true);
   };
 
   return (
@@ -86,6 +91,11 @@ const Faculty = () => {
             selectedStatuses={selectedStatuses}
             onViewDetails={handleViewDetails}
           />
+          <div className="flex justify-end">
+            <Button className="px-6 py-2 w-auto" onClick={handleCreateApplication}>
+              Create Application
+            </Button>
+          </div>
         </>
       )}
     </div>
