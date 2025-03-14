@@ -1,16 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import HandoutList, { HandoutItem } from "@/components/coursehandouts/HandoutList";
+import HandoutList, {
+  HandoutItem,
+} from "@/components/coursehandouts/HandoutList";
 import CourseHandouts from "./FacultyApplication";
-
-const handoutData: HandoutItem[] = [
-  { id: 1, handoutName: "Handout 1", status: "Approved" },
-  { id: 2, handoutName: "Handout 2", status: "Pending" },
-  { id: 3, handoutName: "Handout 3", status: "Rejected" },
-];
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
 
 const statuses = ["Approved", "Pending", "Rejected"];
 
@@ -18,7 +16,21 @@ const Faculty = () => {
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(statuses);
   const [showDetail, setShowDetail] = useState(false);
-  const [selectedHandout, setSelectedHandout] = useState<HandoutItem | null>(null);
+  const [, setSelectedHandout] = useState<HandoutItem | null>(null);
+
+  const { data: handoutData } = useQuery<HandoutItem[]>({
+    queryKey: ["faculty-applications"],
+    queryFn: async (): Promise<HandoutItem[]> => {
+      const response = await api.get<{
+        success: boolean;
+        applications: HandoutItem[];
+      }>("/handout/getAllApplicationsFaculty");
+      return response.data.applications.map((el) => ({
+        ...el,
+        status: el.status.charAt(0).toUpperCase() + el.status.slice(1),
+      }));
+    },
+  });
 
   const handleStatusChange = (values: string[]) => {
     if (values.length === 0) {
@@ -54,7 +66,9 @@ const Faculty = () => {
         </div>
       ) : (
         <>
-          <h1 className="text-3xl font-bold text-primary">Faculty Application</h1>
+          <h1 className="text-3xl font-bold text-primary">
+            Faculty Applications
+          </h1>
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-gray-400" />
@@ -66,7 +80,9 @@ const Faculty = () => {
                 className="w-64 pl-9"
               />
             </div>
-            <Button onClick={() => console.log("Searching for:", search)}>Search</Button>
+            <Button onClick={() => console.log("Searching for:", search)}>
+              Search
+            </Button>
             <ToggleGroup
               type="multiple"
               value={selectedStatuses}
@@ -86,13 +102,16 @@ const Faculty = () => {
             </ToggleGroup>
           </div>
           <HandoutList
-            handouts={handoutData}
+            handouts={handoutData || []}
             search={search}
             selectedStatuses={selectedStatuses}
             onViewDetails={handleViewDetails}
           />
           <div className="flex justify-end">
-            <Button className="px-6 py-2 w-auto" onClick={handleCreateApplication}>
+            <Button
+              className="w-auto px-6 py-2"
+              onClick={handleCreateApplication}
+            >
               Create Application
             </Button>
           </div>

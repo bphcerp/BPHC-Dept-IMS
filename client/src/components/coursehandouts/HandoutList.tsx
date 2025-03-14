@@ -1,10 +1,10 @@
-import React from "react";
 import HandoutRow from "./HandoutRow";
 import HandoutRowWithDetails from "./HandoutRowDetails";
 
 export interface HandoutItem {
   id: number;
-  handoutName: string;
+  courseName: string;
+  courseCode: string;
   status: string;
 }
 
@@ -22,7 +22,7 @@ function HandoutList({
   onViewDetails,
 }: HandoutListProps) {
   const filteredHandouts = handouts.filter((item) => {
-    const matchesSearch = item.handoutName
+    const matchesSearch = item.courseName
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchesStatus = selectedStatuses.includes(item.status);
@@ -31,26 +31,26 @@ function HandoutList({
 
   if (filteredHandouts.length === 0) {
     return (
-      <div className="border-t border-b border-gray-200 p-4 text-center text-gray-500">
+      <div className="border-b border-t border-gray-200 p-4 text-center text-gray-500">
         No handouts found for the current filter/search.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col divide-y-2 border-t border-b border-gray-200">
+    <div className="flex flex-col divide-y-2 border-b border-t border-gray-200">
       {filteredHandouts.map((item) =>
         onViewDetails ? (
           <HandoutRowWithDetails
             key={item.id}
-            handoutName={item.handoutName}
+            handoutName={item.courseName}
             status={item.status}
             onViewDetails={() => onViewDetails(item)}
           />
         ) : (
           <HandoutRow
             key={item.id}
-            handoutName={item.handoutName}
+            handoutName={item.courseName}
             status={item.status}
           />
         )
