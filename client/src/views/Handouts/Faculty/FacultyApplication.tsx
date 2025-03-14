@@ -89,8 +89,7 @@ export default function FacultyApplication() {
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await api.post("/handout/create", formData);
-      return response.data;
+      await api.post("/handout/create", formData);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -98,9 +97,8 @@ export default function FacultyApplication() {
       });
       toast.success("Form submitted successfully.");
     },
-    onError: (error) => {
-      const message = error.response?.data?.message || "";
-      toast.error(`Submission failed ${message}`);
+    onError: () => {
+      toast.error(`Submission failed : Invalid Parameters`);
     },
   });
 
