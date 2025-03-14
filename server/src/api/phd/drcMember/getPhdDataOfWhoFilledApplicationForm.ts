@@ -32,8 +32,7 @@ export default router.get(
             );
         }
 
-        const { value: deadlineCreatedAt, createdAt: deadlineTimestamp } =
-            latestDeadline[0];
+        // const { value: deadlineCreatedAt, createdAt: deadlineTimestamp } =latestDeadline[0];
 
         // Get all students who have submitted qualifying exam applications within the deadline window
         const students = await db
