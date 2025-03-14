@@ -4,7 +4,6 @@ import React from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 const FormDeadline: React.FC = () => {
-  const formDeadlineOld = new Date("2022-12-31T23:59:59");
   const { data: formDeadline, isFetching } = useQuery({
     queryKey: ["phd-students"],
     queryFn: async () => {
@@ -27,7 +26,7 @@ const FormDeadline: React.FC = () => {
       <div className="flex flex-col gap-8">
         {isFetching && <p>Loading...</p>}
         {formDeadline?.deadline ? (
-          <ExamDateDisplay examDate={formDeadline?.deadline} />
+          <ExamDateDisplay examDate={formDeadline?.deadline} title="Exam Form Deadline" />
         ) : (
           <span>No Deadline has been set yet</span>
         )}

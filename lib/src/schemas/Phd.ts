@@ -48,9 +48,9 @@ export const uploadApplicationSchema = z.object({
 export type uploadApplicationBody = z.infer<typeof uploadApplicationSchema>;
 
 export const uploadProposalSchema = z.object({
-    fileUrl1: z.string().url(),
-    fileUrl2: z.string().url(),
-    fileUrl3: z.string().url(),
+    fileUrl1: z.string(),
+    fileUrl2: z.string(),
+    fileUrl3: z.string(),
     formName1: z.string().min(1),
     formName2: z.string().min(1),
     formName3: z.string().min(1),

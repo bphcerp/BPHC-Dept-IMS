@@ -33,7 +33,7 @@ import UpdateProposalDeadline from "@/views/Phd/DrcConvenor/UpdateProposalDeadli
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
-
+import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
@@ -184,6 +184,7 @@ const Routing = () => {
                       path="exam-status"
                       element={<QualifyingExamStatus />}
                     />
+                    <Route path="proposal-submission" element={<ProposalSubmission />} />
                   </Route>
                 )}
               </Route>

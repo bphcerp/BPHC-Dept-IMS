@@ -91,6 +91,11 @@ const NotionalSupervisorLayout = () => {
           icon: <List />,
           url: "/phd/phd-student/exam-status",
         },
+        {
+          title: "Proposal Submission",
+          icon: <NotepadText />,
+          url: "/phd/phd-student/proposal-submission",
+        },
       ],
     },
   ];
