@@ -32,6 +32,14 @@ export const reviewFieldBodySchema = z.object({
     status: z.boolean(),
 });
 
+export const editFieldBodySchema = z.object({
+    value: z.union([
+        z.string().nonempty(),
+        z.coerce.number().positive().finite(),
+        z.coerce.date(),
+    ]),
+});
+
 export const fileFieldNames = [
     "letterOfInvitation",
     "firstPageOfPaper",
