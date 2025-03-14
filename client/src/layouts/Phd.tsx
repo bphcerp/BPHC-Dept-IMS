@@ -98,6 +98,26 @@ const NotionalSupervisorLayout = () => {
         },
       ],
     },
+    {
+      title: "PhD Co-Supervisor",
+      items: [
+        {
+          title: "Co-Supervised Students",
+          icon: <Users />,
+          url: "/phd/phd-co-supervisor/co-supervised-students",
+        },
+      ],
+    },
+    {
+      title: "PhD Supervisor",
+      items: [
+        {
+          title: "Supervised Students",
+          icon: <Users />,
+          url: "/phd/phd-supervisor/supervised-students",
+        },
+      ],
+    },
   ];
 
   return (

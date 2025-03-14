@@ -34,6 +34,8 @@ import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
+import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
+import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
@@ -187,6 +189,16 @@ const Routing = () => {
                     <Route path="proposal-submission" element={<ProposalSubmission />} />
                   </Route>
                 )}
+                 {checkAccess(permissions["/phdAll"] as string) && (
+                  <Route path="phd-co-supervisor" element={<Outlet />}>
+                    <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
+                  </Route>
+                 )}
+                 {checkAccess(permissions["/phdAll"] as string) && (
+                  <Route path="phd-supervisor" element={<Outlet />}>
+                    <Route path="supervised-students" element={<SupervisedStudents />} />
+                  </Route>
+                 )}
               </Route>
             )}
           </>
