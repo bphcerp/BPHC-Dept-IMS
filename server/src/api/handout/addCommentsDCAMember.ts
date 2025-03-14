@@ -45,8 +45,8 @@ router.post(
 
             await tx.insert(applicationStatus).values({
                 applicationId: handout.applicationId,
-                comments: parsed.body.review as string,
-                status: parsed.body.status as boolean,
+                comments: parsed.body.review,
+                status: parsed.body.status,
                 updatedAs: "dca-member",
                 userEmail: req.user?.email,
             });
