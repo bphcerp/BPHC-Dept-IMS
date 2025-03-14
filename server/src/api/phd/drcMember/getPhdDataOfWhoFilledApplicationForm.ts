@@ -5,7 +5,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { phdDocuments, phdConfig } from "@/config/db/schema/phd.ts";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -16,14 +16,12 @@ export default router.get(
         // Get the latest qualifying exam deadline
         const latestDeadline = await db
             .select({
-                value: phdConfig.value,
-                createdAt: phdConfig.createdAt,
+                value: phdConfig.value, 
+                createdAt: phdConfig.createdAt, 
             })
             .from(phdConfig)
-            .where(
-                sql`TRIM(BOTH '"' FROM ${phdConfig.key}) = 'qualifying_exam_deadline'`
-            )
-            .orderBy(desc(phdConfig.createdAt))
+            .where(eq(phdConfig.key, "qualifying_exam_deadline"))
+            .orderBy(sql`${phdConfig.createdAt} DESC`)
             .limit(1);
 
         if (!latestDeadline.length) {
@@ -31,8 +29,8 @@ export default router.get(
                 new HttpError(HttpCode.BAD_REQUEST, "No deadline found")
             );
         }
-
-        // const { value: deadlineCreatedAt, createdAt: deadlineTimestamp } =latestDeadline[0];
+        console.log("deadline",latestDeadline );
+        // const { value: deadlineValue, createdAt: deadlineCreatedAt } = latestDeadline[0];
 
         // Get all students who have submitted qualifying exam applications within the deadline window
         const students = await db
@@ -47,15 +45,12 @@ export default router.get(
             .from(phd)
             .innerJoin(phdDocuments, eq(phd.email, phdDocuments.email))
             .where(
-                and(
-                    // sql`${phdDocuments.uploadedAt} >= ${deadlineCreatedAt}`,
-                    // sql`${phdDocuments.uploadedAt} <= ${deadlineTimestamp}`,
-                    sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType}) = 'qualifying_exam'`
-                )
+                sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType}) = 'qualifying_exam'`
+                
             )
             .orderBy(desc(phdDocuments.uploadedAt));
 
-        console.log("hiiiii", students);
+        console.log("student", students);
 
         if (!students.length) {
             return next(

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer , varchar, uuid} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer ,  uuid} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -56,7 +56,7 @@ export const phdConfig = pgTable("phd_config", {
 
 export const phdDocuments = pgTable("phdDocuments", {
     id: uuid("id").defaultRandom().primaryKey(),
-    email: varchar("email", { length: 255 }).notNull(),
+    email: text("email").notNull(),
     fileUrl: text("fileUrl").notNull(),
     formName: text("formName").notNull(),
     applicationType: text("applicationType").notNull(),

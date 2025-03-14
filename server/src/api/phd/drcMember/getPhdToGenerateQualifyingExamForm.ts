@@ -29,7 +29,6 @@ router.get(
         }
 
         const { value: deadlineValue, createdAt: deadlineCreatedAt } = latestDeadline[0];
-
        
         const students = await db
             .select({
@@ -45,7 +44,6 @@ router.get(
                 sql`${phd.qualifyingAreasUpdatedAt} >= ${deadlineCreatedAt} 
                      AND ${phd.qualifyingAreasUpdatedAt} <= ${deadlineValue}`
             );
-
         res.status(200).json({ success: true, students });
     })
 );
