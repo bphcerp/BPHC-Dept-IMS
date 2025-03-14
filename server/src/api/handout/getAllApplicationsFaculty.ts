@@ -13,12 +13,7 @@ router.get(
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
-        const parsed =
-            handoutSchemas.getAllFacultyApplicationsQuerySchema.parse(
-                req.query
-            );
-
-        const { email } = parsed;
+        const email = req.user.email;
 
         const applications = (
             await db.query.applications.findMany({
