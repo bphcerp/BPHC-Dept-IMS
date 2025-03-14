@@ -1,7 +1,6 @@
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import type * as FormTables from "@/config/db/schema/form.ts";
-import type * as ConferenceTables from "@/config/db/schema/conference.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
@@ -24,6 +23,7 @@ router.get(
                 user: true,
                 statuses: true,
                 conferenceApplications: {
+                    columns: {},
                     with: {
                         purpose: {
                             with: {
@@ -133,30 +133,18 @@ router.get(
 
         for (const fileFieldName of conferenceSchemas.fileFieldNames) {
             const fileField =
-                application.conferenceApplications[0][
-                    fileFieldName as keyof typeof ConferenceTables.conferenceApprovalApplications.$inferSelect
-                ];
-            if (fileField === null) continue;
-            if (typeof fileField === "number") {
-                return next(
-                    new HttpError(
-                        HttpCode.INTERNAL_SERVER_ERROR,
-                        `Could not find fileField ${fileFieldName}`
-                    )
-                );
-            }
+                application.conferenceApplications[0][fileFieldName];
+            if (!fileField) continue;
+
             // Weird bug in drizzle where the joined values doesn't have the correct types
-            const fileID = (
-                (fileField as typeof FormTables.fileFields.$inferSelect)
-                    .file as unknown as typeof FormTables.files.$inferSelect
-            ).id;
+            const fileID = fileField.fileId;
             (
-                (
-                    application.conferenceApplications[0][
-                        fileFieldName as keyof typeof ConferenceTables.conferenceApprovalApplications.$inferSelect
-                    ] as typeof FormTables.fileFields.$inferSelect
-                ).file as unknown as typeof FormTables.files.$inferSelect
-            ).filePath = environment.SERVER_URL + "/api/f/" + fileID;
+                application.conferenceApplications[0][
+                    fileFieldName
+                ] as typeof FormTables.fileFields.$inferSelect & {
+                    file: typeof FormTables.files.$inferSelect;
+                }
+            ).file.filePath = environment.SERVER_URL + "/api/f/" + fileID;
         }
 
         res.status(200).send(application);

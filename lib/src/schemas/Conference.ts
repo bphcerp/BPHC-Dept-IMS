@@ -33,7 +33,7 @@ export const fileFieldNames = [
     "reviewersComments",
     "detailsOfEvent",
     "otherDocuments",
-];
+] as const;
 
 export const multerFileFields: Readonly<Field[]> = (
     fileFieldNames as Readonly<string[]>
