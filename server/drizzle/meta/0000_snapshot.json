@@ -1,5 +1,5 @@
 {
-  "id": "19f76a3f-f997-480f-b5fe-edb63f99de31",
+  "id": "ca76aac1-3f39-46b5-a5ca-249338a182f4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -229,6 +229,12 @@
         },
         "qualifying_area_1": {
           "name": "qualifying_area_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifying_area_2": {
+          "name": "qualifying_area_2",
           "type": "text",
           "primaryKey": false,
           "notNull": false
