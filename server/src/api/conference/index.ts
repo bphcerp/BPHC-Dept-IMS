@@ -5,6 +5,6 @@ import viewApplicationDetailsRouter from "./viewApplicationDetails.ts";
 const router = express.Router();
 
 router.use("/createApplication", createApplicationRouter);
-router.use("/details", viewApplicationDetailsRouter);
+router.use("/viewApplicationDetails", viewApplicationDetailsRouter);
 
 export default router;
