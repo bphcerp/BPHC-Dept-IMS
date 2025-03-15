@@ -1,4 +1,6 @@
 export default {
+    // Admin
+
     "/admin/member/invite": "admin:member:create",
     "/admin/member/search": "admin:member:read",
     "/admin/member/details": "admin:member:read",
@@ -13,4 +15,8 @@ export default {
     "/admin/role/delete": "admin:role:delete",
 
     "/admin/permission/all": "admin:role:update",
+
+    // Conference
+
+    "/conference/createApplication": "conference:application:create",
 };
