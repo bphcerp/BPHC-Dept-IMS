@@ -106,7 +106,7 @@ export const fileFieldsFormsRelations = relations(
             relationName: "fileFields",
         }),
         file: one(files, {
-            fields: [fileFields.file],
+            fields: [fileFields.fileId],
             references: [files.id],
             relationName: "fileFieldsFile",
         }),

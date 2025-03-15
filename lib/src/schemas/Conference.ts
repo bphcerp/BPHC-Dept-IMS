@@ -1,3 +1,4 @@
+import { Field } from "multer";
 import z from "zod";
 
 export const applyForConferenceBodySchema = z.object({
@@ -24,4 +25,18 @@ export const applyForConferenceBodySchema = z.object({
         .optional(),
     accomodationReimbursement: z.coerce.number().positive().finite().optional(),
     otherReimbursement: z.coerce.number().positive().finite().optional(),
+});
+
+export const fileFieldNames = [
+    "letterOfInvitation",
+    "firstPageOfPaper",
+    "reviewersComments",
+    "detailsOfEvent",
+    "otherDocuments",
+] as const;
+
+export const multerFileFields: Readonly<Field[]> = (
+    fileFieldNames as Readonly<string[]>
+).map((x) => {
+    return { name: x, maxCount: 1 };
 });
