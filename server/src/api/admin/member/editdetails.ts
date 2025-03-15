@@ -31,10 +31,7 @@ router.post(
             if (updated.length === 0) throw new Error("User not found");
             res.status(200).json(updated[0]);
         } catch (e) {
-            if (
-                (e as Error)?.message ===
-                'insert or update on table "phd" violates foreign key constraint "phd_notional_supervisor_email_users_email_fk"'
-            ) {
+            if ((e as { code: string })?.code === "23503") {
                 return next(
                     new HttpError(
                         HttpCode.BAD_REQUEST,
@@ -42,7 +39,7 @@ router.post(
                     )
                 );
             }
-            return next(e);
+            throw e;
         }
     })
 );
