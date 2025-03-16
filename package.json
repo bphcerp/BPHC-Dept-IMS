@@ -1,7 +1,7 @@
 {
 	"pnpm": {
 		"patchedDependencies": {
-			"drizzle-orm": "patches/drizzle-orm.patch"
+			"drizzle-orm@0.40.0": "patches/drizzle-orm@0.40.0.patch"
 		}
 	}
 }

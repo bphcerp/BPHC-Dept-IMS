@@ -27,6 +27,11 @@ export const applyForConferenceBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
+export const reviewFieldBodySchema = z.object({
+    comments: z.string(),
+    status: z.boolean(),
+});
+
 export const finalizeApproveApplicationSchema = z.object({
     approve: z.boolean(),
 });
@@ -44,3 +49,5 @@ export const multerFileFields: Readonly<Field[]> = (
 ).map((x) => {
     return { name: x, maxCount: 1 };
 });
+
+export const fieldTypes = z.enum(["text", "number", "date", "file"]);
