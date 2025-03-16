@@ -32,6 +32,10 @@ export const reviewFieldBodySchema = z.object({
     status: z.boolean(),
 });
 
+export const finalizeApproveApplicationSchema = z.object({
+    approve: z.boolean(),
+});
+
 export const fileFieldNames = [
     "letterOfInvitation",
     "firstPageOfPaper",
