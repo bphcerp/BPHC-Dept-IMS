@@ -27,6 +27,10 @@ export const applyForConferenceBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
+export const finalizeApproveApplicationSchema = z.object({
+    approve: z.boolean(),
+});
+
 export const fileFieldNames = [
     "letterOfInvitation",
     "firstPageOfPaper",
