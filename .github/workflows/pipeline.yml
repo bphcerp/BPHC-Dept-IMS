@@ -1,0 +1,20 @@
+name: Redeploy Staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Pull main and host the newest code for staging
+    runs-on: self-hosted
+    steps:
+      - name: clone repo and update
+        run: |
+          cd /home/ubuntu
+          cd bphcerp/ERP
+          git pull
+          docker compose up --build -d
+
