@@ -5,6 +5,6 @@ import getSubmittedApplicationsRouter from "./getSubmittedApplications.ts";
 const router = express.Router();
 
 router.use("/createApplication", createApplicationRouter);
-router.use("/getSubmitted", getSubmittedApplicationsRouter);
+router.use("/getSubmittedApplications", getSubmittedApplicationsRouter);
 
 export default router;
