@@ -5,6 +5,6 @@ import finalizeApplicationRouter from "./finalizeApplication.ts";
 const router = express.Router();
 
 router.use("/createApplication", createApplicationRouter);
-router.use("/finalize", finalizeApplicationRouter);
+router.use("/finalizeApplication", finalizeApplicationRouter);
 
 export default router;
