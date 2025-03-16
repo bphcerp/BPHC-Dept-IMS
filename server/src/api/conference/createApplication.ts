@@ -66,7 +66,7 @@ router.post(
                     .insert(fileFields)
                     .values(
                         insertedFiles.map((file) => ({
-                            file: file.id,
+                            fileId: file.id,
                             module: file.module,
                             userEmail: file.userEmail,
                             fieldName: file.fieldName,

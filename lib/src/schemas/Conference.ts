@@ -40,13 +40,17 @@ export const editFieldBodySchema = z.object({
     ]),
 });
 
+export const finalizeApproveApplicationSchema = z.object({
+    approve: z.boolean(),
+});
+
 export const fileFieldNames = [
     "letterOfInvitation",
     "firstPageOfPaper",
     "reviewersComments",
     "detailsOfEvent",
     "otherDocuments",
-];
+] as const;
 
 export const multerFileFields: Readonly<Field[]> = (
     fileFieldNames as Readonly<string[]>

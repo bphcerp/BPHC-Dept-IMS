@@ -1,6 +1,6 @@
 {
-  "id": "9654b3d4-27e5-44d2-96fe-5eab8280eba3",
-  "prevId": "19f76a3f-f997-480f-b5fe-edb63f99de31",
+  "id": "8d571a4f-34ec-402c-93d1-81d9474cb481",
+  "prevId": "ca76aac1-3f39-46b5-a5ca-249338a182f4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -229,6 +229,12 @@
         },
         "qualifying_area_1": {
           "name": "qualifying_area_1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifying_area_2": {
+          "name": "qualifying_area_2",
           "type": "text",
           "primaryKey": false,
           "notNull": false
