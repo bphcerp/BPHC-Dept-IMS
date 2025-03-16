@@ -1,7 +1,7 @@
 export default {
     // Admin
 
-    "/admin/member/invte": "admin:member:create",
+    "/admin/member/invite": "admin:member:create",
     "/admin/member/search": "admin:member:read",
     "/admin/member/details": "admin:member:read",
     "/admin/member/editdetails": "admin:member:update",

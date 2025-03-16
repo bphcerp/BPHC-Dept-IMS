@@ -6,31 +6,28 @@ import { UserDetails } from "@/components/admin/MemberDetails";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-interface UserData {
-  email: string;
-  type: string;
-  name: string;
-  roles: string[];
-  deactivated: boolean;
-  [key: string]: string[] | number | boolean | string;
-}
+import { adminSchemas } from "lib";
 
 const MemberDetailsView: React.FC = () => {
   const { member } = useParams<{ member: string }>();
   const navigate = useNavigate();
 
   // Fetch member details
-  const { data, isLoading, isError } = useQuery<UserData>({
-    queryKey: ["member", member],
-    queryFn: async () => {
-      if (!member) throw new Error("No member email provided");
-      const response = await api.get<UserData>(`/admin/member/details`, {
-        params: { email: member },
-      });
-      return response.data;
-    },
-    enabled: !!member,
-  });
+  const { data, isLoading, isError } =
+    useQuery<adminSchemas.MemberDetailsResponse>({
+      queryKey: ["member", member],
+      queryFn: async () => {
+        if (!member) throw new Error("No member email provided");
+        const response = await api.get<adminSchemas.MemberDetailsResponse>(
+          `/admin/member/details`,
+          {
+            params: { email: member },
+          }
+        );
+        return response.data;
+      },
+      enabled: !!member,
+    });
 
   const handleBack = () => {
     navigate(-1); // Navigate back to the previous page

@@ -11,11 +11,11 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("get-handout-faculty"),
+    checkAccess("faculty-get-handout"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
 
-        const parsed = handoutSchemas.getApplicationFacultyQuerySchema.parse(
+        const parsed = handoutSchemas.getFacultyApplicationQuerySchema.parse(
             req.query
         );
         const { applicationId } = parsed;
