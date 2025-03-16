@@ -4,7 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  drizzle-orm:
+    hash: kojdthnvolfv74efejcefmcthq
+    path: patches/drizzle-orm.patch
+
 importers:
+
+  .: {}
 
   client:
     dependencies:
@@ -195,6 +202,9 @@ importers:
 
   lib:
     dependencies:
+      '@types/multer':
+        specifier: ^1.4.12
+        version: 1.4.12
       zod:
         specifier: ^3.24.1
         version: 3.24.1
@@ -234,7 +244,7 @@ importers:
         version: 16.4.7
       drizzle-orm:
         specifier: ^0.33.0
-        version: 0.33.0(@types/pg@8.11.11)(@types/react@18.3.18)(pg@8.13.1)(react@18.3.1)
+        version: 0.33.0(patch_hash=kojdthnvolfv74efejcefmcthq)(@types/pg@8.11.11)(@types/react@18.3.18)(pg@8.13.1)(react@18.3.1)
       express:
         specifier: ^4.19.2
         version: 4.21.2
@@ -7584,7 +7594,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.33.0(@types/pg@8.11.11)(@types/react@18.3.18)(pg@8.13.1)(react@18.3.1):
+  drizzle-orm@0.33.0(patch_hash=kojdthnvolfv74efejcefmcthq)(@types/pg@8.11.11)(@types/react@18.3.18)(pg@8.13.1)(react@18.3.1):
     optionalDependencies:
       '@types/pg': 8.11.11
       '@types/react': 18.3.18

@@ -62,7 +62,7 @@ export const dateFields = pgTable("date_fields", {
 
 export const fileFields = pgTable("file_fields", {
     ...baseField,
-    file: integer("file")
+    fileId: integer("file")
         .notNull()
         .references(() => files.id, { onDelete: "cascade" }),
 });
