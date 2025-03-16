@@ -32,6 +32,14 @@ export const reviewFieldBodySchema = z.object({
     status: z.boolean(),
 });
 
+export const editFieldBodySchema = z.object({
+    value: z.union([
+        z.string().nonempty(),
+        z.coerce.number().positive().finite(),
+        z.coerce.date(),
+    ]),
+});
+
 export const finalizeApproveApplicationSchema = z.object({
     approve: z.boolean(),
 });

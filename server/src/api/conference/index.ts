@@ -5,10 +5,12 @@ import finalizeApplicationRouter from "./finalizeApplication.ts";
 import getPendingApplicationsRouter from "./getPendingApplications.ts";
 import viewApplicationDetailsRouter from "./viewApplicationDetails.ts";
 import reviewApplicationFieldRouter from "./reviewApplicationField.ts";
+import editApplicationFieldRouter from "./editApplicationField.ts";
 
 const router = express.Router();
 
 router.use("/createApplication", createApplicationRouter);
+router.use("/edit", editApplicationFieldRouter);
 router.use("/reviewApplicationField", reviewApplicationFieldRouter);
 router.use("/getPendingApplications", getPendingApplicationsRouter);
 router.use("/getSubmittedApplications", getSubmittedApplicationsRouter);
