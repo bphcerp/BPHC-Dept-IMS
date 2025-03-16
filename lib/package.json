@@ -25,6 +25,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@types/multer": "^1.4.12",
     "zod": "^3.24.1"
   }
 }

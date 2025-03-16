@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS "phd" (
 	"qualifying_exam_2" boolean,
 	"qualifying_exam_1_date" timestamp with time zone DEFAULT NULL,
 	"qualifying_exam_2_date" timestamp with time zone DEFAULT NULL,
-	"qualifying_area_1" text
+	"qualifying_area_1" text,
+	"qualifying_area_2" text
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "refresh_tokens" (

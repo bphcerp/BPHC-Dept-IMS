@@ -5,6 +5,7 @@ import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
 import handoutRouter from "./handout/index.ts";
 import conferenceRouter from "./conference/index.ts";
+import fileRouter from "./file/index.ts";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.get("/hello", (_req, res) => {
         message: "Hello!",
     });
 });
+router.use("/f", fileRouter);
 
 // Auth routes and middleware
 router.use(authRouter);

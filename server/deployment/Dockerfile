@@ -3,15 +3,18 @@ ENV NODE_ENV development
 WORKDIR /usr/local/app
 
 COPY ./lib ./lib
-
-WORKDIR /usr/local/app/server
+COPY ./patches ./patches
 
 RUN npm install -g pnpm
+
+WORKDIR /usr/local/app/server
 
 COPY ./server/package.json ./
 COPY ./server/tsconfig.json ./
 
 WORKDIR /usr/local/app
+
+COPY ./package.json ./
 COPY ./pnpm-lock.yaml ./
 COPY ./pnpm-workspace.yaml ./
 RUN pnpm install -r

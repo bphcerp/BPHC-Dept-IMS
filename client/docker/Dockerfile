@@ -3,12 +3,12 @@ WORKDIR /usr/local/app
 
 COPY ./lib ./lib
 
+RUN npm install -g pnpm
+
 WORKDIR /usr/local/app/client
 
 COPY ./client/package.json ./
 COPY ./server/tsconfig*.json ./
-
-RUN npm install -g pnpm
 
 WORKDIR /usr/local/app
 COPY ./pnpm-lock.yaml ./
