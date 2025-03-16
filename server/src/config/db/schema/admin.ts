@@ -109,7 +109,7 @@ export const phd = pgTable("phd", {
         mode: "date",
     }).default(sql`NULL`),
     qualifyingArea1: text("qualifying_area_1"),
-    qualifyingArea2: text("qualifying_area_1"),
+    qualifyingArea2: text("qualifying_area_2"),
 });
 
 export const staff = pgTable("staff", {

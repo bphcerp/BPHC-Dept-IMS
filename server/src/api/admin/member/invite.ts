@@ -1,6 +1,6 @@
 import express from "express";
 import db from "@/config/db/index.ts";
-import { faculty, phd, users, userType } from "@/config/db/schema/admin.ts";
+import { faculty, phd, staff, users } from "@/config/db/schema/admin.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import nodemailer from "nodemailer";
@@ -36,7 +36,11 @@ router.post(
                 // Insert user details
                 const insertedDetails = await db
                     .insert(
-                        parsed.type === userType.enumValues[0] ? faculty : phd
+                        parsed.type === adminSchemas.userTypes[0]
+                            ? faculty
+                            : parsed.type === adminSchemas.userTypes[1]
+                              ? phd
+                              : staff
                     )
                     .values({
                         email: insertedUser[0].email,
