@@ -6,6 +6,8 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import { authUtils, permissions } from "lib";
 const permissionsMap: Record<string, string> = permissions;
 
+const dequerify = (x: string) => x.split("?")[0];
+
 /**
  * Middleware to check if the user has access to a specific operation.
  *
@@ -25,7 +27,9 @@ export function checkAccess(requiredOperation?: string) {
         }
         if (!requiredOperation)
             requiredOperation =
-                permissionsMap[PROD ? req.baseUrl : req.baseUrl.slice(4)];
+                permissionsMap[
+                    dequerify(PROD ? req.baseUrl : req.baseUrl.slice(4))
+                ];
         if (!requiredOperation)
             return next(
                 new HttpError(
