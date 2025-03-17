@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer , varchar, uuid} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -34,13 +34,31 @@ export const phdCourses = pgTable("phd_courses", {
     studentEmail: text("student_email")
         .notNull()
         .references(() => phd.email, { onDelete: "cascade" }),
-    courseNames: text("course_names").array(),
-    courseGrades: text("course_grades").array(),
-    courseUnits: integer("course_units").array(),
+    courseNames: text("course_names")
+        .array()
+        .default(sql`'{}'::text[]`),
+    courseGrades: text("course_grades")
+        .array()
+        .default(sql`'{}'::text[]`),
+    courseUnits: integer("course_units")
+        .array()
+        .default(sql`'{}'::integer[]`),
+    courseIds: text("course_ids")
+        .array()
+        .default(sql`'{}'::text[]`),
 });
 
-export const phdConfig  = pgTable("phd_config", {
-    key: text("key").notNull(),
+export const phdConfig = pgTable("phd_config", {
+    key: text("key").notNull().unique(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const phdDocuments = pgTable("phdDocuments", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: varchar("email", { length: 255 }).notNull(),
+    fileUrl: text("fileUrl").notNull(),
+    formName: varchar("formName", { length: 255 }).notNull(),
+    applicationType: varchar("applicationType", { length: 100 }).notNull(),
+    uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });

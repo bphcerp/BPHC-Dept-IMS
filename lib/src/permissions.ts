@@ -44,5 +44,4 @@ export default {
         "phd:notional-supervisor:update-course-grade",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
-    "/phd/student/inputDetails": "phd:student:input-details",
 };
