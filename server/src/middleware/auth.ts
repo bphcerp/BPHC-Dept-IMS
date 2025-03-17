@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import env, { PROD } from "@/config/environment.ts";
+import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";

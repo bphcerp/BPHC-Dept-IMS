@@ -4,7 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import assert from "assert";
 import { phdCourses } from "@/config/db/schema/phd.ts";
 import { phdSchemas } from "lib";
@@ -51,9 +51,7 @@ export default router.post(
             parsed.data.courses?.map((course) => course.units) ?? [];
         const courseIds = parsed.data.courses?.map((course) => course.id) ?? [];
         const courseGrades =
-            parsed.data.courses?.map((course) =>
-                course.grade ? course.grade : "NULL"
-            ) ?? [];
+            parsed.data.courses?.map((course) => course.grade ?? "NULL") ?? [];
 
         const updated = await db
             .update(phdCourses)

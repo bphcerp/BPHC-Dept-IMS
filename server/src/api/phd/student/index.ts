@@ -1,15 +1,13 @@
-import express from 'express';
-import { authMiddleware } from '@/middleware/auth.ts';
-import inputDetails from './inputDetails.ts';
-import checkExamStatus from "./checkExamStatus.ts"
-import getQualifyingExamDeadLine from './getQualifyingExamDeadLine.ts';
-import getProposalDeadline from './getProposalDeadline.ts';
-import getQualifyingExamStatus from './getQualifyingExamStatus.ts'; 
-import uploadQeApplicationForm from './uploadQeApplicationForm.ts'; 
-import uploadProposalDocuments from './uploadProposalDocuments.ts'; 
-const router  = express.Router();
+import express from "express";
+import { authMiddleware } from "@/middleware/auth.ts";
+import checkExamStatus from "./checkExamStatus.ts";
+import getQualifyingExamDeadLine from "./getQualifyingExamDeadLine.ts";
+import getProposalDeadline from "./getProposalDeadline.ts";
+import getQualifyingExamStatus from "./getQualifyingExamStatus.ts";
+import uploadQeApplicationForm from "./uploadQeApplicationForm.ts";
+import uploadProposalDocuments from "./uploadProposalDocuments.ts";
+const router = express.Router();
 
-router.use("/inputDetails", inputDetails);
 router.use("/checkExamStatus", checkExamStatus);
 router.use("/getQualifyingExamDeadLine", getQualifyingExamDeadLine);
 router.use("/getQualifyingExamStatus", getQualifyingExamStatus);
@@ -18,6 +16,5 @@ router.use("/uploadQeApplicationForm", uploadQeApplicationForm);
 router.use("/uploadProposalDocuments", uploadProposalDocuments);
 
 router.use(authMiddleware);
-
 
 export default router;

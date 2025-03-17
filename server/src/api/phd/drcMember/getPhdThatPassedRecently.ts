@@ -35,8 +35,6 @@ router.get(
             return;
         }
 
-        const currentDate = new Date();
-
         const passedStudents = await db
             .select({
                 email: phd.email,
