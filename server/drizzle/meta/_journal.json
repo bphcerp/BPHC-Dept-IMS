@@ -5,57 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1742057485711,
-      "tag": "0000_fantastic_puma",
+      "when": 1742213422728,
+      "tag": "0000_wild_eddie_brock",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1742057496440,
+      "when": 1742213427032,
       "tag": "0001_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1739911626888,
-      "tag": "0011_slimy_thunderbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1739911790263,
-      "tag": "0012_fast_ego",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1739911839039,
-      "tag": "0013_far_doorman",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1739914468654,
-      "tag": "0014_busy_speed_demon",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1741593381705,
-      "tag": "0015_wealthy_lady_deathstrike",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1741806270943,
-      "tag": "0016_short_karen_page",
       "breakpoints": true
     }
   ]

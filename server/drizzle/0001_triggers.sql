@@ -1,4 +1,4 @@
--- Custom SQL migration file, put you code below! --
+-- Custom SQL migration file, put your code below! --
 CREATE OR REPLACE FUNCTION check_roles() RETURNS TRIGGER AS $$
 DECLARE
 	valid_roles integer[];
