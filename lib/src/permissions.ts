@@ -37,7 +37,7 @@ export default {
 
     "/phd/notifs/send": "phd:notifs:send",
 
-    "/phd/notionalSupervisor/getPhD": "phd:notional-supervisor:get-phd",
+    "/phd/notionalSupervisor/getPhd": "phd:notional-supervisor:get-phd",
     "/phd/notionalSupervisor/updateCourseDetails":
         "phd:notional-supervisor:update-course-details",
     "/phd/notionalSupervisor/updateCourseGrade":
