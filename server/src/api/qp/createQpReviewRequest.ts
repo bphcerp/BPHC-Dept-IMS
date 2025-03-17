@@ -7,7 +7,7 @@ import {
     dateFields,
     fileFields,
 } from "@/config/db/schema/form.ts";
-// import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { qpSchemas, modules } from "lib";
 import { files } from "@/config/db/schema/form.ts";
@@ -16,6 +16,7 @@ const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const body = qpSchemas.qpRequestBodySchema.parse(req.body);
         const insertedIds: Record<string, number> = {};
