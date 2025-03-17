@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import env from "@/config/environment.ts";
+import env, { PROD } from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";
@@ -24,7 +24,8 @@ export function checkAccess(requiredOperation?: string) {
             );
         }
         if (!requiredOperation)
-            requiredOperation = permissionsMap[req.baseUrl.slice(4)];
+            requiredOperation =
+                permissionsMap[PROD ? req.baseUrl : req.baseUrl.slice(4)];
         if (!requiredOperation)
             return next(
                 new HttpError(
