@@ -1,50 +1,71 @@
 services:
-    server:
-        build:
-            dockerfile: ./server/deployment/Dockerfile
-            context: .
-        env_file:
-            - .env
-        environment:
-            DB_HOST: db
-        ports:
-            - ${SERVER_PORT}:${SERVER_PORT}
-        depends_on:
-            db:
-                condition: service_healthy
-        volumes:
-            - ./server:/usr/local/app/server
-            - /usr/local/app/server/node_modules
+  server:
+    build:
+      dockerfile: ./server/deployment/Dockerfile
+      context: .
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server:/usr/local/app/server
+      - /usr/local/app/server/node_modules
+    profiles:
+      - "dev"
+      - "prod"
 
-    db:
-        image: postgres:15.3-bookworm
-        env_file:
-            - .env
-        ports:
-            - ${PGPORT}:${PGPORT}
-        healthcheck:
-            test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}"]
-            interval: 5s
-            timeout: 30s
-            retries: 3
-        volumes:
-            - postgres_db:/var/lib/postgresql/data
+  db:
+    image: postgres:15.3-bookworm
+    env_file:
+      - .env
+    ports:
+      - ${PGPORT}:${PGPORT}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    profiles:
+      - "dev"
+      - "prod"
 
-    client:
-        build:
-            context: .
-            dockerfile: ./client/docker/Dockerfile
-        ports: 
-            - ${FRONTEND_PORT}:${FRONTEND_PORT}
-        env_file:
-            - .env
-        volumes:
-            - ./client:/usr/local/app/client
-            - /usr/local/app/client/node_modules
+  client-prod:
+    build:
+      context: ./
+      dockerfile: ./client/docker/Dockerfile.prod
+    depends_on:
+      - server
+    ports:
+      - "${FRONTEND_PORT}:80"
+    env_file:
+      - .env
+    profiles:
+      - "prod"
+
+  client:
+    build:
+      context: .
+      dockerfile: ./client/docker/Dockerfile
+    ports:
+      - ${FRONTEND_PORT}:${FRONTEND_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./client:/usr/local/app/client
+      - /usr/local/app/client/node_modules
+    profiles:
+      - "dev"
 
 volumes:
-    postgres_db:
+  postgres_db:
 
 networks:
-    default:
-        name: "erp_net"
+  default:
+    name: "erp_net"
