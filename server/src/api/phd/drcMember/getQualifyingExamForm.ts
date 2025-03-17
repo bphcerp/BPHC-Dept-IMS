@@ -11,10 +11,12 @@ const router = express.Router();
 
 router.get(
     "/:email",
-    checkAccess("drc-view-qualifying-form"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
-        const parsed = phdSchemas.getQualifyingExamFormParamsSchema.parse(req.params);
-        
+        const parsed = phdSchemas.getQualifyingExamFormParamsSchema.parse(
+            req.params
+        );
+
         const phdRecord = await db
             .select({
                 email: phd.email,
@@ -26,25 +28,30 @@ router.get(
                 qualifyingArea1: phd.qualifyingArea1,
                 qualifyingArea2: phd.qualifyingArea2,
                 supervisorEmail: phd.supervisorEmail,
-                notionalSupervisorEmail: phd.notionalSupervisorEmail
+                notionalSupervisorEmail: phd.notionalSupervisorEmail,
             })
             .from(phd)
             .where(eq(phd.email, parsed.email))
             .limit(1);
 
         if (phdRecord.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD record not found")
+            );
         }
 
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             formData: {
                 ...phdRecord[0],
                 // Convert dates to ISO strings for JSON serialization
-                qualifyingExam1Date: phdRecord[0].qualifyingExam1Date?.toISOString(),
-                qualifyingExam2Date: phdRecord[0].qualifyingExam2Date?.toISOString()
+                qualifyingExam1Date:
+                    phdRecord[0].qualifyingExam1Date?.toISOString(),
+                qualifyingExam2Date:
+                    phdRecord[0].qualifyingExam2Date?.toISOString(),
             },
-            qualifyingExamFormLink: "https://www.bits-pilani.ac.in/wp-content/uploads/1.-Format-for-application-to-DRC-for-Ph.D-Qualifying-Examination.pdf"
+            qualifyingExamFormLink:
+                "https://www.bits-pilani.ac.in/wp-content/uploads/1.-Format-for-application-to-DRC-for-Ph.D-Qualifying-Examination.pdf",
         });
     })
 );

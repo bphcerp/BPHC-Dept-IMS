@@ -4,13 +4,13 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
-import {  eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("drc-check-exam-status"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const { email } = req.params;
 
@@ -24,7 +24,9 @@ router.get(
             .limit(1);
 
         if (phdRecord.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD record not found")
+            );
         }
 
         const { qualifyingExam1, qualifyingExam2 } = phdRecord[0];

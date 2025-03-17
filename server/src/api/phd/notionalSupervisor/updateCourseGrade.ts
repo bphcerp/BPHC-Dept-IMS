@@ -7,15 +7,13 @@ import { phdCourses } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
 import assert from "assert";
 import { phdSchemas } from "lib";
-import {phd} from "@/config/db/schema/admin.ts"
+import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
 
-
-
 export default router.post(
     "/",
-    checkAccess("notional-supervisor-update-grades"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
 
@@ -28,12 +26,19 @@ export default router.post(
             .limit(1);
 
         if (phdStudent.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
-        
+
         // checks if user is the correct notional supervisor
         if (phdStudent[0].notionalSupervisorEmail !== req.user.email) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not the notional supervisor of this student"
+                )
+            );
         }
 
         const updated = await db
@@ -45,7 +50,9 @@ export default router.post(
             .returning();
 
         if (updated.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD course record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD course record not found")
+            );
         }
 
         res.json({ success: true, phdCourses: updated[0] });

@@ -20,50 +20,54 @@ const notificationSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("drc-send-notification"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
-    const parsed = notificationSchema.parse(req.body);
+        const parsed = notificationSchema.parse(req.body);
 
-    // Verify PhD student exists
-    const phdStudent = await db.query.phd.findFirst({
-        where: eq(phd.email, parsed.email),
-    });
+        // Verify PhD student exists
+        const phdStudent = await db.query.phd.findFirst({
+            where: eq(phd.email, parsed.email),
+        });
 
-    if (!phdStudent) {
-        return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
-    }
-
-    if (env.PROD) {
-        try {
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    user: env.BPHCERP_EMAIL,
-                    pass: env.BPHCERP_PASSWORD,
-                },
-            });
-
-        const emailText = [
-            parsed.body,
-            parsed.link && `\nAccess link: ${parsed.link}`
-        ].filter(Boolean).join('\n');
-
-            await transporter.sendMail({
-                from: env.BPHCERP_EMAIL,
-                to: parsed.email,
-                subject: parsed.subject,
-                text: emailText,
-            });
-        } catch (e) {
-        throw new HttpError(
-            HttpCode.INTERNAL_SERVER_ERROR,
-            "Notification failed: error sending email",
-            (e as Error)?.message
-        );
+        if (!phdStudent) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
-    }
 
-    res.status(200).json({ success: true });
+        if (env.PROD) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: env.BPHCERP_EMAIL,
+                        pass: env.BPHCERP_PASSWORD,
+                    },
+                });
+
+                const emailText = [
+                    parsed.body,
+                    parsed.link && `\nAccess link: ${parsed.link}`,
+                ]
+                    .filter(Boolean)
+                    .join("\n");
+
+                await transporter.sendMail({
+                    from: env.BPHCERP_EMAIL,
+                    to: parsed.email,
+                    subject: parsed.subject,
+                    text: emailText,
+                });
+            } catch (e) {
+                throw new HttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Notification failed: error sending email",
+                    (e as Error)?.message
+                );
+            }
+        }
+
+        res.status(200).json({ success: true });
     })
 );
 

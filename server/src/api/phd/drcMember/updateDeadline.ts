@@ -9,21 +9,24 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("drc-update-deadline"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
-        const parsed = phdSchemas.updateQualifyingDeadlineBodySchema.parse(req.body);
+        const parsed = phdSchemas.updateQualifyingDeadlineBodySchema.parse(
+            req.body
+        );
 
-        await db.insert(phdConfig)
-        .values({
-            key: "qualifying_exam_deadline",
-            value: new Date(parsed.deadline)
-        })
-        .onConflictDoUpdate({
-            target: phdConfig.key,
-            set: {
-            value: new Date(parsed.deadline)
-            }
-        });
+        await db
+            .insert(phdConfig)
+            .values({
+                key: "qualifying_exam_deadline",
+                value: new Date(parsed.deadline),
+            })
+            .onConflictDoUpdate({
+                target: phdConfig.key,
+                set: {
+                    value: new Date(parsed.deadline),
+                },
+            });
 
         res.status(200).json({ success: true });
     })
