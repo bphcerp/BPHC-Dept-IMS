@@ -3,17 +3,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import api from "@/lib/axios-instance"; // Import Axios instance
 
-// Define the TypeScript type for the request data
 interface RequestData {
-  name: string;
-  professor: string;
-  reviewer1: string;
-  reviewer2: string;
-  status: string;
-  ficDeadline: string | null;
-  srDeadline: string | null;
+  dcaMember: string;
+  courseNo: string;
+  courseName: string;
+  fic: string;
+  ficDeadline: string; // ISO date string
+  faculty1: string;
+  faculty2: string;
+  reviewDeadline: string; // ISO date string
 }
+
+
+
 
 // Define the props type for the component
 interface CreateRequestDialogProps {
@@ -28,24 +32,41 @@ const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({ isOpen, onClo
   const [fic, setFIC] = useState("");
   const [ficDeadline, setFicDeadline] = useState<string | null>(null);
   const [srDeadline, setSrDeadline] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false); // Loading state
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!courseName || !courseCode || !fic) {
       alert("Please fill in all fields.");
       return;
     }
 
-    onAddRequest({
-      name: courseCode,
-      professor: fic,
-      reviewer1: "Faculty Reviewer 1",
-      reviewer2: "Faculty Reviewer 2",
-      status: "Pending",
-      ficDeadline,
-      srDeadline,
-    });
+    const requestData: RequestData = {
+      dcaMember: "DCA Member",
+      courseNo: courseCode,
+      courseName: "Course Name",
+      fic: fic,
+      faculty1: "Faculty Reviewer 1",
+      faculty2: "Faculty Reviewer 2",
+      ficDeadline: ficDeadline ?? new Date(Date.now()).toISOString(),
+      reviewDeadline: srDeadline ?? new Date(Date.now()).toISOString(),
+    };
 
-    onClose(); // Close dialog after adding
+    try {
+      setLoading(true); // Start loading
+      const response = await api.post("/qp/createQpRequest", requestData);
+      
+      console.log("Full API Response:", response); // 🔍 Log full response
+      console.log("Response Data:", response.data); // 🔍 Log response data
+
+      if (response.status === 201) {
+        onAddRequest(response.data); // Add new request from backend
+        onClose(); // Close dialog
+      }
+    } catch (error) {
+      console.error("Error creating request:", error);
+    } finally {
+      setLoading(false); // Stop loading
+    }
   };
 
   return (
@@ -101,8 +122,10 @@ const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({ isOpen, onClo
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleAdd}>Done</Button>
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button onClick={handleAdd} disabled={loading}>
+            {loading ? "Submitting..." : "Done"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

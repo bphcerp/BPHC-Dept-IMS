@@ -19,4 +19,7 @@ export default {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
+
+    // qp
+    "/qp/createQpRequest": "qp:review:create",
 };
