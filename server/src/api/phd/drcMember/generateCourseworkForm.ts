@@ -10,15 +10,18 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("drc-generate-coursework"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
         const phdStudents = await db.select().from(phd);
         const allCourses = await db.select().from(phdCourses);
 
-        const coursesByStudent = allCourses.reduce((acc, course) => {
-            acc[course.studentEmail] = course;
-            return acc;
-        }, {} as Record<string, typeof phdCourses.$inferSelect>);
+        const coursesByStudent = allCourses.reduce(
+            (acc, course) => {
+                acc[course.studentEmail] = course;
+                return acc;
+            },
+            {} as Record<string, typeof phdCourses.$inferSelect>
+        );
 
         const formData = phdStudents.map((student) => {
             const coursesEntry = coursesByStudent[student.email];
@@ -29,13 +32,13 @@ router.get(
             const courses = courseNames.map((name, index) => ({
                 name: name || "N/A",
                 units: courseUnits[index] ?? null,
-                grade: courseGrades[index] ?? "Pending"
+                grade: courseGrades[index] ?? "Pending",
             }));
 
             return {
-                name: student.name || "Unknown",
+                name: student.name ?? "Unknown",
                 email: student.email,
-                courses
+                courses,
             };
         });
 
@@ -44,7 +47,8 @@ router.get(
         res.status(200).json({
             success: true,
             formData: validatedData,
-            formLink: "https://universe.bits-pilani.ac.in/uploads/A.Hyd%202014-15/AGSRD/Format%20for%20submitting%20the%20course%20work.pdf"
+            formLink:
+                "https://universe.bits-pilani.ac.in/uploads/A.Hyd%202014-15/AGSRD/Format%20for%20submitting%20the%20course%20work.pdf",
         });
     })
 );

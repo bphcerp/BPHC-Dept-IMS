@@ -16,7 +16,7 @@ const examStatusSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("drc-update-exam"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = examStatusSchema.parse(req.body);
 
@@ -32,13 +32,19 @@ router.post(
         }
 
         //checkig if user has already given both exams
-        if(student.qualifyingExam1 != null && student.qualifyingExam2 != null){
+        if (
+            student.qualifyingExam1 != null &&
+            student.qualifyingExam2 != null
+        ) {
             return next(
-                new HttpError(HttpCode.BAD_REQUEST, "Student has already given both exams")
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Student has already given both exams"
+                )
             );
         }
         //updating exam status
-        if(student.qualifyingExam1 == null){
+        if (student.qualifyingExam1 == null) {
             await db
                 .update(phd)
                 .set({ qualifyingExam1: parsed.ifPass })

@@ -17,21 +17,27 @@ const updateExamDatesSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("drc-update-exam-dates"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = updateExamDatesSchema.parse(req.body);
 
         const updated = await db
             .update(phd)
             .set({
-                qualifyingExam1Date: parsed.qualifyingExam1Date ? new Date(parsed.qualifyingExam1Date) : null,
-                qualifyingExam2Date: parsed.qualifyingExam2Date ? new Date(parsed.qualifyingExam2Date) : null,
+                qualifyingExam1Date: parsed.qualifyingExam1Date
+                    ? new Date(parsed.qualifyingExam1Date)
+                    : null,
+                qualifyingExam2Date: parsed.qualifyingExam2Date
+                    ? new Date(parsed.qualifyingExam2Date)
+                    : null,
             })
             .where(eq(phd.email, parsed.email))
             .returning();
 
         if (updated.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD record not found")
+            );
         }
 
         res.json({ success: true, phd: updated[0] });

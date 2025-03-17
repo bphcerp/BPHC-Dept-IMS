@@ -19,13 +19,17 @@ export const getQualifyingExamFormParamsSchema = z.object({
     email: z.string().email(),
 });
 
-export type GetQualifyingExamFormParams = z.infer<typeof getQualifyingExamFormParamsSchema>;
+export type GetQualifyingExamFormParams = z.infer<
+    typeof getQualifyingExamFormParamsSchema
+>;
 
 export const updateQualifyingDeadlineBodySchema = z.object({
-    deadline: z.string().datetime()
+    deadline: z.string().datetime(),
 });
 
-export type UpdateQualifyingDeadlineBody = z.infer<typeof updateQualifyingDeadlineBodySchema>;
+export type UpdateQualifyingDeadlineBody = z.infer<
+    typeof updateQualifyingDeadlineBodySchema
+>;
 export const courseworkFormSchema = z.array(
     z.object({
         name: z.string(),
@@ -41,3 +45,18 @@ export const courseworkFormSchema = z.array(
 );
 
 export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
+
+export const studentInputDetailsBodySchema = z.object({
+    department: z.string().optional(),
+    phone: z.string().optional(),
+    idNumber: z.string().optional(),
+    erpId: z.string().optional(),
+    name: z.string().nonempty(),
+    instituteEmail: z.string().email().optional(),
+    mobile: z.string().optional(),
+    personalEmail: z.string().email().optional(),
+});
+
+export type StudentInputDetailsBody = z.infer<
+    typeof studentInputDetailsBodySchema
+>;

@@ -16,7 +16,7 @@ const assignSupervisorSchema = z.object({
 
 router.post(
     "/",
-    checkAccess("drc-assign-supervisor"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = assignSupervisorSchema.parse(req.body);
 
@@ -27,7 +27,9 @@ router.post(
             .returning();
 
         if (updated.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD record not found")
+            );
         }
 
         res.json({ success: true, phd: updated[0] });
