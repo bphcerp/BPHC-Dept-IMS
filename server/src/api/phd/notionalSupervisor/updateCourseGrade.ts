@@ -53,17 +53,17 @@ export default router.post(
         }
 
         const courseRecord = existingCourses[0];
-        const currentCourseIds = courseRecord.courseIds || [];
+        const currentCourseIds = courseRecord.courseIds ?? [];
         const currentGrades =
-            courseRecord.courseGrades ||
-            Array(currentCourseIds.length).fill(null);
+            courseRecord.courseGrades ??
+            (Array(currentCourseIds.length).fill("-") as string[]);
 
         const updatedGrades = [...currentGrades];
 
         parsed.courses.forEach((courseUpdate) => {
             const index = currentCourseIds.indexOf(courseUpdate.courseId);
             if (index !== -1) {
-                updatedGrades[index] = courseUpdate.grade;
+                updatedGrades[index] = courseUpdate.grade ?? "-";
             }
         });
 
