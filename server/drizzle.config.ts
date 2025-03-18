@@ -8,7 +8,7 @@ export default defineConfig({
         database: env.POSTGRES_DB,
         user: env.POSTGRES_USER,
         password: env.POSTGRES_PASSWORD,
-        host: "localhost",
+        host: env.DB_HOST,
         port: env.PGPORT,
         ssl: false,
     },
