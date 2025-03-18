@@ -13,7 +13,7 @@ import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd";
 import Phd from "@/views/Phd";
-import { permissions } from "lib";
+import { allPermissions, permissions } from "lib";
 import { Computer, FileText, GraduationCap } from "lucide-react";
 import {
   BrowserRouter,
@@ -40,7 +40,9 @@ const adminModulePermissions = [
   permissions["/admin/role"],
 ];
 
-const phdModulePermissions: string[] = [permissions["/phdAll"] as string];
+const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("phd:")
+);
 
 const qpReviewModulePermissions: string[] = [];
 
@@ -136,12 +138,16 @@ const Routing = () => {
             {checkAccessAnyOne(phdModulePermissions) && (
               <Route path="/phd" element={<PhdLayout />}>
                 <Route index element={<Phd />} />
-                {checkAccess(permissions["/phdAll"] as string) && (
+                {checkAccess(
+                  permissions["/phd/notionalSupervisor/updateCourseDetails"]
+                ) && (
                   <Route path="notional-supervisor" element={<Outlet />}>
                     <Route path="update-grade" element={<UpdateGrade />} />
                   </Route>
                 )}
-                {checkAccess(permissions["/phdAll"] as string) && (
+                {checkAccess(
+                  permissions["/phd/drcMember/generateCourseworkForm"]
+                ) && (
                   <Route path="drc-convenor" element={<Outlet />}>
                     <Route
                       path="coursework-form"
@@ -177,7 +183,7 @@ const Routing = () => {
                     ></Route>
                   </Route>
                 )}
-                {checkAccess(permissions["/phdAll"] as string) && (
+                {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
                     <Route

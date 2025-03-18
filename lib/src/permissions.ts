@@ -22,7 +22,7 @@ export const allPermissions = {
     "phd:notional-supervisor:update-course-details": "",
     "phd:notional-supervisor:update-course-grade": "",
     "phd:student:check-exam-status": "",
-};
+} as const;
 
 export const permissions = {
     // Admin
@@ -70,12 +70,11 @@ export const permissions = {
         "phd:notional-supervisor:update-course-grade",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
-};
+} as const;
 
-if (
-    !new Set(Object.keys(allPermissions)).isSupersetOf(
-        new Set(Object.values(permissions))
-    )
-) {
+const permissionsSet = new Set(Object.values(permissions));
+const allPermissionsSet = new Set(Object.keys(allPermissions));
+
+if (!allPermissionsSet.isSupersetOf(permissionsSet)) {
     throw new Error("Unknown permission defined in routes");
 }
