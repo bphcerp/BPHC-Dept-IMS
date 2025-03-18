@@ -4,7 +4,6 @@ import React from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 const FormDeadline: React.FC = () => {
-  const formDeadlineOld = new Date("2022-12-31T23:59:59");
   const { data: formDeadline, isFetching } = useQuery({
     queryKey: ["phd-students"],
     queryFn: async () => {

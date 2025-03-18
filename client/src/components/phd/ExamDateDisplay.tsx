@@ -1,13 +1,11 @@
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExamDateDisplayProps {
   examDate: string; // ISO date string
 }
 
-export default function ExamDateDisplay({
-  examDate,
-}: ExamDateDisplayProps) {
+export default function ExamDateDisplay({ examDate }: ExamDateDisplayProps) {
   // Parse the ISO date string
   const date = new Date(examDate);
 
@@ -47,7 +45,6 @@ export default function ExamDateDisplay({
             <p className="text-muted-foreground">{formattedTime}</p>
           </div>
         </div>
-
       </CardContent>
     </Card>
   );

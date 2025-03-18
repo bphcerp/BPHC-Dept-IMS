@@ -65,7 +65,7 @@ export function CourseList({
         courses,
       });
     },
-    onSuccess: (_, courses) => {
+    onSuccess: () => {
       toast.success("Courses updated successfully");
     },
     onError: () => {

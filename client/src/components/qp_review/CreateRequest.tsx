@@ -1,8 +1,19 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 // Define the TypeScript type for the request data
 interface RequestData {
@@ -22,7 +33,11 @@ interface CreateRequestDialogProps {
   onAddRequest: (data: RequestData) => void;
 }
 
-const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({ isOpen, onClose, onAddRequest }) => {
+const CreateRequestDialog = ({
+  isOpen,
+  onClose,
+  onAddRequest,
+}: CreateRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
   const [fic, setFIC] = useState("");
@@ -61,7 +76,9 @@ const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({ isOpen, onClo
             <Select onValueChange={setCourseName}>
               <SelectTrigger>{courseName || "Select..."}</SelectTrigger>
               <SelectContent>
-                <SelectItem value="Analog Communication">Analog Communication</SelectItem>
+                <SelectItem value="Analog Communication">
+                  Analog Communication
+                </SelectItem>
                 <SelectItem value="Data Mining">Data Mining</SelectItem>
               </SelectContent>
             </Select>
@@ -83,25 +100,37 @@ const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({ isOpen, onClo
             <Select onValueChange={setFIC}>
               <SelectTrigger>{fic || "Select..."}</SelectTrigger>
               <SelectContent>
-                <SelectItem value="Prof. Harish V Dixit">Prof. Harish V Dixit</SelectItem>
-                <SelectItem value="Prof. SK Aziz Ali">Prof. SK Aziz Ali</SelectItem>
+                <SelectItem value="Prof. Harish V Dixit">
+                  Prof. Harish V Dixit
+                </SelectItem>
+                <SelectItem value="Prof. SK Aziz Ali">
+                  Prof. SK Aziz Ali
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <p>FIC Deadline</p>
-            <Input type="date" onChange={(e) => setFicDeadline(e.target.value)} />
+            <Input
+              type="date"
+              onChange={(e) => setFicDeadline(e.target.value)}
+            />
           </div>
 
           <div>
             <p>SR Deadline</p>
-            <Input type="date" onChange={(e) => setSrDeadline(e.target.value)} />
+            <Input
+              type="date"
+              onChange={(e) => setSrDeadline(e.target.value)}
+            />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleAdd}>Done</Button>
         </DialogFooter>
       </DialogContent>

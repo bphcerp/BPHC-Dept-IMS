@@ -25,11 +25,17 @@ export default router.get(
             .limit(1);
 
         if (student.length === 0) {
-            res.status(404).json({ success: false, message: "Student not found" });
+            res.status(404).json({
+                success: false,
+                message: "Student not found",
+            });
             return;
         }
 
-        const passed = student[0].qualifyingExam1 || student[0].qualifyingExam2;
-        res.status(200).json({ success: true, status: passed ? "pass" : "fail" });
+        const passed = student[0].qualifyingExam1 ?? student[0].qualifyingExam2;
+        res.status(200).json({
+            success: true,
+            status: passed ? "pass" : "fail",
+        });
     })
 );

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useMutation } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
 import { toast } from "sonner";
 
 export default function ExamForm() {
@@ -36,9 +35,9 @@ export default function ExamForm() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: Application) => {
-      return api.post("/phd/student/uploadQeApplicationForm",  data );
+      return api.post("/phd/student/uploadQeApplicationForm", data);
     },
-    onSuccess: (_) => {
+    onSuccess: () => {
       toast.success("Qualifying Exam form submitted successfully");
     },
     onError: () => {
