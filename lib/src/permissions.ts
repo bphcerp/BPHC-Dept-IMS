@@ -75,6 +75,10 @@ export const permissions = {
 const permissionsSet = new Set(Object.values(permissions));
 const allPermissionsSet = new Set(Object.keys(allPermissions));
 
-if (!allPermissionsSet.isSupersetOf(permissionsSet)) {
+if (
+    ![...permissionsSet].every((permission) =>
+        allPermissionsSet.has(permission)
+    )
+) {
     throw new Error("Unknown permission defined in routes");
 }
