@@ -6,7 +6,7 @@ import {
     timestamp,
     boolean,
 } from "drizzle-orm/pg-core";
-import { fileFields } from "./form.ts";
+import { applicationStatusEnum, fileFields } from "./form.ts";
 import { users } from "./admin.ts";
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
@@ -27,7 +27,7 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     lecturewisePlanCourseTopics: boolean("lecturewise_plan_course_topics"),
     numberOfLP: boolean("number_of_lp"),
     evaluationScheme: boolean("evaluation_scheme"),
-    status: boolean("status"),
+    status: applicationStatusEnum("status").notNull().default("pending"),
     handoutFilePath: integer("handout_file_path").references(
         () => fileFields.id,
         {
