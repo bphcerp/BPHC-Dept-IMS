@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface Semester {
   id: number;
@@ -24,41 +24,46 @@ interface QualifyingExam {
   examName: string;
   deadline: string;
   createdAt: string;
-  semesterYear: number;
-  semesterNumber: number;
+  semesterYear?: number;
+  semesterNumber?: number;
 }
 
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
-  const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(null);
   const [examForm, setExamForm] = useState({
     examName: "",
     deadline: ""
   });
 
-  // Fetch semesters for dropdown
-  const { data: semestersData, isLoading: isLoadingSemesters } = useQuery({
-    queryKey: ["phd-semesters"],
+  // Query for current semester
+  const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } = useQuery({
+    queryKey: ["current-phd-semester"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; semesters: Semester[] }>("/phd/drcMember/getAllSem");
+      const response = await api.get<{ success: boolean; semester: Semester; isActive: boolean }>(
+        "/phd/drcMember/getCurrentSemester"
+      );
       return response.data;
     }
   });
 
-  // Fetch qualifying exams for selected semester
+  // Get the current semester ID
+  const currentSemesterId = currentSemesterData?.semester?.id;
+  const isActiveSemester = currentSemesterData?.isActive;
+
+  // Query for exams in the current semester
   const { data: examsData, isLoading: isLoadingExams } = useQuery({
-    queryKey: ["phd-qualifying-exams", selectedSemesterId],
+    queryKey: ["phd-qualifying-exams", currentSemesterId],
     queryFn: async () => {
-      if (!selectedSemesterId) return { success: true, exams: [] };
+      if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ success: boolean; exams: QualifyingExam[] }>(
-        `/phd/drcMember/getAllQualifyingExamForTheSem/${selectedSemesterId}`
+        `/phd/drcMember/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
       return response.data;
     },
-    enabled: !!selectedSemesterId
+    enabled: !!currentSemesterId
   });
 
-  // Create/update qualifying exam mutation
+  // Mutation for updating exam deadlines
   const examMutation = useMutation({
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
       const response = await api.post("/phd/drcMember/updateQualifyingExamDeadline", formData);
@@ -66,7 +71,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     },
     onSuccess: () => {
       toast.success("Qualifying exam deadline updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["phd-qualifying-exams", selectedSemesterId] });
+      queryClient.invalidateQueries({ queryKey: ["phd-qualifying-exams", currentSemesterId] });
       setExamForm({
         examName: "",
         deadline: ""
@@ -77,13 +82,14 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     }
   });
 
-  // Handle exam form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSemesterId) {
-      toast.error("Please select a semester first");
+    
+    if (!currentSemesterId) {
+      toast.error("No active semester found");
       return;
     }
+    
     if (!examForm.examName || !examForm.deadline) {
       toast.error("Please provide both exam name and deadline");
       return;
@@ -94,69 +100,57 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     examMutation.mutate({
       ...examForm,
       deadline: formattedDeadline,
-      semesterId: selectedSemesterId
+      semesterId: currentSemesterId
     });
   };
 
-  // Find the selected semester details
-  const selectedSemester = semestersData?.semesters?.find(s => s.id === selectedSemesterId);
+  // Helper to format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-center text-3xl font-bold">Qualifying Exam Deadline Management</h1>
-
-      <Card className="w-full max-w-md mb-6">
-        <CardHeader>
-          <CardTitle>Select Academic Semester</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoadingSemesters ? (
-            <div className="flex justify-center py-4">
-              <LoadingSpinner className="h-6 w-6" />
-            </div>
-          ) : (
-            <div className="w-full">
-              <Label htmlFor="semesterSelect">Select Semester</Label>
-              <Select
-                value={selectedSemesterId?.toString() || ""}
-                onValueChange={(value) => setSelectedSemesterId(value ? parseInt(value) : null)}
-              >
-                <SelectTrigger id="semesterSelect">
-                  <SelectValue placeholder="Choose a semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {semestersData?.semesters && semestersData.semesters.length > 0 ? (
-                    semestersData.semesters.map((semester) => (
-                      <SelectItem key={semester.id} value={semester.id.toString()}>
-                        {semester.year} - Semester {semester.semesterNumber}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>
-                      No semesters available
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {selectedSemesterId && (
+      
+      {isLoadingCurrentSemester ? (
+        <Card className="w-full max-w-md mb-6">
+          <CardContent className="flex justify-center py-8">
+            <LoadingSpinner className="h-8 w-8" />
+          </CardContent>
+        </Card>
+      ) : currentSemesterData?.semester ? (
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>
-              Update Qualifying Exam Deadline
-              {selectedSemester && (
-                <span className="ml-2 text-base font-normal text-gray-500">
-                  {selectedSemester.year} - Semester {selectedSemester.semesterNumber}
-                </span>
-              )}
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle>
+                Current Academic Semester
+              </CardTitle>
+              <Badge variant={isActiveSemester ? "default" : "secondary"}>
+                {isActiveSemester ? "Active" : "Recent"}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="mb-4">
+              <div className="text-lg font-medium">
+                {currentSemesterData.semester.year} - Semester {currentSemesterData.semester.semesterNumber}
+              </div>
+              <div className="text-sm text-gray-500">
+                <div>Start: {formatDate(currentSemesterData.semester.startDate)}</div>
+                <div>End: {formatDate(currentSemesterData.semester.endDate)}</div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-6">
               <div>
                 <Label htmlFor="examName">Exam Name</Label>
                 <Input
@@ -179,7 +173,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
               </div>
               <Button
                 type="submit"
-                disabled={examMutation.isLoading}
+                disabled={examMutation.isLoading || !isActiveSemester}
                 className="bg-blue-600 text-white hover:bg-blue-700"
               >
                 {examMutation.isLoading ? (
@@ -188,9 +182,13 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                   "Update Exam Deadline"
                 )}
               </Button>
+              {!isActiveSemester && (
+                <p className="text-sm text-amber-600">
+                  Warning: You are setting deadlines for a semester that is not currently active.
+                </p>
+              )}
             </form>
 
-            {/* Display existing exams */}
             <div className="mt-6">
               <h3 className="mb-3 text-lg font-medium">Existing Exams</h3>
               {isLoadingExams ? (
@@ -211,20 +209,11 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                       {examsData.exams.map((exam) => {
                         const deadlineDate = new Date(exam.deadline);
                         const isActive = deadlineDate > new Date();
-                        
                         return (
                           <tr key={exam.id}>
                             <td className="border px-4 py-2">{exam.examName}</td>
                             <td className="border px-4 py-2">
-                              {new Date(deadlineDate).toLocaleString('en-US', { 
-                                weekday: 'short',
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric',
-                                hour: 'numeric', 
-                                minute: '2-digit', 
-                                hour12: true 
-                              })}
+                              {formatDate(exam.deadline)}
                             </td>
                             <td className="border px-4 py-2">
                               <span
@@ -247,6 +236,14 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                 <p className="text-center py-4 text-gray-500">No qualifying exams found for this semester.</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="w-full max-w-md">
+          <CardContent className="py-8">
+            <p className="text-center text-red-500">
+              No semester configuration found. Please contact the system administrator.
+            </p>
           </CardContent>
         </Card>
       )}

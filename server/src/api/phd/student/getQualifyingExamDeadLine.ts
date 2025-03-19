@@ -27,19 +27,12 @@ export default router.get(
         )
         .where(gt(phdQualifyingExams.deadline, now))
         .orderBy(phdQualifyingExams.deadline);
-  
-      // Format the response to match what the frontend expects
-      const hasActiveDeadline = exams.length > 0;
-      const exam = hasActiveDeadline ? {
-        id: exams[0].id,
-        examName: exams[0].examName,
-        deadline: exams[0].deadline
-      } : null;
+        console.log("exm", exams)
+      
 
       res.status(200).json({ 
         success: true, 
-        hasActiveDeadline,
-        exam
+        exams
       });
     })
   );

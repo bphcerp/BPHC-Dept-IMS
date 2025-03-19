@@ -13,7 +13,7 @@ export default router.post(
     checkAccess("drc"),
     asyncHandler(async (req, res) => {
       const { semesterId, examName, deadline } = req.body;
-      
+      console.log("sem id", semesterId);
       // Check if semester exists
       const semester = await db
         .select()
