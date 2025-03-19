@@ -6,7 +6,6 @@ import assignSupervisor from "./assignSupervisor.ts"
 import assignNotionalSupervisor from "./assignNotionalSupervisor.ts"
 import getQualifyingExamForm from "./getQualifyingExamForm.ts"
 import generateCourseworkForm from "./generateCourseworkForm.ts"
-import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
 import updateQePassFailStatus from "./updateQePassFailStatus.ts";
 import getPhdToGenerateQualifyingExamForm from "./getPhdToGenerateQualifyingExamForm.ts";
 import getPhdThatPassedRecently from "./getPhdThatPassedRecently.ts";
@@ -17,6 +16,13 @@ import getSuggestedDacMember from "./getSuggestedDacMember.ts";
 import suggestTwoBestDacMember from "./suggestTwoBestDacMember.ts";
 import updateFinalDac from "./updateFinalDac.ts";
 import updateQualifyingExamResultsOfAllStudents from "./updateQualifyingExamResultsOfAllStudents.ts";
+import getAllQualifyingExam from "./getAllQualifyingExam.ts";
+import getAllQualifyingExamForTheSem from "./getAllQualifyingExamForTheSem.ts";
+import getAllSem from "./getAllSem.ts";
+import getCurrentActiveQualifyingExam from "./getCurrentActiveQualifyingExam.ts";
+import getSpecificSem from "./getSpecificSem.ts";
+import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
+import updateSemesterDates from "./updateSemesterDates.ts";
 
 
 const router = express.Router();
@@ -40,5 +46,11 @@ router.use('/getSuggestedDacMember', getSuggestedDacMember);
 router.use('/updateFinalDac', updateFinalDac);
 router.use('/suggestTwoBestDacMember', suggestTwoBestDacMember);
 router.use('/updateQualifyingExamResultsOfAllStudents', updateQualifyingExamResultsOfAllStudents);
+router.use('/getAllQualifyingExam', getAllQualifyingExam);
+router.use('/updateSemesterDates', updateSemesterDates);
+router.use('/getSpecificSem', getSpecificSem);
+router.use('/getCurrentActiveQualifyingExam', getCurrentActiveQualifyingExam);
+router.use('/getAllSem', getAllSem);
+router.use('/getAllQualifyingExamForTheSem', getAllQualifyingExamForTheSem);
 
 export default router;

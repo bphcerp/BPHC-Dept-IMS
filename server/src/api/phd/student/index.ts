@@ -1,6 +1,5 @@
 import express from "express";
 import { authMiddleware } from "@/middleware/auth.ts";
-import inputDetails from "./inputDetails.ts";
 import checkExamStatus from "./checkExamStatus.ts";
 import getQualifyingExamDeadLine from "./getQualifyingExamDeadLine.ts";
 import getProposalDeadline from "./getProposalDeadline.ts";

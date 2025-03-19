@@ -9,9 +9,10 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("phd"),
+    checkAccess("drc"),
     asyncHandler(async (_req, res) => {
       const now = new Date();
+      
       const exams = await db
         .select({
           id: phdQualifyingExams.id,
@@ -27,19 +28,7 @@ export default router.get(
         )
         .where(gt(phdQualifyingExams.deadline, now))
         .orderBy(phdQualifyingExams.deadline);
-  
-      // Format the response to match what the frontend expects
-      const hasActiveDeadline = exams.length > 0;
-      const exam = hasActiveDeadline ? {
-        id: exams[0].id,
-        examName: exams[0].examName,
-        deadline: exams[0].deadline
-      } : null;
-
-      res.status(200).json({ 
-        success: true, 
-        hasActiveDeadline,
-        exam
-      });
+      
+      res.status(200).json({ success: true, exams });
     })
   );

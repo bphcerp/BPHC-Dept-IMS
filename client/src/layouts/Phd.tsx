@@ -37,6 +37,14 @@ const NotionalSupervisorLayout = () => {
           ],
         },
         {
+          title: "Update sem dates",
+          icon: <List />,
+          url: "/phd/drc-convenor/update-semester-dates",
+          requiredPermissions: [
+            permissions["/phd/drcMember/generateCourseworkForm"],
+          ],
+        },
+        {
           title: "Update QE Deadline",
           icon: <CalendarClockIcon />,
           url: "/phd/drc-convenor/update-qualifying-exam-deadline",

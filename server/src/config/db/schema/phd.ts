@@ -49,7 +49,7 @@ export const phdCourses = pgTable("phd_courses", {
 });
 
 export const phdConfig = pgTable("phd_config", {
-    key: text("key").notNull().unique(),
+    key: text("key").notNull(),
     value: timestamp("value").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -62,3 +62,22 @@ export const phdDocuments = pgTable("phdDocuments", {
     applicationType: text("applicationType").notNull(),
     uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });
+
+export const phdSemesters = pgTable("phd_semesters", {
+    id: serial("id").primaryKey(),
+    year: integer("year").notNull(),
+    semesterNumber: integer("semester_number").notNull(), // 1 or 2
+    startDate: timestamp("start_date").notNull(),
+    endDate: timestamp("end_date").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  });
+
+  export const phdQualifyingExams = pgTable("phd_qualifying_exams", {
+    id: serial("id").primaryKey(),
+    semesterId: integer("semester_id")
+      .notNull()
+      .references(() => phdSemesters.id, { onDelete: "cascade" }),
+    examName: text("exam_name").notNull(), 
+    deadline: timestamp("deadline").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  });

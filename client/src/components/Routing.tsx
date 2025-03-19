@@ -30,6 +30,7 @@ import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppl
 import UpdateQualifyingExamResultsOfAllStudents from "@/views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
 import UpdateQualifyingExamPassingDates from "@/views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
 import UpdateProposalDeadline from "@/views/Phd/DrcConvenor/UpdateProposalDeadline";
+import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
@@ -154,6 +155,10 @@ const Routing = () => {
                     <Route
                       path="coursework-form"
                       element={<CourseworkForm />}
+                    />
+                    <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
                     />
                     <Route
                       path="update-qualifying-exam-deadline"
