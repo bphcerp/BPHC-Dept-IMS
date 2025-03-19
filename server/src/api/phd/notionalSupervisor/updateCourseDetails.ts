@@ -15,13 +15,19 @@ export default router.post(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-
-        const parsed = phdSchemas.updatePhdCoursesBodySchema.parse(req.body);
+        const parsed = phdSchemas.updatePhdCoursesBodySchema.safeParse(
+            req.body
+        );
+        if (!parsed.success) {
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid request body")
+            );
+        }
 
         const phdStudent = await db
             .select()
             .from(phd)
-            .where(eq(phd.email, parsed.studentEmail))
+            .where(eq(phd.email, parsed.data.studentEmail))
             .limit(1);
 
         if (phdStudent.length === 0) {
@@ -30,7 +36,6 @@ export default router.post(
             );
         }
 
-        // check for notional supervisor specifics
         if (phdStudent[0].notionalSupervisorEmail !== req.user.email) {
             return next(
                 new HttpError(
@@ -40,13 +45,23 @@ export default router.post(
             );
         }
 
+        const courseNames =
+            parsed.data.courses?.map((course) => course.name) ?? [];
+        const courseUnits =
+            parsed.data.courses?.map((course) => course.units) ?? [];
+        const courseIds = parsed.data.courses?.map((course) => course.id) ?? [];
+        const courseGrades =
+            parsed.data.courses?.map((course) => course.grade ?? "NULL") ?? [];
+
         const updated = await db
             .update(phdCourses)
             .set({
-                courseNames: parsed.courseNames,
-                courseUnits: parsed.courseUnits,
+                courseNames,
+                courseUnits,
+                courseIds,
+                courseGrades,
             })
-            .where(eq(phdCourses.studentEmail, parsed.studentEmail))
+            .where(eq(phdCourses.studentEmail, parsed.data.studentEmail))
             .returning();
 
         if (updated.length === 0) {

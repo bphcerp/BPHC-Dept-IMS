@@ -45,10 +45,15 @@ export default function EvaluationFormModal({
   onOpenChange,
 }: {
   open: boolean;
-  courseCode: string;
+  courseCode: string | undefined;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [formData, setFormData] = useState<any>(
+  const [formData, setFormData] = useState<{
+    [section: string]: {
+      [field: string]: string;
+      remarks: string;
+    };
+  }>(
     SECTIONS.reduce(
       (acc, section) => ({
         ...acc,
@@ -65,7 +70,7 @@ export default function EvaluationFormModal({
   const [currentSection, setCurrentSection] = useState<string>("");
 
   const handleInputChange = (section: string, field: string, value: string) => {
-    setFormData((prev: any) => ({
+    setFormData((prev) => ({
       ...prev,
       [section]: {
         ...prev[section],

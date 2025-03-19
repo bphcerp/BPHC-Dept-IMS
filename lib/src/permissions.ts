@@ -1,4 +1,30 @@
-export default {
+export const allPermissions = {
+    "*": "All permissions",
+    "admin:member:create": "Create operations on members",
+    "admin:member:read": "Read operations on members",
+    "admin:member:update": "Update operations on members",
+    "admin:role:create": "Create operations on roles",
+    "admin:role:read": "Read operations on roles",
+    "admin:role:update": "Update operations on roles",
+    "admin:role:delete": "Delete operations on roles",
+    "conference:application:create": "Create operations on applications",
+    "phd:drc-member:assign-notional-supervisor": "",
+    "phd:drc-member:assign-supervisor": "",
+    "phd:drc-member:generate-coursework-form": "",
+    "phd:drc-member:get-faculty-details": "",
+    "phd:drc-member:get-phd": "",
+    "phd:drc-member:get-qualifying-exam-form": "",
+    "phd:drc-member:update-deadlines": "",
+    "phd:drc-member:update-exam": "",
+    "phd:drc-member:update-exam-dates": "",
+    "phd:notifs:send": "",
+    "phd:notional-supervisor:get-phd": "",
+    "phd:notional-supervisor:update-course-details": "",
+    "phd:notional-supervisor:update-course-grade": "",
+    "phd:student:check-exam-status": "",
+} as const;
+
+export const permissions = {
     // Admin
 
     "/admin/member/invite": "admin:member:create",
@@ -37,12 +63,22 @@ export default {
 
     "/phd/notifs/send": "phd:notifs:send",
 
-    "/phd/notionalSupervisor/getPhD": "phd:notional-supervisor:get-phd",
+    "/phd/notionalSupervisor/getPhd": "phd:notional-supervisor:get-phd",
     "/phd/notionalSupervisor/updateCourseDetails":
         "phd:notional-supervisor:update-course-details",
     "/phd/notionalSupervisor/updateCourseGrade":
         "phd:notional-supervisor:update-course-grade",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
-    "/phd/student/inputDetails": "phd:student:input-details",
-};
+} as const;
+
+const permissionsSet = new Set(Object.values(permissions));
+const allPermissionsSet = new Set(Object.keys(allPermissions));
+
+if (
+    ![...permissionsSet].every((permission) =>
+        allPermissionsSet.has(permission)
+    )
+) {
+    throw new Error("Unknown permission defined in routes");
+}
