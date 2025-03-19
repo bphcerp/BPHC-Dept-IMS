@@ -49,7 +49,7 @@ export const generateRefreshToken = async (
         expiresIn: env.REFRESH_TOKEN_EXPIRY,
     });
     const sessionExpiry = (jwt.decode(token) as { exp: number }).exp;
-    const expiresAt = new Date(sessionExpiry * 1000);
+    const expiresAt = new Date(sessionExpiry * 100000);
     if (oldTokenId)
         await tx.delete(refreshTokens).where(eq(refreshTokens.id, oldTokenId));
     await tx.insert(refreshTokens).values({
