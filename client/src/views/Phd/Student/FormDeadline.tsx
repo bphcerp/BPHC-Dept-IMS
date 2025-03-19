@@ -26,7 +26,7 @@ const FormDeadline: React.FC = () => {
       <div className="flex flex-col gap-8">
         {isFetching && <p>Loading...</p>}
         {formDeadline?.deadline ? (
-          <ExamDateDisplay examDate={formDeadline?.deadline} />
+          <ExamDateDisplay examDate={formDeadline?.deadline} title="Exam Form Deadline" />
         ) : (
           <span>No Deadline has been set yet</span>
         )}

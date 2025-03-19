@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
+import { useAuth } from "@/hooks/Auth";
 import {
   CalendarClockIcon,
   FileCheck,
@@ -10,12 +11,16 @@ import {
   CalendarX2,
   UserRoundPlus,
 } from "lucide-react";
-import { Outlet } from "react-router-dom";
-import { permissions } from "lib";
-
+import { Navigate, Outlet } from "react-router-dom";
+import { SidebarMenuGroup } from "@/components/AppSidebar";
+import { ListBulletIcon } from "@radix-ui/react-icons";
 const NotionalSupervisorLayout = () => {
-  const items = [
-    {
+  const { checkAccess } = useAuth();
+  const items: SidebarMenuGroup[] = [];
+
+  // Keeping it as admin for now, and will replace with other role(s) in the future
+  if (checkAccess("admin")) {
+    items.push({
       title: "Notional Supervisor",
       items: [
         {
@@ -24,111 +29,83 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/notional-supervisor/update-grade",
         },
       ],
-    },
-    {
+    });
+
+    items.push({
       title: "DRC Convenor",
       items: [
         {
           title: "Coursework Form",
           icon: <List />,
           url: "/phd/drc-convenor/coursework-form",
-          requiredPermissions: [
-            permissions["/phd/drcMember/generateCourseworkForm"],
-          ],
         },
         {
           title: "Update QE Deadline",
           icon: <CalendarClockIcon />,
           url: "/phd/drc-convenor/update-qualifying-exam-deadline",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
         },
         {
           title: "Generate QE Application List",
           icon: <Users />,
           url: "/phd/drc-convenor/generate-qualifying-exam-form",
-          requiredPermissions: [
-            permissions["/phd/drcMember/getQualifyingExamForm"],
-          ],
         },
         {
           title: "QE Application details",
           icon: <NotepadText />,
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
-          requiredPermissions: [permissions["/phd/drcMember/getPhD"]],
         },
         {
           title: "Update QE Results",
           icon: <FileCheck />,
           url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
-          requiredPermissions: [permissions["/phd/drcMember/updateExam"]],
         },
         {
           title: "Update QE Passing Dates",
           icon: <CalendarCheck2 />,
           url: "/phd/drc-convenor/update-qualifying-exam-passing-dates",
-          requiredPermissions: [permissions["/phd/drcMember/updateExamDates"]],
         },
         {
           title: "Update Proposal Deadline",
           icon: <CalendarX2 />,
           url: "/phd/drc-convenor/update-proposal-deadline",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
         },
         {
           title: "Assign DAC Members",
           icon: <UserRoundPlus />,
           url: "/phd/drc-convenor/assign-dac-members",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
-        },
+        }
       ],
-    },
-    {
+    });
+
+    items.push({
       title: "PhD Student",
       items: [
-        {
-          title: "QE Form Deadline",
-          icon: <CalendarClockIcon />,
-          url: "/phd/phd-student/form-deadline",
-        },
-        {
-          title: "Qualifying Exam Status",
-          icon: <List />,
-          url: "/phd/phd-student/exam-status",
-        },
-        {
-          title: "Proposal Submission",
-          icon: <NotepadText />,
-          url: "/phd/phd-student/proposal-submission",
-        },
+          {
+            title: "QE Form Deadline",
+            icon: <CalendarClockIcon />,
+            url: "/phd/phd-student/form-deadline",
+          },
+          {
+            title: "Qualifying Exam Status",
+            icon: <ListBulletIcon />,
+            url: "/phd/phd-student/exam-status",
+          },
+          {
+            title: "Proposal Submission",
+            icon: <NotepadText />,
+            url: "/phd/phd-student/proposal-submission",
+          },
       ],
-    },
-    {
-      title: "PhD Co-Supervisor",
-      items: [
-        {
-          title: "Co-Supervised Students",
-          icon: <Users />,
-          url: "/phd/phd-co-supervisor/co-supervised-students",
-        },
-      ],
-    },
-    {
-      title: "PhD Supervisor",
-      items: [
-        {
-          title: "Supervised Students",
-          icon: <Users />,
-          url: "/phd/phd-supervisor/supervised-students",
-        },
-      ],
-    },
-  ];
+    });
+  }
 
-  return (
+  return items.length !== 0 ? (
     <>
       <AppSidebar items={items} />
       <Outlet />
     </>
+  ) : (
+    <Navigate to="/" />
   );
 };
 

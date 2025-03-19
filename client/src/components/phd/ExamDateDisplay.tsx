@@ -3,9 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExamDateDisplayProps {
   examDate: string; // ISO date string
+  title:string;
 }
 
-export default function ExamDateDisplay({ examDate }: ExamDateDisplayProps) {
+export default function ExamDateDisplay({
+  examDate,
+  title
+}: ExamDateDisplayProps) {
   // Parse the ISO date string
   const date = new Date(examDate);
 
@@ -27,7 +31,7 @@ export default function ExamDateDisplay({ examDate }: ExamDateDisplayProps) {
   return (
     <Card className="h-fit">
       <CardHeader>
-        <CardTitle>Exam Form Deadline</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-start gap-3">

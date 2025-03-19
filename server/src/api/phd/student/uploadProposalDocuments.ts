@@ -15,6 +15,7 @@ export default router.post(
     checkAccess("phd-upload-proposal"),
     asyncHandler(async (req, res) => {
         assert(req.user);
+        console.log(req.body);
         const parsed = phdSchemas.uploadProposalSchema.safeParse(req.body);
         if (!parsed.success) {
             res.status(400).json({ success: false, error: parsed.error.errors });
