@@ -61,7 +61,7 @@ export default function ProposalSubmissionForm() {
       );
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success(
         `All Document uploaded successfully. Proposal submitted successfully.`
       );

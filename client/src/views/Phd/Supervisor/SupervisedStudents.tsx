@@ -37,12 +37,8 @@ interface StudentDetailProps {
   onClose: () => void;
 }
 
-const suggestDacSchema = z.object({
-  dacMembers: z.array(z.string()).min(1).max(5),
-});
-
 const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
-  const [dacMembers, setDacMembers] = useState<string[]>(['']);
+  const [dacMembers, setDacMembers] = useState<string[]>([""]);
   const queryClient = useQueryClient();
 
   const suggestDacMutation = useMutation({
@@ -54,13 +50,13 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
       queryClient.invalidateQueries({ queryKey: ["phd-supervised-students"] });
       onClose();
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to suggest DAC members");
     },
   });
 
   const handleAddDacMember = () => {
-    setDacMembers([...dacMembers, '']);
+    setDacMembers([...dacMembers, ""]);
   };
 
   const handleRemoveDacMember = (index: number) => {
@@ -77,8 +73,10 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
 
   const onSubmit = () => {
     // Filter out empty entries
-    const filteredDacMembers = dacMembers.filter(member => member.trim() !== '');
-    
+    const filteredDacMembers = dacMembers.filter(
+      (member) => member.trim() !== ""
+    );
+
     if (filteredDacMembers.length === 0) {
       toast.error("Please add at least one DAC member");
       return;
@@ -98,21 +96,25 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
             View details and suggest DAC members for {student.name}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-1 font-medium">Name:</div>
             <div className="col-span-3">{student.name}</div>
-            
+
             <div className="col-span-1 font-medium">Email:</div>
             <div className="col-span-3">{student.email}</div>
           </div>
-          
+
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Documents</h3>
             {student.documents ? (
-              <Button variant="link" className="text-blue-600 p-0" asChild>
-                <a href={student.documents} target="_blank" rel="noopener noreferrer">
+              <Button variant="link" className="p-0 text-blue-600" asChild>
+                <a
+                  href={student.documents}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   View Proposal
                 </a>
               </Button>
@@ -120,7 +122,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
               <p className="text-sm text-gray-500">No documents available</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Suggest DAC Members</h3>
             <div className="space-y-2">
@@ -129,7 +131,9 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
                   <Input
                     placeholder={`DAC Member ${index + 1} Email`}
                     value={member}
-                    onChange={(e) => handleDacMemberChange(index, e.target.value)}
+                    onChange={(e) =>
+                      handleDacMemberChange(index, e.target.value)
+                    }
                   />
                   {dacMembers.length > 1 && (
                     <Button
@@ -142,7 +146,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
                   )}
                 </div>
               ))}
-              
+
               {dacMembers.length < 5 && (
                 <Button
                   variant="outline"
@@ -156,7 +160,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
             </div>
           </div>
         </div>
-        
+
         <DialogFooter className="flex justify-between">
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
@@ -189,7 +193,7 @@ const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
 
 const SupervisedStudents: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  
+
   const { data, isLoading } = useQuery({
     queryKey: ["phd-supervised-students"],
     queryFn: async () => {
@@ -222,7 +226,7 @@ const SupervisedStudents: React.FC = () => {
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="mx-auto w-full max-w-4xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-center text-2xl font-bold">
             Supervised Students
           </CardTitle>
         </CardHeader>
@@ -240,15 +244,23 @@ const SupervisedStudents: React.FC = () => {
               {data?.students && data.students.length > 0 ? (
                 data.students.map((student) => (
                   <TableRow key={student.email}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {student.name}
+                    </TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>
                       {student.documents ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-600">
+                        <Badge
+                          variant="outline"
+                          className="bg-green-50 text-green-600"
+                        >
                           Available
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-600">
+                        <Badge
+                          variant="outline"
+                          className="bg-gray-50 text-gray-600"
+                        >
                           Not Available
                         </Badge>
                       )}
@@ -266,7 +278,7 @@ const SupervisedStudents: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={4} className="py-8 text-center">
                     No students under your supervision yet.
                   </TableCell>
                 </TableRow>
@@ -275,12 +287,9 @@ const SupervisedStudents: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-      
+
       {selectedStudent && (
-        <StudentDetail
-          student={selectedStudent}
-          onClose={handleCloseDetails}
-        />
+        <StudentDetail student={selectedStudent} onClose={handleCloseDetails} />
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 import ProposalSubmissionForm from "@/components/phd/ProposalSubmissionForm";
 const ProposalSubmission: React.FC = () => {
-  const { data, isFetching } = useQuery({
+  const { data } = useQuery({
     queryKey: ["phd-student-exams"],
     queryFn: async () => {
       const response = await api.get<{ status: any }>(

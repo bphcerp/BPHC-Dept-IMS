@@ -1,7 +1,7 @@
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
 const CoSupervisedStudents: React.FC = () => {
-  const { data, isFetching } = useQuery({
+  const { data } = useQuery({
     queryKey: ["phd-co-supervised-students"],
     queryFn: async () => {
       const response = await api.get<{ students: any }>(
