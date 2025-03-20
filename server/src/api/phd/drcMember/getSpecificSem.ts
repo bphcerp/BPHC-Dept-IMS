@@ -10,7 +10,7 @@ const router = express.Router();
 
 export default  router.get(
     "/:id",
-    checkAccess("drc"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
       const { id } = req.params;
       

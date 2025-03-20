@@ -9,7 +9,7 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("phd-view-proposal-deadline"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
         const examName = "Thesis Proposal";
         const deadlineEntry = await db

@@ -9,7 +9,7 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("drc"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
       const now = new Date();
       

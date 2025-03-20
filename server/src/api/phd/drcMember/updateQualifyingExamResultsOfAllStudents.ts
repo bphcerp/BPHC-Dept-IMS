@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("drc-update-exam"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
 
         const parsed = phdSchemas.updateExamStatusSchema.safeParse(req.body);

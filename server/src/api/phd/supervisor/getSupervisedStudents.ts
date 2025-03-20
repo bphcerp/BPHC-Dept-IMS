@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("supervisor-view-supervised-students"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
         const supervisorEmail = req.user.email;

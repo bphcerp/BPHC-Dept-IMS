@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("drc-view-passed-students"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
         const deadlineEntry = await db
             .select({ deadline: phdConfig.value })

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("drc-select-dac"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
         const students = await db
             .select({

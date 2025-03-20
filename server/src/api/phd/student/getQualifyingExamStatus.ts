@@ -10,7 +10,7 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("phd-view-qualifying-exam-status"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
 
