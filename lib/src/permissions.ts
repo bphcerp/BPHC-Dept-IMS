@@ -108,10 +108,8 @@ export const permissions = {
     "/phd/notifs/send": "phd:notifs:send",
 
     "/phd/notionalSupervisor/getPhd": "phd:notional-supervisor:get-phd",
-    "/phd/notionalSupervisor/updateCourseDetails":
-        "phd:notional-supervisor:update-course-details",
-    "/phd/notionalSupervisor/updateCourseGrade":
-        "phd:notional-supervisor:update-course-grade",
+    "/phd/notionalSupervisor/updateCourseDetails":"phd:notional-supervisor:update-course-details",
+    "/phd/notionalSupervisor/updateCourseGrade":"phd:notional-supervisor:update-course-grade",
     "/phd/notionalSupervisor/getPhdCourseDetails":"phd:notional-supervisor:get-phd-course-details",
     "/phd/notionalSupervisor/addCourse":"phd:notional-supervisor:add-course",
     "/phd/notionalSupervisor/deleteCourseDetails":"phd:notional-supervisor:delete-course-details",

@@ -9,7 +9,7 @@ export default function AnotherExamplePage() {
       const response = await api.get<{ status: string }>(
         "/phd/student/getQualifyingExamStatus"
       );
-      console.log(response.data);
+
       return response.data?.status;
     },
     refetchOnWindowFocus: false,

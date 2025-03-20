@@ -32,8 +32,7 @@ const FormDeadline: React.FC = () => {
   // Ensure that data is properly checked
   const hasActiveDeadline = (data && data.exams.length > 0);
   const activeExam = hasActiveDeadline ? data.exams[0] : null;
-console.log("data", data);
-console.log("has deadline", hasActiveDeadline)
+
   return (
     <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-center text-3xl font-bold">

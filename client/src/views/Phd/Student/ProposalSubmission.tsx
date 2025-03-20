@@ -9,7 +9,6 @@ const ProposalSubmission: React.FC = () => {
       const response = await api.get<{ status: any }>(
         "/phd/student/getQualifyingExamStatus"
       );
-      console.log(response.data);
       return response.data?.status;
     },
     refetchOnWindowFocus: false,
@@ -23,7 +22,6 @@ const ProposalSubmission: React.FC = () => {
         const response = await api.get<{ deadline: string }>(
           "/phd/student/getProposalDeadline"
         );
-        console.log(response.data);
         return response.data;
       },
       refetchOnWindowFocus: false,
@@ -37,7 +35,6 @@ const ProposalSubmission: React.FC = () => {
         email: string;
         qualificationDate: string;
       }>("/phd/student/getQualifyingExamPassingDate");
-      console.log(response.data);
       return response.data;
     },
     refetchOnWindowFocus: false,
