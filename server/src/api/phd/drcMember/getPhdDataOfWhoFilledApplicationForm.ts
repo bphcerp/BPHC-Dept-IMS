@@ -16,8 +16,8 @@ export default router.get(
         // Get the latest qualifying exam deadline
         const latestDeadline = await db
             .select({
-                value: phdConfig.value, 
-                createdAt: phdConfig.createdAt, 
+                value: phdConfig.value,
+                createdAt: phdConfig.createdAt,
             })
             .from(phdConfig)
             .where(eq(phdConfig.key, "qualifying_exam_deadline"))
@@ -29,7 +29,6 @@ export default router.get(
                 new HttpError(HttpCode.BAD_REQUEST, "No deadline found")
             );
         }
-        console.log("deadline",latestDeadline );
         // const { value: deadlineValue, createdAt: deadlineCreatedAt } = latestDeadline[0];
 
         // Get all students who have submitted qualifying exam applications within the deadline window
@@ -46,11 +45,8 @@ export default router.get(
             .innerJoin(phdDocuments, eq(phd.email, phdDocuments.email))
             .where(
                 sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType}) = 'qualifying_exam'`
-                
             )
             .orderBy(desc(phdDocuments.uploadedAt));
-
-        console.log("student", students);
 
         if (!students.length) {
             return next(

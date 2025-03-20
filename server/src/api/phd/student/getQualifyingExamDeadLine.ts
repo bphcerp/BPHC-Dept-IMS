@@ -11,28 +11,26 @@ export default router.get(
     "/",
     checkAccess("phd"),
     asyncHandler(async (_req, res) => {
-      const now = new Date();
-      const exams = await db
-        .select({
-          id: phdQualifyingExams.id,
-          examName: phdQualifyingExams.examName,
-          deadline: phdQualifyingExams.deadline,
-          semesterYear: phdSemesters.year,
-          semesterNumber: phdSemesters.semesterNumber,
-        })
-        .from(phdQualifyingExams)
-        .innerJoin(
-          phdSemesters,
-          eq(phdQualifyingExams.semesterId, phdSemesters.id)
-        )
-        .where(gt(phdQualifyingExams.deadline, now))
-        .orderBy(phdQualifyingExams.deadline);
-        console.log("exm", exams)
-      
+        const now = new Date();
+        const exams = await db
+            .select({
+                id: phdQualifyingExams.id,
+                examName: phdQualifyingExams.examName,
+                deadline: phdQualifyingExams.deadline,
+                semesterYear: phdSemesters.year,
+                semesterNumber: phdSemesters.semesterNumber,
+            })
+            .from(phdQualifyingExams)
+            .innerJoin(
+                phdSemesters,
+                eq(phdQualifyingExams.semesterId, phdSemesters.id)
+            )
+            .where(gt(phdQualifyingExams.deadline, now))
+            .orderBy(phdQualifyingExams.deadline);
 
-      res.status(200).json({ 
-        success: true, 
-        exams
-      });
+        res.status(200).json({
+            success: true,
+            exams,
+        });
     })
-  );
+);
