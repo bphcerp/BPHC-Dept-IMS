@@ -34,12 +34,13 @@ export const allPermissions = {
     "phd:drc-member:get-current-active-qualifying-exam": "",
     "phd:drc-member:get-specific-sem": "",
     "phd:drc-member:get-current-semester": "",
+    "phd:drc-member:update-semester-dates": "",
 
 
     "phd:notifs:send": "",
 
 
-      "phd:notional-supervisor:get-phd": "",
+    "phd:notional-supervisor:get-phd": "",
     "phd:notional-supervisor:update-course-details": "",
     "phd:notional-supervisor:update-course-grade": "",
     "phd:notional-supervisor:get-phd-course-details": "",
@@ -102,6 +103,7 @@ export const permissions = {
     "/phd/drcMember/getCurrentActiveQualifyingExam": "phd:drc-member:get-current-active-qualifying-exam",
     "/phd/drcMember/getSpecificSem": "phd:drc-member:get-specific-sem",
     "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
+    "/phd/drcMember/updateSemesterDates": "phd:drc-member:update-semester-dates",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -110,9 +112,9 @@ export const permissions = {
         "phd:notional-supervisor:update-course-details",
     "/phd/notionalSupervisor/updateCourseGrade":
         "phd:notional-supervisor:update-course-grade",
-    "/phd/notional-supervisor/getPhdCourseDetails":"phd:notional-supervisor:get-phd-course-details",
-    "/phd/notional-supervisor/addCourse":"phd:notional-supervisor:add-course",
-    "/phd/notional-supervisor/deleteCourseDetails":"phd:notional-supervisor:delete-course-details",
+    "/phd/notionalSupervisor/getPhdCourseDetails":"phd:notional-supervisor:get-phd-course-details",
+    "/phd/notionalSupervisor/addCourse":"phd:notional-supervisor:add-course",
+    "/phd/notionalSupervisor/deleteCourseDetails":"phd:notional-supervisor:delete-course-details",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
 
