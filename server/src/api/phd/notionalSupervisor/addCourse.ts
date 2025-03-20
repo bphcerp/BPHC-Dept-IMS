@@ -12,7 +12,7 @@ const router = express.Router();
 
 export default router.post(
     "/",
-    checkAccess("notional-supervisor-update-courses"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = phdSchemas.addPhdCourseBodySchema.safeParse(req.body);

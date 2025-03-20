@@ -12,7 +12,7 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("notional-supervisor-view-courses"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const { studentEmail } = req.query;
