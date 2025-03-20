@@ -24,7 +24,6 @@ export const allPermissions = {
     "phd:student:check-exam-status": "",
     "phd:co-supervisor:get-students": "",
     "phd:supervisor:get-students": "",
-    
 } as const;
 
 export const permissions = {
@@ -73,7 +72,6 @@ export const permissions = {
         "phd:notional-supervisor:update-course-grade",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
-
 
     //Co-Supervisor
     "/phd/coSupervisor/getStudents": "phd:co-supervisor:get-students",
