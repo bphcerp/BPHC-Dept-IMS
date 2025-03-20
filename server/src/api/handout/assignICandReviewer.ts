@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    // checkAccess("dca-assign-reviewers"),
+    checkAccess("dca-assign-reviewers"),
     asyncHandler(async (req, res, _next) => {
         const parsed = handoutSchemas.assignBodySchema.parse(req.body);
 
