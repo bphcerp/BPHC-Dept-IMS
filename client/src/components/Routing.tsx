@@ -11,7 +11,7 @@ import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
-import PhdLayout from "@/layouts/Phd";
+import PhdLayout from "@/layouts/Phd/Phd";
 import Phd from "@/views/Phd";
 import { allPermissions, permissions } from "lib";
 import { Computer, FileText, GraduationCap } from "lucide-react";
@@ -200,12 +200,12 @@ const Routing = () => {
                     <Route path="proposal-submission" element={<ProposalSubmission />} />
                   </Route>
                 )}
-                 {checkAccess(permissions["/phdAll"] as string) && (
+                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
                   <Route path="phd-co-supervisor" element={<Outlet />}>
                     <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
                   </Route>
                  )}
-                 {checkAccess(permissions["/phdAll"] as string) && (
+                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
                   <Route path="phd-supervisor" element={<Outlet />}>
                     <Route path="supervised-students" element={<SupervisedStudents />} />
                   </Route>
