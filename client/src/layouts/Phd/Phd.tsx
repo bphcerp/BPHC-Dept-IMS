@@ -22,6 +22,7 @@ const NotionalSupervisorLayout = () => {
           title: "Update Grade",
           icon: <CaseUpper />,
           url: "/phd/notional-supervisor/update-grade",
+          requiredPermissions: [permissions["/phd/notionalSupervisor/updateCourseGrade"]],
         },
       ],
     },
@@ -32,6 +33,14 @@ const NotionalSupervisorLayout = () => {
           title: "Coursework Form",
           icon: <List />,
           url: "/phd/drc-convenor/coursework-form",
+          requiredPermissions: [
+            permissions["/phd/drcMember/generateCourseworkForm"],
+          ],
+        },
+        {
+          title: "Update sem dates",
+          icon: <List />,
+          url: "/phd/drc-convenor/update-semester-dates",
           requiredPermissions: [
             permissions["/phd/drcMember/generateCourseworkForm"],
           ],
@@ -89,11 +98,41 @@ const NotionalSupervisorLayout = () => {
           title: "QE Form Deadline",
           icon: <CalendarClockIcon />,
           url: "/phd/phd-student/form-deadline",
+          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
         {
           title: "Qualifying Exam Status",
           icon: <List />,
           url: "/phd/phd-student/exam-status",
+          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
+        },
+        {
+          title: "Proposal Submission",
+          icon: <NotepadText />,
+          url: "/phd/phd-student/proposal-submission",
+          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
+        },
+      ],
+    },
+    {
+      title: "PhD Co-Supervisor",
+      items: [
+        {
+          title: "Co-Supervised Students",
+          icon: <Users />,
+          url: "/phd/phd-co-supervisor/co-supervised-students",
+          requiredPermissions: [permissions["/phd/coSupervisor/getStudents"]],
+        },
+      ],
+    },
+    {
+      title: "PhD Supervisor",
+      items: [
+        {
+          title: "Supervised Students",
+          icon: <Users />,
+          url: "/phd/phd-supervisor/supervised-students",
+          requiredPermissions: [permissions["/phd/supervisor/getStudents"]],
         },
       ],
     },

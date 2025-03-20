@@ -11,7 +11,7 @@ import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
-import PhdLayout from "@/layouts/Phd";
+import PhdLayout from "@/layouts/Phd/Phd";
 import Phd from "@/views/Phd";
 import { allPermissions, permissions } from "lib";
 import { Computer, FileText, GraduationCap } from "lucide-react";
@@ -30,10 +30,13 @@ import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppl
 import UpdateQualifyingExamResultsOfAllStudents from "@/views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
 import UpdateQualifyingExamPassingDates from "@/views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
 import UpdateProposalDeadline from "@/views/Phd/DrcConvenor/UpdateProposalDeadline";
+import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
-
+import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
+import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
+import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
@@ -154,6 +157,10 @@ const Routing = () => {
                       element={<CourseworkForm />}
                     />
                     <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
+                    />
+                    <Route
                       path="update-qualifying-exam-deadline"
                       element={<UpdateQualifyingExamDeadline />}
                     ></Route>
@@ -190,8 +197,19 @@ const Routing = () => {
                       path="exam-status"
                       element={<QualifyingExamStatus />}
                     />
+                    <Route path="proposal-submission" element={<ProposalSubmission />} />
                   </Route>
                 )}
+                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                  <Route path="phd-co-supervisor" element={<Outlet />}>
+                    <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
+                  </Route>
+                 )}
+                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                  <Route path="phd-supervisor" element={<Outlet />}>
+                    <Route path="supervised-students" element={<SupervisedStudents />} />
+                  </Route>
+                 )}
               </Route>
             )}
           </>

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer , varchar, uuid} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer ,  uuid} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
@@ -56,9 +56,28 @@ export const phdConfig = pgTable("phd_config", {
 
 export const phdDocuments = pgTable("phdDocuments", {
     id: uuid("id").defaultRandom().primaryKey(),
-    email: varchar("email", { length: 255 }).notNull(),
+    email: text("email").notNull(),
     fileUrl: text("fileUrl").notNull(),
-    formName: varchar("formName", { length: 255 }).notNull(),
-    applicationType: varchar("applicationType", { length: 100 }).notNull(),
+    formName: text("formName").notNull(),
+    applicationType: text("applicationType").notNull(),
     uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
 });
+
+export const phdSemesters = pgTable("phd_semesters", {
+    id: serial("id").primaryKey(),
+    year: integer("year").notNull(),
+    semesterNumber: integer("semester_number").notNull(), // 1 or 2
+    startDate: timestamp("start_date").notNull(),
+    endDate: timestamp("end_date").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  });
+
+  export const phdQualifyingExams = pgTable("phd_qualifying_exams", {
+    id: serial("id").primaryKey(),
+    semesterId: integer("semester_id")
+      .notNull()
+      .references(() => phdSemesters.id, { onDelete: "cascade" }),
+    examName: text("exam_name").notNull(), 
+    deadline: timestamp("deadline").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  });

@@ -5,23 +5,33 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
-import {phdSchemas} from "lib"
+import z from "zod";
 
 const router = express.Router();
 
 
 router.post(
     "/",
-    checkAccess("drc-update-final-dac"), 
+    checkAccess("drc-select-dac"),
     asyncHandler(async (req, res, next) => {
-        const parsed = phdSchemas.updateFinalDacSchema.safeParse(req.body);
+        const schema = z.object({
+            email: z.string().email(),
+            finalDacMembers: z.array(z.string().email()).length(2)
+        });
+
+        const parsed = schema.safeParse(req.body);
         if (!parsed.success) {
             return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input format"));
         }
 
         const { email, finalDacMembers } = parsed.data;
 
-        const student = await db.select().from(phd).where(eq(phd.email, email)).then(rows => rows[0] || null);
+        const student = await db
+            .select()
+            .from(phd)
+            .where(eq(phd.email, email))
+            .then(rows => rows[0] || null);
+
         if (!student) {
             return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
         }
@@ -30,14 +40,13 @@ router.post(
             .update(phd)
             .set({
                 dac1Email: finalDacMembers[0],
-                dac2Email: finalDacMembers[1],
+                dac2Email: finalDacMembers[1]
             })
             .where(eq(phd.email, email));
 
         res.json({
             success: true,
-            message: "Final DAC members updated successfully",
-            finalDacMembers,
+            message: "DAC members assigned successfully"
         });
     })
 );

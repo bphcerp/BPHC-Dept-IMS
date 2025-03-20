@@ -1,29 +1,36 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
-import { phdConfig } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
+import { eq, gt } from "drizzle-orm";
 
 const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("phd-check-exam-deadline"),
-    asyncHandler(async (_req, res, next) => {
-        const deadlineRecord = await db
-            .select({ deadline: phdConfig.value })
-            .from(phdConfig)
-            .where(eq(phdConfig.key, "qualifying_exam_deadline"))
-            .limit(1);
+    checkAccess("phd"),
+    asyncHandler(async (_req, res) => {
+        const now = new Date();
+        const exams = await db
+            .select({
+                id: phdQualifyingExams.id,
+                examName: phdQualifyingExams.examName,
+                deadline: phdQualifyingExams.deadline,
+                semesterYear: phdSemesters.year,
+                semesterNumber: phdSemesters.semesterNumber,
+            })
+            .from(phdQualifyingExams)
+            .innerJoin(
+                phdSemesters,
+                eq(phdQualifyingExams.semesterId, phdSemesters.id)
+            )
+            .where(gt(phdQualifyingExams.deadline, now))
+            .orderBy(phdQualifyingExams.deadline);
 
-        if (deadlineRecord.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "Qualifying exam deadline not found"));
-        }
-
-        res.json({ success: true, deadline: deadlineRecord[0].deadline });
+        res.status(200).json({
+            success: true,
+            exams,
+        });
     })
 );
-
-

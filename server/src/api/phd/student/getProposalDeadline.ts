@@ -2,19 +2,23 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { phdConfig } from "@/config/db/schema/phd.ts";
+import {  phdQualifyingExams } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("pd-view-proposal-deadline"),
+    checkAccess("phd-view-proposal-deadline"),
     asyncHandler(async (_req, res) => {
+        const examName = "Thesis Proposal";
         const deadlineEntry = await db
-            .select({ deadline: phdConfig.value })
-            .from(phdConfig)
-            .where(eq(phdConfig.key, "proposal_request_deadline"))
+            .select({ 
+                deadline: phdQualifyingExams.deadline 
+            })
+            .from(phdQualifyingExams)
+            .where(eq(phdQualifyingExams.examName, examName))
+            .orderBy(phdQualifyingExams.deadline)
             .limit(1);
 
         if (deadlineEntry.length === 0) {

@@ -15,7 +15,6 @@ export default router.post(
     checkAccess("phd-upload-application"),
     asyncHandler(async (req, res) => {
         assert(req.user);
-        console.log(req.body);
         const parsed = phdSchemas.uploadApplicationSchema.safeParse(req.body);
         if (!parsed.success) {
             res.status(400).json({
@@ -34,7 +33,6 @@ export default router.post(
         } = parsed.data;
         const email = req.user.email;
 
-      
         await db.insert(phdDocuments).values({
             email,
             fileUrl,
@@ -43,13 +41,15 @@ export default router.post(
             uploadedAt: new Date(),
         });
 
-    
         const student = await db.query.phd.findFirst({
             where: eq(phd.email, email),
         });
 
         if (!student) {
-            res.status(404).json({ success: false, message: "Student not found" });
+            res.status(404).json({
+                success: false,
+                message: "Student not found",
+            });
             return;
         }
 
@@ -60,7 +60,7 @@ export default router.post(
             .set({
                 qualifyingArea1,
                 qualifyingArea2,
-                numberOfQeApplication: currentApplications + 1, 
+                numberOfQeApplication: currentApplications + 1,
                 qualifyingAreasUpdatedAt: new Date(),
             })
             .where(eq(phd.email, email));

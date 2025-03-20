@@ -3,31 +3,76 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
-import { phdConfig } from "@/config/db/schema/phd.ts";
-import { phdSchemas } from "lib";
-
+import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
+import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
-router.post(
-    "/",
-    checkAccess("drc-update-proposal-deadline"),
-    asyncHandler(async (req, res, next) => {
-        const parsed = phdSchemas.updateExamDeadlineBodySchema.parse(req.body);
-        const deadlineDate = new Date(parsed.deadline);
-
-        const updated = await db
-            .insert(phdConfig)
-            .values({ key: "proposal_request_deadline", value: deadlineDate })
-            .onConflictDoUpdate({ target: [phdConfig.key], set: { value: deadlineDate } })
-            .returning();
-
-        if (updated.length === 0) {
-            return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "Failed to set proposal request deadline"));
+export default router.post(
+  "/",
+  checkAccess("drc"),
+  asyncHandler(async (req, res) => {
+    const { semesterId, deadline } = req.body;
+    
+    // Verify semester exists
+    const semester = await db
+      .select()
+      .from(phdSemesters)
+      .where(eq(phdSemesters.id, semesterId))
+      .limit(1);
+      
+    if (semester.length === 0) {
+      throw new HttpError(HttpCode.NOT_FOUND, "Semester not found");
+    }
+    
+    // Define the proposal exam name
+    const examName = "Thesis Proposal";
+    
+    // Check if there's an existing proposal deadline for this semester
+    const existingProposal = await db
+      .select()
+      .from(phdQualifyingExams)
+      .where(
+        and(
+          eq(phdQualifyingExams.semesterId, semesterId),
+          eq(phdQualifyingExams.examName, examName)
+        )
+      )
+      .limit(1);
+      
+    if (existingProposal.length > 0) {
+      // Update existing proposal deadline
+      await db
+        .update(phdQualifyingExams)
+        .set({
+          deadline: new Date(deadline),
+        })
+        .where(eq(phdQualifyingExams.id, existingProposal[0].id));
+        
+      res.status(200).json({
+        success: true,
+        message: "Proposal deadline updated successfully",
+        proposal: {
+          ...existingProposal[0],
+          deadline: new Date(deadline),
         }
-
-        res.json({ success: true, deadline: updated[0].value });
-    })
+      });
+    } else {
+      // Create new proposal deadline
+      const newProposal = await db
+        .insert(phdQualifyingExams)
+        .values({
+          semesterId,
+          examName,
+          deadline: new Date(deadline),
+        })
+        .returning();
+        
+      res.status(201).json({
+        success: true,
+        message: "Proposal deadline created successfully",
+        proposal: newProposal[0],
+      });
+    }
+  })
 );
-
-export default router;

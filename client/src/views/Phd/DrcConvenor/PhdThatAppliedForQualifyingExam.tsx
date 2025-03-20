@@ -29,7 +29,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     queryKey: ["phd-qualifying-exam-applications"],
     queryFn: async () => {
       const response = await api.get<IPhdApplicationQuery>(
-        "/phd/drcMember/getPhdDataToGeneratePhdQualifyingExamForm"
+        "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"
       );
       return response.data;
     },

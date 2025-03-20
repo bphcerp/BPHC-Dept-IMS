@@ -40,7 +40,7 @@ const QualifyingExamStudents: React.FC = () => {
     queryKey: ["phd-qualifying-exam-students"],
     queryFn: async () => {
       const response = await api.get<IPhdExamQuery>(
-        "/phd/drcMember/getPhdThatFilledQualifyingExamApplicationForm"
+        "/phd/drcMember/getPhdToGenerateQualifyingExamForm"
       );
       return response.data;
     },
@@ -127,7 +127,7 @@ const QualifyingExamStudents: React.FC = () => {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select Result / Previous Result" />
+                          <SelectValue placeholder="Select Result" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="pass">Pass</SelectItem>

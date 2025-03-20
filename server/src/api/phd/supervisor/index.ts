@@ -1,8 +1,8 @@
 import express from "express";
 import getSupervisedStudents from "./getSupervisedStudents.ts";
-import suggestDacMember from "./suggestDacMember.ts";
+import suggestDacMembers from "./suggestDacMembers.ts";
 
 const router = express.Router();
 router.use("/getSupervisedStudents", getSupervisedStudents);
-router.use("/suggestDacMember", suggestDacMember);
+router.use("/suggestDacMembers", suggestDacMembers);
 export default router;
