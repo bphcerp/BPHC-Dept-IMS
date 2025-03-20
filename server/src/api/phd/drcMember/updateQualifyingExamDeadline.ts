@@ -10,7 +10,7 @@ const router = express.Router();
 
 export default router.post(
     "/",
-    checkAccess("drc"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const { semesterId, examName, deadline } = req.body;
         // Check if semester exists

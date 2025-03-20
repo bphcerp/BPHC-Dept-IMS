@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("drc-select-dac"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const schema = z.object({
             email: z.string().email(),

@@ -12,7 +12,7 @@ const router = express.Router();
 
 export default router.post(
     "/",
-    checkAccess("phd-upload-proposal"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
         const parsed = phdSchemas.uploadProposalSchema.parse(req.body);

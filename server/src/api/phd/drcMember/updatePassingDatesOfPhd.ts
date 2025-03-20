@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.patch(
     "/",
-    checkAccess("drc-update-qualification-date"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const validationResult = phdSchemas.updateQualificationDateSchema.safeParse(req.body);
         if (!validationResult.success) {

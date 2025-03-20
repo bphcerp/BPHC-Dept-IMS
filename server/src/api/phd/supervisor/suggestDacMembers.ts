@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("supervisor-suggest-dac"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
         const parsed = phdSchemas.suggestDacMembersSchema.parse(req.body);

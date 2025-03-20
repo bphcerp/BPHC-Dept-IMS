@@ -10,7 +10,7 @@ const router = express.Router();
 // Create or update a semester
 export default router.post(
   "/",
-  checkAccess("drc"),
+  checkAccess(),
   asyncHandler(async (req, res) => {
     const { year, semesterNumber, startDate, endDate } = req.body;
     

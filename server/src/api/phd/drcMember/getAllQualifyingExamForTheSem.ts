@@ -9,7 +9,7 @@ const router = express.Router();
 
 export default router.get(
   "/:semesterId",
-  checkAccess("drc"),
+  checkAccess(),
   asyncHandler(async (req, res) => {
     const {semesterId} = req.params;
     const exams = await db
