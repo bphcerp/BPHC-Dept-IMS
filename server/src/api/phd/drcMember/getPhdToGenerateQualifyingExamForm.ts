@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("drc-get-qualifying-students"),
+    checkAccess(),
     asyncHandler(async (_req, res) => {
         // Get latest deadline
         const latestDeadline = await db

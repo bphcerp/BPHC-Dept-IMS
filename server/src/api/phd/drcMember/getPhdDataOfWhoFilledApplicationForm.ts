@@ -11,7 +11,7 @@ const router = express.Router();
 
 export default router.get(
     "/",
-    checkAccess("drc-view-qualifying-exam-applications"),
+    checkAccess(),
     asyncHandler(async (_req, _res, next) => {
         // Get the latest qualifying exam deadline
         const latestDeadline = await db

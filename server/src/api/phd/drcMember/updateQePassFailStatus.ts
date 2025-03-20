@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("drc-update-qualifying-exam"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const parsed = phdSchemas.updateQualifyingExamStatusSchema.parse(
             req.body

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("phd-view-qualification-date"), 
+    checkAccess(), 
     asyncHandler(async (req, res, ) => {
         assert(req.user);
         const userEmail = req.user.email; 

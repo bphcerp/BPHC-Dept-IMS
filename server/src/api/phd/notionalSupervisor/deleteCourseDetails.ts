@@ -14,7 +14,7 @@ const router = express.Router();
 
 export default router.delete(
     "/",
-    checkAccess("notional-supervisor-delete-course"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
 
