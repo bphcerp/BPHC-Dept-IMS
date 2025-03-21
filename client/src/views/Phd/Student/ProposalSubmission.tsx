@@ -47,31 +47,30 @@ const ProposalSubmission: React.FC = () => {
         Proposal Submission
       </h1>
       {data == "pass" ? (
-        <div></div>
+        <div className="flex flex-col gap-8">
+          {isFetchingProposalDeadline && <p>Loading...</p>}
+          {proposalDeadline?.deadline ? (
+            <ExamDateDisplay
+              examDate={proposalDeadline?.deadline}
+              title="Proposal Document Submission Deadline"
+            />
+          ) : (
+            <span>No Deadline has been set yet</span>
+          )}
+          {isFetchingPassingDate && <p>Loading...</p>}
+          {passingDate?.qualificationDate ? (
+            <ExamDateDisplay
+              examDate={passingDate?.qualificationDate}
+              title="Qualifying Exam Passing Date"
+            />
+          ) : (
+            <span>No Passing Date has been set yet</span>
+          )}
+          <ProposalSubmissionForm />
+        </div>
       ) : (
         <div>Not applicable for proposal submission.</div>
       )}
-      <div className="flex flex-col gap-8">
-        {isFetchingProposalDeadline && <p>Loading...</p>}
-        {proposalDeadline?.deadline ? (
-          <ExamDateDisplay
-            examDate={proposalDeadline?.deadline}
-            title="Proposal Document Submission Deadline"
-          />
-        ) : (
-          <span>No Deadline has been set yet</span>
-        )}
-        {isFetchingPassingDate && <p>Loading...</p>}
-        {passingDate?.qualificationDate ? (
-          <ExamDateDisplay
-            examDate={passingDate?.qualificationDate}
-            title="Qualifying Exam Passing Date"
-          />
-        ) : (
-          <span>No Passing Date has been set yet</span>
-        )}
-        <ProposalSubmissionForm />
-      </div>
     </main>
   );
 };

@@ -10,12 +10,9 @@ export default function ExamDateDisplay({
   examDate,
   title
 }: ExamDateDisplayProps) {
-  // Parse the ISO date string
-  console.log(examDate);
-  const date = new Date(examDate);
-  console.log(date);
 
-  // Format the date: e.g., "Friday, March 14, 2025"
+  const date = new Date(examDate);
+
   const formattedDate = date.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -23,7 +20,6 @@ export default function ExamDateDisplay({
     day: "numeric",
   });
 
-  // Format the time: e.g., "2:41 PM"
   const formattedTime = date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "numeric",
