@@ -60,7 +60,7 @@ const FormDeadline: React.FC = () => {
               <>
                 <div className="overflow-hidden rounded-lg bg-white shadow">
                   <ExamDateDisplay 
-                    examDate={new Date(data?.exams[0].deadline ? data?.exams[0].deadline : "Invalid Date").toLocaleString()} 
+                    examDate={data?.exams[0].deadline ? data?.exams[0].deadline : "Invalid Date"} 
                     title={`Registration Deadline: ${data?.exams[0].examName}`} 
                   />
                 </div>
