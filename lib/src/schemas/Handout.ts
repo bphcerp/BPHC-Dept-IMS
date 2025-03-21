@@ -8,3 +8,10 @@ export const assignBodySchema = z.object({
 });
 
 export type AssignBody = z.infer<typeof assignBodySchema>;
+
+export const handoutStatuses = [
+    "pending",
+    "approved",
+    "rejected",
+    "notsubmitted",
+] as const;
