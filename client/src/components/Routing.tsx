@@ -37,6 +37,8 @@ import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
+import NotFoundPage from "@/layouts/404";
+
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
@@ -197,23 +199,41 @@ const Routing = () => {
                       path="exam-status"
                       element={<QualifyingExamStatus />}
                     />
-                    <Route path="proposal-submission" element={<ProposalSubmission />} />
+                    <Route
+                      path="proposal-submission"
+                      element={<ProposalSubmission />}
+                    />
                   </Route>
                 )}
-                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
                   <Route path="phd-co-supervisor" element={<Outlet />}>
-                    <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
+                    <Route
+                      path="co-supervised-students"
+                      element={<CoSupervisedStudents />}
+                    />
                   </Route>
-                 )}
-                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                )}
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
                   <Route path="phd-supervisor" element={<Outlet />}>
-                    <Route path="supervised-students" element={<SupervisedStudents />} />
+                    <Route
+                      path="supervised-students"
+                      element={<SupervisedStudents />}
+                    />
                   </Route>
-                 )}
+                )}
               </Route>
             )}
           </>
         )}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
