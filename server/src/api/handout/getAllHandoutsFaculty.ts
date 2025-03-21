@@ -20,6 +20,7 @@ router.get(
             })
         ).map((handout) => {
             return {
+                id: handout.id,
                 courseName: handout.courseName,
                 courseCode: handout.courseCode,
                 reviewerName: handout.reviewer?.name || null
