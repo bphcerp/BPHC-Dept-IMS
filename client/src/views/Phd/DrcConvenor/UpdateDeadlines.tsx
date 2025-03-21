@@ -9,34 +9,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import UpdateQualifyingExamDeadline from "../../../components/phd/UpdateQualifyingExamDeadline";
+import UpdateProposalDeadline from "../../../components/phd/UpdateProposalDeadline";
 
+interface Deadline {
+  value: string;
+  label: string;
+  component: JSX.Element;
+}
 export default function UpdateDeadlinesPage() {
   const navigate = useNavigate();
-  const [selectedLabel, setSelectedLabel] =
-    useState<string>("Select a deadline");
+  const [selected, setSelected] = useState<Deadline | null>(null);
 
   // Navigation options
-  const navigationOptions = [
+  const deadlines = [
     {
       value: "qualifying exam deadline",
       label: "Qualifying Exam Deadline",
-      url: "qualifying-exam-deadline",
+      component: <UpdateQualifyingExamDeadline />,
     },
     {
       value: "thesis proposal deadline",
       label: "Thesis Proposal Deadline",
-      url: "thesis-proposal-deadline",
+      component: <UpdateProposalDeadline />,
     },
   ];
 
   // Handle navigation when an option is clicked
-  const handleNavigation = (url: string, label: string) => {
-    setSelectedLabel(label);
-    navigate(url);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="py-8 bg-gray-100 w-full">
       <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">
@@ -52,15 +53,17 @@ export default function UpdateDeadlinesPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  {selectedLabel}
+                  {selected?.label ?? "Select a deadline"}
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-full">
-                {navigationOptions.map((option) => (
+                {deadlines.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
-                    onClick={() => handleNavigation(option.url, option.label)}
+                    onClick={() => {
+                      setSelected(option);
+                    }}
                     className="cursor-pointer"
                   >
                     {option.label}
@@ -68,15 +71,10 @@ export default function UpdateDeadlinesPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {selectedLabel !== "Select a deadline" && (
-              <p className="mt-4 text-center text-sm text-muted-foreground">
-                Navigating to {selectedLabel}...
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>
+      {selected?.component}
     </div>
   );
 }

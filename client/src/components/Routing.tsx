@@ -24,12 +24,10 @@ import {
 } from "react-router-dom";
 import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
-import UpdateQualifyingExamDeadline from "@/views/Phd/DrcConvenor/UpdateQualifyingExamDeadline";
 import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
 import UpdateQualifyingExamResultsOfAllStudents from "@/views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
 import UpdateQualifyingExamPassingDates from "@/views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
-import UpdateProposalDeadline from "@/views/Phd/DrcConvenor/UpdateProposalDeadline";
 import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
@@ -162,10 +160,6 @@ const Routing = () => {
                       element={<UpdateSemesterDates />}
                     />
                     <Route
-                      path="update-deadlines/qualifying-exam-deadline"
-                      element={<UpdateQualifyingExamDeadline />}
-                    ></Route>
-                    <Route
                       path="generate-qualifying-exam-form"
                       element={<GenerateQualifyingExamForm />}
                     ></Route>
@@ -180,10 +174,6 @@ const Routing = () => {
                     <Route
                       path="update-qualifying-exam-passing-dates"
                       element={<UpdateQualifyingExamPassingDates />}
-                    ></Route>
-                    <Route
-                      path="update-deadlines/thesis-proposal-deadline"
-                      element={<UpdateProposalDeadline />}
                     ></Route>
                     <Route
                       path="update-deadlines"
