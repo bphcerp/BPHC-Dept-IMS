@@ -9,13 +9,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { fileFields } from "./form.ts";
 import { users } from "./admin.ts";
+import { handoutSchemas } from "lib";
 
-export const handoutStatusEnum = pgEnum("handout_status_enum", [
-    "pending",
-    "approved",
-    "rejected",
-    "notsubmitted",
-]);
+export const handoutStatusEnum = pgEnum(
+    "handout_status_enum",
+    handoutSchemas.handoutStatuses
+);
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
