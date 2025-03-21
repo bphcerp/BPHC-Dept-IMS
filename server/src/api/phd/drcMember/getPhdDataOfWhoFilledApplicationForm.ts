@@ -4,59 +4,92 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
-import { phdDocuments, phdConfig } from "@/config/db/schema/phd.ts";
-import { eq, sql, desc } from "drizzle-orm";
+import { phdDocuments, phdQualifyingExams, phdSemesters } from "@/config/db/schema/phd.ts";
+import { eq, sql, desc, and } from "drizzle-orm";
 
 const router = express.Router();
 
 export default router.get(
-    "/",
-    checkAccess(),
-    asyncHandler(async (_req, _res, next) => {
-        // Get the latest qualifying exam deadline
-        const latestDeadline = await db
-            .select({
-                value: phdConfig.value,
-                createdAt: phdConfig.createdAt,
-            })
-            .from(phdConfig)
-            .where(eq(phdConfig.key, "qualifying_exam_deadline"))
-            .orderBy(sql`${phdConfig.createdAt} DESC`)
-            .limit(1);
+  "/",
+  checkAccess(),
+  asyncHandler(async (req, res, next) => {
+    // Get all semesters
+    const semesters = await db
+      .select({
+        id: phdSemesters.id,
+        year: phdSemesters.year,
+        semesterNumber: phdSemesters.semesterNumber,
+        startDate: phdSemesters.startDate,
+        endDate: phdSemesters.endDate,
+      })
+      .from(phdSemesters)
+      .orderBy(desc(phdSemesters.year), phdSemesters.semesterNumber);
 
-        if (!latestDeadline.length) {
-            return next(
-                new HttpError(HttpCode.BAD_REQUEST, "No deadline found")
-            );
-        }
-        // const { value: deadlineValue, createdAt: deadlineCreatedAt } = latestDeadline[0];
+    // If no semesters found, return error
+    if (!semesters.length) {
+      return next(
+        new HttpError(HttpCode.NOT_FOUND, "No semesters found")
+      );
+    }
 
-        // Get all students who have submitted qualifying exam applications within the deadline window
-        const students = await db
-            .select({
+    // For each semester, get all qualifying exams
+    const semestersWithExams = await Promise.all(
+      semesters.map(async (semester) => {
+        const exams = await db
+          .select({
+            id: phdQualifyingExams.id,
+            examName: phdQualifyingExams.examName,
+            deadline: phdQualifyingExams.deadline,
+          })
+          .from(phdQualifyingExams)
+          .where(eq(phdQualifyingExams.semesterId, semester.id))
+          .orderBy(desc(phdQualifyingExams.deadline));
+
+        // For each exam, get all students who applied
+        const examsWithStudents = await Promise.all(
+          exams.map(async (exam) => {
+            // For qualifying exams, we need to check the documents uploaded within 
+            // a reasonable time frame around the exam deadline
+            const deadlineDate = new Date(exam.deadline);
+            const threeMonthsBefore = new Date(deadlineDate);
+            threeMonthsBefore.setMonth(deadlineDate.getMonth() - 3);
+            
+            const students = await db
+              .select({
                 name: phd.name,
                 email: phd.email,
                 erpId: phd.erpId,
                 fileUrl: phdDocuments.fileUrl,
                 formName: phdDocuments.formName,
                 uploadedAt: phdDocuments.uploadedAt,
-            })
-            .from(phd)
-            .innerJoin(phdDocuments, eq(phd.email, phdDocuments.email))
-            .where(
-                sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType}) = 'qualifying_exam'`
-            )
-            .orderBy(desc(phdDocuments.uploadedAt));
-
-        if (!students.length) {
-            return next(
-                new HttpError(
-                    HttpCode.NOT_FOUND,
-                    "No qualifying exam applications found"
+              })
+              .from(phd)
+              .innerJoin(phdDocuments, eq(phd.email, phdDocuments.email))
+              .where(
+                and(
+                  sql`TRIM(BOTH '"' FROM ${phdDocuments.applicationType})='qualifying_exam'`,
+                  sql`${phdDocuments.uploadedAt} BETWEEN ${threeMonthsBefore} AND ${deadlineDate}`
                 )
-            );
-        }
+              )
+              .orderBy(desc(phdDocuments.uploadedAt));
 
-        _res.json({ success: true, applications: students });
-    })
+            return {
+              ...exam,
+              students
+            };
+          })
+        );
+
+        return {
+          ...semester,
+          exams: examsWithStudents
+        };
+      })
+    );
+
+    res.json({ 
+      success: true, 
+      semestersWithExams 
+    });
+  })
 );
