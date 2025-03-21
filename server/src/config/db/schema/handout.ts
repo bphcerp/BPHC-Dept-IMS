@@ -5,9 +5,16 @@ import {
     text,
     timestamp,
     boolean,
+    pgEnum,
 } from "drizzle-orm/pg-core";
-import { applicationStatusEnum, fileFields } from "./form.ts";
+import { fileFields } from "./form.ts";
 import { users } from "./admin.ts";
+import { handoutSchemas } from "lib";
+
+export const handoutStatusEnum = pgEnum(
+    "handout_status_enum",
+    handoutSchemas.handoutStatuses
+);
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
@@ -27,7 +34,7 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     lecturewisePlanCourseTopics: boolean("lecturewise_plan_course_topics"),
     numberOfLP: boolean("number_of_lp"),
     evaluationScheme: boolean("evaluation_scheme"),
-    status: applicationStatusEnum("status").notNull().default("pending"),
+    status: handoutStatusEnum("status").notNull().default("notsubmitted"),
     handoutFilePath: integer("handout_file_path").references(
         () => fileFields.id,
         {

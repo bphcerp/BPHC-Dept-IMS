@@ -85,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     onSettled: () => {
       setTokenValue(null);
       queryClient.clear();
+      window.location.href = "/";
     },
   });
 
