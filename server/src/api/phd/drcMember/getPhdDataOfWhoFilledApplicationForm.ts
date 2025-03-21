@@ -12,8 +12,7 @@ const router = express.Router();
 export default router.get(
   "/",
   checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    // Get all semesters
+  asyncHandler(async (_req, res, next) => {
     const semesters = await db
       .select({
         id: phdSemesters.id,
@@ -25,14 +24,12 @@ export default router.get(
       .from(phdSemesters)
       .orderBy(desc(phdSemesters.year), phdSemesters.semesterNumber);
 
-    // If no semesters found, return error
     if (!semesters.length) {
       return next(
         new HttpError(HttpCode.NOT_FOUND, "No semesters found")
       );
     }
 
-    // For each semester, get all qualifying exams
     const semestersWithExams = await Promise.all(
       semesters.map(async (semester) => {
         const exams = await db
@@ -45,15 +42,12 @@ export default router.get(
           .where(eq(phdQualifyingExams.semesterId, semester.id))
           .orderBy(desc(phdQualifyingExams.deadline));
 
-        // For each exam, get all students who applied
         const examsWithStudents = await Promise.all(
           exams.map(async (exam) => {
-            // For qualifying exams, we need to check the documents uploaded within 
-            // a reasonable time frame around the exam deadline
             const deadlineDate = new Date(exam.deadline);
             const threeMonthsBefore = new Date(deadlineDate);
             threeMonthsBefore.setMonth(deadlineDate.getMonth() - 3);
-            
+
             const students = await db
               .select({
                 name: phd.name,
@@ -62,6 +56,10 @@ export default router.get(
                 fileUrl: phdDocuments.fileUrl,
                 formName: phdDocuments.formName,
                 uploadedAt: phdDocuments.uploadedAt,
+                examStatus1: phd.qualifyingExam1,
+                examStatus2: phd.qualifyingExam2,
+                examDate1: phd.qualifyingExam1Date,
+                examDate2: phd.qualifyingExam2Date,
               })
               .from(phd)
               .innerJoin(phdDocuments, eq(phd.email, phdDocuments.email))
@@ -73,9 +71,38 @@ export default router.get(
               )
               .orderBy(desc(phdDocuments.uploadedAt));
 
+            // Process the students to determine their current exam status and date
+            const processedStudents = students.map(student => {
+              // First determine if they've taken an exam already
+              let examStatus = null;
+              let examDate = null;
+              
+              // Check if they've passed their first exam
+              if (student.examStatus1 !== null) {
+                examStatus = student.examStatus1;
+                examDate = student.examDate1;
+              } 
+              // Check if they're on their second exam
+              else if (student.examStatus2 !== null) {
+                examStatus = student.examStatus2;
+                examDate = student.examDate2;
+              }
+              
+              return {
+                name: student.name,
+                email: student.email,
+                erpId: student.erpId,
+                fileUrl: student.fileUrl,
+                formName: student.formName,
+                uploadedAt: student.uploadedAt,
+                examStatus,
+                examDate
+              };
+            });
+
             return {
               ...exam,
-              students
+              students: processedStudents
             };
           })
         );
@@ -87,9 +114,9 @@ export default router.get(
       })
     );
 
-    res.json({ 
-      success: true, 
-      semestersWithExams 
+    res.json({
+      success: true,
+      semestersWithExams
     });
   })
 );

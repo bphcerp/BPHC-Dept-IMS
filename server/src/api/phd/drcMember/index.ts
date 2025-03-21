@@ -15,6 +15,8 @@ import getAllSem from "./getAllSem.ts";
 import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
 import updateSemesterDates from "./updateSemesterDates.ts";
 import getCurrentSemester from "./getCurrentSemester.ts";
+import getPhdExamStatus from "./getPhdExamStatus.ts";
+import getQualificationDates from "./getQualificationDates.ts";
 
 
 const router = express.Router();
@@ -37,5 +39,7 @@ router.use('/updateSemesterDates', updateSemesterDates);
 router.use('/getAllSem', getAllSem);
 router.use('/getAllQualifyingExamForTheSem', getAllQualifyingExamForTheSem);
 router.use('/getCurrentSemester', getCurrentSemester);
+router.use('/getPhdExamStatus', getPhdExamStatus);
+router.use('/getQualificationDates', getQualificationDates);
 
 export default router;

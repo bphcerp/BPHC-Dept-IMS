@@ -5,13 +5,22 @@ import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { phdQualifyingExams, phdSemesters } from "@/config/db/schema/phd.ts";
 import { sql, eq, desc, gte } from "drizzle-orm";
+import z from "zod";
 
 const router = express.Router();
+
+// Schema for generating form data
+const generateFormSchema = z.object({
+  studentEmails: z.array(z.string().email()).optional(),
+  examStartDate: z.string().optional(),
+  examEndDate: z.string().optional(),
+  roomNumber: z.string().optional(),
+});
 
 router.get(
   "/",
   checkAccess(),
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
     // Get current date
     const currentDate = new Date();
     
@@ -46,6 +55,46 @@ router.get(
     const threeMonthsBeforeDeadline = new Date(deadline);
     threeMonthsBeforeDeadline.setMonth(threeMonthsBeforeDeadline.getMonth() - 3);
     
+    // Check if we're generating form data
+    const { studentEmails, examStartDate, examEndDate, roomNumber } = req.query;
+    
+    // Parse the query parameters if they exist
+    let formData = null;
+    if (studentEmails && examEndDate && roomNumber) {
+      try {
+        const parsedEmails = JSON.parse(studentEmails as string);
+        const parsedQuery = generateFormSchema.parse({
+          studentEmails: parsedEmails,
+          examStartDate: examStartDate || examEndDate,
+          examEndDate,
+          roomNumber
+        });
+        
+        // Fetch only the selected students
+        const selectedStudents = await db
+          .select({
+            name: phd.name,
+            email: phd.email,
+            area1: phd.qualifyingArea1,
+            area2: phd.qualifyingArea2,
+            idNumber: phd.idNumber,
+            numberOfQeApplication: phd.numberOfQeApplication,
+          })
+          .from(phd)
+          .where(sql`${phd.email} IN (${parsedQuery.studentEmails})`);
+        
+        formData = {
+          students: selectedStudents,
+          examStartDate: parsedQuery.examStartDate,
+          examEndDate: parsedQuery.examEndDate,
+          roomNumber: parsedQuery.roomNumber
+        };
+      } catch (error) {
+        console.error("Error parsing form data:", error);
+      }
+    }
+    
+    // Get all eligible students
     const students = await db
       .select({
         name: phd.name,
@@ -53,7 +102,7 @@ router.get(
         area1: phd.qualifyingArea1,
         area2: phd.qualifyingArea2,
         idNumber: phd.idNumber,
-        examAttempt: phd.numberOfQeApplication,
+        numberOfQeApplication: phd.numberOfQeApplication,
       })
       .from(phd)
       .where(
@@ -64,7 +113,8 @@ router.get(
     res.status(200).json({ 
       success: true, 
       students,
-      examInfo: activeExam[0]
+      examInfo: activeExam[0],
+      formData
     });
   })
 );
