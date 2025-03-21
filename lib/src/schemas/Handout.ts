@@ -15,9 +15,3 @@ export const handoutStatuses = [
     "rejected",
     "notsubmitted",
 ] as const;
-
-export const getFacultyHandoutsQuerySchema = z.object({
-    icEmail: z.string().email(),
-});
-
-export type getFacultyHandouts = z.infer<typeof getFacultyHandoutsQuerySchema>;
