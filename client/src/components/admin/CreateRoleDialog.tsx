@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,29 +22,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
-
-const formSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .nonempty("Role name cannot be empty")
-    .regex(/^[a-z0-9-]+$/, {
-      message:
-        "Role name can only contain lowercase letters, numbers, and hyphens",
-    })
-    .max(128, {
-      message: "Role name must not exceed 128 characters",
-    }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { adminSchemas } from "lib";
 
 export function CreateRoleDialog() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<adminSchemas.RoleCreateBody>({
+    resolver: zodResolver(adminSchemas.roleCreateBodySchema),
     defaultValues: {
       name: "",
     },
@@ -77,7 +61,7 @@ export function CreateRoleDialog() {
     },
   });
 
-  function onSubmit(values: FormValues) {
+  function onSubmit(values: adminSchemas.RoleCreateBody) {
     submitMutation.mutate(values.name);
   }
 
