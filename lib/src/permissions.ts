@@ -8,20 +8,12 @@ export const allPermissions = {
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
     "conference:application:create": "Create operations on applications",
-    "phd:drc-member:assign-notional-supervisor": "",
-    "phd:drc-member:assign-supervisor": "",
+
     "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:get-all-qualifying-exam": "",
     "phd:drc-member:get-all-qualifying-exam-for-the-semester": "",
     "phd:drc-member:get-all-semester": "",
-    "phd:drc-member:get-faculty-details": "",
-    "phd:drc-member:get-phd": "",
-    "phd:drc-member:get-qualifying-exam-form": "",
-    "phd:drc-member:update-deadlines": "",
-    "phd:drc-member:update-exam": "",
     "phd:drc-member:update-exam-dates": "",
     "phd:drc-member:update-qualifying-exam-deadline": "",
-    "phd:drc-member:update-qe-pass-fail-status": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
     "phd:drc-member:get-phd-that-passed-recently": "",
@@ -31,11 +23,9 @@ export const allPermissions = {
     "phd:drc-member:update-final-dac": "",
     "phd:drc-member:suggest-two-best-dac-member": "",
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
-    "phd:drc-member:get-current-active-qualifying-exam": "",
-    "phd:drc-member:get-specific-sem": "",
     "phd:drc-member:get-current-semester": "",
     "phd:drc-member:update-semester-dates": "",
-
+    
 
     "phd:notifs:send": "",
 

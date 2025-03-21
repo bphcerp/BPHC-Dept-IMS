@@ -56,20 +56,20 @@ const NotionalSupervisorLayout = () => {
           icon: <Users />,
           url: "/phd/drc-convenor/generate-qualifying-exam-form",
           requiredPermissions: [
-            permissions["/phd/drcMember/getQualifyingExamForm"],
+            permissions["/phd/drcMember/getPhdToGenerateQualifyingExamForm"],
           ],
         },
         {
           title: "QE Application details",
           icon: <NotepadText />,
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
-          requiredPermissions: [permissions["/phd/drcMember/getPhD"]],
+          requiredPermissions: [permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]],
         },
         {
           title: "Update QE Results",
           icon: <FileCheck />,
           url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
-          requiredPermissions: [permissions["/phd/drcMember/updateExam"]],
+          requiredPermissions: [permissions["/phd/drcMember/updateQualifyingExamResultsOfAllStudents"]],
         },
         {
           title: "Update QE Passing Dates",
