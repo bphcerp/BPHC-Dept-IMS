@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -25,20 +25,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
+// Interfaces
+interface IStudent {
+  name: string;
+  email: string;
+  erpId: string;
+  fileUrl: string;
+  formName: string;
+  uploadedAt: string;
+  examStatus: boolean | null;
+  examDate: string | null;
+}
 
 interface IQualifyingExam {
   id: number;
   examName: string;
   deadline: string;
-  students: {
-    name: string;
-    email: string;
-    erpId: string;
-    fileUrl: string;
-    formName: string;
-    uploadedAt: string;
-  }[];
+  students: IStudent[];
 }
 
 interface ISemester {
@@ -55,8 +61,42 @@ interface IPhdApplicationsResponse {
   semestersWithExams: ISemester[];
 }
 
-// Helper to format date using toLocaleString
-const formatDate = (dateString : string) => {
+interface IExamStatus {
+  email: string;
+  qualifyingExam1: boolean | null;
+  qualifyingExam2: boolean | null;
+  qualifyingExam1Date: string | null;
+  qualifyingExam2Date: string | null;
+}
+
+interface IExamStatusResponse {
+  success: boolean;
+  examStatuses: IExamStatus[];
+}
+
+interface IQualificationDate {
+  email: string;
+  name: string;
+  qualificationDate: string | null;
+  examStatus: boolean | null;
+}
+
+interface IQualificationDatesResponse {
+  success: boolean;
+  qualificationDates: IQualificationDate[];
+}
+
+interface IUpdateExamResult {
+  email: string;
+  ifPass: boolean;
+}
+
+interface IUpdateExamDate {
+  email: string;
+  qualificationDate: string;
+}
+
+const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -64,32 +104,191 @@ const formatDate = (dateString : string) => {
   });
 };
 
+const formatISODate = (dateString: string | null) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : "";
+};
+
 const PhdThatAppliedForQualifyingExam: React.FC = () => {
+  const queryClient = useQueryClient();
   const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
-  
+  const [examResults, setExamResults] = useState<IUpdateExamResult[]>([]);
+  const [examDates, setExamDates] = useState<IUpdateExamDate[]>([]);
+  const [studentStatus, setStudentStatus] = useState<Record<string, boolean | null>>({});
+  const [studentDates, setStudentDates] = useState<Record<string, string | null>>({});
+
+  // Fetch main application data
   const { data, isLoading } = useQuery({
     queryKey: ["phd-qualifying-exam-applications"],
     queryFn: async () => {
       const response = await api.get<IPhdApplicationsResponse>(
         "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"
       );
-      
-      // Automatically select the first semester if available
       if (response.data.success && response.data.semestersWithExams.length > 0) {
         setSelectedSemester(response.data.semestersWithExams[0].id);
       }
-      
       return response.data;
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fetch exam status data
+  const { data: examStatusData } = useQuery({
+    queryKey: ["phd-exam-statuses"],
+    queryFn: async () => {
+      const response = await api.get<IExamStatusResponse>(
+        "/phd/drcMember/getPhdExamStatus"
+      );
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch qualification dates data
+  const { data: qualificationDatesData } = useQuery({
+    queryKey: ["phd-qualification-dates"],
+    queryFn: async () => {
+      const response = await api.get<IQualificationDatesResponse>(
+        "/phd/drcMember/getQualificationDates"
+      );
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Initialize student status and dates based on API data
+  useEffect(() => {
+    // Handle exam statuses
+    if (examStatusData?.examStatuses) {
+      const newStatusMap: Record<string, boolean | null> = {};
+      
+      examStatusData.examStatuses.forEach(status => {
+        // Determine which exam status to use (most recent non-null one)
+        const examStatus = status.qualifyingExam2 !== null 
+          ? status.qualifyingExam2 
+          : status.qualifyingExam1;
+          
+        newStatusMap[status.email] = examStatus;
+      });
+      
+      setStudentStatus(newStatusMap);
+    }
+    
+    // Handle qualification dates
+    if (qualificationDatesData?.qualificationDates) {
+      const newDatesMap: Record<string, string | null> = {};
+      
+      qualificationDatesData.qualificationDates.forEach(item => {
+        newDatesMap[item.email] = item.qualificationDate;
+      });
+      
+      setStudentDates(newDatesMap);
+    }
+  }, [examStatusData, qualificationDatesData]);
+
+  // Process data to include status and dates in student objects
+  const processedData = React.useMemo(() => {
+    if (!data?.semestersWithExams) return null;
+    
+    const processed = {
+      ...data,
+      semestersWithExams: data.semestersWithExams.map(semester => ({
+        ...semester,
+        exams: semester.exams.map(exam => ({
+          ...exam,
+          students: exam.students.map(student => ({
+            ...student,
+            examStatus: studentStatus[student.email] ?? null,
+            examDate: studentDates[student.email] ?? null
+          }))
+        }))
+      }))
+    };
+    
+    return processed;
+  }, [data, studentStatus, studentDates]);
+
+  const updateExamResultsMutation = useMutation({
+    mutationFn: async () => {
+      return await api.post(
+        "/phd/drcMember/updateQualifyingExamResultsOfAllStudents",
+        examResults
+      );
+    },
+    onSuccess: (response) => {
+      toast.success("Exam results updated successfully");
+      
+      // Update local state with new status values
+      if (response.data.updatedStudents) {
+        const newStatusMap = { ...studentStatus };
+        
+        response.data.updatedStudents.forEach((student: any) => {
+          if ('qualifyingExam1' in student) {
+            newStatusMap[student.email] = student.qualifyingExam1;
+          } else if ('qualifyingExam2' in student) {
+            newStatusMap[student.email] = student.qualifyingExam2;
+          }
+        });
+        
+        setStudentStatus(newStatusMap);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["phd-exam-statuses"] });
+      setExamResults([]);
+    },
+    onError: () => {
+      toast.error("Failed to update exam results");
+    }
+  });
+
+  const updateExamDatesMutation = useMutation({
+    mutationFn: async () => {
+      // Convert the date string to a valid ISO string format before sending
+      const formattedDates = examDates.map(item => ({
+        email: item.email,
+        // Ensure date is in ISO format with proper timezone handling
+        qualificationDate: new Date(item.qualificationDate).toISOString()
+      }));
+      
+      return await api.patch(
+        "/phd/drcMember/updatePassingDatesOfPhd",
+        formattedDates
+      );
+    },
+    onSuccess: (response) => {
+      toast.success("Qualification dates updated successfully");
+      
+      // Update local state with new date values
+      if (response.data.updatedStudents) {
+        const newDatesMap = { ...studentDates };
+        
+        response.data.updatedStudents.forEach((student: any) => {
+          if (student.qualificationDate) {
+            newDatesMap[student.email] = student.qualificationDate;
+          }
+        });
+        
+        setStudentDates(newDatesMap);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["phd-qualification-dates"] });
+      setExamDates([]);
+    },
+    onError: (error) => {
+      console.error("Update error:", error);
+      toast.error("Failed to update qualification dates");
+    }
+  });
+
   if (isLoading) {
     return <LoadingSpinner className="mx-auto mt-10" />;
   }
 
-  if (!data?.success || !data.semestersWithExams.length) {
+  if (!processedData?.success || !processedData.semestersWithExams.length) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
         <Card className="w-full max-w-4xl">
@@ -102,32 +301,90 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     );
   }
 
-  const currentSemester = data.semestersWithExams.find(sem => sem.id === selectedSemester) || data.semestersWithExams[0];
+  const currentSemester = processedData.semestersWithExams.find(sem => sem.id === selectedSemester) || processedData.semestersWithExams[0];
+
+  const handleStatusChange = (email: string, status: string) => {
+    const ifPass = status === 'pass';
+    
+    // Update local state immediately for UI feedback
+    setStudentStatus(prev => ({
+      ...prev,
+      [email]: ifPass
+    }));
+    
+    // Add to changes that will be sent to server
+    setExamResults(prev => {
+      const newResults = prev.filter(result => result.email !== email);
+      newResults.push({ email, ifPass });
+      return newResults;
+    });
+  };
+
+  const handleDateChange = (email: string, date: string) => {
+    if (!date) return;
+    
+    // Update local state immediately for UI feedback
+    setStudentDates(prev => ({
+      ...prev,
+      [email]: date
+    }));
+    
+    // Add to changes that will be sent to server
+    setExamDates(prev => {
+      const newDates = prev.filter(item => item.email !== email);
+      newDates.push({
+        email,
+        qualificationDate: date
+      });
+      return newDates;
+    });
+  };
+
+  const saveChanges = () => {
+    if (examResults.length > 0) {
+      updateExamResultsMutation.mutate();
+    }
+    if (examDates.length > 0) {
+      updateExamDatesMutation.mutate();
+    }
+    if (examResults.length === 0 && examDates.length === 0) {
+      toast.info("No changes to save");
+    }
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-4xl">
+      <Card className="w-full max-w-6xl">
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Qualifying Exam Applications</h2>
-            
-            <Select
-              value={selectedSemester?.toString() || currentSemester.id.toString()}
-              onValueChange={(value) => setSelectedSemester(parseInt(value))}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="Select Semester" />
-              </SelectTrigger>
-              <SelectContent>
-                {data.semestersWithExams.map((semester) => (
-                  <SelectItem key={semester.id} value={semester.id.toString()}>
-                    {semester.year} - Semester {semester.semesterNumber}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-4">
+              <Select
+                value={selectedSemester?.toString() || currentSemester.id.toString()}
+                onValueChange={(value) => setSelectedSemester(parseInt(value))}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Select Semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {processedData.semestersWithExams.map((semester) => (
+                    <SelectItem key={semester.id} value={semester.id.toString()}>
+                      {semester.year}-Semester {semester.semesterNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={saveChanges}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={updateExamResultsMutation.isLoading || updateExamDatesMutation.isLoading}
+              >
+                {(updateExamResultsMutation.isLoading || updateExamDatesMutation.isLoading)
+                  ? "Saving..."
+                  : "Save Changes"}
+              </Button>
+            </div>
           </div>
-          
           {currentSemester.exams.length === 0 ? (
             <div className="text-center py-4">
               No qualifying exams found for this semester
@@ -153,11 +410,13 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-1/5">Student Name</TableHead>
-                            <TableHead className="w-1/5">Email</TableHead>
-                            <TableHead className="w-1/5">ERP ID</TableHead>
-                            <TableHead className="w-1/5">Application Form</TableHead>
-                            <TableHead className="w-1/5">Submitted On</TableHead>
+                            <TableHead className="w-1/7">Student Name</TableHead>
+                            <TableHead className="w-1/7">Email</TableHead>
+                            <TableHead className="w-1/7">ERP ID</TableHead>
+                            <TableHead className="w-1/7">Application Form</TableHead>
+                            <TableHead className="w-1/7">Submitted On</TableHead>
+                            <TableHead className="w-1/7">Status</TableHead>
+                            <TableHead className="w-1/7">Qualification Date</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -181,6 +440,29 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                               </TableCell>
                               <TableCell>
                                 {formatDate(student.uploadedAt)}
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={student.examStatus === true ? "pass" : student.examStatus === false ? "fail" : ""}
+                                  onValueChange={(value) => handleStatusChange(student.email, value)}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select Status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pass">Pass</SelectItem>
+                                    <SelectItem value="fail">Fail</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="date"
+                                  disabled={student.examStatus !== true}
+                                  value={formatISODate(student.examDate)}
+                                  onChange={(e) => handleDateChange(student.email, e.target.value)}
+                                  className="w-full"
+                                />
                               </TableCell>
                             </TableRow>
                           ))}

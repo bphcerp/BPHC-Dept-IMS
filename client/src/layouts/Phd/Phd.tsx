@@ -1,8 +1,6 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import {
   CalendarClockIcon,
-  FileCheck,
-  CalendarCheck2,
   List,
   Users,
   CaseUpper,
@@ -39,7 +37,7 @@ const NotionalSupervisorLayout = () => {
         },
         {
           title: "Update sem dates",
-          icon: <List />,
+          icon: <CalendarX2 />,
           url: "/phd/drc-convenor/update-semester-dates",
           requiredPermissions: [
             permissions["/phd/drcMember/generateCourseworkForm"],
@@ -65,18 +63,7 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
           requiredPermissions: [permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]],
         },
-        {
-          title: "Update QE Results",
-          icon: <FileCheck />,
-          url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
-          requiredPermissions: [permissions["/phd/drcMember/updateQualifyingExamResultsOfAllStudents"]],
-        },
-        {
-          title: "Update QE Passing Dates",
-          icon: <CalendarCheck2 />,
-          url: "/phd/drc-convenor/update-qualifying-exam-passing-dates",
-          requiredPermissions: [permissions["/phd/drcMember/updateExamDates"]],
-        },
+
         {
           title: "Assign DAC Members",
           icon: <UserRoundPlus />,
@@ -94,12 +81,7 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/phd-student/form-deadline",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
-        {
-          title: "Qualifying Exam Status",
-          icon: <List />,
-          url: "/phd/phd-student/exam-status",
-          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
-        },
+        
         {
           title: "Proposal Submission",
           icon: <NotepadText />,

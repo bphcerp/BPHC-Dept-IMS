@@ -26,12 +26,9 @@ import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
 import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
-import UpdateQualifyingExamResultsOfAllStudents from "@/views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
-import UpdateQualifyingExamPassingDates from "@/views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
 import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
-import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
@@ -168,14 +165,6 @@ const Routing = () => {
                       element={<PhdThatAppliedForQualifyingExam />}
                     ></Route>
                     <Route
-                      path="update-qualifying-exam-results-of-all-students"
-                      element={<UpdateQualifyingExamResultsOfAllStudents />}
-                    ></Route>
-                    <Route
-                      path="update-qualifying-exam-passing-dates"
-                      element={<UpdateQualifyingExamPassingDates />}
-                    ></Route>
-                    <Route
                       path="update-deadlines"
                       element={<UpdateDeadlinesPage />}
                     />
@@ -188,10 +177,7 @@ const Routing = () => {
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
-                    <Route
-                      path="exam-status"
-                      element={<QualifyingExamStatus />}
-                    />
+                    
                     <Route
                       path="proposal-submission"
                       element={<ProposalSubmission />}

@@ -25,7 +25,10 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
     "phd:drc-member:get-current-semester": "",
     "phd:drc-member:update-semester-dates": "",
+    "phd:drc-member:get-phd-exam-status":"",
+    "phd:drc-member:get-qualification-dates":"",
 
+    
     "phd:notifs:send": "",
 
     "phd:notional-supervisor:get-phd": "",
@@ -100,6 +103,9 @@ export const permissions = {
     "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
     "/phd/drcMember/updateSemesterDates":
         "phd:drc-member:update-semester-dates",
+    "/phd/drcMember/getPhdExamStatus":"phd:drc-member:get-phd-exam-status",
+    "/phd/drcMember/getQualificationDates":"phd:drc-member:get-qualification-dates",
+  
 
     "/phd/notifs/send": "phd:notifs:send",
 
