@@ -75,13 +75,16 @@ const PhdQualifyingExamManagement: React.FC = () => {
       examEndDate: string;
       roomNumber: string;
     }) => {
-      return api.post(
+      return api.get(
         "/phd/drcMember/getPhdToGenerateQualifyingExamForm",
         data
       );
     },
     onSuccess: (response) => {
       setFormData(response.data.formData);
+    },
+    onError: () => {
+      alert("Failed to generate form data");
     },
   });
 
