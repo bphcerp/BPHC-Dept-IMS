@@ -47,6 +47,10 @@ const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("phd:")
 );
 
+const conferenceModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("conference:"));
+
 const qpReviewModulePermissions: string[] = [];
 
 const Routing = () => {
@@ -125,6 +129,13 @@ const Routing = () => {
                     <Route path="roles/:role" element={<RoleDetailsView />} />
                   </>
                 )}
+              </Route>
+            )}
+
+            {checkAccessAnyOne(conferenceModulePermissions) && (
+              <Route path="/conference" element={<ConferenceLayout />}>
+                <Route index element={<Navigate to="/conference/apply" />} />
+                <Route path="apply" element={<ConferenceApplyView />} />
               </Route>
             )}
 
