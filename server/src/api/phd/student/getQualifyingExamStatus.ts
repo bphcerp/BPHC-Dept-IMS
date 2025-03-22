@@ -1,6 +1,7 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
@@ -9,33 +10,48 @@ import assert from "assert";
 const router = express.Router();
 
 export default router.get(
-    "/",
-    checkAccess(),
-    asyncHandler(async (req, res) => {
-        assert(req.user);
+  "/",
+  checkAccess(),
+  asyncHandler(async (req, res, next) => {
+    assert(req.user);
+    const userEmail = req.user.email;
 
-        const student = await db
-            .select({
-                email: phd.email,
-                qualifyingExam1: phd.qualifyingExam1,
-                qualifyingExam2: phd.qualifyingExam2,
-            })
-            .from(phd)
-            .where(eq(phd.email, req.user.email))
-            .limit(1);
+    if (!userEmail) {
+      return next(
+        new HttpError(HttpCode.BAD_REQUEST, "User email not found")
+      );
+    }
 
-        if (student.length === 0) {
-            res.status(404).json({
-                success: false,
-                message: "Student not found",
-            });
-            return;
-        }
+    const studentRecord = await db
+      .select()
+      .from(phd)
+      .where(eq(phd.email, userEmail))
+      .limit(1);
 
-        const passed = student[0].qualifyingExam1 ?? student[0].qualifyingExam2;
-        res.status(200).json({
-            success: true,
-            status: passed ? "pass" : "fail",
-        });
-    })
+    if (studentRecord.length === 0) {
+      return next(
+        new HttpError(HttpCode.NOT_FOUND, "Student record not found")
+      );
+    }
+
+    const student = studentRecord[0];
+
+    let status = "pending";
+    
+    const exam1Evaluated = student.qualifyingExam1 !== null;
+    const exam2Evaluated = student.qualifyingExam2 !== null;
+    
+    if (exam1Evaluated || exam2Evaluated) {
+      if (student.qualifyingExam1 === true || student.qualifyingExam2 === true) {
+        status = "pass";
+      } 
+
+      else if (exam1Evaluated && exam2Evaluated && 
+               student.qualifyingExam1 === false && student.qualifyingExam2 === false) {
+        status = "fail";
+      }
+    }
+
+    res.json({ success: true, status });
+  })
 );

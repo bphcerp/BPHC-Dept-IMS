@@ -7,7 +7,6 @@ const CoSupervisedStudents: React.FC = () => {
       const response = await api.get<{ students: any }>(
         "/phd/coSupervisor/getCoSupervisedStudents"
       );
-      console.log(response.data);
       return response.data?.students;
     },
   });

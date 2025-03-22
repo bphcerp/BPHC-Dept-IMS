@@ -1,8 +1,6 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import {
   CalendarClockIcon,
-  FileCheck,
-  CalendarCheck2,
   List,
   Users,
   CaseUpper,
@@ -39,55 +37,38 @@ const NotionalSupervisorLayout = () => {
         },
         {
           title: "Update sem dates",
-          icon: <List />,
+          icon: <CalendarX2 />,
           url: "/phd/drc-convenor/update-semester-dates",
           requiredPermissions: [
             permissions["/phd/drcMember/generateCourseworkForm"],
           ],
         },
         {
-          title: "Update QE Deadline",
+          title: "Update Deadlines",
           icon: <CalendarClockIcon />,
-          url: "/phd/drc-convenor/update-qualifying-exam-deadline",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
+          url: "/phd/drc-convenor/update-deadlines",
+          requiredPermissions: [permissions["/phd/drcMember/updateQualifyingExamDeadline"], permissions["/phd/drcMember/updateProposalDeadline"]],
         },
         {
           title: "Generate QE Application List",
           icon: <Users />,
           url: "/phd/drc-convenor/generate-qualifying-exam-form",
           requiredPermissions: [
-            permissions["/phd/drcMember/getQualifyingExamForm"],
+            permissions["/phd/drcMember/getPhdToGenerateQualifyingExamForm"],
           ],
         },
         {
           title: "QE Application details",
           icon: <NotepadText />,
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
-          requiredPermissions: [permissions["/phd/drcMember/getPhD"]],
+          requiredPermissions: [permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]],
         },
-        {
-          title: "Update QE Results",
-          icon: <FileCheck />,
-          url: "/phd/drc-convenor/update-qualifying-exam-results-of-all-students",
-          requiredPermissions: [permissions["/phd/drcMember/updateExam"]],
-        },
-        {
-          title: "Update QE Passing Dates",
-          icon: <CalendarCheck2 />,
-          url: "/phd/drc-convenor/update-qualifying-exam-passing-dates",
-          requiredPermissions: [permissions["/phd/drcMember/updateExamDates"]],
-        },
-        {
-          title: "Update Proposal Deadline",
-          icon: <CalendarX2 />,
-          url: "/phd/drc-convenor/update-proposal-deadline",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
-        },
+
         {
           title: "Assign DAC Members",
           icon: <UserRoundPlus />,
           url: "/phd/drc-convenor/assign-dac-members",
-          requiredPermissions: [permissions["/phd/drcMember/updateDeadlines"]],
+          requiredPermissions: [permissions["/phd/drcMember/updateFinalDac"]],
         },
       ],
     },
@@ -100,12 +81,7 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/phd-student/form-deadline",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
-        {
-          title: "Qualifying Exam Status",
-          icon: <List />,
-          url: "/phd/phd-student/exam-status",
-          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
-        },
+        
         {
           title: "Proposal Submission",
           icon: <NotepadText />,
@@ -121,7 +97,7 @@ const NotionalSupervisorLayout = () => {
           title: "Co-Supervised Students",
           icon: <Users />,
           url: "/phd/phd-co-supervisor/co-supervised-students",
-          requiredPermissions: [permissions["/phd/coSupervisor/getStudents"]],
+          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
         },
       ],
     },
@@ -132,7 +108,7 @@ const NotionalSupervisorLayout = () => {
           title: "Supervised Students",
           icon: <Users />,
           url: "/phd/phd-supervisor/supervised-students",
-          requiredPermissions: [permissions["/phd/supervisor/getStudents"]],
+          requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
         },
       ],
     },

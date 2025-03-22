@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Student {
   name: string;
@@ -28,19 +29,38 @@ interface Student {
 interface QualifyingStudentsResponse {
   success: boolean;
   students: Student[];
+  examInfo?: {
+    id: number;
+    examName: string;
+    deadline: string;
+    semesterId: number;
+    semesterYear: number;
+    semesterNumber: number;
+  };
+  formData?: {
+    students: Student[];
+    examStartDate: string;
+    examEndDate: string;
+    roomNumber: string;
+  };
 }
 
-const PhdQualifyingExamManagement: React.FC = () => {
+const GenerateQualifyingExamForm: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [examStartDate, setExamStartDate] = useState<string>("");
   const [examEndDate, setExamEndDate] = useState<string>("");
   const [roomNumber, setRoomNumber] = useState<string>("");
-  const [formData, setFormData] = useState<any>(null);
+  const [formData, setFormData] = useState<{
+    students: Student[];
+    examStartDate: string;
+    examEndDate: string;
+    roomNumber: string;
+  } | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   // Fetch qualifying students
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["phd-qualifying-students"],
     queryFn: async () => {
       const response = await api.get<QualifyingStudentsResponse>(
@@ -52,7 +72,7 @@ const PhdQualifyingExamManagement: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Mutation for batch updating exam dates
+  // Mutation for updating final exam date
   const updateExamDatesMutation = useMutation({
     mutationFn: async (data: {
       examDates: Record<string, string>;
@@ -67,23 +87,42 @@ const PhdQualifyingExamManagement: React.FC = () => {
     },
   });
 
-  // Mutation for generating the form data
-  const generateFormMutation = useMutation({
-    mutationFn: async (data: {
-      studentEmails: string[];
-      examStartDate: string;
-      examEndDate: string;
-      roomNumber: string;
-    }) => {
-      return api.post(
-        "/phd/drcMember/getPhdToGenerateQualifyingExamForm",
-        data
-      );
-    },
-    onSuccess: (response) => {
-      setFormData(response.data.formData);
-    },
-  });
+  // Generate form data without updating the database tables
+  const generateForm = async () => {
+    if (!examEndDate || !roomNumber || selectedStudents.length === 0) {
+      alert("Please fill all required fields and select at least one student");
+      return;
+    }
+  
+    try {
+      // Only update the final exam date using the mutation
+      await updateExamDatesMutation.mutateAsync({
+        examDates: selectedStudents.reduce((acc, email) => {
+          acc[email] = examEndDate;
+          return acc;
+        }, {} as Record<string, string>),
+        roomNumber,
+      });
+      
+      // Prepare the form data locally instead of fetching from server
+      if (data?.students) {
+        const selectedStudentsData = data.students.filter(student => 
+          selectedStudents.includes(student.email)
+        );
+        
+        // Set the form data state for printing
+        setFormData({
+          students: selectedStudentsData,
+          examStartDate: examStartDate || examEndDate, // Use end date if start date is not provided
+          examEndDate,
+          roomNumber,
+        });
+      }
+    } catch (error) {
+      console.error("Error generating form:", error);
+      alert("Failed to update exam dates");
+    }
+  };
 
   const handleSelectAll = () => {
     if (data?.students) {
@@ -103,94 +142,6 @@ const PhdQualifyingExamManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateExamDates = async () => {
-    if (!examEndDate || !roomNumber || selectedStudents.length === 0) {
-      alert("Please fill all required fields and select at least one student");
-      return;
-    }
-
-    // Create a mapping of email to exam date based on the exam end date
-    const examDates: Record<string, string> = {};
-    selectedStudents.forEach((email) => {
-      examDates[email] = examEndDate;
-    });
-
-    try {
-      await updateExamDatesMutation.mutateAsync({
-        examDates,
-        roomNumber,
-      });
-
-      // After successful update, generate the form
-      generateFormMutation.mutate({
-        studentEmails: selectedStudents,
-        examStartDate: examStartDate || examEndDate, // Fall back to end date if start date is not provided
-        examEndDate,
-        roomNumber,
-      });
-    } catch (error) {
-      console.error("Error updating exam dates:", error);
-      alert("Failed to update exam dates");
-    }
-  };
-
-  const handlePrint = () => {
-    if (printRef.current) {
-      const printWindow = window.open("", "_blank");
-      printWindow?.document.write(`
-        <html>
-        <head>
-          <title>PhD Qualifying Examination Form</title>
-          <style>
-            body {
-                margin: 40px;
-                line-height: 1.5;
-                font-family: Arial, sans-serif;
-            }
-            .underline {
-                border-bottom: 1px solid #000;
-                display: inline-block;
-                width: 200px;
-                margin: 0 5px;
-            }
-            table {
-                width: 100%;
-                margin-bottom: 20px;
-                border-collapse: collapse;
-            }
-            table, th, td {
-                border: 1px solid #000;
-            }
-            th, td {
-                padding: 8px;
-                text-align: center;
-                vertical-align: middle;
-            }
-            .multiline-header {
-                line-height: 1.2;
-            }
-            .header-section {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            .no-print { display: none; }
-          </style>
-        </head>
-        <body>
-          ${printRef.current.innerHTML}
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() { window.close(); }
-            }
-          </script>
-        </body>
-        </html>
-      `);
-      printWindow?.document.close();
-    }
-  };
-
   // Format date in DD/MM/YYYY format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -202,8 +153,167 @@ const PhdQualifyingExamManagement: React.FC = () => {
 
   const currentDate = formatDate(new Date().toISOString());
 
+  // Function to trigger print
+  const handlePrint = () => {
+    // Use local formData state instead of data?.formData
+    if (!formData) {
+      alert("No form data available. Please generate the form first.");
+      return;
+    }
+
+    const startDate = formatDate(formData.examStartDate);
+    const endDate = formatDate(formData.examEndDate);
+    const roomNum = formData.roomNumber;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow pop-ups to print the form");
+      return;
+    }
+
+    // Create the HTML content directly without using innerHTML from printRef
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Intimation to AGSRD for PhD Qualifying Examination</title>
+        <style>
+          body {
+            margin: 40px;
+            line-height: 1.5;
+            font-family: Arial, sans-serif;
+          }
+          .underline {
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            width: 200px;
+            margin: 0 5px;
+          }
+          table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+          }
+          table, th, td {
+            border: 1px solid #000;
+          }
+          th, td {
+            padding: 8px;
+            text-align: center;
+            vertical-align: middle;
+          }
+          .multiline-header {
+            line-height: 1.2;
+          }
+          .header-section {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header-section">
+          <h2>Intimation to AGSRD for PhD Qualifying Examination</h2>
+          <p>
+            BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE PILANI,<br />
+            CAMPUS<br />
+            DEPARTMENT OF &emsp;
+          </p>
+          <p>Date: ${currentDate}</p>
+          <p>
+            To,<br />
+            Associate Dean, AGSRD<br />
+            BITS Pilani, &emsp; campus.
+          </p>
+          <p>
+            The Department will be conducting PhD qualifying examination as per following-
+          </p>
+        </div>
+
+        <p>
+          1. Date of Examination - From. <span class="underline">${startDate}</span> to.
+          <span class="underline">${endDate}</span>
+        </p>
+        <p>2. Room number - <span class="underline">${roomNum}</span></p>
+        <p>3. List of candidates who will be appearing in the examination-</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Sl No</th>
+              <th class="multiline-header">
+                ID No/<br />
+                Application No/<br />
+                PSRN
+              </th>
+              <th>Name</th>
+              <th class="multiline-header">
+                First attempt/<br />
+                second Attempt
+              </th>
+              <th class="multiline-header">
+                Name of two PhD<br />
+                qualifying areas
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            ${formData.students.map((student, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${student.idNumber}</td>
+                <td>${student.name}</td>
+                <td>${(student.numberOfQeApplication || 1) > 1 ? "Second Attempt" : "First Attempt"}</td>
+                <td>
+                  1. <span class="underline" style="width: 150px">${student.area1 || ""}</span><br />
+                  2. <span class="underline" style="width: 150px">${student.area2 || ""}</span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <br />
+        <p>
+          (Name)<br />
+          (DRC Convener)<br />
+          Date:
+        </p>
+        <br />
+        <p>
+          (Name)<br />
+          (HOD)<br />
+          Date:
+        </p>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() { 
+              window.close();
+            }
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
+
   if (isLoading) {
     return <LoadingSpinner className="mx-auto mt-10" />;
+  }
+
+  if (error) {
+    return (
+      <Alert className="mx-auto mt-10 max-w-lg">
+        <AlertDescription>
+          Error loading qualifying exam data. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
@@ -213,6 +323,18 @@ const PhdQualifyingExamManagement: React.FC = () => {
           <h2 className="mb-6 text-xl font-bold">
             PhD Qualifying Exam Management
           </h2>
+
+          {data?.examInfo && (
+            <Alert className="mb-6">
+              <AlertDescription>
+                Current exam: <strong>{data.examInfo.examName}</strong> | Deadline:{" "}
+                <strong>{formatDate(data.examInfo.deadline)}</strong> | Semester:{" "}
+                <strong>
+                  {data.examInfo.semesterYear}-{data.examInfo.semesterNumber}
+                </strong>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
@@ -304,7 +426,7 @@ const PhdQualifyingExamManagement: React.FC = () => {
 
           <div className="mt-6 flex justify-between">
             <Button
-              onClick={handleUpdateExamDates}
+              onClick={generateForm}
               disabled={
                 selectedStudents.length === 0 || !examEndDate || !roomNumber
               }
@@ -325,124 +447,8 @@ const PhdQualifyingExamManagement: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Hidden Printable Template */}
-      <div ref={printRef} style={{ display: "none" }}>
-        <div className="header-section">
-          <h2>Intimation to AGSRD for PhD Qualifying Examination</h2>
-          <p>
-            BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE PILANI,
-            <br />
-            CAMPUS
-            <br />
-            DEPARTMENT OF &emsp;
-          </p>
-          <p>Date: {currentDate}</p>
-          <p>
-            To,
-            <br />
-            Associate Dean, AGSRD
-            <br />
-            BITS Pilani, &emsp; campus.
-          </p>
-          <p>
-            The Department will be conducting PhD qualifying examination as per
-            following-
-          </p>
-        </div>
-
-        {formData && (
-          <>
-            <p>
-              1. Date of Examination - From.{" "}
-              <span className="underline">
-                {formatDate(formData.examStartDate)}
-              </span>{" "}
-              to.
-              <span className="underline">
-                {formatDate(formData.examEndDate)}
-              </span>
-            </p>
-            <p>
-              2. Room number -{" "}
-              <span className="underline">{formData.roomNumber}</span>
-            </p>
-            <p>
-              3. List of candidates who will be appearing in the examination-
-            </p>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>Sl No</th>
-                  <th className="multiline-header">
-                    ID No/
-                    <br />
-                    Application No/
-                    <br />
-                    PSRN
-                  </th>
-                  <th>Name</th>
-                  <th className="multiline-header">
-                    First attempt/
-                    <br />
-                    second Attempt
-                  </th>
-                  <th className="multiline-header">
-                    Name of two PhD
-                    <br />
-                    qualifying areas
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {formData.students.map((student: any, index: number) => (
-                  <tr key={student.email}>
-                    <td>{index + 1}</td>
-                    <td>{student.idNumber}</td>
-                    <td>{student.name}</td>
-                    <td>
-                      {(student.numberOfQeApplication || 1) > 1
-                        ? "Second Attempt"
-                        : "First Attempt"}
-                    </td>
-                    <td>
-                      1.{" "}
-                      <span className="underline" style={{ width: "150px" }}>
-                        {student.area1 || ""}
-                      </span>
-                      <br />
-                      2.{" "}
-                      <span className="underline" style={{ width: "150px" }}>
-                        {student.area2 || ""}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
-
-        <br />
-        <p>
-          (Name)
-          <br />
-          (DRC Convener)
-          <br />
-          Date:
-        </p>
-        <br />
-        <p>
-          (Name)
-          <br />
-          (HOD)
-          <br />
-          Date:
-        </p>
-      </div>
     </div>
   );
 };
 
-export default PhdQualifyingExamManagement;
+export default GenerateQualifyingExamForm;
