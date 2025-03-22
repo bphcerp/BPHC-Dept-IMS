@@ -51,7 +51,8 @@ const CreateApplication: React.FC = () => {
               type="file"
               accept=".pdf, .docx"
               onChange={handleFileChange}
-            />
+              className="file:border file:border-black file:rounded-md file:text-white file:bg-blue-500 file:hover:bg-blue-600"
+              />
           </div>
           <Button type="submit" disabled={uploading}>
             {uploading ? "Processing..." : "Submit"}
