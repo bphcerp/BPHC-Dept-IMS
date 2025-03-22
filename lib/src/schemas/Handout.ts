@@ -27,3 +27,11 @@ export const createHandoutDCAMemberReviewBodySchema = z.object({
 })
 
 export type CreateHandoutDCAMemberReviewBody = z.infer<typeof createHandoutDCAMemberReviewBodySchema>;
+export const submitHandoutParamsSchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val))),
+});
+
+export type SubmitHandoutParams = z.infer<typeof submitHandoutParamsSchema>;
