@@ -1,0 +1,58 @@
+diff --git a/pg-core/dialect.js b/pg-core/dialect.js
+index d7985c81f3d224f7671efe72e79b14153d5ca8ce..d05b11273bad67a6b2900939e8440879577649a7 100644
+--- a/pg-core/dialect.js
++++ b/pg-core/dialect.js
+@@ -1006,7 +1006,9 @@ class PgDialect {
+         const normalizedRelation = normalizeRelation(schema, tableNamesMap, relation);
+         const relationTableName = getTableUniqueName(relation.referencedTable);
+         const relationTableTsName = tableNamesMap[relationTableName];
+-        const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
++        // 2066 patch:
++        // const relationTableAlias = `${tableAlias}_${selectedRelationTsKey}`;
++        const relationTableAlias = shortenAlias(`${tableAlias}_${selectedRelationTsKey}`);
+         const joinOn2 = and(
+           ...normalizedRelation.fields.map(
+             (field2, i) => eq(
+@@ -1052,7 +1054,9 @@ class PgDialect {
+     if (nestedQueryRelation) {
+       let field = sql`json_build_array(${sql.join(
+         selection.map(
+-          ({ field: field2, tsKey, isJson }) => isJson ? sql`${sql.identifier(`${tableAlias}_${tsKey}`)}.${sql.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
++          // 2066 patch:
++          // ({ field: field2, tsKey, isJson }) => isJson ? sql`${sql.identifier(`${tableAlias}_${tsKey}`)}.${sql.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
++          ({ field: field2, tsKey, isJson }) => isJson ? sql`${sql.identifier(shortenAlias(`${tableAlias}_${tsKey}`))}.${sql.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
+         ),
+         sql`, `
+       )})`;
+@@ -1126,6 +1130,31 @@ class PgDialect {
+     };
+   }
+ }
++
++//------------------------------ 2066 patch (begin) ------------------------------
++const aliasMap = new Map();
++const maxLen = 62;
++function shortenAlias(input) {
++
++  // If input is already short enough, return it unchanged
++  if (input.length <= maxLen) return input;
++
++  // Check if we've already created an alias for this input
++  const fromCache = aliasMap.get(input);
++  if (fromCache) return fromCache;
++
++   // Create a repeatable, deterministic hash
++  const hash = Array.from(input)
++    .reduce((h, c) => Math.imul(31, h) + c.charCodeAt(0) | 0, 0)  // the `| 0` constrains to a 32-bit integer to prevent overflow
++    .toString(36);  // convert to base 36 for brevity
++
++  // Create & save new alias
++  const shortened = `__${hash}__`;
++  aliasMap.set(input, shortened);
++  return shortened;
++}
++//------------------------------ 2066 patch (end) ------------------------------
++
+ export {
+   PgDialect
+ };

@@ -1,3 +1,4 @@
+import { Field } from "multer";
 import z from "zod";
 
 export const createApplicationBodySchema = z.object({
@@ -27,3 +28,36 @@ export const createApplicationBodySchema = z.object({
 });
 
 export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;
+
+export const reviewFieldBodySchema = z.object({
+    comments: z.string(),
+    status: z.boolean(),
+});
+
+export const editFieldBodySchema = z.object({
+    value: z.union([
+        z.string().nonempty(),
+        z.coerce.number().positive().finite(),
+        z.coerce.date(),
+    ]),
+});
+
+export const finalizeApproveApplicationSchema = z.object({
+    approve: z.boolean(),
+});
+
+export const fileFieldNames = [
+    "letterOfInvitation",
+    "firstPageOfPaper",
+    "reviewersComments",
+    "detailsOfEvent",
+    "otherDocuments",
+] as const;
+
+export const multerFileFields: Readonly<Field[]> = (
+    fileFieldNames as Readonly<string[]>
+).map((x) => {
+    return { name: x, maxCount: 1 };
+});
+
+export const fieldTypes = z.enum(["text", "number", "date", "file"]);

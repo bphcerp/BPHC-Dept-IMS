@@ -9,9 +9,31 @@ import RoleDetailsView from "@/views/Admin/Roles/[role]";
 import Home from "@/views/Home";
 import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import DCARequestsView from "@/views/QpReview/DCARequests";
-import { permissions } from "lib";
-import { Computer, FileText } from "lucide-react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
+import ReviewPage from "@/views/QpReview/FacultyReview";
+import PhdLayout from "@/layouts/Phd/Phd";
+import Phd from "@/views/Phd";
+import { allPermissions, permissions } from "lib";
+import { Computer, FileText, GraduationCap } from "lucide-react";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
+import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
+import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
+import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
+import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
+import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
+import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
+import FormDeadline from "@/views/Phd/Student/FormDeadline";
+import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
+import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
+import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
+import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
+import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
 
@@ -20,6 +42,10 @@ const adminModulePermissions = [
   permissions["/admin/member/details"],
   permissions["/admin/role"],
 ];
+
+const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("phd:")
+);
 
 const qpReviewModulePermissions: string[] = [];
 
@@ -38,6 +64,12 @@ const Routing = () => {
       icon: <FileText />,
       url: "/qpReview",
       requiredPermissions: qpReviewModulePermissions,
+    },
+    {
+      title: "PhD",
+      icon: <GraduationCap />,
+      url: "/phd",
+      requiredPermissions: phdModulePermissions,
     },
     {
       title: "Conference Approval",
@@ -104,17 +136,93 @@ const Routing = () => {
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
                 <Route path="dcarequests" element={<DCARequestsView />} />
+                <Route path="facultyReview" element={<ReviewPage />} />
+                <Route
+                  path="facultyReview/:course"
+                  element={<FacultyReview />}
+                />
               </Route>
             )}
 
-            {checkAccessAnyOne([]) && (
-              <Route path="/conference" element={<ConferenceLayout />}>
-                <Route index element={<Navigate to="/conference/apply" />} />
-                <Route path="apply" element={<ConferenceApplyView />} />
+            {checkAccessAnyOne(phdModulePermissions) && (
+              <Route path="/phd" element={<PhdLayout />}>
+                <Route index element={<Phd />} />
+                {checkAccess(
+                  permissions["/phd/notionalSupervisor/updateCourseDetails"]
+                ) && (
+                  <Route path="notional-supervisor" element={<Outlet />}>
+                    <Route path="update-grade" element={<UpdateGrade />} />
+                  </Route>
+                )}
+                {checkAccess(
+                  permissions["/phd/drcMember/generateCourseworkForm"]
+                ) && (
+                  <Route path="drc-convenor" element={<Outlet />}>
+                    <Route
+                      path="coursework-form"
+                      element={<CourseworkForm />}
+                    />
+                    <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
+                    />
+                    <Route
+                      path="generate-qualifying-exam-form"
+                      element={<GenerateQualifyingExamForm />}
+                    ></Route>
+                    <Route
+                      path="phd-that-applied-for-qualifying-exam"
+                      element={<PhdThatAppliedForQualifyingExam />}
+                    ></Route>
+                    <Route
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
+                    />
+                    <Route
+                      path="assign-dac-members"
+                      element={<AssignDacMembers />}
+                    ></Route>
+                  </Route>
+                )}
+                {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
+                  <Route path="phd-student" element={<Outlet />}>
+                    <Route path="form-deadline" element={<FormDeadline />} />
+
+                    <Route
+                      path="proposal-submission"
+                      element={<ProposalSubmission />}
+                    />
+                  </Route>
+                )}
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
+                  <Route path="phd-co-supervisor" element={<Outlet />}>
+                    <Route
+                      path="co-supervised-students"
+                      element={<CoSupervisedStudents />}
+                    />
+                  </Route>
+                )}
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
+                  <Route path="phd-supervisor" element={<Outlet />}>
+                    <Route
+                      path="supervised-students"
+                      element={<SupervisedStudents />}
+                    />
+                  </Route>
+                )}
               </Route>
             )}
           </>
         )}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

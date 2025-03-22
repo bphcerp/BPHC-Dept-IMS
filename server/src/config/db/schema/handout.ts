@@ -1,42 +1,47 @@
-import { pgTable, serial, integer } from "drizzle-orm/pg-core";
-import { textFields, fileFields, applications } from "./form.ts";
+import {
+    pgTable,
+    serial,
+    integer,
+    text,
+    timestamp,
+    boolean,
+    pgEnum,
+} from "drizzle-orm/pg-core";
+import { fileFields } from "./form.ts";
+import { users } from "./admin.ts";
+import { handoutSchemas } from "lib";
+
+export const handoutStatusEnum = pgEnum(
+    "handout_status_enum",
+    handoutSchemas.handoutStatuses
+);
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
-    applicationId: integer("application_id")
+    icEmail: text("ic_email")
         .notNull()
-        .references(() => applications.id, { onDelete: "cascade" }),
-    courseCode: integer("course_code").references(() => textFields.id, {
-        onDelete: "set null",
+        .references(() => users.email, { onDelete: "cascade" }),
+    reviewerEmail: text("reviewer_email").references(() => users.email, {
+        onDelete: "cascade",
     }),
-    courseName: integer("course_name").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    courseStrength: integer("course_strength").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    openBook: integer("open_book").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    closedBook: integer("closed_book").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    midSem: integer("mid_sem").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    compre: integer("compre").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    numComponents: integer("num_components").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
-    frequency: integer("frequency").references(() => textFields.id, {
-        onDelete: "set null",
-    }),
+    courseName: text("course_name").notNull(),
+    courseCode: text("course_code").notNull(),
+    scopeAndObjective: boolean("scope_and_objective"),
+    textBookPrescribed: boolean("text_book_prescribed"),
+    lecturewisePlanLearningObjective: boolean(
+        "lecturewise_plan_learning_objective"
+    ),
+    lecturewisePlanCourseTopics: boolean("lecturewise_plan_course_topics"),
+    numberOfLP: boolean("number_of_lp"),
+    evaluationScheme: boolean("evaluation_scheme"),
+    status: handoutStatusEnum("status").notNull().default("notsubmitted"),
     handoutFilePath: integer("handout_file_path").references(
         () => fileFields.id,
         {
             onDelete: "set null",
         }
     ),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .notNull()
+        .defaultNow(),
 });

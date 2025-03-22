@@ -13,6 +13,7 @@ import {
     textFields,
     textFieldStatus,
 } from "./form.ts";
+import { courseHandoutRequests } from "./handout.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -65,6 +66,12 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     }),
     files: many(files, {
         relationName: "files",
+    }),
+    ics: many(courseHandoutRequests, {
+        relationName: "ic",
+    }),
+    reviewers: many(courseHandoutRequests, {
+        relationName: "reviewer",
     }),
 }));
 

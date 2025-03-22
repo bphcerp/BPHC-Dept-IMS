@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import api from "@/lib/axios-instance";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
@@ -31,28 +30,21 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
-
-const schema = z.object({
-  email: z.string().email(),
-  type: z.enum(["faculty", "phd"], {
-    message: "Please select a value",
-  }),
-});
-type FormFields = z.infer<typeof schema>;
+import { adminSchemas } from "lib";
 
 const InviteDialog = () => {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const form = useForm<FormFields>({
-    resolver: zodResolver(schema),
+  const form = useForm<adminSchemas.InviteMemberBody>({
+    resolver: zodResolver(adminSchemas.inviteMemberBodySchema),
     defaultValues: {
       email: "",
     },
   });
 
   const submitMutation = useMutation({
-    mutationFn: async (data: FormFields) => {
+    mutationFn: async (data: adminSchemas.InviteMemberBody) => {
       await api.post("/admin/member/invite", data);
     },
     onSuccess: () => {
@@ -73,7 +65,7 @@ const InviteDialog = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<FormFields> = (data) => {
+  const onSubmit: SubmitHandler<adminSchemas.InviteMemberBody> = (data) => {
     submitMutation.mutate(data);
   };
 
@@ -127,7 +119,8 @@ const InviteDialog = () => {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="faculty">Faculty</SelectItem>
-                        <SelectItem value="phd">PhD</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                        <SelectItem value="phd">PhD Scholar</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -1,6 +1,12 @@
 import { relations } from "drizzle-orm";
 import { conferenceApprovalApplications } from "./conference.ts";
-import { applications, dateFields, fileFields, textFields } from "./form.ts";
+import {
+    applications,
+    dateFields,
+    fileFields,
+    numberFields,
+    textFields,
+} from "./form.ts";
 
 export const conferenceApprovalApplicationRelations = relations(
     conferenceApprovalApplications,
@@ -50,33 +56,33 @@ export const conferenceApprovalApplicationRelations = relations(
             references: [textFields.id],
             relationName: "conferenceApprovalDescription",
         }),
-        travelReimbursement: one(dateFields, {
+        travelReimbursement: one(numberFields, {
             fields: [conferenceApprovalApplications.travelReimbursement],
-            references: [dateFields.id],
+            references: [numberFields.id],
             relationName: "conferenceApprovalTravelReimbursement",
         }),
-        registrationFeeReimbursement: one(dateFields, {
+        registrationFeeReimbursement: one(numberFields, {
             fields: [
                 conferenceApprovalApplications.registrationFeeReimbursement,
             ],
-            references: [dateFields.id],
+            references: [numberFields.id],
             relationName: "conferenceApprovalRegistrationFeeReimbursement",
         }),
-        dailyAllowanceReimbursement: one(dateFields, {
+        dailyAllowanceReimbursement: one(numberFields, {
             fields: [
                 conferenceApprovalApplications.dailyAllowanceReimbursement,
             ],
-            references: [dateFields.id],
+            references: [numberFields.id],
             relationName: "conferenceApprovalDailyAllowanceReimbursement",
         }),
-        accomodationReimbursement: one(dateFields, {
+        accomodationReimbursement: one(numberFields, {
             fields: [conferenceApprovalApplications.accomodationReimbursement],
-            references: [dateFields.id],
+            references: [numberFields.id],
             relationName: "conferenceApprovalAccomodationReimbursement",
         }),
-        otherReimbursement: one(dateFields, {
+        otherReimbursement: one(numberFields, {
             fields: [conferenceApprovalApplications.otherReimbursement],
-            references: [dateFields.id],
+            references: [numberFields.id],
             relationName: "conferenceApprovalOtherReimbursement",
         }),
         letterOfInvitation: one(fileFields, {

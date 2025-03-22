@@ -1,0 +1,11 @@
+.idea/
+.vscode/
+node_modules/
+build/
+.env
+package-lock.json
+bun.lockb
+dist
+logs
+
+files/*

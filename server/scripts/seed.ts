@@ -5,34 +5,40 @@ import {
     roles,
     users,
 } from "@/config/db/schema/admin.ts";
+import { allPermissions } from "lib";
 
 const seedData = async (email: string) => {
-    await db.insert(permissions).values([
-        {
-            permission: "*",
-            description: "Catch all route",
-        },
-        {
-            permission: "permission",
-            description: "A generic permission",
-        },
-    ]);
+    await db
+        .insert(permissions)
+        .values(
+            Object.entries(allPermissions).map(([key, value]) => ({
+                permission: key,
+                description: value,
+            }))
+        )
+        .onConflictDoNothing();
     const insertedRoles = await db
         .insert(roles)
         .values({
-            roleName: "admin",
+            roleName: "developer",
             allowed: ["*"],
         })
         .onConflictDoNothing()
         .returning();
-    await db.insert(users).values({
-        email,
-        type: "faculty",
-        roles: [insertedRoles[0]?.id ?? 1],
-    });
-    await db.insert(faculty).values({
-        email,
-    });
+    await db
+        .insert(users)
+        .values({
+            email,
+            type: "faculty",
+            roles: [insertedRoles[0]?.id ?? 1],
+        })
+        .onConflictDoNothing();
+    await db
+        .insert(faculty)
+        .values({
+            email,
+        })
+        .onConflictDoNothing();
 };
 
 const args = process.argv.slice(2);

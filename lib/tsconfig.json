@@ -13,9 +13,13 @@
         "moduleDetection": "force",
         "emitDeclarationOnly": true,
         "verbatimModuleSyntax": false,
+        "noEmit": true,
+        "resolveJsonModule": true,
 
         /* Linting */
         "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitAny": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
