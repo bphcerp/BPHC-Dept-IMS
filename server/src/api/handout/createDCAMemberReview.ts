@@ -17,8 +17,8 @@ router.post(
             assert(req.user);
 
             const queryParams =
-                handoutSchemas.createHandoutDCAMemberReviewQuerySchema.parse(
-                    req.query
+                handoutSchemas.createHandoutDCAMemberReviewBodySchema.parse(
+                    req.body
                 );
             const { handoutId, ...updateFields } = queryParams;
 
