@@ -1,27 +1,22 @@
 import db from "@/config/db/index.ts";
-import { asyncHandler } from "@/middleware/routeHandler.ts";
-import assert from "assert";
-import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import express from "express";
+import assert from "assert";
 const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("dca-member-all-pending-handouts"),
+    checkAccess("faculty-get-all-handouts"),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
+
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and, or }) =>
-                    and(
-                        eq(handout.reviewerEmail, req.user?.email!),
-                        or(
-                            eq(handout.status, "pending"),
-                            eq(handout.status, "notsubmitted")
-                        )
-                    ),
+                where: (handout, { eq }) =>
+                    eq(handout.icEmail, req.user?.email!),
                 with: {
-                    ic: {
+                    reviewer: {
                         with: {
                             faculty: true,
                         },
@@ -33,12 +28,14 @@ router.get(
                 id: handout.id,
                 courseName: handout.courseName,
                 courseCode: handout.courseCode,
-                professorName: handout.ic.faculty.name,
-                status: handout.status,
+                reviewerName: handout.reviewer?.faculty.name,
             };
         });
 
-        res.status(200).json({ success: true, handouts });
+        res.status(200).json({
+            success: true,
+            data: handouts,
+        });
     })
 );
 

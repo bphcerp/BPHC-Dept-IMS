@@ -24,19 +24,17 @@ import {
 } from "react-router-dom";
 import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
-import UpdateQualifyingExamDeadline from "@/views/Phd/DrcConvenor/UpdateQualifyingExamDeadline";
 import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
-import UpdateQualifyingExamResultsOfAllStudents from "@/views/Phd/DrcConvenor/UpdateQualifyingExamResultsOfAllStudents";
-import UpdateQualifyingExamPassingDates from "@/views/Phd/DrcConvenor/UpdateQualifyingExamPassingDates";
-import UpdateProposalDeadline from "@/views/Phd/DrcConvenor/UpdateProposalDeadline";
 import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
-import QualifyingExamStatus from "@/views/Phd/Student/QualifyingExamStatus";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
+import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
+import NotFoundPage from "@/layouts/404";
+
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
@@ -161,10 +159,6 @@ const Routing = () => {
                       element={<UpdateSemesterDates />}
                     />
                     <Route
-                      path="update-qualifying-exam-deadline"
-                      element={<UpdateQualifyingExamDeadline />}
-                    ></Route>
-                    <Route
                       path="generate-qualifying-exam-form"
                       element={<GenerateQualifyingExamForm />}
                     ></Route>
@@ -173,17 +167,9 @@ const Routing = () => {
                       element={<PhdThatAppliedForQualifyingExam />}
                     ></Route>
                     <Route
-                      path="update-qualifying-exam-results-of-all-students"
-                      element={<UpdateQualifyingExamResultsOfAllStudents />}
-                    ></Route>
-                    <Route
-                      path="update-qualifying-exam-passing-dates"
-                      element={<UpdateQualifyingExamPassingDates />}
-                    ></Route>
-                    <Route
-                      path="update-proposal-deadline"
-                      element={<UpdateProposalDeadline />}
-                    ></Route>
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
+                    />
                     <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
@@ -193,27 +179,42 @@ const Routing = () => {
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
+                    
                     <Route
-                      path="exam-status"
-                      element={<QualifyingExamStatus />}
+                      path="proposal-submission"
+                      element={<ProposalSubmission />}
                     />
-                    <Route path="proposal-submission" element={<ProposalSubmission />} />
                   </Route>
                 )}
-                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
                   <Route path="phd-co-supervisor" element={<Outlet />}>
-                    <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
+                    <Route
+                      path="co-supervised-students"
+                      element={<CoSupervisedStudents />}
+                    />
                   </Route>
-                 )}
-                 {checkAccess(permissions["/phd/notionalSupervisor/updateCourseDetails"] as string) && (
+                )}
+                {checkAccess(
+                  permissions[
+                    "/phd/notionalSupervisor/updateCourseDetails"
+                  ] as string
+                ) && (
                   <Route path="phd-supervisor" element={<Outlet />}>
-                    <Route path="supervised-students" element={<SupervisedStudents />} />
+                    <Route
+                      path="supervised-students"
+                      element={<SupervisedStudents />}
+                    />
                   </Route>
-                 )}
+                )}
               </Route>
             )}
           </>
         )}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
