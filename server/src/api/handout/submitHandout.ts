@@ -69,6 +69,7 @@ router.post(
                 .update(courseHandoutRequests)
                 .set({
                     handoutFilePath: insertedFileField[0].id,
+                    status: "pending",
                 })
                 .where(eq(courseHandoutRequests.id, Number(id)));
         });
