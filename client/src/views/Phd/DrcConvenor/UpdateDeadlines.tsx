@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +17,6 @@ interface Deadline {
   component: JSX.Element;
 }
 export default function UpdateDeadlinesPage() {
-  const navigate = useNavigate();
   const [selected, setSelected] = useState<Deadline | null>(null);
 
   // Navigation options
@@ -37,7 +35,7 @@ export default function UpdateDeadlinesPage() {
 
   // Handle navigation when an option is clicked
   return (
-    <div className="py-8 bg-gray-100 w-full">
+    <div className="w-full bg-gray-100 py-8">
       <Card className="mx-auto w-full max-w-3xl">
         <CardHeader>
           <CardTitle className="text-center text-2xl font-bold">

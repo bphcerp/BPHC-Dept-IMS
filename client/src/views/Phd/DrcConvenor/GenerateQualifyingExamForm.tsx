@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -57,7 +57,6 @@ const GenerateQualifyingExamForm: React.FC = () => {
     examEndDate: string;
     roomNumber: string;
   } | null>(null);
-  const printRef = useRef<HTMLDivElement>(null);
 
   // Fetch qualifying students
   const { data, isLoading, error } = useQuery({
@@ -93,23 +92,26 @@ const GenerateQualifyingExamForm: React.FC = () => {
       alert("Please fill all required fields and select at least one student");
       return;
     }
-  
+
     try {
       // Only update the final exam date using the mutation
       await updateExamDatesMutation.mutateAsync({
-        examDates: selectedStudents.reduce((acc, email) => {
-          acc[email] = examEndDate;
-          return acc;
-        }, {} as Record<string, string>),
+        examDates: selectedStudents.reduce(
+          (acc, email) => {
+            acc[email] = examEndDate;
+            return acc;
+          },
+          {} as Record<string, string>
+        ),
         roomNumber,
       });
-      
+
       // Prepare the form data locally instead of fetching from server
       if (data?.students) {
-        const selectedStudentsData = data.students.filter(student => 
+        const selectedStudentsData = data.students.filter((student) =>
           selectedStudents.includes(student.email)
         );
-        
+
         // Set the form data state for printing
         setFormData({
           students: selectedStudentsData,
@@ -259,7 +261,9 @@ const GenerateQualifyingExamForm: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            ${formData.students.map((student, index) => `
+            ${formData.students
+              .map(
+                (student, index) => `
               <tr>
                 <td>${index + 1}</td>
                 <td>${student.idNumber}</td>
@@ -270,7 +274,9 @@ const GenerateQualifyingExamForm: React.FC = () => {
                   2. <span class="underline" style="width: 150px">${student.area2 || ""}</span>
                 </td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join("")}
           </tbody>
         </table>
 
@@ -298,7 +304,7 @@ const GenerateQualifyingExamForm: React.FC = () => {
       </body>
       </html>
     `);
-    
+
     printWindow.document.close();
   };
 
@@ -327,8 +333,9 @@ const GenerateQualifyingExamForm: React.FC = () => {
           {data?.examInfo && (
             <Alert className="mb-6">
               <AlertDescription>
-                Current exam: <strong>{data.examInfo.examName}</strong> | Deadline:{" "}
-                <strong>{formatDate(data.examInfo.deadline)}</strong> | Semester:{" "}
+                Current exam: <strong>{data.examInfo.examName}</strong> |
+                Deadline: <strong>{formatDate(data.examInfo.deadline)}</strong>{" "}
+                | Semester:{" "}
                 <strong>
                   {data.examInfo.semesterYear}-{data.examInfo.semesterNumber}
                 </strong>
