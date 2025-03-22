@@ -57,6 +57,7 @@
 
     /* System semantic tokens - Light theme */
     --background: 0 0% 100%;
+    --background-faded: 220 14.3% 95.9%;
     --foreground: 345 2% 19%;
 
     --card: 0 0% 100%;
