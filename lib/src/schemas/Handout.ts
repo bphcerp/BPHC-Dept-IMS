@@ -15,3 +15,12 @@ export const handoutStatuses = [
     "rejected",
     "notsubmitted",
 ] as const;
+
+export const submitHandoutParamsSchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val))),
+});
+
+export type SubmitHandoutParams = z.infer<typeof submitHandoutParamsSchema>;
