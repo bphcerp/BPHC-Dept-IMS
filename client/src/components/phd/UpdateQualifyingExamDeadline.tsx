@@ -31,7 +31,7 @@ interface QualifyingExam {
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
   const [examForm, setExamForm] = useState({
-    examName: "",
+    examName: "Regular Qualifying Exam",
     deadline: ""
   });
 
@@ -73,7 +73,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       toast.success("Qualifying exam deadline updated successfully");
       queryClient.invalidateQueries({ queryKey: ["phd-qualifying-exams", currentSemesterId] });
       setExamForm({
-        examName: "",
+        examName: "Regular Qualifying Exam",
         deadline: ""
       });
     },
@@ -152,14 +152,8 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-6">
               <div>
-                <Label htmlFor="examName">Exam Name</Label>
-                <Input
-                  id="examName"
-                  value={examForm.examName}
-                  onChange={(e) => setExamForm({ ...examForm, examName: e.target.value })}
-                  placeholder="e.g., Regular Qualifying Exam"
-                  required
-                />
+                <Label htmlFor="examName">Exam Name: </Label>
+                <div className="font-bold">Regular Qualifying Exam</div>
               </div>
               <div>
                 <Label htmlFor="deadline">Registration Deadline</Label>

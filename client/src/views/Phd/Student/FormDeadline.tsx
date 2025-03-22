@@ -4,7 +4,6 @@ import React from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 
-// First, let's define the types for our data
 interface Exam {
   id: number;
   examName: string;
@@ -20,20 +19,28 @@ interface BackendResponse {
 
 const FormDeadline: React.FC = () => {
   const { data, isLoading, error } = useQuery<BackendResponse>({
-    queryKey: ["qualifying-exam-deadline"],
+    queryKey: ["get-qualifying-exam-deadline"],
     queryFn: async () => {
-      const response = await api.get<BackendResponse>("/phd/student/getQualifyingExamDeadLine");
-      return response.data;
+      const response = await api.get<BackendResponse>("/phd/student/getQualifyingExamDeadLine",{
+        params: {
+          name: "Regular Qualifying Exam",
+        }
+      });
+      const currentDate = new Date();
+      if (new Date(response.data.exams[0].deadline) > currentDate) {
+        return response.data;
+      } else {
+        return {
+          success: false,
+          exams: [],
+        };
+      }
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Ensure that data is properly checked
-  const hasActiveDeadline = (data && data.exams.length > 0);
-  const activeExam = hasActiveDeadline ? data.exams[0] : null;
-console.log("data", data);
-console.log("has deadline", hasActiveDeadline)
+
   return (
     <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-center text-3xl font-bold">
@@ -49,12 +56,12 @@ console.log("has deadline", hasActiveDeadline)
 
         {!isLoading && !error && (
           <>
-            {activeExam ? (
+            {data?.exams?.length ?? 0 > 0 ? (
               <>
                 <div className="overflow-hidden rounded-lg bg-white shadow">
                   <ExamDateDisplay 
-                    examDate={new Date(activeExam.deadline).toLocaleString()} 
-                    title={`Registration Deadline: ${activeExam.examName}`} 
+                    examDate={data?.exams[0].deadline ? data?.exams[0].deadline : "Invalid Date"} 
+                    title={`Registration Deadline: ${data?.exams[0].examName}`} 
                   />
                 </div>
 

@@ -24,6 +24,7 @@ export default router.get(
                 )
             )
             .limit(1);
+        console.log(currentDate);
         // If no active semester is found, find the most recent one
         if (currentSemester.length === 0) {
             const mostRecentSemester = await db

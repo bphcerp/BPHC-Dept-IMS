@@ -11,7 +11,7 @@ const router = express.Router();
 
 // Schema for batch update with email-to-date mapping
 const updateBatchExamDatesSchema = z.object({
-    examDates: z.record(z.string().email(), z.string().datetime()),
+    examDates: z.record(z.string().email(), z.string().date()),
     roomNumber: z.string()
 });
 
@@ -19,6 +19,7 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
+        console.log(req.body);
         const parsed = updateBatchExamDatesSchema.parse(req.body);
         
         const emails = Object.keys(parsed.examDates);
@@ -67,7 +68,6 @@ router.post(
         if (updatedStudents.length === 0) {
             return next(new HttpError(HttpCode.NOT_FOUND, "No PhD records found"));
         }
-
         res.json({ 
             success: true, 
             count: updatedStudents.length,
