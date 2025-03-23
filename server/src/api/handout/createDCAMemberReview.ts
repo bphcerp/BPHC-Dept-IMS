@@ -12,47 +12,40 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess("dca-member-create-handout-review"),
-    asyncHandler(async (req, res, next) => {
-        try {
-            assert(req.user);
+    asyncHandler(async (req, res, _next) => {
+        assert(req.user);
 
-            const queryParams =
-                handoutSchemas.createHandoutDCAMemberReviewBodySchema.parse(
-                    req.body
-                );
-            const { handoutId, ...updateFields } = queryParams;
+        const parsed =
+            handoutSchemas.createHandoutDCAMemberReviewBodySchema.parse(
+                req.body
+            );
+        const { handoutId, ...updateFields } = parsed;
 
-            const result = await db
-                .update(courseHandoutRequests)
-                .set(
-                    updateFields as {
-                        scopeAndObjective: boolean;
-                        textBookPrescribed: boolean;
-                        lecturewisePlanLearningObjective: boolean;
-                        lecturewisePlanCourseTopics: boolean;
-                        numberOfLP: boolean;
-                        evaluationScheme: boolean;
-                    }
+        const result = await db
+            .update(courseHandoutRequests)
+            .set(
+                updateFields as {
+                    scopeAndObjective: boolean;
+                    textBookPrescribed: boolean;
+                    lecturewisePlanLearningObjective: boolean;
+                    lecturewisePlanCourseTopics: boolean;
+                    numberOfLP: boolean;
+                    evaluationScheme: boolean;
+                }
+            )
+            .where(
+                and(
+                    eq(courseHandoutRequests.id, handoutId),
+                    eq(courseHandoutRequests.reviewerEmail, req.user?.email!)
                 )
-                .where(
-                    and(
-                        eq(courseHandoutRequests.id, handoutId),
-                        eq(
-                            courseHandoutRequests.reviewerEmail,
-                            req.user?.email!
-                        )
-                    )
-                )
-                .returning();
+            )
+            .returning();
 
-            res.status(200).json({
-                success: true,
-                message: "Handout review updated",
-                data: result[0],
-            });
-        } catch (error) {
-            next(error);
-        }
+        res.status(200).json({
+            success: true,
+            message: "Handout review updated",
+            data: result[0],
+        });
     })
 );
 
