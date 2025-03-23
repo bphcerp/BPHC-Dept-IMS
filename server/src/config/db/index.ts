@@ -9,6 +9,7 @@ import * as form from "./schema/form.ts";
 import * as formRelations from "./schema/formRelations.ts";
 import * as handout from "./schema/handout.ts";
 import * as hadnoutRelations from "./schema/handoutRelations.ts";
+import * as patents form "./schema/patents.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
