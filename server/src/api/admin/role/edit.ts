@@ -50,7 +50,7 @@ router.post(
         if (allowed && parsedBody.action === "allow") {
             return next(
                 new HttpError(
-                    HttpCode.NOT_MODIFIED,
+                    HttpCode.BAD_REQUEST,
                     `Permission '${parsedBody.permission}' already allowed`
                 )
             );
@@ -58,7 +58,7 @@ router.post(
         if (disallowed && parsedBody.action === "disallow") {
             return next(
                 new HttpError(
-                    HttpCode.NOT_MODIFIED,
+                    HttpCode.BAD_REQUEST,
                     `Permission '${parsedBody.permission}' already disallowed`
                 )
             );
