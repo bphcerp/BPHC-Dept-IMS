@@ -19,7 +19,7 @@ const CreateApplication: React.FC = () => {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("handout", file);
-      await api.post(`/handout/submitHandout/${params.id}`, formData, {
+      await api.post(`/handout/submit/${params.id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

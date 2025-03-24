@@ -34,7 +34,7 @@ import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents"
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
-import CreateApplication from "@/views/Handouts/createApplication";
+import SubmitHandout from "@/views/Handouts/submitHandout";
 import HandoutLayout from "@/layouts/Handouts";
 
 const adminModulePermissions = [
@@ -147,15 +147,9 @@ const Routing = () => {
             )}
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
-              <Route path="/handouts" element={<HandoutLayout />}>
-                <Route
-                  index
-                  element={<Navigate to="/handouts/createapplication" />}
-                />
-                <Route
-                  path="createapplication/:id"
-                  element={<CreateApplication />}
-                />
+              <Route path="/handout" element={<HandoutLayout />}>
+                <Route index element={<Navigate to="/handout/submit/:id" />} />
+                <Route path="submit/:id" element={<SubmitHandout />} />
               </Route>
             )}
 
@@ -197,6 +191,7 @@ const Routing = () => {
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
                     ></Route>
+                    Handout
                   </Route>
                 )}
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
