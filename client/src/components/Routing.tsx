@@ -36,6 +36,7 @@ import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
 import SubmitHandout from "@/views/Handouts/submitHandout";
 import HandoutLayout from "@/layouts/Handouts";
+import DCAMemberReviewForm from "@/views/Handouts/dca-review";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -78,7 +79,7 @@ const Routing = () => {
     {
       title: "Course Handouts",
       icon: <BookOpen />,
-      url: "/handouts",
+      url: "/handout",
       requiredPermissions: courseHandoutsPermissions,
     },
   ];
@@ -150,9 +151,11 @@ const Routing = () => {
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
               <Route path="/handout" element={<HandoutLayout />}>
+                <Route index element={<Navigate to="/handout/review" />} />
                 {checkAccess(permissions["/handout/submit"]) && (
                   <Route path="submit/:id" element={<SubmitHandout />} />
                 )}
+                <Route path="review" element={<DCAMemberReviewForm/>} />
               </Route>
             )}
 
