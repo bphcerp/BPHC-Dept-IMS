@@ -11,7 +11,7 @@ import { pdfUpload } from "@/config/multer.ts";
 import multer from "multer";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { modules } from "lib";
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const router = express.Router();
 
@@ -21,54 +21,47 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     const upload = pdfUpload.single("qualificationForm");
     upload(req, res, (err) => {
-      if (err) {
-        if (err instanceof multer.MulterError) {
-          return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
-        }
-        return next(err);
+      if (err instanceof multer.MulterError) {
+        return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
+      } else if (err) {
+        return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "File upload failed"));
       }
       next();
     });
   },
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     assert(req.user);
-    
-    const file = req.file as Express.Multer.File | undefined;
+    const file = req.file;
     if (!file) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "Qualification exam form file is required"));
+      throw new HttpError(HttpCode.BAD_REQUEST, "PDF file is required");
     }
-    
+
     const parsed = phdSchemas.uploadApplicationSchema.safeParse({
       ...req.body,
       fileUrl: file.path,
       formName: file.originalname,
       applicationType: "qualifying_exam",
     });
-    
+
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        error: parsed.error.errors,
-      });
-      return;
+      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid input data");
     }
-    
+
     const { qualifyingArea1, qualifyingArea2 } = parsed.data;
-    const email = req.user.email;
+    const { email } = req.user;
     
     await db.transaction(async (tx) => {
-      const insertedApplication = await tx
-        .insert(applications)
+      // 1. Create application record
+      const [application] = await tx.insert(applications)
         .values({
           module: modules[0],
           userEmail: email,
+          status: "pending",
         })
         .returning();
-      
-      const applicationId = insertedApplication[0].id;
-      
-      const insertedFile = await tx
-        .insert(files)
+    
+      // 2. Create file record
+      const [fileRecord] = await tx.insert(files)
         .values({
           userEmail: email,
           filePath: file.path,
@@ -80,17 +73,17 @@ router.post(
         })
         .returning();
       
-      await tx
-        .insert(fileFields)
+      // 3. Create file field record
+      await tx.insert(fileFields)
         .values({
-          fileId: insertedFile[0].id,
+          fileId: fileRecord.id,
           module: modules[0],
           userEmail: email,
           fieldName: "qualificationForm",
         });
-      
-      await tx
-        .insert(textFields)
+
+      // 4. Create text field records for research areas
+      await tx.insert(textFields)
         .values([
           {
             value: qualifyingArea1,
@@ -106,32 +99,30 @@ router.post(
           }
         ]);
       
+      // 5. Update student record
       const student = await tx.query.phd.findFirst({
         where: eq(phd.email, email),
       });
-      
+
       if (!student) {
-        throw new HttpError(HttpCode.NOT_FOUND, "Student not found");
+        throw new HttpError(HttpCode.NOT_FOUND, "Student record not found");
       }
-      
-      const currentApplications = student.numberOfQeApplication ?? 0;
-      
-      await tx
-        .update(phd)
+
+      await tx.update(phd)
         .set({
           qualifyingArea1,
           qualifyingArea2,
-          numberOfQeApplication: currentApplications + 1,
+          numberOfQeApplication: (student.numberOfQeApplication ?? 0) + 1,
           qualifyingAreasUpdatedAt: new Date(),
         })
         .where(eq(phd.email, email));
     });
-    
-    res.status(200).json({
+
+    res.status(HttpCode.OK).json({
       success: true,
-      message: "Application uploaded successfully",
+      message: "Qualification exam application submitted successfully",
     });
   })
 );
-
+  
 export default router;
