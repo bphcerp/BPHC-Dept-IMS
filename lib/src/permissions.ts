@@ -45,10 +45,12 @@ export const allPermissions = {
     "phd:student:upload-proposal-document": "",
     "phd:student:get-qualifying-exam-status": "",
     "phd:student:get-qualifying-exam-passing-date": "",
+    "phd:student:get-proposal-status":"",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
+    "phd:supervisor:review-proposal-document" : "",
 } as const;
 
 export const permissions = {
@@ -132,6 +134,8 @@ export const permissions = {
         "phd:student:get-qualifying-exam-status",
     "/phd/student/getQualifyingExamPassingDate":
         "phd:student:get-qualifying-exam-passing-date",
+    "/phd/student/getProposalStatus":
+        "phd:student:get-proposal-status",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":
@@ -141,6 +145,7 @@ export const permissions = {
     "/phd/supervisor/getSupervisedStudents":
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
+    "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal-document",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
