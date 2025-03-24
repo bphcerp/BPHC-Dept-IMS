@@ -17,7 +17,7 @@ const router = express.Router();
 const uploader = util.promisify(pdfUpload.single("handout"));
 
 router.post(
-    "/:id",
+    "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         try {
@@ -37,9 +37,8 @@ router.post(
                 new HttpError(HttpCode.BAD_REQUEST, "No File Uploaded")
             );
         }
-        const { id } = handoutSchemas.submitHandoutParamsSchema.parse(
-            req.params
-        );
+        const { id } = handoutSchemas.submitHandoutQuerySchema.parse(req.query);
+
         await db.transaction(async (tx) => {
             assert(req.user);
             const insertedFile = await tx

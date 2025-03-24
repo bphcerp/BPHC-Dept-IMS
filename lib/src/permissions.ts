@@ -50,6 +50,7 @@ export const allPermissions = {
     "phd:supervisor:suggest-dac-members": "",
 
     "handout:faculty:submit": "",
+    "handout:dca-convenor:assignreviewer": "",
 } as const;
 
 export const permissions = {
@@ -144,7 +145,8 @@ export const permissions = {
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
 
     //Handout
-    "/handout/submit/:id": "handout:faculty:submit",
+    "/handout/submit": "handout:faculty:submit",
+    "/handout/assignReviewer": "handout:dca-convenor:assignreviewer",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

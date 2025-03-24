@@ -150,7 +150,7 @@ const Routing = () => {
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
               <Route path="/handout" element={<HandoutLayout />}>
-                {checkAccess(permissions["/handout/submit/:id"]) && (
+                {checkAccess(permissions["/handout/submit"]) && (
                   <Route path="submit/:id" element={<SubmitHandout />} />
                 )}
               </Route>
