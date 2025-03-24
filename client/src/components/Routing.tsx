@@ -49,7 +49,9 @@ const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
 
 const qpReviewModulePermissions: string[] = [];
 
-const courseHandoutsPermissions: string[] = [];
+const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("handout:")
+);
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -148,8 +150,9 @@ const Routing = () => {
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
               <Route path="/handout" element={<HandoutLayout />}>
-                <Route index element={<Navigate to="/handout/submit/:id" />} />
-                <Route path="submit/:id" element={<SubmitHandout />} />
+                {checkAccess(permissions["/handout/submit/:id"]) && (
+                  <Route path="submit/:id" element={<SubmitHandout />} />
+                )}
               </Route>
             )}
 
