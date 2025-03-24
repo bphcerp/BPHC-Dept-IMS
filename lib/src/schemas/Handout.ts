@@ -1,13 +1,12 @@
 import z from "zod";
 
-export const assignBodySchema = z.object({
+export const assignICBodySchema = z.object({
     courseName: z.string().nonempty(),
     courseCode: z.string().nonempty(),
     icEmail: z.string().email(),
-    reviewerEmail: z.string().email(),
 });
 
-export type AssignBody = z.infer<typeof assignBodySchema>;
+export type AssignICBody = z.infer<typeof assignICBodySchema>;
 
 export const handoutStatuses = [
     "pending",
@@ -16,11 +15,36 @@ export const handoutStatuses = [
     "notsubmitted",
 ] as const;
 
+export const createHandoutDCAMemberReviewBodySchema = z.object({
+    handoutId: z.coerce.number(),
+    scopeAndObjective: z.coerce.boolean(),
+    textBookPrescribed: z.coerce.boolean(),
+    lecturewisePlanLearningObjective: z.coerce.boolean(),
+    lecturewisePlanCourseTopics: z.coerce.boolean(),
+    numberOfLP: z.coerce.boolean(),
+    evaluationScheme: z.coerce.boolean(),
+})
+
+export type CreateHandoutDCAMemberReviewBody = z.infer<typeof createHandoutDCAMemberReviewBodySchema>;
 export const submitHandoutParamsSchema = z.object({
     id: z
         .string()
         .nonempty()
-        .refine((val) => !isNaN(Number(val))),
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
 });
 
 export type SubmitHandoutParams = z.infer<typeof submitHandoutParamsSchema>;
+
+export const assignReviewerBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    reviewerEmail: z.string().email(),
+});
+
+export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;
