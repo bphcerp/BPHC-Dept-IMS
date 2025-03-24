@@ -2,7 +2,7 @@ import { Calendar, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExamDateDisplayProps {
-  examDate: string; // ISO date string
+  examDate: string | Date; // ISO date string
   title:string;
 }
 
@@ -10,10 +10,9 @@ export default function ExamDateDisplay({
   examDate,
   title
 }: ExamDateDisplayProps) {
-  // Parse the ISO date string
+
   const date = new Date(examDate);
 
-  // Format the date: e.g., "Friday, March 14, 2025"
   const formattedDate = date.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -21,7 +20,6 @@ export default function ExamDateDisplay({
     day: "numeric",
   });
 
-  // Format the time: e.g., "2:41 PM"
   const formattedTime = date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "numeric",
