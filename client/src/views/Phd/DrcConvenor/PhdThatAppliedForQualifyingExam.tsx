@@ -33,11 +33,13 @@ interface IStudent {
   name: string;
   email: string;
   erpId: string;
-  fileUrl: string;
   formName: string;
+  fileUrl: string | null;
   uploadedAt: string;
   examStatus: boolean | null;
   examDate: string | null;
+  qualifyingArea1: string | null;
+  qualifyingArea2: string | null;
 }
 
 interface IQualifyingExam {
@@ -202,8 +204,8 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
           ...exam,
           students: exam.students.map(student => ({
             ...student,
-            examStatus: studentStatus[student.email] ?? null,
-            examDate: studentDates[student.email] ?? null
+            examStatus: studentStatus[student.email] ?? student.examStatus ?? null,
+            examDate: studentDates[student.email] ?? student.examDate ?? null
           }))
         }))
       }))
@@ -428,15 +430,17 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                               <TableCell>{student.email}</TableCell>
                               <TableCell>{student.erpId}</TableCell>
                               <TableCell>
+                              {student.fileUrl ? (
                                 <Button variant="link" className="text-blue-600" asChild>
-                                  <a
-                                    href={student.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
+                                  <a href={student.fileUrl} target="_blank" rel="noopener noreferrer">
                                     {student.formName}
                                   </a>
                                 </Button>
+                              ) : (
+                                <span className="text-gray-500">
+                                  No form available (ID: {student.erpId})
+                                </span>
+                              )}
                               </TableCell>
                               <TableCell>
                                 {formatDate(student.uploadedAt)}

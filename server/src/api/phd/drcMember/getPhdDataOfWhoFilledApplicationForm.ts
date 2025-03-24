@@ -4,10 +4,11 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
-import { fileFields, applications, textFields, files } from "@/config/db/schema/form.ts"; // Ensure correct import
+import { fileFields, applications, textFields, files } from "@/config/db/schema/form.ts";
 import { phdQualifyingExams, phdSemesters } from "@/config/db/schema/phd.ts";
 import { eq, sql, desc, and } from "drizzle-orm";
 import environment from "@/config/environment.ts";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -66,7 +67,7 @@ export default router.get(
               .innerJoin(applications, eq(phd.email, applications.userEmail))
               .where(
                 and(
-                  eq(applications.module, "PhD Proposal"),
+                  eq(applications.module, modules[4]),
                   sql`${applications.createdAt} BETWEEN ${threeMonthsBefore} AND ${deadlineDate}`
                 )
               )
@@ -75,23 +76,24 @@ export default router.get(
             // Process students with documents
             const studentsWithDocuments = await Promise.all(
               students.map(async (student) => {
-                // Fetch qualification documents
-                const qualificationDocs = await db
-                  .select({
-                    id: files.id,
-                    fileName: files.originalName,
-                    fileUrl: sql`${environment.SERVER_URL}/api/f/${files.id}`.as("fileUrl"),
-                    uploadedAt: files.createdAt,
-                  })
-                  .from(fileFields)
-                  .innerJoin(files, eq(fileFields.fileId, files.id))
-                  .where(
-                    and(
-                      eq(fileFields.userEmail, student.email),
-                      eq(fileFields.fieldName, "qualificationForm")
-                    )
+                const qualificationForm = await db
+                .select({
+                  id: files.id,
+                  fileName: files.originalName,
+                  fileUrl: sql`CONCAT(${environment.SERVER_URL}::text, '/f/', ${files.id})`.as("fileUrl"),
+                  uploadedAt: files.createdAt,
+                })
+                .from(fileFields)
+                .innerJoin(files, eq(fileFields.fileId, files.id))
+                .where(
+                  and(
+                    eq(fileFields.userEmail, student.email),
+                    eq(fileFields.fieldName, "qualificationForm"), 
+                    eq(fileFields.module, modules[4]) 
                   )
-                  .orderBy(desc(files.createdAt));
+                )
+                .orderBy(desc(files.createdAt))
+                .limit(1);
 
                 // Fetch text fields for qualifying areas
                 const textFieldsData = await db
@@ -103,6 +105,7 @@ export default router.get(
                   .where(
                     and(
                       eq(textFields.userEmail, student.email),
+                      eq(textFields.module, modules[4]),
                       sql`${textFields.fieldName} IN ('qualifyingArea1', 'qualifyingArea2')`
                     )
                   );
@@ -123,11 +126,28 @@ export default router.get(
                 let examStatus = student.examStatus1 ?? student.examStatus2 ?? null;
                 let examDate = student.examDate1 ?? student.examDate2 ?? null;
 
+                // Get the application's created timestamp
+                const applicationTimestamp = await db
+                  .select({
+                    createdAt: applications.createdAt,
+                  })
+                  .from(applications)
+                  .where(
+                    and(
+                      eq(applications.userEmail, student.email),
+                      eq(applications.module, modules[4])
+                    )
+                  )
+                  .orderBy(desc(applications.createdAt))
+                  .limit(1);
+
                 return {
                   name: student.name,
                   email: student.email,
                   erpId: student.erpId,
-                  documents: qualificationDocs, // Properly structured documents
+                  formName: qualificationForm[0]?.fileName || "Application Form",
+                  fileUrl: qualificationForm[0]?.fileUrl || null,
+                  uploadedAt: applicationTimestamp[0]?.createdAt || new Date().toISOString(),
                   qualifyingArea1: qualifyingAreas["qualifyingArea1"],
                   qualifyingArea2: qualifyingAreas["qualifyingArea2"],
                   examStatus,

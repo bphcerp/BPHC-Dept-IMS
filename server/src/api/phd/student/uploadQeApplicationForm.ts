@@ -54,7 +54,7 @@ router.post(
       // 1. Create application record
       const [application] = await tx.insert(applications)
         .values({
-          module: modules[0],
+          module: modules[4],
           userEmail: email,
           status: "pending",
         })
@@ -69,7 +69,7 @@ router.post(
           mimetype: file.mimetype,
           size: file.size,
           fieldName: "qualificationForm",
-          module: modules[0],
+          module: modules[4],
         })
         .returning();
       
@@ -77,7 +77,7 @@ router.post(
       await tx.insert(fileFields)
         .values({
           fileId: fileRecord.id,
-          module: modules[0],
+          module: modules[4],
           userEmail: email,
           fieldName: "qualificationForm",
         });
@@ -88,13 +88,13 @@ router.post(
           {
             value: qualifyingArea1,
             userEmail: email,
-            module: modules[0],
+            module: modules[4],
             fieldName: "qualifyingArea1",
           },
           {
             value: qualifyingArea2,
             userEmail: email,
-            module: modules[0],
+            module: modules[4],
             fieldName: "qualifyingArea2",
           }
         ]);
