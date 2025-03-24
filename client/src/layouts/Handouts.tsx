@@ -13,7 +13,7 @@ const HandoutLayout = () => {
               {
                 title: "Faculty Submission",
                 icon: <FileText />,
-                url: "/handouts/createapplication",
+                url: "/handouts/createapplication/:id",
               },
             ],
           },

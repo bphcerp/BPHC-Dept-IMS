@@ -14,7 +14,7 @@ import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
 import Phd from "@/views/Phd";
 import { allPermissions, permissions } from "lib";
-import { Computer, FileText, GraduationCap,BookOpen } from "lucide-react";
+import { Computer, FileText, GraduationCap, BookOpen } from "lucide-react";
 import {
   BrowserRouter,
   Navigate,
@@ -39,7 +39,7 @@ import HandoutLayout from "@/layouts/Handouts";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
-  permissions["/admin/member/details"], 
+  permissions["/admin/member/details"],
   permissions["/admin/role"],
 ];
 
@@ -147,13 +147,13 @@ const Routing = () => {
             )}
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
-              <Route path="/handouts" element={<HandoutLayout  />}>
+              <Route path="/handouts" element={<HandoutLayout />}>
                 <Route
                   index
                   element={<Navigate to="/handouts/createapplication" />}
                 />
                 <Route
-                  path="createapplication"
+                  path="createapplication/:id"
                   element={<CreateApplication />}
                 />
               </Route>
@@ -202,7 +202,7 @@ const Routing = () => {
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
-                    
+
                     <Route
                       path="proposal-submission"
                       element={<ProposalSubmission />}
