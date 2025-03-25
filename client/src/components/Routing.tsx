@@ -162,7 +162,15 @@ const Routing = () => {
                   <Route path="faculty" element={<GetAllHandoutsFaculty />} />
                 )}
                 {checkAccess(permissions["/handout/dca/get"]) && (
-                  <Route path="dca" element={<GetAllHandoutsDCA />} />
+                  <>
+                    <Route path="dca" element={<GetAllHandoutsDCA />} />
+                    {checkAccess(permissions["/handout/dca/review"]) && (
+                      <Route
+                        path="dca/review/:id"
+                        element={<DCAMemberReviewForm />}
+                      />
+                    )}
+                  </>
                 )}
                 {checkAccess(permissions["/handout/dca/get"]) &&
                   checkAccess(permissions["/handout/dca/assignReviewer"]) && (
@@ -177,7 +185,6 @@ const Routing = () => {
                       />
                     </>
                   )}
-                <Route path="review" element={<DCAMemberReviewForm />} />
               </Route>
             )}
 

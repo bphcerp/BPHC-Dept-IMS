@@ -2,11 +2,12 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ReviewField from "@/components/handouts/reviewField";
+import api from "@/lib/axios-instance";
+import { isAxiosError } from "axios";
 
 interface HandoutReviewFormValues {
   handoutId: string;
@@ -34,41 +35,42 @@ const DCAMemberReviewForm: React.FC = () => {
     },
   });
 
-  const mutation = useMutation(
-    async (data: HandoutReviewFormValues) => {
-      const response = await axios.post("/handout/createDCAMemberReview", data);
-      return response.data;
+  const mutation = useMutation({
+    mutationFn: async (data: HandoutReviewFormValues) => {
+      await api.post("/dca/review", data);
     },
-    {
-      onSuccess: (data) => {
-        toast.success("Handout review successfully submitted");
-        queryClient.invalidateQueries({ queryKey: ["handouts"] });
-      },
-      onError: (error: any) => {
+    onSuccess: async () => {
+      toast.success("Handout review successfully submitted");
+      await queryClient.refetchQueries({
+        queryKey: ["handouts-dca", "handouts-faculty"],
+      });
+    },
+    onError: (error) => {
+      if (isAxiosError(error)) {
         console.log("Error submitting handout review:", error.response?.data);
-        toast.error("An error occurred while submitting the review");
-      },
-    }
-  );
-  
+      }
+      toast.error("An error occurred while submitting the review");
+    },
+  });
+
   const onSubmit = (data: HandoutReviewFormValues) => {
     mutation.mutate(data);
   };
-  
+
   return (
-    <div className="container max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-2xl text-center font-bold mb-4">Handout Review</h1>
-      <p className="text-center text-muted-foreground mb-8">
+    <div className="container mx-auto max-w-3xl px-4 py-10">
+      <h1 className="mb-4 text-center text-2xl font-bold">Handout Review</h1>
+      <p className="mb-8 text-center text-muted-foreground">
         Review the handout and approve or reject each section.
       </p>
-      
+
       {mutation.error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 mb-6 rounded-md">
+        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
           {(mutation.error as any).message || "An error occurred"}
         </div>
       )}
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+      <form onSubmit={() => handleSubmit(onSubmit)} className="space-y-6">
         <input type="hidden" {...register("handoutId")} />
 
         <div className="space-y-4">
@@ -118,11 +120,13 @@ const DCAMemberReviewForm: React.FC = () => {
           </p>
         </div>
         <Button
-        type="submit"
-        disabled={mutation.isLoading}
-        className="ms-auto float-right px-4 py-2 text-sm w-auto justify-center"
->            {mutation.isLoading ? "Submitting..." : "Submit Review"}
-          </Button>
+          type="submit"
+          disabled={mutation.isLoading}
+          className="float-right ms-auto w-auto justify-center px-4 py-2 text-sm"
+        >
+          {" "}
+          {mutation.isLoading ? "Submitting..." : "Submit Review"}
+        </Button>
       </form>
     </div>
   );

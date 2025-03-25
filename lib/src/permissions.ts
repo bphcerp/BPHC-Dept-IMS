@@ -53,6 +53,7 @@ export const allPermissions = {
     "handout:dca-convenor:assignreviewer": "",
     "handout:faculty:get-all-handouts": "",
     "handout:dca:get-all-handouts": "",
+    "handout:dca:review": "",
 } as const;
 
 export const permissions = {
@@ -151,6 +152,7 @@ export const permissions = {
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
     "/handout/faculty/get": "handout:faculty:get-all-handouts",
     "/handout/dca/get": "handout:dca:get-all-handouts",
+    "/handout/dca/review": "handout:dca:review",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
