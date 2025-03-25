@@ -30,7 +30,10 @@ interface ProposalDeadline {
 
 const UpdateProposalDeadline: React.FC = () => {
   const queryClient = useQueryClient();
-  const [deadline, setDeadline] = useState("");
+  const [proposalForm, setProposalForm] = useState({
+    examName: "Thesis Proposal",
+    deadline: ""
+  });
 
   // Query for current semester
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } = useQuery({
@@ -47,34 +50,34 @@ const UpdateProposalDeadline: React.FC = () => {
   const currentSemesterId = currentSemesterData?.semester?.id;
   const isActiveSemester = currentSemesterData?.isActive;
 
-  // Query for proposal deadline in the current semester
-  const { data: proposalData, isLoading: isLoadingProposal } = useQuery({
-    queryKey: ["phd-proposal-deadline", currentSemesterId],
+  // Query for proposal deadlines in the current semester
+  const { data: proposalData, isLoading: isLoadingProposals } = useQuery({
+    queryKey: ["phd-proposal-deadlines", currentSemesterId],
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ success: boolean; exams: ProposalDeadline[] }>(
         `/phd/drcMember/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
-      // Filter out only the Thesis Proposal deadline
-      const proposalDeadline = response.data.exams.find(exam => exam.examName === "Thesis Proposal");
-      return { success: response.data.success, proposal: proposalDeadline };
+      // Filter out all Thesis Proposal deadlines
+      const proposalDeadlines = response.data.exams.filter(exam => exam.examName === "Thesis Proposal");
+      return { success: response.data.success, exams: proposalDeadlines };
     },
     enabled: !!currentSemesterId
   });
 
-  // Mutation for updating proposal deadline
+  // Mutation for updating proposal deadlines
   const proposalMutation = useMutation({
-    mutationFn: async (formData: { semesterId: number, deadline: string }) => {
-      const response = await api.post("/phd/drcMember/updateProposalDeadline", {
-        ...formData,
-        examName: "Thesis Proposal"
-      });
+    mutationFn: async (formData: typeof proposalForm & { semesterId: number }) => {
+      const response = await api.post("/phd/drcMember/updateProposalDeadline", formData);
       return response.data;
     },
     onSuccess: () => {
       toast.success("Thesis proposal deadline updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["phd-proposal-deadline", currentSemesterId] });
-      setDeadline("");
+      queryClient.invalidateQueries({ queryKey: ["phd-proposal-deadlines", currentSemesterId] });
+      setProposalForm({
+        examName: "Thesis Proposal",
+        deadline: ""
+      });
     },
     onError: () => {
       toast.error("Failed to update thesis proposal deadline");
@@ -89,14 +92,15 @@ const UpdateProposalDeadline: React.FC = () => {
       return;
     }
     
-    if (!deadline) {
-      toast.error("Please provide a deadline");
+    if (!proposalForm.examName || !proposalForm.deadline) {
+      toast.error("Please provide both exam name and deadline");
       return;
     }
     
-    const formattedDeadline = new Date(deadline).toISOString();
+    const formattedDeadline = new Date(proposalForm.deadline).toISOString();
     
     proposalMutation.mutate({
+      ...proposalForm,
       deadline: formattedDeadline,
       semesterId: currentSemesterId
     });
@@ -150,12 +154,16 @@ const UpdateProposalDeadline: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-6">
               <div>
-                <Label htmlFor="deadline">Thesis Proposal Deadline</Label>
+                <Label htmlFor="examName">Exam Name: </Label>
+                <div className="font-bold">Thesis Proposal</div>
+              </div>
+              <div>
+                <Label htmlFor="deadline">Registration Deadline</Label>
                 <Input
                   id="deadline"
                   type="datetime-local"
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
+                  value={proposalForm.deadline}
+                  onChange={(e) => setProposalForm({ ...proposalForm, deadline: e.target.value })}
                   required
                 />
               </div>
@@ -172,36 +180,38 @@ const UpdateProposalDeadline: React.FC = () => {
               </Button>
               {!isActiveSemester && (
                 <p className="text-sm text-amber-600">
-                  Warning: You are setting a deadline for a semester that is not currently active.
+                  Warning: You are setting deadlines for a semester that is not currently active.
                 </p>
               )}
             </form>
 
             <div className="mt-6">
-              <h3 className="mb-3 text-lg font-medium">Current Proposal Deadline</h3>
-              {isLoadingProposal ? (
+              <h3 className="mb-3 text-lg font-medium">Current Thesis Proposal Deadlines</h3>
+              {isLoadingProposals ? (
                 <div className="flex justify-center py-4">
                   <LoadingSpinner className="h-6 w-6" />
                 </div>
-              ) : proposalData?.proposal ? (
+              ) : (proposalData?.exams && proposalData.exams.length > 0) ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="bg-gray-100">
+                        <th className="border px-4 py-2 text-left">Exam Name</th>
                         <th className="border px-4 py-2 text-left">Deadline</th>
                         <th className="border px-4 py-2 text-left">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td className="border px-4 py-2">
-                          {formatDate(proposalData.proposal.deadline)}
-                        </td>
-                        <td className="border px-4 py-2">
-                          {(() => {
-                            const deadlineDate = new Date(proposalData.proposal.deadline);
-                            const isActive = deadlineDate > new Date();
-                            return (
+                      {proposalData.exams.map((proposal) => {
+                        const deadlineDate = new Date(proposal.deadline);
+                        const isActive = deadlineDate > new Date();
+                        return (
+                          <tr key={proposal.id}>
+                            <td className="border px-4 py-2">{proposal.examName}</td>
+                            <td className="border px-4 py-2">
+                              {formatDate(proposal.deadline)}
+                            </td>
+                            <td className="border px-4 py-2">
                               <span
                                 className={`rounded-full px-2 py-1 text-xs font-medium ${
                                   isActive
@@ -211,15 +221,15 @@ const UpdateProposalDeadline: React.FC = () => {
                               >
                                 {isActive ? "Active" : "Expired"}
                               </span>
-                            );
-                          })()}
-                        </td>
-                      </tr>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               ) : (
-                <p className="text-center py-4 text-gray-500">No proposal deadline set for this semester.</p>
+                <p className="text-center py-4 text-gray-500">No Thesis Proposal deadlines set for this semester.</p>
               )}
             </div>
           </CardContent>

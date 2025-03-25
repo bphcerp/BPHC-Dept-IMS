@@ -58,7 +58,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       const response = await api.get<{ success: boolean; exams: QualifyingExam[] }>(
         `/phd/drcMember/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
-      return response.data;
+      // Filter out all Regular Qualifying Exams
+      const regularQualifyingExams = response.data.exams.filter(exam => exam.examName === "Regular Qualifying Exam");
+      return { success: response.data.success, exams: regularQualifyingExams };
     },
     enabled: !!currentSemesterId
   });
@@ -184,7 +186,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
             </form>
 
             <div className="mt-6">
-              <h3 className="mb-3 text-lg font-medium">Existing Exams</h3>
+              <h3 className="mb-3 text-lg font-medium">Current Qualifying Exam Deadlines</h3>
               {isLoadingExams ? (
                 <div className="flex justify-center py-4">
                   <LoadingSpinner className="h-6 w-6" />
@@ -227,7 +229,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                <p className="text-center py-4 text-gray-500">No qualifying exams found for this semester.</p>
+                <p className="text-center py-4 text-gray-500">No Regular Qualifying Exam deadlines set for this semester.</p>
               )}
             </div>
           </CardContent>
