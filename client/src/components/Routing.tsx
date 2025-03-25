@@ -90,6 +90,7 @@ const Routing = () => {
       url: "/conference",
       requiredPermissions: qpReviewModulePermissions,
     },
+    {
       title: "Course Handouts",
       icon: <BookOpen />,
       url: "/handout/faculty",
