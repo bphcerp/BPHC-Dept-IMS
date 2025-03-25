@@ -54,33 +54,47 @@ const FacultyHandouts: React.FC = () => {
   useEffect(() => {
     if (handouts) {
       const filtered = selectedStatuses.length
-        ? handouts.filter((handout) => selectedStatuses.includes(handout.status))
+        ? handouts.filter((handout) =>
+            selectedStatuses.includes(handout.status)
+          )
         : handouts;
       setFilteredHandouts(filtered);
     }
   }, [handouts, selectedStatuses]);
 
-  if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
-  if (isError) return <div className="flex h-screen items-center justify-center text-red-500">Error fetching handouts</div>;
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  if (isError)
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Error fetching handouts
+      </div>
+    );
 
   return (
     <div className="h-screen w-full p-6">
       <div className="h-full overflow-hidden rounded-lg bg-white">
         <div className="flex h-full flex-col">
-          <div className="p-6 border-b">
+          <div className="border-b p-6">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-800">Faculty Handouts</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Faculty Handouts
+              </h1>
               <ToggleGroup
                 type="multiple"
                 value={selectedStatuses}
                 onValueChange={setSelectedStatuses}
-                className="bg-transparent space-x-2"
+                className="space-x-2 bg-transparent"
               >
                 {handoutSchemas.handoutStatuses.map((status) => (
                   <ToggleGroupItem
                     key={status}
                     value={status}
-                    className="capitalize border"
+                    className="border capitalize"
                   >
                     {status}
                   </ToggleGroupItem>
@@ -106,15 +120,25 @@ const FacultyHandouts: React.FC = () => {
                     <TableRow key={handout.id}>
                       <TableCell>{handout.courseCode}</TableCell>
                       <TableCell>{handout.courseName}</TableCell>
-                      <TableCell>{handout.reviewerName || 'Unassigned'}</TableCell>
                       <TableCell>
-                        <span className={`uppercase ${STATUS_COLORS[handout.status]}`}>
+                        {handout.reviewerName || "Unassigned"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`uppercase ${STATUS_COLORS[handout.status]}`}
+                        >
                           {handout.status}
                         </span>
                       </TableCell>
-                      <TableCell>{new Date(handout.submittedOn).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <Button asChild variant="outline">
+                        {new Date(handout.submittedOn).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                        >
                           <Link to={`/handouts/${handout.id}`}>Details</Link>
                         </Button>
                       </TableCell>
@@ -122,7 +146,9 @@ const FacultyHandouts: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">No handouts found</TableCell>
+                    <TableCell colSpan={6} className="text-center">
+                      No handouts found
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
