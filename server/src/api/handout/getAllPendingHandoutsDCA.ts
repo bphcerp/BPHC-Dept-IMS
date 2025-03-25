@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("dca-member-all-pending-handouts"),
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
         const handouts = (

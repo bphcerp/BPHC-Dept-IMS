@@ -25,10 +25,9 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
     "phd:drc-member:get-current-semester": "",
     "phd:drc-member:update-semester-dates": "",
-    "phd:drc-member:get-phd-exam-status":"",
-    "phd:drc-member:get-qualification-dates":"",
+    "phd:drc-member:get-phd-exam-status": "",
+    "phd:drc-member:get-qualification-dates": "",
 
-    
     "phd:notifs:send": "",
 
     "phd:notional-supervisor:get-phd": "",
@@ -49,6 +48,12 @@ export const allPermissions = {
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
+
+    "handout:faculty:submit": "",
+    "handout:dca-convenor:assignreviewer": "",
+    "handout:faculty:get-all-handouts": "",
+    "handout:dca:get-all-handouts": "",
+    "handout:dca:review": "",
 } as const;
 
 export const permissions = {
@@ -103,9 +108,9 @@ export const permissions = {
     "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
     "/phd/drcMember/updateSemesterDates":
         "phd:drc-member:update-semester-dates",
-    "/phd/drcMember/getPhdExamStatus":"phd:drc-member:get-phd-exam-status",
-    "/phd/drcMember/getQualificationDates":"phd:drc-member:get-qualification-dates",
-  
+    "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
+    "/phd/drcMember/getQualificationDates":
+        "phd:drc-member:get-qualification-dates",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -141,6 +146,13 @@ export const permissions = {
     "/phd/supervisor/getSupervisedStudents":
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
+
+    //Handout
+    "/handout/submit": "handout:faculty:submit",
+    "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
+    "/handout/faculty/get": "handout:faculty:get-all-handouts",
+    "/handout/dca/get": "handout:dca:get-all-handouts",
+    "/handout/dca/review": "handout:dca:review",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
