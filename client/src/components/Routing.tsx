@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/Auth";
 import AdminLayout from "@/layouts/Admin";
 import QpReviewLayout from "@/layouts/QpReview";
-import Admin from "@/views/Admin";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
@@ -12,7 +11,6 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
-import Phd from "@/views/Phd";
 import { allPermissions, permissions } from "lib";
 import { Computer, FileText, GraduationCap, BookOpen } from "lucide-react";
 import {
@@ -118,7 +116,10 @@ const Routing = () => {
           <>
             {checkAccessAnyOne(adminModulePermissions) && (
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Admin />} />
+                <Route
+                  index
+                  element={<Navigate to="/admin/members" replace={true} />}
+                />
                 {checkAccess(permissions["/admin/member/details"]) && (
                   <>
                     <Route path="members" element={<MembersView />} />
@@ -141,7 +142,9 @@ const Routing = () => {
               <Route path="/qpReview" element={<QpReviewLayout />}>
                 <Route
                   index
-                  element={<Navigate to="/qpReview/ficSubmission" />}
+                  element={
+                    <Navigate to="/qpReview/ficSubmission" replace={true} />
+                  }
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
                 <Route path="dcarequests" element={<DCARequestsView />} />
@@ -190,7 +193,6 @@ const Routing = () => {
 
             {checkAccessAnyOne(phdModulePermissions) && (
               <Route path="/phd" element={<PhdLayout />}>
-                <Route index element={<Phd />} />
                 {checkAccess(
                   permissions["/phd/notionalSupervisor/updateCourseDetails"]
                 ) && (
