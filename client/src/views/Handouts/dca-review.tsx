@@ -37,7 +37,7 @@ const DCAMemberReviewForm: React.FC = () => {
 
   const mutation = useMutation({
     mutationFn: async (data: HandoutReviewFormValues) => {
-      await api.post("/dca/review", data);
+      await api.post("/handout/dca/review", data);
     },
     onSuccess: async () => {
       toast.success("Handout review successfully submitted");
