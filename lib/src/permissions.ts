@@ -3,6 +3,7 @@ export const allPermissions = {
     "admin:member:create": "Create operations on members",
     "admin:member:read": "Read operations on members",
     "admin:member:update": "Update operations on members",
+    "admin:member:delete": "Delete operations on members",
     "admin:role:create": "Create operations on roles",
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
@@ -24,10 +25,9 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
     "phd:drc-member:get-current-semester": "",
     "phd:drc-member:update-semester-dates": "",
-    "phd:drc-member:get-phd-exam-status":"",
-    "phd:drc-member:get-qualification-dates":"",
+    "phd:drc-member:get-phd-exam-status": "",
+    "phd:drc-member:get-qualification-dates": "",
 
-    
     "phd:notifs:send": "",
 
     "phd:notional-supervisor:get-phd": "",
@@ -50,6 +50,12 @@ export const allPermissions = {
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
     "phd:supervisor:review-proposal-document" : "",
+
+    "handout:faculty:submit": "",
+    "handout:dca-convenor:assignreviewer": "",
+    "handout:faculty:get-all-handouts": "",
+    "handout:dca:get-all-handouts": "",
+    "handout:dca:review": "",
 } as const;
 
 export const permissions = {
@@ -61,6 +67,7 @@ export const permissions = {
     "/admin/member/editdetails": "admin:member:update",
     "/admin/member/editroles": "admin:member:update",
     "/admin/member/deactivate": "admin:member:update",
+    "/admin/member/delete": "admin:member:delete",
 
     "/admin/role/create": "admin:role:create",
     "/admin/role": "admin:role:read",
@@ -102,9 +109,9 @@ export const permissions = {
     "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
     "/phd/drcMember/updateSemesterDates":
         "phd:drc-member:update-semester-dates",
-    "/phd/drcMember/getPhdExamStatus":"phd:drc-member:get-phd-exam-status",
-    "/phd/drcMember/getQualificationDates":"phd:drc-member:get-qualification-dates",
-  
+    "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
+    "/phd/drcMember/getQualificationDates":
+        "phd:drc-member:get-qualification-dates",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -143,6 +150,13 @@ export const permissions = {
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
     "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal-document",
+
+    //Handout
+    "/handout/submit": "handout:faculty:submit",
+    "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
+    "/handout/faculty/get": "handout:faculty:get-all-handouts",
+    "/handout/dca/get": "handout:dca:get-all-handouts",
+    "/handout/dca/review": "handout:dca:review",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
