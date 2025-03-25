@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-router.get(
+export default router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res, next) => {

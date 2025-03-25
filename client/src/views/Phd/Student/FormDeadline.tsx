@@ -7,7 +7,7 @@ import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 interface Exam {
   id: number;
   examName: string;
-  deadline: Date;
+  deadline: string;
   semesterYear?: number;
   semesterNumber?: number;
 }
@@ -18,28 +18,36 @@ interface BackendResponse {
 }
 
 const FormDeadline: React.FC = () => {
-  const { data, isLoading, error } = useQuery<BackendResponse>({
+  const { data, isLoading,  isError } = useQuery<BackendResponse, Error>({
     queryKey: ["get-qualifying-exam-deadline"],
     queryFn: async () => {
-      const response = await api.get<BackendResponse>("/phd/student/getQualifyingExamDeadLine",{
-        params: {
-          name: "Regular Qualifying Exam",
-        }
-      });
-      const currentDate = new Date();
-      if (new Date(response.data.exams[0].deadline) > currentDate) {
+      try {
+        const response = await api.get<BackendResponse>("/phd/student/getQualifyingExamDeadLine", {
+          params: {
+            name: "Regular Qualifying Exam",
+          }
+        });
         return response.data;
-      } else {
-        return {
-          success: false,
-          exams: [],
-        };
+      } catch (err) {
+        console.error("Error fetching exam deadline:", err);
+        throw err;
       }
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    });
+  };
 
   return (
     <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
@@ -54,21 +62,30 @@ const FormDeadline: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && !error && (
+        {isError && (
+          <div className="rounded-lg bg-red-100 p-6 shadow">
+            <p className="text-center text-red-600">
+              Failed to load exam deadline. Please try again later.
+            </p>
+          </div>
+        )}
+
+        {!isLoading && !isError && (
           <>
-            {data?.exams?.length ?? 0 > 0 ? (
+            {data?.exams && data.exams.length > 0 ? (
               <>
                 <div className="overflow-hidden rounded-lg bg-white shadow">
                   <ExamDateDisplay 
-                    examDate={data?.exams[0].deadline ? data?.exams[0].deadline : "Invalid Date"} 
-                    title={`Registration Deadline: ${data?.exams[0].examName}`} 
+                    examDate={formatDate(data.exams[0].deadline)} 
+                    title={`Registration Deadline: ${data.exams[0].examName}`} 
                   />
                 </div>
 
                 <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
                   <h2 className="mb-4 text-xl font-semibold">Exam Registration</h2>
                   <p className="mb-6">
-                    Please complete the registration form below before the deadline.
+                    Please complete the registration form below before the deadline (
+                    {formatDate(data.exams[0].deadline)}).
                     You can also access the
                     <a
                       href="https://www.bits-pilani.ac.in/wp-content/uploads/1.-Format-for-application-to-DRC-for-Ph.D-Qualifying-Examination.pdf"
@@ -80,7 +97,6 @@ const FormDeadline: React.FC = () => {
                     </a>
                     if needed.
                   </p>
-                  {/* Use ExamForm without the examId prop as it's not in the component's interface */}
                   <ExamForm />
                 </div>
               </>
@@ -100,6 +116,5 @@ const FormDeadline: React.FC = () => {
     </main>
   );
 };
-
 
 export default FormDeadline;
