@@ -16,10 +16,6 @@ export default router.post(
     asyncHandler(async (req, res) => {
         assert(req.user);
         
-        // Log full request body for debugging
-        console.log('Full Request Body:', req.body);
-        
-        // Parse the request body
         const parsed = phdSchemas.suggestDacMembersSchema.parse({
             dacMembers: req.body.dacMembers,
             studentEmail: req.body.studentEmail
@@ -28,11 +24,6 @@ export default router.post(
         const { dacMembers, studentEmail } = parsed;
         const supervisorEmail = req.user.email;
 
-        console.log('Supervisor Email:', supervisorEmail);
-        console.log('Student Email:', studentEmail);
-        console.log('DAC Members:', dacMembers);
-
-        // Additional check to ensure studentEmail is not empty
         if (!studentEmail) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST, 
@@ -41,21 +32,21 @@ export default router.post(
         }
 
         // Verify the student is under this supervisor's supervision
-        // const student = await db
-        //     .select({ email: phd.email })
-        //     .from(phd)
-        //     .where(and(
-        //         eq(phd.supervisorEmail, supervisorEmail),
-        //         eq(phd.email, studentEmail)
-        //     ))
-        //     .limit(1);
+        const student = await db
+            .select({ email: phd.email })
+            .from(phd)
+            .where(and(
+                eq(phd.supervisorEmail, supervisorEmail),
+                eq(phd.email, studentEmail)
+            ))
+            .limit(1);
 
-        // if (student.length === 0) {
-        //     throw new HttpError(
-        //         HttpCode.FORBIDDEN, 
-        //         "You are not authorized to suggest DAC members for this student"
-        //     );
-        // }
+        if (student.length === 0) {
+            throw new HttpError(
+                HttpCode.FORBIDDEN, 
+                "You are not authorized to suggest DAC members for this student"
+            );
+        }
 
         // Update the student's record with suggested DAC members
         const updateResult = await db

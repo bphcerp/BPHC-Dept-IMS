@@ -22,7 +22,7 @@ interface ProposalReviewDialogProps {
 interface ReviewPayload {
   status: "approved" | "rejected";
   comments?: string;
-  dacMembers?: string[];
+  studentEmail: string;
 }
 
 const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
@@ -34,28 +34,12 @@ const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
     "pending"
   );
   const [comments, setComments] = useState("");
-  const [dacMembers, setDacMembers] = useState<string[]>(Array(2).fill(""));
 
   const queryClient = useQueryClient();
 
   const reviewMutation = useMutation<void, Error, ReviewPayload>({
     mutationFn: async (payload) => {
-      // Validate DAC members if accepting
-      if (
-        payload.status === "approved" &&
-        (!payload.dacMembers || payload.dacMembers.length === 0)
-      ) {
-        throw new Error("Please add at least one DAC member");
-      }
-
-      await api.post("/phd/supervisor/reviewProposalDocument", {
-        status: payload.status,
-        comments: payload.comments,
-        dacMembers:
-          payload.status === "approved"
-            ? payload.dacMembers?.filter((m) => m.trim() !== "")
-            : undefined,
-      });
+      await api.post("/phd/supervisor/reviewProposalDocument", payload);
     },
     onSuccess: () => {
       toast.success(
@@ -70,21 +54,12 @@ const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
     },
   });
 
-  const handleDacMemberChange = (index: number, value: string) => {
-    const newDacMembers = [...dacMembers];
-    newDacMembers[index] = value;
-    setDacMembers(newDacMembers);
-  };
-
   const handleReview = () => {
     const payload: ReviewPayload = {
       status: status === "accept" ? "approved" : "rejected",
-      comments,
+      comments: comments.trim() || undefined,
+      studentEmail,
     };
-
-    if (status === "accept") {
-      payload.dacMembers = dacMembers.filter((m) => m.trim() !== "");
-    }
 
     reviewMutation.mutate(payload);
   };
@@ -138,15 +113,12 @@ const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
 
         {status === "accept" && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Suggest DAC Members</h3>
-            {dacMembers.map((member, index) => (
-              <Input
-                key={index}
-                placeholder={`DAC Member ${index + 1} Email`}
-                value={member}
-                onChange={(e) => handleDacMemberChange(index, e.target.value)}
-              />
-            ))}
+            <Input
+              placeholder="Optional comments for acceptance"
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              className="w-full"
+            />
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStatus("pending")}>
                 Back

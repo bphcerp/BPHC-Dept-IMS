@@ -47,9 +47,7 @@ const SuggestDacMembers: React.FC<SuggestDacMembersProps> = ({
     mutationFn: async (data: { 
       dacMembers: string[], 
       studentEmail: string 
-    }) => {
-      console.log('Mutation Payload:', data);
-      
+    }) => {    
       return await api.post("/phd/supervisor/suggestDacMembers", data);
     },
     onSuccess: () => {
