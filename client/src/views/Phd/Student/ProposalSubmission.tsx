@@ -24,6 +24,7 @@ interface ProposalStatusResponse {
   documents: {
     proposal: Array<{
       status: "pending" | "approved" | "rejected";
+      comment: string;
     }>;
   };
 }
@@ -88,9 +89,10 @@ export default function CombinedExamAndProposalPage() {
     examData?.status === "pass" && 
     proposalStatus?.showProposal;
 
-  // Get proposal status
+  // Get proposal status and comment
   const proposalStatusValue = proposalStatus?.documents.proposal[0]?.status;
-  console.log(proposalStatusValue);
+  const proposalComment = proposalStatus?.documents.proposal[0]?.comment || "";
+
   return (
     <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
@@ -115,9 +117,11 @@ export default function CombinedExamAndProposalPage() {
               Your qualifying exam results have not been finalized yet.
             </div>
           ) : (
-            <ExamStatusList
-              status={examData.status === "pass" ? "Pass" : "Fail"}
-            />
+            <>
+              <ExamStatusList
+                status={examData.status === "pass" ? "Pass" : "Fail"}
+              />
+            </>
           )}
         </div>
 
@@ -165,9 +169,11 @@ export default function CombinedExamAndProposalPage() {
             <h2 className="text-2xl font-semibold text-green-600">
               Proposal Approved
             </h2>
-            <p className="mt-4 text-gray-600">
-              Your research proposal has been successfully approved.
-            </p>
+            {proposalComment && (
+              <p className="mt-4 text-gray-600">
+                Comment: {proposalComment}
+              </p>
+            )}
           </div>
         )}
 
@@ -179,6 +185,11 @@ export default function CombinedExamAndProposalPage() {
             <p className="mt-4 text-gray-600">
               Your previous proposal was rejected. Please resubmit.
             </p>
+            {proposalComment && (
+              <p className="mt-2 text-gray-600">
+                Feedback: {proposalComment}
+              </p>
+            )}
           </div>
         )}
       </div>

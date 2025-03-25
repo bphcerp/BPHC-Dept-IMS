@@ -47,7 +47,8 @@ router.get(
     // Find the latest application status for the PhD module
     const latestApplicationStatus = await db
       .select({
-        status: applicationStatus.status
+        status: applicationStatus.status,
+        comments: applicationStatus.comments
       })
       .from(applicationStatus)
       .innerJoin(
@@ -66,7 +67,7 @@ router.get(
     // Determine proposal visibility and status
     let showProposal = false;
     let proposalStatus = "pending";
-
+    let comment = "";
     if (latestApplicationStatus.length > 0) {
       if (latestApplicationStatus[0].status === false) {
         showProposal = true;
@@ -76,6 +77,7 @@ router.get(
         showProposal = false;
         proposalStatus = "approved";
       }
+      comment = latestApplicationStatus[0].comments;
     }
 
     res.status(200).json({
@@ -83,7 +85,8 @@ router.get(
       showProposal,
       documents: {
         proposal: [{
-          status: proposalStatus
+          status: proposalStatus,
+          comment: comment
         }]
       }
     });

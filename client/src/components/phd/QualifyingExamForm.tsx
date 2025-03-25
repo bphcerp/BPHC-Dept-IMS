@@ -69,7 +69,7 @@ export default function ExamForm() {
               id="qualifyingArea1"
               value={qualifyingArea1}
               onChange={(e) => setQualifyingArea1(e.target.value)}
-              placeholder="Enter primary research area"
+              placeholder="Enter research area 1"
               required
             />
           </div>
@@ -80,7 +80,7 @@ export default function ExamForm() {
               id="qualifyingArea2"
               value={qualifyingArea2}
               onChange={(e) => setQualifyingArea2(e.target.value)}
-              placeholder="Enter secondary research area"
+              placeholder="Enter research area 2"
               required
             />
           </div>

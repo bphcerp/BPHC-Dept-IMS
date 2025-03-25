@@ -1,4 +1,3 @@
-// Phd/CoSupervisor/CoSupervisedStudents.tsx
 import React from "react";
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
@@ -21,7 +20,11 @@ const CoSupervisedStudents: React.FC = () => {
         students: Array<{
           email: string;
           name: string;
-          proposalStatus?: string;
+          applicationStatus?: {
+            status: "pending" | "approved" | "rejected";
+            comments?: string | null;
+            updatedAs?: string | null;
+          } | null;
           qualifyingArea1?: string;
           qualifyingArea2?: string;
         }>;
@@ -64,12 +67,14 @@ const CoSupervisedStudents: React.FC = () => {
                     <TableCell>
                       <Badge
                         variant={
-                          student.proposalStatus === "approved"
+                          student.applicationStatus?.status === "approved"
                             ? "default"
+                            : student.applicationStatus?.status === "rejected"
+                            ? "destructive"
                             : "outline"
                         }
                       >
-                        {student.proposalStatus || "Pending"}
+                        {student.applicationStatus?.status || "Pending"}
                       </Badge>
                     </TableCell>
                   </TableRow>

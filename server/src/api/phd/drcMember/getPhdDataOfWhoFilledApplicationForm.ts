@@ -42,7 +42,7 @@ export default router.get(
             deadline: phdQualifyingExams.deadline,
           })
           .from(phdQualifyingExams)
-          .where(eq(phdQualifyingExams.semesterId, semester.id))
+          .where(and(eq(phdQualifyingExams.semesterId, semester.id), eq(phdQualifyingExams.examName, "Regular Qualifying Exam")))
           .orderBy(desc(phdQualifyingExams.deadline));
 
         // Process exams with students

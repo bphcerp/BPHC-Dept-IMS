@@ -36,7 +36,7 @@ const FormDeadline: React.FC = () => {
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
+console.log(data);
   // Helper function to format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -76,7 +76,7 @@ const FormDeadline: React.FC = () => {
               <>
                 <div className="overflow-hidden rounded-lg bg-white shadow">
                   <ExamDateDisplay 
-                    examDate={formatDate(data.exams[0].deadline)} 
+                    examDate={data.exams[0].deadline} 
                     title={`Registration Deadline: ${data.exams[0].examName}`} 
                   />
                 </div>
