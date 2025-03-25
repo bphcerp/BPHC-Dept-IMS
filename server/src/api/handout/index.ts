@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.use("/assignIC", assignIC);
 router.use("/getAllPendingHandoutsDCA", getAllPendingHandoutsDCA);
-router.use("/submitHandout", submitHandout);
+router.use("/submit", submitHandout);
 router.use("/getAllHandoutsFaculty", getAllHandoutsFaculty);
 router.use("/createDCAMemberReview", createDCAMemberReview);
 router.use("/assignReviewer", assignReviewer);
