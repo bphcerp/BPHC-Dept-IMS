@@ -1,5 +1,5 @@
 import { pgTable, serial, integer, jsonb, boolean } from "drizzle-orm/pg-core";
-import { textFields, dateFields, fileFields, applications, applicationStatus } from "./form.ts";
+import { textFields, dateFields, fileFields, applications } from "./form.ts";
 
 export const qpReviewRequests = pgTable("qp_review_requests", {
     id: serial("id").primaryKey(), // Request ID (primary key)

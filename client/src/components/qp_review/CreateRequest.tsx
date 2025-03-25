@@ -34,7 +34,7 @@ interface RequestData {
 interface CreateRequestDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddRequest: (data: RequestData) => void;
+  onAddRequest: (data: any) => void;
 }
 
 const CreateRequestDialog = ({
