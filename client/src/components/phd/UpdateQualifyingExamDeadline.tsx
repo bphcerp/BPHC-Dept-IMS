@@ -40,7 +40,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     queryKey: ["current-phd-semester"],
     queryFn: async () => {
       const response = await api.get<{ success: boolean; semester: Semester; isActive: boolean }>(
-        "/phd/drcMember/getCurrentSemester"
+        "/phd/staff/getCurrentSemester"
       );
       return response.data;
     }
@@ -56,7 +56,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ success: boolean; exams: QualifyingExam[] }>(
-        `/phd/drcMember/getAllQualifyingExamForTheSem/${currentSemesterId}`
+        `/phd/staff/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
       // Filter out all Regular Qualifying Exams
       const regularQualifyingExams = response.data.exams.filter(exam => exam.examName === "Regular Qualifying Exam");
@@ -68,7 +68,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   // Mutation for updating exam deadlines
   const examMutation = useMutation({
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
-      const response = await api.post("/phd/drcMember/updateQualifyingExamDeadline", formData);
+      const response = await api.post("/phd/staff/updateQualifyingExamDeadline", formData);
       return response.data;
     },
     onSuccess: () => {

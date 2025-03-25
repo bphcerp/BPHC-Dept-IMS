@@ -3,17 +3,17 @@ import updateExamDates from "./updateExamDates.ts";
 import generateCourseworkForm from "./generateCourseworkForm.ts"
 import getPhdToGenerateQualifyingExamForm from "./getPhdToGenerateQualifyingExamForm.ts";
 import updatePassingDatesOfPhd from "./updatePassingDatesOfPhd.ts";
-import updateProposalDeadline from "./updateProposalDeadline.ts";
+import updateProposalDeadline from "../staff/updateProposalDeadline.ts";
 import getPhdDataOfWhoFilledApplicationForm from "./getPhdDataOfWhoFilledApplicationForm.ts";
 import getSuggestedDacMember from "./getSuggestedDacMember.ts";
 import suggestTwoBestDacMember from "./suggestTwoBestDacMember.ts";
 import updateFinalDac from "./updateFinalDac.ts";
 import updateQualifyingExamResultsOfAllStudents from "./updateQualifyingExamResultsOfAllStudents.ts";
-import getAllQualifyingExamForTheSem from "./getAllQualifyingExamForTheSem.ts";
+import getAllQualifyingExamForTheSem from "../staff/getAllQualifyingExamForTheSem.ts";
 import getAllSem from "../staff/getAllSem.ts";
-import updateQualifyingExamDeadline from "./updateQualifyingExamDeadline.ts";
+import updateQualifyingExamDeadline from "../staff/updateQualifyingExamDeadline.ts";
 import updateSemesterDates from "../staff/updateSemesterDates.ts";
-import getCurrentSemester from "./getCurrentSemester.ts";
+import getCurrentSemester from "../staff/getCurrentSemester.ts";
 import getPhdExamStatus from "./getPhdExamStatus.ts";
 import getQualificationDates from "./getQualificationDates.ts";
 

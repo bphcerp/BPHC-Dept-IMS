@@ -40,7 +40,7 @@ const UpdateProposalDeadline: React.FC = () => {
     queryKey: ["current-phd-semester"],
     queryFn: async () => {
       const response = await api.get<{ success: boolean; semester: Semester; isActive: boolean }>(
-        "/phd/drcMember/getCurrentSemester"
+        "/phd/staff/getCurrentSemester"
       );
       return response.data;
     }
@@ -56,7 +56,7 @@ const UpdateProposalDeadline: React.FC = () => {
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ success: boolean; exams: ProposalDeadline[] }>(
-        `/phd/drcMember/getAllQualifyingExamForTheSem/${currentSemesterId}`
+        `/phd/staff/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
       // Filter out all Thesis Proposal deadlines
       const proposalDeadlines = response.data.exams.filter(exam => exam.examName === "Thesis Proposal");
@@ -68,7 +68,7 @@ const UpdateProposalDeadline: React.FC = () => {
   // Mutation for updating proposal deadlines
   const proposalMutation = useMutation({
     mutationFn: async (formData: typeof proposalForm & { semesterId: number }) => {
-      const response = await api.post("/phd/drcMember/updateProposalDeadline", formData);
+      const response = await api.post("/phd/staff/updateProposalDeadline", formData);
       return response.data;
     },
     onSuccess: () => {

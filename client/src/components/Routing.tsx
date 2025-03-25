@@ -30,7 +30,7 @@ import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
-import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
+import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -236,10 +236,6 @@ const Routing = () => {
                       element={<PhdThatAppliedForQualifyingExam />}
                     ></Route>
                     <Route
-                      path="update-deadlines"
-                      element={<UpdateDeadlinesPage />}
-                    />
-                    <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
                     ></Route>
@@ -261,6 +257,10 @@ const Routing = () => {
                     <Route
                       path="update-semester-dates"
                       element={<UpdateSemesterDates />}
+                    />
+                    <Route
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
                     />
                   </Route>
                 )}

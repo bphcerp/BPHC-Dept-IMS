@@ -36,12 +36,6 @@ const NotionalSupervisorLayout = () => {
           ],
         },
         {
-          title: "Update Deadlines",
-          icon: <CalendarClockIcon />,
-          url: "/phd/drc-convenor/update-deadlines",
-          requiredPermissions: [permissions["/phd/drcMember/updateQualifyingExamDeadline"], permissions["/phd/drcMember/updateProposalDeadline"]],
-        },
-        {
           title: "Generate QE Application List",
           icon: <Users />,
           url: "/phd/drc-convenor/generate-qualifying-exam-form",
@@ -93,16 +87,11 @@ const NotionalSupervisorLayout = () => {
             permissions["/phd/staff/getAllSem"],
           ],
         },
-      ],
-    },
-    {
-      title: "PhD Co-Supervisor",
-      items: [
         {
-          title: "Co-Supervised Students",
-          icon: <Users />,
-          url: "/phd/phd-co-supervisor/co-supervised-students",
-          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
+          title: "Update Deadlines",
+          icon: <CalendarClockIcon />,
+          url: "/phd/staff/update-deadlines",
+          requiredPermissions: [permissions["/phd/staff/updateQualifyingExamDeadline"], permissions["/phd/staff/updateProposalDeadline"]],
         },
       ],
     },
@@ -114,6 +103,17 @@ const NotionalSupervisorLayout = () => {
           icon: <Users />,
           url: "/phd/phd-supervisor/supervised-students",
           requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
+        },
+      ],
+    },
+    {
+      title: "PhD Co-Supervisor",
+      items: [
+        {
+          title: "Co-Supervised Students",
+          icon: <Users />,
+          url: "/phd/phd-co-supervisor/co-supervised-students",
+          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
         },
       ],
     },
