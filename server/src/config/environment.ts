@@ -1,6 +1,7 @@
 import { z } from "zod";
 import dotenv from "dotenv";
 import path from "path";
+import { type StringValue } from "ms";
 // Trying to load .env if running outside docker and cwd is server
 dotenv.config({
     path: path.resolve(process.cwd(), "../.env"),
@@ -34,8 +35,8 @@ const parsed = serverSchema.parse(process.env);
 
 export const PROD = parsed.NODE_ENV === "production";
 export const REFRESH_TOKEN_COOKIE = "amogus";
-export const ACCESS_TOKEN_EXPIRY = "5m";
-export const REFRESH_TOKEN_EXPIRY = "7d";
+export const ACCESS_TOKEN_EXPIRY: StringValue = "5m";
+export const REFRESH_TOKEN_EXPIRY: StringValue = "7d";
 export const FILES_DIR = path.join(import.meta.dirname ?? "", "../../files");
 
 export default {

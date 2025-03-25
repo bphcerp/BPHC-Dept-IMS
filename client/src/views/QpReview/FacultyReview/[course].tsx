@@ -19,7 +19,8 @@ export default function FacultyReview() {
   const { course } = useParams<{ course: string }>();
   const location = useLocation();
   const courseCode =
-    location.state?.courseName || course?.toUpperCase().replace("-", " ");
+    (location.state as { courseName: string })?.courseName ||
+    course?.toUpperCase().replace("-", " ");
 
   return (
     <main className="w-full bg-background">

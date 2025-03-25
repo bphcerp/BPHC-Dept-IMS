@@ -1,4 +1,4 @@
-import type { Permissions } from "../types/auth";
+import type { Permissions } from "../types/auth.ts";
 
 /**
  * Checks if a required permission matches a given wildcard pattern.

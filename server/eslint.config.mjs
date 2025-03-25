@@ -16,7 +16,7 @@ const compat = new FlatCompat({
 });
 
 export default [
-    { ignores: ["eslint.config.mjs"] },
+    { ignores: ["eslint.config.mjs", "drizzle.config.ts"] },
     ...compat.extends(
         "plugin:@typescript-eslint/recommended-type-checked",
         "plugin:@typescript-eslint/stylistic-type-checked"
@@ -33,8 +33,8 @@ export default [
             sourceType: "script",
             parserOptions: {
                 projectService: {
-                  allowDefaultProject: ["*.ts", "*.tsx"],
-                  defaultProject: "tsconfig.json",
+                    allowDefaultProject: ["*.ts", "*.tsx"],
+                    defaultProject: "tsconfig.json",
                 },
                 tsconfigRootDir: __dirname,
             },

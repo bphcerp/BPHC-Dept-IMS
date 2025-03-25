@@ -1,0 +1,42 @@
+FROM node:20-alpine AS build-stage
+ENV NODE_ENV production
+WORKDIR /usr/local/app
+
+RUN npm install -g pnpm
+
+COPY ./lib ./lib
+
+WORKDIR /usr/local/app/client
+
+COPY --chown=node:node client/tsconfig*.json ./
+COPY --chown=node:node client/public ./
+COPY --chown=node:node client/postcss.config.js ./
+COPY --chown=node:node client/tailwind.config.js ./
+COPY --chown=node:node client/vite.config.ts ./
+COPY --chown=node:node client/components.json ./
+COPY --chown=node:node client/index.html ./
+COPY --chown=node:node .env ./
+COPY --chown=node:node client/package.json ./
+
+
+WORKDIR /usr/local/app
+COPY ./pnpm-lock.yaml ./
+COPY ./pnpm-workspace.yaml ./
+RUN pnpm install -r
+
+WORKDIR /usr/local/app/client
+
+COPY --chown=node:node client/src ./src
+
+RUN pnpm run build
+
+FROM nginx:1.25.3-alpine-slim
+WORKDIR /usr/share/nginx/html
+
+RUN mkdir /usr/log
+RUN rm -rf ./*
+COPY nginx.prod.conf /etc/nginx/nginx.conf
+
+COPY --from=build-stage /usr/local/app/client/dist .
+
+CMD ["nginx", "-g", "daemon off;"]

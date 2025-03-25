@@ -14,7 +14,6 @@ import {
 } from "./form.ts";
 import { users } from "./admin.ts";
 import { conferenceApprovalApplications } from "./conference.ts";
-import { courseHandoutRequests } from "./handout.ts";
 
 export const applicationsFormsRelations = relations(
     applications,
@@ -29,9 +28,6 @@ export const applicationsFormsRelations = relations(
         }),
         conferenceApplications: many(conferenceApprovalApplications, {
             relationName: "conferenceApprovalApplications",
-        }),
-        courseHandoutRequests: many(courseHandoutRequests, {
-            relationName: "courseHandoutRequests",
         }),
     })
 );

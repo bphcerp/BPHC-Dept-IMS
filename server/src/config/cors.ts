@@ -3,7 +3,7 @@ import logger from "@/config/logger.ts";
 import type { CorsOptions } from "cors";
 import { HttpCode, HttpError } from "./errors.ts";
 
-const allowedOrigins: string[] = ["http://172.16.62.151:5173"];
+const allowedOrigins: string[] = ["https://eee.ims.bits-hyderabad.ac.in"];
 
 if (!PROD)
     allowedOrigins.push("http://localhost:5173", "http://localhost:9000");

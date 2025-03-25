@@ -1,86 +1,52 @@
-import { z } from "zod";
+import z from "zod";
 
-export const getFacultyApplicationQuerySchema = z.object({
-    applicationId: z.coerce.number(),
+export const assignICBodySchema = z.object({
+    courseName: z.string().nonempty(),
+    courseCode: z.string().nonempty(),
+    icEmail: z.string().email(),
 });
 
-export type GetFacultyApplicationQuery = z.infer<
-    typeof getFacultyApplicationQuerySchema
->;
+export type AssignICBody = z.infer<typeof assignICBodySchema>;
 
-export const getAllFacultyApplicationsQuerySchema = z.object({
-    email: z.string().email(),
+export const handoutStatuses = [
+    "pending",
+    "approved",
+    "rejected",
+    "notsubmitted",
+] as const;
+
+export const createHandoutDCAMemberReviewBodySchema = z.object({
+    handoutId: z.coerce.number(),
+    scopeAndObjective: z.coerce.boolean(),
+    textBookPrescribed: z.coerce.boolean(),
+    lecturewisePlanLearningObjective: z.coerce.boolean(),
+    lecturewisePlanCourseTopics: z.coerce.boolean(),
+    numberOfLP: z.coerce.boolean(),
+    evaluationScheme: z.coerce.boolean(),
 });
 
-export type GetAllFacultyApplicationsQuery = z.infer<
-    typeof getAllFacultyApplicationsQuerySchema
+export type CreateHandoutDCAMemberReviewBody = z.infer<
+    typeof createHandoutDCAMemberReviewBodySchema
 >;
-
-export const dcaMemberCommentsRequestSchema = z.object({
-    body: z.object({
-        fieldReviews: z.object({
-            courseCode: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            courseName: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            openBook: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            closedBook: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            midSem: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            compre: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            numComponents: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
-            frequency: z.object({
-                comments: z.string(),
-                approved: z.boolean(),
-            }),
+export const submitHandoutQuerySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
         }),
-        review: z.string().nonempty(),
-        status: z.boolean(),
-    }),
-    params: z.object({
-        appid: z.coerce.number().refine((val) => !isNaN(Number(val))),
-    }),
 });
 
-export type DCAMemberCommentsRequest = z.infer<
-    typeof dcaMemberCommentsRequestSchema
->;
+export type SubmitHandoutParams = z.infer<typeof submitHandoutQuerySchema>;
 
-export const getReviewDCAMemberQuerySchema = z.object({
-    email: z.string().email(),
-    applicationId: z.coerce.number(),
+export const assignReviewerBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    reviewerEmail: z.string().email(),
 });
 
-export type GetReviewDCAMemberQuery = z.infer<
-    typeof getReviewDCAMemberQuerySchema
->;
-
-export const dcaConvenorCommentsSchema = z.object({
-    body: z.object({
-        review: z.string().nonempty(),
-        status: z.boolean(),
-    }),
-    params: z.object({
-        appid: z.coerce.number().refine((val) => !isNaN(Number(val))),
-    }),
-});
-
-export type DCAConvenorComments = z.infer<typeof dcaConvenorCommentsSchema>;
+export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("notional-supervisor-view-phd"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
 

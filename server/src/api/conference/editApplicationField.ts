@@ -76,8 +76,10 @@ router.post(
                     eq(
                         files.id,
                         (
-                            originalFile.file as unknown as typeof fileFields.$inferSelect
-                        ).id
+                            originalFile as unknown as {
+                                file: typeof fileFields.$inferSelect;
+                            }
+                        ).file.id
                     )
                 );
         } else {

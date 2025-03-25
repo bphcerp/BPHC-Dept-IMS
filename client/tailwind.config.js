@@ -20,7 +20,10 @@ export default {
                 ]
   		},
   		colors: {
-  			background: 'hsl(var(--background))',
+  			background: {
+				DEFAULT: 'hsl(var(--background))',
+				faded: 'hsl(var(--background-faded))'
+			},
   			foreground: 'hsl(var(--foreground))',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
