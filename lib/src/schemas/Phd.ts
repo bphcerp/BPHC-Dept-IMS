@@ -8,6 +8,20 @@ export const updateExamStatusSchema = z.array(
 );
 export type UpdateExamStatusSchemaBody = z.infer<typeof updateExamStatusSchema>;
 
+
+
+
+export const updatePhdExamStatusSchema = z.object({
+    email: z.string().email(),
+    examNumber: z.number().int().min(1).max(2),
+    status: z.enum(["pass", "fail"]),
+    date: z.string().optional() 
+  });
+  
+  export type UpdatePhdExamStatusBody = z.infer<
+    typeof updatePhdExamStatusSchema
+  >;
+
 export const updateQualifyingExamStatusSchema = z.record(
     z.string(),
     z.enum(["pass", "fail"])

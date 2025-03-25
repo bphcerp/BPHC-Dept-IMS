@@ -9,20 +9,12 @@ export const allPermissions = {
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
     "conference:application:create": "Create operations on applications",
-    "phd:drc-member:assign-notional-supervisor": "",
-    "phd:drc-member:assign-supervisor": "",
+
     "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:get-all-qualifying-exam": "",
     "phd:drc-member:get-all-qualifying-exam-for-the-semester": "",
     "phd:drc-member:get-all-semester": "",
-    "phd:drc-member:get-faculty-details": "",
-    "phd:drc-member:get-phd": "",
-    "phd:drc-member:get-qualifying-exam-form": "",
-    "phd:drc-member:update-deadlines": "",
-    "phd:drc-member:update-exam": "",
     "phd:drc-member:update-exam-dates": "",
     "phd:drc-member:update-qualifying-exam-deadline": "",
-    "phd:drc-member:update-qe-pass-fail-status": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
     "phd:drc-member:get-phd-that-passed-recently": "",
@@ -32,14 +24,12 @@ export const allPermissions = {
     "phd:drc-member:update-final-dac": "",
     "phd:drc-member:suggest-two-best-dac-member": "",
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
-    "phd:drc-member:get-current-active-qualifying-exam": "",
-    "phd:drc-member:get-specific-sem": "",
     "phd:drc-member:get-current-semester": "",
     "phd:drc-member:update-semester-dates": "",
-
+    "phd:drc-member:get-phd-exam-status": "",
+    "phd:drc-member:get-qualification-dates": "",
 
     "phd:notifs:send": "",
-
 
     "phd:notional-supervisor:get-phd": "",
     "phd:notional-supervisor:update-course-details": "",
@@ -48,10 +38,23 @@ export const allPermissions = {
     "phd:notional-supervisor:add-course": "",
     "phd:notional-supervisor:delete-course-details": "",
 
-    
     "phd:student:check-exam-status": "",
-    "phd:co-supervisor:get-students": "",
-    "phd:supervisor:get-students": "",
+    "phd:student:get-proposal-deadline": "",
+    "phd:student:get-qualifying-exam-deadline": "",
+    "phd:student:upload-qe-application-form": "",
+    "phd:student:upload-proposal-document": "",
+    "phd:student:get-qualifying-exam-status": "",
+    "phd:student:get-qualifying-exam-passing-date": "",
+
+    "phd:co-supervisor:get-co-supervised-students": "",
+    "phd:supervisor:get-supervised-students": "",
+    "phd:supervisor:suggest-dac-members": "",
+
+    "handout:faculty:submit": "",
+    "handout:dca-convenor:assignreviewer": "",
+    "handout:faculty:get-all-handouts": "",
+    "handout:dca:get-all-handouts": "",
+    "handout:dca:review": "",
 } as const;
 
 export const permissions = {
@@ -79,33 +82,37 @@ export const permissions = {
 
     // PhD
 
-    "/phd/drcMember/assignNotionalSupervisor": "phd:drc-member:assign-notional-supervisor",
-    "/phd/drcMember/assignSupervisor": "phd:drc-member:assign-supervisor",
-    "/phd/drcMember/generateCourseworkForm": "phd:drc-member:generate-coursework-form",
-    "/phd/drcMember/getAllQualifyingExam": "phd:drc-member:get-all-qualifying-exam",
-    "/phd/drcMember/getAllQualifyingExamForTheSemester": "phd:drc-member:get-all-qualifying-exam-for-the-semester",
-    "/phd/drcMember/getAllSemester": "phd:drc-member:get-all-semester",
-    "/phd/drcMember/getFacultyDetails": "phd:drc-member:get-faculty-details",
-    "/phd/drcMember/getPhD": "phd:drc-member:get-phd",
-    "/phd/drcMember/getQualifyingExamForm": "phd:drc-member:get-qualifying-exam-form",
-    "/phd/drcMember/updateDeadlines": "phd:drc-member:update-deadlines",
-    "/phd/drcMember/updateExam": "phd:drc-member:update-exam",
+    "/phd/drcMember/generateCourseworkForm":
+        "phd:drc-member:generate-coursework-form",
+    "/phd/drcMember/getAllQualifyingExamForTheSem":
+        "phd:drc-member:get-all-qualifying-exam-for-the-semester",
+    "/phd/drcMember/getAllSem": "phd:drc-member:get-all-semester",
     "/phd/drcMember/updateExamDates": "phd:drc-member:update-exam-dates",
-    "/phd/drcMember/updateQualifyingExamDeadline": "phd:drc-member:update-qualifying-exam-deadline",
-    "/phd/drcMember/updateQePassFailStatus": "phd:drc-member:update-qe-pass-fail-status",
-    "/phd/drcMember/getPhdToGenerateQualifyingExamForm": "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
-    "/phd/drcMember/updatePassingDatesOfPhd": "phd:drc-member:update-passing-dates-of-phd",
-    "/phd/drcMember/getPhdThatPassedRecently": "phd:drc-member:get-phd-that-passed-recently",
-    "/phd/drcMember/updateProposalDeadline": "phd:drc-member:update-proposal-deadline",
-    "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm": "phd:drc-member:get-phd-data-of-who-filled-application-form",
-    "/phd/drcMember/getSuggestedDacMember": "phd:drc-member:get-suggested-dac-member",
+    "/phd/drcMember/updateQualifyingExamDeadline":
+        "phd:drc-member:update-qualifying-exam-deadline",
+    "/phd/drcMember/getPhdToGenerateQualifyingExamForm":
+        "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
+    "/phd/drcMember/updatePassingDatesOfPhd":
+        "phd:drc-member:update-passing-dates-of-phd",
+    "/phd/drcMember/getPhdThatPassedRecently":
+        "phd:drc-member:get-phd-that-passed-recently",
+    "/phd/drcMember/updateProposalDeadline":
+        "phd:drc-member:update-proposal-deadline",
+    "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm":
+        "phd:drc-member:get-phd-data-of-who-filled-application-form",
+    "/phd/drcMember/getSuggestedDacMember":
+        "phd:drc-member:get-suggested-dac-member",
     "/phd/drcMember/updateFinalDac": "phd:drc-member:update-final-dac",
-    "/phd/drcMember/suggestTwoBestDacMember": "phd:drc-member:suggest-two-best-dac-member",
-    "/phd/drcMember/updateQualifyingExamResultsOfAllStudents": "phd:drc-member:update-qualifying-exam-results-of-all-students",
-    "/phd/drcMember/getCurrentActiveQualifyingExam": "phd:drc-member:get-current-active-qualifying-exam",
-    "/phd/drcMember/getSpecificSem": "phd:drc-member:get-specific-sem",
+    "/phd/drcMember/suggestTwoBestDacMember":
+        "phd:drc-member:suggest-two-best-dac-member",
+    "/phd/drcMember/updateQualifyingExamResultsOfAllStudents":
+        "phd:drc-member:update-qualifying-exam-results-of-all-students",
     "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
-    "/phd/drcMember/updateSemesterDates": "phd:drc-member:update-semester-dates",
+    "/phd/drcMember/updateSemesterDates":
+        "phd:drc-member:update-semester-dates",
+    "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
+    "/phd/drcMember/getQualificationDates":
+        "phd:drc-member:get-qualification-dates",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -114,17 +121,40 @@ export const permissions = {
         "phd:notional-supervisor:update-course-details",
     "/phd/notionalSupervisor/updateCourseGrade":
         "phd:notional-supervisor:update-course-grade",
-    "/phd/notionalSupervisor/getPhdCourseDetails":"phd:notional-supervisor:get-phd-course-details",
-    "/phd/notionalSupervisor/addCourse":"phd:notional-supervisor:add-course",
-    "/phd/notionalSupervisor/deleteCourseDetails":"phd:notional-supervisor:delete-course-details",
+    "/phd/notionalSupervisor/getPhdCourseDetails":
+        "phd:notional-supervisor:get-phd-course-details",
+    "/phd/notionalSupervisor/addCourse": "phd:notional-supervisor:add-course",
+    "/phd/notionalSupervisor/deleteCourseDetails":
+        "phd:notional-supervisor:delete-course-details",
 
     "/phd/student/checkExamStatus": "phd:student:check-exam-status",
+    "/phd/student/getProposalDeadline": "phd:student:get-proposal-deadline",
+    "/phd/student/getQualifyingExamDeadLine":
+        "phd:student:get-qualifying-exam-deadline",
+    "/phd/student/uploadQeApplicationForm":
+        "phd:student:upload-qe-application-form",
+    "/phd/student/uploadProposalDocuments":
+        "phd:student:upload-proposal-document",
+    "/phd/student/getQualifyingExamStatus":
+        "phd:student:get-qualifying-exam-status",
+    "/phd/student/getQualifyingExamPassingDate":
+        "phd:student:get-qualifying-exam-passing-date",
 
     //Co-Supervisor
-    "/phd/coSupervisor/getStudents": "phd:co-supervisor:get-students",
+    "/phd/coSupervisor/getCoSupervisedStudents":
+        "phd:co-supervisor:get-co-supervised-students",
 
     //Supervisor
-    "/phd/supervisor/getStudents": "phd:supervisor:get-students",
+    "/phd/supervisor/getSupervisedStudents":
+        "phd:supervisor:get-supervised-students",
+    "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
+
+    //Handout
+    "/handout/submit": "handout:faculty:submit",
+    "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
+    "/handout/faculty/get": "handout:faculty:get-all-handouts",
+    "/handout/dca/get": "handout:dca:get-all-handouts",
+    "/handout/dca/review": "handout:dca:review",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

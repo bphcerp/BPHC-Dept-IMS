@@ -25,6 +25,7 @@ export function checkAccess(requiredOperation?: string) {
                 new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated")
             );
         }
+
         if (!requiredOperation)
             requiredOperation =
                 permissionsMap[
