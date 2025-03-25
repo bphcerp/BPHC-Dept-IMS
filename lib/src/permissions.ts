@@ -3,6 +3,7 @@ export const allPermissions = {
     "admin:member:create": "Create operations on members",
     "admin:member:read": "Read operations on members",
     "admin:member:update": "Update operations on members",
+    "admin:member:delete": "Delete operations on members",
     "admin:role:create": "Create operations on roles",
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
@@ -65,6 +66,7 @@ export const permissions = {
     "/admin/member/editdetails": "admin:member:update",
     "/admin/member/editroles": "admin:member:update",
     "/admin/member/deactivate": "admin:member:update",
+    "/admin/member/delete": "admin:member:delete",
 
     "/admin/role/create": "admin:role:create",
     "/admin/role": "admin:role:read",
