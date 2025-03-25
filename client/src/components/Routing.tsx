@@ -24,7 +24,7 @@ import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
 import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
-import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
+import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
@@ -228,10 +228,6 @@ const Routing = () => {
                       element={<CourseworkForm />}
                     />
                     <Route
-                      path="update-semester-dates"
-                      element={<UpdateSemesterDates />}
-                    />
-                    <Route
                       path="generate-qualifying-exam-form"
                       element={<GenerateQualifyingExamForm />}
                     ></Route>
@@ -257,6 +253,14 @@ const Routing = () => {
                     <Route
                       path="proposal-submission"
                       element={<ProposalSubmission />}
+                    />
+                  </Route>
+                )}
+                {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+                  <Route path="staff" element={<Outlet />}>
+                    <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
                     />
                   </Route>
                 )}

@@ -33,7 +33,7 @@ const UpdateSemesterDates: React.FC = () => {
   const { data: semestersData, isLoading: isLoadingSemesters } = useQuery({
     queryKey: ["phd-semesters"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; semesters: Semester[] }>("/phd/drcMember/getAllSem");
+      const response = await api.get<{ success: boolean; semesters: Semester[] }>("/phd/staff/getAllSem");
       return response.data;
     },
   });
@@ -41,7 +41,7 @@ const UpdateSemesterDates: React.FC = () => {
   // Create/update semester mutation
   const semesterMutation = useMutation({
     mutationFn: async (formData: typeof semesterForm) => {
-      const response = await api.post("/phd/drcMember/updateSemesterDates", formData);
+      const response = await api.post("/phd/staff/updateSemesterDates", formData);
       return response.data;
     },
     onSuccess: () => {

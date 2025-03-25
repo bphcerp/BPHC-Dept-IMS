@@ -36,14 +36,6 @@ const NotionalSupervisorLayout = () => {
           ],
         },
         {
-          title: "Update sem dates",
-          icon: <CalendarX2 />,
-          url: "/phd/drc-convenor/update-semester-dates",
-          requiredPermissions: [
-            permissions["/phd/drcMember/generateCourseworkForm"],
-          ],
-        },
-        {
           title: "Update Deadlines",
           icon: <CalendarClockIcon />,
           url: "/phd/drc-convenor/update-deadlines",
@@ -87,6 +79,19 @@ const NotionalSupervisorLayout = () => {
           icon: <NotepadText />,
           url: "/phd/phd-student/proposal-submission",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
+        },
+      ],
+    },
+    {
+      title: "Staff",
+      items: [
+        {
+          title: "Update sem dates",
+          icon: <CalendarX2 />,
+          url: "/phd/staff/update-semester-dates",
+          requiredPermissions: [
+            permissions["/phd/staff/getAllSem"],
+          ],
         },
       ],
     },
