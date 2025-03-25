@@ -80,9 +80,6 @@ export const permissions = {
 
     "/conference/createApplication": "conference:application:create",
 
-    // qp
-    "/qp/createQpRequest": "qp:review:create",
-
     // PhD
 
     "/phd/drcMember/generateCourseworkForm":
