@@ -64,12 +64,6 @@ const DCAMemberReviewForm: React.FC = () => {
         Review the handout and approve or reject each section.
       </p>
 
-      {mutation.error && (
-        <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
-          {(mutation.error as any).message || "An error occurred"}
-        </div>
-      )}
-
       <form onSubmit={() => handleSubmit(onSubmit)} className="space-y-6">
         <input type="hidden" {...register("handoutId")} />
 
