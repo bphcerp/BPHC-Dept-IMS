@@ -29,6 +29,8 @@ router.get(
                 courseName: handout.courseName,
                 courseCode: handout.courseCode,
                 reviewerName: handout.reviewer?.faculty.name,
+                submittedOn: handout.createdAt.toISOString(),
+                status: handout.status,
             };
         });
 
