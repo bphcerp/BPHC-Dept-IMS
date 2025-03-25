@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/AppSidebar";
+import { ReaderIcon } from "@radix-ui/react-icons";
+import { permissions } from "lib";
 import { Outlet } from "react-router-dom";
-import { BookAudio } from "lucide-react";
 
 const HandoutLayout = () => {
   return (
@@ -8,12 +9,38 @@ const HandoutLayout = () => {
       <AppSidebar
         items={[
           {
-            title: "Handouts",
+            title: "Faculty",
             items: [
               {
-                title: "DCA Review",
-                icon: <BookAudio />,
-                url: "/handout/review",
+                title: "Handouts",
+                icon: <ReaderIcon />,
+                url: "/handout/faculty",
+                requiredPermissions: [permissions["/handout/faculty/get"]],
+              },
+            ],
+          },
+          {
+            title: "DCAMember",
+            items: [
+              {
+                title: "Handouts",
+                icon: <ReaderIcon />,
+                url: "/handout/dca",
+                requiredPermissions: [permissions["/handout/dca/get"]],
+              },
+            ],
+          },
+          {
+            title: "DCA Convenor",
+            items: [
+              {
+                title: "Handouts",
+                icon: <ReaderIcon />,
+                url: "/handout/dcaconvenor",
+                requiredPermissions: [
+                  permissions["/handout/dca/get"],
+                  permissions["/handout/dca/assignReviewer"],
+                ],
               },
             ],
           },

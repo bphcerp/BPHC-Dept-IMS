@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("faculty-get-all-handouts"),
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
