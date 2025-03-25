@@ -2,87 +2,77 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { fileFieldStatus } from "@/config/db/schema/form.ts";
+import { phd } from "@/config/db/schema/admin.ts";
+import { applications } from "@/config/db/schema/form.ts";
 import { eq } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { z } from "zod";
 
 const reviewSchema = z.object({
-  comments: z.string(),
   status: z.enum(["approved", "rejected"]),
+  comments: z.string().optional(),
+  dacMembers: z.array(z.string()).optional(),
 });
 
 const router = express.Router();
 
 router.post(
-  "/:fieldId",
+  "/",
   checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    const fieldId = parseInt(req.params.fieldId);
-    if (isNaN(fieldId)) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid field ID"));
-    }
-
-    const { comments, status } = reviewSchema.parse(req.body);
-
-    // Convert "approved" to true and "rejected" to false
-    const statusBoolean = status === "approved";
-
-    // Get the current user's role
-    const user = await db.query.users.findFirst({
-      where: (user) => eq(user.email, req.user!.email),
-    });
-
+  asyncHandler(async (req, res) => {
+    const user = req.user;
     if (!user) {
-      return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
+      throw new HttpError(HttpCode.UNAUTHORIZED, "User not authenticated");
     }
 
-    const topRole = await db.query.roles.findFirst({
-      where: (role) => eq(role.id, user.roles[0]),
-    });
+    const { status,  dacMembers } = reviewSchema.parse(req.body);
 
-    // Get file field to verify ownership
-    const fileField = await db.query.fileFields.findFirst({
-      where: (field) => eq(field.id, fieldId),
+    const studentApplication = await db.query.applications.findFirst({
+      where: (app) => eq(app.userEmail, user.email),
       with: {
-        file: true,
-      },
+        user: {
+          with: {
+            phd: true
+          }
+        }
+      }
     });
 
-    if (!fileField) {
-      return next(new HttpError(HttpCode.NOT_FOUND, "Document not found"));
+    if (!studentApplication) {
+      throw new HttpError(HttpCode.NOT_FOUND, "No application found");
     }
 
-    // Check if the supervisor is allowed to review this document
-    const student = await db.query.phd.findFirst({
-      where: (student) => eq(student.email, fileField.userEmail),
+    const isPrimaryOrCoSupervisor = 
+      studentApplication.user.phd?.supervisorEmail === user.email ||
+      studentApplication.user.phd?.coSupervisorEmail === user.email ||
+      studentApplication.user.phd?.coSupervisorEmail2 === user.email;
+
+    if (!isPrimaryOrCoSupervisor) {
+      throw new HttpError(HttpCode.FORBIDDEN, "Not authorized to review this application");
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(applications)
+        .set({ status: status === "approved" ? "approved" : "rejected" })
+        .where(eq(applications.id, studentApplication.id));
+
+      if (status === "approved" && dacMembers && dacMembers.length > 0) {
+        await tx
+          .update(phd)
+          .set({ 
+            suggestedDacMembers: dacMembers,
+            dac1Email: dacMembers[0],
+            dac2Email: dacMembers[1] || null
+          })
+          .where(eq(phd.email, studentApplication.userEmail));
+      }
     });
 
-    if (!student) {
-      return next(new HttpError(HttpCode.NOT_FOUND, "Student not found"));
-    }
-
-    const canReview =
-      student.supervisorEmail === req.user!.email ||
-      student.coSupervisorEmail === req.user!.email ||
-      student.coSupervisorEmail2 === req.user!.email;
-
-    if (!canReview) {
-      return next(new HttpError(HttpCode.FORBIDDEN, "You are not authorized to review this document"));
-    }
-
-    // Insert review
-    await db.insert(fileFieldStatus).values({
-      comments,
-      status: statusBoolean, // Ensure status is boolean
-      updatedAs: topRole ? topRole.roleName : "Supervisor",
-      fileField: fieldId,
-      userEmail: req.user!.email,
-    });
-
-    res.status(200).json({
+    res.status(HttpCode.OK).json({
       success: true,
-      message: `Document ${status === "approved" ? "approved" : "rejected"}`,
+      message: `Proposal ${status}`,
+      status
     });
   })
 );

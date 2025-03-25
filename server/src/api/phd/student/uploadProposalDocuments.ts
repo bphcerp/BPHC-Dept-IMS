@@ -11,7 +11,7 @@ import { pdfUpload } from "@/config/multer.ts";
 import multer from "multer";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { modules } from "lib";
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 const router = express.Router();
 
@@ -24,17 +24,17 @@ router.post(
       { name: "proposalDocument2", maxCount: 1 },
       { name: "proposalDocument3", maxCount: 1 }
     ]);
+    
     upload(req, res, (err) => {
-          if (err) {
-            if (err instanceof multer.MulterError) {
-              return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
-            }
-            return next(err);
-          }
-          next();
-        });
+      if (err instanceof multer.MulterError) {
+        return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
+      } else if (err) {
+        return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "File upload failed"));
+      }
+      next();
+    });
   },
-  asyncHandler(async (req, res, next) => {
+  asyncHandler(async (req, res) => {
     assert(req.user);
     
     const uploadedFiles = req.files as {
@@ -45,31 +45,35 @@ router.post(
         !uploadedFiles.proposalDocument1 ||
         !uploadedFiles.proposalDocument2 ||
         !uploadedFiles.proposalDocument3) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "All three proposal documents are required"));
+      throw new HttpError(HttpCode.BAD_REQUEST, "All three proposal documents are required");
     }
     
-    const email = req.user.email;
+    const { email } = req.user;
     
-    const { supervisor, coSupervisor1, coSupervisor2 } = phdSchemas.uploadProposalSchema.parse({
+    const parsed = phdSchemas.uploadProposalSchema.safeParse({
       ...req.body,
-      fileUrl1: 'placeholder',
-      fileUrl2: 'placeholder',
-      fileUrl3: 'placeholder',
+      fileUrl1: uploadedFiles.proposalDocument1[0].path,
+      fileUrl2: uploadedFiles.proposalDocument2[0].path,
+      fileUrl3: uploadedFiles.proposalDocument3[0].path,
       formName1: uploadedFiles.proposalDocument1[0].originalname,
       formName2: uploadedFiles.proposalDocument2[0].originalname,
       formName3: uploadedFiles.proposalDocument3[0].originalname,
     });
     
+    if (!parsed.success) {
+      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid input data");
+    }
+    
+    const { supervisor, coSupervisor1, coSupervisor2 } = parsed.data;
+    
     await db.transaction(async (tx) => {
-      const insertedApplication = await tx
-        .insert(applications)
+      const [application] = await tx.insert(applications)
         .values({
-          module: modules[0],
+          module: modules[3],
           userEmail: email,
+          status: "pending",
         })
         .returning();
-      
-      const applicationId = insertedApplication[0].id;
       
       const fileEntries = [
         { field: "proposalDocument1", file: uploadedFiles.proposalDocument1[0] },
@@ -78,7 +82,7 @@ router.post(
       ];
       
       for (const { field, file } of fileEntries) {
-        const insertedFile = await tx
+        const [fileRecord] = await tx
           .insert(files)
           .values({
             userEmail: email,
@@ -87,15 +91,15 @@ router.post(
             mimetype: file.mimetype,
             size: file.size,
             fieldName: field,
-            module: modules[0],
+            module: modules[3],
           })
           .returning();
         
         await tx
           .insert(fileFields)
           .values({
-            fileId: insertedFile[0].id,
-            module: modules[0],
+            fileId: fileRecord.id,
+            module: modules[3],
             userEmail: email,
             fieldName: field,
           });
@@ -105,19 +109,19 @@ router.post(
         {
           value: supervisor,
           userEmail: email,
-          module: modules[0],
+          module: modules[3],
           fieldName: "supervisor",
         },
         {
           value: coSupervisor1,
           userEmail: email,
-          module: modules[0],
+          module: modules[3],
           fieldName: "coSupervisor1",
         },
         {
           value: coSupervisor2,
           userEmail: email,
-          module: modules[0],
+          module: modules[3],
           fieldName: "coSupervisor2",
         }
       ]);
@@ -132,7 +136,7 @@ router.post(
         .where(eq(phd.email, email));
     });
     
-    res.status(200).json({
+    res.status(HttpCode.OK).json({
       success: true,
       message: "Proposal documents uploaded successfully"
     });

@@ -39,7 +39,7 @@ router.get(
             id: fileFields.id,
             fieldName: fileFields.fieldName,
             fileName: files.originalName,
-            fileUrl: sql`${environment.SERVER_URL}/api/f/${files.id}`.as("fileUrl"),
+            fileUrl: sql`CONCAT(${environment.SERVER_URL}::text, '/f/', ${files.id})`.as("fileUrl"),
             uploadedAt: files.createdAt,
             status: fileFieldStatus.status,
             comments: fileFieldStatus.comments,

@@ -2,7 +2,7 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { fileFields, files, fileFieldStatus } from "@/config/db/schema/form.ts";
+import { fileFields, files, fileFieldStatus, applications } from "@/config/db/schema/form.ts";
 import { eq, desc, sql } from "drizzle-orm";
 import assert from "assert";
 import environment from "@/config/environment.ts";
@@ -16,12 +16,17 @@ router.get(
     assert(req.user);
     const email = req.user.email;
 
+    const application = await db.query.applications.findFirst({
+      where: eq(applications.userEmail, email),
+      orderBy: [desc(applications.createdAt)]
+    });
+
     const documents = await db
       .select({
         id: fileFields.id,
         fieldName: fileFields.fieldName,
         fileName: files.originalName,
-        fileUrl: sql`${environment.SERVER_URL}/api/f/${files.id}`.as("fileUrl"),
+        fileUrl: sql`${environment.SERVER_URL}/f/${files.id}`.as("fileUrl"),
         uploadedAt: files.createdAt,
         status: fileFieldStatus.status,
         comments: fileFieldStatus.comments,

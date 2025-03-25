@@ -16,7 +16,6 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-deadline": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
-    "phd:drc-member:get-phd-that-passed-recently": "",
     "phd:drc-member:update-proposal-deadline": "",
     "phd:drc-member:get-phd-data-of-who-filled-application-form": "",
     "phd:drc-member:get-suggested-dac-member": "",
@@ -89,8 +88,6 @@ export const permissions = {
         "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
     "/phd/drcMember/updatePassingDatesOfPhd":
         "phd:drc-member:update-passing-dates-of-phd",
-    "/phd/drcMember/getPhdThatPassedRecently":
-        "phd:drc-member:get-phd-that-passed-recently",
     "/phd/drcMember/updateProposalDeadline":
         "phd:drc-member:update-proposal-deadline",
     "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm":

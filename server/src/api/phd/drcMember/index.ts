@@ -2,7 +2,6 @@ import express from "express";
 import updateExamDates from "./updateExamDates.ts";
 import generateCourseworkForm from "./generateCourseworkForm.ts"
 import getPhdToGenerateQualifyingExamForm from "./getPhdToGenerateQualifyingExamForm.ts";
-import getPhdThatPassedRecently from "./getPhdThatPassedRecently.ts";
 import updatePassingDatesOfPhd from "./updatePassingDatesOfPhd.ts";
 import updateProposalDeadline from "./updateProposalDeadline.ts";
 import getPhdDataOfWhoFilledApplicationForm from "./getPhdDataOfWhoFilledApplicationForm.ts";
@@ -28,7 +27,6 @@ router.use('/updateQualifyingExamDeadline', updateQualifyingExamDeadline);
 router.use('/generateCourseworkForm', generateCourseworkForm);
 router.use('/getPhdToGenerateQualifyingExamForm', getPhdToGenerateQualifyingExamForm);
 router.use('/updatePassingDatesOfPhd', updatePassingDatesOfPhd);
-router.use('/getPhdThatPassedRecently', getPhdThatPassedRecently);
 router.use('/updateProposalDeadline', updateProposalDeadline);
 router.use('/getPhdDataOfWhoFilledApplicationForm', getPhdDataOfWhoFilledApplicationForm);
 router.use('/getSuggestedDacMember', getSuggestedDacMember);

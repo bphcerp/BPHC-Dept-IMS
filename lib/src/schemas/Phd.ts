@@ -43,10 +43,10 @@ export type UpdateQualificationDateBody = z.infer<
 >;
 
 export const suggestDacMembersSchema = z.object({
-    dacMembers: z
-        .array(z.string().email())
-        .length(5, "Exactly 5 DAC members are required"),
-});
+    dacMembers: z.array(z.string().email()),
+    studentEmail: z.string().email()
+  });
+
 export type SuggestDacMembersBody = z.infer<typeof suggestDacMembersSchema>;
 
 export const selectDacSchema = z.object({
