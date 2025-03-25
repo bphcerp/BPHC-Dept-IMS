@@ -25,14 +25,7 @@ export function checkAccess(requiredOperation?: string) {
                 new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated")
             );
         }
-        
-        
-        permissionsMap[
-            // TODO: Change this once we move to prod container properly
-            dequerify(req.baseUrl)
-            // dequerify(PROD ? req.baseUrl : req.baseUrl.slice(4))
-        ]
-        
+
         if (!requiredOperation)
             requiredOperation =
                 permissionsMap[
@@ -40,7 +33,7 @@ export function checkAccess(requiredOperation?: string) {
                     dequerify(req.baseUrl)
                     // dequerify(PROD ? req.baseUrl : req.baseUrl.slice(4))
                 ];
-            
+
         if (!requiredOperation)
             return next(
                 new HttpError(
