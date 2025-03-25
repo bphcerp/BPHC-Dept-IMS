@@ -15,13 +15,13 @@ const router = express.Router();
 router.get(
   "/",
   checkAccess(),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     const user = req.user;
     if (!user) {
-      throw new HttpError(HttpCode.UNAUTHORIZED, "User not authenticated");
+      return next(new HttpError(HttpCode.UNAUTHORIZED, "User not authenticated"));
     }
 
-    // Check if any application exists for PhD module
+    // Check if any application exists for the PhD module
     const existingApplications = await db
       .select({ id: applications.id })
       .from(applications)
@@ -32,21 +32,19 @@ router.get(
         )
       );
 
-    // If no applications exist, show proposal form
+    // If no applications exist, show the proposal form
     if (existingApplications.length === 0) {
-       res.status(200).json({
+      res.status(200).json({
         success: true,
         showProposal: true,
         documents: {
-          proposal: [{
-            status: "pending"
-          }]
+          proposal: [{ status: "pending" }]
         }
       });
       return;
     }
 
-    // Find the latest application status for PhD module
+    // Find the latest application status for the PhD module
     const latestApplicationStatus = await db
       .select({
         status: applicationStatus.status
@@ -69,14 +67,15 @@ router.get(
     let showProposal = false;
     let proposalStatus = "pending";
 
-    // If latest status is false, show proposal form
-    if (latestApplicationStatus.length > 0 && latestApplicationStatus[0].status === false) {
-      showProposal = true;
-      proposalStatus = "rejected";
-    }
-    if (latestApplicationStatus.length > 0 && latestApplicationStatus[0].status === true) {
-      showProposal = false;
-      proposalStatus = "approved";
+    if (latestApplicationStatus.length > 0) {
+      if (latestApplicationStatus[0].status === false) {
+        showProposal = true;
+        proposalStatus = "rejected";
+      }
+      if (latestApplicationStatus[0].status === true) {
+        showProposal = false;
+        proposalStatus = "approved";
+      }
     }
 
     res.status(200).json({

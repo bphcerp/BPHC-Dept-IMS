@@ -3,23 +3,22 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
-import { eq, gt,and } from "drizzle-orm";
+import { eq, gt, and } from "drizzle-orm";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 
 const router = express.Router();
 
-export default router.get(
+router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req, res, next) => {
         const now = new Date();
         const name = typeof req.query.name === "string" ? req.query.name : null;
-        if (!name){
-            res.status(400).json({
-                success: false,
-                message: "Name is required",
-            });
-            return;
+
+        if (!name) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Name is required"));
         }
+
         const exams = await db
             .select({
                 id: phdQualifyingExams.id,
@@ -33,7 +32,7 @@ export default router.get(
                 phdSemesters,
                 eq(phdQualifyingExams.semesterId, phdSemesters.id)
             )
-            .where(and(gt(phdQualifyingExams.deadline, now), name ? eq(phdQualifyingExams.examName, name) : undefined))
+            .where(and(gt(phdQualifyingExams.deadline, now), eq(phdQualifyingExams.examName, name)))
             .orderBy(phdQualifyingExams.deadline);
 
         res.status(200).json({
@@ -42,3 +41,5 @@ export default router.get(
         });
     })
 );
+
+export default router;

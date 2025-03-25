@@ -43,10 +43,12 @@ router.get(
       .orderBy(desc(phdQualifyingExams.deadline))
       .limit(1);
 
-    if (!activeExam.length) {
-      res.status(400).json({ success: false, message: "No active qualifying exam deadline found" });
-      return;
-    }
+      if (!activeExam.length) {
+        res.status(200).json({
+          success: false,
+          message: "No active qualifying exam deadline found",
+        });
+      }
 
     const { deadline } = activeExam[0];
     
