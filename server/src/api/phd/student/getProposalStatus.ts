@@ -2,10 +2,13 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { fileFields, files, fileFieldStatus, applications } from "@/config/db/schema/form.ts";
-import { eq, desc, sql } from "drizzle-orm";
-import assert from "assert";
-import environment from "@/config/environment.ts";
+import {
+  applications,
+  applicationStatus
+} from "@/config/db/schema/form.ts";
+import { eq, and, desc } from "drizzle-orm";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -13,53 +16,77 @@ router.get(
   "/",
   checkAccess(),
   asyncHandler(async (req, res) => {
-    assert(req.user);
-    const email = req.user.email;
+    const user = req.user;
+    if (!user) {
+      throw new HttpError(HttpCode.UNAUTHORIZED, "User not authenticated");
+    }
 
-    const application = await db.query.applications.findFirst({
-      where: eq(applications.userEmail, email),
-      orderBy: [desc(applications.createdAt)]
-    });
+    // Check if any application exists for PhD module
+    const existingApplications = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(
+        and(
+          eq(applications.userEmail, user.email),
+          eq(applications.module, modules[3]) // PhD module
+        )
+      );
 
-    const documents = await db
+    // If no applications exist, show proposal form
+    if (existingApplications.length === 0) {
+       res.status(200).json({
+        success: true,
+        showProposal: true,
+        documents: {
+          proposal: [{
+            status: "pending"
+          }]
+        }
+      });
+      return;
+    }
+
+    // Find the latest application status for PhD module
+    const latestApplicationStatus = await db
       .select({
-        id: fileFields.id,
-        fieldName: fileFields.fieldName,
-        fileName: files.originalName,
-        fileUrl: sql`${environment.SERVER_URL}/f/${files.id}`.as("fileUrl"),
-        uploadedAt: files.createdAt,
-        status: fileFieldStatus.status,
-        comments: fileFieldStatus.comments,
-        reviewedBy: fileFieldStatus.updatedAs,
+        status: applicationStatus.status
       })
-      .from(fileFields)
-      .innerJoin(files, eq(fileFields.fileId, files.id))
-      .leftJoin(fileFieldStatus, eq(fileFields.id, fileFieldStatus.fileField))
-      .where(eq(fileFields.userEmail, email))
-      .orderBy(desc(fileFieldStatus.id));
+      .from(applicationStatus)
+      .innerJoin(
+        applications, 
+        eq(applicationStatus.applicationId, applications.id)
+      )
+      .where(
+        and(
+          eq(applications.userEmail, user.email),
+          eq(applications.module, modules[3]) // PhD module
+        )
+      )
+      .orderBy(desc(applicationStatus.id))
+      .limit(1);
 
-    const processedDocuments = documents.map(doc => ({
-      id: doc.id,
-      fieldName: doc.fieldName ?? "",
-      fileName: doc.fileName ?? "", 
-      fileUrl: doc.fileUrl,
-      status: typeof doc.status === "string" ? doc.status : "pending", 
-      comments: doc.comments ?? "",
-      reviewedBy: doc.reviewedBy ?? "",
-      uploadedAt: doc.uploadedAt,
-      needsResubmission: String(doc.status) === "rejected",
-    }));
-    
+    // Determine proposal visibility and status
+    let showProposal = false;
+    let proposalStatus = "pending";
 
-    const qualifyingDocs = processedDocuments.filter(doc => doc.fieldName === "qualificationForm");
-    const proposalDocs = processedDocuments.filter(doc => doc.fieldName.startsWith("proposalDocument"));
+    // If latest status is false, show proposal form
+    if (latestApplicationStatus.length > 0 && latestApplicationStatus[0].status === false) {
+      showProposal = true;
+      proposalStatus = "rejected";
+    }
+    if (latestApplicationStatus.length > 0 && latestApplicationStatus[0].status === true) {
+      showProposal = false;
+      proposalStatus = "approved";
+    }
 
     res.status(200).json({
       success: true,
+      showProposal,
       documents: {
-        qualifyingExam: qualifyingDocs,
-        proposal: proposalDocs,
-      },
+        proposal: [{
+          status: proposalStatus
+        }]
+      }
     });
   })
 );

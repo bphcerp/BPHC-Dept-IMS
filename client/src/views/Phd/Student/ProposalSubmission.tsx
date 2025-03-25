@@ -19,10 +19,11 @@ interface PassingDateResponse {
 }
 
 interface ProposalStatusResponse {
+  success: boolean;
+  showProposal: boolean;
   documents: {
     proposal: Array<{
-      status: string;
-      needsResubmission: boolean;
+      status: "pending" | "approved" | "rejected";
     }>;
   };
 }
@@ -68,23 +69,28 @@ export default function CombinedExamAndProposalPage() {
       enabled: examData?.status === "pass",
     });
 
-  const { data: proposalStatus, isLoading: isLoadingProposalStatus } =
-    useQuery<ProposalStatusResponse>({
-      queryKey: ["phd-proposal-status"],
-      queryFn: async () => {
-        const response = await api.get("/phd/student/getProposalStatus");
-        return response.data;
-      },
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5,
-      enabled: examData?.status === "pass",
-    });
+  const { 
+    data: proposalStatus, 
+    isLoading: isLoadingProposalStatus 
+  } = useQuery<ProposalStatusResponse>({
+    queryKey: ["phd-proposal-status"],
+    queryFn: async () => {
+      const response = await api.get("/phd/student/getProposalStatus");
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+    enabled: examData?.status === "pass",
+  });
 
-  // Check if proposal is already approved
-  const isProposalApproved = proposalStatus?.documents.proposal.some(
-    (doc) => doc.status === "approved"
-  );
+  // Determine if proposal submission form should be shown
+  const showProposalSubmissionForm = 
+    examData?.status === "pass" && 
+    proposalStatus?.showProposal;
 
+  // Get proposal status
+  const proposalStatusValue = proposalStatus?.documents.proposal[0]?.status;
+  console.log(proposalStatusValue);
   return (
     <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
@@ -116,8 +122,7 @@ export default function CombinedExamAndProposalPage() {
         </div>
 
         {examData?.success &&
-          examData.status === "pass" &&
-          !isProposalApproved && (
+          examData.status === "pass" && (
             <div className="rounded-lg bg-white p-6 shadow-md">
               <h2 className="mb-6 text-2xl font-semibold">
                 Proposal Submission
@@ -149,18 +154,30 @@ export default function CombinedExamAndProposalPage() {
                   </div>
                 )}
 
-                <ProposalSubmissionForm />
+                {/* Show submission form based on new logic */}
+                {showProposalSubmissionForm && <ProposalSubmissionForm />}
               </div>
             </div>
           )}
-
-        {isProposalApproved && (
+      
+        {proposalStatusValue === "approved" && (
           <div className="rounded-lg bg-white p-6 text-center shadow-md">
             <h2 className="text-2xl font-semibold text-green-600">
               Proposal Approved
             </h2>
             <p className="mt-4 text-gray-600">
               Your research proposal has been successfully approved.
+            </p>
+          </div>
+        )}
+
+        {proposalStatusValue === "rejected" && showProposalSubmissionForm && (
+          <div className="rounded-lg bg-white p-6 text-center shadow-md">
+            <h2 className="text-2xl font-semibold text-red-600">
+              Proposal Rejected
+            </h2>
+            <p className="mt-4 text-gray-600">
+              Your previous proposal was rejected. Please resubmit.
             </p>
           </div>
         )}

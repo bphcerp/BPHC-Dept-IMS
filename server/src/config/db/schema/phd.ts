@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer ,  uuid} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
 
