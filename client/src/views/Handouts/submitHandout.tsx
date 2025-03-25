@@ -9,7 +9,7 @@ import api from "@/lib/axios-instance";
 import { useParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 
-const CreateApplication: React.FC = () => {
+const SubmitHandout: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading] = useState<boolean>(false);
   const params = useParams();
@@ -19,7 +19,7 @@ const CreateApplication: React.FC = () => {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("handout", file);
-      await api.post(`/handout/submit?id=${params.id}`, formData, {
+      await api.post(`/handout/faculty/submit?id=${params.id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -90,4 +90,4 @@ const CreateApplication: React.FC = () => {
   );
 };
 
-export default CreateApplication;
+export default SubmitHandout;

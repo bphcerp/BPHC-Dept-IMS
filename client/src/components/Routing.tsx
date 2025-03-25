@@ -37,6 +37,10 @@ import NotFoundPage from "@/layouts/404";
 import SubmitHandout from "@/views/Handouts/submitHandout";
 import HandoutLayout from "@/layouts/Handouts";
 import DCAMemberReviewForm from "@/views/Handouts/dca-review";
+import GetAllHandoutsDCAConvenor from "@/views/Handouts/getAllHandoutsDCAConvenor";
+import GetAllHandoutsDCA from "@/views/Handouts/getAllHandoutsDCA";
+import GetAllHandoutsFaculty from "@/views/Handouts/getAllHandoutsFaculty";
+import AssignReviewer from "@/views/Handouts/assignReviewer";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -79,7 +83,7 @@ const Routing = () => {
     {
       title: "Course Handouts",
       icon: <BookOpen />,
-      url: "/handout",
+      url: "/handout/faculty",
       requiredPermissions: courseHandoutsPermissions,
     },
   ];
@@ -151,11 +155,29 @@ const Routing = () => {
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
               <Route path="/handout" element={<HandoutLayout />}>
-                <Route index element={<Navigate to="/handout/review" />} />
                 {checkAccess(permissions["/handout/submit"]) && (
                   <Route path="submit/:id" element={<SubmitHandout />} />
                 )}
-                <Route path="review" element={<DCAMemberReviewForm/>} />
+                {checkAccess(permissions["/handout/faculty/get"]) && (
+                  <Route path="faculty" element={<GetAllHandoutsFaculty />} />
+                )}
+                {checkAccess(permissions["/handout/dca/get"]) && (
+                  <Route path="dca" element={<GetAllHandoutsDCA />} />
+                )}
+                {checkAccess(permissions["/handout/dca/get"]) &&
+                  checkAccess(permissions["/handout/dca/assignReviewer"]) && (
+                    <>
+                      <Route
+                        path="dcaconvenor"
+                        element={<GetAllHandoutsDCAConvenor />}
+                      />
+                      <Route
+                        path="assignreviewer/:id"
+                        element={<AssignReviewer />}
+                      />
+                    </>
+                  )}
+                <Route path="review" element={<DCAMemberReviewForm />} />
               </Route>
             )}
 
