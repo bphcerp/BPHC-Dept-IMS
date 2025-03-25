@@ -28,6 +28,7 @@ import { adminSchemas } from "lib";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
+import DeleteUserDialog from "./DeleteUserDialog";
 
 interface UserDetailsProps {
   data: adminSchemas.MemberDetailsResponse;
@@ -300,7 +301,10 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
             </div>
           </CardContent>
           <CardFooter className="justify-between">
-            {!data.deactivated && <DeactivateUserDialog email={data.email} />}
+            <div className="flex items-center gap-2">
+              {!data.deactivated && <DeactivateUserDialog email={data.email} />}
+              <DeleteUserDialog email={data.email} />
+            </div>
             <Button
               variant="outline"
               onClick={() => {
