@@ -27,12 +27,7 @@ export function checkAccess(requiredOperation?: string) {
         }
 
         if (!requiredOperation)
-            requiredOperation =
-                permissionsMap[
-                    // TODO: Change this once we move to prod container properly
-                    dequerify(req.baseUrl)
-                    // dequerify(PROD ? req.baseUrl : req.baseUrl.slice(4))
-                ];
+            requiredOperation = permissionsMap[dequerify(req.baseUrl)];
 
         if (!requiredOperation)
             return next(
