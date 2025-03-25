@@ -32,6 +32,8 @@ import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents"
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
+import ConferenceLayout from "@/layouts/Conference";
+import ConferenceApplyView from "@/views/Conference/Apply";
 import SubmitHandout from "@/views/Handouts/submitHandout";
 import HandoutLayout from "@/layouts/Handouts";
 import DCAMemberReviewForm from "@/views/Handouts/dca-review";
@@ -49,6 +51,10 @@ const adminModulePermissions = [
 const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("phd:")
 );
+
+const conferenceModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("conference:"));
 
 const qpReviewModulePermissions: string[] = [];
 
@@ -79,6 +85,11 @@ const Routing = () => {
       requiredPermissions: phdModulePermissions,
     },
     {
+      title: "Conference Approval",
+      icon: <FileText />,
+      url: "/conference",
+      requiredPermissions: qpReviewModulePermissions,
+    },
       title: "Course Handouts",
       icon: <BookOpen />,
       url: "/handout/faculty",
@@ -135,6 +146,13 @@ const Routing = () => {
                     <Route path="roles/:role" element={<RoleDetailsView />} />
                   </>
                 )}
+              </Route>
+            )}
+
+            {checkAccessAnyOne(conferenceModulePermissions) && (
+              <Route path="/conference" element={<ConferenceLayout />}>
+                <Route index element={<Navigate to="/conference/apply" />} />
+                <Route path="apply" element={<ConferenceApplyView />} />
               </Route>
             )}
 
