@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 interface Semester {
   id: number;
-  year: number;
+  year: string;
   semesterNumber: number;
   startDate: string;
   endDate: string;
@@ -23,7 +23,7 @@ const UpdateSemesterDates: React.FC = () => {
   
   // Form states
   const [semesterForm, setSemesterForm] = useState({
-    year: new Date().getFullYear(),
+    year: new Date().getFullYear().toString(),
     semesterNumber: 1,
     startDate: "",
     endDate: "",
@@ -48,7 +48,7 @@ const UpdateSemesterDates: React.FC = () => {
       toast.success("Semester saved successfully");
       queryClient.invalidateQueries({ queryKey: ["phd-semesters"] });
       setSemesterForm({
-        year: new Date().getFullYear(),
+        year: new Date().getFullYear().toString(),
         semesterNumber: 1,
         startDate: "",
         endDate: "",
@@ -86,11 +86,9 @@ const UpdateSemesterDates: React.FC = () => {
                   <Label htmlFor="year">Academic Year</Label>
                   <Input
                     id="year"
-                    type="number"
+                    type="text"
                     value={semesterForm.year}
-                    onChange={(e) => setSemesterForm({ ...semesterForm, year: parseInt(e.target.value) })}
-                    min={2000}
-                    max={2100}
+                    onChange={(e) => setSemesterForm({ ...semesterForm, year: e.target.value })}
                     required
                   />
                 </div>
@@ -167,20 +165,8 @@ const UpdateSemesterDates: React.FC = () => {
                       <tr key={semester.id}>
                         <td className="border px-4 py-2">{semester.year}</td>
                         <td className="border px-4 py-2">Semester {semester.semesterNumber}</td>
-                        <td className="border px-4 py-2">
-                          {new Date(semester.startDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </td>
-                        <td className="border px-4 py-2">
-                          {new Date(semester.endDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </td>
+                        <td className="border px-4 py-2">{new Date(semester.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                        <td className="border px-4 py-2">{new Date(semester.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                       </tr>
                     ))}
                   </tbody>

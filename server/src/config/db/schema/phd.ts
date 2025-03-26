@@ -23,7 +23,7 @@ export const phdCourses = pgTable("phd_courses", {
 
 export const phdSemesters = pgTable("phd_semesters", {
     id: serial("id").primaryKey(),
-    year: integer("year").notNull(),
+    year: text("year").notNull(),
     semesterNumber: integer("semester_number").notNull(), // 1 or 2
     startDate: timestamp("start_date").notNull(),
     endDate: timestamp("end_date").notNull(),
