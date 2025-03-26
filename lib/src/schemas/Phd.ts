@@ -48,8 +48,8 @@ export type UpdateQualifyingExamBody = z.infer<typeof updateQualifyingExamSchema
 export const updateSemesterDatesSchema = z.object({
     year: z.string(),
     semesterNumber: z.number(),
-    startDate: z.string().datetime(),
-    endDate: z.string().datetime(),
+    startDate: z.string(),
+    endDate: z.string(),
 });
 
 export type UpdateSemesterDatesBody = z.infer<typeof updateSemesterDatesSchema>;

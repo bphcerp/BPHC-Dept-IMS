@@ -40,6 +40,8 @@ export const allPermissions = {
     "phd:student:get-qualifying-exam-status": "",
     "phd:student:get-qualifying-exam-passing-date": "",
     "phd:student:get-proposal-status":"",
+    "phd:student:get-qe-application":"",
+    "phd:student:get-grade-status":"",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
@@ -134,6 +136,10 @@ export const permissions = {
         "phd:student:get-qualifying-exam-passing-date",
     "/phd/student/getProposalStatus":
         "phd:student:get-proposal-status",
+    "/phd/student/getNoOfQeApplication":
+        "phd:student:get-qe-application",
+    "/phd/student/getGradeStatus":
+        "phd:student:get-grade-status",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":

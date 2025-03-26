@@ -4,7 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import assert from "assert";
 import {phdSchemas} from "lib"
 
@@ -32,14 +32,50 @@ export default router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "All dates must be provided");
         }
 
+        const existingActiveExams = await db
+            .select()
+            .from(phdQualifyingExams)
+            .where(
+                and(
+                eq(phdQualifyingExams.semesterId, semesterId),
+                eq(phdQualifyingExams.examName, examName),
+                gt(phdQualifyingExams.deadline, new Date()) // deadline not passed
+                )
+            );
+
+            if (existingActiveExams.length > 0) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST, 
+                "An active exam deadline already exists for this semester. Please cancel the existing deadline first."
+            );
+            }
+        
+            const deadlineDate = new Date(deadline);
+            const startDate = new Date(examStartDate);
+            const endDate = new Date(examEndDate);
+        
+            if (deadlineDate >= startDate) {
+              throw new HttpError(
+                HttpCode.BAD_REQUEST, 
+                "Registration deadline must be before exam start date"
+              );
+            }
+        
+            if (startDate >= endDate) {
+              throw new HttpError(
+                HttpCode.BAD_REQUEST, 
+                "Exam start date must be before exam end date"
+              );
+            }
+        
         const newExam = await db
             .insert(phdQualifyingExams)
             .values({
                 semesterId,
                 examName,
-                examStartDate: new Date(examStartDate),
-                examEndDate: new Date(examEndDate),
-                deadline: new Date(deadline),
+                examStartDate: startDate,
+                examEndDate: endDate,
+                deadline: deadlineDate,
             })
             .returning();
 

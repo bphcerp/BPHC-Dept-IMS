@@ -4,9 +4,10 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 import assert from "assert";
-import {phdSchemas} from "lib"
+import { phdSchemas } from "lib";
+
 const router = express.Router();
 
 export default router.post(
@@ -16,6 +17,7 @@ export default router.post(
         assert(req.body);
         const parsed = phdSchemas.updateProposalDeadlineSchema.parse(req.body);
         const { semesterId, deadline } = parsed;
+
         // Verify semester exists   
         const semester = await db
             .select()
@@ -29,6 +31,25 @@ export default router.post(
 
         // Define the proposal exam name
         const examName = "Thesis Proposal";
+
+        // Check for existing active proposal deadlines
+        const existingActiveProposals = await db
+            .select()
+            .from(phdQualifyingExams)
+            .where(
+                and(
+                    eq(phdQualifyingExams.semesterId, semesterId),
+                    eq(phdQualifyingExams.examName, examName),
+                    gt(phdQualifyingExams.deadline, new Date()) // deadline not passed
+                )
+            );
+
+        if (existingActiveProposals.length > 0) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST, 
+                "An active proposal deadline already exists for this semester. Please cancel the existing deadline first."
+            );
+        }
 
         const newProposal = await db
             .insert(phdQualifyingExams)
