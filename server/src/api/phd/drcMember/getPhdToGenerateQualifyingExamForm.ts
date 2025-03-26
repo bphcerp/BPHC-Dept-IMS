@@ -4,7 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { phdQualifyingExams, phdSemesters } from "@/config/db/schema/phd.ts";
-import { sql, eq, desc, gte } from "drizzle-orm";
+import { sql, eq, desc, gte,and } from "drizzle-orm";
 import z from "zod";
 
 const router = express.Router();
@@ -39,7 +39,7 @@ router.get(
         phdSemesters,
         eq(phdQualifyingExams.semesterId, phdSemesters.id)
       )
-      .where(gte(phdQualifyingExams.deadline, currentDate))
+      .where(and(gte(phdQualifyingExams.deadline, currentDate), eq(phdQualifyingExams.examName, "Regular Qualifying Exam")))
       .orderBy(desc(phdQualifyingExams.deadline))
       .limit(1);
 

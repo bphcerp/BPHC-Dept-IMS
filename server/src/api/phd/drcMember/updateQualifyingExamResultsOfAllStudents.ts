@@ -45,20 +45,16 @@ router.post(
         // Update exam 1 if it's not set yet
         updateData = {
           qualifyingExam1: student.ifPass,
-          // Only set date to null if failing; date will be set separately if passing
-          qualifyingExam1Date: student.ifPass ? existingStudent.qualifyingExam1Date : null
         };
       } else if (existingStudent.qualifyingExam2 === null) {
         // Update exam 2 if exam 1 is set but exam 2 isn't
         updateData = {
           qualifyingExam2: student.ifPass,
-          qualifyingExam2Date: student.ifPass ? existingStudent.qualifyingExam2Date : null
         };
       } else {
         // If both are already set, update exam 2 (assuming this is an update)
         updateData = {
-          qualifyingExam2: student.ifPass,
-          qualifyingExam2Date: student.ifPass ? existingStudent.qualifyingExam2Date : null
+          qualifyingExam2: student.ifPass
         };
       }
 

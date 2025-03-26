@@ -91,6 +91,7 @@ export default function CombinedExamAndProposalPage() {
 
   // Get proposal status and comment
   const proposalStatusValue = proposalStatus?.documents.proposal[0]?.status;
+  console.log(proposalStatusValue)
   const proposalComment = proposalStatus?.documents.proposal[0]?.comment || "";
 
   return (

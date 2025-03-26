@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface Semester {
   id: number;
-  year: number;
+  year: string;
   semesterNumber: number;
   startDate: string;
   endDate: string;
@@ -23,19 +23,22 @@ interface QualifyingExam {
   semesterId: number;
   examName: string;
   deadline: string;
+  examStartDate?: string;
+  examEndDate?: string;
   createdAt: string;
-  semesterYear?: number;
-  semesterNumber?: number;
+  semesterYear?: string;
+  semesterNumber?: string;
 }
 
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
   const [examForm, setExamForm] = useState({
     examName: "Regular Qualifying Exam",
-    deadline: ""
+    deadline: "",
+    examStartDate: "",
+    examEndDate: ""
   });
 
-  // Query for current semester
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } = useQuery({
     queryKey: ["current-phd-semester"],
     queryFn: async () => {
@@ -46,11 +49,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     }
   });
 
-  // Get the current semester ID
   const currentSemesterId = currentSemesterData?.semester?.id;
   const isActiveSemester = currentSemesterData?.isActive;
 
-  // Query for exams in the current semester
   const { data: examsData, isLoading: isLoadingExams } = useQuery({
     queryKey: ["phd-qualifying-exams", currentSemesterId],
     queryFn: async () => {
@@ -58,14 +59,12 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       const response = await api.get<{ success: boolean; exams: QualifyingExam[] }>(
         `/phd/staff/getAllQualifyingExamForTheSem/${currentSemesterId}`
       );
-      // Filter out all Regular Qualifying Exams
       const regularQualifyingExams = response.data.exams.filter(exam => exam.examName === "Regular Qualifying Exam");
       return { success: response.data.success, exams: regularQualifyingExams };
     },
     enabled: !!currentSemesterId
   });
 
-  // Mutation for updating exam deadlines
   const examMutation = useMutation({
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
       const response = await api.post("/phd/staff/updateQualifyingExamDeadline", formData);
@@ -76,7 +75,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["phd-qualifying-exams", currentSemesterId] });
       setExamForm({
         examName: "Regular Qualifying Exam",
-        deadline: ""
+        deadline: "",
+        examStartDate: "",
+        examEndDate: ""
       });
     },
     onError: () => {
@@ -87,26 +88,46 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation checks
     if (!currentSemesterId) {
       toast.error("No active semester found");
       return;
     }
-    
-    if (!examForm.examName || !examForm.deadline) {
-      toast.error("Please provide both exam name and deadline");
+
+    // Validate that all dates are provided
+    if (!examForm.deadline || !examForm.examStartDate || !examForm.examEndDate) {
+      toast.error("Please provide all dates");
       return;
     }
-    
-    const formattedDeadline = new Date(examForm.deadline).toISOString();
-    
-    examMutation.mutate({
+
+    // Convert dates to Date objects for comparison
+    const deadlineDate = new Date(examForm.deadline);
+    const startDate = new Date(examForm.examStartDate);
+    const endDate = new Date(examForm.examEndDate);
+
+    // Validate date order
+    if (deadlineDate >= startDate) {
+      toast.error("Registration deadline must be before exam start date");
+      return;
+    }
+
+    if (startDate >= endDate) {
+      toast.error("Exam start date must be before exam end date");
+      return;
+    }
+
+    // Format dates to ISO string
+    const formattedData = {
       ...examForm,
-      deadline: formattedDeadline,
+      deadline: new Date(examForm.deadline).toISOString(),
+      examStartDate: new Date(examForm.examStartDate).toISOString(),
+      examEndDate: new Date(examForm.examEndDate).toISOString(),
       semesterId: currentSemesterId
-    });
+    };
+
+    examMutation.mutate(formattedData);
   };
 
-  // Helper to format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
       weekday: 'short',
@@ -122,7 +143,6 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-center text-3xl font-bold">Qualifying Exam Deadline Management</h1>
-      
       {isLoadingCurrentSemester ? (
         <Card className="w-full max-w-md mb-6">
           <CardContent className="flex justify-center py-8">
@@ -133,9 +153,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>
-                Current Academic Semester
-              </CardTitle>
+              <CardTitle>Current Academic Semester</CardTitle>
               <Badge variant={isActiveSemester ? "default" : "secondary"}>
                 {isActiveSemester ? "Active" : "Recent"}
               </Badge>
@@ -144,17 +162,16 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
           <CardContent>
             <div className="mb-4">
               <div className="text-lg font-medium">
-                {currentSemesterData.semester.year} - Semester {currentSemesterData.semester.semesterNumber}
+                {currentSemesterData.semester.year}-Semester {currentSemesterData.semester.semesterNumber}
               </div>
               <div className="text-sm text-gray-500">
                 <div>Start: {formatDate(currentSemesterData.semester.startDate)}</div>
                 <div>End: {formatDate(currentSemesterData.semester.endDate)}</div>
               </div>
             </div>
-
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-6">
               <div>
-                <Label htmlFor="examName">Exam Name: </Label>
+                <Label htmlFor="examName">Exam Name:</Label>
                 <div className="font-bold">Regular Qualifying Exam</div>
               </div>
               <div>
@@ -164,6 +181,26 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                   type="datetime-local"
                   value={examForm.deadline}
                   onChange={(e) => setExamForm({ ...examForm, deadline: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="examStartDate">Exam Start Date</Label>
+                <Input
+                  id="examStartDate"
+                  type="datetime-local"
+                  value={examForm.examStartDate}
+                  onChange={(e) => setExamForm({ ...examForm, examStartDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="examEndDate">Exam End Date</Label>
+                <Input
+                  id="examEndDate"
+                  type="datetime-local"
+                  value={examForm.examEndDate}
+                  onChange={(e) => setExamForm({ ...examForm, examEndDate: e.target.value })}
                   required
                 />
               </div>
@@ -184,7 +221,6 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                 </p>
               )}
             </form>
-
             <div className="mt-6">
               <h3 className="mb-3 text-lg font-medium">Current Qualifying Exam Deadlines</h3>
               {isLoadingExams ? (
@@ -197,7 +233,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     <thead>
                       <tr className="bg-gray-100">
                         <th className="border px-4 py-2 text-left">Exam Name</th>
-                        <th className="border px-4 py-2 text-left">Deadline</th>
+                        <th className="border px-4 py-2 text-left">Registration Deadline</th>
+                        <th className="border px-4 py-2 text-left">Exam Start</th>
+                        <th className="border px-4 py-2 text-left">Exam End</th>
                         <th className="border px-4 py-2 text-left">Status</th>
                       </tr>
                     </thead>
@@ -210,6 +248,12 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                             <td className="border px-4 py-2">{exam.examName}</td>
                             <td className="border px-4 py-2">
                               {formatDate(exam.deadline)}
+                            </td>
+                            <td className="border px-4 py-2">
+                              {exam.examStartDate ? formatDate(exam.examStartDate) : 'N/A'}
+                            </td>
+                            <td className="border px-4 py-2">
+                              {exam.examEndDate ? formatDate(exam.examEndDate) : 'N/A'}
                             </td>
                             <td className="border px-4 py-2">
                               <span
@@ -229,7 +273,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                <p className="text-center py-4 text-gray-500">No Regular Qualifying Exam deadlines set for this semester.</p>
+                <p className="text-center py-4 text-gray-500">
+                  No Regular Qualifying Exam deadlines set for this semester.
+                </p>
               )}
             </div>
           </CardContent>

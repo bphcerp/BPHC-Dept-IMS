@@ -58,12 +58,12 @@ router.get(
       .where(
         and(
           eq(applications.userEmail, user.email),
-          eq(applications.module, modules[3]) // PhD module
+          eq(applications.module, modules[3]) 
         )
       )
       .orderBy(desc(applicationStatus.id))
       .limit(1);
-
+      console.log(latestApplicationStatus)
     // Determine proposal visibility and status
     let showProposal = false;
     let proposalStatus = "pending";

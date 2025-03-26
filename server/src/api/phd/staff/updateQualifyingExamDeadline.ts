@@ -12,8 +12,8 @@ export default router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const { semesterId, examName, deadline } = req.body;
-        // Check if semester exists
+        const { semesterId, examName, examStartDate, examEndDate, deadline } = req.body;
+
         const semester = await db
             .select()
             .from(phdSemesters)
@@ -24,19 +24,24 @@ export default router.post(
             throw new HttpError(HttpCode.NOT_FOUND, "Semester not found");
         }
 
-        // Create new exam
+        if (!examStartDate || !examEndDate || !deadline) {
+            throw new HttpError(HttpCode.BAD_REQUEST, "All dates must be provided");
+        }
+
         const newExam = await db
             .insert(phdQualifyingExams)
             .values({
                 semesterId,
                 examName,
+                examStartDate: new Date(examStartDate),
+                examEndDate: new Date(examEndDate),
                 deadline: new Date(deadline),
             })
             .returning();
 
         res.status(201).json({
             success: true,
-            message: "Qualifying exam deadline created successfully",
+            message: "Qualifying exam created successfully",
             exam: newExam[0],
         });
     })

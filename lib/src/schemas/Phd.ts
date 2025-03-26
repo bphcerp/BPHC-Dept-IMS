@@ -67,7 +67,10 @@ export const uploadApplicationSchema = z.object({
     applicationType: z.string().min(1),
     qualifyingArea1: z.string().min(1),
     qualifyingArea2: z.string().min(1),
+    examStartDate: z.string(),
+    examEndDate: z.string(),
 });
+
 export type uploadApplicationBody = z.infer<typeof uploadApplicationSchema>;
 
 export const uploadProposalSchema = z.object({

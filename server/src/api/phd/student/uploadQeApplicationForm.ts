@@ -36,31 +36,88 @@ router.post(
       throw new HttpError(HttpCode.BAD_REQUEST, "PDF file is required");
     }
 
+    // Safely parse dates
+    const parseDate = (dateString: string | undefined): Date | null => {
+      if (!dateString) return null;
+      const parsedDate = new Date(dateString);
+      return !isNaN(parsedDate.getTime()) ? parsedDate : null;
+    };
+
+    const examStartDate = parseDate(req.body.examStartDate);
+    const examEndDate = parseDate(req.body.examEndDate);
+
+    if (!examStartDate || !examEndDate) {
+      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid exam dates");
+    }
+
     const parsed = phdSchemas.uploadApplicationSchema.safeParse({
       ...req.body,
       fileUrl: file.path,
       formName: file.originalname,
       applicationType: "qualifying_exam",
+      examStartDate: examStartDate.toISOString(),
+      examEndDate: examEndDate.toISOString(),
     });
 
     if (!parsed.success) {
-      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid input data");
+      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid input data: " + parsed.error.message);
     }
 
-    const { qualifyingArea1, qualifyingArea2 } = parsed.data;
+    const {
+      qualifyingArea1,
+      qualifyingArea2,
+      examStartDate: parsedStartDate,
+      examEndDate: parsedEndDate
+    } = parsed.data;
+
     const { email } = req.user;
-    
+
     await db.transaction(async (tx) => {
-      // 1. Create application record
-      const [application] = await tx.insert(applications)
+      const student = await tx.query.phd.findFirst({
+        where: eq(phd.email, email),
+      });
+
+      if (!student) {
+        throw new HttpError(HttpCode.NOT_FOUND, "Student record not found");
+      }
+
+      let shouldIncrementApplicationCount = true;
+      if (
+        (student.qualifyingExam1StartDate?.toISOString() === new Date(parsedStartDate).toISOString() &&
+          student.qualifyingExam1EndDate?.toISOString() === new Date(parsedEndDate).toISOString()) ||
+        (student.qualifyingExam2StartDate?.toISOString() === new Date(parsedStartDate).toISOString() &&
+          student.qualifyingExam2EndDate?.toISOString() === new Date(parsedEndDate).toISOString())
+      ) {
+        shouldIncrementApplicationCount = false;
+      }
+
+      const updateFields: Record<string, any> = {
+        qualifyingArea1,
+        qualifyingArea2,
+        qualifyingAreasUpdatedAt: new Date(),
+      };
+
+      if (shouldIncrementApplicationCount) {
+        updateFields.numberOfQeApplication = (student.numberOfQeApplication ?? 0) + 1;
+        if (!student.qualifyingExam1StartDate) {
+          updateFields.qualifyingExam1StartDate = new Date(parsedStartDate);
+          updateFields.qualifyingExam1EndDate = new Date(parsedEndDate);
+        } else if (!student.qualifyingExam2StartDate) {
+          updateFields.qualifyingExam2StartDate = new Date(parsedStartDate);
+          updateFields.qualifyingExam2EndDate = new Date(parsedEndDate);
+        } else {
+          throw new HttpError(HttpCode.BAD_REQUEST, "Maximum number of qualifying exam attempts reached");
+        }
+      }
+
+      await tx.insert(applications)
         .values({
           module: modules[4],
           userEmail: email,
           status: "pending",
         })
         .returning();
-    
-      // 2. Create file record
+
       const [fileRecord] = await tx.insert(files)
         .values({
           userEmail: email,
@@ -72,8 +129,7 @@ router.post(
           module: modules[4],
         })
         .returning();
-      
-      // 3. Create file field record
+
       await tx.insert(fileFields)
         .values({
           fileId: fileRecord.id,
@@ -82,7 +138,6 @@ router.post(
           fieldName: "qualificationForm",
         });
 
-      // 4. Create text field records for research areas
       await tx.insert(textFields)
         .values([
           {
@@ -98,23 +153,9 @@ router.post(
             fieldName: "qualifyingArea2",
           }
         ]);
-      
-      // 5. Update student record
-      const student = await tx.query.phd.findFirst({
-        where: eq(phd.email, email),
-      });
-
-      if (!student) {
-        throw new HttpError(HttpCode.NOT_FOUND, "Student record not found");
-      }
 
       await tx.update(phd)
-        .set({
-          qualifyingArea1,
-          qualifyingArea2,
-          numberOfQeApplication: (student.numberOfQeApplication ?? 0) + 1,
-          qualifyingAreasUpdatedAt: new Date(),
-        })
+        .set(updateFields)
         .where(eq(phd.email, email));
     });
 
@@ -124,5 +165,5 @@ router.post(
     });
   })
 );
-  
+
 export default router;

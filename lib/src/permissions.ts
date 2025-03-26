@@ -21,6 +21,7 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
     "phd:drc-member:get-phd-exam-status": "",
     "phd:drc-member:get-qualification-dates": "",
+    "phd:drc-member:get-dates-of-qe-exam":"",
 
     "phd:notifs:send": "",
 
@@ -103,6 +104,8 @@ export const permissions = {
     "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
     "/phd/drcMember/getQualificationDates":
         "phd:drc-member:get-qualification-dates",
+    "/phd/drcMember/getDatesOfQeExam":
+        "phd:drc-member:get-dates-of-qe-exam",
 
     "/phd/notifs/send": "phd:notifs:send",
 

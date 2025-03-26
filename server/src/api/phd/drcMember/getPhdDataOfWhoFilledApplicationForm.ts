@@ -60,8 +60,10 @@ export default router.get(
                 erpId: phd.erpId,
                 examStatus1: phd.qualifyingExam1,
                 examStatus2: phd.qualifyingExam2,
-                examDate1: phd.qualifyingExam1Date,
-                examDate2: phd.qualifyingExam2Date,
+                examDateStart1: phd.qualifyingExam1StartDate,
+                examDateEnd1: phd.qualifyingExam1EndDate,
+                examDateStart2: phd.qualifyingExam2StartDate,
+                examDateEnd2: phd.qualifyingExam2EndDate,
               })
               .from(phd)
               .innerJoin(applications, eq(phd.email, applications.userEmail))
@@ -124,7 +126,7 @@ export default router.get(
 
                 // Determine exam status & date
                 let examStatus = student.examStatus1 ?? student.examStatus2 ?? null;
-                let examDate = student.examDate1 ?? student.examDate2 ?? null;
+                let examDate = student.examDateStart1 ?? student.examDateStart2 ?? null;
 
                 // Get the application's created timestamp
                 const applicationTimestamp = await db

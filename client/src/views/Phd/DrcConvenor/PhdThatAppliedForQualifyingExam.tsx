@@ -67,8 +67,10 @@ interface IExamStatus {
   email: string;
   qualifyingExam1: boolean | null;
   qualifyingExam2: boolean | null;
-  qualifyingExam1Date: string | null;
-  qualifyingExam2Date: string | null;
+  qualifyingExam1StartDate: string | null;
+  qualifyingExam2StartDate: string | null;
+  qualifyingExam1EndDate: string | null;
+  qualifyingExam2EndDate: string | null;
 }
 
 interface IExamStatusResponse {
@@ -164,23 +166,29 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
 
   // Initialize student status and dates based on API data
   useEffect(() => {
-    // Handle exam statuses
     if (examStatusData?.examStatuses) {
       const newStatusMap: Record<string, boolean | null> = {};
       
       examStatusData.examStatuses.forEach(status => {
-        // Determine which exam status to use (most recent non-null one)
-        const examStatus = status.qualifyingExam2 !== null 
-          ? status.qualifyingExam2 
-          : status.qualifyingExam1;
-          
+        // Determine exam status based on both start and end dates
+        let examStatus: boolean | null = null;
+        
+        // Check Exam 2 first (if both start and end dates exist)
+        if (status.qualifyingExam2StartDate && status.qualifyingExam2EndDate) {
+          examStatus = status.qualifyingExam2;
+        } 
+        // If Exam 2 not complete, check Exam 1
+        else if (status.qualifyingExam1StartDate && status.qualifyingExam1EndDate) {
+          examStatus = status.qualifyingExam1;
+        }
+        
         newStatusMap[status.email] = examStatus;
       });
       
       setStudentStatus(newStatusMap);
     }
     
-    // Handle qualification dates
+    // Handle qualification dates (unchanged)
     if (qualificationDatesData?.qualificationDates) {
       const newDatesMap: Record<string, string | null> = {};
       
