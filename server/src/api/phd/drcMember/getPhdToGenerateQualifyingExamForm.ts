@@ -44,7 +44,7 @@ router.get(
       .limit(1);
 
       if (!activeExam.length) {
-        res.status(200).json({
+        res.status(404).json({
           success: false,
           message: "No active qualifying exam deadline found",
         });

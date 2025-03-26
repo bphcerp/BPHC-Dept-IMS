@@ -5,6 +5,7 @@ import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { sql } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import assert from "assert";
 
 const router = express.Router();
 
@@ -12,10 +13,7 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        if (!req.user) {
-            return next(new HttpError(HttpCode.UNAUTHORIZED, "User not authenticated"));
-        }
-
+        assert(req.user)
         const userEmail = req.user.email;
 
         const result = await db

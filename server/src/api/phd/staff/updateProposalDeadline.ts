@@ -5,16 +5,18 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
-
+import assert from "assert";
+import {phdSchemas} from "lib"
 const router = express.Router();
 
 export default router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const { semesterId, deadline } = req.body;
-
-        // Verify semester exists
+        assert(req.body);
+        const parsed = phdSchemas.updateProposalDeadlineSchema.parse(req.body);
+        const { semesterId, deadline } = parsed;
+        // Verify semester exists   
         const semester = await db
             .select()
             .from(phdSemesters)
