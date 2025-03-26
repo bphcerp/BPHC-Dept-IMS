@@ -40,7 +40,7 @@ export default router.get(
 
         res.json({ 
             allCoursesGraded: allGraded,
-            totalCourses: courseGrades.length,
+            totalCourses: courseRecord.courseNames?.length ?? 0,
             gradedCourses: courseGrades.filter(grade => {
                 const normalizedGrade = grade.trim().toLowerCase();
                 return grade && normalizedGrade !== 'nc' && normalizedGrade !== '-';
