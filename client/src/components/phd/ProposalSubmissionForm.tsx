@@ -15,7 +15,10 @@ import { FileIcon, MailIcon, ExternalLinkIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-
+interface UploadResponse {
+  message: string;
+  success: boolean;
+}
 export default function ProposalSubmissionForm() {
   // Form links - replace with your actual links
   const formLinks = [
@@ -47,12 +50,9 @@ export default function ProposalSubmissionForm() {
     coSupervisor1: "",
     coSupervisor2: "",
   });
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const proposalMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await api.post(
+  const proposalMutation = useMutation<UploadResponse, Error, FormData>({
+    mutationFn: async (data: FormData): Promise<UploadResponse> => {
+      const response = await api.post<UploadResponse>(
         "/phd/student/uploadProposalDocuments",
         data,
         {
@@ -65,9 +65,7 @@ export default function ProposalSubmissionForm() {
     },
     onSuccess: () => {
       toast.success("Proposal submitted successfully.");
-      setIsSubmitting(false);
-
-      // Reset form
+      
       setFormData({
         proposalDocument1: null,
         proposalDocument2: null,
@@ -80,7 +78,6 @@ export default function ProposalSubmissionForm() {
     onError: (error) => {
       console.error("Submission error:", error);
       toast.error("Failed to upload documents. Please try again.");
-      setIsSubmitting(false);
     },
   });
 
@@ -120,9 +117,6 @@ export default function ProposalSubmissionForm() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    // Create FormData object for file upload
     const submitData = new FormData();
     submitData.append("proposalDocument1", formData.proposalDocument1);
     submitData.append("proposalDocument2", formData.proposalDocument2);
@@ -252,8 +246,12 @@ export default function ProposalSubmissionForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Proposal"}
+        <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={proposalMutation.isLoading}
+          >
+            {proposalMutation.isLoading ? "Submitting..." : "Submit Proposal"}
           </Button>
         </CardFooter>
       </form>

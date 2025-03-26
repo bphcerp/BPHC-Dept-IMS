@@ -35,7 +35,7 @@ export default function ExamForm() {
     Error
   >({
     queryKey: ["get-qualifying-exam-deadline"],
-    queryFn: async () => {
+    queryFn: async (): Promise<BackendResponse> => {
       try {
         const response = await api.get<BackendResponse>(
           "/phd/student/getQualifyingExamDeadLine",

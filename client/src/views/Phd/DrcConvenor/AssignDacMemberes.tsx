@@ -145,7 +145,7 @@ const AssignDacMembers: React.FC = () => {
           <h2 className="mb-4 text-xl font-bold">Assign DAC Members</h2>
           <p className="mb-4 text-gray-600">
             Assign two Doctoral Advisory Committee members from the suggested list. 
-            Use the 'Suggest' button to auto-select the two faculty members with the lowest workload.
+            Use the Suggest button to auto-select the two faculty members with the lowest workload.
           </p>
 
           <Table>

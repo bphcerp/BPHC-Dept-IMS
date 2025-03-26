@@ -45,8 +45,8 @@ const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
       toast.success(
         `Proposal ${status === "accept" ? "Accepted" : "Rejected"}`
       );
-      queryClient.invalidateQueries({ queryKey: ["phd-supervised-students"] });
-      queryClient.invalidateQueries({ queryKey: ["phd-proposal-status"] });
+      void queryClient.invalidateQueries({ queryKey: ["phd-supervised-students"] });
+      void queryClient.invalidateQueries({ queryKey: ["phd-proposal-status"] });
       onClose();
     },
     onError: (error) => {
@@ -68,9 +68,9 @@ const ProposalReviewDialog: React.FC<ProposalReviewDialogProps> = ({
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Review Proposal for {studentName}</DialogTitle>
+        <DialogTitle>Review Proposal for {studentName}</DialogTitle>
           <DialogDescription>
-            Review and take action on the student's proposal
+            Review and take action on the students proposal
           </DialogDescription>
         </DialogHeader>
 
