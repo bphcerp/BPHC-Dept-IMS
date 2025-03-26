@@ -90,11 +90,11 @@ const SupervisedStudents: React.FC = () => {
     documents.forEach((doc) => {
       const timestamp = new Date(doc.uploadedAt).getTime();
 
-      // Find an existing group within 5 minutes
+      // Find an existing group within 1 minute
       const existingGroup = groups.find(
         (group) =>
           Math.abs(new Date(group.uploadedAt).getTime() - timestamp) <=
-          5 * 60 * 1000
+          1 * 60 * 1000
       );
 
       if (existingGroup) {
