@@ -24,6 +24,8 @@ interface ProposalDeadline {
   createdAt: string;
   semesterYear?: string;
   semesterNumber?: number;
+  examStartDate?: string;
+  examEndDate?: string;
 }
 
 const UpdateProposalDeadline: React.FC = () => {
@@ -63,6 +65,27 @@ const UpdateProposalDeadline: React.FC = () => {
     enabled: !!currentSemesterId
   });
 
+  // Query for Regular Qualifying Exam deadlines
+  const { data: regularQEData } = useQuery({
+    queryKey: ["phd-regular-qe-deadlines", currentSemesterId],
+    queryFn: async () => {
+      if (!currentSemesterId) return { success: true, exams: [] };
+      const response = await api.get<{ success: boolean; exams: ProposalDeadline[] }>(
+        `/phd/staff/getAllQualifyingExamForTheSem/${currentSemesterId}`
+      );
+      // Filter out active Regular Qualifying Exam deadlines
+      const regularQEDeadlines = response.data.exams
+        .filter(exam => exam.examName === "Regular Qualifying Exam")
+        .filter(exam => new Date(exam.examEndDate || 0) > new Date());
+      
+      return { 
+        success: response.data.success, 
+        exams: regularQEDeadlines 
+      };
+    },
+    enabled: !!currentSemesterId
+  });
+
   // Mutation for updating proposal deadlines
   const proposalMutation = useMutation({
     mutationFn: async (formData: typeof proposalForm & { semesterId: number }) => {
@@ -94,6 +117,20 @@ const UpdateProposalDeadline: React.FC = () => {
     if (!proposalForm.deadline) {
       toast.error("Please provide a deadline");
       return;
+    }
+
+    // New validation check for proposal deadline
+    if (regularQEData?.exams && regularQEData.exams.length > 0) {
+      const latestRegularQE = regularQEData.exams[0];
+      const proposalDeadline = new Date(proposalForm.deadline);
+      const regularQEEndDate = new Date(latestRegularQE?.examEndDate || 0);
+
+      if (proposalDeadline <= regularQEEndDate) {
+        toast.error(
+          `Proposal deadline must be after the Regular Qualifying Exam end date (${formatDate(regularQEEndDate.toISOString())})`
+        );
+        return;
+      }
     }
     
     const formattedDeadline = new Date(proposalForm.deadline).toISOString();
@@ -172,6 +209,11 @@ const UpdateProposalDeadline: React.FC = () => {
                     onChange={(e) => setProposalForm({ ...proposalForm, deadline: e.target.value })}
                     required
                   />
+                  {regularQEData?.exams && regularQEData.exams.length > 0 && (
+                    <div className="text-sm text-gray-600 mt-2">
+                      Latest Regular QE End Date: {formatDate(regularQEData.exams[0].examEndDate || '')}
+                    </div>
+                  )}
                 </div>
                 <Button
                   type="submit"

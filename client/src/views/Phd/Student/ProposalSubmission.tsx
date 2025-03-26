@@ -70,10 +70,7 @@ export default function CombinedExamAndProposalPage() {
       enabled: examData?.status === "pass",
     });
 
-  const { 
-    data: proposalStatus, 
-    isLoading: isLoadingProposalStatus 
-  } = useQuery<ProposalStatusResponse>({
+  const { data: proposalStatus } = useQuery<ProposalStatusResponse>({
     queryKey: ["phd-proposal-status"],
     queryFn: async () => {
       const response = await api.get("/phd/student/getProposalStatus");
