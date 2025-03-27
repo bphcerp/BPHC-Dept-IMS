@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { adminSchemas } from "lib";
 import { Button } from "@/components/ui/button";
+import { isAxiosError } from "axios";
 
 interface Role {
   role: string;
@@ -99,10 +100,13 @@ const RoleDetailsView = () => {
       });
       return { previousData };
     },
-    onError: (_err, _variables, context) => {
+    onError: (err, _variables, context) => {
       // If mutation fails, use context from onMutate to rollback
       queryClient.setQueryData<Role>(["role", role], context?.previousData);
-      toast.error("An error occurred while updating role permissions.");
+      toast.error(
+        (isAxiosError(err) && (err.response?.data as string)) ??
+          "An error occurred while updating role permissions."
+      );
     },
     onSettled: () => {
       void queryClient.refetchQueries(["role", role]);
@@ -191,6 +195,7 @@ const RoleDetailsView = () => {
                       });
                     }}
                     value="disallowed"
+                    disabled={roleData?.disallowed.includes(permission)}
                     data-state={
                       roleData?.disallowed.includes(permission) ? "on" : "off"
                     }
@@ -207,6 +212,10 @@ const RoleDetailsView = () => {
                       });
                     }}
                     value="none"
+                    disabled={
+                      !roleData?.disallowed.includes(permission) &&
+                      !roleData?.allowed.includes(permission)
+                    }
                     data-state={
                       !roleData?.disallowed.includes(permission) &&
                       !roleData?.allowed.includes(permission)
@@ -226,6 +235,7 @@ const RoleDetailsView = () => {
                       });
                     }}
                     value="allowed"
+                    disabled={roleData?.allowed.includes(permission)}
                     data-state={
                       roleData?.allowed.includes(permission) ? "on" : "off"
                     }

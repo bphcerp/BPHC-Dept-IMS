@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/Auth";
 import AdminLayout from "@/layouts/Admin";
 import QpReviewLayout from "@/layouts/QpReview";
-import Admin from "@/views/Admin";
 import MembersView from "@/views/Admin/Members";
 import MemberDetailsView from "@/views/Admin/Members/[member]";
 import RolesView from "@/views/Admin/Roles";
@@ -12,9 +11,8 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
-import Phd from "@/views/Phd";
 import { allPermissions, permissions } from "lib";
-import { Computer, FileText, GraduationCap } from "lucide-react";
+import { Computer, FileText, GraduationCap, BookOpen } from "lucide-react";
 import {
   BrowserRouter,
   Navigate,
@@ -34,6 +32,15 @@ import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents"
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
+import ConferenceLayout from "@/layouts/Conference";
+import ConferenceApplyView from "@/views/Conference/Apply";
+import SubmitHandout from "@/views/Handouts/submitHandout";
+import HandoutLayout from "@/layouts/Handouts";
+import DCAMemberReviewForm from "@/views/Handouts/dca-review";
+import GetAllHandoutsDCAConvenor from "@/views/Handouts/getAllHandoutsDCAConvenor";
+import GetAllHandoutsDCA from "@/views/Handouts/getAllHandoutsDCA";
+import GetAllHandoutsFaculty from "@/views/Handouts/getAllHandoutsFaculty";
+import AssignReviewer from "@/views/Handouts/assignReviewer";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -45,7 +52,15 @@ const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("phd:")
 );
 
+const conferenceModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("conference:"));
+
 const qpReviewModulePermissions: string[] = [];
+
+const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("handout:")
+);
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -68,6 +83,18 @@ const Routing = () => {
       icon: <GraduationCap />,
       url: "/phd",
       requiredPermissions: phdModulePermissions,
+    },
+    {
+      title: "Conference Approval",
+      icon: <FileText />,
+      url: "/conference",
+      requiredPermissions: qpReviewModulePermissions,
+    },
+    {
+      title: "Course Handouts",
+      icon: <BookOpen />,
+      url: "/handout/faculty",
+      requiredPermissions: courseHandoutsPermissions,
     },
   ];
 
@@ -101,7 +128,10 @@ const Routing = () => {
           <>
             {checkAccessAnyOne(adminModulePermissions) && (
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Admin />} />
+                <Route
+                  index
+                  element={<Navigate to="/admin/members" replace={true} />}
+                />
                 {checkAccess(permissions["/admin/member/details"]) && (
                   <>
                     <Route path="members" element={<MembersView />} />
@@ -120,11 +150,20 @@ const Routing = () => {
               </Route>
             )}
 
+            {checkAccessAnyOne(conferenceModulePermissions) && (
+              <Route path="/conference" element={<ConferenceLayout />}>
+                <Route index element={<Navigate to="/conference/apply" />} />
+                <Route path="apply" element={<ConferenceApplyView />} />
+              </Route>
+            )}
+
             {checkAccessAnyOne(qpReviewModulePermissions) && (
               <Route path="/qpReview" element={<QpReviewLayout />}>
                 <Route
                   index
-                  element={<Navigate to="/qpReview/ficSubmission" />}
+                  element={
+                    <Navigate to="/qpReview/ficSubmission" replace={true} />
+                  }
                 />
                 <Route path="ficSubmission" element={<FicSubmissionView />} />
                 <Route path="dcarequests" element={<DCARequestsView />} />
@@ -136,9 +175,43 @@ const Routing = () => {
               </Route>
             )}
 
+            {checkAccessAnyOne(courseHandoutsPermissions) && (
+              <Route path="/handout" element={<HandoutLayout />}>
+                {checkAccess(permissions["/handout/submit"]) && (
+                  <Route path="submit/:id" element={<SubmitHandout />} />
+                )}
+                {checkAccess(permissions["/handout/faculty/get"]) && (
+                  <Route path="faculty" element={<GetAllHandoutsFaculty />} />
+                )}
+                {checkAccess(permissions["/handout/dca/get"]) && (
+                  <>
+                    <Route path="dca" element={<GetAllHandoutsDCA />} />
+                    {checkAccess(permissions["/handout/dca/review"]) && (
+                      <Route
+                        path="dca/review/:id"
+                        element={<DCAMemberReviewForm />}
+                      />
+                    )}
+                  </>
+                )}
+                {checkAccess(permissions["/handout/dca/get"]) &&
+                  checkAccess(permissions["/handout/dca/assignReviewer"]) && (
+                    <>
+                      <Route
+                        path="dcaconvenor"
+                        element={<GetAllHandoutsDCAConvenor />}
+                      />
+                      <Route
+                        path="assignreviewer/:id"
+                        element={<AssignReviewer />}
+                      />
+                    </>
+                  )}
+              </Route>
+            )}
+
             {checkAccessAnyOne(phdModulePermissions) && (
               <Route path="/phd" element={<PhdLayout />}>
-                <Route index element={<Phd />} />
                 {checkAccess(
                   permissions["/phd/notionalSupervisor/updateCourseDetails"]
                 ) && (
@@ -174,12 +247,13 @@ const Routing = () => {
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
                     ></Route>
+                    Handout
                   </Route>
                 )}
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
-                    
+
                     <Route
                       path="proposal-submission"
                       element={<ProposalSubmission />}
