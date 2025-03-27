@@ -5,9 +5,13 @@ import {
     roles,
     users,
 } from "@/config/db/schema/admin.ts";
+import { notInArray } from "drizzle-orm";
 import { allPermissions } from "lib";
 
-const seedData = async (email: string) => {
+const seedData = async (email?: string) => {
+    await db
+        .delete(permissions)
+        .where(notInArray(permissions.permission, Object.keys(allPermissions)));
     await db
         .insert(permissions)
         .values(
@@ -25,26 +29,25 @@ const seedData = async (email: string) => {
         })
         .onConflictDoNothing()
         .returning();
-    await db
-        .insert(users)
-        .values({
-            email,
-            type: "faculty",
-            roles: [insertedRoles[0]?.id ?? 1],
-        })
-        .onConflictDoNothing();
-    await db
-        .insert(faculty)
-        .values({
-            email,
-        })
-        .onConflictDoNothing();
+    if (email) {
+        await db
+            .insert(users)
+            .values({
+                email,
+                type: "faculty",
+                roles: [insertedRoles[0]?.id ?? 1],
+            })
+            .onConflictDoNothing();
+        await db
+            .insert(faculty)
+            .values({
+                email,
+            })
+            .onConflictDoNothing();
+    }
 };
 
 const args = process.argv.slice(2);
-if (args.length === 0) {
-    console.error("Please provide an email address");
-} else {
-    console.log("Seeding data...");
-    await seedData(args[0]);
-}
+
+console.log("Seeding data...");
+await seedData(args.length ? args[0] : undefined);

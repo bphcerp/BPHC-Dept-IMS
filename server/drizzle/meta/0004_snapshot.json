@@ -1,6 +1,6 @@
 {
-  "id": "23256d2d-4843-4bec-993e-ca2dc49b961e",
-  "prevId": "4078436b-10a6-4789-a317-e2215dc0e6e5",
+  "id": "9f4e3638-ac53-46a6-89fa-8e6b6e563c71",
+  "prevId": "c2a47733-13e8-48f2-ae54-f8af2f14cdab",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1745,203 +1745,114 @@
           "primaryKey": true,
           "notNull": true
         },
-        "application_id": {
-          "name": "application_id",
-          "type": "integer",
+        "ic_email": {
+          "name": "ic_email",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "course_code": {
-          "name": "course_code",
-          "type": "integer",
+        "reviewer_email": {
+          "name": "reviewer_email",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "course_name": {
           "name": "course_name",
-          "type": "integer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "course_code": {
+          "name": "course_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scope_and_objective": {
+          "name": "scope_and_objective",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "course_strength": {
-          "name": "course_strength",
-          "type": "integer",
+        "text_book_prescribed": {
+          "name": "text_book_prescribed",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "open_book": {
-          "name": "open_book",
-          "type": "integer",
+        "lecturewise_plan_learning_objective": {
+          "name": "lecturewise_plan_learning_objective",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "closed_book": {
-          "name": "closed_book",
-          "type": "integer",
+        "lecturewise_plan_course_topics": {
+          "name": "lecturewise_plan_course_topics",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "mid_sem": {
-          "name": "mid_sem",
-          "type": "integer",
+        "number_of_lp": {
+          "name": "number_of_lp",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "compre": {
-          "name": "compre",
-          "type": "integer",
+        "evaluation_scheme": {
+          "name": "evaluation_scheme",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
-        "num_components": {
-          "name": "num_components",
-          "type": "integer",
+        "status": {
+          "name": "status",
+          "type": "handout_status_enum",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
-        },
-        "frequency": {
-          "name": "frequency",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'notsubmitted'"
         },
         "handout_file_path": {
           "name": "handout_file_path",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "course_handout_requests_application_id_applications_id_fk": {
-          "name": "course_handout_requests_application_id_applications_id_fk",
+        "course_handout_requests_ic_email_users_email_fk": {
+          "name": "course_handout_requests_ic_email_users_email_fk",
           "tableFrom": "course_handout_requests",
-          "tableTo": "applications",
+          "tableTo": "users",
           "columnsFrom": [
-            "application_id"
+            "ic_email"
           ],
           "columnsTo": [
-            "id"
+            "email"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "course_handout_requests_course_code_text_fields_id_fk": {
-          "name": "course_handout_requests_course_code_text_fields_id_fk",
+        "course_handout_requests_reviewer_email_users_email_fk": {
+          "name": "course_handout_requests_reviewer_email_users_email_fk",
           "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
+          "tableTo": "users",
           "columnsFrom": [
-            "course_code"
+            "reviewer_email"
           ],
           "columnsTo": [
-            "id"
+            "email"
           ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_course_name_text_fields_id_fk": {
-          "name": "course_handout_requests_course_name_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "course_name"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_course_strength_text_fields_id_fk": {
-          "name": "course_handout_requests_course_strength_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "course_strength"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_open_book_text_fields_id_fk": {
-          "name": "course_handout_requests_open_book_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "open_book"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_closed_book_text_fields_id_fk": {
-          "name": "course_handout_requests_closed_book_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "closed_book"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_mid_sem_text_fields_id_fk": {
-          "name": "course_handout_requests_mid_sem_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "mid_sem"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_compre_text_fields_id_fk": {
-          "name": "course_handout_requests_compre_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "compre"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_num_components_text_fields_id_fk": {
-          "name": "course_handout_requests_num_components_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "num_components"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_frequency_text_fields_id_fk": {
-          "name": "course_handout_requests_frequency_text_fields_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "frequency"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "course_handout_requests_handout_file_path_file_fields_id_fk": {
@@ -2303,6 +2214,292 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.qp_review_requests": {
+      "name": "qp_review_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dca_member": {
+          "name": "dca_member",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_no": {
+          "name": "course_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "course_name": {
+          "name": "course_name",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fic": {
+          "name": "fic",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fic_deadline": {
+          "name": "fic_deadline",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mid_sem": {
+          "name": "mid_sem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mid_sem_sol": {
+          "name": "mid_sem_sol",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compre": {
+          "name": "compre",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compre_sol": {
+          "name": "compre_sol",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "documents_uploaded": {
+          "name": "documents_uploaded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "faculty_1": {
+          "name": "faculty_1",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "faculty_2": {
+          "name": "faculty_2",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_1": {
+          "name": "review_1",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_2": {
+          "name": "review_2",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_deadline": {
+          "name": "review_deadline",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "qp_review_requests_application_id_applications_id_fk": {
+          "name": "qp_review_requests_application_id_applications_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_dca_member_text_fields_id_fk": {
+          "name": "qp_review_requests_dca_member_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "dca_member"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_course_no_text_fields_id_fk": {
+          "name": "qp_review_requests_course_no_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "course_no"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_course_name_text_fields_id_fk": {
+          "name": "qp_review_requests_course_name_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "course_name"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_fic_text_fields_id_fk": {
+          "name": "qp_review_requests_fic_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "fic"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_fic_deadline_date_fields_id_fk": {
+          "name": "qp_review_requests_fic_deadline_date_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "date_fields",
+          "columnsFrom": [
+            "fic_deadline"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_mid_sem_file_fields_id_fk": {
+          "name": "qp_review_requests_mid_sem_file_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "file_fields",
+          "columnsFrom": [
+            "mid_sem"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_mid_sem_sol_file_fields_id_fk": {
+          "name": "qp_review_requests_mid_sem_sol_file_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "file_fields",
+          "columnsFrom": [
+            "mid_sem_sol"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_compre_file_fields_id_fk": {
+          "name": "qp_review_requests_compre_file_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "file_fields",
+          "columnsFrom": [
+            "compre"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_compre_sol_file_fields_id_fk": {
+          "name": "qp_review_requests_compre_sol_file_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "file_fields",
+          "columnsFrom": [
+            "compre_sol"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_faculty_1_text_fields_id_fk": {
+          "name": "qp_review_requests_faculty_1_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "faculty_1"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_faculty_2_text_fields_id_fk": {
+          "name": "qp_review_requests_faculty_2_text_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "text_fields",
+          "columnsFrom": [
+            "faculty_2"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_review_deadline_date_fields_id_fk": {
+          "name": "qp_review_requests_review_deadline_date_fields_id_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "date_fields",
+          "columnsFrom": [
+            "review_deadline"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -2336,6 +2533,16 @@
         "SFC Meeting",
         "Project Info",
         "Patent Info"
+      ]
+    },
+    "public.handout_status_enum": {
+      "name": "handout_status_enum",
+      "schema": "public",
+      "values": [
+        "pending",
+        "approved",
+        "rejected",
+        "notsubmitted"
       ]
     }
   },

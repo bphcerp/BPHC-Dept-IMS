@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("dca-member-create-handout-review"),
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 

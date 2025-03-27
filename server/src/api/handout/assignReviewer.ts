@@ -10,8 +10,8 @@ import { handoutSchemas } from "lib";
 const router = express.Router();
 
 router.post(
-    "/:id",
-    checkAccess("dca-assign-reviewers"),
+    "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.assignReviewerBodySchema.parse(req.body);
 

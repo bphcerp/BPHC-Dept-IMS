@@ -9,10 +9,10 @@ import assignReviewer from "./assignReviewer.ts";
 const router = express.Router();
 
 router.use("/assignIC", assignIC);
-router.use("/getAllPendingHandoutsDCA", getAllPendingHandoutsDCA);
-router.use("/submitHandout", submitHandout);
-router.use("/getAllHandoutsFaculty", getAllHandoutsFaculty);
-router.use("/createDCAMemberReview", createDCAMemberReview);
-router.use("/assignReviewer", assignReviewer);
+router.use("/dca/get", getAllPendingHandoutsDCA);
+router.use("/faculty/submit", submitHandout);
+router.use("/faculty/get", getAllHandoutsFaculty);
+router.use("/dca/review", createDCAMemberReview);
+router.use("/dca/assignReviewer", assignReviewer);
 
 export default router;

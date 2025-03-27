@@ -7,6 +7,9 @@ export const deactivateMemberBodySchema = z.object({
 });
 export type DeactivateMemberBody = z.infer<typeof deactivateMemberBodySchema>;
 
+export const deleteMemberBodySchema = deactivateMemberBodySchema;
+export type DeleteMemberBody = z.infer<typeof deleteMemberBodySchema>;
+
 export const memberDetailsQuerySchema = z.object({
     email: z.string().email(),
 });

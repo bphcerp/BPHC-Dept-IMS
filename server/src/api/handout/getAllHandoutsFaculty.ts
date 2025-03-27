@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("faculty-get-all-handouts"),
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 
@@ -29,6 +29,8 @@ router.get(
                 courseName: handout.courseName,
                 courseCode: handout.courseCode,
                 reviewerName: handout.reviewer?.faculty.name,
+                submittedOn: handout.createdAt.toISOString(),
+                status: handout.status,
             };
         });
 

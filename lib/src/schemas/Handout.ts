@@ -15,6 +15,8 @@ export const handoutStatuses = [
     "notsubmitted",
 ] as const;
 
+export type HandoutStatus = typeof handoutStatuses[number];
+
 export const createHandoutDCAMemberReviewBodySchema = z.object({
     handoutId: z.coerce.number(),
     scopeAndObjective: z.coerce.boolean(),
@@ -23,10 +25,12 @@ export const createHandoutDCAMemberReviewBodySchema = z.object({
     lecturewisePlanCourseTopics: z.coerce.boolean(),
     numberOfLP: z.coerce.boolean(),
     evaluationScheme: z.coerce.boolean(),
-})
+});
 
-export type CreateHandoutDCAMemberReviewBody = z.infer<typeof createHandoutDCAMemberReviewBodySchema>;
-export const submitHandoutParamsSchema = z.object({
+export type CreateHandoutDCAMemberReviewBody = z.infer<
+    typeof createHandoutDCAMemberReviewBodySchema
+>;
+export const submitHandoutQuerySchema = z.object({
     id: z
         .string()
         .nonempty()
@@ -35,7 +39,7 @@ export const submitHandoutParamsSchema = z.object({
         }),
 });
 
-export type SubmitHandoutParams = z.infer<typeof submitHandoutParamsSchema>;
+export type SubmitHandoutParams = z.infer<typeof submitHandoutQuerySchema>;
 
 export const assignReviewerBodySchema = z.object({
     id: z
