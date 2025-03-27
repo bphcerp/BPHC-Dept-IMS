@@ -18,4 +18,10 @@ export const addNewPatentBodySchema = z
         path: ["grant_date"],
     });
 
+export const patentsSchemas = {
+    getAllPatentsQuerySchema: z.object({
+        inventor: z.string().optional(), // Optional query parameter for filtering by inventor name
+    }),
+};
+
 export type AddNewPatentBody = z.infer<typeof addNewPatentBodySchema>;
