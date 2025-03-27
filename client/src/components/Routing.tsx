@@ -41,6 +41,7 @@ import GetAllHandoutsDCAConvenor from "@/views/Handouts/getAllHandoutsDCAConveno
 import GetAllHandoutsDCA from "@/views/Handouts/getAllHandoutsDCA";
 import GetAllHandoutsFaculty from "@/views/Handouts/getAllHandoutsFaculty";
 import AssignReviewer from "@/views/Handouts/assignReviewer";
+import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -261,6 +262,10 @@ const Routing = () => {
                     <Route
                       path="update-deadlines"
                       element={<UpdateDeadlinesPage />}
+                    />
+                    <Route
+                      path="update-subareas"
+                      element={<UpdateSubAreasPage />}
                     />
                   </Route>
                 )}
