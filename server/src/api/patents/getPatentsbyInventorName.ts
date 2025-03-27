@@ -9,66 +9,34 @@ import { patentsSchemas } from '@/validations/patentsSchemas.ts';
 const router = express.Router();
 
 router.get(
-    '/:name/patents',
-    checkAccess('patents:view_by_inventor'),
+    "/:name/patents",
     asyncHandler(async (req, res, next) => {
-        // Validate request parameters using Zod
-        const parsedParams = patentsSchemas.getPatentsByInventorParamsSchema.safeParse(req.params);
-        if (!parsedParams.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, 'Invalid inventor name'));
+        // Validate request parameters
+        const parsed = patentsSchemas.getPatentsByInventorParamsSchema.safeParse(req.params);
+        if (!parsed.success) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, parsed.error.errors));
         }
 
-        const { name } = parsedParams.data;
+        const { name } = parsed.data;
 
-        // Step 1: Retrieve all patents where the given inventor is associated
+        // Find the inventor
         const inventorData = await db.query.users.findFirst({
             where: (user, { eq }) => eq(user.name, name),
-            columns: { id: true }
+            columns: { id: true },
         });
 
         if (!inventorData) {
-            return next(new HttpError(HttpCode.NOT_FOUND, 'Inventor not found'));
+            return res.status(404).json({ error: "Inventor not found" });
         }
 
         const inventorId = inventorData.id;
 
-        // Step 2: Get all patent IDs linked to this inventor
-        const inventorPatents = await db.query.patentInventors.findMany({
-            where: (patentInventor, { eq }) => eq(patentInventor.user_id, inventorId),
-            columns: { patent_id: true }
+        // Find patents associated with this inventor
+        const inventorPatents = await db.query.patents.findMany({
+            where: (patent, { like }) => like(patent.inventorsName, `%${name}%`),
         });
 
-        if (!inventorPatents.length) {
-            return res.status(200).json([]); // No patents found
-        }
-
-        const patentIds = inventorPatents.map((p) => p.patent_id);
-
-        // Step 3: Fetch all patents where patent_id matches
-        const patentData = await db.query.patents.findMany({
-            where: (patent, { inArray }) => inArray(patent.patent_id, patentIds)
-        });
-
-        // Step 4: Fetch inventor details for each patent
-        const patentsWithInventors = await Promise.all(
-            patentData.map(async (patent) => {
-                const associatedInventors = await db.query.patentInventors.findMany({
-                    where: (pi, { eq }) => eq(pi.patent_id, patent.patent_id),
-                    columns: { user_id: true }
-                });
-
-                const inventorIds = associatedInventors.map((inv) => inv.user_id);
-
-                const inventorDetails = await db.query.users.findMany({
-                    where: (user, { inArray }) => inArray(user.id, inventorIds),
-                    columns: { name: true, email: true }
-                });
-
-                return { ...patent, inventors: inventorDetails };
-            })
-        );
-
-        res.status(200).json(patentsWithInventors);
+        res.status(200).json(inventorPatents);
     })
 );
 
