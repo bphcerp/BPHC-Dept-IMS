@@ -5,7 +5,6 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
 import { eq, and, gt } from "drizzle-orm";
-import assert from "assert";
 import {phdSchemas} from "lib"
 
 const router = express.Router();
@@ -14,7 +13,6 @@ export default router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        assert(req.body);
         const parsed = phdSchemas.updateQualifyingExamSchema.parse(req.body);
         const { semesterId, examName, examStartDate, examEndDate, deadline } = parsed;
 

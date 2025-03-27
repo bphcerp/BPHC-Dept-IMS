@@ -6,6 +6,7 @@ import { phd } from "@/config/db/schema/admin.ts";
 import { phdQualifyingExams, phdSemesters } from "@/config/db/schema/phd.ts";
 import { sql, eq, desc, gte,and } from "drizzle-orm";
 import z from "zod";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ const generateFormSchema = z.object({
 router.get(
   "/",
   checkAccess(),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
     // Get current date
     const currentDate = new Date();
     
@@ -44,10 +45,11 @@ router.get(
       .limit(1);
 
       if (!activeExam.length) {
-        res.status(404).json({
-          success: false,
-          message: "No active qualifying exam deadline found",
-        });
+        return next(new HttpError(
+          HttpCode.NOT_FOUND, 
+          "No active qualifying exam deadline found",
+          "Please check the current semester's exam schedule"
+        ));
       }
 
     const { deadline } = activeExam[0];
