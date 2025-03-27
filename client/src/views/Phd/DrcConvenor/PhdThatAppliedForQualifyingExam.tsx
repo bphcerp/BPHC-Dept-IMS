@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -67,6 +67,7 @@ interface IExamStatus {
   email: string;
   qualifyingExam1: boolean | null;
   qualifyingExam2: boolean | null;
+  numberOfQeApplication: number;
   qualifyingExam1StartDate: string | null;
   qualifyingExam2StartDate: string | null;
   qualifyingExam1EndDate: string | null;
@@ -100,6 +101,7 @@ interface IUpdateExamDate {
   qualificationDate: string;
 }
 
+// Utility functions
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString("en-US", {
     month: "short",
@@ -120,7 +122,10 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
   const [examResults, setExamResults] = useState<IUpdateExamResult[]>([]);
   const [examDates, setExamDates] = useState<IUpdateExamDate[]>([]);
   const [studentStatus, setStudentStatus] = useState<
-    Record<string, boolean | null>
+    Record<string, { 
+      status: boolean | null, 
+      numberOfQeApplication: number 
+    }>
   >({});
   const [studentDates, setStudentDates] = useState<
     Record<string, string | null>
@@ -146,10 +151,13 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
   });
 
   // Fetch exam status data
-  const { data: examStatusData } = useQuery({
+  const { data: examStatusData } = useQuery<{ 
+    success: boolean; 
+    examStatuses: IExamStatus[] 
+  }>({
     queryKey: ["phd-exam-statuses"],
     queryFn: async () => {
-      const response = await api.get<IExamStatusResponse>(
+      const response = await api.get(
         "/phd/drcMember/getPhdExamStatus"
       );
       return response.data;
@@ -171,34 +179,36 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Initialize student status and dates based on API data
+  // Initialize student status based on API data
   useEffect(() => {
     if (examStatusData?.examStatuses) {
-      const newStatusMap: Record<string, boolean | null> = {};
+      const newStatusMap: Record<string, { 
+        status: boolean | null, 
+        numberOfQeApplication: number 
+      }> = {};
 
       examStatusData.examStatuses.forEach((status) => {
-        // Determine exam status based on both start and end dates
         let examStatus: boolean | null = null;
 
-        // Check Exam 2 first (if both start and end dates exist)
-        if (status.qualifyingExam2StartDate && status.qualifyingExam2EndDate) {
+        // Determine exam status based on number of QE applications
+        if (status.numberOfQeApplication === 1) {
+          // For first QE application
+          examStatus = status.qualifyingExam1;
+        } else if (status.numberOfQeApplication === 2) {
+          // For second QE application
           examStatus = status.qualifyingExam2;
         }
-        // If Exam 2 not complete, check Exam 1
-        else if (
-          status.qualifyingExam1StartDate &&
-          status.qualifyingExam1EndDate
-        ) {
-          examStatus = status.qualifyingExam1;
-        }
 
-        newStatusMap[status.email] = examStatus;
+        newStatusMap[status.email] = {
+          status: examStatus,
+          numberOfQeApplication: status.numberOfQeApplication
+        };
       });
 
       setStudentStatus(newStatusMap);
     }
 
-    // Handle qualification dates (unchanged)
+    // Handle qualification dates
     if (qualificationDatesData?.qualificationDates) {
       const newDatesMap: Record<string, string | null> = {};
 
@@ -211,7 +221,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
   }, [examStatusData, qualificationDatesData]);
 
   // Process data to include status and dates in student objects
-  const processedData = React.useMemo(() => {
+  const processedData = useMemo(() => {
     if (!data?.semestersWithExams) return null;
 
     const processed = {
@@ -220,12 +230,14 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
         ...semester,
         exams: semester.exams.map((exam) => ({
           ...exam,
-          students: exam.students.map((student) => ({
-            ...student,
-            examStatus:
-              studentStatus[student.email] ?? student.examStatus ?? null,
-            examDate: studentDates[student.email] ?? student.examDate ?? null,
-          })),
+          students: exam.students.map((student) => {
+            const studentStatusInfo = studentStatus[student.email];
+            return {
+              ...student,
+              examStatus: studentStatusInfo?.status ?? null,
+              examDate: studentDates[student.email] ?? student.examDate ?? null,
+            };
+          }),
         })),
       })),
     };
@@ -233,20 +245,10 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     return processed;
   }, [data, studentStatus, studentDates]);
 
+  // Mutation for updating exam results
   const updateExamResultsMutation = useMutation({
     mutationFn: async () => {
-      return await api.post<{
-        updatedStudents: (
-          | {
-              qualifyingExam1: boolean;
-              email: string;
-            }
-          | {
-              qualifyingExam2: boolean;
-              email: string;
-            }
-        )[];
-      }>(
+      return await api.post(
         "/phd/drcMember/updateQualifyingExamResultsOfAllStudents",
         examResults
       );
@@ -258,11 +260,17 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
       if (response.data.updatedStudents) {
         const newStatusMap = { ...studentStatus };
 
-        response.data.updatedStudents.forEach((student) => {
-          if ("qualifyingExam1" in student) {
-            newStatusMap[student.email] = student.qualifyingExam1;
-          } else if ("qualifyingExam2" in student) {
-            newStatusMap[student.email] = student.qualifyingExam2;
+        response.data.updatedStudents.forEach((student:any) => {
+          const existingRecord = newStatusMap[student.email];
+          
+          // Update the status based on existing record
+          if (existingRecord) {
+            newStatusMap[student.email] = {
+              ...existingRecord,
+              status: 'qualifyingExam1' in student 
+                ? student.qualifyingExam1 
+                : student.qualifyingExam2
+            };
           }
         });
 
@@ -277,6 +285,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     },
   });
 
+  // Mutation for updating exam dates
   const updateExamDatesMutation = useMutation({
     mutationFn: async () => {
       // Convert the date string to a valid ISO string format before sending
@@ -286,12 +295,10 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
         qualificationDate: new Date(item.qualificationDate).toISOString(),
       }));
 
-      return await api.patch<{
-        updatedStudents: {
-          email: string;
-          qualificationDate: Date;
-        }[];
-      }>("/phd/drcMember/updatePassingDatesOfPhd", formattedDates);
+      return await api.patch(
+        "/phd/drcMember/updatePassingDatesOfPhd",
+        formattedDates
+      );
     },
     onSuccess: (response) => {
       toast.success("Qualification dates updated successfully");
@@ -300,7 +307,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
       if (response.data.updatedStudents) {
         const newDatesMap = { ...studentDates };
 
-        response.data.updatedStudents.forEach((student) => {
+        response.data.updatedStudents.forEach((student : any) => {
           if (student.qualificationDate) {
             newDatesMap[student.email] =
               student.qualificationDate.toISOString();
@@ -321,10 +328,12 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     },
   });
 
+  // Loading state
   if (isLoading) {
     return <LoadingSpinner className="mx-auto mt-10" />;
   }
 
+  // No data state
   if (!processedData?.success || !processedData.semestersWithExams.length) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
@@ -342,18 +351,24 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     );
   }
 
+  // Select current semester
   const currentSemester =
     processedData.semestersWithExams.find(
       (sem) => sem.id === selectedSemester
     ) || processedData.semestersWithExams[0];
 
+  // Handlers for status and date changes
   const handleStatusChange = (email: string, status: string) => {
     const ifPass = status === "pass";
+    const numberOfQeApplication = studentStatus[email]?.numberOfQeApplication ?? 1;
 
     // Update local state immediately for UI feedback
     setStudentStatus((prev) => ({
       ...prev,
-      [email]: ifPass,
+      [email]: {
+        status: ifPass,
+        numberOfQeApplication
+      }
     }));
 
     // Add to changes that will be sent to server
@@ -384,6 +399,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     });
   };
 
+  // Save changes function
   const saveChanges = () => {
     if (examResults.length > 0) {
       updateExamResultsMutation.mutate();
@@ -515,10 +531,10 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                               <TableCell>
                                 <Select
                                   value={
-                                    student.examStatus === true
-                                      ? "pass"
-                                      : student.examStatus === false
-                                        ? "fail"
+                                    student.examStatus === true 
+                                      ? "pass" 
+                                      : student.examStatus === false 
+                                        ? "fail" 
                                         : ""
                                   }
                                   onValueChange={(value) =>

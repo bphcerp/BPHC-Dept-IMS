@@ -47,26 +47,18 @@ router.post(
             );
             if (!existingStudent) continue;
 
-            let updateData:
-                | { qualifyingExam1: boolean }
-                | { qualifyingExam2: boolean };
+            let updateData: { qualifyingExam1?: boolean; qualifyingExam2?: boolean } = {};
 
-            // Determine which exam to update based on current statuses
-            if (existingStudent.qualifyingExam1 === null) {
-                // Update exam 1 if it's not set yet
-                updateData = {
-                    qualifyingExam1: student.ifPass,
-                };
-            } else if (existingStudent.qualifyingExam2 === null) {
-                // Update exam 2 if exam 1 is set but exam 2 isn't
-                updateData = {
-                    qualifyingExam2: student.ifPass,
-                };
+            // Determine which exam to update based on numberOfQeApplication
+            if (existingStudent.numberOfQeApplication === 1) {
+                // For first QE application, update exam 1
+                updateData.qualifyingExam1 = student.ifPass;
+            } else if (existingStudent.numberOfQeApplication === 2) {
+                // For second QE application, update exam 2
+                updateData.qualifyingExam2 = student.ifPass;
             } else {
-                // If both are already set, update exam 2 (assuming this is an update)
-                updateData = {
-                    qualifyingExam2: student.ifPass,
-                };
+                // If no valid number of applications, skip this student
+                continue;
             }
 
             updates.push(
@@ -78,7 +70,10 @@ router.post(
 
             updatedStudents.push({
                 email: student.email,
-                ...updateData,
+                ...(updateData.qualifyingExam1 !== undefined 
+                    ? { qualifyingExam1: updateData.qualifyingExam1 } 
+                    : { qualifyingExam2: updateData.qualifyingExam2 }
+                ),
             });
         }
 
