@@ -1,13 +1,27 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+// Interface for PhD Sub Areas
+interface PhdSubArea {
+  id: number;
+  name: string;
+  areaName: string;
+}
 
 interface Exam {
   id: number;
@@ -24,6 +38,11 @@ interface BackendResponse {
   exams: Exam[];
 }
 
+interface SubAreasResponse {
+  success: boolean;
+  subAreas: PhdSubArea[];
+}
+
 export default function ExamForm() {
   const [qualifyingArea1, setQualifyingArea1] = useState("");
   const [qualifyingArea2, setQualifyingArea2] = useState("");
@@ -34,14 +53,26 @@ export default function ExamForm() {
   const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
   const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
   const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
-  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] =
-    useState(false);
+  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] = useState(false);
+
+  // Fetch sub-areas
+  const { 
+    data: subAreasData, 
+    isLoading: isSubAreasLoading, 
+  } = useQuery<SubAreasResponse, Error>({
+    queryKey: ["phd-sub-areas"],
+    queryFn: async () => {
+      const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+  });
 
   // Fetch exam deadline and dates
-  const { data: examData, isLoading: isExamDataLoading } = useQuery<
-    BackendResponse,
-    Error
-  >({
+  const { 
+    data: examData, 
+    isLoading: isExamDataLoading 
+  } = useQuery<BackendResponse, Error>({
     queryKey: ["get-qualifying-exam-deadline"],
     queryFn: async (): Promise<BackendResponse> => {
       try {
@@ -108,12 +139,16 @@ export default function ExamForm() {
       !file ||
       !qualifyingArea1 ||
       !qualifyingArea2 ||
+      qualifyingArea1 === qualifyingArea2 || // Ensure areas are different
       !generalInfoChecked ||
       !academicInfoChecked ||
       !anticipatedPlanChecked ||
       !qualifyingExamDetailsChecked
     ) {
-      toast.error("All fields and checkboxes are required");
+      toast.error(qualifyingArea1 === qualifyingArea2 
+        ? "Please select two different research sub-areas" 
+        : "All fields and checkboxes are required"
+      );
       return;
     }
 
@@ -125,14 +160,6 @@ export default function ExamForm() {
     formData.append("qualifyingArea2", qualifyingArea2);
     formData.append("examStartDate", selectedExam.examStartDate);
     formData.append("examEndDate", selectedExam.examEndDate);
-
-    console.log("Form Data:", {
-      qualificationForm: file.name,
-      qualifyingArea1,
-      qualifyingArea2,
-      examStartDate: selectedExam.examStartDate,
-      examEndDate: selectedExam.examEndDate,
-    });
 
     submitMutation.mutate(formData);
   };
@@ -163,6 +190,11 @@ export default function ExamForm() {
     );
   };
 
+  // Get unique areas to group sub-areas
+  const uniqueAreas = subAreasData 
+    ? [...new Set(subAreasData.subAreas.map(area => area.areaName))]
+    : [];
+
   return (
     <Card className="mx-auto max-w-2xl">
       <CardContent className="space-y-4 pt-6">
@@ -172,25 +204,66 @@ export default function ExamForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea1">Primary Research Area *</Label>
-            <Input
-              id="qualifyingArea1"
+            <Label htmlFor="qualifyingArea1">Primary Research Sub-Area *</Label>
+            <Select 
               value={qualifyingArea1}
-              onChange={(e) => setQualifyingArea1(e.target.value)}
-              placeholder="Enter research area 1"
-              required
-            />
+              onValueChange={setQualifyingArea1}
+              disabled={isSubAreasLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select primary research sub-area" />
+              </SelectTrigger>
+              <SelectContent>
+                {uniqueAreas.map((area) => (
+                  <optgroup key={area} label={area}>
+                    {subAreasData?.subAreas
+                      .filter(subArea => subArea.areaName === area)
+                      .map((subArea) => (
+                        <SelectItem 
+                          key={subArea.id} 
+                          value={subArea.name}
+                        >
+                          {subArea.name}
+                        </SelectItem>
+                      ))
+                    }
+                  </optgroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea2">Secondary Research Area *</Label>
-            <Input
-              id="qualifyingArea2"
+            <Label htmlFor="qualifyingArea2">Secondary Research Sub-Area *</Label>
+            <Select 
               value={qualifyingArea2}
-              onChange={(e) => setQualifyingArea2(e.target.value)}
-              placeholder="Enter research area 2"
-              required
-            />
+              onValueChange={setQualifyingArea2}
+              disabled={isSubAreasLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select secondary research sub-area" />
+              </SelectTrigger>
+              <SelectContent>
+                {uniqueAreas.map((area) => (
+                  <optgroup key={area} label={area}>
+                    {subAreasData?.subAreas
+                      .filter(subArea => 
+                        subArea.areaName === area && 
+                        subArea.name !== qualifyingArea1
+                      )
+                      .map((subArea) => (
+                        <SelectItem 
+                          key={subArea.id} 
+                          value={subArea.name}
+                        >
+                          {subArea.name}
+                        </SelectItem>
+                      ))
+                    }
+                  </optgroup>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-3">
@@ -223,7 +296,7 @@ export default function ExamForm() {
             )}
           </div>
 
-          {/* New Checkbox Sections */}
+          {/* Checkbox Sections (Unchanged from previous version) */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <input
@@ -296,7 +369,11 @@ export default function ExamForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={submitMutation.isLoading || isExamDataLoading}
+            disabled={
+              submitMutation.isLoading || 
+              isExamDataLoading || 
+              isSubAreasLoading
+            }
           >
             {submitMutation.isLoading ? "Submitting..." : "Submit Application"}
           </Button>
