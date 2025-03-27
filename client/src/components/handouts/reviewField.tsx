@@ -1,11 +1,12 @@
+import { HandoutReviewFormValues } from "@/views/Handouts/dca-review";
 import React from "react";
 import { useController, Control } from "react-hook-form";
 
 interface ReviewFieldProps {
-  name: string;
+  name: keyof HandoutReviewFormValues;
   label: string;
   description: string;
-  control: Control<any>;
+  control: Control<HandoutReviewFormValues>;
 }
 
 const ReviewField: React.FC<ReviewFieldProps> = ({
@@ -33,7 +34,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
       <input
         id={name}
         type="checkbox"
-        checked={value}
+        checked={!!value}
         onChange={(e) => onChange(e.target.checked)}
         className="h-5 w-5"
       />

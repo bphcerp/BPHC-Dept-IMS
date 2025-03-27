@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface Semester {
@@ -20,7 +26,7 @@ interface Semester {
 
 const UpdateSemesterDates: React.FC = () => {
   const queryClient = useQueryClient();
-  
+
   // Form states
   const [semesterForm, setSemesterForm] = useState({
     year: new Date().getFullYear().toString(),
@@ -33,7 +39,10 @@ const UpdateSemesterDates: React.FC = () => {
   const { data: semestersData, isLoading: isLoadingSemesters } = useQuery({
     queryKey: ["phd-semesters"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; semesters: Semester[] }>("/phd/staff/getAllSem");
+      const response = await api.get<{
+        success: boolean;
+        semesters: Semester[];
+      }>("/phd/staff/getAllSem");
       return response.data;
     },
   });
@@ -41,12 +50,15 @@ const UpdateSemesterDates: React.FC = () => {
   // Create/update semester mutation
   const semesterMutation = useMutation({
     mutationFn: async (formData: typeof semesterForm) => {
-      const response = await api.post("/phd/staff/updateSemesterDates", formData);
+      const response = await api.post<{ semester: Semester }>(
+        "/phd/staff/updateSemesterDates",
+        formData
+      );
       return response.data;
     },
     onSuccess: () => {
       toast.success("Semester saved successfully");
-      queryClient.invalidateQueries({ queryKey: ["phd-semesters"] });
+      void queryClient.invalidateQueries({ queryKey: ["phd-semesters"] });
       setSemesterForm({
         year: new Date().getFullYear().toString(),
         semesterNumber: 1,
@@ -71,7 +83,9 @@ const UpdateSemesterDates: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-center text-3xl font-bold">PhD Program Semester Management</h1>
+      <h1 className="mb-8 text-center text-3xl font-bold">
+        PhD Program Semester Management
+      </h1>
 
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Create/Update Semester */}
@@ -88,7 +102,9 @@ const UpdateSemesterDates: React.FC = () => {
                     id="year"
                     type="text"
                     value={semesterForm.year}
-                    onChange={(e) => setSemesterForm({ ...semesterForm, year: e.target.value })}
+                    onChange={(e) =>
+                      setSemesterForm({ ...semesterForm, year: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -96,7 +112,12 @@ const UpdateSemesterDates: React.FC = () => {
                   <Label htmlFor="semesterNumber">Semester Number</Label>
                   <Select
                     value={semesterForm.semesterNumber.toString()}
-                    onValueChange={(value) => setSemesterForm({ ...semesterForm, semesterNumber: parseInt(value) })}
+                    onValueChange={(value) =>
+                      setSemesterForm({
+                        ...semesterForm,
+                        semesterNumber: parseInt(value),
+                      })
+                    }
                   >
                     <SelectTrigger id="semesterNumber">
                       <SelectValue placeholder="Select semester" />
@@ -113,7 +134,12 @@ const UpdateSemesterDates: React.FC = () => {
                     id="startDate"
                     type="date"
                     value={semesterForm.startDate}
-                    onChange={(e) => setSemesterForm({ ...semesterForm, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setSemesterForm({
+                        ...semesterForm,
+                        startDate: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
@@ -123,7 +149,12 @@ const UpdateSemesterDates: React.FC = () => {
                     id="endDate"
                     type="date"
                     value={semesterForm.endDate}
-                    onChange={(e) => setSemesterForm({ ...semesterForm, endDate: e.target.value })}
+                    onChange={(e) =>
+                      setSemesterForm({
+                        ...semesterForm,
+                        endDate: e.target.value,
+                      })
+                    }
                     required
                   />
                 </div>
@@ -133,7 +164,11 @@ const UpdateSemesterDates: React.FC = () => {
                 disabled={semesterMutation.isLoading}
                 className="bg-blue-600 text-white hover:bg-blue-700"
               >
-                {semesterMutation.isLoading ? <LoadingSpinner className="h-5 w-5" /> : "Save Semester"}
+                {semesterMutation.isLoading ? (
+                  <LoadingSpinner className="h-5 w-5" />
+                ) : (
+                  "Save Semester"
+                )}
               </Button>
             </form>
           </CardContent>
@@ -164,16 +199,30 @@ const UpdateSemesterDates: React.FC = () => {
                     {semestersData.semesters.map((semester) => (
                       <tr key={semester.id}>
                         <td className="border px-4 py-2">{semester.year}</td>
-                        <td className="border px-4 py-2">Semester {semester.semesterNumber}</td>
-                        <td className="border px-4 py-2">{new Date(semester.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                        <td className="border px-4 py-2">{new Date(semester.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                        <td className="border px-4 py-2">
+                          Semester {semester.semesterNumber}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {new Date(semester.startDate).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric", year: "numeric" }
+                          )}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {new Date(semester.endDate).toLocaleDateString(
+                            "en-US",
+                            { month: "short", day: "numeric", year: "numeric" }
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-center py-4">No semesters found. Create one above.</p>
+              <p className="py-4 text-center">
+                No semesters found. Create one above.
+              </p>
             )}
           </CardContent>
         </Card>

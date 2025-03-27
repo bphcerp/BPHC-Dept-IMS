@@ -12,7 +12,7 @@ const router = express.Router();
 // Schema for batch update with email-to-date mapping
 const updateBatchExamDatesSchema = z.object({
     examDates: z.record(z.string().email(), z.string().date()),
-    roomNumber: z.string()
+    roomNumber: z.string(),
 });
 
 router.post(
@@ -21,32 +21,37 @@ router.post(
     asyncHandler(async (req, res, next) => {
         console.log(req.body);
         const parsed = updateBatchExamDatesSchema.parse(req.body);
-        
+
         const emails = Object.keys(parsed.examDates);
-        
+
         if (emails.length === 0) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "No student emails provided"));
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "No student emails provided"
+                )
+            );
         }
 
         // Process each student individually to handle different attempt numbers
         const updatePromises = emails.map(async (email) => {
             const examDate = new Date(parsed.examDates[email]);
-            
+
             // Get the student to check the attempt number
             const student = await db
                 .select({
-                    numberOfQeApplication: phd.numberOfQeApplication
+                    numberOfQeApplication: phd.numberOfQeApplication,
                 })
                 .from(phd)
                 .where(eq(phd.email, email))
                 .limit(1);
-            
+
             if (student.length === 0) {
                 return null;
             }
-            
-            const attemptNumber = student[0].numberOfQeApplication || 0;
-            
+
+            const attemptNumber = student[0].numberOfQeApplication ?? 0;
+
             // Update based on attempt number
             let updateData = {};
             if (attemptNumber <= 1) {
@@ -54,24 +59,26 @@ router.post(
             } else {
                 updateData = { qualifyingExam2Date: examDate };
             }
-            
+
             return db
                 .update(phd)
                 .set(updateData)
                 .where(eq(phd.email, email))
                 .returning();
         });
-        
+
         const results = await Promise.all(updatePromises);
         const updatedStudents = results.filter(Boolean).flat();
-        
+
         if (updatedStudents.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "No PhD records found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "No PhD records found")
+            );
         }
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             count: updatedStudents.length,
-            students: updatedStudents
+            students: updatedStudents,
         });
     })
 );

@@ -67,11 +67,11 @@ const GenerateQualifyingExamForm: React.FC = () => {
   });
 
   // Fetch exam dates
-  const { data: examDatesData } = useQuery<ExamDateResponse>({
+  const { data: examDatesData } = useQuery({
     queryKey: ["phd-qualifying-exam-dates"],
     queryFn: async () => {
       if (data?.examInfo?.semesterId) {
-        const response = await api.get(
+        const response = await api.get<ExamDateResponse>(
           `/phd/drcMember/getDatesOfQeExam/${data.examInfo.semesterId}`
         );
         return response.data;

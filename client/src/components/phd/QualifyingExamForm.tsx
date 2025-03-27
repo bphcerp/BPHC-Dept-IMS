@@ -7,6 +7,7 @@ import { Upload } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 
 interface Exam {
   id: number;
@@ -33,7 +34,8 @@ export default function ExamForm() {
   const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
   const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
   const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
-  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] = useState(false);
+  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] =
+    useState(false);
 
   // Fetch exam deadline and dates
   const { data: examData, isLoading: isExamDataLoading } = useQuery<
@@ -63,13 +65,12 @@ export default function ExamForm() {
 
   const submitMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await api.post(
-        "/phd/student/uploadQeApplicationForm",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      const response = await api.post<{
+        success: boolean;
+        message: string;
+      }>("/phd/student/uploadQeApplicationForm", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -84,8 +85,12 @@ export default function ExamForm() {
       setAnticipatedPlanChecked(false);
       setQualifyingExamDetailsChecked(false);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || error.response?.data?.error || "Submission failed");
+    onError: (error) => {
+      toast.error(
+        isAxiosError(error)
+          ? (error.response?.data as string) || "Submission failed"
+          : "Submission failed"
+      );
       console.error("Submission error:", error);
     },
   });
@@ -99,9 +104,15 @@ export default function ExamForm() {
     }
 
     // Check if all required fields and checkboxes are filled
-    if (!file || !qualifyingArea1 || !qualifyingArea2 ||
-        !generalInfoChecked || !academicInfoChecked || 
-        !anticipatedPlanChecked || !qualifyingExamDetailsChecked) {
+    if (
+      !file ||
+      !qualifyingArea1 ||
+      !qualifyingArea2 ||
+      !generalInfoChecked ||
+      !academicInfoChecked ||
+      !anticipatedPlanChecked ||
+      !qualifyingExamDetailsChecked
+    ) {
       toast.error("All fields and checkboxes are required");
       return;
     }
@@ -120,12 +131,12 @@ export default function ExamForm() {
       qualifyingArea1,
       qualifyingArea2,
       examStartDate: selectedExam.examStartDate,
-      examEndDate: selectedExam.examEndDate
+      examEndDate: selectedExam.examEndDate,
     });
 
     submitMutation.mutate(formData);
   };
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     setFile(selectedFile);
@@ -140,9 +151,14 @@ export default function ExamForm() {
 
     const exam = examData.exams[0];
     return (
-      <div className="text-sm text-muted-foreground mb-4">
-        <p>Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} - {new Date(exam.examEndDate).toLocaleDateString()}</p>
-        <p>Application Deadline: {new Date(exam.deadline).toLocaleDateString()}</p>
+      <div className="mb-4 text-sm text-muted-foreground">
+        <p>
+          Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} -{" "}
+          {new Date(exam.examEndDate).toLocaleDateString()}
+        </p>
+        <p>
+          Application Deadline: {new Date(exam.deadline).toLocaleDateString()}
+        </p>
       </div>
     );
   };
@@ -210,18 +226,15 @@ export default function ExamForm() {
           {/* New Checkbox Sections */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="generalInfo" 
+              <input
+                type="checkbox"
+                id="generalInfo"
                 className="form-checkbox h-4 w-4"
                 checked={generalInfoChecked}
                 onChange={(e) => setGeneralInfoChecked(e.target.checked)}
-                required 
+                required
               />
-              <Label 
-                htmlFor="generalInfo" 
-                className="text-sm font-medium"
-              >
+              <Label htmlFor="generalInfo" className="text-sm font-medium">
                 I have filled the General Information *
               </Label>
             </div>
@@ -229,18 +242,15 @@ export default function ExamForm() {
 
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="academicInfo" 
+              <input
+                type="checkbox"
+                id="academicInfo"
                 className="form-checkbox h-4 w-4"
                 checked={academicInfoChecked}
                 onChange={(e) => setAcademicInfoChecked(e.target.checked)}
-                required 
+                required
               />
-              <Label 
-                htmlFor="academicInfo" 
-                className="text-sm font-medium"
-              >
+              <Label htmlFor="academicInfo" className="text-sm font-medium">
                 I have filled the Academic Information *
               </Label>
             </div>
@@ -248,18 +258,15 @@ export default function ExamForm() {
 
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="anticipatedPlan" 
+              <input
+                type="checkbox"
+                id="anticipatedPlan"
                 className="form-checkbox h-4 w-4"
                 checked={anticipatedPlanChecked}
                 onChange={(e) => setAnticipatedPlanChecked(e.target.checked)}
-                required 
+                required
               />
-              <Label 
-                htmlFor="anticipatedPlan" 
-                className="text-sm font-medium"
-              >
+              <Label htmlFor="anticipatedPlan" className="text-sm font-medium">
                 I have filled the Anticipated Plan for PhD *
               </Label>
             </div>
@@ -267,16 +274,18 @@ export default function ExamForm() {
 
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="qualifyingExamDetails" 
+              <input
+                type="checkbox"
+                id="qualifyingExamDetails"
                 className="form-checkbox h-4 w-4"
                 checked={qualifyingExamDetailsChecked}
-                onChange={(e) => setQualifyingExamDetailsChecked(e.target.checked)}
-                required 
+                onChange={(e) =>
+                  setQualifyingExamDetailsChecked(e.target.checked)
+                }
+                required
               />
-              <Label 
-                htmlFor="qualifyingExamDetails" 
+              <Label
+                htmlFor="qualifyingExamDetails"
                 className="text-sm font-medium"
               >
                 I have filled Details about PhD Qualifying Examination *

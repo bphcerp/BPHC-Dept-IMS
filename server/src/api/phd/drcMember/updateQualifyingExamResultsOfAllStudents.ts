@@ -10,77 +10,89 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 const router = express.Router();
 
 router.post(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    const parsed = phdSchemas.updateExamStatusSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input data"));
-    }
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const parsed = phdSchemas.updateExamStatusSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid input data")
+            );
+        }
 
-    const studentsToUpdate = parsed.data;
-    if (studentsToUpdate.length === 0) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "No students to update"));
-    }
+        const studentsToUpdate = parsed.data;
+        if (studentsToUpdate.length === 0) {
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "No students to update")
+            );
+        }
 
-    const studentRecords = await db.query.phd.findMany({
-      where: sql`${phd.email} IN (${sql.join(studentsToUpdate.map((s) => s.email), sql`, `)})`,
-    });
+        const studentRecords = await db.query.phd.findMany({
+            where: sql`${phd.email} IN (${sql.join(
+                studentsToUpdate.map((s) => s.email),
+                sql`, `
+            )})`,
+        });
 
-    if (studentRecords.length === 0) {
-      return next(new HttpError(HttpCode.NOT_FOUND, "No students found"));
-    }
+        if (studentRecords.length === 0) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "No students found"));
+        }
 
-    const updates = [];
-    const updatedStudents = [];
+        const updates = [];
+        const updatedStudents = [];
 
-    for (const student of studentsToUpdate) {
-      const existingStudent = studentRecords.find((s) => s.email === student.email);
-      if (!existingStudent) continue;
+        for (const student of studentsToUpdate) {
+            const existingStudent = studentRecords.find(
+                (s) => s.email === student.email
+            );
+            if (!existingStudent) continue;
 
-      let updateData: any = {};
-      
-      // Determine which exam to update based on current statuses
-      if (existingStudent.qualifyingExam1 === null) {
-        // Update exam 1 if it's not set yet
-        updateData = {
-          qualifyingExam1: student.ifPass,
-        };
-      } else if (existingStudent.qualifyingExam2 === null) {
-        // Update exam 2 if exam 1 is set but exam 2 isn't
-        updateData = {
-          qualifyingExam2: student.ifPass,
-        };
-      } else {
-        // If both are already set, update exam 2 (assuming this is an update)
-        updateData = {
-          qualifyingExam2: student.ifPass
-        };
-      }
+            let updateData:
+                | { qualifyingExam1: boolean }
+                | { qualifyingExam2: boolean };
 
-      updates.push(
-        db.update(phd)
-          .set(updateData)
-          .where(eq(phd.email, student.email))
-      );
+            // Determine which exam to update based on current statuses
+            if (existingStudent.qualifyingExam1 === null) {
+                // Update exam 1 if it's not set yet
+                updateData = {
+                    qualifyingExam1: student.ifPass,
+                };
+            } else if (existingStudent.qualifyingExam2 === null) {
+                // Update exam 2 if exam 1 is set but exam 2 isn't
+                updateData = {
+                    qualifyingExam2: student.ifPass,
+                };
+            } else {
+                // If both are already set, update exam 2 (assuming this is an update)
+                updateData = {
+                    qualifyingExam2: student.ifPass,
+                };
+            }
 
-      updatedStudents.push({
-        email: student.email,
-        ...updateData
-      });
-    }
+            updates.push(
+                db
+                    .update(phd)
+                    .set(updateData)
+                    .where(eq(phd.email, student.email))
+            );
 
-    if (updates.length > 0) {
-      await Promise.all(updates);
-    }
+            updatedStudents.push({
+                email: student.email,
+                ...updateData,
+            });
+        }
 
-    res.status(200).json({
-      success: true,
-      updatedCount: updates.length,
-      updatedStudents,
-      message: `${updates.length} student exam results updated successfully.`
-    });
-  })
+        if (updates.length > 0) {
+            await Promise.all(updates);
+        }
+
+        res.status(200).json({
+            success: true,
+            updatedCount: updates.length,
+            updatedStudents,
+            message: `${updates.length} student exam results updated successfully.`,
+        });
+    })
 );
 
 export default router;

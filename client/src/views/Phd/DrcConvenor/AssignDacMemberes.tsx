@@ -103,21 +103,25 @@ const AssignDacMembers: React.FC = () => {
   });
 
   // Submit final DAC members for assignment
-  const updateFinalDacMutation = useMutation<unknown, unknown, UpdateDacParams>({
-    mutationFn: async ({ email, dac1, dac2 }: UpdateDacParams) => {
-      return await api.post("/phd/drcMember/updateFinalDac", {
-        email,
-        finalDacMembers: [dac1, dac2],
-      });
-    },
-    onSuccess: (_data, variables) => {
-      toast.success(`DAC members assigned successfully for ${variables.email}!`);
-      queryClient.invalidateQueries({ queryKey: ["phd-suggested-dac"] });
-    },
-    onError: (_error, variables) => {
-      toast.error(`Failed to update DAC members for ${variables.email}`);
-    },
-  });
+  const updateFinalDacMutation = useMutation<unknown, unknown, UpdateDacParams>(
+    {
+      mutationFn: async ({ email, dac1, dac2 }: UpdateDacParams) => {
+        return await api.post("/phd/drcMember/updateFinalDac", {
+          email,
+          finalDacMembers: [dac1, dac2],
+        });
+      },
+      onSuccess: (_data, variables) => {
+        toast.success(
+          `DAC members assigned successfully for ${variables.email}!`
+        );
+        void queryClient.invalidateQueries({ queryKey: ["phd-suggested-dac"] });
+      },
+      onError: (_error, variables) => {
+        toast.error(`Failed to update DAC members for ${variables.email}`);
+      },
+    }
+  );
 
   // Handle input change for DAC members
   const handleDacChange = (
@@ -144,8 +148,9 @@ const AssignDacMembers: React.FC = () => {
         <CardContent className="p-6">
           <h2 className="mb-4 text-xl font-bold">Assign DAC Members</h2>
           <p className="mb-4 text-gray-600">
-            Assign two Doctoral Advisory Committee members from the suggested list. 
-            Use the Suggest button to auto-select the two faculty members with the lowest workload.
+            Assign two Doctoral Advisory Committee members from the suggested
+            list. Use the Suggest button to auto-select the two faculty members
+            with the lowest workload.
           </p>
 
           <Table>
@@ -164,7 +169,8 @@ const AssignDacMembers: React.FC = () => {
                   // Check if this student's update is in progress
                   const isUpdating =
                     updateFinalDacMutation.isLoading &&
-                    (updateFinalDacMutation.variables as UpdateDacParams)?.email === student.email;
+                    (updateFinalDacMutation.variables as UpdateDacParams)
+                      ?.email === student.email;
 
                   // Check if we're getting suggestions for this student
                   const isSuggesting = suggestingFor === student.email;
