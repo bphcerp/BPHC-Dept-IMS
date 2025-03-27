@@ -9,7 +9,7 @@ import ReviewField from "@/components/handouts/reviewField";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 
-interface HandoutReviewFormValues {
+export interface HandoutReviewFormValues {
   handoutId: string;
   scopeAndObjective: boolean;
   textBookPrescribed: boolean;
