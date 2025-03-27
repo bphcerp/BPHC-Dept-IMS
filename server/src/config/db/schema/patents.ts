@@ -1,14 +1,19 @@
-import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 
 export const patents = pgTable("patents", {
     id: serial("id").primaryKey(),
+    filingId: text("filing_id").notNull(),
+    userEmail: text("user_email")
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
 
     applicationNumber: text("application_number").notNull(),
     inventorsName: text("inventors_name").notNull(),
     department: text("department"),
     title: text("title"),
     campus: text("campus"),
+    nationality: text("nationanlity"),
 
     filingDate: text("filing_date"),
     applicationPublicationDate: text("application_publication_date"),
@@ -22,16 +27,4 @@ export const patents = pgTable("patents", {
     grantedAy: text("granted_ay"),
     grantedCy: text("granted_cy"),
     status: text("status"),
-});
-
-export const patentInventors = pgTable("patent_inventors", {
-    id: serial("id").primaryKey(),
-
-    patentId: integer("patent_id").references(() => patents.id, {
-        onDelete: "cascade",
-    }),
-
-    userEmail: text("user_email")
-        .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
 });
