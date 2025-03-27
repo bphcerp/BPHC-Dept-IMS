@@ -36,7 +36,7 @@ router.post(
             .where(
                 and(
                     eq(courseHandoutRequests.id, handoutId),
-                    eq(courseHandoutRequests.reviewerEmail, req.user?.email!)
+                    eq(courseHandoutRequests.reviewerEmail, req.user!.email)
                 )
             )
             .returning();

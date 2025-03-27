@@ -45,13 +45,13 @@ export default router.get(
       if (student.qualifyingExam1 === true || student.qualifyingExam2 === true) {
         status = "pass";
       } 
-
-      else if (exam1Evaluated && exam2Evaluated && 
-               student.qualifyingExam1 === false && student.qualifyingExam2 === false) {
-        status = "fail";
+    
+      else if (exam1Evaluated || exam2Evaluated  ){
+        if(student.qualifyingExam1 === false || student.qualifyingExam2 === false) {
+          status = "fail";
       }
     }
-
+  }
     res.json({ success: true, status });
   })
 );

@@ -14,7 +14,7 @@ router.get(
             await db.query.courseHandoutRequests.findMany({
                 where: (handout, { eq, and, or }) =>
                     and(
-                        eq(handout.reviewerEmail, req.user?.email!),
+                        eq(handout.reviewerEmail, req.user!.email),
                         or(
                             eq(handout.status, "pending"),
                             eq(handout.status, "notsubmitted")

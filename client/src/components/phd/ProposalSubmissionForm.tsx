@@ -1,5 +1,4 @@
 import type React from "react";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,56 +16,80 @@ import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 
+interface UploadResponse {
+  message: string;
+  success: boolean;
+}
+
 export default function ProposalSubmissionForm() {
-  // Sample links - replace with your actual links
+  // Form links - replace with your actual links
   const formLinks = [
     {
       id: 1,
       url: "https://www.bits-pilani.ac.in/wp-content/uploads/1.-Appendix-I-to-be-attached-with-research-Proposals.pdf",
       label: "Proposal Form 1",
+      fieldName: "proposalDocument1",
     },
     {
       id: 2,
       url: "https://www.bits-pilani.ac.in/wp-content/uploads/2.-Summary-of-Research-Proposal.pdf",
       label: "Proposal Form 2",
+      fieldName: "proposalDocument2",
     },
     {
       id: 3,
       url: "https://www.bits-pilani.ac.in/wp-content/uploads/3.-Outline-of-the-Proposed-topic-of-Research.pdf",
       label: "Proposal Form 3",
+      fieldName: "proposalDocument3",
     },
   ];
 
-  const [formData, setFormData] = useState<{
-    file1: File | null;
-    file2: File | null;
-    file3: File | null;
-    supervisorEmail: string;
-    coSupervisorEmail1: string;
-    coSupervisorEmail2: string;
-  }>({
-    file1: null,
-    file2: null,
-    file3: null,
-    supervisorEmail: "",
-    coSupervisorEmail1: "",
-    coSupervisorEmail2: "",
+  const [formData, setFormData] = useState({
+    proposalDocument1: null as File | null,
+    proposalDocument2: null as File | null,
+    proposalDocument3: null as File | null,
+    supervisor: "",
+    coSupervisor1: "",
+    coSupervisor2: "",
   });
 
-  const proposalMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await api.post(
+  // New state for checkboxes
+  const [appendixIChecked, setAppendixIChecked] = useState(false);
+  const [summaryResearchProposalChecked, setSummaryResearchProposalChecked] = useState(false);
+  const [outlineProposedTopicChecked, setOutlineProposedTopicChecked] = useState(false);
+
+  const proposalMutation = useMutation<UploadResponse, Error, FormData>({
+    mutationFn: async (data: FormData): Promise<UploadResponse> => {
+      const response = await api.post<UploadResponse>(
         "/phd/student/uploadProposalDocuments",
-        data
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
       return response.data;
     },
     onSuccess: () => {
-      toast.success(
-        `All Document uploaded successfully. Proposal submitted successfully.`
-      );
+      toast.success("Proposal submitted successfully.");
+      
+      setFormData({
+        proposalDocument1: null,
+        proposalDocument2: null,
+        proposalDocument3: null,
+        supervisor: "",
+        coSupervisor1: "",
+        coSupervisor2: "",
+      });
+
+      // Reset checkboxes
+      setAppendixIChecked(false);
+      setSummaryResearchProposalChecked(false);
+      setOutlineProposedTopicChecked(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Submission error:", error);
       toast.error("Failed to upload documents. Please try again.");
     },
   });
@@ -91,36 +114,46 @@ export default function ProposalSubmissionForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.file1 || !formData.file2 || !formData.file3) {
-      alert("Please upload all the files");
+
+    // Validate form data
+    if (
+      !formData.proposalDocument1 ||
+      !formData.proposalDocument2 ||
+      !formData.proposalDocument3
+    ) {
+      toast.error("Please upload all three proposal documents");
       return;
-    } else if (!formData.supervisorEmail) {
-      alert("Please enter supervisor email");
-      return;
-    } else if (!formData.coSupervisorEmail1 || !formData.coSupervisorEmail2) {
-      alert("Please enter co-supervisor emails");
-      return;
-    } else {
-      proposalMutation.mutate({
-        fileUrl1: formData.file1.name,
-        fileUrl2: formData.file2.name,
-        fileUrl3: formData.file3.name,
-        formName1: "Proposal Form 1",
-        formName2: "Proposal Form 2",
-        formName3: "Proposal Form 3",
-        supervisor: formData.supervisorEmail,
-        coSupervisor1: formData.coSupervisorEmail1,
-        coSupervisor2: formData.coSupervisorEmail2,
-      });
     }
+
+    // Validate checkboxes
+    if (!appendixIChecked || !summaryResearchProposalChecked || !outlineProposedTopicChecked) {
+      toast.error("Please confirm you have filled all required forms");
+      return;
+    }
+
+    if (!formData.supervisor) {
+      toast.error("Please enter supervisor email");
+      return;
+    }
+
+    const submitData = new FormData();
+    submitData.append("proposalDocument1", formData.proposalDocument1);
+    submitData.append("proposalDocument2", formData.proposalDocument2);
+    submitData.append("proposalDocument3", formData.proposalDocument3);
+    submitData.append("supervisor", formData.supervisor);
+    submitData.append("coSupervisor1", formData.coSupervisor1);
+    submitData.append("coSupervisor2", formData.coSupervisor2);
+
+    proposalMutation.mutate(submitData);
   };
 
   return (
     <Card className="mx-auto w-full">
       <CardHeader>
-        <CardTitle className="text-2xl">Proposal Submission</CardTitle>
+        <CardTitle className="text-2xl">Research Proposal Submission</CardTitle>
         <CardDescription>
-          Download the forms, fill them out, and upload the completed documents.
+          Download the required forms, fill them out, and upload the completed
+          PDF documents.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -133,7 +166,7 @@ export default function ProposalSubmissionForm() {
               <div key={link.id} className="space-y-3 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ExternalLinkIcon className="h-4 w-4 text-primary" />
+                    <FileIcon className="h-4 w-4 text-primary" />
                     <span className="font-medium">{link.label}</span>
                   </div>
                   <a
@@ -150,21 +183,92 @@ export default function ProposalSubmissionForm() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <FileIcon className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor={`file${link.id}`}>
-                      Upload Completed Form
+                    <Label htmlFor={link.fieldName}>
+                      Upload Completed {link.label} (PDF)
                     </Label>
                   </div>
                   <Input
-                    id={`file${link.id}`}
-                    name={`file${link.id}`}
+                    id={link.fieldName}
+                    name={link.fieldName}
                     type="file"
                     accept=".pdf"
                     onChange={handleFileChange}
+                    className="cursor-pointer"
                     required
                   />
+                  {formData[link.fieldName as keyof typeof formData] && (
+                    <p className="text-xs text-green-600">
+                      ✓{" "}
+                      {
+                        (
+                          formData[
+                            link.fieldName as keyof typeof formData
+                          ] as File
+                        ).name
+                      }
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
+
+            {/* New Checkbox Sections */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="appendixI" 
+                  className="form-checkbox h-4 w-4"
+                  checked={appendixIChecked}
+                  onChange={(e) => setAppendixIChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="appendixI" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Appendix I to be attached with Research Proposals *
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="summaryResearchProposal" 
+                  className="form-checkbox h-4 w-4"
+                  checked={summaryResearchProposalChecked}
+                  onChange={(e) => setSummaryResearchProposalChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="summaryResearchProposal" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Summary of Research Proposal *
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="outlineProposedTopic" 
+                  className="form-checkbox h-4 w-4"
+                  checked={outlineProposedTopicChecked}
+                  onChange={(e) => setOutlineProposedTopicChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="outlineProposedTopic" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Outline of the Proposed Topic of Research *
+                </Label>
+              </div>
+            </div>
           </div>
 
           {/* Supervisor Emails */}
@@ -174,14 +278,14 @@ export default function ProposalSubmissionForm() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <MailIcon className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="supervisorEmail">Supervisor Email</Label>
+                <Label htmlFor="supervisor">Supervisor Email *</Label>
               </div>
               <Input
-                id="supervisorEmail"
-                name="supervisorEmail"
+                id="supervisor"
+                name="supervisor"
                 type="email"
                 placeholder="Enter supervisor email"
-                value={formData.supervisorEmail}
+                value={formData.supervisor}
                 onChange={handleInputChange}
                 required
               />
@@ -190,16 +294,14 @@ export default function ProposalSubmissionForm() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <MailIcon className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="coSupervisorEmail1">
-                  Co-Supervisor Email 1
-                </Label>
+                <Label htmlFor="coSupervisor1">Co-Supervisor Email 1 *</Label>
               </div>
               <Input
-                id="coSupervisorEmail1"
-                name="coSupervisorEmail1"
+                id="coSupervisor1"
+                name="coSupervisor1"
                 type="email"
                 placeholder="Enter co-supervisor email"
-                value={formData.coSupervisorEmail1}
+                value={formData.coSupervisor1}
                 onChange={handleInputChange}
               />
             </div>
@@ -207,24 +309,26 @@ export default function ProposalSubmissionForm() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <MailIcon className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="coSupervisorEmail2">
-                  Co-Supervisor Email 2
-                </Label>
+                <Label htmlFor="coSupervisor2">Co-Supervisor Email 2 *</Label>
               </div>
               <Input
-                id="coSupervisorEmail2"
-                name="coSupervisorEmail2"
+                id="coSupervisor2"
+                name="coSupervisor2"
                 type="email"
                 placeholder="Enter co-supervisor email"
-                value={formData.coSupervisorEmail2}
+                value={formData.coSupervisor2}
                 onChange={handleInputChange}
               />
             </div>
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full">
-            Submit Proposal
+        <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={proposalMutation.isLoading}
+          >
+            {proposalMutation.isLoading ? "Submitting..." : "Submit Proposal"}
           </Button>
         </CardFooter>
       </form>

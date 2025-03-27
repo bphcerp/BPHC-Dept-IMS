@@ -21,18 +21,15 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(
-        async (req, res, next) =>
-            await pdfUpload.fields(
-                conferenceSchemas.multerFileFields
-                // @ts-expect-error Type incompatibility between multer req and express req for some reason
-            )(req, res, (err) => {
-                if (err instanceof multer.MulterError)
-                    return next(
-                        new HttpError(HttpCode.BAD_REQUEST, err.message)
-                    );
-                next(err);
-            })
+    asyncHandler((req, res, next) =>
+        pdfUpload.fields(
+            conferenceSchemas.multerFileFields
+            // @ts-expect-error Type incompatibility between multer req and express req for some reason
+        )(req, res, (err) => {
+            if (err instanceof multer.MulterError)
+                return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
+            next(err);
+        })
     ),
     asyncHandler(async (req, res) => {
         const body = conferenceSchemas.createApplicationBodySchema.parse(
@@ -44,7 +41,7 @@ router.post(
             const insertedIds: Record<string, number> = {};
 
             let insertedFileFields: (typeof fileFields.$inferSelect)[] = [];
-            if (req.files) {
+            if (req.files && Object.entries(req.files).length) {
                 const insertedFiles = await tx
                     .insert(files)
                     .values(

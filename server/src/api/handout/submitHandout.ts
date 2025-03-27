@@ -10,27 +10,20 @@ import { eq } from "drizzle-orm";
 import express from "express";
 import { handoutSchemas, modules } from "lib";
 import multer from "multer";
-import util from "util";
 
 const router = express.Router();
-
-const uploader = util.promisify(pdfUpload.single("handout"));
 
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, next) => {
-        try {
-            //@ts-expect-error
-            await uploader(req, res);
-        } catch (err) {
-            if (err instanceof multer.MulterError) {
+    asyncHandler(async (req, res, next) =>
+        // @ts-expect-error Type incompatibility between multer req and express req for some reason
+        pdfUpload.single("handout")(req, res, (err) => {
+            if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
-            }
-            return next(err);
-        }
-        next();
-    }),
+            next(err);
+        })
+    ),
     asyncHandler(async (req, res, next) => {
         if (!req.file) {
             return next(

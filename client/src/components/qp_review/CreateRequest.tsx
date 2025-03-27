@@ -27,14 +27,19 @@ interface RequestData {
   reviewDeadline: string; // ISO date string
 }
 
-
-
+export interface Course {
+  name: string;
+  professor: string;
+  reviewer1: string;
+  reviewer2: string;
+  status: string;
+}
 
 // Define the props type for the component
 interface CreateRequestDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddRequest: (data: any) => void;
+  onAddRequest: (data: Course) => void;
 }
 
 const CreateRequestDialog = ({
@@ -68,8 +73,11 @@ const CreateRequestDialog = ({
 
     try {
       setLoading(true); // Start loading
-      const response = await api.post("/qp/createQpRequest", requestData);
-      
+      const response = await api.post<Course>(
+        "/qp/createQpRequest",
+        requestData
+      );
+
       console.log("Full API Response:", response); // 🔍 Log full response
       console.log("Response Data:", response.data); // 🔍 Log response data
 
@@ -152,7 +160,7 @@ const CreateRequestDialog = ({
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleAdd} disabled={loading}>
+          <Button onClick={() => void handleAdd()} disabled={loading}>
             {loading ? "Submitting..." : "Done"}
           </Button>
         </DialogFooter>
