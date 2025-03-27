@@ -16,11 +16,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-// Interface for PhD Sub Areas
+// Updated interface to match actual data
 interface PhdSubArea {
   id: number;
-  name: string;
-  areaName: string;
+  subarea: string;
 }
 
 interface Exam {
@@ -59,11 +58,19 @@ export default function ExamForm() {
   const { 
     data: subAreasData, 
     isLoading: isSubAreasLoading, 
+    error: subAreasError 
   } = useQuery<SubAreasResponse, Error>({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
-      const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
-      return response.data;
+      console.log("Fetching sub-areas...");
+      try {
+        const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
+        console.log("Sub-areas response:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching sub-areas:", error);
+        throw error;
+      }
     },
     refetchOnWindowFocus: false,
   });
@@ -170,98 +177,77 @@ export default function ExamForm() {
     setFileName(selectedFile?.name || "");
   };
 
-  // Optionally display exam dates to user
-  const renderExamDetails = () => {
-    if (!examData || examData.exams.length === 0) {
-      return null;
-    }
+  // Render loading or error states
+  if (isSubAreasLoading) {
+    return <div>Loading sub-areas...</div>;
+  }
 
-    const exam = examData.exams[0];
+  if (subAreasError) {
     return (
-      <div className="mb-4 text-sm text-muted-foreground">
-        <p>
-          Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} -{" "}
-          {new Date(exam.examEndDate).toLocaleDateString()}
-        </p>
-        <p>
-          Application Deadline: {new Date(exam.deadline).toLocaleDateString()}
-        </p>
+      <div>
+        Error loading sub-areas: 
+        {subAreasError instanceof Error ? subAreasError.message : "Unknown error"}
       </div>
     );
-  };
+  }
 
-  // Get unique areas to group sub-areas
-  const uniqueAreas = subAreasData 
-    ? [...new Set(subAreasData.subAreas.map(area => area.areaName))]
-    : [];
+  // Additional debugging for empty sub-areas
+  if (!subAreasData || subAreasData.subAreas.length === 0) {
+    console.error("No sub-areas found!");
+    return <div>No research sub-areas available</div>;
+  }
 
   return (
     <Card className="mx-auto max-w-2xl">
       <CardContent className="space-y-4 pt-6">
         <h2 className="text-2xl font-bold">Qualifying Exam Application</h2>
 
-        {renderExamDetails()}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea1">Primary Research Sub-Area *</Label>
+            <Label htmlFor="qualifyingArea1">Research Sub-Area 1 *</Label>
             <Select 
               value={qualifyingArea1}
               onValueChange={setQualifyingArea1}
               disabled={isSubAreasLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select primary research sub-area" />
+                <SelectValue placeholder="Select research sub-area" />
               </SelectTrigger>
               <SelectContent>
-                {uniqueAreas.map((area) => (
-                  <optgroup key={area} label={area}>
-                    {subAreasData?.subAreas
-                      .filter(subArea => subArea.areaName === area)
-                      .map((subArea) => (
-                        <SelectItem 
-                          key={subArea.id} 
-                          value={subArea.name}
-                        >
-                          {subArea.name}
-                        </SelectItem>
-                      ))
-                    }
-                  </optgroup>
+                {subAreasData.subAreas.map((subArea) => (
+                  <SelectItem 
+                    key={subArea.id} 
+                    value={subArea.subarea}
+                  >
+                    {subArea.subarea}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea2">Secondary Research Sub-Area *</Label>
+            <Label htmlFor="qualifyingArea2">Research Sub-Area 2 *</Label>
             <Select 
               value={qualifyingArea2}
               onValueChange={setQualifyingArea2}
               disabled={isSubAreasLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select secondary research sub-area" />
+                <SelectValue placeholder="Select research sub-area" />
               </SelectTrigger>
               <SelectContent>
-                {uniqueAreas.map((area) => (
-                  <optgroup key={area} label={area}>
-                    {subAreasData?.subAreas
-                      .filter(subArea => 
-                        subArea.areaName === area && 
-                        subArea.name !== qualifyingArea1
-                      )
-                      .map((subArea) => (
-                        <SelectItem 
-                          key={subArea.id} 
-                          value={subArea.name}
-                        >
-                          {subArea.name}
-                        </SelectItem>
-                      ))
-                    }
-                  </optgroup>
-                ))}
+                {subAreasData.subAreas
+                  .filter(subArea => subArea.subarea !== qualifyingArea1)
+                  .map((subArea) => (
+                    <SelectItem 
+                      key={subArea.id} 
+                      value={subArea.subarea}
+                    >
+                      {subArea.subarea}
+                    </SelectItem>
+                  ))
+                }
               </SelectContent>
             </Select>
           </div>
@@ -296,7 +282,6 @@ export default function ExamForm() {
             )}
           </div>
 
-          {/* Checkbox Sections (Unchanged from previous version) */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <input
