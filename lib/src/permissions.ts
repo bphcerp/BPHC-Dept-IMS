@@ -11,7 +11,6 @@ export const allPermissions = {
     "conference:application:create": "Create operations on applications",
 
     "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:update-exam-dates": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
     "phd:drc-member:get-phd-data-of-who-filled-application-form": "",
@@ -93,7 +92,6 @@ export const permissions = {
 
     "/phd/drcMember/generateCourseworkForm":
         "phd:drc-member:generate-coursework-form",
-    "/phd/drcMember/updateExamDates": "phd:drc-member:update-exam-dates",
     "/phd/drcMember/getPhdToGenerateQualifyingExamForm":
         "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
     "/phd/drcMember/updatePassingDatesOfPhd":
