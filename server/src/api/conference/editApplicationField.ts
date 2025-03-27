@@ -19,7 +19,6 @@ const router = express.Router();
 router.post(
     "/:type/:id",
     asyncHandler((req, res, next) =>
-        // @ts-expect-error Type incompatibility between multer req and express req for some reason
         pdfUpload.single("value")(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));

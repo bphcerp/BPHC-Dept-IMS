@@ -22,14 +22,17 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler((req, res, next) =>
-        pdfUpload.fields(
-            conferenceSchemas.multerFileFields
-            // @ts-expect-error Type incompatibility between multer req and express req for some reason
-        )(req, res, (err) => {
-            if (err instanceof multer.MulterError)
-                return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
-            next(err);
-        })
+        pdfUpload.fields(conferenceSchemas.multerFileFields)(
+            req,
+            res,
+            (err) => {
+                if (err instanceof multer.MulterError)
+                    return next(
+                        new HttpError(HttpCode.BAD_REQUEST, err.message)
+                    );
+                next(err);
+            }
+        )
     ),
     asyncHandler(async (req, res) => {
         const body = conferenceSchemas.createApplicationBodySchema.parse(

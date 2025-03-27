@@ -28,7 +28,6 @@ router.post(
             { name: "proposalDocument1", maxCount: 1 },
             { name: "proposalDocument2", maxCount: 1 },
             { name: "proposalDocument3", maxCount: 1 },
-            // @ts-expect-error Type incompatibility between multer req and express req for some reason
         ])(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
