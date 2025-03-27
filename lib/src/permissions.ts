@@ -54,6 +54,9 @@ export const allPermissions = {
     "phd:staff:get-all-qualifying-exam-for-the-semester": "",
     "phd:staff:get-current-semester": "",
     "phd:staff:update-qualifying-exam-deadline": "",
+    "phd:staff:delete-sub-area":"",
+    "phd:staff:get-sub-area":"",
+    "phd:staff:update-sub-area":"",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
@@ -160,6 +163,10 @@ export const permissions = {
     "/phd/staff/getCurrentSemester": "phd:staff:get-current-semester",
     "/phd/staff/updateQualifyingExamDeadline":
         "phd:staff:update-qualifying-exam-deadline",
+    "/phd/staff/deleteSubArea":"phd:staff:delete-sub-area",
+    "/phd/staff/getSubAreas":"phd:staff:get-sub-area",
+    "/phd/staff/updateSubAreas":"phd:staff:update-sub-area",
+        
     //Handout
     "/handout/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
