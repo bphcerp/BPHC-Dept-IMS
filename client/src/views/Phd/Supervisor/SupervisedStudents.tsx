@@ -54,16 +54,18 @@ const SupervisedStudents: React.FC = () => {
   const [selectedDocumentBatch, setSelectedDocumentBatch] =
     useState<DocumentBatch | null>(null);
 
-  const { data, isLoading, refetch } = useQuery<SupervisedStudentsResponse>({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["phd-supervised-students"] as const,
     queryFn: async () => {
-      const response = await api.get("/phd/supervisor/getSupervisedStudents");
+      const response = await api.get<SupervisedStudentsResponse>(
+        "/phd/supervisor/getSupervisedStudents"
+      );
       return {
         ...response.data,
-        students: response.data.students.map((student: Student) => ({
+        students: response.data.students.map((student) => ({
           ...student,
           proposalDocuments: groupProposalDocuments(
-            student.proposalDocuments || []
+            student.proposalDocuments.flatMap((doc) => doc.documents) || []
           ),
         })),
       };
@@ -123,7 +125,7 @@ const SupervisedStudents: React.FC = () => {
     setSelectedStudent(null);
     setSelectedDocumentBatch(null);
     setShowProposalDocuments(false);
-    refetch();
+    void refetch();
   };
 
   const handleSuggestDacMembers = (student: StudentWithGroupedDocuments) => {
@@ -134,7 +136,7 @@ const SupervisedStudents: React.FC = () => {
   const handleCloseDacSuggestion = () => {
     setShowDacSuggestion(false);
     setSelectedStudent(null);
-    refetch();
+    void refetch();
   };
 
   const handleOpenProposalReview = (student: StudentWithGroupedDocuments) => {
@@ -145,7 +147,7 @@ const SupervisedStudents: React.FC = () => {
   const handleCloseProposalReview = () => {
     setSelectedStudent(null);
     setShowProposalReview(false);
-    refetch();
+    void refetch();
   };
 
   if (isLoading) {

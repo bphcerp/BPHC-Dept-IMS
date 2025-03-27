@@ -15,18 +15,15 @@ export default router.post(
     checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user);
-        
-        const parsed = phdSchemas.suggestDacMembersSchema.parse({
-            dacMembers: req.body.dacMembers,
-            studentEmail: req.body.studentEmail
-        });
-        
+
+        const parsed = phdSchemas.suggestDacMembersSchema.parse(req.body);
+
         const { dacMembers, studentEmail } = parsed;
         const supervisorEmail = req.user.email;
 
         if (!studentEmail) {
             throw new HttpError(
-                HttpCode.BAD_REQUEST, 
+                HttpCode.BAD_REQUEST,
                 "Student email is required"
             );
         }
@@ -35,15 +32,17 @@ export default router.post(
         const student = await db
             .select({ email: phd.email })
             .from(phd)
-            .where(and(
-                eq(phd.supervisorEmail, supervisorEmail),
-                eq(phd.email, studentEmail)
-            ))
+            .where(
+                and(
+                    eq(phd.supervisorEmail, supervisorEmail),
+                    eq(phd.email, studentEmail)
+                )
+            )
             .limit(1);
 
         if (student.length === 0) {
             throw new HttpError(
-                HttpCode.FORBIDDEN, 
+                HttpCode.FORBIDDEN,
                 "You are not authorized to suggest DAC members for this student"
             );
         }
@@ -51,16 +50,16 @@ export default router.post(
         // Update the student's record with suggested DAC members
         const updateResult = await db
             .update(phd)
-            .set({ 
-                suggestedDacMembers: dacMembers, 
-            }) 
+            .set({
+                suggestedDacMembers: dacMembers,
+            })
             .where(eq(phd.email, studentEmail));
 
-        console.log('Update Result:', updateResult);
+        console.log("Update Result:", updateResult);
 
-        res.status(200).json({ 
-            success: true, 
-            message: "DAC members suggested successfully" 
+        res.status(200).json({
+            success: true,
+            message: "DAC members suggested successfully",
         });
     })
 );

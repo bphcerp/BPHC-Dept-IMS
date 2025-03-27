@@ -5,7 +5,7 @@ interface ReviewFieldProps {
   name: string;
   label: string;
   description: string;
-  control: Control<any>;
+  control: Control<Record<string, boolean>>;
 }
 
 const ReviewField: React.FC<ReviewFieldProps> = ({

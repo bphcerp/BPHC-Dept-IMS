@@ -14,7 +14,7 @@ router.post(
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.assignICBodySchema.parse(req.body);
 
-        const icExists = db.query.users.findFirst({
+        const icExists = await db.query.users.findFirst({
             where: (user, { eq }) => eq(user.email, parsed.icEmail),
         });
 

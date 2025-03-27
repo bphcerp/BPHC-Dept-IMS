@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { isAxiosError } from "axios";
 
 // Student interface
 export interface Student {
@@ -21,13 +22,15 @@ export interface Student {
   email: string;
   erpId?: string;
   supervisor?: string;
-  proposalDocuments?: {
-    id: number;
-    fieldName: string;
-    fileName: string;
-    fileUrl: string;
-    uploadedAt: string;
-  }[] | null;
+  proposalDocuments?:
+    | {
+        id: number;
+        fieldName: string;
+        fileName: string;
+        fileUrl: string;
+        uploadedAt: string;
+      }[]
+    | null;
 }
 
 // Props interface for the component
@@ -36,46 +39,48 @@ interface SuggestDacMembersProps {
   onClose: () => void;
 }
 
-const SuggestDacMembers: React.FC<SuggestDacMembersProps> = ({ 
-  student, 
-  onClose 
+const SuggestDacMembers: React.FC<SuggestDacMembersProps> = ({
+  student,
+  onClose,
 }) => {
   const [dacMembers, setDacMembers] = useState<string[]>([""]);
   const queryClient = useQueryClient();
 
   const suggestDacMutation = useMutation({
-    mutationFn: async (data: { 
-      dacMembers: string[], 
-      studentEmail: string 
-    }) => {    
+    mutationFn: async (data: {
+      dacMembers: string[];
+      studentEmail: string;
+    }) => {
       return await api.post("/phd/supervisor/suggestDacMembers", data);
     },
     onSuccess: () => {
       toast.success("DAC members suggested successfully");
-      queryClient.invalidateQueries({ queryKey: ["phd-supervised-students"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["phd-supervised-students"],
+      });
       onClose();
     },
-    onError: (error: any) => {
-      console.error('Mutation Error Full:', error);
-      console.error('Error Response:', error.response);
+    onError: (error) => {
       toast.error(
-        error.response?.data?.message || 
-        "Failed to suggest DAC members. Please try again."
+        isAxiosError(error)
+          ? (error.response?.data as string) ||
+              "Failed to suggest DAC members. Please try again."
+          : "Failed to suggest DAC members. Please try again."
       );
     },
   });
-  
+
   const onSubmit = () => {
     // Filter out empty entries
     const filteredDacMembers = dacMembers.filter(
       (member) => member.trim() !== ""
     );
-  
+
     if (filteredDacMembers.length === 0) {
       toast.error("Please add at least one DAC member");
       return;
     }
-  
+
     suggestDacMutation.mutate({
       dacMembers: filteredDacMembers,
       studentEmail: student.email,
@@ -116,9 +121,7 @@ const SuggestDacMembers: React.FC<SuggestDacMembersProps> = ({
                 <Input
                   placeholder={`DAC Member ${index + 1} Email`}
                   value={member}
-                  onChange={(e) =>
-                    handleDacMemberChange(index, e.target.value)
-                  }
+                  onChange={(e) => handleDacMemberChange(index, e.target.value)}
                 />
                 {dacMembers.length > 1 && (
                   <Button

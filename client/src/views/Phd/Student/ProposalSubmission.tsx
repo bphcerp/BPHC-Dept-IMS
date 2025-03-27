@@ -34,10 +34,12 @@ export default function CombinedExamAndProposalPage() {
     data: examData,
     isLoading: isLoadingExamStatus,
     error: examError,
-  } = useQuery<ExamStatusResponse>({
+  } = useQuery({
     queryKey: ["phd-student-exams"],
     queryFn: async () => {
-      const response = await api.get("/phd/student/getQualifyingExamStatus");
+      const response = await api.get<ExamStatusResponse>(
+        "/phd/student/getQualifyingExamStatus"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -45,23 +47,11 @@ export default function CombinedExamAndProposalPage() {
   });
 
   const { data: proposalDeadline, isLoading: isLoadingProposalDeadline } =
-    useQuery<ProposalDeadlineResponse>({
+    useQuery({
       queryKey: ["phd-students"],
       queryFn: async () => {
-        const response = await api.get("/phd/student/getProposalDeadline");
-        return response.data;
-      },
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5,
-      enabled: examData?.status === "pass",
-    });
-
-  const { data: passingDate, isLoading: isLoadingPassingDate } =
-    useQuery<PassingDateResponse>({
-      queryKey: ["phd-qualifying-exam-passing-date"],
-      queryFn: async () => {
-        const response = await api.get(
-          "/phd/student/getQualifyingExamPassingDate"
+        const response = await api.get<ProposalDeadlineResponse>(
+          "/phd/student/getProposalDeadline"
         );
         return response.data;
       },
@@ -70,10 +60,25 @@ export default function CombinedExamAndProposalPage() {
       enabled: examData?.status === "pass",
     });
 
-  const { data: proposalStatus } = useQuery<ProposalStatusResponse>({
+  const { data: passingDate, isLoading: isLoadingPassingDate } = useQuery({
+    queryKey: ["phd-qualifying-exam-passing-date"],
+    queryFn: async () => {
+      const response = await api.get<PassingDateResponse>(
+        "/phd/student/getQualifyingExamPassingDate"
+      );
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+    enabled: examData?.status === "pass",
+  });
+
+  const { data: proposalStatus } = useQuery({
     queryKey: ["phd-proposal-status"],
     queryFn: async () => {
-      const response = await api.get("/phd/student/getProposalStatus");
+      const response = await api.get<ProposalStatusResponse>(
+        "/phd/student/getProposalStatus"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -82,13 +87,12 @@ export default function CombinedExamAndProposalPage() {
   });
 
   // Determine if proposal submission form should be shown
-  const showProposalSubmissionForm = 
-    examData?.status === "pass" && 
-    proposalStatus?.showProposal;
+  const showProposalSubmissionForm =
+    examData?.status === "pass" && proposalStatus?.showProposal;
 
   // Get proposal status and comment
   const proposalStatusValue = proposalStatus?.documents.proposal[0]?.status;
-  console.log(proposalStatusValue)
+  console.log(proposalStatusValue);
   const proposalComment = proposalStatus?.documents.proposal[0]?.comment || "";
 
   return (
@@ -123,54 +127,49 @@ export default function CombinedExamAndProposalPage() {
           )}
         </div>
 
-        {examData?.success &&
-          examData.status === "pass" && (
-            <div className="rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-6 text-2xl font-semibold">
-                Proposal Submission
-              </h2>
-              <div className="flex flex-col gap-8">
-                {isLoadingProposalDeadline ? (
-                  <p>Loading deadline information...</p>
-                ) : proposalDeadline?.deadline ? (
-                  <ExamDateDisplay
-                    examDate={proposalDeadline.deadline}
-                    title="Proposal Document Submission Deadline"
-                  />
-                ) : (
-                  <div className="rounded-md bg-blue-50 p-4 text-blue-700">
-                    No proposal submission deadline has been set yet.
-                  </div>
-                )}
+        {examData?.success && examData.status === "pass" && (
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-6 text-2xl font-semibold">Proposal Submission</h2>
+            <div className="flex flex-col gap-8">
+              {isLoadingProposalDeadline ? (
+                <p>Loading deadline information...</p>
+              ) : proposalDeadline?.deadline ? (
+                <ExamDateDisplay
+                  examDate={proposalDeadline.deadline}
+                  title="Proposal Document Submission Deadline"
+                />
+              ) : (
+                <div className="rounded-md bg-blue-50 p-4 text-blue-700">
+                  No proposal submission deadline has been set yet.
+                </div>
+              )}
 
-                {isLoadingPassingDate ? (
-                  <p>Loading qualifying exam passing date...</p>
-                ) : passingDate?.qualificationDate ? (
-                  <ExamDateDisplay
-                    examDate={passingDate.qualificationDate}
-                    title="Qualifying Exam Passing Date"
-                  />
-                ) : (
-                  <div className="rounded-md bg-blue-50 p-4 text-blue-700">
-                    No qualifying exam passing date has been recorded yet.
-                  </div>
-                )}
+              {isLoadingPassingDate ? (
+                <p>Loading qualifying exam passing date...</p>
+              ) : passingDate?.qualificationDate ? (
+                <ExamDateDisplay
+                  examDate={passingDate.qualificationDate}
+                  title="Qualifying Exam Passing Date"
+                />
+              ) : (
+                <div className="rounded-md bg-blue-50 p-4 text-blue-700">
+                  No qualifying exam passing date has been recorded yet.
+                </div>
+              )}
 
-                {/* Show submission form based on new logic */}
-                {showProposalSubmissionForm && <ProposalSubmissionForm />}
-              </div>
+              {/* Show submission form based on new logic */}
+              {showProposalSubmissionForm && <ProposalSubmissionForm />}
             </div>
-          )}
-      
+          </div>
+        )}
+
         {proposalStatusValue === "approved" && (
           <div className="rounded-lg bg-white p-6 text-center shadow-md">
             <h2 className="text-2xl font-semibold text-green-600">
               Proposal Approved
             </h2>
             {proposalComment && (
-              <p className="mt-4 text-gray-600">
-                Comment: {proposalComment}
-              </p>
+              <p className="mt-4 text-gray-600">Comment: {proposalComment}</p>
             )}
           </div>
         )}
@@ -184,9 +183,7 @@ export default function CombinedExamAndProposalPage() {
               Your previous proposal was rejected. Please resubmit.
             </p>
             {proposalComment && (
-              <p className="mt-2 text-gray-600">
-                Feedback: {proposalComment}
-              </p>
+              <p className="mt-2 text-gray-600">Feedback: {proposalComment}</p>
             )}
           </div>
         )}

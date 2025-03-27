@@ -21,7 +21,7 @@ router.post(
         const body = qpSchemas.qpRequestBodySchema.parse(req.body);
         const insertedIds: Record<string, number> = {};
 
-        await db.transaction(async (tx) => {
+        const inserted = await db.transaction(async (tx) => {
             const insertedApplication = await tx
                 .insert(applications)
                 .values({
@@ -101,7 +101,7 @@ router.post(
                     filePath: "/uploads/placeholder.pdf",
                     originalName: "placeholder.pdf",
                     mimetype: "application/pdf",
-                    size: 1024, 
+                    size: 1024,
                 })
                 .returning({ id: files.id });
 
@@ -127,27 +127,28 @@ router.post(
                 insertedIds[key] = inserted[0].id;
             }
 
-            await tx.insert(qpReviewRequests).values({
-                applicationId,
-                dcaMember: insertedIds["dcaMember"],
-                courseNo: insertedIds["courseNo"],
-                courseName: insertedIds["courseName"],
-                fic: insertedIds["fic"],
-                ficDeadline: insertedIds["ficDeadline"],
-                midSem: insertedIds["midSem"],
-                midSemSol: insertedIds["midSemSol"],
-                compre: insertedIds["compre"],
-                compreSol: insertedIds["compreSol"],
-                documentsUploaded: false,
-                faculty1: insertedIds["faculty1"],
-                faculty2: insertedIds["faculty2"],
-                reviewDeadline: insertedIds["reviewDeadline"],
-            });
+            return await tx
+                .insert(qpReviewRequests)
+                .values({
+                    applicationId,
+                    dcaMember: insertedIds.dcaMember,
+                    courseNo: insertedIds.courseNo,
+                    courseName: insertedIds.courseName,
+                    fic: insertedIds.fic,
+                    ficDeadline: insertedIds.ficDeadline,
+                    midSem: insertedIds.midSem,
+                    midSemSol: insertedIds.midSemSol,
+                    compre: insertedIds.compre,
+                    compreSol: insertedIds.compreSol,
+                    documentsUploaded: false,
+                    faculty1: insertedIds.faculty1,
+                    faculty2: insertedIds.faculty2,
+                    reviewDeadline: insertedIds.reviewDeadline,
+                })
+                .returning();
         });
 
-        res.status(201).json({
-            message: "QP Review Request Created Successfully",
-        });
+        res.status(201).json(inserted[0]);
     })
 );
 
