@@ -15,10 +15,12 @@ import { FileIcon, MailIcon, ExternalLinkIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
+
 interface UploadResponse {
   message: string;
   success: boolean;
 }
+
 export default function ProposalSubmissionForm() {
   // Form links - replace with your actual links
   const formLinks = [
@@ -50,6 +52,12 @@ export default function ProposalSubmissionForm() {
     coSupervisor1: "",
     coSupervisor2: "",
   });
+
+  // New state for checkboxes
+  const [appendixIChecked, setAppendixIChecked] = useState(false);
+  const [summaryResearchProposalChecked, setSummaryResearchProposalChecked] = useState(false);
+  const [outlineProposedTopicChecked, setOutlineProposedTopicChecked] = useState(false);
+
   const proposalMutation = useMutation<UploadResponse, Error, FormData>({
     mutationFn: async (data: FormData): Promise<UploadResponse> => {
       const response = await api.post<UploadResponse>(
@@ -74,6 +82,11 @@ export default function ProposalSubmissionForm() {
         coSupervisor1: "",
         coSupervisor2: "",
       });
+
+      // Reset checkboxes
+      setAppendixIChecked(false);
+      setSummaryResearchProposalChecked(false);
+      setOutlineProposedTopicChecked(false);
     },
     onError: (error) => {
       console.error("Submission error:", error);
@@ -109,6 +122,12 @@ export default function ProposalSubmissionForm() {
       !formData.proposalDocument3
     ) {
       toast.error("Please upload all three proposal documents");
+      return;
+    }
+
+    // Validate checkboxes
+    if (!appendixIChecked || !summaryResearchProposalChecked || !outlineProposedTopicChecked) {
+      toast.error("Please confirm you have filled all required forms");
       return;
     }
 
@@ -192,6 +211,64 @@ export default function ProposalSubmissionForm() {
                 </div>
               </div>
             ))}
+
+            {/* New Checkbox Sections */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="appendixI" 
+                  className="form-checkbox h-4 w-4"
+                  checked={appendixIChecked}
+                  onChange={(e) => setAppendixIChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="appendixI" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Appendix I to be attached with Research Proposals *
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="summaryResearchProposal" 
+                  className="form-checkbox h-4 w-4"
+                  checked={summaryResearchProposalChecked}
+                  onChange={(e) => setSummaryResearchProposalChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="summaryResearchProposal" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Summary of Research Proposal *
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="checkbox" 
+                  id="outlineProposedTopic" 
+                  className="form-checkbox h-4 w-4"
+                  checked={outlineProposedTopicChecked}
+                  onChange={(e) => setOutlineProposedTopicChecked(e.target.checked)}
+                  required 
+                />
+                <Label 
+                  htmlFor="outlineProposedTopic" 
+                  className="text-sm font-medium"
+                >
+                  I have filled everything in Outline of the Proposed Topic of Research *
+                </Label>
+              </div>
+            </div>
           </div>
 
           {/* Supervisor Emails */}

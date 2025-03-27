@@ -29,6 +29,12 @@ export default function ExamForm() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
 
+  // New state for checkboxes
+  const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
+  const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
+  const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
+  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] = useState(false);
+
   // Fetch exam deadline and dates
   const { data: examData, isLoading: isExamDataLoading } = useQuery<
     BackendResponse,
@@ -72,6 +78,11 @@ export default function ExamForm() {
       setQualifyingArea2("");
       setFile(null);
       setFileName("");
+      // Reset checkboxes
+      setGeneralInfoChecked(false);
+      setAcademicInfoChecked(false);
+      setAnticipatedPlanChecked(false);
+      setQualifyingExamDetailsChecked(false);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || error.response?.data?.error || "Submission failed");
@@ -87,8 +98,11 @@ export default function ExamForm() {
       return;
     }
 
-    if (!file || !qualifyingArea1 || !qualifyingArea2) {
-      toast.error("All fields are required");
+    // Check if all required fields and checkboxes are filled
+    if (!file || !qualifyingArea1 || !qualifyingArea2 ||
+        !generalInfoChecked || !academicInfoChecked || 
+        !anticipatedPlanChecked || !qualifyingExamDetailsChecked) {
+      toast.error("All fields and checkboxes are required");
       return;
     }
 
@@ -191,6 +205,83 @@ export default function ExamForm() {
                 Selected file: {fileName}
               </p>
             )}
+          </div>
+
+          {/* New Checkbox Sections */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="generalInfo" 
+                className="form-checkbox h-4 w-4"
+                checked={generalInfoChecked}
+                onChange={(e) => setGeneralInfoChecked(e.target.checked)}
+                required 
+              />
+              <Label 
+                htmlFor="generalInfo" 
+                className="text-sm font-medium"
+              >
+                I have filled the General Information *
+              </Label>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="academicInfo" 
+                className="form-checkbox h-4 w-4"
+                checked={academicInfoChecked}
+                onChange={(e) => setAcademicInfoChecked(e.target.checked)}
+                required 
+              />
+              <Label 
+                htmlFor="academicInfo" 
+                className="text-sm font-medium"
+              >
+                I have filled the Academic Information *
+              </Label>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="anticipatedPlan" 
+                className="form-checkbox h-4 w-4"
+                checked={anticipatedPlanChecked}
+                onChange={(e) => setAnticipatedPlanChecked(e.target.checked)}
+                required 
+              />
+              <Label 
+                htmlFor="anticipatedPlan" 
+                className="text-sm font-medium"
+              >
+                I have filled the Anticipated Plan for PhD *
+              </Label>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="qualifyingExamDetails" 
+                className="form-checkbox h-4 w-4"
+                checked={qualifyingExamDetailsChecked}
+                onChange={(e) => setQualifyingExamDetailsChecked(e.target.checked)}
+                required 
+              />
+              <Label 
+                htmlFor="qualifyingExamDetails" 
+                className="text-sm font-medium"
+              >
+                I have filled Details about PhD Qualifying Examination *
+              </Label>
+            </div>
           </div>
 
           <Button
