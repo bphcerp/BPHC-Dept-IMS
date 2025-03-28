@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -12,205 +12,142 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
-interface Student {
-  email: string;
-  name: string;
-  documents: string | null;
+import SuggestDacMembers, { Student } from "@/components/phd/SuggestDacMembers";
+import ProposalDocumentsModal from "@/components/phd/ProposalDocumentsModal";
+import ProposalReviewDialog from "@/components/phd/ProposalReviewDialog";
+
+// Define a more precise type for proposal documents
+interface ProposalDocument {
+  id: number;
+  fieldName: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
 }
 
-interface StudentDetailProps {
-  student: Student;
-  onClose: () => void;
+// Response interface
+export interface SupervisedStudentsResponse {
+  success: boolean;
+  students: StudentWithGroupedDocuments[];
 }
 
-const StudentDetail: React.FC<StudentDetailProps> = ({ student, onClose }) => {
-  const [dacMembers, setDacMembers] = useState<string[]>([""]);
-  const queryClient = useQueryClient();
+// Extended Student interface with grouped documents
+interface StudentWithGroupedDocuments
+  extends Omit<Student, "proposalDocuments"> {
+  proposalDocuments: DocumentBatch[];
+}
 
-  const suggestDacMutation = useMutation({
-    mutationFn: async (data: { dacMembers: string[] }) => {
-      return await api.post("/phd/supervisor/suggestDacMembers", data);
-    },
-    onSuccess: () => {
-      toast.success("DAC members suggested successfully");
-      queryClient.invalidateQueries({ queryKey: ["phd-supervised-students"] });
-      onClose();
-    },
-    onError: () => {
-      toast.error("Failed to suggest DAC members");
-    },
-  });
-
-  const handleAddDacMember = () => {
-    setDacMembers([...dacMembers, ""]);
-  };
-
-  const handleRemoveDacMember = (index: number) => {
-    const newDacMembers = [...dacMembers];
-    newDacMembers.splice(index, 1);
-    setDacMembers(newDacMembers);
-  };
-
-  const handleDacMemberChange = (index: number, value: string) => {
-    const newDacMembers = [...dacMembers];
-    newDacMembers[index] = value;
-    setDacMembers(newDacMembers);
-  };
-
-  const onSubmit = () => {
-    // Filter out empty entries
-    const filteredDacMembers = dacMembers.filter(
-      (member) => member.trim() !== ""
-    );
-
-    if (filteredDacMembers.length === 0) {
-      toast.error("Please add at least one DAC member");
-      return;
-    }
-
-    suggestDacMutation.mutate({
-      dacMembers: filteredDacMembers,
-    });
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Student Details</DialogTitle>
-          <DialogDescription>
-            View details and suggest DAC members for {student.name}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-4 gap-4">
-            <div className="col-span-1 font-medium">Name:</div>
-            <div className="col-span-3">{student.name}</div>
-
-            <div className="col-span-1 font-medium">Email:</div>
-            <div className="col-span-3">{student.email}</div>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Documents</h3>
-            {student.documents ? (
-              <Button variant="link" className="p-0 text-blue-600" asChild>
-                <a
-                  href={student.documents}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Proposal
-                </a>
-              </Button>
-            ) : (
-              <p className="text-sm text-gray-500">No documents available</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-medium">Suggest DAC Members</h3>
-            <div className="space-y-2">
-              {dacMembers.map((member, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Input
-                    placeholder={`DAC Member ${index + 1} Email`}
-                    value={member}
-                    onChange={(e) =>
-                      handleDacMemberChange(index, e.target.value)
-                    }
-                  />
-                  {dacMembers.length > 1 && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => handleRemoveDacMember(index)}
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              {dacMembers.length < 5 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddDacMember}
-                  className="mt-2"
-                >
-                  Add DAC Member
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter className="flex justify-between">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              onClick={onSubmit}
-              disabled={suggestDacMutation.isLoading}
-            >
-              {suggestDacMutation.isLoading ? (
-                <LoadingSpinner className="mr-2 h-4 w-4" />
-              ) : null}
-              Submit DAC Suggestions
-            </Button>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="destructive" size="sm">
-              Reject
-            </Button>
-            <Button variant="default" size="sm">
-              Accept
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+// Define DocumentBatch type
+interface DocumentBatch {
+  documents: ProposalDocument[];
+  uploadedAt: string;
+}
 
 const SupervisedStudents: React.FC = () => {
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<StudentWithGroupedDocuments | null>(null);
+  const [showDacSuggestion, setShowDacSuggestion] = useState(false);
+  const [showProposalDocuments, setShowProposalDocuments] = useState(false);
+  const [showProposalReview, setShowProposalReview] = useState(false);
+  const [selectedDocumentBatch, setSelectedDocumentBatch] =
+    useState<DocumentBatch | null>(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["phd-supervised-students"],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["phd-supervised-students"] as const,
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; students: Student[] }>(
+      const response = await api.get<SupervisedStudentsResponse>(
         "/phd/supervisor/getSupervisedStudents"
       );
-      return response.data;
+      return {
+        ...response.data,
+        students: response.data.students.map((student) => ({
+          ...student,
+          proposalDocuments: groupProposalDocuments(
+            student.proposalDocuments.flatMap((doc) => doc.documents) || []
+          ),
+        })),
+      };
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });
 
-  const handleViewDetails = (student: Student) => {
+  // Add this method to your SupervisedStudents component
+  const convertToStudent = (student: StudentWithGroupedDocuments): Student => {
+    const { proposalDocuments, ...baseStudent } = student;
+    return {
+      ...baseStudent,
+      proposalDocuments: proposalDocuments.flatMap((batch) => batch.documents),
+    };
+  };
+
+  // Function to group proposal documents
+  const groupProposalDocuments = (
+    documents: ProposalDocument[]
+  ): DocumentBatch[] => {
+    const groups: DocumentBatch[] = [];
+
+    documents.forEach((doc) => {
+      const timestamp = new Date(doc.uploadedAt).getTime();
+
+      // Find an existing group within 1 minute
+      const existingGroup = groups.find(
+        (group) =>
+          Math.abs(new Date(group.uploadedAt).getTime() - timestamp) <=
+          1 * 60 * 1000
+      );
+
+      if (existingGroup) {
+        existingGroup.documents.push(doc);
+      } else {
+        groups.push({
+          documents: [doc],
+          uploadedAt: doc.uploadedAt,
+        });
+      }
+    });
+
+    return groups;
+  };
+
+  const handleViewDetails = (
+    student: StudentWithGroupedDocuments,
+    documentBatch: DocumentBatch
+  ) => {
     setSelectedStudent(student);
+    setSelectedDocumentBatch(documentBatch);
+    setShowProposalDocuments(true);
   };
 
   const handleCloseDetails = () => {
     setSelectedStudent(null);
+    setSelectedDocumentBatch(null);
+    setShowProposalDocuments(false);
+    void refetch();
+  };
+
+  const handleSuggestDacMembers = (student: StudentWithGroupedDocuments) => {
+    setSelectedStudent(student);
+    setShowDacSuggestion(true);
+  };
+
+  const handleCloseDacSuggestion = () => {
+    setShowDacSuggestion(false);
+    setSelectedStudent(null);
+    void refetch();
+  };
+
+  const handleOpenProposalReview = (student: StudentWithGroupedDocuments) => {
+    setSelectedStudent(student);
+    setShowProposalReview(true);
+  };
+
+  const handleCloseProposalReview = () => {
+    setSelectedStudent(null);
+    setShowProposalReview(false);
+    void refetch();
   };
 
   if (isLoading) {
@@ -235,7 +172,7 @@ const SupervisedStudents: React.FC = () => {
               <TableRow>
                 <TableHead className="w-1/3">Name</TableHead>
                 <TableHead className="w-1/3">Email</TableHead>
-                <TableHead className="w-1/3">Documents</TableHead>
+                <TableHead className="w-1/6">Proposal Documents</TableHead>
                 <TableHead className="w-1/6">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -248,12 +185,13 @@ const SupervisedStudents: React.FC = () => {
                     </TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>
-                      {student.documents ? (
+                      {student.proposalDocuments &&
+                      student.proposalDocuments.length > 0 ? (
                         <Badge
                           variant="outline"
                           className="bg-green-50 text-green-600"
                         >
-                          Available
+                          Available ({student.proposalDocuments.length})
                         </Badge>
                       ) : (
                         <Badge
@@ -265,13 +203,25 @@ const SupervisedStudents: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(student)}
-                      >
-                        View Details
-                      </Button>
+                      <div className="flex gap-2">
+                        {student.proposalDocuments.map((batch, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(student, batch)}
+                          >
+                            Batch {index + 1}
+                          </Button>
+                        ))}
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleSuggestDacMembers(student)}
+                        >
+                          Suggest DAC
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -287,8 +237,34 @@ const SupervisedStudents: React.FC = () => {
         </CardContent>
       </Card>
 
-      {selectedStudent && (
-        <StudentDetail student={selectedStudent} onClose={handleCloseDetails} />
+      {selectedStudent && showProposalDocuments && selectedDocumentBatch && (
+        <ProposalDocumentsModal
+          student={convertToStudent(selectedStudent)}
+          documentBatch={{
+            documents: selectedDocumentBatch.documents,
+            uploadedAt: selectedDocumentBatch.uploadedAt,
+          }}
+          onClose={handleCloseDetails}
+          onReview={() => {
+            handleCloseDetails();
+            handleOpenProposalReview(selectedStudent);
+          }}
+        />
+      )}
+
+      {selectedStudent && showDacSuggestion && (
+        <SuggestDacMembers
+          student={convertToStudent(selectedStudent)}
+          onClose={handleCloseDacSuggestion}
+        />
+      )}
+
+      {selectedStudent && showProposalReview && (
+        <ProposalReviewDialog
+          studentEmail={selectedStudent.email}
+          studentName={selectedStudent.name}
+          onClose={handleCloseProposalReview}
+        />
       )}
     </div>
   );

@@ -11,23 +11,17 @@ export const allPermissions = {
     "conference:application:create": "Create operations on applications",
 
     "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:get-all-qualifying-exam-for-the-semester": "",
-    "phd:drc-member:get-all-semester": "",
     "phd:drc-member:update-exam-dates": "",
-    "phd:drc-member:update-qualifying-exam-deadline": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
-    "phd:drc-member:get-phd-that-passed-recently": "",
-    "phd:drc-member:update-proposal-deadline": "",
     "phd:drc-member:get-phd-data-of-who-filled-application-form": "",
     "phd:drc-member:get-suggested-dac-member": "",
     "phd:drc-member:update-final-dac": "",
     "phd:drc-member:suggest-two-best-dac-member": "",
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
-    "phd:drc-member:get-current-semester": "",
-    "phd:drc-member:update-semester-dates": "",
     "phd:drc-member:get-phd-exam-status": "",
     "phd:drc-member:get-qualification-dates": "",
+    "phd:drc-member:get-dates-of-qe-exam":"",
 
     "phd:notifs:send": "",
 
@@ -45,10 +39,21 @@ export const allPermissions = {
     "phd:student:upload-proposal-document": "",
     "phd:student:get-qualifying-exam-status": "",
     "phd:student:get-qualifying-exam-passing-date": "",
+    "phd:student:get-proposal-status":"",
+    "phd:student:get-qe-application":"",
+    "phd:student:get-grade-status":"",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
+    "phd:supervisor:review-proposal-document" : "",
+
+    "phd:staff:get-all-semester": "",
+    "phd:staff:update-semester-dates": "",
+    "phd:staff:update-proposal-deadline": "",
+    "phd:staff:get-all-qualifying-exam-for-the-semester": "",
+    "phd:staff:get-current-semester": "",
+    "phd:staff:update-qualifying-exam-deadline": "",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
@@ -85,20 +90,11 @@ export const permissions = {
 
     "/phd/drcMember/generateCourseworkForm":
         "phd:drc-member:generate-coursework-form",
-    "/phd/drcMember/getAllQualifyingExamForTheSem":
-        "phd:drc-member:get-all-qualifying-exam-for-the-semester",
-    "/phd/drcMember/getAllSem": "phd:drc-member:get-all-semester",
     "/phd/drcMember/updateExamDates": "phd:drc-member:update-exam-dates",
-    "/phd/drcMember/updateQualifyingExamDeadline":
-        "phd:drc-member:update-qualifying-exam-deadline",
     "/phd/drcMember/getPhdToGenerateQualifyingExamForm":
         "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
     "/phd/drcMember/updatePassingDatesOfPhd":
         "phd:drc-member:update-passing-dates-of-phd",
-    "/phd/drcMember/getPhdThatPassedRecently":
-        "phd:drc-member:get-phd-that-passed-recently",
-    "/phd/drcMember/updateProposalDeadline":
-        "phd:drc-member:update-proposal-deadline",
     "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm":
         "phd:drc-member:get-phd-data-of-who-filled-application-form",
     "/phd/drcMember/getSuggestedDacMember":
@@ -108,12 +104,11 @@ export const permissions = {
         "phd:drc-member:suggest-two-best-dac-member",
     "/phd/drcMember/updateQualifyingExamResultsOfAllStudents":
         "phd:drc-member:update-qualifying-exam-results-of-all-students",
-    "/phd/drcMember/getCurrentSemester": "phd:drc-member:get-current-semester",
-    "/phd/drcMember/updateSemesterDates":
-        "phd:drc-member:update-semester-dates",
     "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
     "/phd/drcMember/getQualificationDates":
         "phd:drc-member:get-qualification-dates",
+    "/phd/drcMember/getDatesOfQeExam":
+        "phd:drc-member:get-dates-of-qe-exam",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -140,6 +135,12 @@ export const permissions = {
         "phd:student:get-qualifying-exam-status",
     "/phd/student/getQualifyingExamPassingDate":
         "phd:student:get-qualifying-exam-passing-date",
+    "/phd/student/getProposalStatus":
+        "phd:student:get-proposal-status",
+    "/phd/student/getNoOfQeApplication":
+        "phd:student:get-qe-application",
+    "/phd/student/getGradeStatus":
+        "phd:student:get-grade-status",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":
@@ -149,7 +150,17 @@ export const permissions = {
     "/phd/supervisor/getSupervisedStudents":
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
+    "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal-document",
 
+    //staff
+    "/phd/staff/updateSemesterDates":"phd:staff:update-semester-dates",
+    "/phd/staff/getAllSem": "phd:staff:get-all-semester",
+
+    "/phd/staff/updateProposalDeadline":"phd:staff:update-proposal-deadline",
+    "/phd/staff/getAllQualifyingExamForTheSem":"phd:staff:get-all-qualifying-exam-for-the-semester",
+    "/phd/staff/getCurrentSemester": "phd:staff:get-current-semester",
+    "/phd/staff/updateQualifyingExamDeadline":
+        "phd:staff:update-qualifying-exam-deadline",
     //Handout
     "/handout/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",

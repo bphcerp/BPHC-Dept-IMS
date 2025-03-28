@@ -1,11 +1,12 @@
+import { HandoutReviewFormValues } from "@/views/Handouts/DCAReview";
 import React from "react";
 import { useController, Control } from "react-hook-form";
 
 interface ReviewFieldProps {
-  name: string;
+  name: keyof HandoutReviewFormValues;
   label: string;
   description: string;
-  control: Control<any>;
+  control: Control<HandoutReviewFormValues>;
   disabled: boolean;
 }
 
@@ -36,7 +37,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
       <input
         id={name}
         type="checkbox"
-        checked={value}
+        checked={!!value}
         onChange={(e) => onChange(e.target.checked)}
         className="h-5 w-5"
         disabled={disabled}

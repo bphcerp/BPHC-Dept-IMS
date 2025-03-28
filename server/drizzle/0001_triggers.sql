@@ -68,7 +68,7 @@ END;
 $$ LANGUAGE plpgsql;
 --> statement-breakpoint
 CREATE OR REPLACE TRIGGER on_permission_delete
-AFTER DELETE ON permissions
+BEFORE DELETE ON permissions
 FOR EACH ROW EXECUTE FUNCTION handle_permission_deletion();
 --> statement-breakpoint
 CREATE OR REPLACE FUNCTION update_role_member_count() RETURNS trigger AS $$

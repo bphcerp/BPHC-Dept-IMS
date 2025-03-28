@@ -24,13 +24,13 @@ import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
 import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
 import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
-import UpdateSemesterDates from "@/views/Phd/DrcConvenor/UpdateSemesterDates";
+import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
-import UpdateDeadlinesPage from "@/views/Phd/DrcConvenor/UpdateDeadlines";
+import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -229,10 +229,6 @@ const Routing = () => {
                       element={<CourseworkForm />}
                     />
                     <Route
-                      path="update-semester-dates"
-                      element={<UpdateSemesterDates />}
-                    />
-                    <Route
                       path="generate-qualifying-exam-form"
                       element={<GenerateQualifyingExamForm />}
                     ></Route>
@@ -240,10 +236,6 @@ const Routing = () => {
                       path="phd-that-applied-for-qualifying-exam"
                       element={<PhdThatAppliedForQualifyingExam />}
                     ></Route>
-                    <Route
-                      path="update-deadlines"
-                      element={<UpdateDeadlinesPage />}
-                    />
                     <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
@@ -258,6 +250,18 @@ const Routing = () => {
                     <Route
                       path="proposal-submission"
                       element={<ProposalSubmission />}
+                    />
+                  </Route>
+                )}
+                {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+                  <Route path="staff" element={<Outlet />}>
+                    <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
+                    />
+                    <Route
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
                     />
                   </Route>
                 )}

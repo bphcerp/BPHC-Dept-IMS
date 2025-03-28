@@ -9,15 +9,9 @@ import {
   NavigationMenuTrigger,
   NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
-import CreateRequestDialog from "@/components/qp_review/CreateRequest";
-
-interface Course {
-  name: string;
-  professor: string;
-  reviewer1: string;
-  reviewer2: string;
-  status: string;
-}
+import CreateRequestDialog, {
+  Course,
+} from "@/components/qp_review/CreateRequest";
 
 const DCARequestsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,9 +48,8 @@ const DCARequestsView = () => {
   };
 
   // Function to add new request
-  const handleAddRequest = (newRequest : Course) => {
-    setCourses([...courses, newRequest,
-    ]); // Add new request to the list
+  const handleAddRequest = (newRequest: Course) => {
+    setCourses([...courses, newRequest]); // Add new request to the list
     setIsDialogOpen(false); // Close the dialog after adding
   };
 
@@ -64,7 +57,10 @@ const DCARequestsView = () => {
     <div className="flex w-full flex-col gap-4 px-10 pt-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">Courses</h1>
-        <Button className="flex items-center gap-2" onClick={() => setIsDialogOpen(true)}>
+        <Button
+          className="flex items-center gap-2"
+          onClick={() => setIsDialogOpen(true)}
+        >
           <Plus size={16} /> Create New Request
         </Button>
       </div>
@@ -73,7 +69,7 @@ const DCARequestsView = () => {
       <CreateRequestDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onAddRequest={handleAddRequest} 
+        onAddRequest={handleAddRequest}
       />
 
       {/* Search & Filter Section */}
@@ -94,10 +90,10 @@ const DCARequestsView = () => {
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <NavigationMenuTrigger className="border px-4 py-2 flex items-center gap-2">
+              <NavigationMenuTrigger className="flex items-center gap-2 border px-4 py-2">
                 Sort By <ChevronDown size={16} />
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="bg-white border rounded-md shadow-md p-2">
+              <NavigationMenuContent className="rounded-md border bg-white p-2 shadow-md">
                 {Object.keys(statusColors).map((status) => (
                   <div
                     key={status}
@@ -114,37 +110,52 @@ const DCARequestsView = () => {
       </div>
 
       {/* Course List */}
-      <div className="border-t mt-4">
+      <div className="mt-4 border-t">
         {courses
           .filter((course) => course.status === sortBy)
           .map((course, index) => (
-            <div key={index} className="flex items-center justify-between py-4 border-b">
+            <div
+              key={index}
+              className="flex items-center justify-between border-b py-4"
+            >
               <div>
                 <p className="font-semibold">{course.name}</p>
                 <p className="text-sm text-gray-500">{course.professor}</p>
               </div>
               <button className="text-blue-500">Edit</button>
-              <select className="border p-1" title="Faculty Reviewer 1" value={course.reviewer1}onChange={(e) => {
+              <select
+                className="border p-1"
+                title="Faculty Reviewer 1"
+                value={course.reviewer1}
+                onChange={(e) => {
                   const updatedCourses = [...courses];
                   updatedCourses[index].reviewer1 = e.target.value;
                   setCourses(updatedCourses);
-                  }}>
-                  <option>Select Reviewer 1</option>
-                  <option>Prof. BVSSN RAO</option>
-                  <option>Prof. BhanuMurthy</option>
-                  <option>Prof. Harish V Dixit</option>
-                  </select>
-                  <select className="border p-1" title="Faculty Reviewer 2" value={course.reviewer2}onChange={(e) => {
+                }}
+              >
+                <option>Select Reviewer 1</option>
+                <option>Prof. BVSSN RAO</option>
+                <option>Prof. BhanuMurthy</option>
+                <option>Prof. Harish V Dixit</option>
+              </select>
+              <select
+                className="border p-1"
+                title="Faculty Reviewer 2"
+                value={course.reviewer2}
+                onChange={(e) => {
                   const updatedCourses = [...courses];
                   updatedCourses[index].reviewer2 = e.target.value;
                   setCourses(updatedCourses);
-                  }}>
-                  <option>Select Reviewer 2</option>
-                  <option>Prof. BVSSN RAO</option>
-                  <option>Prof. BhanuMurthy</option>
-                  <option>Prof. Harish V Dixit</option>
-                  </select>
-              <span className={`px-3 py-1 text-white rounded-md ${statusColors[course.status]}`}>
+                }}
+              >
+                <option>Select Reviewer 2</option>
+                <option>Prof. BVSSN RAO</option>
+                <option>Prof. BhanuMurthy</option>
+                <option>Prof. Harish V Dixit</option>
+              </select>
+              <span
+                className={`rounded-md px-3 py-1 text-white ${statusColors[course.status]}`}
+              >
                 {course.status}
               </span>
             </div>

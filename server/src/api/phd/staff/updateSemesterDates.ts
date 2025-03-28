@@ -4,6 +4,8 @@ import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters,  } from "@/config/db/schema/phd.ts";
 import { eq, and } from "drizzle-orm";
+import assert from "assert";
+import {phdSchemas} from "lib"
 
 const router = express.Router();
 
@@ -12,7 +14,9 @@ export default router.post(
   "/",
   checkAccess(),
   asyncHandler(async (req, res) => {
-    const { year, semesterNumber, startDate, endDate } = req.body;
+    assert(req.body);
+    const parsed = phdSchemas.updateSemesterDatesSchema.parse(req.body);
+    const { year, semesterNumber, startDate, endDate } = parsed;
     
     // Check if semester already exists
     const existingSemester = await db

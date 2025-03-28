@@ -8,9 +8,6 @@ export const updateExamStatusSchema = z.array(
 );
 export type UpdateExamStatusSchemaBody = z.infer<typeof updateExamStatusSchema>;
 
-
-
-
 export const updatePhdExamStatusSchema = z.object({
     email: z.string().email(),
     examNumber: z.number().int().min(1).max(2),
@@ -31,6 +28,32 @@ export type UpdateQualifyingExamStatusBody = z.infer<
     typeof updateQualifyingExamStatusSchema
 >;
 
+export const updateProposalDeadlineSchema = z.object({
+    semesterId: z.number().int().positive(),
+    deadline: z.string().datetime()
+});
+
+export type UpdateProposalDeadlineBody = z.infer<typeof updateProposalDeadlineSchema>;
+
+export const updateQualifyingExamSchema = z.object({
+    semesterId: z.number().int().positive(),
+    examName: z.string().min(1),
+    examStartDate: z.string().datetime(),
+    examEndDate: z.string().datetime(),
+    deadline: z.string().datetime()
+});
+
+export type UpdateQualifyingExamBody = z.infer<typeof updateQualifyingExamSchema>;
+
+export const updateSemesterDatesSchema = z.object({
+    year: z.string(),
+    semesterNumber: z.number(),
+    startDate: z.string(),
+    endDate: z.string(),
+});
+
+export type UpdateSemesterDatesBody = z.infer<typeof updateSemesterDatesSchema>;
+
 export const updateQualificationDateSchema = z.array(
     z.object({
         email: z.string().email(),
@@ -43,10 +66,10 @@ export type UpdateQualificationDateBody = z.infer<
 >;
 
 export const suggestDacMembersSchema = z.object({
-    dacMembers: z
-        .array(z.string().email())
-        .length(5, "Exactly 5 DAC members are required"),
-});
+    dacMembers: z.array(z.string().email()),
+    studentEmail: z.string().email()
+  });
+
 export type SuggestDacMembersBody = z.infer<typeof suggestDacMembersSchema>;
 
 export const selectDacSchema = z.object({
@@ -67,7 +90,10 @@ export const uploadApplicationSchema = z.object({
     applicationType: z.string().min(1),
     qualifyingArea1: z.string().min(1),
     qualifyingArea2: z.string().min(1),
+    examStartDate: z.string(),
+    examEndDate: z.string(),
 });
+
 export type uploadApplicationBody = z.infer<typeof uploadApplicationSchema>;
 
 export const uploadProposalSchema = z.object({

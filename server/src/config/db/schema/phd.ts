@@ -1,33 +1,6 @@
-import { pgTable, text, serial, timestamp, integer ,  uuid} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
-
-export const phdApplications = pgTable("phd_applications", {
-    applicationId: serial("application_id").primaryKey(),
-    email: text("email")
-        .notNull()
-        .references(() => phd.email, { onDelete: "cascade" }),
-    fileId1: text("file_id_1")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),
-    fileId2: text("file_id_2")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),
-    fileId3: text("file_id_3")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),
-    fileId4: text("file_id_4")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),
-    fileId5: text("file_id_5")
-        .array()
-        .notNull()
-        .default(sql`'{}'::text[]`),
-});
 
 export const phdCourses = pgTable("phd_courses", {
     id: serial("id").primaryKey(),
@@ -48,24 +21,9 @@ export const phdCourses = pgTable("phd_courses", {
         .default(sql`'{}'::text[]`),
 });
 
-export const phdConfig = pgTable("phd_config", {
-    key: text("key").notNull().unique(),
-    value: timestamp("value").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const phdDocuments = pgTable("phdDocuments", {
-    id: uuid("id").defaultRandom().primaryKey(),
-    email: text("email").notNull(),
-    fileUrl: text("fileUrl").notNull(),
-    formName: text("formName").notNull(),
-    applicationType: text("applicationType").notNull(),
-    uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
-});
-
 export const phdSemesters = pgTable("phd_semesters", {
     id: serial("id").primaryKey(),
-    year: integer("year").notNull(),
+    year: text("year").notNull(),
     semesterNumber: integer("semester_number").notNull(), // 1 or 2
     startDate: timestamp("start_date").notNull(),
     endDate: timestamp("end_date").notNull(),
@@ -78,6 +36,8 @@ export const phdSemesters = pgTable("phd_semesters", {
       .notNull()
       .references(() => phdSemesters.id, { onDelete: "cascade" }),
     examName: text("exam_name").notNull(), 
+    examStartDate: timestamp("exam_start_date").default(sql`NULL`),
+    examEndDate: timestamp("exam_end_date").default(sql`NULL`),
     deadline: timestamp("deadline").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   });

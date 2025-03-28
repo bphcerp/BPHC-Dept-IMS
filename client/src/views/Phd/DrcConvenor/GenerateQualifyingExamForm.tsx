@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -13,8 +13,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Student {
@@ -37,25 +35,22 @@ interface QualifyingStudentsResponse {
     semesterYear: number;
     semesterNumber: number;
   };
-  formData?: {
-    students: Student[];
+}
+
+interface ExamDateResponse {
+  success: boolean;
+  exam: {
     examStartDate: string;
     examEndDate: string;
-    roomNumber: string;
   };
 }
 
 const GenerateQualifyingExamForm: React.FC = () => {
-  const queryClient = useQueryClient();
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [examStartDate, setExamStartDate] = useState<string>("");
-  const [examEndDate, setExamEndDate] = useState<string>("");
-  const [roomNumber, setRoomNumber] = useState<string>("");
   const [formData, setFormData] = useState<{
     students: Student[];
     examStartDate: string;
     examEndDate: string;
-    roomNumber: string;
   } | null>(null);
 
   // Fetch qualifying students
@@ -71,58 +66,39 @@ const GenerateQualifyingExamForm: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Mutation for updating final exam date
-  const updateExamDatesMutation = useMutation({
-    mutationFn: async (data: {
-      examDates: Record<string, string>;
-      roomNumber: string;
-    }) => {
-      return api.post("/phd/drcMember/updateExamDates", data);
+  // Fetch exam dates
+  const { data: examDatesData } = useQuery({
+    queryKey: ["phd-qualifying-exam-dates"],
+    queryFn: async () => {
+      if (data?.examInfo?.semesterId) {
+        const response = await api.get<ExamDateResponse>(
+          `/phd/drcMember/getDatesOfQeExam/${data.examInfo.semesterId}`
+        );
+        return response.data;
+      }
+      return null;
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["phd-qualifying-students"],
-      });
-    },
+    enabled: !!data?.examInfo?.semesterId,
   });
 
-  // Generate form data without updating the database tables
-  const generateForm = async () => {
-    if (!examEndDate || !roomNumber || selectedStudents.length === 0) {
-      alert("Please fill all required fields and select at least one student");
+  // Generate form data
+  const generateForm = () => {
+    if (!examDatesData?.exam || selectedStudents.length === 0) {
+      alert("Please select students and ensure exam dates are available");
       return;
     }
 
-    try {
-      // Only update the final exam date using the mutation
-      await updateExamDatesMutation.mutateAsync({
-        examDates: selectedStudents.reduce(
-          (acc, email) => {
-            acc[email] = examEndDate;
-            return acc;
-          },
-          {} as Record<string, string>
-        ),
-        roomNumber,
+    if (data?.students) {
+      const selectedStudentsData = data.students.filter((student) =>
+        selectedStudents.includes(student.email)
+      );
+
+      // Set the form data state for printing
+      setFormData({
+        students: selectedStudentsData,
+        examStartDate: examDatesData.exam.examStartDate,
+        examEndDate: examDatesData.exam.examEndDate,
       });
-
-      // Prepare the form data locally instead of fetching from server
-      if (data?.students) {
-        const selectedStudentsData = data.students.filter((student) =>
-          selectedStudents.includes(student.email)
-        );
-
-        // Set the form data state for printing
-        setFormData({
-          students: selectedStudentsData,
-          examStartDate: examStartDate || examEndDate, // Use end date if start date is not provided
-          examEndDate,
-          roomNumber,
-        });
-      }
-    } catch (error) {
-      console.error("Error generating form:", error);
-      alert("Failed to update exam dates");
     }
   };
 
@@ -157,7 +133,6 @@ const GenerateQualifyingExamForm: React.FC = () => {
 
   // Function to trigger print
   const handlePrint = () => {
-    // Use local formData state instead of data?.formData
     if (!formData) {
       alert("No form data available. Please generate the form first.");
       return;
@@ -165,7 +140,6 @@ const GenerateQualifyingExamForm: React.FC = () => {
 
     const startDate = formatDate(formData.examStartDate);
     const endDate = formatDate(formData.examEndDate);
-    const roomNum = formData.roomNumber;
 
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
@@ -173,7 +147,7 @@ const GenerateQualifyingExamForm: React.FC = () => {
       return;
     }
 
-    // Create the HTML content directly without using innerHTML from printRef
+    // Create the HTML content directly
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -237,8 +211,8 @@ const GenerateQualifyingExamForm: React.FC = () => {
           1. Date of Examination - From. <span class="underline">${startDate}</span> to.
           <span class="underline">${endDate}</span>
         </p>
-        <p>2. Room number - <span class="underline">${roomNum}</span></p>
-        <p>3. List of candidates who will be appearing in the examination-</p>
+
+        <p>2. List of candidates who will be appearing in the examination-</p>
 
         <table>
           <thead>
@@ -343,41 +317,6 @@ const GenerateQualifyingExamForm: React.FC = () => {
             </Alert>
           )}
 
-          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="examStartDate">Exam Start Date</Label>
-              <Input
-                id="examStartDate"
-                type="date"
-                value={examStartDate}
-                onChange={(e) => setExamStartDate(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="examEndDate">Exam End Date (Required)</Label>
-              <Input
-                id="examEndDate"
-                type="date"
-                value={examEndDate}
-                onChange={(e) => setExamEndDate(e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="roomNumber">Room Number</Label>
-              <Input
-                id="roomNumber"
-                type="text"
-                value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
-                className="mt-1"
-                required
-              />
-            </div>
-          </div>
-
           <Table>
             <TableHeader>
               <TableRow>
@@ -435,11 +374,13 @@ const GenerateQualifyingExamForm: React.FC = () => {
             <Button
               onClick={generateForm}
               disabled={
-                selectedStudents.length === 0 || !examEndDate || !roomNumber
+                selectedStudents.length === 0 ||
+                !examDatesData?.exam?.examStartDate ||
+                !examDatesData?.exam?.examEndDate
               }
               className="bg-blue-600 text-white hover:bg-blue-700"
             >
-              Update Exam Dates & Generate Form
+              Generate Form
             </Button>
 
             {formData && (

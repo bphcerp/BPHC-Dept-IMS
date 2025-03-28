@@ -15,7 +15,7 @@ router.post(
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.assignReviewerBodySchema.parse(req.body);
 
-        const reviewerExists = db.query.users.findFirst({
+        const reviewerExists = await db.query.users.findFirst({
             where: (user, { eq }) => eq(user.email, parsed.reviewerEmail),
         });
 

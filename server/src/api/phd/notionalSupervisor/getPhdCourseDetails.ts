@@ -31,7 +31,7 @@ export default router.get(
 
         const [studentCourses] = await db.select().from(phdCourses).where(eq(phdCourses.studentEmail, studentEmail as string)).limit(1);
 
-        if (!studentCourses || !studentCourses.courseNames) {
+        if (!studentCourses?.courseNames) {
             res.json({ success: true, courses: [] });
             return;
         }

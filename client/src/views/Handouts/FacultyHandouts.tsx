@@ -38,11 +38,13 @@ const FacultyHandouts: React.FC = () => {
     data: handouts,
     isLoading,
     isError,
-  } = useQuery<Handout[]>({
+  } = useQuery({
     queryKey: ["handouts-faculty"],
     queryFn: async () => {
       try {
-        const response = await api.get("/handout/faculty/get");
+        const response = await api.get<{ data: Handout[] }>(
+          "/handout/faculty/get"
+        );
         return response.data.data;
       } catch (error) {
         toast.error("Failed to fetch handouts");

@@ -14,8 +14,10 @@ export default router.get(
       email: phd.email,
       qualifyingExam1: phd.qualifyingExam1,
       qualifyingExam2: phd.qualifyingExam2,
-      qualifyingExam1Date: phd.qualifyingExam1Date,
-      qualifyingExam2Date: phd.qualifyingExam2Date,
+      qualifyingExam1StartDate: phd.qualifyingExam1StartDate,
+      qualifyingExam2StartDate: phd.qualifyingExam2StartDate,
+      qualifyingExam1EndDate: phd.qualifyingExam1EndDate,
+      qualifyingExam2EndDate: phd.qualifyingExam2EndDate,
     }).from(phd);
     
     res.json({
