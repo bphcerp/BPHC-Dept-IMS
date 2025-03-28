@@ -6,6 +6,7 @@ interface ReviewFieldProps {
   label: string;
   description: string;
   control: Control<any>;
+  disabled: boolean;
 }
 
 const ReviewField: React.FC<ReviewFieldProps> = ({
@@ -13,6 +14,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
   label,
   description,
   control,
+  disabled,
 }) => {
   const {
     field: { value, onChange },
@@ -20,6 +22,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
     name,
     control,
     defaultValue: false,
+    disabled,
   });
 
   return (
@@ -36,6 +39,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
         checked={value}
         onChange={(e) => onChange(e.target.checked)}
         className="h-5 w-5"
+        disabled={disabled}
       />
     </div>
   );
