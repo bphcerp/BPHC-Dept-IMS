@@ -41,6 +41,7 @@ import GetAllHandoutsDCAConvenor from "@/views/Handouts/getAllHandoutsDCAConveno
 import GetAllHandoutsDCA from "@/views/Handouts/getAllHandoutsDCA";
 import GetAllHandoutsFaculty from "@/views/Handouts/getAllHandoutsFaculty";
 import AssignReviewer from "@/views/Handouts/assignReviewer";
+import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -88,7 +89,7 @@ const Routing = () => {
       title: "Conference Approval",
       icon: <FileText />,
       url: "/conference",
-      requiredPermissions: qpReviewModulePermissions,
+      requiredPermissions: conferenceModulePermissions,
     },
     {
       title: "Course Handouts",
@@ -153,7 +154,17 @@ const Routing = () => {
             {checkAccessAnyOne(conferenceModulePermissions) && (
               <Route path="/conference" element={<ConferenceLayout />}>
                 <Route index element={<Navigate to="/conference/apply" />} />
-                <Route path="apply" element={<ConferenceApplyView />} />
+                {checkAccess(permissions["/conference/createApplication"]) && (
+                  <Route path="apply" element={<ConferenceApplyView />} />
+                )}
+                {checkAccess(
+                  permissions["/conference/getSubmittedApplications"]
+                ) && (
+                  <Route
+                    path="submitted"
+                    element={<ConferenceSubmittedApplicationsView />}
+                  />
+                )}
               </Route>
             )}
 
