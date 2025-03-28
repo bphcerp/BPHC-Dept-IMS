@@ -12,14 +12,8 @@ router.get(
         assert(req.user);
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and, or }) =>
-                    and(
-                        eq(handout.reviewerEmail, req.user!.email),
-                        or(
-                            eq(handout.status, "pending"),
-                            eq(handout.status, "notsubmitted")
-                        )
-                    ),
+                where: (handout, { eq }) =>
+                    eq(handout.reviewerEmail, req.user?.email!),
                 with: {
                     ic: {
                         with: {
@@ -35,6 +29,7 @@ router.get(
                 courseCode: handout.courseCode,
                 professorName: handout.ic.faculty.name,
                 status: handout.status,
+                submittedOn: handout.createdAt,
             };
         });
 

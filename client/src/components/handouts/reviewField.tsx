@@ -1,4 +1,4 @@
-import { HandoutReviewFormValues } from "@/views/Handouts/dca-review";
+import { HandoutReviewFormValues } from "@/views/Handouts/DCAReview";
 import React from "react";
 import { useController, Control } from "react-hook-form";
 
@@ -7,6 +7,7 @@ interface ReviewFieldProps {
   label: string;
   description: string;
   control: Control<HandoutReviewFormValues>;
+  disabled: boolean;
 }
 
 const ReviewField: React.FC<ReviewFieldProps> = ({
@@ -14,6 +15,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
   label,
   description,
   control,
+  disabled,
 }) => {
   const {
     field: { value, onChange },
@@ -21,6 +23,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
     name,
     control,
     defaultValue: false,
+    disabled,
   });
 
   return (
@@ -37,6 +40,7 @@ const ReviewField: React.FC<ReviewFieldProps> = ({
         checked={!!value}
         onChange={(e) => onChange(e.target.checked)}
         className="h-5 w-5"
+        disabled={disabled}
       />
     </div>
   );

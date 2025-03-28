@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess(),
+    //checkAccess(),
     asyncHandler(async (req, res, next) =>
         pdfUpload.single("handout")(req, res, (err) => {
             if (err instanceof multer.MulterError)

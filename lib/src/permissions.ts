@@ -60,6 +60,7 @@ export const allPermissions = {
     "handout:faculty:get-all-handouts": "",
     "handout:dca:get-all-handouts": "",
     "handout:dca:review": "",
+    "handout:get": "",
 } as const;
 
 export const permissions = {
@@ -166,6 +167,7 @@ export const permissions = {
     "/handout/faculty/get": "handout:faculty:get-all-handouts",
     "/handout/dca/get": "handout:dca:get-all-handouts",
     "/handout/dca/review": "handout:dca:review",
+    "/handout/get": "handout:get",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
