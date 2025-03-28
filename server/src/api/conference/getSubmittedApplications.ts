@@ -5,11 +5,13 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const submittedApplications = await db
             .select()
