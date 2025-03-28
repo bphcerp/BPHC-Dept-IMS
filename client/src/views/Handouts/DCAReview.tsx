@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,7 +36,7 @@ const DCAMemberReviewForm: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery<Handout>({
-    queryKey: [`handout ${handoutId}`],
+    queryKey: [`handout-dca ${handoutId}`],
     queryFn: async () => {
       try {
         const response = await api.get(`/handout/get?handoutId=${handoutId}`);
@@ -69,7 +69,11 @@ const DCAMemberReviewForm: React.FC = () => {
     onSuccess: async () => {
       toast.success("Handout review successfully submitted");
       await queryClient.refetchQueries({
-        queryKey: ["handouts-dca", "handouts-faculty"],
+        queryKey: [
+          "handouts-dca",
+          "handouts-faculty",
+          `handout-dca ${handoutId}`,
+        ],
       });
     },
     onError: (error) => {
@@ -84,7 +88,7 @@ const DCAMemberReviewForm: React.FC = () => {
     mutation.mutate(data);
   };
 
-  useEffect(() => {
+  useMemo(() => {
     setValue("scopeAndObjective", data?.scopeAndObjective ?? false);
     setValue("textBookPrescribed", data?.textBookPrescribed ?? false);
     setValue(
@@ -97,7 +101,7 @@ const DCAMemberReviewForm: React.FC = () => {
     );
     setValue("numberOfLP", data?.numberOfLP ?? false);
     setValue("evaluationScheme", data?.evaluationScheme ?? false);
-  }, [isLoading, data, setValue]);
+  }, [data, setValue]);
 
   if (isLoading)
     return (
