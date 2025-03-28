@@ -40,7 +40,6 @@ const DCAMemberReviewForm: React.FC = () => {
     queryFn: async () => {
       try {
         const response = await api.get(`/handout/get?handoutId=${handoutId}`);
-        console.log(response);
         return response.data.handout;
       } catch (error) {
         toast.error("Failed to fetch handouts");
