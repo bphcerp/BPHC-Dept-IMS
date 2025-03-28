@@ -41,6 +41,7 @@ import DCAConvenorHandouts from "@/views/Handouts/DCAConvenorHandouts";
 import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import AssignReviewer from "@/views/Handouts/AssignReviewer";
+import FacultyHandout from "@/views/Handouts/FacultyHandout";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -183,6 +184,9 @@ const Routing = () => {
                 {checkAccess(permissions["/handout/faculty/get"]) && (
                   <Route path="faculty" element={<FacultyHandouts />} />
                 )}
+                {checkAccess(permissions["/handout/get"]) && (
+                  <Route path=":id" element={<FacultyHandout />} />
+                )}
                 {checkAccess(permissions["/handout/dca/get"]) && (
                   <>
                     <Route path="dca" element={<DCAMemberHandouts />} />
@@ -195,7 +199,7 @@ const Routing = () => {
                       )}
                   </>
                 )}
-                {checkAccess(permissions["/handout/dca/get"]) &&
+                {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
                   checkAccess(permissions["/handout/dca/assignReviewer"]) && (
                     <>
                       <Route

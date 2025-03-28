@@ -1,6 +1,5 @@
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { handoutSchemas } from "lib";

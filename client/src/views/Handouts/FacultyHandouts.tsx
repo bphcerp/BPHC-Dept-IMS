@@ -141,7 +141,13 @@ const FacultyHandouts: React.FC = () => {
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                         >
-                          <Link to={`/handouts/${handout.id}`}>Details</Link>
+                          {handout.status === "notsubmitted" ? (
+                            <Link to={`/handout/submit/${handout.id}`}>
+                              Submit
+                            </Link>
+                          ) : (
+                            <Link to={`/handout/${handout.id}`}>Details</Link>
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>
