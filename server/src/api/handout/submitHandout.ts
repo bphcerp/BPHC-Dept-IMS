@@ -3,7 +3,6 @@ import { fileFields, files } from "@/config/db/schema/form.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import { eq } from "drizzle-orm";
