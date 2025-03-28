@@ -186,12 +186,13 @@ const Routing = () => {
                 {checkAccess(permissions["/handout/dca/get"]) && (
                   <>
                     <Route path="dca" element={<GetAllHandoutsDCA />} />
-                    {checkAccess(permissions["/handout/dca/review"]) && (
-                      <Route
-                        path="dca/review/:id"
-                        element={<DCAMemberReviewForm />}
-                      />
-                    )}
+                    {checkAccess(permissions["/handout/dca/review"]) &&
+                      checkAccess(permissions["/handout/get"]) && (
+                        <Route
+                          path="dca/review/:id"
+                          element={<DCAMemberReviewForm />}
+                        />
+                      )}
                   </>
                 )}
                 {checkAccess(permissions["/handout/dca/get"]) &&
