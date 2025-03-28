@@ -8,7 +8,10 @@ export const allPermissions = {
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
+
     "conference:application:create": "Create operations on applications",
+    "conference:application:submitted": "Read and edit submitted applications",
+    "conference:application:all": "Read and view status of all applications",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:update-exam-dates": "",
@@ -21,7 +24,7 @@ export const allPermissions = {
     "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
     "phd:drc-member:get-phd-exam-status": "",
     "phd:drc-member:get-qualification-dates": "",
-    "phd:drc-member:get-dates-of-qe-exam":"",
+    "phd:drc-member:get-dates-of-qe-exam": "",
 
     "phd:notifs:send": "",
 
@@ -39,14 +42,14 @@ export const allPermissions = {
     "phd:student:upload-proposal-document": "",
     "phd:student:get-qualifying-exam-status": "",
     "phd:student:get-qualifying-exam-passing-date": "",
-    "phd:student:get-proposal-status":"",
-    "phd:student:get-qe-application":"",
-    "phd:student:get-grade-status":"",
+    "phd:student:get-proposal-status": "",
+    "phd:student:get-qe-application": "",
+    "phd:student:get-grade-status": "",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
-    "phd:supervisor:review-proposal-document" : "",
+    "phd:supervisor:review-proposal-document": "",
 
     "phd:staff:get-all-semester": "",
     "phd:staff:update-semester-dates": "",
@@ -85,6 +88,11 @@ export const permissions = {
 
     "/conference/createApplication": "conference:application:create",
 
+    "/conference/getSubmittedApplications": "conference:application:submitted",
+    "/conference/viewOwnApplicationDetails": "conference:application:submitted",
+
+    "/conference/viewApplicationDetails": "conference:application:all",
+
     // PhD
 
     "/phd/drcMember/generateCourseworkForm":
@@ -106,8 +114,7 @@ export const permissions = {
     "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
     "/phd/drcMember/getQualificationDates":
         "phd:drc-member:get-qualification-dates",
-    "/phd/drcMember/getDatesOfQeExam":
-        "phd:drc-member:get-dates-of-qe-exam",
+    "/phd/drcMember/getDatesOfQeExam": "phd:drc-member:get-dates-of-qe-exam",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -134,12 +141,9 @@ export const permissions = {
         "phd:student:get-qualifying-exam-status",
     "/phd/student/getQualifyingExamPassingDate":
         "phd:student:get-qualifying-exam-passing-date",
-    "/phd/student/getProposalStatus":
-        "phd:student:get-proposal-status",
-    "/phd/student/getNoOfQeApplication":
-        "phd:student:get-qe-application",
-    "/phd/student/getGradeStatus":
-        "phd:student:get-grade-status",
+    "/phd/student/getProposalStatus": "phd:student:get-proposal-status",
+    "/phd/student/getNoOfQeApplication": "phd:student:get-qe-application",
+    "/phd/student/getGradeStatus": "phd:student:get-grade-status",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":
@@ -149,14 +153,16 @@ export const permissions = {
     "/phd/supervisor/getSupervisedStudents":
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
-    "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal-document",
+    "/phd/supervisor/reviewProposalDocument":
+        "phd:supervisor:review-proposal-document",
 
     //staff
-    "/phd/staff/updateSemesterDates":"phd:staff:update-semester-dates",
+    "/phd/staff/updateSemesterDates": "phd:staff:update-semester-dates",
     "/phd/staff/getAllSem": "phd:staff:get-all-semester",
 
-    "/phd/staff/updateProposalDeadline":"phd:staff:update-proposal-deadline",
-    "/phd/staff/getAllQualifyingExamForTheSem":"phd:staff:get-all-qualifying-exam-for-the-semester",
+    "/phd/staff/updateProposalDeadline": "phd:staff:update-proposal-deadline",
+    "/phd/staff/getAllQualifyingExamForTheSem":
+        "phd:staff:get-all-qualifying-exam-for-the-semester",
     "/phd/staff/getCurrentSemester": "phd:staff:get-current-semester",
     "/phd/staff/updateQualifyingExamDeadline":
         "phd:staff:update-qualifying-exam-deadline",
