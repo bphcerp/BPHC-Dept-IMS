@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess(),
+    // checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.getReviewQuerySchema.parse(req.query);
 

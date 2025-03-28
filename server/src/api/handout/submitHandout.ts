@@ -18,7 +18,7 @@ const uploader = util.promisify(pdfUpload.single("handout"));
 
 router.post(
     "/",
-    checkAccess(),
+    // checkAccess(),
     asyncHandler(async (req, res, next) => {
         try {
             //@ts-expect-error
