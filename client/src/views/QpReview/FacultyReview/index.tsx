@@ -47,7 +47,7 @@ export default function ReviewPage() {
 
   return (
     <div className="w-full bg-background pt-6">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-4">
         <QPReviewList
           pendingCourses={pendingCourses}
           reviewedCourses={reviewedCourses}
@@ -73,7 +73,7 @@ function QPReviewList({
   reviewedCourses: Course[];
 }) {
   return (
-    <div className="rounded-lg border bg-white shadow-sm">
+    <div className="rounded-lg border bg-white shadow-sm w-full">
       <div className="p-6">
         <h2 className="mb-4 text-xl font-semibold">QP To Review</h2>
 
