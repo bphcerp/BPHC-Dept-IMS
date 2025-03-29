@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ const DCAMemberHandouts: React.FC = () => {
     },
   });
 
-  useEffect(() => {
+  useMemo(() => {
     if (handouts) {
       const filtered = selectedStatuses.length
         ? handouts.filter((handout) =>

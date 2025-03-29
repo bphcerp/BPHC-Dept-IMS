@@ -6,6 +6,7 @@ import getAllHandoutsFaculty from "./getAllHandoutsFaculty.ts";
 import createDCAMemberReview from "./createDCAMemberReview.ts";
 import assignReviewer from "./assignReviewer.ts";
 import getHandout from "./getHandout.ts";
+import getAllHandouts from "./getAllHandouts.ts";
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/faculty/get", getAllHandoutsFaculty);
 router.use("/dca/review", createDCAMemberReview);
 router.use("/dca/assignReviewer", assignReviewer);
 router.use("/get", getHandout);
+router.use("/dcaconvenor/get", getAllHandouts);
 
 export default router;
