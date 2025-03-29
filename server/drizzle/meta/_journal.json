@@ -43,6 +43,13 @@
       "when": 1743072245017,
       "tag": "0005_damp_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1743239092409,
+      "tag": "0006_freezing_hannibal_king",
+      "breakpoints": true
     }
   ]
 }
