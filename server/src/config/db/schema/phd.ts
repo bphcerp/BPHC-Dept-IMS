@@ -41,3 +41,8 @@ export const phdSemesters = pgTable("phd_semesters", {
     deadline: timestamp("deadline").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   });
+
+  export const phdSubAreas = pgTable("phd_sub_areas", {
+    id: serial("id").primaryKey(),
+    subarea : text("sub_area").notNull()
+  } );

@@ -1,5 +1,4 @@
 import express from "express";
-import updateExamDates from "./updateExamDates.ts";
 import generateCourseworkForm from "./generateCourseworkForm.ts"
 import getPhdToGenerateQualifyingExamForm from "./getPhdToGenerateQualifyingExamForm.ts";
 import updatePassingDatesOfPhd from "./updatePassingDatesOfPhd.ts";
@@ -21,8 +20,6 @@ import getDatesOfQeExam from "./getDatesOfQeExam.ts";
 
 const router = express.Router();
 
-
-router.use("/updateExamDates", updateExamDates);
 router.use('/generateCourseworkForm', generateCourseworkForm);
 router.use('/updateQualifyingExamDeadline', updateQualifyingExamDeadline);
 router.use('/generateCourseworkForm', generateCourseworkForm);

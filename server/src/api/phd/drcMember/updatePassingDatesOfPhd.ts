@@ -9,7 +9,7 @@ import { phdSchemas } from "lib";
 
 const router = express.Router();
 
-router.patch(
+router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
