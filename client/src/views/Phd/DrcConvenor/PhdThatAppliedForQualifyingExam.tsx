@@ -74,10 +74,10 @@ interface IExamStatus {
   qualifyingExam2EndDate: string | null;
 }
 
-interface IExamStatusResponse {
-  success: boolean;
-  examStatuses: IExamStatus[];
-}
+// interface IExamStatusResponse {
+//   success: boolean;
+//   examStatuses: IExamStatus[];
+// }
 
 interface IQualificationDate {
   email: string;
@@ -99,6 +99,16 @@ interface IUpdateExamResult {
 interface IUpdateExamDate {
   email: string;
   qualificationDate: string;
+}
+
+interface IExamDatesResponse {
+  success: boolean;
+  exam: {
+    id: number;
+    examName: string;
+    examStartDate: string;
+    examEndDate: string;
+  };
 }
 
 // Utility functions
@@ -128,6 +138,9 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     }>
   >({});
   const [studentDates, setStudentDates] = useState<
+    Record<string, string | null>
+  >({});
+  const [dateValidationErrors, setDateValidationErrors] = useState<
     Record<string, string | null>
   >({});
 
@@ -179,6 +192,21 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Fetch exam dates for validation
+  const { data: examDateData } = useQuery<IExamDatesResponse>({
+    queryKey: ["qualifying-exam-dates", selectedSemester],
+    queryFn: async () => {
+      if (!selectedSemester) return { success: false, exam: null };
+      const response = await api.get(
+        `/phd/drcMember/getDatesOfQeExam/${selectedSemester}`
+      );
+      return response.data;
+    },
+    enabled: !!selectedSemester,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Initialize student status based on API data
   useEffect(() => {
     if (examStatusData?.examStatuses) {
@@ -220,6 +248,28 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     }
   }, [examStatusData, qualificationDatesData]);
 
+  // Validate all dates whenever examDateData changes
+  useEffect(() => {
+    if (examDateData?.success && examDateData.exam?.examEndDate) {
+      const examEndDate = new Date(examDateData.exam.examEndDate);
+      const errors: Record<string, string | null> = {};
+      
+      // Check all current dates against the exam end date
+      Object.entries(studentDates).forEach(([email, dateStr]) => {
+        if (dateStr) {
+          const qualificationDate = new Date(dateStr);
+          if (qualificationDate <= examEndDate) {
+            errors[email] = `Date must be after ${formatDate(examDateData.exam.examEndDate)}`;
+          } else {
+            errors[email] = null;
+          }
+        }
+      });
+      
+      setDateValidationErrors(errors);
+    }
+  }, [examDateData, studentDates]);
+
   // Process data to include status and dates in student objects
   const processedData = useMemo(() => {
     if (!data?.semestersWithExams) return null;
@@ -244,6 +294,16 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
 
     return processed;
   }, [data, studentStatus, studentDates]);
+
+  // Check if a date is valid (after exam end date)
+  const isDateValid = (date: string) => {
+    if (!examDateData?.success || !examDateData.exam?.examEndDate) return true;
+    
+    const examEndDate = new Date(examDateData.exam.examEndDate);
+    const qualificationDate = new Date(date);
+    
+    return qualificationDate > examEndDate;
+  };
 
   // Mutation for updating exam results
   const updateExamResultsMutation = useMutation({
@@ -288,14 +348,19 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
   // Mutation for updating exam dates
   const updateExamDatesMutation = useMutation({
     mutationFn: async () => {
+      // Filter out any invalid dates before sending
+      const validDates = examDates.filter(item => 
+        isDateValid(item.qualificationDate)
+      );
+      
       // Convert the date string to a valid ISO string format before sending
-      const formattedDates = examDates.map((item) => ({
+      const formattedDates = validDates.map((item) => ({
         email: item.email,
         // Ensure date is in ISO format with proper timezone handling
         qualificationDate: new Date(item.qualificationDate).toISOString(),
       }));
 
-      return await api.patch(
+      return await api.post(
         "/phd/drcMember/updatePassingDatesOfPhd",
         formattedDates
       );
@@ -328,6 +393,94 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     },
   });
 
+  // Handlers for status and date changes
+  const handleStatusChange = (email: string, status: string) => {
+    const ifPass = status === "pass";
+    const numberOfQeApplication = studentStatus[email]?.numberOfQeApplication ?? 1;
+
+    // Update local state immediately for UI feedback
+    setStudentStatus((prev) => ({
+      ...prev,
+      [email]: {
+        status: ifPass,
+        numberOfQeApplication
+      }
+    }));
+
+    // Add to changes that will be sent to server
+    setExamResults((prev) => {
+      const newResults = prev.filter((result) => result.email !== email);
+      newResults.push({ email, ifPass });
+      return newResults;
+    });
+  };
+
+  const handleDateChange = (email: string, date: string) => {
+    if (!date) return;
+
+    // Validate the date is after the exam end date
+    if (!isDateValid(date)) {
+      if (examDateData?.exam?.examEndDate) {
+        setDateValidationErrors((prev) => ({
+          ...prev,
+          [email]: `Date must be after ${formatDate(examDateData.exam.examEndDate)}`
+        }));
+      }
+      
+      // Still update the UI to show the invalid date (with error styling)
+      setStudentDates((prev) => ({
+        ...prev,
+        [email]: date,
+      }));
+      
+      // Don't add to changes that will be sent to server
+      return;
+    }
+
+    // Clear any validation errors for this email
+    setDateValidationErrors((prev) => ({
+      ...prev,
+      [email]: null
+    }));
+
+    // Update local state immediately for UI feedback
+    setStudentDates((prev) => ({
+      ...prev,
+      [email]: date,
+    }));
+
+    // Add to changes that will be sent to server
+    setExamDates((prev) => {
+      const newDates = prev.filter((item) => item.email !== email);
+      newDates.push({
+        email,
+        qualificationDate: date,
+      });
+      return newDates;
+    });
+  };
+
+  // Save changes function
+  const saveChanges = () => {
+    // Check for invalid dates
+    const hasInvalidDates = Object.values(dateValidationErrors).some(error => error !== null);
+    
+    if (hasInvalidDates) {
+      toast.error("Please fix the invalid qualification dates before saving");
+      return;
+    }
+    
+    if (examResults.length > 0) {
+      updateExamResultsMutation.mutate();
+    }
+    if (examDates.length > 0) {
+      updateExamDatesMutation.mutate();
+    }
+    if (examResults.length === 0 && examDates.length === 0) {
+      toast.info("No changes to save");
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return <LoadingSpinner className="mx-auto mt-10" />;
@@ -356,61 +509,6 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     processedData.semestersWithExams.find(
       (sem) => sem.id === selectedSemester
     ) || processedData.semestersWithExams[0];
-
-  // Handlers for status and date changes
-  const handleStatusChange = (email: string, status: string) => {
-    const ifPass = status === "pass";
-    const numberOfQeApplication = studentStatus[email]?.numberOfQeApplication ?? 1;
-
-    // Update local state immediately for UI feedback
-    setStudentStatus((prev) => ({
-      ...prev,
-      [email]: {
-        status: ifPass,
-        numberOfQeApplication
-      }
-    }));
-
-    // Add to changes that will be sent to server
-    setExamResults((prev) => {
-      const newResults = prev.filter((result) => result.email !== email);
-      newResults.push({ email, ifPass });
-      return newResults;
-    });
-  };
-
-  const handleDateChange = (email: string, date: string) => {
-    if (!date) return;
-
-    // Update local state immediately for UI feedback
-    setStudentDates((prev) => ({
-      ...prev,
-      [email]: date,
-    }));
-
-    // Add to changes that will be sent to server
-    setExamDates((prev) => {
-      const newDates = prev.filter((item) => item.email !== email);
-      newDates.push({
-        email,
-        qualificationDate: date,
-      });
-      return newDates;
-    });
-  };
-
-  // Save changes function
-  const saveChanges = () => {
-    if (examResults.length > 0) {
-      updateExamResultsMutation.mutate();
-    }
-    if (examDates.length > 0) {
-      updateExamDatesMutation.mutate();
-    }
-    if (examResults.length === 0 && examDates.length === 0) {
-      toast.info("No changes to save");
-    }
-  };
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
@@ -444,7 +542,8 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                 className="bg-green-600 text-white hover:bg-green-700"
                 disabled={
                   updateExamResultsMutation.isLoading ||
-                  updateExamDatesMutation.isLoading
+                  updateExamDatesMutation.isLoading ||
+                  Object.values(dateValidationErrors).some(error => error !== null)
                 }
               >
                 {updateExamResultsMutation.isLoading ||
@@ -454,6 +553,16 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
               </Button>
             </div>
           </div>
+          
+          {examDateData?.success && examDateData.exam && (
+            <div className="mb-4 rounded-md bg-blue-50 p-3 text-blue-800">
+              <p className="text-sm">
+                <strong>Note:</strong> Qualification dates must be after the exam end date: 
+                <strong> {formatDate(examDateData.exam.examEndDate)}</strong>
+              </p>
+            </div>
+          )}
+          
           {currentSemester.exams.length === 0 ? (
             <div className="py-4 text-center">
               No qualifying exams found for this semester
@@ -551,18 +660,32 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                                 </Select>
                               </TableCell>
                               <TableCell>
-                                <Input
-                                  type="date"
-                                  disabled={student.examStatus !== true}
-                                  value={formatISODate(student.examDate)}
-                                  onChange={(e) =>
-                                    handleDateChange(
-                                      student.email,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full"
-                                />
+                                <div className="space-y-1">
+                                  <Input
+                                    type="date"
+                                    disabled={student.examStatus !== true}
+                                    value={formatISODate(student.examDate)}
+                                    min={examDateData?.exam?.examEndDate 
+                                      ? formatISODate(examDateData.exam.examEndDate) 
+                                      : undefined}
+                                    onChange={(e) =>
+                                      handleDateChange(
+                                        student.email,
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`w-full ${
+                                      dateValidationErrors[student.email]
+                                        ? "border-red-500 focus-visible:ring-red-500"
+                                        : ""
+                                    }`}
+                                  />
+                                  {dateValidationErrors[student.email] && (
+                                    <p className="text-xs text-red-500">
+                                      {dateValidationErrors[student.email]}
+                                    </p>
+                                  )}
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
