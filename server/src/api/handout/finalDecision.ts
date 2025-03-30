@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    // checkAccess(),
+    // checkAccess("handout:final-decision"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = handoutSchemas.finalDecisionBodySchema.parse(req.body);
