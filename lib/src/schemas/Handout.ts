@@ -63,3 +63,15 @@ export const assignReviewerBodySchema = z.object({
 });
 
 export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;
+
+export const finalDecisionBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    status: z.enum(handoutStatuses),
+});
+
+export type FinalDecisionBody = z.infer<typeof finalDecisionBodySchema>;
