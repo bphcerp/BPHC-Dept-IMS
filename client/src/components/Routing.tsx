@@ -44,6 +44,7 @@ import AssignReviewer from "@/views/Handouts/AssignReviewer";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
+import ConferenceSubmittedApplicationView from "@/views/Conference/Submitted/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -162,10 +163,16 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/conference/getSubmittedApplications"]
                 ) && (
-                  <Route
-                    path="submitted"
-                    element={<ConferenceSubmittedApplicationsView />}
-                  />
+                  <>
+                    <Route
+                      path="submitted"
+                      element={<ConferenceSubmittedApplicationsView />}
+                    />
+                    <Route
+                      path="submitted/:id"
+                      element={<ConferenceSubmittedApplicationView />}
+                    />
+                  </>
                 )}
               </Route>
             )}
