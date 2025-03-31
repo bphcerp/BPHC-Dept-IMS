@@ -8,7 +8,10 @@ export const allPermissions = {
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
+
     "conference:application:create": "Create operations on applications",
+    "conference:application:submitted": "Read and edit submitted applications",
+    "conference:application:all": "Read and view status of all applications",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -90,6 +93,11 @@ export const permissions = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
+
+    "/conference/getSubmittedApplications": "conference:application:submitted",
+    "/conference/viewOwnApplicationDetails": "conference:application:submitted",
+
+    "/conference/viewApplicationDetails": "conference:application:all",
 
     // PhD
 
