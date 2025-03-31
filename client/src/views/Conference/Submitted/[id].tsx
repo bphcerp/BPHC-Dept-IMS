@@ -18,7 +18,7 @@ const ConferenceSubmittedApplicationView = () => {
   });
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center gap-6 bg-background-faded p-8">
+    <div className="relative flex min-h-screen w-full flex-col gap-6 bg-background-faded p-8">
       <h2 className="self-start text-3xl font-normal">View Application</h2>
       {isLoading && <p>Loading...</p>}
       {isError && <p>Error loading applications</p>}

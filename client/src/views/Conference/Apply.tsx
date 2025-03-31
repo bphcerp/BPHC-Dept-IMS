@@ -87,7 +87,7 @@ const ConferenceApplyView: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center justify-center gap-6 bg-background-faded p-8">
+    <div className="relative flex min-h-screen w-full flex-col items-start justify-center gap-6 bg-background-faded p-8">
       <h2 className="self-start text-3xl font-normal">Apply for Conference</h2>
       <Form {...form}>
         <form
