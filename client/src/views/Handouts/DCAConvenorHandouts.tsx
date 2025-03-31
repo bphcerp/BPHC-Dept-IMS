@@ -9,6 +9,7 @@ import { handoutSchemas } from "lib";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Card } from "@/components/ui/card";
 
+
 interface Handout {
   id: string;
   courseName: string;
@@ -137,14 +138,13 @@ const DCAConvenorHandouts: React.FC = () => {
                             Assign Reviewer
                           </Link>
                         </Button>
-                      ) : handout.status === "pending" ||
-                        handout.status === "notsubmitted" ? (
+                      ) : handout.status === "pending" ? (
                         <Button
                           asChild
                           variant="outline"
                           className="whitespace-nowrap hover:bg-primary hover:text-white"
                         >
-                          <Link to={`/handout/dca/review/${handout.id}`}>
+                          <Link to={`/handout/dcaconvenor/review/${handout.id}`}>
                             Review
                           </Link>
                         </Button>
