@@ -1,7 +1,6 @@
 import db from "@/config/db/index.ts";
 import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
 import { applications } from "@/config/db/schema/form.ts";
-import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
@@ -20,7 +19,7 @@ const getSubmittedApplications = async (email: string) => {
         )
         .where(eq(applications.userEmail, email));
 
-    if (submittedApplications.length === 0) return;
+    if (submittedApplications.length === 0) return { applications: [] };
     return {
         applications: submittedApplications.map((app) => ({
             id: app.applications.id,
@@ -36,16 +35,8 @@ const getSubmittedApplications = async (email: string) => {
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, next) => {
+    asyncHandler(async (req, res) => {
         const data = await getSubmittedApplications(req.user!.email);
-        if (!data) {
-            return next(
-                new HttpError(
-                    HttpCode.NOT_FOUND,
-                    "No submitted applications found"
-                )
-            );
-        }
         const response: conferenceSchemas.submittedApplicationsResponse = data;
         res.status(200).json(response);
     })
