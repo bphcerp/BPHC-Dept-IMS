@@ -47,10 +47,9 @@ const DCARequestsView = () => {
     Pending: "bg-gray-400",
   };
 
-  // Function to add new request
   const handleAddRequest = (newRequest: Course) => {
-    setCourses([...courses, newRequest]); // Add new request to the list
-    setIsDialogOpen(false); // Close the dialog after adding
+    setCourses([...courses, newRequest]); 
+    setIsDialogOpen(false); 
   };
 
   return (

@@ -24,7 +24,7 @@ export default function FacultyReview() {
 
   return (
     <main className="w-full bg-background">
-      <div className="mx-auto max-w-6xl p-4">
+      <div className="mx-4 mt-2">
         <div className="overflow-hidden rounded-md border">
           <div className="flex items-center justify-between border-b p-4">
             <h1 className="text-2xl font-bold">{courseCode}</h1>
