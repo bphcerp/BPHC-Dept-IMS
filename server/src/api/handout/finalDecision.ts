@@ -1,6 +1,6 @@
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-// import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { handoutSchemas } from "lib";
@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    // checkAccess("handout:final-decision"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const parsed = handoutSchemas.finalDecisionBodySchema.parse(req.body);
@@ -27,12 +27,11 @@ router.post(
         if (!result.length)
             return next(new HttpError(HttpCode.NOT_FOUND, "Handout Not Found"));
 
-        
         res.status(200).json({
             success: true,
             message: "Handout review updated",
             data: result[0],
-        });;
+        });
     })
 );
 

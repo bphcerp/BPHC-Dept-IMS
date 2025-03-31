@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { handoutSchemas } from "lib";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from "@/components/ui/separator";
 
 interface Handout {
   id: string;
@@ -149,19 +150,20 @@ const DCAConvenorHandouts: React.FC = () => {
                               Assign Reviewer
                             </Link>
                           </Button>
-                        ) : handout.status === "pending" ||
-                          handout.status === "notsubmitted" ? (
+                        ) : handout.status === "pending" ? (
                           <Button
                             asChild
                             variant="outline"
                             className="hover:bg-primary hover:text-white"
                           >
-                            <Link to={`/handout/dca/review/${handout.id}`}>
+                            <Link
+                              to={`/handout/dcaconvenor/review/${handout.id}`}
+                            >
                               Review
                             </Link>
                           </Button>
                         ) : (
-                          <div>None</div>
+                          <div className="text-center">None</div>
                         )}
                       </TableCell>
                     </TableRow>
