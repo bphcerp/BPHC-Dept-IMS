@@ -84,14 +84,14 @@ const UpdateSemesterDates: React.FC = () => {
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <h1 className="mb-8 text-center text-3xl font-bold">
-        PhD Program Semester Management
+        PhD Semester
       </h1>
 
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Create/Update Semester */}
         <Card>
           <CardHeader>
-            <CardTitle>Create/Update Semester</CardTitle>
+            <CardTitle>Create Semester</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSemesterSubmit} className="space-y-4">

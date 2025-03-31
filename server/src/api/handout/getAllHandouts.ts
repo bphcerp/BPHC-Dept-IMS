@@ -1,6 +1,5 @@
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import assert from "assert";
 import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
 const router = express.Router();
@@ -8,20 +7,16 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, _next) => {
-        assert(req.user);
+    asyncHandler(async (_req, res, _next) => {
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and, or }) =>
-                    and(
-                        eq(handout.reviewerEmail, req.user!.email),
-                        or(
-                            eq(handout.status, "pending"),
-                            eq(handout.status, "notsubmitted")
-                        )
-                    ),
                 with: {
                     ic: {
+                        with: {
+                            faculty: true,
+                        },
+                    },
+                    reviewer: {
                         with: {
                             faculty: true,
                         },
@@ -33,8 +28,10 @@ router.get(
                 id: handout.id,
                 courseName: handout.courseName,
                 courseCode: handout.courseCode,
+                reviewerName: handout.reviewer?.faculty.name || "",
                 professorName: handout.ic.faculty.name,
                 status: handout.status,
+                submittedOn: handout.createdAt,
             };
         });
 

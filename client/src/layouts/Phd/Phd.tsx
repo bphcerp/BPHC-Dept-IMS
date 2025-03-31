@@ -93,6 +93,12 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/staff/update-deadlines",
           requiredPermissions: [permissions["/phd/staff/updateQualifyingExamDeadline"], permissions["/phd/staff/updateProposalDeadline"]],
         },
+        {
+          title: "Update Sub Areas",
+          icon: <CalendarClockIcon />,
+          url: "/phd/staff/update-subareas",
+          requiredPermissions: [permissions["/phd/staff/updateSubAreas"], permissions["/phd/staff/getSubAreas"], permissions["/phd/staff/deleteSubArea"]],
+        },
       ],
     },
     {

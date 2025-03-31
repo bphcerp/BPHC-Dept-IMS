@@ -15,7 +15,7 @@ export const handoutStatuses = [
     "notsubmitted",
 ] as const;
 
-export type HandoutStatus = typeof handoutStatuses[number];
+export type HandoutStatus = (typeof handoutStatuses)[number];
 
 export const createHandoutDCAMemberReviewBodySchema = z.object({
     handoutId: z.coerce.number(),
@@ -41,6 +41,17 @@ export const submitHandoutQuerySchema = z.object({
 
 export type SubmitHandoutParams = z.infer<typeof submitHandoutQuerySchema>;
 
+export const getReviewQuerySchema = z.object({
+    handoutId: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+});
+
+export type GetReviewQuery = z.infer<typeof getReviewQuerySchema>;
+
 export const assignReviewerBodySchema = z.object({
     id: z
         .string()
@@ -52,3 +63,15 @@ export const assignReviewerBodySchema = z.object({
 });
 
 export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;
+
+export const finalDecisionBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    status: z.enum(handoutStatuses),
+});
+
+export type FinalDecisionBody = z.infer<typeof finalDecisionBodySchema>;

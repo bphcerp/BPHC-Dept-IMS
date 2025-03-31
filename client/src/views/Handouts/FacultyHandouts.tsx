@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ const FacultyHandouts: React.FC = () => {
     },
   });
 
-  useEffect(() => {
+  useMemo(() => {
     if (handouts) {
       const filtered = selectedStatuses.length
         ? handouts.filter((handout) =>
@@ -141,7 +141,13 @@ const FacultyHandouts: React.FC = () => {
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                         >
-                          <Link to={`/handouts/${handout.id}`}>Details</Link>
+                          {handout.status === "notsubmitted" ? (
+                            <Link to={`/handout/submit/${handout.id}`}>
+                              Submit
+                            </Link>
+                          ) : (
+                            <Link to={`/handout/${handout.id}`}>Details</Link>
+                          )}
                         </Button>
                       </TableCell>
                     </TableRow>

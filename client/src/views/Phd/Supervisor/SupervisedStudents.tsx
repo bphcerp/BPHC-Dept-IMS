@@ -30,43 +30,38 @@ interface ProposalDocument {
 // Response interface
 export interface SupervisedStudentsResponse {
   success: boolean;
-  students: StudentWithGroupedDocuments[];
+  students: StudentWithProposalDocuments[];
 }
 
-// Extended Student interface with grouped documents
-interface StudentWithGroupedDocuments
-  extends Omit<Student, "proposalDocuments"> {
-  proposalDocuments: DocumentBatch[];
-}
-
-// Define DocumentBatch type
-interface DocumentBatch {
-  documents: ProposalDocument[];
-  uploadedAt: string;
+// Extended Student interface with proposal documents
+interface StudentWithProposalDocuments extends Omit<Student, "proposalDocuments"> {
+  proposalDocuments: ProposalDocument[];
 }
 
 const SupervisedStudents: React.FC = () => {
-  const [selectedStudent, setSelectedStudent] =
-    useState<StudentWithGroupedDocuments | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithProposalDocuments | null>(null);
   const [showDacSuggestion, setShowDacSuggestion] = useState(false);
   const [showProposalDocuments, setShowProposalDocuments] = useState(false);
   const [showProposalReview, setShowProposalReview] = useState(false);
-  const [selectedDocumentBatch, setSelectedDocumentBatch] =
-    useState<DocumentBatch | null>(null);
+  const [selectedDocumentBatch, setSelectedDocumentBatch] = useState<ProposalDocument[] | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<SupervisedStudentsResponse>({
     queryKey: ["phd-supervised-students"] as const,
     queryFn: async () => {
       const response = await api.get<SupervisedStudentsResponse>(
         "/phd/supervisor/getSupervisedStudents"
       );
+      
+      // Ensure proper typing and handling of proposal documents
       return {
         ...response.data,
         students: response.data.students.map((student) => ({
           ...student,
-          proposalDocuments: groupProposalDocuments(
-            student.proposalDocuments.flatMap((doc) => doc.documents) || []
-          ),
+          proposalDocuments: Array.isArray(student.proposalDocuments) 
+            ? student.proposalDocuments.flatMap((doc) => 
+                Array.isArray(doc) ? doc : [doc]
+              )
+            : []
         })),
       };
     },
@@ -74,38 +69,35 @@ const SupervisedStudents: React.FC = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Add this method to your SupervisedStudents component
-  const convertToStudent = (student: StudentWithGroupedDocuments): Student => {
+  // Convert back to original Student type if needed
+  const convertToStudent = (student: StudentWithProposalDocuments): Student => {
     const { proposalDocuments, ...baseStudent } = student;
     return {
       ...baseStudent,
-      proposalDocuments: proposalDocuments.flatMap((batch) => batch.documents),
+      proposalDocuments: proposalDocuments,
     };
   };
 
-  // Function to group proposal documents
+  // Group documents by upload batch (within 1 minute)
   const groupProposalDocuments = (
     documents: ProposalDocument[]
-  ): DocumentBatch[] => {
-    const groups: DocumentBatch[] = [];
+  ): ProposalDocument[][] => {
+    const groups: ProposalDocument[][] = [];
 
     documents.forEach((doc) => {
       const timestamp = new Date(doc.uploadedAt).getTime();
 
       // Find an existing group within 1 minute
-      const existingGroup = groups.find(
-        (group) =>
-          Math.abs(new Date(group.uploadedAt).getTime() - timestamp) <=
-          1 * 60 * 1000
+      const existingGroupIndex = groups.findIndex((group) => 
+        group.some((existingDoc) => 
+          Math.abs(new Date(existingDoc.uploadedAt).getTime() - timestamp) <= 1 * 60 * 1000
+        )
       );
 
-      if (existingGroup) {
-        existingGroup.documents.push(doc);
+      if (existingGroupIndex !== -1) {
+        groups[existingGroupIndex].push(doc);
       } else {
-        groups.push({
-          documents: [doc],
-          uploadedAt: doc.uploadedAt,
-        });
+        groups.push([doc]);
       }
     });
 
@@ -113,8 +105,8 @@ const SupervisedStudents: React.FC = () => {
   };
 
   const handleViewDetails = (
-    student: StudentWithGroupedDocuments,
-    documentBatch: DocumentBatch
+    student: StudentWithProposalDocuments,
+    documentBatch: ProposalDocument[]
   ) => {
     setSelectedStudent(student);
     setSelectedDocumentBatch(documentBatch);
@@ -128,7 +120,7 @@ const SupervisedStudents: React.FC = () => {
     void refetch();
   };
 
-  const handleSuggestDacMembers = (student: StudentWithGroupedDocuments) => {
+  const handleSuggestDacMembers = (student: StudentWithProposalDocuments) => {
     setSelectedStudent(student);
     setShowDacSuggestion(true);
   };
@@ -139,7 +131,7 @@ const SupervisedStudents: React.FC = () => {
     void refetch();
   };
 
-  const handleOpenProposalReview = (student: StudentWithGroupedDocuments) => {
+  const handleOpenProposalReview = (student: StudentWithProposalDocuments) => {
     setSelectedStudent(student);
     setShowProposalReview(true);
   };
@@ -178,53 +170,58 @@ const SupervisedStudents: React.FC = () => {
             </TableHeader>
             <TableBody>
               {data?.students && data.students.length > 0 ? (
-                data.students.map((student) => (
-                  <TableRow key={student.email}>
-                    <TableCell className="font-medium">
-                      {student.name}
-                    </TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell>
-                      {student.proposalDocuments &&
-                      student.proposalDocuments.length > 0 ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-green-50 text-green-600"
-                        >
-                          Available ({student.proposalDocuments.length})
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-gray-50 text-gray-600"
-                        >
-                          Not Available
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {student.proposalDocuments.map((batch, index) => (
-                          <Button
-                            key={index}
+                data.students.map((student) => {
+                  // Group documents for this student
+                  const documentGroups = groupProposalDocuments(student.proposalDocuments);
+
+                  return (
+                    <TableRow key={student.email}>
+                      <TableCell className="font-medium">
+                        {student.name}
+                      </TableCell>
+                      <TableCell>{student.email}</TableCell>
+                      <TableCell>
+                        {student.proposalDocuments &&
+                        student.proposalDocuments.length > 0 ? (
+                          <Badge
                             variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDetails(student, batch)}
+                            className="bg-green-50 text-green-600"
                           >
-                            Batch {index + 1}
+                            Available ({student.proposalDocuments.length})
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-50 text-gray-600"
+                          >
+                            Not Available
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {documentGroups.map((batch, index) => (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDetails(student, batch)}
+                            >
+                              Batch {index + 1}
+                            </Button>
+                          ))}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleSuggestDacMembers(student)}
+                          >
+                            Suggest DAC
                           </Button>
-                        ))}
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleSuggestDacMembers(student)}
-                        >
-                          Suggest DAC
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="py-8 text-center">
@@ -241,8 +238,8 @@ const SupervisedStudents: React.FC = () => {
         <ProposalDocumentsModal
           student={convertToStudent(selectedStudent)}
           documentBatch={{
-            documents: selectedDocumentBatch.documents,
-            uploadedAt: selectedDocumentBatch.uploadedAt,
+            documents: selectedDocumentBatch,
+            uploadedAt: selectedDocumentBatch[0]?.uploadedAt || new Date().toISOString(),
           }}
           onClose={handleCloseDetails}
           onReview={() => {

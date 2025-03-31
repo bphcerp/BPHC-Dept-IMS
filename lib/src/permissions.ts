@@ -14,7 +14,6 @@ export const allPermissions = {
     "conference:application:all": "Read and view status of all applications",
 
     "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:update-exam-dates": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
     "phd:drc-member:update-passing-dates-of-phd": "",
     "phd:drc-member:get-phd-data-of-who-filled-application-form": "",
@@ -45,6 +44,7 @@ export const allPermissions = {
     "phd:student:get-proposal-status": "",
     "phd:student:get-qe-application": "",
     "phd:student:get-grade-status": "",
+    "phd:student:get-sub-area": "",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
@@ -57,12 +57,17 @@ export const allPermissions = {
     "phd:staff:get-all-qualifying-exam-for-the-semester": "",
     "phd:staff:get-current-semester": "",
     "phd:staff:update-qualifying-exam-deadline": "",
+    "phd:staff:delete-sub-area": "",
+    "phd:staff:get-sub-area": "",
+    "phd:staff:update-sub-area": "",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
     "handout:faculty:get-all-handouts": "",
     "handout:dca:get-all-handouts": "",
     "handout:dca:review": "",
+    "handout:get": "",
+    "handout:dca-convenor:get-all": "",
 } as const;
 
 export const permissions = {
@@ -97,7 +102,6 @@ export const permissions = {
 
     "/phd/drcMember/generateCourseworkForm":
         "phd:drc-member:generate-coursework-form",
-    "/phd/drcMember/updateExamDates": "phd:drc-member:update-exam-dates",
     "/phd/drcMember/getPhdToGenerateQualifyingExamForm":
         "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
     "/phd/drcMember/updatePassingDatesOfPhd":
@@ -144,6 +148,7 @@ export const permissions = {
     "/phd/student/getProposalStatus": "phd:student:get-proposal-status",
     "/phd/student/getNoOfQeApplication": "phd:student:get-qe-application",
     "/phd/student/getGradeStatus": "phd:student:get-grade-status",
+    "/phd/student/getSubAreas": "phd:student:get-sub-area",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":
@@ -166,12 +171,18 @@ export const permissions = {
     "/phd/staff/getCurrentSemester": "phd:staff:get-current-semester",
     "/phd/staff/updateQualifyingExamDeadline":
         "phd:staff:update-qualifying-exam-deadline",
+    "/phd/staff/deleteSubArea": "phd:staff:delete-sub-area",
+    "/phd/staff/getSubAreas": "phd:staff:get-sub-area",
+    "/phd/staff/updateSubAreas": "phd:staff:update-sub-area",
+
     //Handout
     "/handout/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
     "/handout/faculty/get": "handout:faculty:get-all-handouts",
     "/handout/dca/get": "handout:dca:get-all-handouts",
     "/handout/dca/review": "handout:dca:review",
+    "/handout/get": "handout:get",
+    "/handout/dcaconvenor/get": "handout:dca-convenor:get-all",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

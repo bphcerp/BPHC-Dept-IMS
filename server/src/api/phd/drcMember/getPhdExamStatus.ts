@@ -14,6 +14,7 @@ export default router.get(
       email: phd.email,
       qualifyingExam1: phd.qualifyingExam1,
       qualifyingExam2: phd.qualifyingExam2,
+      numberOfQeApplication: phd.numberOfQeApplication,
       qualifyingExam1StartDate: phd.qualifyingExam1StartDate,
       qualifyingExam2StartDate: phd.qualifyingExam2StartDate,
       qualifyingExam1EndDate: phd.qualifyingExam1EndDate,

@@ -45,6 +45,16 @@ export const updateQualifyingExamSchema = z.object({
 
 export type UpdateQualifyingExamBody = z.infer<typeof updateQualifyingExamSchema>;
 
+export const updateSubAreasSchema = z.object({
+    subAreas: z.array(
+        z.object({
+            subarea: z.string().min(1), 
+        })
+    ).nonempty(),
+});
+
+export type UpdateSubAreasBody = z.infer<typeof updateSubAreasSchema>;
+
 export const updateSemesterDatesSchema = z.object({
     year: z.string(),
     semesterNumber: z.number(),

@@ -34,13 +34,15 @@ import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
-import SubmitHandout from "@/views/Handouts/submitHandout";
+import SubmitHandout from "@/views/Handouts/SubmitHandout";
 import HandoutLayout from "@/layouts/Handouts";
-import DCAMemberReviewForm from "@/views/Handouts/dca-review";
-import GetAllHandoutsDCAConvenor from "@/views/Handouts/getAllHandoutsDCAConvenor";
-import GetAllHandoutsDCA from "@/views/Handouts/getAllHandoutsDCA";
-import GetAllHandoutsFaculty from "@/views/Handouts/getAllHandoutsFaculty";
-import AssignReviewer from "@/views/Handouts/assignReviewer";
+import DCAMemberReviewForm from "@/views/Handouts/DCAReview";
+import DCAConvenorHandouts from "@/views/Handouts/DCAConvenorHandouts";
+import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
+import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
+import AssignReviewer from "@/views/Handouts/AssignReviewer";
+import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
+import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 
 const adminModulePermissions = [
@@ -192,25 +194,29 @@ const Routing = () => {
                   <Route path="submit/:id" element={<SubmitHandout />} />
                 )}
                 {checkAccess(permissions["/handout/faculty/get"]) && (
-                  <Route path="faculty" element={<GetAllHandoutsFaculty />} />
+                  <Route path="faculty" element={<FacultyHandouts />} />
+                )}
+                {checkAccess(permissions["/handout/get"]) && (
+                  <Route path=":id" element={<FacultyHandout />} />
                 )}
                 {checkAccess(permissions["/handout/dca/get"]) && (
                   <>
-                    <Route path="dca" element={<GetAllHandoutsDCA />} />
-                    {checkAccess(permissions["/handout/dca/review"]) && (
-                      <Route
-                        path="dca/review/:id"
-                        element={<DCAMemberReviewForm />}
-                      />
-                    )}
+                    <Route path="dca" element={<DCAMemberHandouts />} />
+                    {checkAccess(permissions["/handout/dca/review"]) &&
+                      checkAccess(permissions["/handout/get"]) && (
+                        <Route
+                          path="dca/review/:id"
+                          element={<DCAMemberReviewForm />}
+                        />
+                      )}
                   </>
                 )}
-                {checkAccess(permissions["/handout/dca/get"]) &&
+                {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
                   checkAccess(permissions["/handout/dca/assignReviewer"]) && (
                     <>
                       <Route
                         path="dcaconvenor"
-                        element={<GetAllHandoutsDCAConvenor />}
+                        element={<DCAConvenorHandouts />}
                       />
                       <Route
                         path="assignreviewer/:id"
@@ -272,6 +278,10 @@ const Routing = () => {
                     <Route
                       path="update-deadlines"
                       element={<UpdateDeadlinesPage />}
+                    />
+                    <Route
+                      path="update-subareas"
+                      element={<UpdateSubAreasPage />}
                     />
                   </Route>
                 )}

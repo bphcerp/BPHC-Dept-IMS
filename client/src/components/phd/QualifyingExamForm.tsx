@@ -1,13 +1,26 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+// Updated interface to match actual data
+interface PhdSubArea {
+  id: number;
+  subarea: string;
+}
 
 interface Exam {
   id: number;
@@ -24,6 +37,11 @@ interface BackendResponse {
   exams: Exam[];
 }
 
+interface SubAreasResponse {
+  success: boolean;
+  subAreas: PhdSubArea[];
+}
+
 export default function ExamForm() {
   const [qualifyingArea1, setQualifyingArea1] = useState("");
   const [qualifyingArea2, setQualifyingArea2] = useState("");
@@ -34,14 +52,34 @@ export default function ExamForm() {
   const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
   const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
   const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
-  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] =
-    useState(false);
+  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] = useState(false);
+
+  // Fetch sub-areas
+  const { 
+    data: subAreasData, 
+    isLoading: isSubAreasLoading, 
+    error: subAreasError 
+  } = useQuery<SubAreasResponse, Error>({
+    queryKey: ["phd-sub-areas"],
+    queryFn: async () => {
+      console.log("Fetching sub-areas...");
+      try {
+        const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
+        console.log("Sub-areas response:", response.data);
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching sub-areas:", error);
+        throw error;
+      }
+    },
+    refetchOnWindowFocus: false,
+  });
 
   // Fetch exam deadline and dates
-  const { data: examData, isLoading: isExamDataLoading } = useQuery<
-    BackendResponse,
-    Error
-  >({
+  const { 
+    data: examData, 
+    isLoading: isExamDataLoading 
+  } = useQuery<BackendResponse, Error>({
     queryKey: ["get-qualifying-exam-deadline"],
     queryFn: async (): Promise<BackendResponse> => {
       try {
@@ -108,12 +146,16 @@ export default function ExamForm() {
       !file ||
       !qualifyingArea1 ||
       !qualifyingArea2 ||
+      qualifyingArea1 === qualifyingArea2 || // Ensure areas are different
       !generalInfoChecked ||
       !academicInfoChecked ||
       !anticipatedPlanChecked ||
       !qualifyingExamDetailsChecked
     ) {
-      toast.error("All fields and checkboxes are required");
+      toast.error(qualifyingArea1 === qualifyingArea2 
+        ? "Please select two different research sub-areas" 
+        : "All fields and checkboxes are required"
+      );
       return;
     }
 
@@ -126,14 +168,6 @@ export default function ExamForm() {
     formData.append("examStartDate", selectedExam.examStartDate);
     formData.append("examEndDate", selectedExam.examEndDate);
 
-    console.log("Form Data:", {
-      qualificationForm: file.name,
-      qualifyingArea1,
-      qualifyingArea2,
-      examStartDate: selectedExam.examStartDate,
-      examEndDate: selectedExam.examEndDate,
-    });
-
     submitMutation.mutate(formData);
   };
 
@@ -143,54 +177,79 @@ export default function ExamForm() {
     setFileName(selectedFile?.name || "");
   };
 
-  // Optionally display exam dates to user
-  const renderExamDetails = () => {
-    if (!examData || examData.exams.length === 0) {
-      return null;
-    }
+  // Render loading or error states
+  if (isSubAreasLoading) {
+    return <div>Loading sub-areas...</div>;
+  }
 
-    const exam = examData.exams[0];
+  if (subAreasError) {
     return (
-      <div className="mb-4 text-sm text-muted-foreground">
-        <p>
-          Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} -{" "}
-          {new Date(exam.examEndDate).toLocaleDateString()}
-        </p>
-        <p>
-          Application Deadline: {new Date(exam.deadline).toLocaleDateString()}
-        </p>
+      <div>
+        Error loading sub-areas: 
+        {subAreasError instanceof Error ? subAreasError.message : "Unknown error"}
       </div>
     );
-  };
+  }
+
+  // Additional debugging for empty sub-areas
+  if (!subAreasData || subAreasData.subAreas.length === 0) {
+    console.error("No sub-areas found!");
+    return <div>No research sub-areas available</div>;
+  }
 
   return (
     <Card className="mx-auto max-w-2xl">
       <CardContent className="space-y-4 pt-6">
         <h2 className="text-2xl font-bold">Qualifying Exam Application</h2>
 
-        {renderExamDetails()}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea1">Primary Research Area *</Label>
-            <Input
-              id="qualifyingArea1"
+            <Label htmlFor="qualifyingArea1">Research Sub-Area 1 *</Label>
+            <Select 
               value={qualifyingArea1}
-              onChange={(e) => setQualifyingArea1(e.target.value)}
-              placeholder="Enter research area 1"
-              required
-            />
+              onValueChange={setQualifyingArea1}
+              disabled={isSubAreasLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select research sub-area" />
+              </SelectTrigger>
+              <SelectContent>
+                {subAreasData.subAreas.map((subArea) => (
+                  <SelectItem 
+                    key={subArea.id} 
+                    value={subArea.subarea}
+                  >
+                    {subArea.subarea}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="qualifyingArea2">Secondary Research Area *</Label>
-            <Input
-              id="qualifyingArea2"
+            <Label htmlFor="qualifyingArea2">Research Sub-Area 2 *</Label>
+            <Select 
               value={qualifyingArea2}
-              onChange={(e) => setQualifyingArea2(e.target.value)}
-              placeholder="Enter research area 2"
-              required
-            />
+              onValueChange={setQualifyingArea2}
+              disabled={isSubAreasLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select research sub-area" />
+              </SelectTrigger>
+              <SelectContent>
+                {subAreasData.subAreas
+                  .filter(subArea => subArea.subarea !== qualifyingArea1)
+                  .map((subArea) => (
+                    <SelectItem 
+                      key={subArea.id} 
+                      value={subArea.subarea}
+                    >
+                      {subArea.subarea}
+                    </SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-3">
@@ -223,7 +282,6 @@ export default function ExamForm() {
             )}
           </div>
 
-          {/* New Checkbox Sections */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <input
@@ -296,7 +354,11 @@ export default function ExamForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={submitMutation.isLoading || isExamDataLoading}
+            disabled={
+              submitMutation.isLoading || 
+              isExamDataLoading || 
+              isSubAreasLoading
+            }
           >
             {submitMutation.isLoading ? "Submitting..." : "Submit Application"}
           </Button>

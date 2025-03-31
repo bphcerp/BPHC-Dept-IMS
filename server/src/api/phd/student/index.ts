@@ -10,6 +10,7 @@ import getQualifyingExamPassingDate from "./getQualifyingExamPassingDate.ts";
 import getProposalStatus from "./getProposalStatus.ts";
 import getGradeStatus from "./getGradeStatus.ts";
 import getNoOfQeApplication from "./getNoOfQeApplication.ts";
+import getSubAreas from "./getSubAreas.ts";
 const router = express.Router();
 
 router.use("/checkExamStatus", checkExamStatus);
@@ -22,6 +23,7 @@ router.use("/getQualifyingExamPassingDate", getQualifyingExamPassingDate);
 router.use("/getProposalStatus", getProposalStatus);
 router.use("/getGradeStatus", getGradeStatus);
 router.use("/getNoOfQeApplication", getNoOfQeApplication);
+router.use("/getSubAreas", getSubAreas);
 
 router.use(authMiddleware);
 

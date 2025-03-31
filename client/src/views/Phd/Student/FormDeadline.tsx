@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
+import { AxiosError } from "axios";
 
 interface Exam {
   id: number;
@@ -31,6 +32,12 @@ interface QeApplicationResponse {
 interface QualifyingExamStatusResponse {
   success: boolean;
   status: string;
+}
+
+interface AxiosErrorResponse {
+  response?: {
+    status?: number;
+  };
 }
 
 const FormDeadline: React.FC = () => {
@@ -66,8 +73,22 @@ const FormDeadline: React.FC = () => {
   } = useQuery<GradeStatusResponse, Error>({
     queryKey: ["get-grade-status"],
     queryFn: async () => {
-      const response = await api.get<GradeStatusResponse>("/phd/student/getGradeStatus");
-      return response.data;
+      try {
+        const response = await api.get<GradeStatusResponse>("/phd/student/getGradeStatus");
+        return response.data;
+      } catch (error) {
+        const axiosError = error as AxiosError<unknown, AxiosErrorResponse>;
+        if (axiosError.response?.status === 404) {
+          // Custom handling for 404 (Not Found) error
+          return {
+            allCoursesGraded: false,
+            totalCourses: 0,
+            gradedCourses: 0,
+            noCourseFound: true
+          };
+        }
+        throw error;
+      }
     },
     refetchOnWindowFocus: false,
   });
@@ -212,6 +233,16 @@ const FormDeadline: React.FC = () => {
               />
             </div>
 
+            {gradeStatusData && 'noCourseFound' in gradeStatusData && (
+              <div className="rounded-lg bg-yellow-100 p-6 shadow">
+                <p className="text-center text-lg text-yellow-800">
+                  Your notional supervisor has not added any courses for you yet.
+                </p>
+                <p className="mt-2 text-center text-yellow-600">
+                  Please contact your supervisor to update your course information.
+                </p>
+              </div>
+            )}
             {shouldShowExamForm ? (
               <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
                 <h2 className="mb-4 text-xl font-semibold">Exam Registration</h2>
