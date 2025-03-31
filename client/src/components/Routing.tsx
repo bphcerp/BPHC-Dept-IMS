@@ -43,6 +43,7 @@ import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import AssignReviewer from "@/views/Handouts/AssignReviewer";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
+import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -211,6 +212,14 @@ const Routing = () => {
                         path="assignreviewer/:id"
                         element={<AssignReviewer />}
                       />
+                      {checkAccess(
+                        permissions["/handout/dcaconvenor/finalDecision"]
+                      ) && (
+                        <Route
+                          path="dcaconvenor/review/:id"
+                          element={<DCAConvenorReview />}
+                        />
+                      )}
                     </>
                   )}
               </Route>
