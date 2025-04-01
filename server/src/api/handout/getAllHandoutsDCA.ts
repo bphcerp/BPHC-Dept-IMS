@@ -10,16 +10,23 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
-        const handouts = await db.query.courseHandoutRequests.findMany({
-            where: (handout, { eq }) =>
-                eq(handout.reviewerEmail, req.user!.email),
-            with: {
-                ic: {
-                    with: {
-                        faculty: true,
+        const handouts = (
+            await db.query.courseHandoutRequests.findMany({
+                where: (handout, { eq }) =>
+                    eq(handout.reviewerEmail, req.user!.email),
+                with: {
+                    ic: {
+                        with: {
+                            faculty: true,
+                        },
                     },
                 },
-            },
+            })
+        ).map((handout) => {
+            return {
+                ...handout,
+                professorName: handout.ic.faculty.name,
+            };
         });
         res.status(200).json({ success: true, handouts });
     })

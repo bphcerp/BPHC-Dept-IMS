@@ -8,19 +8,27 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res, _next) => {
-        const handouts = await db.query.courseHandoutRequests.findMany({
-            with: {
-                ic: {
-                    with: {
-                        faculty: true,
+        const handouts = (
+            await db.query.courseHandoutRequests.findMany({
+                with: {
+                    ic: {
+                        with: {
+                            faculty: true,
+                        },
+                    },
+                    reviewer: {
+                        with: {
+                            faculty: true,
+                        },
                     },
                 },
-                reviewer: {
-                    with: {
-                        faculty: true,
-                    },
-                },
-            },
+            })
+        ).map((handout) => {
+            return {
+                ...handout,
+                reviewerName: handout.reviewer?.faculty.name,
+                professorName: handout.ic.faculty.name,
+            };
         });
 
         res.status(200).json({ success: true, handouts });
