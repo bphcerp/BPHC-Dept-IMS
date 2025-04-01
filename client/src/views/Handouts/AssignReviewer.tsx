@@ -55,8 +55,14 @@ const AssignReviewer: React.FC = () => {
     onSuccess: async () => {
       toast.success("Reviewer assigned successfully");
       navigate("/handout/dcaconvenor");
-      await queryClient.refetchQueries({
-        queryKey: ["handouts-dca", "handouts-faculty", `handout-dca ${id}`],
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "handouts-dca",
+          "handouts-faculty",
+          `handout-dcaconvenor ${id}`,
+          `handout-dca ${id}`,
+          `handout-faculty ${id}`,
+        ],
       });
     },
     onError: (error) => {

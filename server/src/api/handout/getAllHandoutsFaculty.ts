@@ -25,12 +25,8 @@ router.get(
             })
         ).map((handout) => {
             return {
-                id: handout.id,
-                courseName: handout.courseName,
-                courseCode: handout.courseCode,
+                ...handout,
                 reviewerName: handout.reviewer?.faculty.name,
-                submittedOn: handout.createdAt.toISOString(),
-                status: handout.status,
             };
         });
 

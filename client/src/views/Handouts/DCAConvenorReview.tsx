@@ -46,11 +46,13 @@ const FacultyHandout: React.FC = () => {
     onSuccess: async () => {
       toast.success("Review added successfully");
       navigate("/handout/dcaconvenor");
-      await queryClient.refetchQueries({
+      await queryClient.invalidateQueries({
         queryKey: [
           "handouts-dca",
           "handouts-faculty",
           `handout-dcaconvenor ${id}`,
+          `handout-dca ${id}`,
+          `handout-faculty ${id}`,
         ],
       });
     },
