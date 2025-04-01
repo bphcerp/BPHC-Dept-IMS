@@ -27,10 +27,12 @@ const SubmitHandout: React.FC = () => {
     },
     onSuccess: async () => {
       toast.success("Handout Upload Successfully");
-      await queryClient.refetchQueries([
-        "handouts-faculty",
+      await queryClient.invalidateQueries([
         "handouts-dca",
-        "handouts-dca-convenor",
+        "handouts-faculty",
+        `handout-dcaconvenor ${params.id}`,
+        `handout-dca ${params.id}`,
+        `handout-faculty ${params.id}`,
       ]);
     },
     onError: (error) => {
