@@ -53,28 +53,21 @@ const dummyHandouts: Handout[] = [
   },
 ];
 
-// Mock revision comments for demonstration
 const revisionComments = {
   "3": "Please add DCA Convencer comments here",
 };
 
 export const FacultyHandouts: React.FC = () => {
-  // Search query state
   const [searchQuery, setSearchQuery] = useState("");
-  // Separate states for category and status filters
   const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  // State for filtered handouts
   const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>(dummyHandouts);
-  // Dialog state
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isReUploadDialogOpen, setIsReUploadDialogOpen] = useState(false);
   const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(null);
 
   useEffect(() => {
     let results = dummyHandouts;
-
-    // Filter by search query (course name or course code)
     if (searchQuery) {
       results = results.filter(
         (handout) =>
@@ -82,8 +75,6 @@ export const FacultyHandouts: React.FC = () => {
           handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
-    // Filter by category and status if any are selected.
     results = results.filter((handout) => {
       const matchesCategory =
         activeCategoryFilters.length > 0
@@ -123,7 +114,6 @@ export const FacultyHandouts: React.FC = () => {
 
   return (
     <div className="w-full px-4">
-      {/* Header Section */}
       <div className="px-2 py-6">
         <div className="flex items-center justify-between">
           <div>

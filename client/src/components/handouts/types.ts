@@ -15,4 +15,15 @@ export const STATUS_COLORS: Record<string, string> = {
     approved: "text-green-600",
     revision: "text-red-600",
     "not submitted": "text-gray-600",
+    
 };
+
+export interface DCAHandout {
+    id: string;
+    courseName: string;
+    courseCode: string;
+    category: string;
+    instructor: string;
+    submittedOn: string;
+    status: string;
+  }
