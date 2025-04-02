@@ -15,6 +15,8 @@ export const handoutStatuses = [
     "notsubmitted",
 ] as const;
 
+export const categories = ["HD", "FD"] as const;
+
 export type HandoutStatus = (typeof handoutStatuses)[number];
 
 export const createHandoutDCAMemberReviewBodySchema = z.object({

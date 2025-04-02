@@ -35,7 +35,7 @@ const DCAMemberReviewForm: React.FC = () => {
   const { id: handoutId } = useParams();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery<Handout>({
+  const { data, isLoading, isError, refetch } = useQuery<Handout>({
     queryKey: [`handout-dca ${handoutId}`],
     queryFn: async () => {
       try {
@@ -77,6 +77,7 @@ const DCAMemberReviewForm: React.FC = () => {
           `handout-faculty ${handoutId}`,
         ],
       });
+      await refetch();
     },
     onError: (error) => {
       if (isAxiosError(error)) {

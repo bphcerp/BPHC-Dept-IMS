@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    //checkAccess(),
+    // checkAccess(),
     asyncHandler(async (req, res, next) =>
         pdfUpload.single("handout")(req, res, (err) => {
             if (err instanceof multer.MulterError)
@@ -59,6 +59,7 @@ router.post(
                 .update(courseHandoutRequests)
                 .set({
                     handoutFilePath: insertedFileField[0].id,
+                    submittedOn: new Date(),
                     status: "pending",
                 })
                 .where(eq(courseHandoutRequests.id, Number(id)));

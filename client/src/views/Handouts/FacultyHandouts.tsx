@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -13,82 +13,74 @@ import { STATUS_COLORS } from "@/components/handouts/types";
 import { Handout } from "@/components/handouts/types";
 import { UploadDialog } from "@/components/handouts/UploadDialog";
 import { ReUploadDialog } from "./ReUploadDialog";
-
-const dummyHandouts: Handout[] = [
-  {
-    id: "1",
-    courseName: "Introduction to Programming",
-    courseCode: "CS101",
-    category: "FD", // New category field
-    reviewerName: "Dr. Smith",
-    submittedOn: "2023-04-01T00:00:00Z",
-    status: "pending",
-  },
-  {
-    id: "2",
-    courseName: "Data Structures",
-    courseCode: "CS201",
-    category: "HD",
-    reviewerName: "Prof. Johnson",
-    submittedOn: "2023-04-02T00:00:00Z",
-    status: "approved",
-  },
-  {
-    id: "3",
-    courseName: "Algorithms",
-    courseCode: "CS301",
-    category: "FD",
-    reviewerName: "",
-    submittedOn: "2023-04-03T00:00:00Z",
-    status: "revision",
-  },
-  {
-    id: "4",
-    courseName: "Operating Systems",
-    courseCode: "CS401",
-    category: "HD",
-    reviewerName: "Dr. Lee",
-    submittedOn: "2023-04-04T00:00:00Z",
-    status: "not submitted",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { toast } from "sonner";
 
 const revisionComments = {
   "3": "Please add DCA Convencer comments here",
 };
 
 export const FacultyHandouts: React.FC = () => {
+  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>();
+  const {
+    data: handouts,
+    isLoading,
+    isError,
+  } = useQuery<Handout[]>({
+    queryKey: ["handouts-faculty"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{ data: Handout[] }>(
+          "/handout/faculty/get"
+        );
+        if (response.data.data) setFilteredHandouts(response.data.data);
+        return response.data.data;
+      } catch (error) {
+        toast.error("Failed to fetch handouts");
+        throw error;
+      }
+    },
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>(dummyHandouts);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isReUploadDialogOpen, setIsReUploadDialogOpen] = useState(false);
-  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(null);
+  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(
+    null
+  );
 
-  useEffect(() => {
-    let results = dummyHandouts;
-    if (searchQuery) {
-      results = results.filter(
-        (handout) =>
-          handout.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  useMemo(() => {
+    if (handouts) {
+      let results = handouts;
+      if (searchQuery) {
+        results = results.filter(
+          (handout) =>
+            handout.courseName
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      results = results.filter((handout) => {
+        const matchesCategory =
+          activeCategoryFilters.length > 0
+            ? activeCategoryFilters.includes(handout.category)
+            : true;
+        const matchesStatus =
+          activeStatusFilters.length > 0
+            ? activeStatusFilters.includes(handout.status)
+            : true;
+        return matchesCategory && matchesStatus;
+      });
+
+      setFilteredHandouts(results);
     }
-    results = results.filter((handout) => {
-      const matchesCategory =
-        activeCategoryFilters.length > 0
-          ? activeCategoryFilters.includes(handout.category)
-          : true;
-      const matchesStatus =
-        activeStatusFilters.length > 0
-          ? activeStatusFilters.includes(handout.status)
-          : true;
-      return matchesCategory && matchesStatus;
-    });
-
-    setFilteredHandouts(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters]);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
 
   const handleUploadClick = (handoutId: string) => {
     setSelectedHandoutId(handoutId);
@@ -101,7 +93,6 @@ export const FacultyHandouts: React.FC = () => {
   };
 
   const handleUploadComplete = () => {
-    console.log(`File uploaded for handout ${selectedHandoutId}`);
     setIsUploadDialogOpen(false);
     setSelectedHandoutId(null);
   };
@@ -112,12 +103,26 @@ export const FacultyHandouts: React.FC = () => {
     setSelectedHandoutId(null);
   };
 
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  if (isError)
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Error fetching handouts
+      </div>
+    );
   return (
     <div className="w-full px-4">
       <div className="px-2 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-primary">Faculty Handouts</h1>
+            <h1 className="text-3xl font-bold text-primary">
+              Faculty Handouts
+            </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
           </div>
           <div className="ml-4">
@@ -134,30 +139,45 @@ export const FacultyHandouts: React.FC = () => {
       </div>
 
       {/* Separator */}
-      <hr className="border-gray-300 my-1" />
+      <hr className="my-1 border-gray-300" />
 
       {/* Handouts Table */}
-      <div className="overflow-x-auto bg-white shadow w-full">
-        <div className="min-w-full inline-block align-middle">
+      <div className="w-full overflow-x-auto bg-white shadow">
+        <div className="inline-block min-w-full align-middle">
           <Table className="min-w-full">
             <TableHeader className="bg-gray-100">
               <TableRow>
-                <TableHead className="px-4 py-2 text-left">Course Code</TableHead>
-                <TableHead className="px-4 py-2 text-left">Course Name</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Code
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Name
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
                 <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
-                <TableHead className="px-4 py-2 text-left">Submitted On</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Submitted On
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-300">
-              {filteredHandouts.length ? (
+              {filteredHandouts?.length ? (
                 filteredHandouts.map((handout) => (
-                  <TableRow key={handout.id} className="odd:bg-white even:bg-gray-100">
-                    <TableCell className="px-4 py-2">{handout.courseCode}</TableCell>
-                    <TableCell className="px-4 py-2">{handout.courseName}</TableCell>
-                    <TableCell className="px-4 py-2">{handout.category}</TableCell>
+                  <TableRow
+                    key={handout.id}
+                    className="odd:bg-white even:bg-gray-100"
+                  >
+                    <TableCell className="px-4 py-2">
+                      {handout.courseCode}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.courseName}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.category}
+                    </TableCell>
                     <TableCell className="px-4 py-2">
                       {handout.reviewerName || "Unassigned"}
                     </TableCell>
@@ -167,10 +187,14 @@ export const FacultyHandouts: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {new Date(handout.submittedOn).toLocaleDateString()}
+                      {!handout.submittedOn ? (
+                        <span className="mx-3">NA</span>
+                      ) : (
+                        new Date(handout.submittedOn).toLocaleDateString()
+                      )}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.status === "not submitted" ? (
+                      {handout.status === "notsubmitted" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
@@ -178,7 +202,7 @@ export const FacultyHandouts: React.FC = () => {
                         >
                           Upload
                         </Button>
-                      ) : handout.status === "revision" ? (
+                      ) : handout.status === "rejected" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
@@ -189,7 +213,7 @@ export const FacultyHandouts: React.FC = () => {
                       ) : (
                         <Button
                           disabled
-                          className="bg-white text-gray-500 cursor-not-allowed opacity-50"
+                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
                         >
                           None
                         </Button>
@@ -214,6 +238,7 @@ export const FacultyHandouts: React.FC = () => {
         isOpen={isUploadDialogOpen}
         onClose={() => setIsUploadDialogOpen(false)}
         onUpload={handleUploadComplete}
+        id={selectedHandoutId!}
       />
 
       {/* ReUpload Dialog for revisions */}
@@ -223,8 +248,9 @@ export const FacultyHandouts: React.FC = () => {
         onReUpload={handleReUploadComplete}
         revisionComments={
           selectedHandoutId
-            ? revisionComments[selectedHandoutId as keyof typeof revisionComments] ||
-              "No revision comments provided."
+            ? revisionComments[
+                selectedHandoutId as keyof typeof revisionComments
+              ] || "No revision comments provided."
             : ""
         }
       />

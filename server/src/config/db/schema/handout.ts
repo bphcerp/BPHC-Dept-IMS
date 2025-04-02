@@ -16,6 +16,8 @@ export const handoutStatusEnum = pgEnum(
     handoutSchemas.handoutStatuses
 );
 
+export const categoryEnum = pgEnum("category_enum", handoutSchemas.categories);
+
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
     icEmail: text("ic_email")
@@ -44,6 +46,8 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
+    submittedOn: timestamp("submitted_on", { withTimezone: true }),
     deadline: timestamp("deadline", { withTimezone: true }),
     comments: text("comments"),
+    category: categoryEnum("category").notNull(),
 });
