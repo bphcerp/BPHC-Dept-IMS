@@ -1,170 +1,218 @@
-
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios-instance";
+import React, { useState, useEffect, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { FilterBar } from "@/components/handouts/FilterBar";
+import { HandoutsDCAcon } from "@/components/handouts/types";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { handoutSchemas } from "lib";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { STATUS_COLORS } from "@/components/handouts/types";
 
+const dummyHandouts: HandoutsDCAcon[] = [
+  {
+    id: "1",courseName: "Introduction to Programming",courseCode: "CS101",category: "FD",instructor: "Dr. Smith",
+    reviewer: "Reviewer 1",
+    submittedOn: "2023-04-01T00:00:00Z",
+    status: "pending",
+  },
+  {
+    id: "2",courseName: "Data Structures",courseCode: "CS201",category: "HD",instructor: "Prof. Johnson",reviewer: "Reviewer 2",
+    submittedOn: "2023-04-02T00:00:00Z",
+    status: "approved",
+  },
+  {
+    id: "3",courseName: "Algorithms",courseCode: "CS301",category: "FD",instructor: "",reviewer: "",
+    submittedOn: "2023-04-03T00:00:00Z",
+    status: "revision",
+  },
+  {
+    id: "4",courseName: "Operating Systems",courseCode: "CS401",category: "HD",instructor: "Dr. Lee",reviewer: "",
+    submittedOn: "2023-04-04T00:00:00Z",
+    status: "not submitted",
+  },
+];
 
-interface Handout {
-  id: string;
-  courseName: string;
-  courseCode: string;
-  professorName?: string;
-  reviewerName?: string;
-  submittedOn: string;
-  status: handoutSchemas.HandoutStatus;
-}
+const instructorOptions = ["Dr. Smith", "Prof. Johnson", "Dr. Lee", "Dr. Williams"];
+const reviewerOptions = ["Reviewer 1", "Reviewer 2", "Reviewer 3", "Reviewer 4"];
 
-const STATUS_COLORS: Record<handoutSchemas.HandoutStatus, string> = {
-  pending: "text-yellow-600",
-  approved: "text-green-600",
-  rejected: "text-red-600",
-  notsubmitted: "text-gray-500",
-};
+export const DCAConvenerHandouts: React.FC = () => {
+  const navigate = useNavigate();
 
-const DCAConvenorHandouts: React.FC = () => {
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>([]);
-  const {
-    data: handouts,
-    isLoading,
-    isError,
-  } = useQuery<Handout[]>({
-    queryKey: ["handouts-dca-convenor"],
-    queryFn: async () => {
-      try {
-        const response = await api.get("/handout/dcaconvenor/get");
-        return response.data.handouts;
-      } catch (error) {
-        toast.error("Failed to fetch handouts");
-        throw error;
-      }
-    },
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [handouts, setHandouts] = useState<HandoutsDCAcon[]>(dummyHandouts);
+  const [filteredHandouts, setFilteredHandouts] = useState<HandoutsDCAcon[]>(dummyHandouts);
 
-  useMemo(() => {
-    if (handouts) {
-      const filtered = selectedStatuses.length
-        ? handouts.filter((handout) =>
-            selectedStatuses.includes(handout.status)
-          )
-        : handouts;
-      setFilteredHandouts(filtered);
+  useEffect(() => {
+    let results = handouts;
+
+    if (searchQuery) {
+      results = results.filter(
+        (handout) =>
+          handout.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
-  }, [handouts, selectedStatuses]);
 
-  if (isLoading)
-    return (
-      <div className="mx-auto flex h-screen items-center justify-center">
-        Loading...
-      </div>
+    results = results.filter((handout) => {
+      const matchesCategory =
+        activeCategoryFilters.length > 0
+          ? activeCategoryFilters.includes(handout.category)
+          : true;
+      const matchesStatus =
+        activeStatusFilters.length > 0
+          ? activeStatusFilters.includes(handout.status)
+          : true;
+      return matchesCategory && matchesStatus;
+    });
+
+    setFilteredHandouts(results);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
+
+  const handleInstructorChange = (e: ChangeEvent<HTMLSelectElement>, id: string) => {
+    const newValue = e.target.value;
+    setHandouts((prev) =>
+      prev.map((handout) =>
+        handout.id === id ? { ...handout, instructor: newValue } : handout
+      )
     );
-  if (isError)
-    return (
-      <div className="mx-auto flex h-screen items-center justify-center text-red-500">
-        Error fetching handouts
-      </div>
+  };
+
+  const handleReviewerChange = (e: ChangeEvent<HTMLSelectElement>, id: string) => {
+    const newValue = e.target.value;
+    setHandouts((prev) =>
+      prev.map((handout) =>
+        handout.id === id ? { ...handout, reviewer: newValue } : handout
+      )
     );
+  };
 
   return (
-    <div className="h-screen w-full p-4 md:p-6">
-      <div className="flex h-full flex-col">
-        <div className="border-b p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-              DCA Convenor Handouts
-            </h1>
-            <ToggleGroup
-              type="multiple"
-              value={selectedStatuses}
-              onValueChange={setSelectedStatuses}
-              className="flex flex-wrap gap-2 bg-transparent"
-            >
-              {handoutSchemas.handoutStatuses.map((status) => (
-                <ToggleGroupItem
-                  key={status}
-                  value={status}
-                  className="border capitalize text-xs md:text-sm"
-                >
-                  {status}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+    <div className="w-full px-4">
+      <div className="px-2 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">DCA Member - Handouts</h1>
+            <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" className="hover:bg-primary hover:text-white">
+                Initiate
+              </Button>
+              <Button variant="outline" className="hover:bg-primary hover:text-white">
+                Export
+              </Button>
+              <Button variant="outline" className="hover:bg-primary hover:text-white">
+                Summary
+              </Button>
+            </div>
+          </div>
+          <div className="ml-4">
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeCategoryFilters={activeCategoryFilters}
+              onCategoryFilterChange={setActiveCategoryFilters}
+              activeStatusFilters={activeStatusFilters}
+              onStatusFilterChange={setActiveStatusFilters}
+            />
           </div>
         </div>
+      </div>
 
-        <div className="flex-grow overflow-auto p-4 md:p-6">
-          <div className="space-y-4">
-            {filteredHandouts.length ? (
-              filteredHandouts.map((handout) => (
-                <Card
-                  key={handout.id}
-                  className="w-full border border-l-4 hover:shadow-md transition-all duration-200"
-                  style={{ borderLeftColor: handout.status === 'approved' ? '#10b981' :
-                                        handout.status === 'rejected' ? '#ef4444' :
-                                        handout.status === 'pending' ? '#f59e0b' : '#9ca3af' }}
-                >
-                  <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="font-semibold text-gray-900">{handout.courseCode}</div>
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${STATUS_COLORS[handout.status]}`}>
-                          {handout.status}
-                        </span>
-                      </div>
+      <hr className="border-gray-300 my-1" />
 
-                      <div className="text-sm md:text-base font-medium text-gray-700">{handout.courseName}</div>
-
-                      <div className="flex flex-wrap gap-x-6 mt-2 text-xs md:text-sm text-gray-500">
-                        <div>IC: {handout.professorName || "Unassigned"}</div>
-                        <div>Reviewer: {handout.reviewerName || "Unassigned"}</div>
-                        <div>Submitted: {new Date(handout.submittedOn).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-
-                    <div className="self-start md:self-center">
-                      {!handout.reviewerName ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="whitespace-nowrap hover:bg-primary hover:text-white"
-                        >
-                          <Link to={`/handout/assignreviewer/${handout.id}`}>
-                            Assign Reviewer
-                          </Link>
-                        </Button>
-                      ) : handout.status === "pending" ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="whitespace-nowrap hover:bg-primary hover:text-white"
-                        >
-                          <Link to={`/handout/dcaconvenor/review/${handout.id}`}>
-                            Review
-                          </Link>
-                        </Button>
-                      ) : (
-                        <div className="text-gray-400 text-sm">None</div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="w-full p-8 text-center text-gray-500">
-                No handouts found
-              </Card>
-            )}
-          </div>
+      <div className="overflow-x-auto bg-white shadow w-full">
+        <div className="min-w-full inline-block align-middle">
+          <Table className="min-w-full">
+            <TableHeader className="bg-gray-100">
+              <TableRow>
+                <TableHead className="px-4 py-2 text-left">Course Code</TableHead>
+                <TableHead className="px-4 py-2 text-left">Course Name</TableHead>
+                <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">Instructor</TableHead>
+                <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
+                <TableHead className="px-4 py-2 text-left">Status</TableHead>
+                <TableHead className="px-4 py-2 text-left">Submitted On</TableHead>
+                <TableHead className="px-4 py-2 text-left">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-300">
+              {filteredHandouts.length ? (
+                filteredHandouts.map((handout) => (
+                  <TableRow key={handout.id} className="odd:bg-white even:bg-gray-100">
+                    <TableCell className="px-4 py-2">{handout.courseCode}</TableCell>
+                    <TableCell className="px-4 py-2">{handout.courseName}</TableCell>
+                    <TableCell className="px-4 py-2">{handout.category}</TableCell>
+                    {/* Instructor Dropdown */}
+                    <TableCell className="px-4 py-2">
+                      <select
+                        value={handout.instructor}
+                        onChange={(e) => handleInstructorChange(e, handout.id)}
+                        className="border border-gray-300 p-1 rounded"
+                      >
+                        <option value="">Select Instructor</option>
+                        {instructorOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    {/* Reviewer Dropdown */}
+                    <TableCell className="px-4 py-2">
+                      <select
+                        value={handout.reviewer}
+                        onChange={(e) => handleReviewerChange(e, handout.id)}
+                        className="border border-gray-300 p-1 rounded"
+                      >
+                        <option value="">Select Reviewer</option>
+                        {reviewerOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="px-4 py-2 uppercase">
+                      <span className={STATUS_COLORS[handout.status]}>
+                        {handout.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {new Date(handout.submittedOn).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <Button
+                        variant="outline"
+                        className="hover:bg-primary hover:text-white"
+                        onClick={() =>
+                          navigate(`/handout/assignreviewer/${handout.id}`)
+                        }
+                      >
+                        Assign Reviewer
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="px-4 py-2 text-center">
+                    No handouts found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>
   );
 };
 
-export default DCAConvenorHandouts;
+export default DCAConvenerHandouts;

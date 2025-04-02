@@ -26,4 +26,15 @@ export interface DCAHandout {
     instructor: string;
     submittedOn: string;
     status: string;
-  }
+  };
+
+  export interface HandoutsDCAcon {
+    id: string;
+    courseName: string;
+    courseCode: string;
+    category: string;
+    instructor: string;
+    reviewer: string;
+    submittedOn: string;
+    status: string;
+  };
