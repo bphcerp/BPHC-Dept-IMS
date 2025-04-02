@@ -50,6 +50,13 @@
       "when": 1743239092409,
       "tag": "0006_freezing_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1743629732817,
+      "tag": "0007_mighty_marvel_zombies",
+      "breakpoints": true
     }
   ]
 }
