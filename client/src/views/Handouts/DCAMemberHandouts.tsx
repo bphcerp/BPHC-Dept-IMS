@@ -51,7 +51,7 @@ const dummyHandouts: DCAHandout[] = [
     courseName: "Algorithms",
     courseCode: "CS301",
     category: "FD",
-    instructor: "",
+    instructor: "Dr. HVD Sir",
     submittedOn: "2023-04-03T00:00:00Z",
     status: "revision",
   },
@@ -145,7 +145,7 @@ export const DCAMemberHandouts: React.FC = () => {
                     <TableCell className="px-4 py-2">{handout.courseName}</TableCell>
                     <TableCell className="px-4 py-2">{handout.category}</TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.instructor || "Unassigned"}
+                      {handout.instructor}
                     </TableCell>
                     <TableCell className="px-4 py-2 uppercase">
                       <span className={STATUS_COLORS[handout.status]}>

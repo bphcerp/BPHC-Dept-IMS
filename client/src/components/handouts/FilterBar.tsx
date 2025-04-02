@@ -23,21 +23,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-4">
-      {/* Search Field */}
       <div className="relative w-full">
         <Input
           type="search"
           placeholder="SEARCH"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full sm:w-64 pl-9 border-gray-300"
+          className="w-full sm:w-96 pl-9 border-gray-300"
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
       </div>
       
-      {/* Combined Category and Status Filters in One Row */}
       <div className="flex flex-wrap gap-2">
-        {/* Category Filters */}
         <ToggleGroup
           type="multiple"
           value={activeCategoryFilters}
@@ -58,7 +55,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </ToggleGroupItem>
         </ToggleGroup>
         
-        {/* Status Filters */}
         <ToggleGroup
           type="multiple"
           value={activeStatusFilters}
