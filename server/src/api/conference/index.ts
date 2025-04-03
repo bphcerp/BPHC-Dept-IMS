@@ -7,6 +7,7 @@ import viewApplicationDetailsRouter from "./viewApplicationDetails.ts";
 import viewOwnApplicationDetailsRouter from "./viewOwnApplicationDetails.ts";
 import reviewApplicationFieldRouter from "./reviewApplicationField.ts";
 import editApplicationFieldRouter from "./editApplicationField.ts";
+import applicationsRouter from "./applications/index.ts";
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use("/getSubmittedApplications", getSubmittedApplicationsRouter);
 router.use("/finalizeApplication", finalizeApplicationRouter);
 router.use("/viewApplicationDetails", viewApplicationDetailsRouter);
 router.use("/viewOwnApplicationDetails", viewOwnApplicationDetailsRouter);
+router.use("/applications", applicationsRouter);
 
 export default router;
