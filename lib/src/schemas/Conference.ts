@@ -61,3 +61,11 @@ export const multerFileFields: Readonly<Field[]> = (
 });
 
 export const fieldTypes = z.enum(["text", "number", "date", "file"]);
+
+export type submittedApplicationsResponse = {
+    applications: {
+        id: number;
+        status: "pending" | "approved" | "rejected";
+        createdAt: string;
+    }[];
+};

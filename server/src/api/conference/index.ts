@@ -4,6 +4,7 @@ import getSubmittedApplicationsRouter from "./getSubmittedApplications.ts";
 import finalizeApplicationRouter from "./finalizeApplication.ts";
 import getPendingApplicationsRouter from "./getPendingApplications.ts";
 import viewApplicationDetailsRouter from "./viewApplicationDetails.ts";
+import viewOwnApplicationDetailsRouter from "./viewOwnApplicationDetails.ts";
 import reviewApplicationFieldRouter from "./reviewApplicationField.ts";
 import editApplicationFieldRouter from "./editApplicationField.ts";
 
@@ -16,5 +17,6 @@ router.use("/getPendingApplications", getPendingApplicationsRouter);
 router.use("/getSubmittedApplications", getSubmittedApplicationsRouter);
 router.use("/finalizeApplication", finalizeApplicationRouter);
 router.use("/viewApplicationDetails", viewApplicationDetailsRouter);
+router.use("/viewOwnApplicationDetails", viewOwnApplicationDetailsRouter);
 
 export default router;

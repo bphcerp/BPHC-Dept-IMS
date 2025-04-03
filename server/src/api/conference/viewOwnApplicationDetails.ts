@@ -3,7 +3,7 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import type * as FormTables from "@/config/db/schema/form.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { conferenceSchemas } from "lib";
 import environment from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -20,7 +20,8 @@ router.get(
         }
 
         const application = await db.query.applications.findFirst({
-            where: (app) => eq(app.id, id),
+            where: (app) =>
+                and(eq(app.id, id), eq(app.userEmail, req.user!.email)),
             with: {
                 user: true,
                 statuses: true,

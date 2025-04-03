@@ -1,21 +1,21 @@
 import db from "@/config/db/index.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import assert from "assert";
+import { checkAccess } from "@/middleware/auth.ts";
 const router = express.Router();
 
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, _next) => {
-        assert(req.user);
-
+    asyncHandler(async (_req, res, _next) => {
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq }) =>
-                    eq(handout.icEmail, req.user!.email),
                 with: {
+                    ic: {
+                        with: {
+                            faculty: true,
+                        },
+                    },
                     reviewer: {
                         with: {
                             faculty: true,
@@ -27,13 +27,11 @@ router.get(
             return {
                 ...handout,
                 reviewerName: handout.reviewer?.faculty.name,
+                professorName: handout.ic.faculty.name,
             };
         });
 
-        res.status(200).json({
-            success: true,
-            data: handouts,
-        });
+        res.status(200).json({ success: true, handouts });
     })
 );
 
