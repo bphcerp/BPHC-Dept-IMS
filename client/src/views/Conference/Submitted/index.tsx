@@ -70,7 +70,7 @@ const ConferenceSubmittedApplicationsView = () => {
     queryFn: async () => {
       return (
         await api.get<conferenceSchemas.submittedApplicationsResponse>(
-          "/conference/getSubmittedApplications"
+          "/conference/applications/my"
         )
       ).data;
     },

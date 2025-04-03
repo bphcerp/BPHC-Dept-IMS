@@ -10,9 +10,8 @@ const ConferenceSubmittedApplicationView = () => {
     queryKey: ["conference", "submittedApplications"],
     queryFn: async () => {
       if (!id) throw new Error("No application ID provided");
-      return (
-        await api.get<object>(`/conference/viewOwnApplicationDetails/${id}`)
-      ).data;
+      return (await api.get<object>(`/conference/applications/view/${id}`))
+        .data;
     },
     enabled: !!id,
   });
