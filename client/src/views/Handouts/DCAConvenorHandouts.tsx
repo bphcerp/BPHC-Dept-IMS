@@ -31,10 +31,14 @@ interface HandoutsDCAcon {
 
 export const DCAConvenerHandouts: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredHandouts, setFilteredHandouts] = useState<HandoutsDCAcon[]>([]);
-  
+  const [filteredHandouts, setFilteredHandouts] = useState<HandoutsDCAcon[]>(
+    []
+  );
+
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
   const [currentHandoutId, setCurrentHandoutId] = useState<string | null>(null);
@@ -42,17 +46,27 @@ export const DCAConvenerHandouts: React.FC = () => {
   const queryClient = useQueryClient();
 
   const updateICMutation = useMutation({
-    mutationFn: async ({ id, icEmail, sendEmail }: { id: string; icEmail: string; sendEmail: boolean }) => {
+    mutationFn: async ({
+      id,
+      icEmail,
+      sendEmail,
+    }: {
+      id: string;
+      icEmail: string;
+      sendEmail: boolean;
+    }) => {
       const response = await api.post("/handout/dcaconvenor/updateIC", {
         id: id.toString(),
         icEmail,
-        sendEmail
+        sendEmail,
       });
       return response.data;
     },
     onSuccess: async () => {
       toast.success("Instructor updated successfully");
-      await queryClient.invalidateQueries({ queryKey: ["handouts-dca-convenor"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
     },
     onError: () => {
       toast.error("Failed to update instructor");
@@ -60,17 +74,27 @@ export const DCAConvenerHandouts: React.FC = () => {
   });
 
   const updateReviewerMutation = useMutation({
-    mutationFn: async ({ id, reviewerEmail, sendEmail }: { id: string; reviewerEmail: string; sendEmail: boolean }) => {
+    mutationFn: async ({
+      id,
+      reviewerEmail,
+      sendEmail,
+    }: {
+      id: string;
+      reviewerEmail: string;
+      sendEmail: boolean;
+    }) => {
       const response = await api.post("/handout/dcaconvenor/updateReviewer", {
         id: id.toString(),
         reviewerEmail,
-        sendEmail
+        sendEmail,
       });
       return response.data;
     },
     onSuccess: async () => {
       toast.success("Reviewer assigned successfully");
-      await queryClient.invalidateQueries({ queryKey: ["handouts-dca-convenor"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
     },
     onError: () => {
       toast.error("Failed to assign reviewer");
@@ -85,9 +109,10 @@ export const DCAConvenerHandouts: React.FC = () => {
     queryKey: ["handouts-dca-convenor"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ success: boolean; handouts: HandoutsDCAcon[] }>(
-          "/handout/dcaconvenor/get"
-        );
+        const response = await api.get<{
+          success: boolean;
+          handouts: HandoutsDCAcon[];
+        }>("/handout/dcaconvenor/get");
         return response.data.handouts;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -143,9 +168,9 @@ export const DCAConvenerHandouts: React.FC = () => {
     updateICMutation.mutate({
       id: currentHandoutId,
       icEmail: email,
-      sendEmail
+      sendEmail,
     });
-    
+
     setIsICDialogOpen(false);
   };
 
@@ -158,9 +183,9 @@ export const DCAConvenerHandouts: React.FC = () => {
     updateReviewerMutation.mutate({
       id: currentHandoutId,
       reviewerEmail: email,
-      sendEmail
+      sendEmail,
     });
-    
+
     setIsReviewerDialogOpen(false);
   };
 
@@ -240,7 +265,9 @@ export const DCAConvenerHandouts: React.FC = () => {
                 <TableHead className="px-4 py-2 text-left">
                   Instructor Email
                 </TableHead>
-                <TableHead className="px-4 py-2 text-left">Reviewer Email</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Reviewer Email
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Submitted On
@@ -267,7 +294,7 @@ export const DCAConvenerHandouts: React.FC = () => {
                     <TableCell className="px-4 py-2">
                       <div className="flex items-center">
                         <span>{handout.professorName}</span>
-                        <button 
+                        <button
                           onClick={() => handlePencilClick(handout.id, false)}
                           className="ml-2 text-gray-500 hover:text-primary"
                         >
@@ -277,8 +304,10 @@ export const DCAConvenerHandouts: React.FC = () => {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <div className="flex items-center">
-                        <span>{handout.reviewerName || "No reviewer assigned"}</span>
-                        <button 
+                        <span>
+                          {handout.reviewerName || "No reviewer assigned"}
+                        </span>
+                        <button
                           onClick={() => handlePencilClick(handout.id, true)}
                           className="ml-2 text-gray-500 hover:text-primary"
                         >
@@ -292,7 +321,9 @@ export const DCAConvenerHandouts: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {new Date(handout.submittedOn).toLocaleDateString()}
+                      {handout.submittedOn
+                        ? new Date(handout.submittedOn).toLocaleDateString()
+                        : "NA"}
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <Button
@@ -317,13 +348,13 @@ export const DCAConvenerHandouts: React.FC = () => {
         </div>
       </div>
 
-      <AssignICDialog 
+      <AssignICDialog
         isOpen={isICDialogOpen}
         setIsOpen={setIsICDialogOpen}
         onAssign={handleAssignIC}
       />
-      
-      <AssignDCADialog 
+
+      <AssignDCADialog
         isOpen={isReviewerDialogOpen}
         setIsOpen={setIsReviewerDialogOpen}
         onAssign={handleAssignReviewer}
