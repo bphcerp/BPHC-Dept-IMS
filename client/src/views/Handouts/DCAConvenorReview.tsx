@@ -12,7 +12,7 @@ import { Handout } from "./DCAReview";
 import { BASE_API_URL } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
 
-const FacultyHandout: React.FC = () => {
+const DCAConvenorReview: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -152,4 +152,4 @@ const FacultyHandout: React.FC = () => {
   );
 };
 
-export default FacultyHandout;
+export default DCAConvenorReview;

@@ -33,6 +33,7 @@ export interface Handout {
   handoutFilePath: {
     fileId: string;
   };
+  comments: string;
 }
 
 const DCAMemberReviewForm: React.FC = () => {
@@ -192,6 +193,16 @@ const DCAMemberReviewForm: React.FC = () => {
               control={control}
               disabled={data.evaluationScheme != null}
             />
+            {data.comments ? (
+              <div className="flex max-w-[28vw] flex-col text-muted-foreground">
+                <div className="mb-2 font-bold">DCA Convenor Comments :</div>
+                <div className="ml-4 overflow-hidden break-words">
+                  {data.comments}
+                </div>
+              </div>
+            ) : (
+              ""
+            )}
           </div>
           {data.lecturewisePlanCourseTopics == null ? (
             <>

@@ -16,6 +16,7 @@ import { ReUploadDialog } from "./ReUploadDialog";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const revisionComments = {
   "3": "Please add DCA Convencer comments here",
@@ -23,6 +24,7 @@ const revisionComments = {
 
 export const FacultyHandouts: React.FC = () => {
   const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>();
+  const navigate = useNavigate();
   const {
     data: handouts,
     isLoading,
@@ -212,10 +214,11 @@ export const FacultyHandouts: React.FC = () => {
                         </Button>
                       ) : (
                         <Button
-                          disabled
-                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => navigate(`/handout/${handout.id}`)}
                         >
-                          None
+                          Details
                         </Button>
                       )}
                     </TableCell>
