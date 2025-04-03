@@ -1,50 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import ToSubmit from "@/components/qp_review/ToSubmit";
 import Submitted from "@/components/qp_review/Submitted";
+import api from "@/lib/axios-instance";
 
-const toSubmitData = [
-  { course: "EEE 101", deadline: "30/11/2025" },
-  { course: "CSE 102", deadline: "30/11/2025" },
-  { course: "PHY 103", deadline: "30/11/2025" },
-  { course: "MECH 104", deadline: "30/11/2025" },
-];
+const statuses = ["pending", "approved"];
+const ficEmail = "fic@email.com";
 
-const submittedData = [
-  { course: "MATH 201", status: "Approved" },
-  { course: "CSE 202", status: "Ongoing" },
-  { course: "CHEM 203", status: "New" },
-  { course: "BIO 204", status: "Approved" },
-];
-
-const statuses = ["New", "Ongoing", "Approved"];
+type SubmissionData = {
+  courseName: string;
+  courseCode: string;
+  deadline?: string;
+  daysLeft?: number;
+  id: string;
+  status: string;
+  documentsUploaded: boolean;
+};
 
 const FicSubmissionView = () => {
   const [search, setSearch] = useState("");
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["New"]); // Default to "New" selected
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
+    "pending",
+    "approved",
+  ]);
+  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const response = await api.get(
+          `/qp/getAllFICSubmissions/${encodeURIComponent(ficEmail)}`
+        );
+
+        if (response.status === 200) {
+          const data = response.data.data;
+          const formattedData = data.map((item: SubmissionData) => {
+            const deadline = item.deadline ? new Date(item.deadline) : null;
+            return {
+              id:item.id,
+              courseName: item.courseName,
+              courseCode: item.courseCode,
+              deadline: deadline?.toLocaleDateString("en-GB"),
+              daysLeft: deadline
+                ? Math.ceil(
+                    (deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                  )
+                : undefined,
+              status: item.status,
+              documentsUploaded: item.documentsUploaded,
+            };
+          });
+          setSubmissions(formattedData);
+
+          console.log("Fetched submissions:", formattedData);
+        }
+      } catch (error) {
+        console.error("Error fetching submissions:", error);
+      }
+    };
+
+    fetchSubmissions();
+  }, []);
 
   const handleStatusChange = (statuses: string[]) => {
-    setSelectedStatuses(statuses.length ? statuses : ["New"]); // Ensure at least "New" is selected initially
+    setSelectedStatuses(statuses.length ? statuses : ["pending"]);
   };
 
-  // Show "To Submit" courses only when "New" toggle is active
-  const showToSubmit = selectedStatuses.includes("New");
-
-  // Filter submitted courses based on the selected statuses (excluding "New" because those are in ToSubmit)
-  const filteredSubmitted = submittedData.filter(
-    (item) =>
-      item.status !== "New" && // Exclude "New" status from submitted
-      (selectedStatuses.length === 0 || selectedStatuses.includes(item.status))
+  const filteredSubmissions = submissions.filter((item) =>
+    selectedStatuses.includes(item.status)
   );
+
+  console.log(filteredSubmissions)
 
   return (
     <div className="flex w-full flex-col gap-4 px-10 pt-4">
       <h1 className="text-3xl font-bold text-primary">Courses</h1>
 
-      {/* Search & Filter Section */}
       <div className="flex items-center gap-4">
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-gray-400" />
@@ -68,7 +102,7 @@ const FicSubmissionView = () => {
               key={status}
               value={status}
               aria-label={`Filter by ${status}`}
-              className={`border border-gray-300`}
+              className="border border-gray-300"
             >
               <span className="capitalize">{status}</span>
             </ToggleGroupItem>
@@ -76,27 +110,42 @@ const FicSubmissionView = () => {
         </ToggleGroup>
       </div>
 
-      {/* To-Submit Courses (Shown only if "New" is selected) */}
-      {showToSubmit && (
+      {filteredSubmissions.filter((item) => item.status === "pending") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">To Submit</h2>
-          {toSubmitData.map((item, index) => (
-            <ToSubmit
-              key={index}
-              course={item.course}
-              deadline={item.deadline}
-            />
-          ))}
+          {filteredSubmissions
+            .filter((item) => item.status === "pending")
+            .map((item, index) => {
+              console.log(item);
+              return (
+                <ToSubmit
+                  key={index}
+                  requestId={item.id}
+                  courseName={item.courseName}
+                  ficDeadline={item.deadline || "N/A"}
+                  daysLeft={item.daysLeft || 0}
+                  courseCode={item.courseCode} 
+                  ficEmail={ficEmail}     
+                  documentsUploaded={item.documentsUploaded}
+                  />
+              );
+            })}
         </div>
       )}
 
-      {/* Submitted Courses (Filtered) */}
-      {filteredSubmitted.length > 0 && (
+      {filteredSubmissions.some((item) => item.status === "approved") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">Submitted</h2>
-          {filteredSubmitted.map((item, index) => (
-            <Submitted key={index} course={item.course} status={item.status} />
-          ))}
+          {filteredSubmissions
+            .filter((item) => item.status === "approved")
+            .map((item, index) => (
+              <Submitted
+                key={index}
+                courseName={item.courseName}
+                courseCode={item.courseCode}
+                status={item.status}
+              />
+            ))}
         </div>
       )}
     </div>

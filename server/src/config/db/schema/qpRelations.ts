@@ -1,74 +1,47 @@
 import { relations } from "drizzle-orm";
-import { textFields, dateFields, fileFields, applications } from "./form.ts";
 import { qpReviewRequests } from "./qp.ts";
+import { users } from "./admin.ts";
+import { fileFields } from "./form.ts";
 
-export const qpReviewRequestsRelations = relations(
-    qpReviewRequests,
-    ({ one }) => ({
-        application: one(applications, {
-            fields: [qpReviewRequests.applicationId],
-            references: [applications.id],
-            relationName: "qpReviewRequests",
-        }),
-        dcaMember: one(textFields, {
-            fields: [qpReviewRequests.dcaMember],
-            references: [textFields.id],
-            relationName: "qpDcaMember",
-        }),
-        courseNo: one(textFields, {
-            fields: [qpReviewRequests.courseNo],
-            references: [textFields.id],
-            relationName: "qpCourseNo",
-        }),
-        courseName: one(textFields, {
-            fields: [qpReviewRequests.courseName],
-            references: [textFields.id],
-            relationName: "qpCourseName",
-        }),
-        fic: one(textFields, {
-            fields: [qpReviewRequests.fic],
-            references: [textFields.id],
-            relationName: "qpFic",
-        }),
-        ficDeadline: one(dateFields, {
-            fields: [qpReviewRequests.ficDeadline],
-            references: [dateFields.id],
-            relationName: "qpFicDeadline",
-        }),
-        midSem: one(fileFields, {
-            fields: [qpReviewRequests.midSem],
-            references: [fileFields.id],
-            relationName: "qpMidSem",
-        }),
-        midSemSol: one(fileFields, {
-            fields: [qpReviewRequests.midSemSol],
-            references: [fileFields.id],
-            relationName: "qpMidSemSol",
-        }),
-        compre: one(fileFields, {
-            fields: [qpReviewRequests.compre],
-            references: [fileFields.id],
-            relationName: "qpCompre",
-        }),
-        compreSol: one(fileFields, {
-            fields: [qpReviewRequests.compreSol],
-            references: [fileFields.id],
-            relationName: "qpCompreSol",
-        }),
-        faculty1: one(textFields, {
-            fields: [qpReviewRequests.faculty1],
-            references: [textFields.id],
-            relationName: "qpFaculty1",
-        }),
-        faculty2: one(textFields, {
-            fields: [qpReviewRequests.faculty2],
-            references: [textFields.id],
-            relationName: "qpFaculty2",
-        }),
-        reviewDeadline: one(dateFields, {
-            fields: [qpReviewRequests.reviewDeadline],
-            references: [dateFields.id],
-            relationName: "qpReviewDeadline",
-        }),
-    })
-);
+export const qpReviewRequestsRelations = relations(qpReviewRequests, ({ one }) => ({
+    dcaMember: one(users, {
+        fields: [qpReviewRequests.dcaMemberEmail],
+        references: [users.email],
+        relationName: "qpDcaMember",
+    }),
+    fic: one(users, {
+        fields: [qpReviewRequests.ficEmail],
+        references: [users.email],
+        relationName: "qpFic",
+    }),
+    faculty1: one(users, {
+        fields: [qpReviewRequests.faculty1Email],
+        references: [users.email],
+        relationName: "qpFaculty1",
+    }),
+    faculty2: one(users, {
+        fields: [qpReviewRequests.faculty2Email],
+        references: [users.email],
+        relationName: "qpFaculty2",
+    }),
+    midSemFile: one(fileFields, {
+        fields: [qpReviewRequests.midSemFileId],
+        references: [fileFields.id],
+        relationName: "qpMidSemFile",
+    }),
+    midSemSolFile: one(fileFields, {
+        fields: [qpReviewRequests.midSemSolFileId],
+        references: [fileFields.id],
+        relationName: "qpMidSemSolFile",
+    }),
+    compreFile: one(fileFields, {
+        fields: [qpReviewRequests.compreFileId],
+        references: [fileFields.id],
+        relationName: "qpCompreFile",
+    }),
+    compreSolFile: one(fileFields, {
+        fields: [qpReviewRequests.compreSolFileId],
+        references: [fileFields.id],
+        relationName: "qpCompreSolFile",
+    }),
+}));
