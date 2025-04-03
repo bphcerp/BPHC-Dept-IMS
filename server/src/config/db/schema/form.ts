@@ -35,6 +35,7 @@ const baseStatus = {
     comments: text("comments").notNull(),
     updatedAs: text("updated_as").notNull(),
     status: boolean("status").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
 };
 
 export const applications = pgTable("applications", {
