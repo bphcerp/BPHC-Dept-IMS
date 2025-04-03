@@ -10,8 +10,15 @@ export const allPermissions = {
     "admin:role:delete": "Delete operations on roles",
 
     "conference:application:create": "Create operations on applications",
-    "conference:application:submitted": "Read and edit submitted applications",
-    "conference:application:all": "Read and view status of all applications",
+    "conference:application:submitted": "View submitted applications",
+    "conference:application:view-pending": "View pending applications",
+    "conference:application:review-fields":
+        "Approve or Reject fields of applications",
+    "conference:application:overwrite-field-review":
+        "Overwrite a review for a particular field of an application",
+    "conference:application:approve-drc-convener":
+        "Approve application as DRC convener",
+    "conference:application:approve-hod": "Approve application as HOD",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -97,7 +104,8 @@ export const permissions = {
     "/conference/getSubmittedApplications": "conference:application:submitted",
     "/conference/viewOwnApplicationDetails": "conference:application:submitted",
 
-    "/conference/viewApplicationDetails": "conference:application:all",
+    "/conference/viewApplicationDetails": "conference:application:view-pending",
+    "/conference/applications/pending": "conference:application:view-pending",
 
     // PhD
 

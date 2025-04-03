@@ -1,6 +1,13 @@
 import { Field } from "multer";
 import z from "zod";
 
+export const states = [
+    "DRC Member",
+    "DRC Convener",
+    "HoD",
+    "Completed",
+] as const;
+
 export const createApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
@@ -28,6 +35,14 @@ export const createApplicationBodySchema = z.object({
 });
 
 export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;
+
+export const pendingApplicationsQuerySchema = z.object({
+    state: z.enum(states),
+});
+
+export type PendingApplicationsQuery = z.infer<
+    typeof pendingApplicationsQuerySchema
+>;
 
 export const reviewFieldBodySchema = z.object({
     comments: z.string(),
