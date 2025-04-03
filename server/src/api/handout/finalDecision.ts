@@ -20,6 +20,7 @@ router.post(
             .update(courseHandoutRequests)
             .set({
                 status: parsed.status,
+                comments: parsed.comments,
             })
             .where(eq(courseHandoutRequests.id, Number(parsed.id)))
             .returning();

@@ -73,6 +73,7 @@ export const finalDecisionBodySchema = z.object({
         .refine((val) => !isNaN(Number(val)), {
             message: "Invalid handout id",
         }),
+    comments: z.string(),
     status: z.enum(handoutStatuses),
 });
 
