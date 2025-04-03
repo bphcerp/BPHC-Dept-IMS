@@ -1,49 +1,63 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CourseItem from "@/components/qp_review/CourseItem";
+import api from "@/lib/axios-instance";
 
 export default function ReviewPage() {
-  const pendingCourses = [
-    {
-      code: "ECE F342",
-      DCA: "DCA: MV Kumar",
-      role: "FIC: Kumar H",
-      timeLeft: "24 days left",
-      status: "pending",
-    },
-    {
-      code: "ECE F343",
-      DCA: "DCA: MV Kumar",
-      role: "FIC: Kumar B",
-      timeLeft: "3 days left",
-      status: "pending",
-    },
-    {
-      code: "ECE F341",
-      DCA: "DCA: MV Kumar",
-      role: "FIC: Kumar K",
-      timeLeft: "10 days left",
-      status: "pending",
-    },
-  ];
+  const [pendingCourses, setPendingCourses] = useState<Course[]>([]);
+  const [reviewedCourses, setReviewedCourses] = useState<Course[]>([]);
+  const facultyEmail = "harishdixit@university.com";
 
-  const reviewedCourses = [
-    {
-      code: "ECE F212",
-      DCA: "DCA: Palaniappan",
-      role: "FIC: Harishwar",
-      timeLeft: "DCA Approval Pending",
-      status: "reviewed",
-    },
-    {
-      code: "ECE F241",
-      DCA: "DCA: Girish",
-      role: "FIC: Solomon",
-      timeLeft: "Approved",
-      status: "reviewed",
-    },
-  ];
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await api.get(
+          `/qp/getAllFacultyRequests/${encodeURIComponent(facultyEmail)}`
+        );
+
+        const data = response.data
+
+        console.log(data)
+
+        if (data.success) {
+          const pending = data.data.filter(
+            (req: any) => req.status === "pending"
+          );
+          const reviewed = data.data.filter(
+            (req: any) => req.status === "approved"
+          );
+
+          setPendingCourses(
+            pending.map((req: any) => ({
+              id: req.id,
+              code: req.code,
+              DCA: `${req.DCA}`,
+              role: `${req.role}`,
+              timeLeft: req.timeLeft || "N/A",
+              status: req.status,
+            }))
+          );
+
+          setReviewedCourses(
+            reviewed.map((req: any) => ({
+              id:req.id,
+              code: req.courseCode,
+              DCA: ` ${req.dcaName}`,
+              role: ` ${req.ficName}`,
+              timeLeft: req.deadline || "Approved",
+              status: req.status,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching faculty requests:", error);
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   return (
     <div className="w-full bg-background pt-6">
@@ -58,6 +72,7 @@ export default function ReviewPage() {
 }
 
 interface Course {
+  id: number;
   code: string;
   DCA: string;
   role: string;

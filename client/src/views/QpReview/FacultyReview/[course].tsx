@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import EvaluationFormModal from "@/components/qp_review/EvaluationFormModal";
-import { useParams, useLocation } from "react-router-dom";
+import api from "@/lib/axios-instance";
+import { useLocation } from "react-router-dom";
 
 const tabItems = [
   { value: "midSem", label: "Mid Sem" },
@@ -16,18 +17,43 @@ const tabItems = [
 
 export default function FacultyReview() {
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const { course } = useParams<{ course: string }>();
+  const [files, setFiles] = useState<Record<string, string | null>>({});
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const courseCode =
-    (location.state as { courseName: string })?.courseName ||
-    course?.toUpperCase().replace("-", " ");
+  const requestId = location.state?.requestId;
+  const email = "harishdixit@university.com";
+
+  useEffect(() => {
+    async function fetchFiles() {
+      try {
+        const response = await api.get(
+          `/qp/getFilesByRequestID/${Number(requestId)}`
+        );
+        const data = response.data.data;
+
+        setFiles(() => data);
+        console.log(files);
+      } catch (error) {
+        console.error("Error fetching files:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchFiles();
+    console.log(files);
+  }, [requestId]);
+
+  if (loading) {
+    return <>Loading...</>;
+  }
 
   return (
     <main className="w-full bg-background">
       <div className="mx-4 mt-2">
         <div className="overflow-hidden rounded-md border">
           <div className="flex items-center justify-between border-b p-4">
-            <h1 className="text-2xl font-bold">{courseCode}</h1>
+            <h1 className="text-2xl font-bold">Review Documents</h1>
             <Button
               variant="secondary"
               size="sm"
@@ -55,7 +81,7 @@ export default function FacultyReview() {
 
               {tabItems.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value} className="m-0">
-                  <DocumentPreview document={tab.label} />
+                  <DocumentDownload documentUrl={files[tab.value]} />
                 </TabsContent>
               ))}
             </Tabs>
@@ -65,29 +91,32 @@ export default function FacultyReview() {
 
       <EvaluationFormModal
         open={showReviewModal}
-        courseCode={courseCode}
         onOpenChange={setShowReviewModal}
+        courseCode={undefined}
+        requestId={requestId}
+        email={email}
       />
     </main>
   );
 }
 
-interface Document {
-  document: string;
-}
+function DocumentDownload({ documentUrl }: { documentUrl: string | null }) {
+  if (!documentUrl) {
+    return (
+      <div className="flex h-[75vh] items-center justify-center bg-gray-100">
+        <p className="text-gray-500">No document available</p>
+      </div>
+    );
+  }
 
-function DocumentPreview({ document }: Document) {
   return (
     <div className="relative flex h-[75vh] items-center justify-center bg-gray-100">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-2 top-2"
-        title="Download"
-      >
-        <Download className="h-5 w-5" />
-      </Button>
-      <p className="text-gray-500">{document}</p>
+      <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
+        <Button size="sm" className="absolute right-2 top-2 flex gap-2">
+          <Download className="h-5 w-5" />
+          Download PDF
+        </Button>
+      </a>
     </div>
   );
 }
