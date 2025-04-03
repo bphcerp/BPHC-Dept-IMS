@@ -100,12 +100,10 @@ export const permissions = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-
-    "/conference/getSubmittedApplications": "conference:application:submitted",
-    "/conference/viewOwnApplicationDetails": "conference:application:submitted",
-
-    "/conference/viewApplicationDetails": "conference:application:view-pending",
+    "/conference/applications/details": "conference:application:view-pending",
     "/conference/applications/pending": "conference:application:view-pending",
+    "/conference/applications/my": "conference:application:submitted",
+    "/conference/applications/view": "conference:application:submitted",
 
     // PhD
 

@@ -4,9 +4,10 @@ import type * as FormTables from "@/config/db/schema/form.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
-import { conferenceSchemas } from "lib";
+import { authUtils, conferenceSchemas } from "lib";
 import environment from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import { permissions } from "lib";
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const id = parseInt(req.params.id);
-        if (isNaN(id)) {
+        if (isNaN(id) || id <= 0) {
             next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
         }
 
@@ -133,6 +134,19 @@ router.get(
             );
         }
 
+        const allowedToViewAny = authUtils.checkAccess(
+            permissions["/conference/applications/view"],
+            req.user!.permissions
+        );
+
+        if (!allowedToViewAny && application.userEmail !== req.user!.email)
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not allowed to view this application"
+                )
+            );
+
         for (const fileFieldName of conferenceSchemas.fileFieldNames) {
             const fileField =
                 application.conferenceApplications[0][fileFieldName];
@@ -146,7 +160,7 @@ router.get(
                 ] as typeof FormTables.fileFields.$inferSelect & {
                     file: typeof FormTables.files.$inferSelect;
                 }
-            ).file.filePath = environment.SERVER_URL + "/api/f/" + fileID;
+            ).file.filePath = environment.SERVER_URL + "/f/" + fileID;
         }
 
         res.status(200).send(application);
