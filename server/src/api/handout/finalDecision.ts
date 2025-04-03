@@ -7,32 +7,75 @@ import { handoutSchemas } from "lib";
 import { assert } from "console";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { eq } from "drizzle-orm";
+import nodemailer from "nodemailer";
+import env from "@/config/environment.ts";
+
 const router = express.Router();
 
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        assert(req.user);
-        const parsed = handoutSchemas.finalDecisionBodySchema.parse(req.body);
+        try {
+            assert(req.user);
+            const parsed = handoutSchemas.finalDecisionBodySchema.parse(
+                req.body
+            );
 
-        const result = await db
-            .update(courseHandoutRequests)
-            .set({
-                status: parsed.status,
-                comments: parsed.comments,
-            })
-            .where(eq(courseHandoutRequests.id, Number(parsed.id)))
-            .returning();
+            const handout = await db.query.courseHandoutRequests.findFirst({
+                where: (handout, { eq }) => eq(handout.id, Number(parsed.id)),
+            });
 
-        if (!result.length)
-            return next(new HttpError(HttpCode.NOT_FOUND, "Handout Not Found"));
+            const result = await db
+                .update(courseHandoutRequests)
+                .set({
+                    status: parsed.status,
+                    comments: parsed.comments,
+                })
+                .where(eq(courseHandoutRequests.id, Number(parsed.id)))
+                .returning();
 
-        res.status(200).json({
-            success: true,
-            message: "Handout review updated",
-            data: result[0],
-        });
+            if (!result.length)
+                return next(
+                    new HttpError(HttpCode.NOT_FOUND, "Handout Not Found")
+                );
+
+            if (env.PROD && parsed.status == "rejected") {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        service: "gmail",
+                        auth: {
+                            user: env.BPHCERP_EMAIL,
+                            pass: env.BPHCERP_PASSWORD,
+                        },
+                    });
+                    await transporter.sendMail({
+                        from: env.BPHCERP_EMAIL,
+                        to: handout?.icEmail,
+                        subject: "Handout Rejection",
+                        text: `You handout verification request for course code ${handout?.courseCode} by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                    });
+                } catch (e) {
+                    throw new HttpError(
+                        HttpCode.INTERNAL_SERVER_ERROR,
+                        "Failed: error sending rejection email",
+                        (e as Error)?.message
+                    );
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Handout review updated",
+                data: result[0],
+            });
+        } catch (e) {
+            if (e instanceof HttpError) {
+                return next(e);
+            } else {
+                throw e;
+            }
+        }
     })
 );
 
