@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 interface CourseItemProps {
   course: {
+    id: number;
     code: string;
     DCA: string;
     role: string;
@@ -14,6 +15,8 @@ interface CourseItemProps {
 export default function CourseItem({ course }: CourseItemProps) {
   const router = useNavigate();
   const courseCode = course.code;
+  const requestId = course.id;
+  console.log(requestId)
   const slug = encodeURIComponent(
     courseCode.toLowerCase().replace(/\s+/g, "-")
   );
@@ -22,7 +25,7 @@ export default function CourseItem({ course }: CourseItemProps) {
     <div
       className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-gray-200"
       onClick={() =>
-        router(`/qpReview/FacultyReview/${slug}`, { state: { courseCode } })
+        router(`/qpReview/FacultyReview/${slug}`, { state: { courseCode, requestId } })
       }
     >
       <div className="flex items-start justify-between">
