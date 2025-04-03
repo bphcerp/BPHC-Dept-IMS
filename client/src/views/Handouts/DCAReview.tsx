@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import ReviewField from "@/components/handouts/reviewField";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
+import { BASE_API_URL } from "@/lib/constants";
 
 export interface HandoutReviewFormValues {
   handoutId: string;
@@ -29,6 +30,9 @@ export interface Handout {
   lecturewisePlanCourseTopics: boolean;
   numberOfLP: boolean;
   evaluationScheme: boolean;
+  handoutFilePath: {
+    fileId: string;
+  };
 }
 
 const DCAMemberReviewForm: React.FC = () => {
@@ -121,7 +125,7 @@ const DCAMemberReviewForm: React.FC = () => {
     );
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-10">
+    <div className="container mx-auto max-w-3xl px-2 py-10">
       <h1 className="mb-4 text-center text-2xl font-bold">Handout Review</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
@@ -129,84 +133,89 @@ const DCAMemberReviewForm: React.FC = () => {
       <p className="mb-4 text-center text-muted-foreground">
         <span className="font-bold">Course Code :</span> {data.courseCode}
       </p>{" "}
-      <p className="mb-8 text-center text-muted-foreground">
+      <p className="mb-6 text-center text-muted-foreground">
         {data.lecturewisePlanCourseTopics == null
           ? "Review the handout and approve or reject each section."
           : "You have reviewed this handout"}
       </p>
-      <form
-        onSubmit={(e) => {
-          void handleSubmit(onSubmit)(e);
-        }}
-        className="space-y-6"
-      >
-        <div className="space-y-4">
-          <ReviewField
-            name="scopeAndObjective"
-            label="Scope and Objective"
-            description="Check if scope and objectives are clearly defined"
-            control={control}
-            disabled={data.scopeAndObjective != null}
-          />
-          <ReviewField
-            name="textBookPrescribed"
-            label="Textbook Prescribed"
-            description="Verify if appropriate textbooks are listed"
-            control={control}
-            disabled={data.textBookPrescribed != null}
-          />
-          <ReviewField
-            name="lecturewisePlanLearningObjective"
-            label="Learning Objectives"
-            description="Check if learning objectives for each lecture are defined"
-            control={control}
-            disabled={data.lecturewisePlanLearningObjective != null}
-          />
-          <ReviewField
-            name="lecturewisePlanCourseTopics"
-            label="Course Topics"
-            description="Review the lecture-wise course topics"
-            control={control}
-            disabled={data.lecturewisePlanCourseTopics != null}
-          />
-          <ReviewField
-            name="numberOfLP"
-            label="Number of Learning Points"
-            description="Ensure sufficient learning points are included"
-            control={control}
-            disabled={data.numberOfLP != null}
-          />
-          <ReviewField
-            name="evaluationScheme"
-            label="Evaluation Scheme"
-            description="Check if the evaluation scheme is appropriate"
-            control={control}
-            disabled={data.evaluationScheme != null}
-          />
-        </div>
-
-        <Separator className="my-4" />
-        {data.lecturewisePlanCourseTopics == null ? (
-          <>
-            <div className="flex items-center justify-center">
-              <p className="text-sm text-muted-foreground">
-                Check the box to approve; leave unchecked to reject each
-                section.
-              </p>
-            </div>
-            <Button
-              type="submit"
-              disabled={mutation.isLoading}
-              className="float-right ms-auto w-auto justify-center px-4 py-2 text-sm"
-            >
-              {" "}
-              {mutation.isLoading ? "Submitting..." : "Submit Review"}
-            </Button>
-          </>
-        ) : (
-          <></>
-        )}
-      </form>
+      <div className="flex space-x-4">
+        <iframe
+          src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}
+          className="my-2 h-[90vh] max-h-[550px] w-full self-center"
+        ></iframe>
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="w-full scale-90 space-y-6"
+        >
+          <div className="space-y-4">
+            <ReviewField
+              name="scopeAndObjective"
+              label="Scope and Objective"
+              description="Check if scope and objectives are clearly defined"
+              control={control}
+              disabled={data.scopeAndObjective != null}
+            />
+            <ReviewField
+              name="textBookPrescribed"
+              label="Textbook Prescribed"
+              description="Verify if appropriate textbooks are listed"
+              control={control}
+              disabled={data.textBookPrescribed != null}
+            />
+            <ReviewField
+              name="lecturewisePlanLearningObjective"
+              label="Learning Objectives"
+              description="Check if learning objectives for each lecture are defined"
+              control={control}
+              disabled={data.lecturewisePlanLearningObjective != null}
+            />
+            <ReviewField
+              name="lecturewisePlanCourseTopics"
+              label="Course Topics"
+              description="Review the lecture-wise course topics"
+              control={control}
+              disabled={data.lecturewisePlanCourseTopics != null}
+            />
+            <ReviewField
+              name="numberOfLP"
+              label="Number of Learning Points"
+              description="Ensure sufficient learning points are included"
+              control={control}
+              disabled={data.numberOfLP != null}
+            />
+            <ReviewField
+              name="evaluationScheme"
+              label="Evaluation Scheme"
+              description="Check if the evaluation scheme is appropriate"
+              control={control}
+              disabled={data.evaluationScheme != null}
+            />
+          </div>
+          {data.lecturewisePlanCourseTopics == null ? (
+            <>
+              <Separator />
+              <div className="flex items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  Check the box to approve; leave unchecked to reject each
+                  section.
+                </p>
+              </div>
+              <Button
+                type="submit"
+                disabled={mutation.isLoading}
+                className="float-right ms-auto w-auto justify-center px-4 py-2 text-sm"
+              >
+                {" "}
+                {mutation.isLoading ? "Submitting..." : "Submit Review"}
+              </Button>
+            </>
+          ) : (
+            <></>
+          )}
+        </form>
+      </div>
     </div>
   );
 };

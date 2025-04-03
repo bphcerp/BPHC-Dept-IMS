@@ -15,6 +15,9 @@ router.get(
         const handout = await db.query.courseHandoutRequests.findFirst({
             where: (handout, { eq }) =>
                 eq(handout.id, Number(parsed.handoutId)),
+            with: {
+                handoutFilePath: true,
+            },
         });
 
         if (!handout)

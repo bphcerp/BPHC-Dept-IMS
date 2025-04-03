@@ -168,7 +168,14 @@ export const DCAMemberHandouts: React.FC = () => {
                       {new Date(handout.submittedOn).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.lecturewisePlanLearningObjective == null ? (
+                      {handout.status == "notsubmitted" ? (
+                        <Button
+                          disabled
+                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
+                        >
+                          None
+                        </Button>
+                      ) : (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
@@ -176,14 +183,10 @@ export const DCAMemberHandouts: React.FC = () => {
                             navigate(`/handout/dca/review/${handout.id}`)
                           }
                         >
-                          Review
-                        </Button>
-                      ) : (
-                        <Button
-                          disabled
-                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
-                        >
-                          None
+                          {handout.status == "pending" &&
+                          handout.lecturewisePlanLearningObjective == null
+                            ? "Review"
+                            : "Details"}
                         </Button>
                       )}
                     </TableCell>
