@@ -1,7 +1,5 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { FilterBar } from "@/components/handouts/FilterBar";
-import { HandoutsDCAcon } from "@/components/handouts/types";
+import React, { useState, useEffect } from "react";
+import { FilterBar } from "@/components/handouts/filterBar";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,78 +10,121 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { STATUS_COLORS } from "@/components/handouts/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { toast } from "sonner";
+import { Pencil } from "lucide-react";
+import { AssignICDialog } from "@/components/handouts/updateICDialog";
+import { AssignDCADialog } from "@/components/handouts/assignDCADialog";
 
-const dummyHandouts: HandoutsDCAcon[] = [
-  {
-    id: "1",
-    courseName: "Introduction to Programming",
-    courseCode: "CS101",
-    category: "FD",
-    instructor: "Dr. Smith",
-    reviewer: "Reviewer 1",
-    submittedOn: "2023-04-01T00:00:00Z",
-    status: "pending",
-  },
-  {
-    id: "2",
-    courseName: "Data Structures",
-    courseCode: "CS201",
-    category: "HD",
-    instructor: "Prof. Johnson",
-    reviewer: "Reviewer 2",
-    submittedOn: "2023-04-02T00:00:00Z",
-    status: "approved",
-  },
-  {
-    id: "3",
-    courseName: "Algorithms",
-    courseCode: "CS301",
-    category: "FD",
-    instructor: "",
-    reviewer: "",
-    submittedOn: "2023-04-03T00:00:00Z",
-    status: "revision",
-  },
-  {
-    id: "4",
-    courseName: "Operating Systems",
-    courseCode: "CS401",
-    category: "HD",
-    instructor: "Dr. Lee",
-    reviewer: "",
-    submittedOn: "2023-04-04T00:00:00Z",
-    status: "notsubmitted",
-  },
-];
-
-const instructorOptions = [
-  "Dr. Smith",
-  "Prof. Johnson",
-  "Dr. Lee",
-  "Dr. Williams",
-];
-const reviewerOptions = [
-  "Reviewer 1",
-  "Reviewer 2",
-  "Reviewer 3",
-  "Reviewer 4",
-];
+interface HandoutsDCAcon {
+  reviewerEmail: string;
+  id: string;
+  courseName: string;
+  courseCode: string;
+  category: string;
+  reviewerName: string | null;
+  professorName: string;
+  submittedOn: string;
+  status: string;
+}
 
 export const DCAConvenerHandouts: React.FC = () => {
-  const navigate = useNavigate();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
     []
   );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [handouts, setHandouts] = useState<HandoutsDCAcon[]>(dummyHandouts);
-  const [filteredHandouts, setFilteredHandouts] =
-    useState<HandoutsDCAcon[]>(dummyHandouts);
+  const [filteredHandouts, setFilteredHandouts] = useState<HandoutsDCAcon[]>(
+    []
+  );
+
+  const [isICDialogOpen, setIsICDialogOpen] = useState(false);
+  const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
+  const [currentHandoutId, setCurrentHandoutId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+
+  const updateICMutation = useMutation({
+    mutationFn: async ({
+      id,
+      icEmail,
+      sendEmail,
+    }: {
+      id: string;
+      icEmail: string;
+      sendEmail: boolean;
+    }) => {
+      const response = await api.post("/handout/dcaconvenor/updateIC", {
+        id: id.toString(),
+        icEmail,
+        sendEmail,
+      });
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Instructor updated successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to update instructor");
+    },
+  });
+
+  const updateReviewerMutation = useMutation({
+    mutationFn: async ({
+      id,
+      reviewerEmail,
+      sendEmail,
+    }: {
+      id: string;
+      reviewerEmail: string;
+      sendEmail: boolean;
+    }) => {
+      const response = await api.post("/handout/dcaconvenor/updateReviewer", {
+        id: id.toString(),
+        reviewerEmail,
+        sendEmail,
+      });
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Reviewer assigned successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to assign reviewer");
+    },
+  });
+
+  const {
+    data: handouts,
+    isLoading,
+    isError,
+  } = useQuery<HandoutsDCAcon[]>({
+    queryKey: ["handouts-dca-convenor"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{
+          success: boolean;
+          handouts: HandoutsDCAcon[];
+        }>("/handout/dcaconvenor/get");
+        return response.data.handouts;
+      } catch (error) {
+        toast.error("Failed to fetch handouts");
+        throw error;
+      }
+    },
+  });
 
   useEffect(() => {
-    let results = handouts;
+    if (!handouts) return;
 
+    let results = handouts;
     if (searchQuery) {
       results = results.filter(
         (handout) =>
@@ -109,29 +150,60 @@ export const DCAConvenerHandouts: React.FC = () => {
     setFilteredHandouts(results);
   }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
 
-  const handleInstructorChange = (
-    e: ChangeEvent<HTMLSelectElement>,
-    id: string
-  ) => {
-    const newValue = e.target.value;
-    setHandouts((prev) =>
-      prev.map((handout) =>
-        handout.id === id ? { ...handout, instructor: newValue } : handout
-      )
-    );
+  const handlePencilClick = (handoutId: string, isReviewer: boolean) => {
+    setCurrentHandoutId(handoutId);
+    if (isReviewer) {
+      setIsReviewerDialogOpen(true);
+    } else {
+      setIsICDialogOpen(true);
+    }
   };
 
-  const handleReviewerChange = (
-    e: ChangeEvent<HTMLSelectElement>,
-    id: string
-  ) => {
-    const newValue = e.target.value;
-    setHandouts((prev) =>
-      prev.map((handout) =>
-        handout.id === id ? { ...handout, reviewer: newValue } : handout
-      )
-    );
+  const handleAssignIC = (email: string, sendEmail: boolean) => {
+    if (!currentHandoutId) {
+      toast.error("No handout selected");
+      return;
+    }
+
+    updateICMutation.mutate({
+      id: currentHandoutId,
+      icEmail: email,
+      sendEmail,
+    });
+
+    setIsICDialogOpen(false);
   };
+
+  const handleAssignReviewer = (email: string, sendEmail: boolean) => {
+    if (!currentHandoutId) {
+      toast.error("No handout selected");
+      return;
+    }
+
+    updateReviewerMutation.mutate({
+      id: currentHandoutId,
+      reviewerEmail: email,
+      sendEmail,
+    });
+
+    setIsReviewerDialogOpen(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Error fetching handouts
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-4">
@@ -139,7 +211,7 @@ export const DCAConvenerHandouts: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-primary">
-              DCA Member - Handouts
+              DCA Convenor - Handouts
             </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
             <div className="mt-2 flex gap-2">
@@ -191,9 +263,11 @@ export const DCAConvenerHandouts: React.FC = () => {
                 </TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
                 <TableHead className="px-4 py-2 text-left">
-                  Instructor
+                  Instructor Email
                 </TableHead>
-                <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Reviewer Email
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Submitted On
@@ -217,35 +291,29 @@ export const DCAConvenerHandouts: React.FC = () => {
                     <TableCell className="px-4 py-2">
                       {handout.category}
                     </TableCell>
-                    {/* Instructor Dropdown */}
                     <TableCell className="px-4 py-2">
-                      <select
-                        value={handout.instructor}
-                        onChange={(e) => handleInstructorChange(e, handout.id)}
-                        className="rounded border border-gray-300 px-1 py-1.5"
-                      >
-                        <option value="">Select Instructor</option>
-                        {instructorOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center">
+                        <span>{handout.professorName}</span>
+                        <button
+                          onClick={() => handlePencilClick(handout.id, false)}
+                          className="ml-2 text-gray-500 hover:text-primary"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
                     </TableCell>
-                    {/* Reviewer Dropdown */}
                     <TableCell className="px-4 py-2">
-                      <select
-                        value={handout.reviewer}
-                        onChange={(e) => handleReviewerChange(e, handout.id)}
-                        className="rounded border border-gray-300 px-1 py-1.5"
-                      >
-                        <option value="">Select Reviewer</option>
-                        {reviewerOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex items-center">
+                        <span>
+                          {handout.reviewerName || "No reviewer assigned"}
+                        </span>
+                        <button
+                          onClick={() => handlePencilClick(handout.id, true)}
+                          className="ml-2 text-gray-500 hover:text-primary"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
                     </TableCell>
                     <TableCell className="px-4 py-2 uppercase">
                       <span className={STATUS_COLORS[handout.status]}>
@@ -253,9 +321,19 @@ export const DCAConvenerHandouts: React.FC = () => {
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {new Date(handout.submittedOn).toLocaleDateString()}
+                      {handout.submittedOn
+                        ? new Date(handout.submittedOn).toLocaleDateString()
+                        : "NA"}
                     </TableCell>
-                    <TableCell className="px-4 py-2"></TableCell>
+                    <TableCell className="px-4 py-2">
+                      <Button
+                        variant="outline"
+                        className="hover:bg-primary hover:text-white"
+                        onClick={() => {}}
+                      >
+                        View
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -269,6 +347,18 @@ export const DCAConvenerHandouts: React.FC = () => {
           </Table>
         </div>
       </div>
+
+      <AssignICDialog
+        isOpen={isICDialogOpen}
+        setIsOpen={setIsICDialogOpen}
+        onAssign={handleAssignIC}
+      />
+
+      <AssignDCADialog
+        isOpen={isReviewerDialogOpen}
+        setIsOpen={setIsReviewerDialogOpen}
+        onAssign={handleAssignReviewer}
+      />
     </div>
   );
 };

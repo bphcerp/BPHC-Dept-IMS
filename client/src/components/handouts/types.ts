@@ -21,7 +21,7 @@ export const STATUS_COLORS: Record<string, string> = {
   pending: "text-yellow-600",
   approved: "text-green-600",
   rejected: "text-red-600",
-  "not submitted": "text-gray-600",
+  notsubmitted: "text-gray-600",
 };
 
 export interface DCAHandout {

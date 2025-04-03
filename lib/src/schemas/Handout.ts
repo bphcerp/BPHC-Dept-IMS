@@ -78,3 +78,27 @@ export const finalDecisionBodySchema = z.object({
 });
 
 export type FinalDecisionBody = z.infer<typeof finalDecisionBodySchema>;
+
+export const updateICBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    icEmail: z.string().email(),
+})
+
+export type UpdateICBody = z.infer<typeof updateICBodySchema>;
+
+export const updateReviewerBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    reviewerEmail: z.string().email(),
+})
+
+export type UpdateReviewerBody = z.infer<typeof updateReviewerBodySchema>;

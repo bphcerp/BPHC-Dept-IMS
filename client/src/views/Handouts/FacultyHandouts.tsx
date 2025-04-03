@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FilterBar } from "@/components/handouts/FilterBar";
+import { FilterBar } from "@/components/handouts/filterBar";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { Handout } from "@/components/handouts/types";
 import { UploadDialog } from "@/components/handouts/UploadDialog";
