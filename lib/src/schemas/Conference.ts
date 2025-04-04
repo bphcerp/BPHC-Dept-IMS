@@ -36,7 +36,11 @@ export const createApplicationBodySchema = z.object({
         .positive()
         .finite()
         .optional(),
-    accomodationReimbursement: z.coerce.number().positive().finite().optional(),
+    accommodationReimbursement: z.coerce
+        .number()
+        .positive()
+        .finite()
+        .optional(),
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
@@ -89,7 +93,7 @@ export const numberFieldNames = [
     "travelReimbursement",
     "registrationFeeReimbursement",
     "dailyAllowanceReimbursement",
-    "accomodationReimbursement",
+    "accommodationReimbursement",
     "otherReimbursement",
 ] as const;
 
@@ -146,7 +150,7 @@ export type ViewApplicationResponse = {
         travelReimbursement?: numberFieldResponse;
         registrationFeeReimbursement?: numberFieldResponse;
         dailyAllowanceReimbursement?: numberFieldResponse;
-        accomodationReimbursement?: numberFieldResponse;
+        accommodationReimbursement?: numberFieldResponse;
         otherReimbursement?: numberFieldResponse;
         letterOfInvitation?: fileFieldResponse;
         firstPageOfPaper?: fileFieldResponse;

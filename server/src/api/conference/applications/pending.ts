@@ -2,17 +2,14 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { conferenceSchemas, modules } from "lib";
+import { type conferenceSchemas, modules } from "lib";
 
 const router = express.Router();
 
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
-        // const parsed = conferenceSchemas.pendingApplicationsQuerySchema.parse(
-        //     req.query
-        // );
+    asyncHandler(async (_, res) => {
         const pendingApplications = (
             await db.query.applications.findMany({
                 with: {
@@ -23,9 +20,7 @@ router.get(
                             phd: true,
                         },
                     },
-                    conferenceApplications: {
-                        // where: ({ state }, { eq }) => eq(state, parsed.state),
-                    },
+                    conferenceApplications: true,
                 },
                 where: ({ status, module }, { and, eq }) =>
                     and(eq(status, "pending"), eq(module, modules[0])),
