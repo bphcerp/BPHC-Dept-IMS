@@ -57,6 +57,13 @@
       "when": 1743653266839,
       "tag": "0007_abandoned_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1743787965691,
+      "tag": "0008_tiresome_doomsday",
+      "breakpoints": true
     }
   ]
 }
