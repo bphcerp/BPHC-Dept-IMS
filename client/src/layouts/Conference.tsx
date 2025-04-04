@@ -9,7 +9,7 @@ const ConferenceLayout = () => {
       <AppSidebar
         items={[
           {
-            title: "Conference Approvals",
+            title: "Faculty",
             items: [
               {
                 title: "Apply",
@@ -24,7 +24,7 @@ const ConferenceLayout = () => {
                 icon: <FileText />,
                 url: "/conference/submitted",
                 requiredPermissions: [
-                  permissions["/conference/getSubmittedApplications"],
+                  permissions["/conference/applications/my"],
                 ],
               },
             ],

@@ -161,9 +161,7 @@ const Routing = () => {
                 {checkAccess(permissions["/conference/createApplication"]) && (
                   <Route path="apply" element={<ConferenceApplyView />} />
                 )}
-                {checkAccess(
-                  permissions["/conference/getSubmittedApplications"]
-                ) && (
+                {checkAccess(permissions["/conference/applications/my"]) && (
                   <>
                     <Route
                       path="submitted"
