@@ -131,6 +131,15 @@ router.post(
                 .where(
                     eq(conferenceApprovalApplications.applicationId, applId)
                 );
+        } else if (!status) {
+            await db
+                .update(conferenceApprovalApplications)
+                .set({
+                    state: conferenceSchemas.states[0],
+                })
+                .where(
+                    eq(conferenceApprovalApplications.applicationId, applId)
+                );
         }
 
         res.status(200).send();
