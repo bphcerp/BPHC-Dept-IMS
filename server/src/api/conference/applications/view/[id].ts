@@ -1,7 +1,7 @@
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { authUtils, conferenceSchemas } from "lib";
+import { authUtils } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
 import { permissions } from "lib";
 import { getApplicationById } from "@/lib/conference/index.ts";
