@@ -1,5 +1,5 @@
 {
-  "id": "52377495-2785-4329-baec-7df1ba046cda",
+  "id": "1ed82c04-e19c-4903-9810-ff5b28e1578f",
   "prevId": "1f16fb72-ef19-4800-9b5b-3f28f2844fc5",
   "version": "7",
   "dialect": "postgresql",
@@ -683,8 +683,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "accomodation_reimbursement": {
-          "name": "accomodation_reimbursement",
+        "accommodation_reimbursement": {
+          "name": "accommodation_reimbursement",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -884,12 +884,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "conference_approval_applications_accomodation_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_accomodation_reimbursement_number_fields_id_fk",
+        "conference_approval_applications_accommodation_reimbursement_number_fields_id_fk": {
+          "name": "conference_approval_applications_accommodation_reimbursement_number_fields_id_fk",
           "tableFrom": "conference_approval_applications",
           "tableTo": "number_fields",
           "columnsFrom": [
-            "accomodation_reimbursement"
+            "accommodation_reimbursement"
           ],
           "columnsTo": [
             "id"
