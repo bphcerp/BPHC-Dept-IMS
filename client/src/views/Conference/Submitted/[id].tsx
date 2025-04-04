@@ -119,8 +119,8 @@ const ConferenceEditView: React.FC = () => {
           app.registrationFeeReimbursement?.value ?? undefined,
         dailyAllowanceReimbursement:
           app.dailyAllowanceReimbursement?.value ?? undefined,
-        accomodationReimbursement:
-          app.accomodationReimbursement?.value ?? undefined,
+        accommodationReimbursement:
+          app.accommodationReimbursement?.value ?? undefined,
         otherReimbursement: app.otherReimbursement?.value ?? undefined,
       });
       setHasSetForm(true);
