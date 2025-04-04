@@ -63,8 +63,8 @@ export const conferenceApprovalApplications = pgTable(
         ).references(() => numberFields.id, {
             onDelete: "set null",
         }),
-        accomodationReimbursement: integer(
-            "accomodation_reimbursement"
+        accommodationReimbursement: integer(
+            "accommodation_reimbursement"
         ).references(() => numberFields.id, {
             onDelete: "set null",
         }),

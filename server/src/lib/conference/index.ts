@@ -43,7 +43,7 @@ export const getApplicationById = async (id: number) => {
                     travelReimbursement: withStatus,
                     registrationFeeReimbursement: withStatus,
                     dailyAllowanceReimbursement: withStatus,
-                    accomodationReimbursement: withStatus,
+                    accommodationReimbursement: withStatus,
                     otherReimbursement: withStatus,
                     letterOfInvitation: {
                         with: { ...withStatus.with, file: true },
