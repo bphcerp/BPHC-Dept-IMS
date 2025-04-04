@@ -26,6 +26,7 @@ router.post(
             icEmail: parsed.icEmail,
             courseCode: parsed.courseCode,
             courseName: parsed.courseName,
+            category: parsed.category,
         });
 
         res.status(201).json({ success: true });

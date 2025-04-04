@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { AssignICDialog } from "@/components/handouts/updateICDialog";
 import { AssignDCADialog } from "@/components/handouts/assignDCADialog";
+import { SetDeadlineDialog } from "@/components/handouts/setDeadline";
+import { useNavigate } from "react-router-dom";
 
 interface HandoutsDCAcon {
   reviewerEmail: string;
@@ -43,7 +45,7 @@ export const DCAConvenerHandouts: React.FC = () => {
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
   const [currentHandoutId, setCurrentHandoutId] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const updateICMutation = useMutation({
@@ -216,12 +218,7 @@ export const DCAConvenerHandouts: React.FC = () => {
             </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
             <div className="mt-2 flex gap-2">
-              <Button
-                variant="outline"
-                className="hover:bg-primary hover:text-white"
-              >
-                Initiate
-              </Button>
+              <SetDeadlineDialog />
               <Button
                 variant="outline"
                 className="hover:bg-primary hover:text-white"
@@ -332,7 +329,9 @@ export const DCAConvenerHandouts: React.FC = () => {
                       <Button
                         variant="outline"
                         className="hover:bg-primary hover:text-white"
-                        onClick={() => {}}
+                        onClick={() =>
+                          navigate(`/handout/dcaconvenor/review/${handout.id}`)
+                        }
                       >
                         View
                       </Button>
