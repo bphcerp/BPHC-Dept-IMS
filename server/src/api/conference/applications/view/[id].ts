@@ -13,17 +13,15 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const id = parseInt(req.params.id);
-        if (isNaN(id) || id <= 0) {
-            next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
-        }
+        if (isNaN(id) || id <= 0)
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
 
         const application = await getApplicationById(id);
 
-        if (!application) {
+        if (!application)
             return next(
                 new HttpError(HttpCode.NOT_FOUND, "Application not found")
             );
-        }
 
         const allowedToViewAny = authUtils.checkAccess(
             permissions["/conference/applications/view"],
