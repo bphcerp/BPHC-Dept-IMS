@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/table";
 import { FilterBar } from "@/components/handouts/filterBar";
 import { STATUS_COLORS } from "@/components/handouts/types";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { toast } from "sonner";
 
 interface HandoutSummary {
   id: string;
@@ -26,47 +29,38 @@ interface HandoutSummary {
   evaluationScheme: boolean;
 }
 
-const dummyData: HandoutSummary[] = [
-  {
-    id: "1",
-    courseCode: "CS101",
-    icName: "Dr. Alice",
-    reviewerName: "Reviewer 1",
-    status: "approved",
-    submittedOn: "2025-03-31T00:00:00Z",
-    category: "FD",
-    scopeAndObjective: true,
-    textBookPrescribed: false,
-    lecturewisePlanLearningObjective: true,
-    lecturewisePlanCourseTopics: true,
-    numberOfLP: false,
-    evaluationScheme: true,
-  },
-  {
-    id: "2",
-    courseCode: "MA202",
-    icName: "Dr. Bob",
-    reviewerName: "Reviewer 2",
-    status: "pending",
-    submittedOn: "2025-04-01T00:00:00Z",
-    category: "HD",
-    scopeAndObjective: false,
-    textBookPrescribed: true,
-    lecturewisePlanLearningObjective: false,
-    lecturewisePlanCourseTopics: true,
-    numberOfLP: true,
-    evaluationScheme: false,
-  },
-];
-
 const DCAConvenerSummary: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredData, setFilteredData] = useState<HandoutSummary[]>(dummyData);
+  const [filteredData, setFilteredData] = useState<HandoutSummary[]>([]);
+
+  const {
+    data: handouts,
+    isLoading,
+    isError,
+  } = useQuery<HandoutSummary[]>({
+    queryKey: ["handouts-dca-convenor"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{
+          success: boolean;
+          handouts: HandoutSummary[];
+        }>("/handout/dcaconvenor/get");
+        return response.data.handouts;
+      } catch (error) {
+        toast.error("Failed to fetch handouts");
+        throw error;
+      }
+    },
+  });
 
   useEffect(() => {
-    let results = dummyData;
+    if (!handouts) {
+      setFilteredData([]);
+      return;
+    }
+    let results = handouts;
 
     if (searchQuery) {
       results = results.filter(
@@ -88,10 +82,26 @@ const DCAConvenerSummary: React.FC = () => {
     }
 
     setFilteredData(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters]);
+  }, [handouts, searchQuery, activeCategoryFilters, activeStatusFilters]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto p-4">
+        <p>Error fetching handouts</p>
+      </div>
+    );
+  }
 
   return (
-		<div className="container mx-auto p-4">
+    <div className="container mx-auto p-4">
       <div className="px-2 py-4">
         <div className="flex items-center justify-between">
           <div>

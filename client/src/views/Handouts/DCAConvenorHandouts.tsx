@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -228,12 +228,14 @@ export const DCAConvenerHandouts: React.FC = () => {
               >
                 Export
               </Button>
-              <Button
-                variant="outline"
-                className="hover:bg-primary hover:text-white"
-              >
-                Summary
-              </Button>
+              <Link to="/handout/summary">
+                <Button
+                  variant="outline"
+                  className="hover:bg-primary hover:text-white"
+                >
+                  Summary
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="ml-4">
