@@ -140,10 +140,8 @@ export const FacultyHandouts: React.FC = () => {
         </div>
       </div>
 
-      {/* Separator */}
       <hr className="my-1 border-gray-300" />
 
-      {/* Handouts Table */}
       <div className="w-full overflow-x-auto bg-white shadow">
         <div className="inline-block min-w-full align-middle">
           <Table className="min-w-full">

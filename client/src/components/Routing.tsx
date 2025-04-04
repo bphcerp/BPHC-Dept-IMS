@@ -46,6 +46,7 @@ import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 import ConferenceSubmittedApplicationView from "@/views/Conference/Submitted/[id]";
+import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -230,6 +231,9 @@ const Routing = () => {
                         path="assignreviewer/:id"
                         element={<AssignReviewer />}
                       />
+                      <Route 
+                      path="summary"
+                      element={<DCAConvenerSummary/>}/>
                       {checkAccess(
                         permissions["/handout/dcaconvenor/finalDecision"]
                       ) && (
