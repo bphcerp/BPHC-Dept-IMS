@@ -104,6 +104,10 @@ export const permissions = {
     "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",
+    "/conference/fields/review": "conference:application:review-fields",
+    "/conference/approveApplicationAsDrcConvener":
+        "conference:application:approve-drc-convener",
+    "/conference/approveApplicationAsHod": "conference:application:approve-hod",
 
     // PhD
 

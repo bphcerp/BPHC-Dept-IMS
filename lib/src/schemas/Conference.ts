@@ -1,5 +1,11 @@
 import { Field } from "multer";
 import z from "zod";
+import {
+    dateFieldResponse,
+    fileFieldResponse,
+    numberFieldResponse,
+    textFieldResponse,
+} from "./Form.ts";
 
 export const states = [
     "DRC Member",
@@ -83,4 +89,32 @@ export type submittedApplicationsResponse = {
         status: "pending" | "approved" | "rejected";
         createdAt: string;
     }[];
+};
+
+export type ViewApplicationResponse = {
+    id: number;
+    status: "pending" | "approved" | "rejected";
+    createdAt: string;
+    userEmail: string;
+    conferenceApplication: {
+        state: string;
+        purpose: textFieldResponse;
+        contentTitle: textFieldResponse;
+        eventName: textFieldResponse;
+        venue: textFieldResponse;
+        date: dateFieldResponse;
+        organizedBy: textFieldResponse;
+        modeOfEvent: textFieldResponse;
+        description: textFieldResponse;
+        travelReimbursement?: numberFieldResponse;
+        registrationFeeReimbursement?: numberFieldResponse;
+        dailyAllowanceReimbursement?: numberFieldResponse;
+        accomodationReimbursement?: numberFieldResponse;
+        otherReimbursement?: numberFieldResponse;
+        letterOfInvitation?: fileFieldResponse;
+        firstPageOfPaper?: fileFieldResponse;
+        reviewersComments?: fileFieldResponse;
+        detailsOfEvent?: fileFieldResponse;
+        otherDocuments?: fileFieldResponse;
+    };
 };
