@@ -33,7 +33,7 @@ const columns: ColumnDef<{
         <Button
           variant="link"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="flex w-full items-center justify-start p-0"
+          className="flex w-full items-center justify-start p-0 font-semibold"
         >
           ID
         </Button>
@@ -47,7 +47,7 @@ const columns: ColumnDef<{
         <Button
           variant="link"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="flex w-full items-center justify-start p-0"
+          className="flex w-full items-center justify-start p-0 font-semibold"
         >
           Status
         </Button>
@@ -56,7 +56,13 @@ const columns: ColumnDef<{
     accessorKey: "status",
   },
   {
-    header: "Submitted At",
+    header: () => {
+      return (
+        <p className="flex w-full items-center justify-start p-0 font-semibold">
+          Submitted At
+        </p>
+      );
+    },
     accessorKey: "createdAt",
   },
 ];
