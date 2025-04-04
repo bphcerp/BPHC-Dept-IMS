@@ -24,7 +24,11 @@ import { useNavigate } from "react-router-dom";
 
 const columns: ColumnDef<{
   id: number;
-  state: string;
+  user: {
+    name: string | null;
+    email: string;
+  };
+  state: (typeof conferenceSchemas.states)[number];
   createdAt: string;
 }>[] = [
   {
@@ -32,7 +36,7 @@ const columns: ColumnDef<{
       return (
         <Button
           variant="link"
-          onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
         >
           ID
@@ -46,7 +50,35 @@ const columns: ColumnDef<{
       return (
         <Button
           variant="link"
-          onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
+        >
+          Applicant
+        </Button>
+      );
+    },
+    accessorKey: "user",
+    cell: ({ row }) => {
+      const user: { name: string; email: string } = row.getValue("user");
+      return (
+        <div className="flex flex-col">
+          <p className="font-semibold">{user.name}</p>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
+        </div>
+      );
+    },
+    sortingFn: (rowA, rowB) => {
+      const userA: { name: string } = rowA.getValue("user");
+      const userB: { name: string } = rowB.getValue("user");
+      return userA.name.localeCompare(userB.name);
+    },
+  },
+  {
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="link"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
         >
           Status
@@ -63,27 +95,38 @@ const columns: ColumnDef<{
         </p>
       );
     },
+    cell({ row }) {
+      const createdAt: string = row.getValue("createdAt");
+      return new Date(createdAt).toLocaleString();
+    },
     accessorKey: "createdAt",
   },
 ];
 
-const ConferenceSubmittedApplicationsView = () => {
+const ConferencePendingApplicationsView = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["conference", "submitted"],
+    queryKey: ["conference", "pending"],
     queryFn: async () => {
       return (
-        await api.get<conferenceSchemas.submittedApplicationsResponse>(
-          "/conference/applications/my"
+        await api.get<conferenceSchemas.pendingApplicationsResponse>(
+          "/conference/applications/pending"
         )
       ).data;
     },
   });
 
   const table = useReactTable({
-    data: data?.applications ?? [],
+    data:
+      data?.applications.map(({ userEmail, userName, ...appl }) => ({
+        ...appl,
+        user: {
+          name: userName,
+          email: userEmail,
+        },
+      })) ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -130,7 +173,7 @@ const ConferenceSubmittedApplicationsView = () => {
                     data-state={row.getIsSelected() && "selected"}
                     className="cursor-pointer"
                     onClick={() => {
-                      navigate(`${row.original.id}`);
+                      navigate(`../view/${row.original.id}`);
                     }}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -179,4 +222,4 @@ const ConferenceSubmittedApplicationsView = () => {
   );
 };
 
-export default ConferenceSubmittedApplicationsView;
+export default ConferencePendingApplicationsView;

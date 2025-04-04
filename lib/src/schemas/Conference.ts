@@ -50,10 +50,16 @@ export type PendingApplicationsQuery = z.infer<
     typeof pendingApplicationsQuerySchema
 >;
 
-export const reviewFieldBodySchema = z.object({
-    comments: z.string(),
-    status: z.boolean(),
-});
+export const reviewFieldBodySchema = z.discriminatedUnion("status", [
+    z.object({
+        status: z.literal(true),
+        comments: z.string().optional(),
+    }),
+    z.object({
+        status: z.literal(false),
+        comments: z.string().trim().nonempty(),
+    }),
+]);
 
 export const editFieldBodySchema = z.object({
     value: z.union([
@@ -66,6 +72,26 @@ export const editFieldBodySchema = z.object({
 export const finalizeApproveApplicationSchema = z.object({
     approve: z.boolean(),
 });
+
+export const textFieldNames = [
+    "purpose",
+    "contentTitle",
+    "eventName",
+    "venue",
+    "organizedBy",
+    "modeOfEvent",
+    "description",
+] as const;
+
+export const dateFieldNames = ["date"] as const;
+
+export const numberFieldNames = [
+    "travelReimbursement",
+    "registrationFeeReimbursement",
+    "dailyAllowanceReimbursement",
+    "accomodationReimbursement",
+    "otherReimbursement",
+] as const;
 
 export const fileFieldNames = [
     "letterOfInvitation",
@@ -87,7 +113,18 @@ export type submittedApplicationsResponse = {
     applications: {
         id: number;
         status: "pending" | "approved" | "rejected";
+        state: (typeof states)[number];
         createdAt: string;
+    }[];
+};
+
+export type pendingApplicationsResponse = {
+    applications: {
+        id: number;
+        state: (typeof states)[number];
+        createdAt: string;
+        userEmail: string;
+        userName: string | null;
     }[];
 };
 
@@ -97,7 +134,7 @@ export type ViewApplicationResponse = {
     createdAt: string;
     userEmail: string;
     conferenceApplication: {
-        state: string;
+        state: (typeof states)[number];
         purpose: textFieldResponse;
         contentTitle: textFieldResponse;
         eventName: textFieldResponse;

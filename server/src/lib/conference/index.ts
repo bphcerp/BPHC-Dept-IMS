@@ -2,6 +2,8 @@ import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { conferenceSchemas, modules } from "lib";
 import type * as FormTables from "@/config/db/schema/form.ts";
+import type { PgColumn } from "drizzle-orm/pg-core";
+import { desc } from "drizzle-orm";
 
 const withStatus = {
     with: {
@@ -11,6 +13,9 @@ const withStatus = {
                 status: true,
                 comments: true,
             },
+            orderBy: ({ timestamp }: { timestamp: PgColumn }) => [
+                desc(timestamp),
+            ],
         },
     },
 } as const;

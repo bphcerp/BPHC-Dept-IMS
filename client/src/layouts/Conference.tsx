@@ -29,6 +29,19 @@ const ConferenceLayout = () => {
               },
             ],
           },
+          {
+            title: "Review",
+            items: [
+              {
+                title: "Pending Applications",
+                icon: <FileText />,
+                url: "/conference/pending",
+                requiredPermissions: [
+                  permissions["/conference/applications/pending"],
+                ],
+              },
+            ],
+          },
         ]}
       />
       <Outlet />

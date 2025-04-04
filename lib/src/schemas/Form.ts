@@ -10,7 +10,8 @@ export const modules = [
     "Patent Info",
 ] as const;
 
-type baseFieldResponse = {
+export type baseFieldResponse = {
+    id: number;
     statuses: {
         status: boolean;
         comments?: string;

@@ -90,14 +90,22 @@ router.post(
         });
 
         if (latestStatus) {
-            if (latestStatus.status && status) {
+            if (latestStatus.status && status)
                 return next(
                     new HttpError(
                         HttpCode.BAD_REQUEST,
                         "Field is already approved"
                     )
                 );
-            }
+
+            if (!latestStatus.status && !status)
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Field is already rejected"
+                    )
+                );
+
             if (
                 !authUtils.checkAccess(
                     "conference:application:overwrite-field-review",
@@ -113,19 +121,17 @@ router.post(
                 );
         }
 
-        await db.transaction(async (tx) => {
-            await tx.insert(fieldStatus).values(value);
-            if (status && (await areAllFieldsApprovedForApplication(applId))) {
-                await tx
-                    .update(conferenceApprovalApplications)
-                    .set({
-                        state: conferenceSchemas.states[1],
-                    })
-                    .where(
-                        eq(conferenceApprovalApplications.applicationId, applId)
-                    );
-            }
-        });
+        await db.insert(fieldStatus).values(value);
+        if (status && (await areAllFieldsApprovedForApplication(applId))) {
+            await db
+                .update(conferenceApprovalApplications)
+                .set({
+                    state: conferenceSchemas.states[1],
+                })
+                .where(
+                    eq(conferenceApprovalApplications.applicationId, applId)
+                );
+        }
 
         res.status(200).send();
     })
