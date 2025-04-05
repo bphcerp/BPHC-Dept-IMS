@@ -7,6 +7,7 @@ import Review from "@/components/handouts/review";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
 import { handoutSchemas } from "lib";
+import { ChevronLeft } from "lucide-react";
 import { isAxiosError } from "axios";
 import { Handout } from "./DCAReview";
 import { BASE_API_URL } from "@/lib/constants";
@@ -18,6 +19,9 @@ const DCAConvenorReview: React.FC = () => {
   const queryClient = useQueryClient();
   const [comments, setComments] = useState("");
 
+  const goBack = () => {
+    navigate("/handout/dcaconvenor");
+  };
   const { data, isLoading, isError } = useQuery<Handout>({
     queryKey: [`handout-dcaconvenor ${id}`],
     queryFn: async () => {
@@ -75,6 +79,14 @@ const DCAConvenorReview: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-10">
+      <Button 
+        variant={"ghost"}
+        onClick={goBack} 
+        className="mb-4 flex size-sm items-center"
+      >
+        <ChevronLeft className="mr-1" size={16} />
+        Back to Dashboard
+      </Button>
       <h1 className="mb-4 text-center text-2xl font-bold">Handout</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}

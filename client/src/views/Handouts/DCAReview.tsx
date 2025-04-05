@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams,useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import ReviewField from "@/components/handouts/reviewField";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 import { BASE_API_URL } from "@/lib/constants";
+import { ChevronLeft } from "lucide-react";
 
 export interface HandoutReviewFormValues {
   handoutId: string;
@@ -39,7 +40,7 @@ export interface Handout {
 const DCAMemberReviewForm: React.FC = () => {
   const { id: handoutId } = useParams();
   const queryClient = useQueryClient();
-
+  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useQuery<Handout>({
     queryKey: [`handout-dca ${handoutId}`],
     queryFn: async () => {
@@ -52,7 +53,11 @@ const DCAMemberReviewForm: React.FC = () => {
       }
     },
   });
-
+  
+  const goBack = () => {
+    navigate("/handout/dca");
+  };
+  
   const { handleSubmit, control, setValue } = useForm<HandoutReviewFormValues>({
     defaultValues: {
       scopeAndObjective: false,
@@ -63,7 +68,7 @@ const DCAMemberReviewForm: React.FC = () => {
       evaluationScheme: false,
     },
   });
-
+  
   const mutation = useMutation({
     mutationFn: async (data: HandoutReviewFormValues) => {
       await api.post("/handout/dca/review", {
@@ -127,6 +132,14 @@ const DCAMemberReviewForm: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-3xl px-2 py-10">
+      <Button 
+        variant={"ghost"}
+        onClick={goBack} 
+        className="mb-4 flex size-sm items-center"
+      >
+        <ChevronLeft className="mr-1" size={16} />
+        Back to Dashboard
+      </Button>
       <h1 className="mb-4 text-center text-2xl font-bold">Handout Review</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
