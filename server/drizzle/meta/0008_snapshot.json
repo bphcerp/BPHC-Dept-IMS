@@ -1,6 +1,6 @@
 {
-  "id": "1f16fb72-ef19-4800-9b5b-3f28f2844fc5",
-  "prevId": "6a23afe0-4d42-49ab-b992-9ceaffb58ff0",
+  "id": "55243b6c-6c38-4626-81e8-bcc71bca5eaa",
+  "prevId": "1f16fb72-ef19-4800-9b5b-3f28f2844fc5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1840,6 +1840,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "submitted_on": {
+          "name": "submitted_on",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "deadline": {
           "name": "deadline",
           "type": "timestamp with time zone",
@@ -1851,6 +1857,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "category_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -2558,6 +2571,14 @@
         "SFC Meeting",
         "Project Info",
         "Patent Info"
+      ]
+    },
+    "public.category_enum": {
+      "name": "category_enum",
+      "schema": "public",
+      "values": [
+        "HD",
+        "FD"
       ]
     },
     "public.handout_status_enum": {
