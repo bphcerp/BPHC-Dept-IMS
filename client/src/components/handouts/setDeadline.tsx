@@ -101,7 +101,7 @@ export const SetDeadlineDialog: React.FC = () => {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Set Deadliner</DialogTitle>
+          <DialogTitle>Set Deadline</DialogTitle>
         </DialogHeader>
         <div>
           <Form {...form}>
