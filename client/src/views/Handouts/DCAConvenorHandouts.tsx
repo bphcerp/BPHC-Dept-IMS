@@ -127,6 +127,8 @@ export const DCAConvenerHandouts: React.FC = () => {
   useEffect(() => {
     if (!handouts) return;
 
+    localStorage.setItem("handouts DCA CONVENOR", JSON.stringify(handouts));
+
     let results = handouts;
     if (searchQuery) {
       results = results.filter(
@@ -137,7 +139,6 @@ export const DCAConvenerHandouts: React.FC = () => {
           handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
     results = results.filter((handout) => {
       const matchesCategory =
         activeCategoryFilters.length > 0
