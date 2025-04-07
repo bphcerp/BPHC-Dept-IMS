@@ -204,7 +204,7 @@ const ConferenceEditView: React.FC = () => {
                             <FormMessage />
                           </>
                         ) : (
-                          <Input {...field} readOnly />
+                          <Input {...field} disabled />
                         )
                       ) : (
                         <>
@@ -212,12 +212,12 @@ const ConferenceEditView: React.FC = () => {
                             {fieldName !== "description" ? (
                               <Input
                                 {...field}
-                                readOnly={!editableFields.includes(fieldName)}
+                                disabled={!editableFields.includes(fieldName)}
                               />
                             ) : (
                               <Textarea
                                 {...field}
-                                readOnly={!editableFields.includes(fieldName)}
+                                disabled={!editableFields.includes(fieldName)}
                               />
                             )}
                           </FormControl>
@@ -275,7 +275,7 @@ const ConferenceEditView: React.FC = () => {
                       <FormMessage />
                     </>
                   ) : (
-                    <Input value={field.value.toLocaleDateString()} readOnly />
+                    <Input value={field.value.toLocaleDateString()} disabled />
                   )}
                 </FormItem>
               )}
@@ -304,7 +304,7 @@ const ConferenceEditView: React.FC = () => {
                             else field.onChange(e);
                           }}
                           type="number"
-                          readOnly={!editableFields.includes(fieldName)}
+                          disabled={!editableFields.includes(fieldName)}
                         />
                       </FormControl>
                       <FormMessage />
