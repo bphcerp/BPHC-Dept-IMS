@@ -362,9 +362,11 @@ const ConferenceEditView: React.FC = () => {
               ) : null;
             })}
           </div>
-          <div className="flex justify-end gap-2">
-            <Button type="submit">Submit</Button>
-          </div>
+          {editableFields.length ? (
+            <div className="flex justify-end gap-2">
+              <Button type="submit">Submit</Button>
+            </div>
+          ) : null}
         </form>
       </Form>
     </div>
