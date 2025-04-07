@@ -157,7 +157,7 @@ const ConferenceEditView: React.FC = () => {
     );
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-start justify-center gap-6 bg-background-faded p-8">
+    <div className="relative flex min-h-screen w-full flex-col items-start gap-6 bg-background-faded p-8">
       <BackButton />
       <h2 className="self-start text-3xl">Application No. {id}</h2>
       <Form {...form}>
