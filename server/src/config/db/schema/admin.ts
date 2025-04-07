@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, serial, timestamp, integer, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
 import { adminSchemas } from "lib";
 
@@ -50,10 +50,6 @@ export const faculty = pgTable("faculty", {
     email: text("email")
         .primaryKey()
         .references(() => users.email, { onDelete: "restrict" }),
-    authorId: uuid("author_id")
-        .defaultRandom()
-        .notNull()
-        .unique(),
     name: text("name"),
     department: text("department"),
     designation: text("designation")
