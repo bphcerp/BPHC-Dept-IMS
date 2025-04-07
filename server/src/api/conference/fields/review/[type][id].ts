@@ -47,37 +47,34 @@ router.post(
             userEmail: req.user!.email,
         };
 
-        const fieldStatusQuery =
-            type === "text"
-                ? db.query.textFieldStatus
-                : type === "number"
-                  ? db.query.numberFieldStatus
-                  : type === "date"
-                    ? db.query.dateFieldStatus
-                    : type === "file"
-                      ? db.query.fileFieldStatus
-                      : null;
-        if (!fieldStatusQuery)
-            return next(
-                new HttpError(HttpCode.BAD_REQUEST, "Invalid field type")
-            );
+        let fieldStatusQuery, fieldStatus, fieldStatusCol;
 
-        const fieldStatus =
-            type === "text"
-                ? textFieldStatus
-                : type === "number"
-                  ? numberFieldStatus
-                  : type === "date"
-                    ? dateFieldStatus
-                    : fileFieldStatus;
-        const fieldStatusCol =
-            type === "text"
-                ? textFieldStatus.textField
-                : type === "number"
-                  ? numberFieldStatus.numberField
-                  : type === "date"
-                    ? dateFieldStatus.dateField
-                    : fileFieldStatus.fileField;
+        switch (type) {
+            case "text":
+                fieldStatusQuery = db.query.textFieldStatus;
+                fieldStatus = textFieldStatus;
+                fieldStatusCol = textFieldStatus.textField;
+                break;
+            case "number":
+                fieldStatusQuery = db.query.numberFieldStatus;
+                fieldStatus = numberFieldStatus;
+                fieldStatusCol = numberFieldStatus.numberField;
+                break;
+            case "date":
+                fieldStatusQuery = db.query.dateFieldStatus;
+                fieldStatus = dateFieldStatus;
+                fieldStatusCol = dateFieldStatus.dateField;
+                break;
+            case "file":
+                fieldStatusQuery = db.query.fileFieldStatus;
+                fieldStatus = fileFieldStatus;
+                fieldStatusCol = fileFieldStatus.fileField;
+                break;
+            default:
+                return next(
+                    new HttpError(HttpCode.BAD_REQUEST, "Invalid field type")
+                );
+        }
 
         const latestStatus = await fieldStatusQuery.findFirst({
             columns: {
