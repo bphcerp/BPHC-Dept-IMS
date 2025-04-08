@@ -35,13 +35,35 @@ router.post(
                 .where(eq(courseHandoutRequests.id, Number(parsed.id)))
                 .returning();
 
-            if (!result.length)
+            if (!result.length) {
                 return next(
                     new HttpError(HttpCode.NOT_FOUND, "Handout Not Found")
                 );
-
-            if (env.PROD && parsed.status == "rejected") {
+            }
+            /*
+            if (parsed.status === "rejected"){
+                await db.insert(courseHandoutRequests).values({
+                    courseCode: handout.courseCode,
+                    courseName: handout.courseName,
+                    icEmail: handout.icEmail,
+                    reviewerEmail: handout.reviewerEmail,
+                    category: handout.category,
+                    previousSubmissionId: Number(parsed.id),
+                    submittedOn: new Date(),
+                });
+            }
+            */ 
+            if (env.PROD && parsed.status === "rejected") {
                 try {
+                    await db.insert(courseHandoutRequests).values({
+                        courseCode: handout.courseCode,
+                        courseName: handout.courseName,
+                        icEmail: handout.icEmail,
+                        reviewerEmail: handout.reviewerEmail,
+                        category: handout.category,
+                        previousSubmissionId: Number(parsed.id),
+                        submittedOn: new Date(),
+                    });
                     const transporter = nodemailer.createTransport({
                         service: "gmail",
                         auth: {
@@ -53,7 +75,7 @@ router.post(
                         from: env.BPHCERP_EMAIL,
                         to: handout?.icEmail,
                         subject: "Handout Rejection",
-                        text: `You handout verification request for course code ${handout?.courseCode} by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                        text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
                     });
                 } catch (e) {
                     throw new HttpError(

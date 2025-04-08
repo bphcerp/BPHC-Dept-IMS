@@ -202,14 +202,6 @@ export const FacultyHandouts: React.FC = () => {
                         >
                           Upload
                         </Button>
-                      ) : handout.status === "rejected" ? (
-                        <Button
-                          variant="outline"
-                          className="hover:bg-primary hover:text-white"
-                          onClick={() => handleReUploadClick(handout.id)}
-                        >
-                          Reupload
-                        </Button>
                       ) : (
                         <Button
                           variant="outline"
