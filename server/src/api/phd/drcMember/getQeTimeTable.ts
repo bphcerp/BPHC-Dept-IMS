@@ -55,21 +55,25 @@ router.get(
             );
 
             const qualifyingAreaIds: number[] = [];
+            const subAreaIdByName = new Map(
+                allSubAreas.map((area) => [area.subarea, area.id])
+            );
+
             students.forEach((student) => {
                 if (student.qualifyingArea1) {
-                    const areaId = parseInt(student.qualifyingArea1);
-                    if (!isNaN(areaId) && subAreaNameById.has(areaId)) {
+                    const areaId = subAreaIdByName.get(student.qualifyingArea1);
+                    if (areaId) {
                         qualifyingAreaIds.push(areaId);
                     }
                 }
                 if (student.qualifyingArea2) {
-                    const areaId = parseInt(student.qualifyingArea2);
-                    if (!isNaN(areaId) && subAreaNameById.has(areaId)) {
+                    const areaId = subAreaIdByName.get(student.qualifyingArea2);
+                    if (areaId) {
                         qualifyingAreaIds.push(areaId);
                     }
                 }
             });
-
+            console.log(qualifyingAreaIds);
             if (qualifyingAreaIds.length === 0) {
                 return next(
                     new HttpError(
@@ -94,25 +98,25 @@ router.get(
             const studentExams: ExamGroup[] = [];
             students.forEach((student) => {
                 if (student.qualifyingArea1) {
-                    const areaId = parseInt(student.qualifyingArea1);
-                    if (!isNaN(areaId) && examinerMap.has(areaId)) {
+                    const areaId = subAreaIdByName.get(student.qualifyingArea1);
+                    if (areaId && examinerMap.has(areaId)) {
                         studentExams.push({
                             email: student.email,
                             name: student.name || "",
                             subAreaId: areaId,
-                            subArea: subAreaNameById.get(areaId) || "",
+                            subArea: student.qualifyingArea1,
                             examiner: examinerMap.get(areaId) || "",
                         });
                     }
                 }
                 if (student.qualifyingArea2) {
-                    const areaId = parseInt(student.qualifyingArea2);
-                    if (!isNaN(areaId) && examinerMap.has(areaId)) {
+                    const areaId = subAreaIdByName.get(student.qualifyingArea2);
+                    if (areaId && examinerMap.has(areaId)) {
                         studentExams.push({
                             email: student.email,
                             name: student.name || "",
                             subAreaId: areaId,
-                            subArea: subAreaNameById.get(areaId) || "",
+                            subArea: student.qualifyingArea2,
                             examiner: examinerMap.get(areaId) || "",
                         });
                     }
@@ -153,8 +157,8 @@ router.get(
                 () => []
             );
 
-            const examGroupSessionMap = new Map<string, number>(); 
-            const studentAssignedSessions = new Map<string, Set<number>>(); 
+            const examGroupSessionMap = new Map<string, number>();
+            const studentAssignedSessions = new Map<string, Set<number>>();
 
             for (const [
                 key,
