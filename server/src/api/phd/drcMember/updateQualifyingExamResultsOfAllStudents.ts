@@ -47,7 +47,7 @@ router.post(
             );
             if (!existingStudent) continue;
 
-            let updateData: { qualifyingExam1?: boolean; qualifyingExam2?: boolean } = {};
+            const updateData: { qualifyingExam1?: boolean; qualifyingExam2?: boolean } = {};
 
             // Determine which exam to update based on numberOfQeApplication
             if (existingStudent.numberOfQeApplication === 1) {

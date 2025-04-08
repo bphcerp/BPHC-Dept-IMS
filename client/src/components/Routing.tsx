@@ -45,7 +45,9 @@ import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
-import ConferenceSubmittedApplicationView from "@/views/Conference/Submitted/[id]";
+import ConferenceViewApplicationView from "@/views/Conference/View/[id]";
+import ConferencePendingApplicationsView from "@/views/Conference/Pending";
+import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -161,9 +163,7 @@ const Routing = () => {
                 {checkAccess(permissions["/conference/createApplication"]) && (
                   <Route path="apply" element={<ConferenceApplyView />} />
                 )}
-                {checkAccess(
-                  permissions["/conference/getSubmittedApplications"]
-                ) && (
+                {checkAccess(permissions["/conference/applications/my"]) && (
                   <>
                     <Route
                       path="submitted"
@@ -171,7 +171,21 @@ const Routing = () => {
                     />
                     <Route
                       path="submitted/:id"
-                      element={<ConferenceSubmittedApplicationView />}
+                      element={<ConferenceEditView />}
+                    />
+                  </>
+                )}
+                {checkAccess(
+                  permissions["/conference/applications/pending"]
+                ) && (
+                  <>
+                    <Route
+                      path="pending"
+                      element={<ConferencePendingApplicationsView />}
+                    />
+                    <Route
+                      path="view/:id"
+                      element={<ConferenceViewApplicationView />}
                     />
                   </>
                 )}

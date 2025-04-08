@@ -32,9 +32,10 @@ const baseStatus = {
     userEmail: text("user_email")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
-    comments: text("comments").notNull(),
+    comments: text("comments"),
     updatedAs: text("updated_as").notNull(),
     status: boolean("status").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
 };
 
 export const applications = pgTable("applications", {

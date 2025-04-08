@@ -75,10 +75,10 @@ export const conferenceApprovalApplicationRelations = relations(
             references: [numberFields.id],
             relationName: "conferenceApprovalDailyAllowanceReimbursement",
         }),
-        accomodationReimbursement: one(numberFields, {
-            fields: [conferenceApprovalApplications.accomodationReimbursement],
+        accommodationReimbursement: one(numberFields, {
+            fields: [conferenceApprovalApplications.accommodationReimbursement],
             references: [numberFields.id],
-            relationName: "conferenceApprovalAccomodationReimbursement",
+            relationName: "conferenceApprovalAccommodationReimbursement",
         }),
         otherReimbursement: one(numberFields, {
             fields: [conferenceApprovalApplications.otherReimbursement],
