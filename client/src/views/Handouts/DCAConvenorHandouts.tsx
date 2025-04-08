@@ -30,6 +30,7 @@ interface HandoutsDCAcon {
   professorName: string;
   submittedOn: string;
   status: string;
+  scopeAndObjective: boolean;
 }
 
 export const DCAConvenerHandouts: React.FC = () => {
@@ -337,7 +338,11 @@ export const DCAConvenerHandouts: React.FC = () => {
                             )
                           }
                         >
-                          {handout.status === "pending" ? "Review" : "View"}
+                          {handout.status === "pending" &&
+                          handout.scopeAndObjective != null &&
+                          handout
+                            ? "Review"
+                            : "View"}
                         </Button>
                       ) : (
                         <Button

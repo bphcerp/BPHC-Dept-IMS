@@ -103,7 +103,7 @@ const FacultyHandout: React.FC = () => {
                     <div className="mb-2 font-bold">
                       DCA Convenor Comments :
                     </div>
-                    <div className="ml-4 overflow-hidden break-words">
+                    <div className="ml-4 overflow-hidden break-words text-center">
                       {data.comments}
                     </div>
                   </div>

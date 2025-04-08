@@ -51,7 +51,6 @@ export function AssignICDialog({
   const [sendEmail, setSendEmail] = useState(true);
   const [shouldFetch, setShouldFetch] = useState(false);
 
-  
   useEffect(() => {
     if (isOpen) {
       setShouldFetch(true);
@@ -61,33 +60,32 @@ export function AssignICDialog({
   const {
     data: faculties,
     isLoading,
-    refetch
+    refetch,
   } = useQuery<Faculty[]>({
     queryKey: ["faculties-list"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ success: boolean; faculties: Faculty[] }>(
-          "/handout/dcaconvenor/getAllFaculty"
-        );
+        const response = await api.get<{
+          success: boolean;
+          faculties: Faculty[];
+        }>("/handout/dcaconvenor/getAllFaculty");
         return response.data.faculties;
       } catch (error) {
         toast.error("Failed to fetch faculty list");
         throw error;
       }
     },
-    enabled: shouldFetch, 
-    staleTime: 5 * 60 * 1000, 
-    cacheTime: 10 * 60 * 1000, 
+    enabled: shouldFetch,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
   });
 
-  
   useEffect(() => {
     if (shouldFetch) {
       void refetch();
     }
   }, [shouldFetch, refetch]);
 
-  
   useEffect(() => {
     if (!isOpen) {
       setReviewer("");
@@ -110,7 +108,7 @@ export function AssignICDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Reviewers</DialogTitle>
+          <DialogTitle>Assign IC</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
           <div>
@@ -123,7 +121,8 @@ export function AssignICDialog({
                   className="w-full justify-between"
                 >
                   {reviewer
-                    ? faculties?.find((f) => f.email === reviewer)?.name || "Select reviewer..."
+                    ? faculties?.find((f) => f.email === reviewer)?.name ||
+                      "Select reviewer..."
                     : "Select reviewer..."}
                   <ChevronsUpDown className="opacity-50" />
                 </Button>
@@ -137,25 +136,29 @@ export function AssignICDialog({
                   <CommandList>
                     <CommandEmpty>No faculty found.</CommandEmpty>
                     <CommandGroup>
-                      {!isLoading && faculties && faculties
-                        .filter(f => !f.deactivated)
-                        .map((faculty) => (
-                          <CommandItem
-                            key={faculty.email}
-                            onSelect={() => {
-                              setReviewer(faculty.email);
-                              setOpen(false);
-                            }}
-                          >
-                            {faculty.name}
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                reviewer === faculty.email ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
+                      {!isLoading &&
+                        faculties &&
+                        faculties
+                          .filter((f) => !f.deactivated)
+                          .map((faculty) => (
+                            <CommandItem
+                              key={faculty.email}
+                              onSelect={() => {
+                                setReviewer(faculty.email);
+                                setOpen(false);
+                              }}
+                            >
+                              {faculty.name}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  reviewer === faculty.email
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>

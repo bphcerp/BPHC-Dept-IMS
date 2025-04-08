@@ -29,6 +29,7 @@ export const FacultyHandouts: React.FC = () => {
     data: handouts,
     isLoading,
     isError,
+    refetch,
   } = useQuery<Handout[]>({
     queryKey: ["handouts-faculty"],
     queryFn: async () => {
@@ -232,6 +233,7 @@ export const FacultyHandouts: React.FC = () => {
         onClose={() => setIsUploadDialogOpen(false)}
         onUpload={handleUploadComplete}
         id={selectedHandoutId!}
+        refetch={refetch}
       />
 
       {/* ReUpload Dialog for revisions */}

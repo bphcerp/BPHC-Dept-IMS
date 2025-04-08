@@ -6,17 +6,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+} from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { Input } from "../ui/input";
+import { Handout } from "@/views/Handouts/DCAReview";
 
 interface UploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onUpload: () => void;
   id: string;
+  refetch: UseQueryResult<Handout[], Error>["refetch"];
 }
 
 export const UploadDialog: React.FC<UploadDialogProps> = ({
@@ -24,6 +30,7 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
   onClose,
   onUpload,
   id,
+  refetch,
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading] = useState<boolean>(false);
@@ -48,6 +55,7 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
         `handout-dca ${id}`,
         `handout-faculty ${id}`,
       ]);
+      await refetch();
       onUpload();
     },
     onError: (error) => {

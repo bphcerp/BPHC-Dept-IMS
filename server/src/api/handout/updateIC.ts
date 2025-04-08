@@ -1,7 +1,7 @@
 import db from "@/config/db/index.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-// import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { handoutSchemas } from "lib";
@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    // checkAccess("dca-assign-ics"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.updateICBodySchema.parse(req.body);
         const icExists = await db.query.users.findFirst({

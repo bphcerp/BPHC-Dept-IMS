@@ -70,6 +70,9 @@ export const allPermissions = {
     "handout:dca-convenor:get-all": "",
     "handout:dca-convenor:final-decision": "",
     "handout:dca-convenor:reminder": "",
+    "handout:dca-convenor:get-all-dcamember": "",
+    "handout:dca-convenor:update-reviewer": "",
+    "handout:dca-convenor:update-ic": "",
 } as const;
 
 export const permissions = {
@@ -178,7 +181,7 @@ export const permissions = {
     "/phd/staff/updateSubAreas": "phd:staff:update-sub-area",
 
     //Handout
-    "/handout/submit": "handout:faculty:submit",
+    "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
     "/handout/faculty/get": "handout:faculty:get-all-handouts",
     "/handout/dca/get": "handout:dca:get-all-handouts",
@@ -187,6 +190,11 @@ export const permissions = {
     "/handout/dcaconvenor/get": "handout:dca-convenor:get-all",
     "/handout/dcaconvenor/finalDecision": "handout:dca-convenor:final-decision",
     "/handout/dcaconvenor/reminder": "handout:dca-convenor:reminder",
+    "/handout/dcaconvenor/getAllDCAMember":
+        "handout:dca-convenor:get-all-dcamember",
+    "/handout/dcaconvenor/updateReviewer":
+        "handout:dca-convenor:update-reviewer",
+    "/handout/dcaconvenor/updateIC": "handout:dca-convenor:update-ic",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

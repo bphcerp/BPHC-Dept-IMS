@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-//import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq, and, arrayContains } from "drizzle-orm";
@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    //checkAccess(),
+    checkAccess(),
     asyncHandler(async (_req, res, _next) => {
         const dcaMemberRole = await db.query.roles.findFirst({
             where: (roles) => eq(roles.roleName, "dca-member"),
