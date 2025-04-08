@@ -1,5 +1,5 @@
 {
-  "id": "55243b6c-6c38-4626-81e8-bcc71bca5eaa",
+  "id": "15e579f1-59b5-408b-94ae-1106f894da19",
   "prevId": "1f16fb72-ef19-4800-9b5b-3f28f2844fc5",
   "version": "7",
   "dialect": "postgresql",
@@ -1771,6 +1771,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "previous_submission_id": {
+          "name": "previous_submission_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "course_name": {
           "name": "course_name",
           "type": "text",
@@ -1892,6 +1898,19 @@
             "email"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "course_handout_requests_previous_submission_id_course_handout_requests_id_fk": {
+          "name": "course_handout_requests_previous_submission_id_course_handout_requests_id_fk",
+          "tableFrom": "course_handout_requests",
+          "tableTo": "course_handout_requests",
+          "columnsFrom": [
+            "previous_submission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "course_handout_requests_handout_file_path_file_fields_id_fk": {
