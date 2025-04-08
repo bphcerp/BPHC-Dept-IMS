@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { useAllPermissions } from "@/hooks/Admin/AllPermissions";
+import { Permission, useAllPermissions } from "@/hooks/Admin/AllPermissions";
 import api from "@/lib/axios-instance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Edit, Minus, X } from "lucide-react";
@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { adminSchemas } from "lib";
 import { Button } from "@/components/ui/button";
 import { isAxiosError } from "axios";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 
 interface Role {
   role: string;
@@ -32,6 +34,7 @@ const RoleDetailsView = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const role = params["role"];
+  const types = ["admin", "conference", "PhD", "handout"]
   const { data: roleData } = useQuery({
     queryKey: ["role", role],
     queryFn: async () => {
@@ -116,9 +119,24 @@ const RoleDetailsView = () => {
   // role rename dialog
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRole, setNewRole] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [filteredPerms, setFilteredPerms] = useState<Permission[]>([])
+
+  useEffect(() => {
+    if (allPermissions) {
+      const filtered = allPermissions.filter(
+        (perm) =>
+          selectedTypes.length === 0 || selectedTypes.some(type => perm.permission.includes(type.toLowerCase()))
+      );
+      setFilteredPerms(filtered);
+    }
+  }, [allPermissions, selectedTypes]);
 
   const handleRenameClick = () => {
     setIsDialogOpen(true);
+  };
+  const handleTypeChange = (types: string[]) => {
+    setSelectedTypes(types);
   };
 
   const handleConfirmRename = () => {
@@ -170,14 +188,32 @@ const RoleDetailsView = () => {
         </div>
       </div>
       <h2 className="text-2xl font-bold text-primary">Edit permissions</h2>
+      <div><ToggleGroup
+            type="multiple"
+            value={selectedTypes}
+            onValueChange={handleTypeChange}
+            className="bg-transparent"
+          >
+            {types.map((type) => (
+              <ToggleGroupItem
+                key={type}
+                value={type}
+                aria-label={`Filter by ${type}`}
+                className="border border-gray-300"
+              >
+                <span className="capitalize">{type}</span>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          </div>
       {isFetchingPermissions ? (
         <LoadingSpinner />
       ) : isErrorPermissions ? (
         <p>An error occurred.</p>
       ) : (
-        allPermissions && (
+        filteredPerms && (
           <div className="flex flex-col gap-2">
-            {allPermissions.map(({ permission, description }) => (
+            {filteredPerms.map(({ permission, description }) => (
               <div
                 key={permission}
                 className="flex items-center gap-4 border-b pb-2"

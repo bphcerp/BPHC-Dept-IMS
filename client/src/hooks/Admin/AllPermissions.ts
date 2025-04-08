@@ -1,7 +1,7 @@
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
 
-interface Permission {
+export interface Permission {
   permission: string;
   description: string | null;
 }
