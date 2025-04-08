@@ -9,14 +9,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { boolean } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
-import { modules } from "lib";
+import { modules, formSchemas } from "lib";
 
 export const modulesEnum = pgEnum("modules_enum", modules);
-export const applicationStatusEnum = pgEnum("application_status_enum", [
-    "pending",
-    "approved",
-    "rejected",
-]);
+export const applicationStatusEnum = pgEnum(
+    "application_status_enum",
+    formSchemas.applicationStates
+);
 
 const baseField = {
     id: serial("id").primaryKey(),
