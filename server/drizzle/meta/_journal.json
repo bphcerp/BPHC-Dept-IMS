@@ -57,6 +57,20 @@
       "when": 1743653266839,
       "tag": "0007_abandoned_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1743788938773,
+      "tag": "0008_kind_orphan",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1744109442394,
+      "tag": "0009_foamy_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

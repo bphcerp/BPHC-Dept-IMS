@@ -1,4 +1,4 @@
-import { conferenceSchemas } from "lib";
+import { conferenceSchemas, formSchemas } from "lib";
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ import { useNavigate } from "react-router-dom";
 
 const columns: ColumnDef<{
   id: number;
-  status: string;
+  state: string;
   createdAt: string;
 }>[] = [
   {
@@ -32,8 +32,8 @@ const columns: ColumnDef<{
       return (
         <Button
           variant="link"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="flex w-full items-center justify-start p-0"
+          onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
+          className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
         >
           ID
         </Button>
@@ -46,17 +46,32 @@ const columns: ColumnDef<{
       return (
         <Button
           variant="link"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="flex w-full items-center justify-start p-0"
+          onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
+          className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
         >
           Status
         </Button>
       );
     },
     accessorKey: "status",
+    cell: ({ row }) => {
+      const status: (typeof formSchemas.applicationStatuses)[number] =
+        row.getValue("status");
+      return status === "approved"
+        ? "Accepted"
+        : status === "rejected"
+          ? "Rejected"
+          : "Pending";
+    },
   },
   {
-    header: "Submitted At",
+    header: () => {
+      return (
+        <p className="flex w-full items-center justify-start p-0 font-semibold">
+          Submitted At
+        </p>
+      );
+    },
     accessorKey: "createdAt",
   },
 ];
@@ -66,11 +81,11 @@ const ConferenceSubmittedApplicationsView = () => {
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["conference", "submittedApplications"],
+    queryKey: ["conference", "submitted"],
     queryFn: async () => {
       return (
         await api.get<conferenceSchemas.submittedApplicationsResponse>(
-          "/conference/getSubmittedApplications"
+          "/conference/applications/my"
         )
       ).data;
     },

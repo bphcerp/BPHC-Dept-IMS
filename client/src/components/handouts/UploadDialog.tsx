@@ -1,25 +1,41 @@
-// createApplication.tsx
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { ChangeEvent, FormEvent, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { Input } from "../ui/input";
 
-const SubmitHandout: React.FC = () => {
+interface UploadDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onUpload: () => void;
+  id: string;
+  refetch: () => Promise<void>;
+}
+
+export const UploadDialog: React.FC<UploadDialogProps> = ({
+  isOpen,
+  onClose,
+  onUpload,
+  id,
+  refetch,
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading] = useState<boolean>(false);
-  const params = useParams();
   const queryClient = useQueryClient();
 
-  const handoutSubmitMutation = useMutation({
+  const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("handout", file);
-      await api.post(`/handout/faculty/submit?id=${params.id}`, formData, {
+      await api.post(`/handout/faculty/submit?id=${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -30,10 +46,12 @@ const SubmitHandout: React.FC = () => {
       await queryClient.invalidateQueries([
         "handouts-dca",
         "handouts-faculty",
-        `handout-dcaconvenor ${params.id}`,
-        `handout-dca ${params.id}`,
-        `handout-faculty ${params.id}`,
+        `handout-dcaconvenor ${id}`,
+        `handout-dca ${id}`,
+        `handout-faculty ${id}`,
       ]);
+      await refetch();
+      onUpload();
     },
     onError: (error) => {
       if (isAxiosError(error)) {
@@ -67,33 +85,34 @@ const SubmitHandout: React.FC = () => {
       return;
     }
 
-    handoutSubmitMutation.mutate(file);
+    uploadMutation.mutate(file);
   };
 
   return (
-    <div className="flex w-full px-6 pt-4">
-      <h1 className="mb-6 text-center text-3xl font-bold text-primary">
-        Submit Handout
-      </h1>
-      <div className="flex min-h-screen flex-col items-center justify-center p-4">
-        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
-          <div className="flex flex-col space-y-2">
-            <Label htmlFor="file-upload">Upload File</Label>
-            <Input
-              id="file-upload"
-              type="file"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="file:cursor-pointer file:rounded-md file:border file:border-black file:bg-primary file:text-white file:hover:bg-blue-800"
-            />
-          </div>
-          <Button type="submit" disabled={uploading}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="border border-gray-300 bg-white text-black">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Upload Handout</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex w-full max-w-md flex-col space-y-6"
+        >
+          <Input
+            id="file-upload"
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="mt-4 file:cursor-pointer file:rounded-md file:border file:border-black file:bg-primary file:text-white file:hover:bg-blue-800"
+          />
+          <Button type="submit" disabled={uploading} className="self-end">
             {uploading ? "Processing..." : "Submit"}
           </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
-
-export default SubmitHandout;

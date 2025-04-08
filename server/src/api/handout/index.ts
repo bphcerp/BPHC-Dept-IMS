@@ -8,6 +8,11 @@ import assignReviewer from "./assignReviewer.ts";
 import getHandout from "./getHandout.ts";
 import getAllHandouts from "./getAllHandouts.ts";
 import finalDecision from "./finalDecision.ts";
+import getAllFaculty from "./getAllFaculty.ts";
+import updateIC from "./updateIC.ts";
+import updateReviewer from "./updateReviewer.ts";
+import getAllDCAMember from "./getAllDCAMember.ts";
+import reminder from "./reminder.ts";
 
 const router = express.Router();
 
@@ -19,5 +24,11 @@ router.use("/dca/review", createDCAMemberReview);
 router.use("/dca/assignReviewer", assignReviewer);
 router.use("/get", getHandout);
 router.use("/dcaconvenor/get", getAllHandouts);
+router.use("/dcaconvenor/getAllFaculty", getAllFaculty);
+router.use("/dcaconvenor/updateIC", updateIC);
+router.use("/dcaconvenor/updateReviewer", updateReviewer);
+router.use("/dcaconvenor/getAllDCAMember", getAllDCAMember);
 router.use("/dcaconvenor/finalDecision", finalDecision);
+router.use("/dcaconvenor/reminder", reminder);
+
 export default router;

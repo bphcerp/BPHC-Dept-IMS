@@ -1,4 +1,4 @@
-import { pgTable, serial, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, pgEnum } from "drizzle-orm/pg-core";
 import {
     textFields,
     fileFields,
@@ -6,6 +6,12 @@ import {
     dateFields,
     numberFields,
 } from "./form.ts";
+import { conferenceSchemas } from "lib";
+
+export const conferenceStateEnum = pgEnum(
+    "conference_state_enum",
+    conferenceSchemas.states
+);
 
 export const conferenceApprovalApplications = pgTable(
     "conference_approval_applications",
@@ -14,6 +20,9 @@ export const conferenceApprovalApplications = pgTable(
         applicationId: integer("application_id")
             .notNull()
             .references(() => applications.id, { onDelete: "cascade" }),
+        state: conferenceStateEnum("state")
+            .notNull()
+            .default(conferenceSchemas.states[0]),
         purpose: integer("purpose").references(() => textFields.id, {
             onDelete: "set null",
         }),
@@ -54,8 +63,8 @@ export const conferenceApprovalApplications = pgTable(
         ).references(() => numberFields.id, {
             onDelete: "set null",
         }),
-        accomodationReimbursement: integer(
-            "accomodation_reimbursement"
+        accommodationReimbursement: integer(
+            "accommodation_reimbursement"
         ).references(() => numberFields.id, {
             onDelete: "set null",
         }),

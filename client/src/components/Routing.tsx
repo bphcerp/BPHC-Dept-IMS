@@ -34,20 +34,21 @@ import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
-import SubmitHandout from "@/views/Handouts/SubmitHandout";
 import HandoutLayout from "@/layouts/Handouts";
 import DCAMemberReviewForm from "@/views/Handouts/DCAReview";
 import DCAConvenorHandouts from "@/views/Handouts/DCAConvenorHandouts";
 import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
-import AssignReviewer from "@/views/Handouts/AssignReviewer";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
 import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
-import ConferenceSubmittedApplicationView from "@/views/Conference/Submitted/[id]";
+import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
+import ConferenceViewApplicationView from "@/views/Conference/View/[id]";
+import ConferencePendingApplicationsView from "@/views/Conference/Pending";
+import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -163,9 +164,7 @@ const Routing = () => {
                 {checkAccess(permissions["/conference/createApplication"]) && (
                   <Route path="apply" element={<ConferenceApplyView />} />
                 )}
-                {checkAccess(
-                  permissions["/conference/getSubmittedApplications"]
-                ) && (
+                {checkAccess(permissions["/conference/applications/my"]) && (
                   <>
                     <Route
                       path="submitted"
@@ -173,7 +172,21 @@ const Routing = () => {
                     />
                     <Route
                       path="submitted/:id"
-                      element={<ConferenceSubmittedApplicationView />}
+                      element={<ConferenceEditView />}
+                    />
+                  </>
+                )}
+                {checkAccess(
+                  permissions["/conference/applications/pending"]
+                ) && (
+                  <>
+                    <Route
+                      path="pending"
+                      element={<ConferencePendingApplicationsView />}
+                    />
+                    <Route
+                      path="view/:id"
+                      element={<ConferenceViewApplicationView />}
                     />
                   </>
                 )}
@@ -200,12 +213,10 @@ const Routing = () => {
 
             {checkAccessAnyOne(courseHandoutsPermissions) && (
               <Route path="/handout" element={<HandoutLayout />}>
-                {checkAccess(permissions["/handout/submit"]) && (
-                  <Route path="submit/:id" element={<SubmitHandout />} />
-                )}
-                {checkAccess(permissions["/handout/faculty/get"]) && (
-                  <Route path="faculty" element={<FacultyHandouts />} />
-                )}
+                {checkAccess(permissions["/handout/faculty/get"]) &&
+                  checkAccess(permissions["/handout/faculty/submit"]) && (
+                    <Route path="faculty" element={<FacultyHandouts />} />
+                  )}
                 {checkAccess(permissions["/handout/get"]) && (
                   <Route path=":id" element={<FacultyHandout />} />
                 )}
@@ -222,16 +233,23 @@ const Routing = () => {
                   </>
                 )}
                 {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
-                  checkAccess(permissions["/handout/dca/assignReviewer"]) && (
+                  checkAccess(permissions["/handout/dca/assignReviewer"]) &&
+                  checkAccess(
+                    permissions["/handout/dcaconvenor/getAllDCAMember"]
+                  ) && (
                     <>
-                      <Route
-                        path="dcaconvenor"
-                        element={<DCAConvenorHandouts />}
-                      />
-                      <Route
-                        path="assignreviewer/:id"
-                        element={<AssignReviewer />}
-                      />
+                      {checkAccess(
+                        permissions["/handout/dcaconvenor/updateReviewer"]
+                      ) &&
+                        checkAccess(
+                          permissions["/handout/dcaconvenor/updateIC"]
+                        ) && (
+                          <Route
+                            path="dcaconvenor"
+                            element={<DCAConvenorHandouts />}
+                          />
+                        )}
+                      <Route path="summary" element={<DCAConvenerSummary />} />
                       {checkAccess(
                         permissions["/handout/dcaconvenor/finalDecision"]
                       ) && (
