@@ -1,44 +1,128 @@
-
-import React, { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios-instance";
+import React, { useState, useEffect } from "react";
+import { FilterBar } from "@/components/handouts/filterBar";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Link } from "react-router-dom";
-import { handoutSchemas } from "lib";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Card } from "@/components/ui/card";
+import { STATUS_COLORS } from "@/components/handouts/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { toast } from "sonner";
+import { Pencil } from "lucide-react";
+import { AssignICDialog } from "@/components/handouts/updateICDialog";
+import { AssignDCADialog } from "@/components/handouts/assignDCADialog";
+import { SetDeadlineDialog } from "@/components/handouts/setDeadline";
+import { useNavigate } from "react-router-dom";
 
-
-interface Handout {
+interface HandoutsDCAcon {
+  reviewerEmail: string;
   id: string;
   courseName: string;
   courseCode: string;
-  professorName?: string;
-  reviewerName?: string;
+  category: string;
+  reviewerName: string | null;
+  professorName: string;
   submittedOn: string;
-  status: handoutSchemas.HandoutStatus;
+  status: string;
+  scopeAndObjective: boolean;
 }
 
-const STATUS_COLORS: Record<handoutSchemas.HandoutStatus, string> = {
-  pending: "text-yellow-600",
-  approved: "text-green-600",
-  rejected: "text-red-600",
-  notsubmitted: "text-gray-500",
-};
+export const DCAConvenerHandouts: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [filteredHandouts, setFilteredHandouts] = useState<HandoutsDCAcon[]>(
+    []
+  );
 
-const DCAConvenorHandouts: React.FC = () => {
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>([]);
+  const [isICDialogOpen, setIsICDialogOpen] = useState(false);
+  const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
+  const [currentHandoutId, setCurrentHandoutId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const updateICMutation = useMutation({
+    mutationFn: async ({
+      id,
+      icEmail,
+      sendEmail,
+    }: {
+      id: string;
+      icEmail: string;
+      sendEmail: boolean;
+    }) => {
+      const response = await api.post<{ success: boolean }>(
+        "/handout/dcaconvenor/updateIC",
+        {
+          id: id.toString(),
+          icEmail,
+          sendEmail,
+        }
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Instructor updated successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to update instructor");
+    },
+  });
+
+  const updateReviewerMutation = useMutation({
+    mutationFn: async ({
+      id,
+      reviewerEmail,
+      sendEmail,
+    }: {
+      id: string;
+      reviewerEmail: string;
+      sendEmail: boolean;
+    }) => {
+      const response = await api.post<{ success: boolean }>(
+        "/handout/dcaconvenor/updateReviewer",
+        {
+          id: id.toString(),
+          reviewerEmail,
+          sendEmail,
+        }
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Reviewer assigned successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to assign reviewer");
+    },
+  });
+
   const {
     data: handouts,
     isLoading,
     isError,
-  } = useQuery<Handout[]>({
+  } = useQuery<HandoutsDCAcon[]>({
     queryKey: ["handouts-dca-convenor"],
     queryFn: async () => {
       try {
-        const response = await api.get("/handout/dcaconvenor/get");
+        const response = await api.get<{
+          success: boolean;
+          handouts: HandoutsDCAcon[];
+        }>("/handout/dcaconvenor/get");
         return response.data.handouts;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -47,124 +131,261 @@ const DCAConvenorHandouts: React.FC = () => {
     },
   });
 
-  useMemo(() => {
-    if (handouts) {
-      const filtered = selectedStatuses.length
-        ? handouts.filter((handout) =>
-            selectedStatuses.includes(handout.status)
-          )
-        : handouts;
-      setFilteredHandouts(filtered);
-    }
-  }, [handouts, selectedStatuses]);
+  useEffect(() => {
+    if (!handouts) return;
 
-  if (isLoading)
+    localStorage.setItem("handouts DCA CONVENOR", JSON.stringify(handouts));
+
+    let results = handouts;
+    if (searchQuery) {
+      results = results.filter(
+        (handout) =>
+          handout.courseName
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    results = results.filter((handout) => {
+      const matchesCategory =
+        activeCategoryFilters.length > 0
+          ? activeCategoryFilters.includes(handout.category)
+          : true;
+      const matchesStatus =
+        activeStatusFilters.length > 0
+          ? activeStatusFilters.includes(handout.status)
+          : true;
+      return matchesCategory && matchesStatus;
+    });
+
+    setFilteredHandouts(results);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
+
+  const handlePencilClick = (handoutId: string, isReviewer: boolean) => {
+    setCurrentHandoutId(handoutId);
+    if (isReviewer) {
+      setIsReviewerDialogOpen(true);
+    } else {
+      setIsICDialogOpen(true);
+    }
+  };
+
+  const handleAssignIC = (email: string, sendEmail: boolean) => {
+    if (!currentHandoutId) {
+      toast.error("No handout selected");
+      return;
+    }
+
+    updateICMutation.mutate({
+      id: currentHandoutId,
+      icEmail: email,
+      sendEmail,
+    });
+
+    setIsICDialogOpen(false);
+  };
+
+  const handleAssignReviewer = (email: string, sendEmail: boolean) => {
+    if (!currentHandoutId) {
+      toast.error("No handout selected");
+      return;
+    }
+
+    updateReviewerMutation.mutate({
+      id: currentHandoutId,
+      reviewerEmail: email,
+      sendEmail,
+    });
+
+    setIsReviewerDialogOpen(false);
+  };
+
+  if (isLoading) {
     return (
-      <div className="mx-auto flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         Loading...
       </div>
     );
-  if (isError)
+  }
+
+  if (isError) {
     return (
-      <div className="mx-auto flex h-screen items-center justify-center text-red-500">
+      <div className="flex h-screen items-center justify-center text-red-500">
         Error fetching handouts
       </div>
     );
+  }
 
   return (
-    <div className="h-screen w-full p-4 md:p-6">
-      <div className="flex h-full flex-col">
-        <div className="border-b p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-              DCA Convenor Handouts
+    <div className="w-full px-4">
+      <div className="px-2 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">
+              DCA Convenor - Handouts
             </h1>
-            <ToggleGroup
-              type="multiple"
-              value={selectedStatuses}
-              onValueChange={setSelectedStatuses}
-              className="flex flex-wrap gap-2 bg-transparent"
-            >
-              {handoutSchemas.handoutStatuses.map((status) => (
-                <ToggleGroupItem
-                  key={status}
-                  value={status}
-                  className="border capitalize text-xs md:text-sm"
+            <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
+            <div className="mt-2 flex gap-2">
+              <SetDeadlineDialog />
+              <Button
+                variant="outline"
+                className="hover:bg-primary hover:text-white"
+              >
+                Export
+              </Button>
+              <Link to="/handout/summary">
+                <Button
+                  variant="outline"
+                  className="hover:bg-primary hover:text-white"
                 >
-                  {status}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+                  Summary
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-
-        <div className="flex-grow overflow-auto p-4 md:p-6">
-          <div className="space-y-4">
-            {filteredHandouts.length ? (
-              filteredHandouts.map((handout) => (
-                <Card
-                  key={handout.id}
-                  className="w-full border border-l-4 hover:shadow-md transition-all duration-200"
-                  style={{ borderLeftColor: handout.status === 'approved' ? '#10b981' :
-                                        handout.status === 'rejected' ? '#ef4444' :
-                                        handout.status === 'pending' ? '#f59e0b' : '#9ca3af' }}
-                >
-                  <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="font-semibold text-gray-900">{handout.courseCode}</div>
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${STATUS_COLORS[handout.status]}`}>
-                          {handout.status}
-                        </span>
-                      </div>
-
-                      <div className="text-sm md:text-base font-medium text-gray-700">{handout.courseName}</div>
-
-                      <div className="flex flex-wrap gap-x-6 mt-2 text-xs md:text-sm text-gray-500">
-                        <div>IC: {handout.professorName || "Unassigned"}</div>
-                        <div>Reviewer: {handout.reviewerName || "Unassigned"}</div>
-                        <div>Submitted: {new Date(handout.submittedOn).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-
-                    <div className="self-start md:self-center">
-                      {!handout.reviewerName ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="whitespace-nowrap hover:bg-primary hover:text-white"
-                        >
-                          <Link to={`/handout/assignreviewer/${handout.id}`}>
-                            Assign Reviewer
-                          </Link>
-                        </Button>
-                      ) : handout.status === "pending" ? (
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="whitespace-nowrap hover:bg-primary hover:text-white"
-                        >
-                          <Link to={`/handout/dcaconvenor/review/${handout.id}`}>
-                            Review
-                          </Link>
-                        </Button>
-                      ) : (
-                        <div className="text-gray-400 text-sm">None</div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="w-full p-8 text-center text-gray-500">
-                No handouts found
-              </Card>
-            )}
+          <div className="ml-4">
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeCategoryFilters={activeCategoryFilters}
+              onCategoryFilterChange={setActiveCategoryFilters}
+              activeStatusFilters={activeStatusFilters}
+              onStatusFilterChange={setActiveStatusFilters}
+            />
           </div>
         </div>
       </div>
+
+      <hr className="my-1 border-gray-300" />
+
+      <div className="w-full overflow-x-auto bg-white shadow">
+        <div className="inline-block min-w-full align-middle">
+          <Table className="min-w-full">
+            <TableHeader className="bg-gray-100">
+              <TableRow>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Code
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Name
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Instructor Email
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Reviewer Email
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Status</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Submitted On
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-300">
+              {filteredHandouts.length ? (
+                filteredHandouts.map((handout) => (
+                  <TableRow
+                    key={handout.id}
+                    className="odd:bg-white even:bg-gray-100"
+                  >
+                    <TableCell className="px-4 py-2">
+                      {handout.courseCode}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.courseName}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.category}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <div className="flex items-center">
+                        <span>{handout.professorName}</span>
+                        <button
+                          onClick={() => handlePencilClick(handout.id, false)}
+                          className="ml-2 text-gray-500 hover:text-primary"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      <div className="flex items-center">
+                        <span>
+                          {handout.reviewerName || "No reviewer assigned"}
+                        </span>
+                        <button
+                          onClick={() => handlePencilClick(handout.id, true)}
+                          className="ml-2 text-gray-500 hover:text-primary"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-2 uppercase">
+                      <span className={STATUS_COLORS[handout.status]}>
+                        {handout.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.submittedOn
+                        ? new Date(handout.submittedOn).toLocaleDateString()
+                        : "NA"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.status != "notsubmitted" ? (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() =>
+                            navigate(
+                              `/handout/dcaconvenor/review/${handout.id}`
+                            )
+                          }
+                        >
+                          {handout.status === "pending" &&
+                          handout.scopeAndObjective != null &&
+                          handout
+                            ? "Review"
+                            : "View"}
+                        </Button>
+                      ) : (
+                        <Button
+                          disabled
+                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
+                        >
+                          None
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="px-4 py-2 text-center">
+                    No handouts found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      <AssignICDialog
+        isOpen={isICDialogOpen}
+        setIsOpen={setIsICDialogOpen}
+        onAssign={handleAssignIC}
+      />
+
+      <AssignDCADialog
+        isOpen={isReviewerDialogOpen}
+        setIsOpen={setIsReviewerDialogOpen}
+        onAssign={handleAssignReviewer}
+      />
     </div>
   );
 };
 
-export default DCAConvenorHandouts;
+export default DCAConvenerHandouts;

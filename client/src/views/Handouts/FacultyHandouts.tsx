@@ -1,43 +1,43 @@
 import React, { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { FilterBar } from "@/components/handouts/filterBar";
+import { STATUS_COLORS } from "@/components/handouts/types";
+import { Handout } from "@/components/handouts/types";
+import { UploadDialog } from "@/components/handouts/UploadDialog";
+import { ReUploadDialog } from "./ReUploadDialog";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { handoutSchemas } from "lib";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
-interface Handout {
-  id: string;
-  courseName: string;
-  courseCode: string;
-  reviewerName?: string;
-  submittedOn: string;
-  status: handoutSchemas.HandoutStatus;
-}
-
-const STATUS_COLORS: Record<handoutSchemas.HandoutStatus, string> = {
-  pending: "text-yellow-600 bg-yellow-50 border-yellow-200",
-  approved: "text-green-600 bg-green-50 border-green-200",
-  rejected: "text-red-600 bg-red-50 border-red-200",
-  notsubmitted: "text-gray-500 bg-gray-50 border-gray-200",
+const revisionComments = {
+  "3": "Please add DCA Convencer comments here",
 };
 
-const FacultyHandouts: React.FC = () => {
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>([]);
+export const FacultyHandouts: React.FC = () => {
+  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>();
+  const navigate = useNavigate();
   const {
     data: handouts,
     isLoading,
     isError,
-  } = useQuery({
+    refetch,
+  } = useQuery<Handout[]>({
     queryKey: ["handouts-faculty"],
     queryFn: async () => {
       try {
         const response = await api.get<{ data: Handout[] }>(
           "/handout/faculty/get"
         );
+        if (response.data.data) setFilteredHandouts(response.data.data);
         return response.data.data;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -46,16 +46,65 @@ const FacultyHandouts: React.FC = () => {
     },
   });
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isReUploadDialogOpen, setIsReUploadDialogOpen] = useState(false);
+  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(
+    null
+  );
+
   useMemo(() => {
     if (handouts) {
-      const filtered = selectedStatuses.length
-        ? handouts.filter((handout) =>
-            selectedStatuses.includes(handout.status)
-          )
-        : handouts;
-      setFilteredHandouts(filtered);
+      let results = handouts;
+      if (searchQuery) {
+        results = results.filter(
+          (handout) =>
+            handout.courseName
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      results = results.filter((handout) => {
+        const matchesCategory =
+          activeCategoryFilters.length > 0
+            ? activeCategoryFilters.includes(handout.category)
+            : true;
+        const matchesStatus =
+          activeStatusFilters.length > 0
+            ? activeStatusFilters.includes(handout.status)
+            : true;
+        return matchesCategory && matchesStatus;
+      });
+
+      setFilteredHandouts(results);
     }
-  }, [handouts, selectedStatuses]);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
+
+  const handleUploadClick = (handoutId: string) => {
+    setSelectedHandoutId(handoutId);
+    setIsUploadDialogOpen(true);
+  };
+
+  // const handleReUploadClick = (handoutId: string) => {
+  //   setSelectedHandoutId(handoutId);
+  //   setIsReUploadDialogOpen(true);
+  // };
+
+  const handleUploadComplete = () => {
+    setIsUploadDialogOpen(false);
+    setSelectedHandoutId(null);
+  };
+
+  const handleReUploadComplete = () => {
+    console.log(`File re-uploaded for handout ${selectedHandoutId}`);
+    setIsReUploadDialogOpen(false);
+    setSelectedHandoutId(null);
+  };
 
   if (isLoading)
     return (
@@ -69,95 +118,141 @@ const FacultyHandouts: React.FC = () => {
         Error fetching handouts
       </div>
     );
-
   return (
-    <div className="h-screen w-full p-4 md:p-6 ">
-      <div className="flex h-full flex-col">
-        <div className="border-b p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+    <div className="w-full px-4">
+      <div className="px-2 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">
               Faculty Handouts
             </h1>
-            <ToggleGroup
-              type="multiple"
-              value={selectedStatuses}
-              onValueChange={setSelectedStatuses}
-              className="flex flex-wrap gap-2 bg-transparent"
-            >
-              {handoutSchemas.handoutStatuses.map((status) => (
-                <ToggleGroupItem
-                  key={status}
-                  value={status}
-                  className="border capitalize text-xs md:text-sm"
-                >
-                  {status}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
           </div>
-        </div>
-        
-        <div className="flex-grow overflow-auto p-4 md:p-6">
-          <div className="space-y-4">
-            {filteredHandouts.length ? (
-              filteredHandouts.map((handout) => (
-                <Card 
-                  key={handout.id} 
-                  className="w-full border border-l-4 hover:shadow-md transition-all duration-200"
-                  style={{ borderLeftColor: handout.status === 'approved' ? '#10b981' : 
-                                        handout.status === 'rejected' ? '#ef4444' : 
-                                        handout.status === 'pending' ? '#f59e0b' : '#9ca3af' }}
-                >
-                  <div className="p-4 md:p-5 flex flex-col md:flex-row justify-between md:items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="font-semibold text-gray-900">{handout.courseCode}</div>
-                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium uppercase ${STATUS_COLORS[handout.status]}`}>
-                          {handout.status}
-                        </span>
-                      </div>
-                      
-                      <div className="text-sm md:text-base font-medium text-gray-700">{handout.courseName}</div>
-                      
-                      <div className="flex flex-wrap gap-x-6 mt-2 text-xs md:text-sm text-gray-500">
-                        <div>Reviewer: {handout.reviewerName || "Unassigned"}</div>
-                        <div>Submitted: {new Date(handout.submittedOn).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="self-start md:self-center">
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="whitespace-nowrap hover:bg-primary hover:text-white"
-                      >
-                        {handout.status === "notsubmitted" ? (
-                          <Link to={`/handout/submit/${handout.id}`}>
-                            Submit
-                          </Link>
-                        ) : (
-                          <Link to={`/handout/${handout.id}`}>Details</Link>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <Card className="w-full p-8 text-center text-gray-500">
-                No handouts found
-              </Card>
-            )}
+          <div className="ml-4">
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeCategoryFilters={activeCategoryFilters}
+              onCategoryFilterChange={setActiveCategoryFilters}
+              activeStatusFilters={activeStatusFilters}
+              onStatusFilterChange={setActiveStatusFilters}
+            />
           </div>
         </div>
       </div>
 
+      <hr className="my-1 border-gray-300" />
+
+      <div className="w-full overflow-x-auto bg-white shadow">
+        <div className="inline-block min-w-full align-middle">
+          <Table className="min-w-full">
+            <TableHeader className="bg-gray-100">
+              <TableRow>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Code
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Name
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
+                <TableHead className="px-4 py-2 text-left">Status</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Submitted On
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-300">
+              {filteredHandouts?.length ? (
+                filteredHandouts.map((handout) => (
+                  <TableRow
+                    key={handout.id}
+                    className="odd:bg-white even:bg-gray-100"
+                  >
+                    <TableCell className="px-4 py-2">
+                      {handout.courseCode}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.courseName}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.category}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.reviewerName || "Unassigned"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 uppercase">
+                      <span className={STATUS_COLORS[handout.status]}>
+                        {handout.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {!handout.submittedOn ? (
+                        <span className="mx-3">NA</span>
+                      ) : (
+                        new Date(handout.submittedOn).toLocaleDateString()
+                      )}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {handout.status === "notsubmitted" ? (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => handleUploadClick(handout.id)}
+                        >
+                          Upload
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => navigate(`/handout/${handout.id}`)}
+                        >
+                          Details
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="px-4 py-2 text-center">
+                    No handouts found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Upload Dialog for new uploads */}
+      <UploadDialog
+        isOpen={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        onUpload={handleUploadComplete}
+        id={selectedHandoutId!}
+        refetch={async () => {
+          await refetch();
+        }}
+      />
+
+      {/* ReUpload Dialog for revisions */}
+      <ReUploadDialog
+        isOpen={isReUploadDialogOpen}
+        onClose={() => setIsReUploadDialogOpen(false)}
+        onReUpload={handleReUploadComplete}
+        revisionComments={
+          selectedHandoutId
+            ? revisionComments[
+                selectedHandoutId as keyof typeof revisionComments
+              ] || "No revision comments provided."
+            : ""
+        }
+      />
     </div>
   );
 };
 
 export default FacultyHandouts;
-
-
-
-

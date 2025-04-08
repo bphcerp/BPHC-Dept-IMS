@@ -29,5 +29,10 @@ export const courseHandoutRequestsRelations = relations(
             references: [fileFields.id],
             relationName: "handoutFilePath",
         }),
+        previousSubmission: one(courseHandoutRequests, {
+            fields: [courseHandoutRequests.previousSubmissionId],
+            references: [courseHandoutRequests.id],
+            relationName: "previousSubmission",
+        }),
     })
 );

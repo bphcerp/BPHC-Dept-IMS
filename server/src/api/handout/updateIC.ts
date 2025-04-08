@@ -5,31 +5,37 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { handoutSchemas } from "lib";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("dca-assign-ics"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
-        const parsed = handoutSchemas.assignICBodySchema.parse(req.body);
-
+        const parsed = handoutSchemas.updateICBodySchema.parse(req.body);
         const icExists = await db.query.users.findFirst({
             where: (user, { eq }) => eq(user.email, parsed.icEmail),
         });
-
         if (!icExists) {
             return next(new HttpError(HttpCode.NOT_FOUND, "IC does not exist"));
         }
-
-        await db.insert(courseHandoutRequests).values({
-            icEmail: parsed.icEmail,
-            courseCode: parsed.courseCode,
-            courseName: parsed.courseName,
-            category: parsed.category,
+        const handoutExists = await db.query.courseHandoutRequests.findFirst({
+            where: (handout, { eq }) => eq(handout.id, Number(parsed.id)),
         });
-
-        res.status(201).json({ success: true });
+        if (!handoutExists) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Handout does not exist")
+            );
+        }
+        await db
+            .update(courseHandoutRequests)
+            .set({
+                icEmail: parsed.icEmail,
+            })
+            .where(eq(courseHandoutRequests.id, Number(parsed.id)))
+            .returning();
+        res.status(200).json({ success: true });
     })
 );
 

@@ -1,19 +1,22 @@
 import z from "zod";
 
-export const assignICBodySchema = z.object({
-    courseName: z.string().nonempty(),
-    courseCode: z.string().nonempty(),
-    icEmail: z.string().email(),
-});
-
-export type AssignICBody = z.infer<typeof assignICBodySchema>;
-
 export const handoutStatuses = [
     "pending",
     "approved",
     "rejected",
     "notsubmitted",
 ] as const;
+
+export const categories = ["HD", "FD"] as const;
+
+export const assignICBodySchema = z.object({
+    courseName: z.string().nonempty(),
+    courseCode: z.string().nonempty(),
+    icEmail: z.string().email(),
+    category: z.enum(categories),
+});
+
+export type AssignICBody = z.infer<typeof assignICBodySchema>;
 
 export type HandoutStatus = (typeof handoutStatuses)[number];
 
@@ -71,7 +74,38 @@ export const finalDecisionBodySchema = z.object({
         .refine((val) => !isNaN(Number(val)), {
             message: "Invalid handout id",
         }),
+    comments: z.string(),
     status: z.enum(handoutStatuses),
 });
 
 export type FinalDecisionBody = z.infer<typeof finalDecisionBodySchema>;
+
+export const updateICBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    icEmail: z.string().email(),
+});
+
+export type UpdateICBody = z.infer<typeof updateICBodySchema>;
+
+export const updateReviewerBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    reviewerEmail: z.string().email(),
+});
+
+export type UpdateReviewerBody = z.infer<typeof updateReviewerBodySchema>;
+
+export const deadlineBodySchema = z.object({
+    time: z.date(),
+});
+
+export type DeadlineBody = z.infer<typeof deadlineBodySchema>;
