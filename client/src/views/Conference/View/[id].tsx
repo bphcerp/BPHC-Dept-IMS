@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/popover";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/hooks/Auth";
+import ReviewApplicationDialog from "@/components/conference/ReviewApplicationDialog";
 
 interface FieldProps {
   applId: number;
@@ -234,6 +235,14 @@ const FieldDisplay = ({
 const ConferenceViewApplicationView = () => {
   const { id } = useParams<{ id: string }>();
   const { checkAccess } = useAuth();
+  const canReviewAsHod = checkAccess(
+    "conference:application:review-application-hod"
+  );
+  const canReviewAsConvener = checkAccess(
+    "conference:application:review-application-convener"
+  );
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [reviewDialogStatus, setReviewDialogStatus] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["conference", "applications", parseInt(id!)],
@@ -263,7 +272,10 @@ const ConferenceViewApplicationView = () => {
             Application No. {data.id}
           </h2>
           <div className="flex flex-col gap-4">
-            <ProgressStatus currentStage={data.conferenceApplication.state} />
+            <ProgressStatus
+              currentStage={data.conferenceApplication.state}
+              currentStatus={data.status}
+            />
             {Object.entries(data.conferenceApplication).map(([key, value]) =>
               value && typeof value === "object" ? (
                 <FieldDisplay
@@ -292,12 +304,47 @@ const ConferenceViewApplicationView = () => {
                   canOverwrite={checkAccess(
                     "conference:application:overwrite-field-review"
                   )}
-                  canReview={checkAccess(
-                    "conference:application:review-fields"
-                  )}
+                  canReview={
+                    checkAccess("conference:application:review-fields") &&
+                    data.status === "pending"
+                  }
                 />
               ) : null
             )}
+            {data.status === "pending" &&
+            (canReviewAsHod ||
+              (conferenceSchemas.states.indexOf(
+                data.conferenceApplication.state
+              ) < 2 &&
+                canReviewAsConvener)) ? (
+              <div className="flex gap-4">
+                <ReviewApplicationDialog
+                  applId={data.id}
+                  status={reviewDialogStatus}
+                  dialogOpen={reviewDialogOpen}
+                  setDialogOpen={setReviewDialogOpen}
+                />
+                <Button
+                  onClick={() => {
+                    setReviewDialogStatus(true);
+                    setReviewDialogOpen(true);
+                  }}
+                >
+                  {canReviewAsHod
+                    ? "Accept application"
+                    : "Approve and send to HoD"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setReviewDialogStatus(false);
+                    setReviewDialogOpen(true);
+                  }}
+                >
+                  Reject application
+                </Button>
+              </div>
+            ) : null}
           </div>
         </>
       )}

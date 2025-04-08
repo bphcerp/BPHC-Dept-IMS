@@ -10,6 +10,8 @@ export const modules = [
     "Patent Info",
 ] as const;
 
+export const applicationStatuses = ["pending", "approved", "rejected"] as const;
+
 export type baseFieldResponse = {
     id: number;
     statuses: {

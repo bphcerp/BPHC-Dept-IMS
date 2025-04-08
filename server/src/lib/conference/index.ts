@@ -90,8 +90,11 @@ export const getApplicationById = async (id: number) => {
     return undefined;
 };
 
-export const areAllFieldsApprovedForApplication = async (id: number) => {
-    const application = await getApplicationById(id);
+export type Application = Awaited<ReturnType<typeof getApplicationById>>;
+
+export const areAllFieldsApprovedForApplication = async (
+    application: Application
+) => {
     if (!application) return false;
     for (const field of Object.values(application.conferenceApplication)) {
         if (

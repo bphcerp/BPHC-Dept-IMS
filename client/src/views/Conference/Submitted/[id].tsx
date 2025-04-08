@@ -35,9 +35,10 @@ import { isAxiosError } from "axios";
 import { z } from "zod";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import BackButton from "@/components/BackButton";
+import { ProgressStatus } from "@/components/conference/StateProgressBar";
 
 const schema = conferenceSchemas.createApplicationBodySchema.merge(
   z.object(
@@ -100,6 +101,8 @@ const ConferenceEditView: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
+  const isPending = useMemo(() => data?.status === "pending", [data]);
+
   useEffect(() => {
     if (!data) return;
     const app = data.conferenceApplication;
@@ -126,19 +129,21 @@ const ConferenceEditView: React.FC = () => {
       setHasSetForm(true);
     }
     setEditableFields(
-      Object.entries(app).reduce(
-        (prev, [k, v]) =>
-          v &&
-          typeof v === "object" &&
-          "statuses" in v &&
-          v.statuses.length &&
-          !v.statuses[0].status
-            ? [...prev, k]
-            : prev,
-        [] as string[]
-      )
+      isPending
+        ? Object.entries(app).reduce(
+            (prev, [k, v]) =>
+              v &&
+              typeof v === "object" &&
+              "statuses" in v &&
+              v.statuses.length &&
+              !v.statuses[0].status
+                ? [...prev, k]
+                : prev,
+            [] as string[]
+          )
+        : []
     );
-  }, [data, form, hasSetForm]);
+  }, [data, form, hasSetForm, isPending]);
 
   const onSubmit: SubmitHandler<Schema> = (formData) => {
     console.log(formData);
@@ -167,6 +172,10 @@ const ConferenceEditView: React.FC = () => {
           }}
           className="w-full max-w-3xl space-y-4"
         >
+          <ProgressStatus
+            currentStage={data.conferenceApplication.state}
+            currentStatus={data.status}
+          />
           <div className="grid grid-cols-1 gap-4">
             {conferenceSchemas.textFieldNames.map((fieldName) => {
               const fieldData = data.conferenceApplication[fieldName];
@@ -181,7 +190,9 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        <StatusBadge fieldData={fieldData} />
+                        {isPending ? (
+                          <StatusBadge fieldData={fieldData} />
+                        ) : null}
                       </div>
 
                       {fieldName === "modeOfEvent" ? (
@@ -236,7 +247,11 @@ const ConferenceEditView: React.FC = () => {
                 <FormItem>
                   <div className="flex items-end justify-between">
                     <FormLabel>DATE</FormLabel>
-                    <StatusBadge fieldData={data.conferenceApplication.date!} />
+                    {isPending ? (
+                      <StatusBadge
+                        fieldData={data.conferenceApplication.date!}
+                      />
+                    ) : null}
                   </div>
                   {editableFields.includes("date") ? (
                     <>
@@ -293,7 +308,9 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        <StatusBadge fieldData={fieldData} />
+                        {isPending ? (
+                          <StatusBadge fieldData={fieldData} />
+                        ) : null}
                       </div>
                       <FormControl>
                         <Input
@@ -326,7 +343,9 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        <StatusBadge fieldData={fieldData} />
+                        {isPending ? (
+                          <StatusBadge fieldData={fieldData} />
+                        ) : null}
                       </div>
 
                       <div

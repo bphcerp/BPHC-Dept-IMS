@@ -1,4 +1,4 @@
-import { conferenceSchemas } from "lib";
+import { conferenceSchemas, formSchemas } from "lib";
 import {
   Table,
   TableBody,
@@ -53,7 +53,16 @@ const columns: ColumnDef<{
         </Button>
       );
     },
-    accessorKey: "state",
+    accessorKey: "status",
+    cell: ({ row }) => {
+      const status: (typeof formSchemas.applicationStatuses)[number] =
+        row.getValue("status");
+      return status === "approved"
+        ? "Accepted"
+        : status === "rejected"
+          ? "Rejected"
+          : "Pending";
+    },
   },
   {
     header: () => {
