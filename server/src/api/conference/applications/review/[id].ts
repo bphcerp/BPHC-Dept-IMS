@@ -10,7 +10,7 @@ import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts
 
 const router = express.Router();
 
-router.get(
+router.post(
     "/:id",
     asyncHandler(async (req, res, next) => {
         const id = parseInt(req.params.id);
