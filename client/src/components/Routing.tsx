@@ -43,6 +43,8 @@ import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import AssignReviewer from "@/views/Handouts/AssignReviewer";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
+import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
+import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -223,6 +225,7 @@ const Routing = () => {
                 ) && (
                   <Route path="notional-supervisor" element={<Outlet />}>
                     <Route path="update-grade" element={<UpdateGrade />} />
+                    <Route path="suggest-examiner" element={<SuggestExaminer />} />
                   </Route>
                 )}
                 {checkAccess(
@@ -244,6 +247,10 @@ const Routing = () => {
                     <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
+                    ></Route>
+                    <Route
+                      path="assign-examiner"
+                      element={<AssignExaminers />}
                     ></Route>
                     Handout
                   </Route>

@@ -20,6 +20,12 @@ const NotionalSupervisorLayout = () => {
           title: "Update Grade",
           icon: <CaseUpper />,
           url: "/phd/notional-supervisor/update-grade",
+          requiredPermissions: [permissions["/phd/supervisor/updateSuggestedExaminer"]],
+        },
+        {
+          title: "Suggest Examiner",
+          icon: <UserRoundPlus />,
+          url: "/phd/notional-supervisor/suggest-examiner",
           requiredPermissions: [permissions["/phd/notionalSupervisor/updateCourseGrade"]],
         },
       ],
@@ -49,7 +55,12 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
           requiredPermissions: [permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]],
         },
-
+        {
+          title: "Assign Examiner",
+          icon: <NotepadText />,
+          url: "/phd/drc-convenor/assign-examiner",
+          requiredPermissions: [permissions["/phd/drcMember/updateExaminer"]],
+        },
         {
           title: "Assign DAC Members",
           icon: <UserRoundPlus />,

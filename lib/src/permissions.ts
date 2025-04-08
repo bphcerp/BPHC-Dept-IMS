@@ -21,6 +21,11 @@ export const allPermissions = {
     "phd:drc-member:get-phd-exam-status": "",
     "phd:drc-member:get-qualification-dates": "",
     "phd:drc-member:get-dates-of-qe-exam":"",
+    "phd:drc-member:update-examiner":"",
+    "phd:drc-member:notify-supervisor":"",
+    "phd:drc-member:get-subarea-and-examiner":"",
+    "phd:drc-member:get-supervisor-with-student":"",
+    "phd:drc-member:get-qe-time-table":"",
 
     "phd:notifs:send": "",
 
@@ -47,6 +52,9 @@ export const allPermissions = {
     "phd:supervisor:get-supervised-students": "",
     "phd:supervisor:suggest-dac-members": "",
     "phd:supervisor:review-proposal-document" : "",
+    "phd:supervisor:update-suggested-supervisor":"",
+    "phd:supervisor:get-subareas":"",
+    "phd:supervisor:get-students":"",
 
     "phd:staff:get-all-semester": "",
     "phd:staff:update-semester-dates": "",
@@ -110,8 +118,12 @@ export const permissions = {
     "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
     "/phd/drcMember/getQualificationDates":
         "phd:drc-member:get-qualification-dates",
-    "/phd/drcMember/getDatesOfQeExam":
-        "phd:drc-member:get-dates-of-qe-exam",
+    "/phd/drcMember/getDatesOfQeExam":"phd:drc-member:get-dates-of-qe-exam",
+    "/phd/drcMember/updateExaminer":"phd:drc-member:update-examiner",
+    "/phd/drcMember/notifySupervisor":"phd:drc-member:notify-supervisor",
+    "/phd/drcMember/getSubAreasAndExaminer":"phd:drc-member:get-subarea-and-examiner",
+    "/phd/drcMember/getSupervisorsWithStudents":"phd:drc-member:get-supervisor-with-student",
+    "/phd/drcMember/getQeTimeTable":"phd:drc-member:get-qe-time-table",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -155,6 +167,9 @@ export const permissions = {
         "phd:supervisor:get-supervised-students",
     "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
     "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal-document",
+    "/phd/supervisor/updateSuggestedExaminer": "phd:supervisor:update-suggested-supervisor",
+    "/phd/supervisor/getSubAreas": "phd:supervisor:get-subareas",
+    "/phd/supervisor/getStudents": "phd:supervisor:get-students",
 
     //staff
     "/phd/staff/updateSemesterDates":"phd:staff:update-semester-dates",
