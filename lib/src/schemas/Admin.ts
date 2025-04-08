@@ -101,6 +101,7 @@ export const editDetailsBodySchema = z.intersection(
             designation: z.string().trim().array().optional(),
             room: z.string().trim().optional(),
             psrn: z.string().trim().nonempty().optional(),
+            authorId: z.string().trim().nonempty().optional(),
         }),
         z.object({
             type: z.literal(userTypes[1]), // PhD
