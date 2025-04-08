@@ -130,7 +130,7 @@ const RoleDetailsView = () => {
             perm.permission.includes(type.toLowerCase())
           )
       );
-      filtered.sort();
+      filtered.sort((a, b) => a.permission.localeCompare(b.permission));
       setFilteredPerms(filtered);
     }
   }, [allPermissions, selectedTypes]);
