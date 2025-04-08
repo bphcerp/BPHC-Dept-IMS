@@ -71,6 +71,13 @@
       "when": 1744109442394,
       "tag": "0009_foamy_thunderbolt",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1744111485120,
+      "tag": "0010_nice_living_lightning",
+      "breakpoints": true
     }
   ]
 }
