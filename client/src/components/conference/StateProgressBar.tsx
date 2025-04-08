@@ -9,7 +9,7 @@ export const ProgressStatus = ({
   currentStatus,
 }: {
   currentStage: (typeof statusStages)[number];
-  currentStatus: (typeof formSchemas.applicationStates)[number];
+  currentStatus: (typeof formSchemas.applicationStatuses)[number];
 }) => {
   const currentStep = statusStages.indexOf(currentStage);
   const progressValue = (currentStep / (statusStages.length - 1)) * 100;
