@@ -40,43 +40,32 @@ router.post(
                     new HttpError(HttpCode.NOT_FOUND, "Handout Not Found")
                 );
             }
-            /*
-            if (parsed.status === "rejected"){
-                await db.insert(courseHandoutRequests).values({
-                    courseCode: handout.courseCode,
-                    courseName: handout.courseName,
-                    icEmail: handout.icEmail,
-                    reviewerEmail: handout.reviewerEmail,
-                    category: handout.category,
-                    previousSubmissionId: Number(parsed.id),
-                    submittedOn: new Date(),
-                });
-            }
-            */ 
-            if (env.PROD && parsed.status === "rejected") {
+            if (parsed.status === "rejected") {
                 try {
                     await db.insert(courseHandoutRequests).values({
-                        courseCode: handout.courseCode,
-                        courseName: handout.courseName,
-                        icEmail: handout.icEmail,
-                        reviewerEmail: handout.reviewerEmail,
-                        category: handout.category,
+                        courseCode: handout?.courseCode,
+                        courseName: handout?.courseName,
+                        icEmail: handout?.icEmail,
+                        reviewerEmail: handout?.reviewerEmail,
+                        category: handout?.category,
                         previousSubmissionId: Number(parsed.id),
                         submittedOn: new Date(),
                     });
-                    const transporter = nodemailer.createTransport({
-                        service: "gmail",
-                        auth: {
-                            user: env.BPHCERP_EMAIL,
-                            pass: env.BPHCERP_PASSWORD,
-                        },
-                    });
-                    await transporter.sendMail({
-                        from: env.BPHCERP_EMAIL,
-                        to: handout?.icEmail,
-                        subject: "Handout Rejection",
-                        text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
-                    });
+                    if (env.PROD) {
+                        const transporter = nodemailer.createTransport({
+                            service: "gmail",
+                            auth: {
+                                user: env.BPHCERP_EMAIL,
+                                pass: env.BPHCERP_PASSWORD,
+                            },
+                        });
+                        await transporter.sendMail({
+                            from: env.BPHCERP_EMAIL,
+                            to: handout?.icEmail,
+                            subject: "Handout Rejection",
+                            text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                        });
+                    }
                 } catch (e) {
                     throw new HttpError(
                         HttpCode.INTERNAL_SERVER_ERROR,

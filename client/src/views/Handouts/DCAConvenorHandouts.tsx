@@ -327,15 +327,26 @@ export const DCAConvenerHandouts: React.FC = () => {
                         : "NA"}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <Button
-                        variant="outline"
-                        className="hover:bg-primary hover:text-white"
-                        onClick={() =>
-                          navigate(`/handout/dcaconvenor/review/${handout.id}`)
-                        }
-                      >
-                        View
-                      </Button>
+                      {handout.status != "notsubmitted" ? (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() =>
+                            navigate(
+                              `/handout/dcaconvenor/review/${handout.id}`
+                            )
+                          }
+                        >
+                          {handout.status === "pending" ? "Review" : "View"}
+                        </Button>
+                      ) : (
+                        <Button
+                          disabled
+                          className="cursor-not-allowed bg-white text-gray-500 opacity-50"
+                        >
+                          None
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

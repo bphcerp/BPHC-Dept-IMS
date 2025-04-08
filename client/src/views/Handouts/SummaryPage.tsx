@@ -16,7 +16,7 @@ import { toast } from "sonner";
 interface HandoutSummary {
   id: string;
   courseCode: string;
-  icName: string;
+  professorName: string;
   reviewerName: string;
   status: string;
   submittedOn: string;
@@ -31,7 +31,9 @@ interface HandoutSummary {
 
 const DCAConvenerSummary: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
   const [filteredData, setFilteredData] = useState<HandoutSummary[]>([]);
 
@@ -65,7 +67,9 @@ const DCAConvenerSummary: React.FC = () => {
     if (searchQuery) {
       results = results.filter(
         (handout) =>
-          handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          handout.courseCode
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
           handout.icName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           handout.reviewerName.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -151,8 +155,12 @@ const DCAConvenerSummary: React.FC = () => {
                   <TableCell className="px-4 py-2">
                     {handout.courseCode}
                   </TableCell>
-                  <TableCell className="px-4 py-2">{handout.category}</TableCell>
-                  <TableCell className="px-4 py-2">{handout.icName}</TableCell>
+                  <TableCell className="px-4 py-2">
+                    {handout.category}
+                  </TableCell>
+                  <TableCell className="px-4 py-2">
+                    {handout.professorName}
+                  </TableCell>
                   <TableCell className="px-4 py-2">
                     {handout.reviewerName}
                   </TableCell>
