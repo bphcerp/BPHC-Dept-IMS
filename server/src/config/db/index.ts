@@ -12,6 +12,8 @@ import * as hadnoutRelations from "./schema/handoutRelations.ts";
 import * as patents from "./schema/patents.ts";
 import * as qp from "./schema/qp.ts";
 import * as qpRelations from "./schema/qpRelations.ts";
+import * as publications from "./schema/publications.ts";
+import * as publicationsRelations from "./schema/publicationsRelations.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
@@ -41,6 +43,8 @@ const db = drizzle(pool, {
         ...phdRelations,
         ...qp,
         ...qpRelations,
+        ...publications,
+        ...publicationsRelations,
     },
 });
 
