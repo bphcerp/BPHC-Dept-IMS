@@ -16,6 +16,11 @@ import getCurrentSemester from "../staff/getCurrentSemester.ts";
 import getPhdExamStatus from "./getPhdExamStatus.ts";
 import getQualificationDates from "./getQualificationDates.ts";
 import getDatesOfQeExam from "./getDatesOfQeExam.ts";
+import getSubAreasAndExaminer from "./getSubAreasAndExaminer.ts";
+import notifySupervisor from "./notifySupervisor.ts";
+import updateExaminer from "./updateExaminer.ts";
+import getSupervisorsWithStudents from "./getSupervisorsWithStudents.ts";
+import getQeTimeTable from "./getQeTimeTable.ts";
 
 
 const router = express.Router();
@@ -38,5 +43,10 @@ router.use('/getCurrentSemester', getCurrentSemester);
 router.use('/getPhdExamStatus', getPhdExamStatus);
 router.use('/getQualificationDates', getQualificationDates);
 router.use('/getDatesOfQeExam', getDatesOfQeExam);
+router.use('/getSubAreasAndExaminer', getSubAreasAndExaminer);
+router.use('/notifySupervisor', notifySupervisor);
+router.use('/updateExaminer', updateExaminer);
+router.use('/getSupervisorsWithStudents', getSupervisorsWithStudents);
+router.use('/getQeTimeTable', getQeTimeTable);
 
 export default router;

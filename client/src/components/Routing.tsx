@@ -41,6 +41,8 @@ import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
+import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
+import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
@@ -268,6 +270,7 @@ const Routing = () => {
                 ) && (
                   <Route path="notional-supervisor" element={<Outlet />}>
                     <Route path="update-grade" element={<UpdateGrade />} />
+                    <Route path="suggest-examiner" element={<SuggestExaminer />} />
                   </Route>
                 )}
                 {checkAccess(
@@ -289,6 +292,10 @@ const Routing = () => {
                     <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
+                    ></Route>
+                    <Route
+                      path="assign-examiner"
+                      element={<AssignExaminers />}
                     ></Route>
                     Handout
                   </Route>

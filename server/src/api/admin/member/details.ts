@@ -33,6 +33,7 @@ router.get(
                         mobile: true,
                         personalEmail: true,
                         notionalSupervisorEmail: true,
+                        supervisorEmail: true,
                     },
                 },
                 staff: true,

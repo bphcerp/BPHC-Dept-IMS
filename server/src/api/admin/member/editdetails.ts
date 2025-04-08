@@ -35,7 +35,7 @@ router.post(
                 return next(
                     new HttpError(
                         HttpCode.BAD_REQUEST,
-                        "Invalid Notional Supervisor Email"
+                        "Invalid email address provided"
                     )
                 );
             }
