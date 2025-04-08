@@ -57,6 +57,7 @@ export const faculty = pgTable("faculty", {
         .default(sql`'{}'::text[]`),
     room: text("room"),
     phone: text("phone"),
+    authorId: text("author_id").unique(),
 });
 
 export const phd = pgTable("phd", {
