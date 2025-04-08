@@ -26,9 +26,7 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     reviewerEmail: text("reviewer_email").references(() => users.email, {
         onDelete: "cascade",
     }),
-    previousSubmissionId: integer("previous_submission_id").references(() => courseHandoutRequests.id,{
-        onDelete: "set null",
-    }),
+    previousSubmissionId: integer("previous_submission_id"),
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
     scopeAndObjective: boolean("scope_and_objective"),

@@ -1,5 +1,5 @@
 {
-  "id": "54110d78-0381-4b10-bb3e-905e5dc57b77",
+  "id": "e5358233-e7ff-494d-9fa4-734e25eb7481",
   "prevId": "1ed82c04-e19c-4903-9810-ff5b28e1578f",
   "version": "7",
   "dialect": "postgresql",
@@ -1941,19 +1941,6 @@
             "email"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "course_handout_requests_previous_submission_id_course_handout_requests_id_fk": {
-          "name": "course_handout_requests_previous_submission_id_course_handout_requests_id_fk",
-          "tableFrom": "course_handout_requests",
-          "tableTo": "course_handout_requests",
-          "columnsFrom": [
-            "previous_submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "course_handout_requests_handout_file_path_file_fields_id_fk": {
