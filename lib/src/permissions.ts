@@ -10,8 +10,16 @@ export const allPermissions = {
     "admin:role:delete": "Delete operations on roles",
 
     "conference:application:create": "Create operations on applications",
-    "conference:application:submitted": "Read and edit submitted applications",
-    "conference:application:all": "Read and view status of all applications",
+    "conference:application:submitted": "View submitted applications",
+    "conference:application:view-pending": "View pending applications",
+    "conference:application:review-fields":
+        "Approve or Reject fields of applications",
+    "conference:application:overwrite-field-review":
+        "Overwrite a review for a particular field of an application",
+    "conference:application:review-application-hod":
+        "Review application as HOD",
+    "conference:application:review-application-convener":
+        "Review application as DRC convener",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -97,11 +105,11 @@ export const permissions = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-
-    "/conference/getSubmittedApplications": "conference:application:submitted",
-    "/conference/viewOwnApplicationDetails": "conference:application:submitted",
-
-    "/conference/viewApplicationDetails": "conference:application:all",
+    "/conference/applications/details": "conference:application:view-pending",
+    "/conference/applications/pending": "conference:application:view-pending",
+    "/conference/applications/my": "conference:application:submitted",
+    "/conference/applications/view": "conference:application:submitted",
+    "/conference/fields/review": "conference:application:review-fields",
 
     // PhD
 

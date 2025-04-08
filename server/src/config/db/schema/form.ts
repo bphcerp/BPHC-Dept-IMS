@@ -9,14 +9,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { boolean } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
-import { modules } from "lib";
+import { modules, formSchemas } from "lib";
 
 export const modulesEnum = pgEnum("modules_enum", modules);
-export const applicationStatusEnum = pgEnum("application_status_enum", [
-    "pending",
-    "approved",
-    "rejected",
-]);
+export const applicationStatusEnum = pgEnum(
+    "application_status_enum",
+    formSchemas.applicationStatuses
+);
 
 const baseField = {
     id: serial("id").primaryKey(),
@@ -32,9 +31,10 @@ const baseStatus = {
     userEmail: text("user_email")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
-    comments: text("comments").notNull(),
+    comments: text("comments"),
     updatedAs: text("updated_as").notNull(),
     status: boolean("status").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).defaultNow(),
 };
 
 export const applications = pgTable("applications", {

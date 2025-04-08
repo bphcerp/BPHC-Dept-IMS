@@ -97,16 +97,7 @@ const ConferenceApplyView: React.FC = () => {
           className="w-full max-w-3xl space-y-4"
         >
           <div className="grid grid-cols-1 gap-4">
-            {(
-              [
-                "purpose",
-                "contentTitle",
-                "eventName",
-                "venue",
-                "organizedBy",
-                "description",
-              ] as const
-            ).map((fieldName) => {
+            {conferenceSchemas.textFieldNames.map((fieldName) => {
               return (
                 <FormField
                   key={fieldName}
@@ -117,43 +108,36 @@ const ConferenceApplyView: React.FC = () => {
                       <FormLabel>
                         {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                       </FormLabel>
-                      <FormControl>
-                        {fieldName !== "description" ? (
-                          <Input {...field} />
-                        ) : (
-                          <Textarea {...field} />
-                        )}
-                      </FormControl>
+                      {fieldName !== "modeOfEvent" ? (
+                        <FormControl>
+                          {fieldName !== "description" ? (
+                            <Input {...field} />
+                          ) : (
+                            <Textarea {...field} />
+                          )}
+                        </FormControl>
+                      ) : (
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="online">Online</SelectItem>
+                            <SelectItem value="offline">Offline</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               );
             })}
-            <FormField
-              control={form.control}
-              name="modeOfEvent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>MODE OF EVENT</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="offline">Offline</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="date"
@@ -195,15 +179,7 @@ const ConferenceApplyView: React.FC = () => {
                 </FormItem>
               )}
             />
-            {(
-              [
-                "travelReimbursement",
-                "registrationFeeReimbursement",
-                "dailyAllowanceReimbursement",
-                "accomodationReimbursement",
-                "otherReimbursement",
-              ] as const
-            ).map((fieldName) => {
+            {conferenceSchemas.numberFieldNames.map((fieldName) => {
               return (
                 <FormField
                   key={fieldName}
