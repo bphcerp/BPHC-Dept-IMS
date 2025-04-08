@@ -90,10 +90,10 @@ export const FacultyHandouts: React.FC = () => {
     setIsUploadDialogOpen(true);
   };
 
-  const handleReUploadClick = (handoutId: string) => {
-    setSelectedHandoutId(handoutId);
-    setIsReUploadDialogOpen(true);
-  };
+  // const handleReUploadClick = (handoutId: string) => {
+  //   setSelectedHandoutId(handoutId);
+  //   setIsReUploadDialogOpen(true);
+  // };
 
   const handleUploadComplete = () => {
     setIsUploadDialogOpen(false);
@@ -233,7 +233,9 @@ export const FacultyHandouts: React.FC = () => {
         onClose={() => setIsUploadDialogOpen(false)}
         onUpload={handleUploadComplete}
         id={selectedHandoutId!}
-        refetch={refetch}
+        refetch={async () => {
+          await refetch();
+        }}
       />
 
       {/* ReUpload Dialog for revisions */}

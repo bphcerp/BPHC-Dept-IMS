@@ -26,7 +26,9 @@ const DCAConvenorReview: React.FC = () => {
     queryKey: [`handout-dcaconvenor ${id}`],
     queryFn: async () => {
       try {
-        const response = await api.get(`/handout/get?handoutId=${id}`);
+        const response = await api.get<{ status: boolean; handout: Handout }>(
+          `/handout/get?handoutId=${id}`
+        );
         return response.data.handout;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -56,7 +58,6 @@ const DCAConvenorReview: React.FC = () => {
       if (isAxiosError(error)) {
         console.log("Error adding review:", error.response?.data);
       }
-      ("handout:dca-convenor:get-all-dcamember");
       toast.error("An error occurred while adding review");
     },
   });

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 interface HandoutSummary {
   id: string;
   courseCode: string;
+  icName: string;
   professorName: string;
   reviewerName: string;
   status: string;

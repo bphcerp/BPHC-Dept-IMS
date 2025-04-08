@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { useParams,useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -41,11 +41,13 @@ const DCAMemberReviewForm: React.FC = () => {
   const { id: handoutId } = useParams();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data, isLoading, isError, refetch } = useQuery<Handout>({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: [`handout-dca ${handoutId}`],
     queryFn: async () => {
       try {
-        const response = await api.get(`/handout/get?handoutId=${handoutId}`);
+        const response = await api.get<{ status: boolean; handout: Handout }>(
+          `/handout/get?handoutId=${handoutId}`
+        );
         return response.data.handout;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -53,11 +55,11 @@ const DCAMemberReviewForm: React.FC = () => {
       }
     },
   });
-  
+
   const goBack = () => {
     navigate("/handout/dcaconvenor");
   };
-  
+
   const { handleSubmit, control, setValue } = useForm<HandoutReviewFormValues>({
     defaultValues: {
       scopeAndObjective: false,
@@ -68,7 +70,7 @@ const DCAMemberReviewForm: React.FC = () => {
       evaluationScheme: false,
     },
   });
-  
+
   const mutation = useMutation({
     mutationFn: async (data: HandoutReviewFormValues) => {
       await api.post("/handout/dca/review", {
@@ -132,10 +134,10 @@ const DCAMemberReviewForm: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-3xl px-2 py-10">
-      <Button 
+      <Button
         variant={"ghost"}
-        onClick={goBack} 
-        className="mb-4 flex size-sm items-center"
+        onClick={goBack}
+        className="size-sm mb-4 flex items-center"
       >
         <ChevronLeft className="mr-1" size={16} />
         Back to Dashboard

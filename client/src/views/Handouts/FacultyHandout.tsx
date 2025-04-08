@@ -10,11 +10,13 @@ import { BASE_API_URL } from "@/lib/constants";
 const FacultyHandout: React.FC = () => {
   const { id } = useParams();
 
-  const { data, isLoading, isError } = useQuery<Handout>({
+  const { data, isLoading, isError } = useQuery({
     queryKey: [`handout-faculty ${id}`],
     queryFn: async () => {
       try {
-        const response = await api.get(`/handout/get?handoutId=${id}`);
+        const response = await api.get<{ status: boolean; handout: Handout }>(
+          `/handout/get?handoutId=${id}`
+        );
         return response.data.handout;
       } catch (error) {
         toast.error("Failed to fetch handouts");

@@ -31,17 +31,21 @@ export const DCAMemberHandouts: React.FC = () => {
     data: handouts,
     isLoading,
     isError,
-  } = useQuery<DCAHandout[]>({
+  } = useQuery({
     queryKey: ["handouts-dca"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ handouts:any,data: DCAHandout[] }>(
-          "/handout/dca/get"
-        );
-        if (response.data.handouts){
+        const response = await api.get<{
+          handouts: DCAHandout[];
+          success: boolean;
+        }>("/handout/dca/get");
+        if (response.data.handouts) {
           setFilteredHandouts(response.data.handouts);
-          localStorage.setItem("handouts DCA MEMBER", JSON.stringify(response.data.handouts));
-        } 
+          localStorage.setItem(
+            "handouts DCA MEMBER",
+            JSON.stringify(response.data.handouts)
+          );
+        }
         return response.data.handouts;
       } catch (error) {
         toast.error("Failed to fetch handouts");

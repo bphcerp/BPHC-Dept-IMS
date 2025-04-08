@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -59,11 +59,14 @@ export const DCAConvenerHandouts: React.FC = () => {
       icEmail: string;
       sendEmail: boolean;
     }) => {
-      const response = await api.post("/handout/dcaconvenor/updateIC", {
-        id: id.toString(),
-        icEmail,
-        sendEmail,
-      });
+      const response = await api.post<{ success: boolean }>(
+        "/handout/dcaconvenor/updateIC",
+        {
+          id: id.toString(),
+          icEmail,
+          sendEmail,
+        }
+      );
       return response.data;
     },
     onSuccess: async () => {
@@ -87,11 +90,14 @@ export const DCAConvenerHandouts: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
-      const response = await api.post("/handout/dcaconvenor/updateReviewer", {
-        id: id.toString(),
-        reviewerEmail,
-        sendEmail,
-      });
+      const response = await api.post<{ success: boolean }>(
+        "/handout/dcaconvenor/updateReviewer",
+        {
+          id: id.toString(),
+          reviewerEmail,
+          sendEmail,
+        }
+      );
       return response.data;
     },
     onSuccess: async () => {
