@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { isAxiosError } from "axios";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-
 interface Role {
   role: string;
   allowed: string[];
@@ -34,7 +33,7 @@ const RoleDetailsView = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const role = params["role"];
-  const types = ["admin", "conference", "PhD", "handout"]
+  const types = ["admin", "conference", "PhD", "handout"];
   const { data: roleData } = useQuery({
     queryKey: ["role", role],
     queryFn: async () => {
@@ -120,15 +119,18 @@ const RoleDetailsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRole, setNewRole] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [filteredPerms, setFilteredPerms] = useState<Permission[]>([])
+  const [filteredPerms, setFilteredPerms] = useState<Permission[]>([]);
 
   useEffect(() => {
     if (allPermissions) {
       const filtered = allPermissions.filter(
         (perm) =>
-          selectedTypes.length === 0 || selectedTypes.some(type => perm.permission.includes(type.toLowerCase()))
+          selectedTypes.length === 0 ||
+          selectedTypes.some((type) =>
+            perm.permission.includes(type.toLowerCase())
+          )
       );
-      setFilteredPerms(filtered);
+      setFilteredPerms(filtered.sort());
     }
   }, [allPermissions, selectedTypes]);
 
@@ -188,24 +190,25 @@ const RoleDetailsView = () => {
         </div>
       </div>
       <h2 className="text-2xl font-bold text-primary">Edit permissions</h2>
-      <div><ToggleGroup
-            type="multiple"
-            value={selectedTypes}
-            onValueChange={handleTypeChange}
-            className="bg-transparent"
-          >
-            {types.map((type) => (
-              <ToggleGroupItem
-                key={type}
-                value={type}
-                aria-label={`Filter by ${type}`}
-                className="border border-gray-300"
-              >
-                <span className="capitalize">{type}</span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          </div>
+      <div>
+        <ToggleGroup
+          type="multiple"
+          value={selectedTypes}
+          onValueChange={handleTypeChange}
+          className="bg-transparent"
+        >
+          {types.map((type) => (
+            <ToggleGroupItem
+              key={type}
+              value={type}
+              aria-label={`Filter by ${type}`}
+              className="border border-gray-300"
+            >
+              <span className="capitalize">{type}</span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
       {isFetchingPermissions ? (
         <LoadingSpinner />
       ) : isErrorPermissions ? (
