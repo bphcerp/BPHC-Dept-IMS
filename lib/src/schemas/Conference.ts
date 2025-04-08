@@ -65,6 +65,10 @@ export const reviewFieldBodySchema = z.discriminatedUnion("status", [
     }),
 ]);
 
+export const reviewApplicationBodySchema = z.object({
+    status: z.boolean(),
+});
+
 export const editFieldBodySchema = z.object({
     value: z.union([
         z.string().nonempty(),

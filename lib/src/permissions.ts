@@ -16,9 +16,10 @@ export const allPermissions = {
         "Approve or Reject fields of applications",
     "conference:application:overwrite-field-review":
         "Overwrite a review for a particular field of an application",
-    "conference:application:approve-drc-convener":
-        "Approve application as DRC convener",
-    "conference:application:approve-hod": "Approve application as HOD",
+    "conference:application:review-application-hod":
+        "Review application as HOD",
+    "conference:application:review-application-convener":
+        "Review application as DRC convener",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -105,9 +106,6 @@ export const permissions = {
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",
     "/conference/fields/review": "conference:application:review-fields",
-    "/conference/approveApplicationAsDrcConvener":
-        "conference:application:approve-drc-convener",
-    "/conference/approveApplicationAsHod": "conference:application:approve-hod",
 
     // PhD
 
