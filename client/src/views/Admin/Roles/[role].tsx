@@ -130,7 +130,8 @@ const RoleDetailsView = () => {
             perm.permission.includes(type.toLowerCase())
           )
       );
-      setFilteredPerms(filtered.sort());
+      filtered.sort();
+      setFilteredPerms(filtered);
     }
   }, [allPermissions, selectedTypes]);
 
