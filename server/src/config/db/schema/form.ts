@@ -14,7 +14,7 @@ import { modules, formSchemas } from "lib";
 export const modulesEnum = pgEnum("modules_enum", modules);
 export const applicationStatusEnum = pgEnum(
     "application_status_enum",
-    formSchemas.applicationStates
+    formSchemas.applicationStatuses
 );
 
 const baseField = {
