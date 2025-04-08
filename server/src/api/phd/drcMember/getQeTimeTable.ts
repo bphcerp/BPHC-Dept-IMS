@@ -50,9 +50,6 @@ router.get(
             }
 
             const allSubAreas = await db.select().from(phdSubAreas);
-            const subAreaNameById = new Map(
-                allSubAreas.map((area) => [area.id, area.subarea])
-            );
 
             const qualifyingAreaIds: number[] = [];
             const subAreaIdByName = new Map(
@@ -102,10 +99,10 @@ router.get(
                     if (areaId && examinerMap.has(areaId)) {
                         studentExams.push({
                             email: student.email,
-                            name: student.name || "",
+                            name: student.name ?? "Student",
                             subAreaId: areaId,
                             subArea: student.qualifyingArea1,
-                            examiner: examinerMap.get(areaId) || "",
+                            examiner: examinerMap.get(areaId)!,
                         });
                     }
                 }
@@ -114,10 +111,10 @@ router.get(
                     if (areaId && examinerMap.has(areaId)) {
                         studentExams.push({
                             email: student.email,
-                            name: student.name || "",
+                            name: student.name ?? "Student",
                             subAreaId: areaId,
                             subArea: student.qualifyingArea2,
-                            examiner: examinerMap.get(areaId) || "",
+                            examiner: examinerMap.get(areaId)!,
                         });
                     }
                 }
