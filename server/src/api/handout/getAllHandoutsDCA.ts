@@ -13,7 +13,7 @@ router.get(
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
                 where: (handout, { eq }) =>
-                    eq(handout.reviewerEmail, req.user?.email!),
+                    eq(handout.reviewerEmail, req.user!.email),
                 with: {
                     ic: {
                         with: {
@@ -24,15 +24,10 @@ router.get(
             })
         ).map((handout) => {
             return {
-                id: handout.id,
-                courseName: handout.courseName,
-                courseCode: handout.courseCode,
+                ...handout,
                 professorName: handout.ic.faculty.name,
-                status: handout.status,
-                submittedOn: handout.createdAt,
             };
         });
-
         res.status(200).json({ success: true, handouts });
     })
 );

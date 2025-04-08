@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,81 +14,87 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import api from "@/lib/axios-instance"; // Import Axios instance
+import api from "@/lib/axios-instance";
 
 interface RequestData {
-  dcaMember: string;
+  dcaMemberEmail: string;
   courseNo: string;
   courseName: string;
   fic: string;
-  ficDeadline: string; // ISO date string
-  faculty1: string;
-  faculty2: string;
-  reviewDeadline: string; // ISO date string
+  ficDeadline: Date;
+  reviewDeadline: Date;
 }
 
 export interface Course {
-  name: string;
+  id: number;
+  courseName: string;
   professor: string;
   reviewer1: string;
   reviewer2: string;
   status: string;
+  reviewed: string;
 }
 
-// Define the props type for the component
 interface CreateRequestDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAddRequest: (data: Course) => void;
+  fetchCourses: () => Promise<void>;
 }
 
 const CreateRequestDialog = ({
   isOpen,
   onClose,
   onAddRequest,
+  fetchCourses
 }: CreateRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
   const [fic, setFIC] = useState("");
   const [ficDeadline, setFicDeadline] = useState<string | null>(null);
   const [srDeadline, setSrDeadline] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // Loading state
+  const [created, setCreated] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleAdd = async () => {
     if (!courseName || !courseCode || !fic) {
       alert("Please fill in all fields.");
       return;
     }
+    createDCARequest();
+  }
 
-    const requestData: RequestData = {
-      dcaMember: "DCA Member",
-      courseNo: courseCode,
-      courseName: "Course Name",
-      fic: fic,
-      faculty1: "Faculty Reviewer 1",
-      faculty2: "Faculty Reviewer 2",
-      ficDeadline: ficDeadline ?? new Date(Date.now()).toISOString(),
-      reviewDeadline: srDeadline ?? new Date(Date.now()).toISOString(),
-    };
+  useEffect(() => {
+    fetchCourses();
+    setCreated(false)
+  },[created])
 
+  const requestData: RequestData = {
+    dcaMemberEmail: "dca@email.com",
+    courseNo: courseCode,
+    courseName: courseName,
+    fic: fic,
+    ficDeadline: ficDeadline ? new Date(ficDeadline) : new Date(),
+    reviewDeadline: srDeadline ? new Date(srDeadline) : new Date(),
+  };
+
+
+   const createDCARequest = async () => {
     try {
-      setLoading(true); // Start loading
-      const response = await api.post<Course>(
-        "/qp/createQpRequest",
-        requestData
-      );
+      setLoading(true);
+      const response = await api.post("/qp/createQpRequest", requestData);
 
-      console.log("Full API Response:", response); // 🔍 Log full response
-      console.log("Response Data:", response.data); // 🔍 Log response data
+      console.log("Full API Response:", response);
+      console.log("Response Data:", response.data);
 
       if (response.status === 201) {
-        onAddRequest(response.data); // Add new request from backend
-        onClose(); // Close dialog
+        onAddRequest(response.data);
+        onClose();
       }
     } catch (error) {
       console.error("Error creating request:", error);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
@@ -129,12 +135,7 @@ const CreateRequestDialog = ({
             <Select onValueChange={setFIC}>
               <SelectTrigger>{fic || "Select..."}</SelectTrigger>
               <SelectContent>
-                <SelectItem value="Prof. Harish V Dixit">
-                  Prof. Harish V Dixit
-                </SelectItem>
-                <SelectItem value="Prof. SK Aziz Ali">
-                  Prof. SK Aziz Ali
-                </SelectItem>
+                <SelectItem value="fic@email.com">FIC</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -160,7 +161,9 @@ const CreateRequestDialog = ({
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={() => void handleAdd()} disabled={loading}>
+          <Button onClick={() =>{ void handleAdd()
+          setCreated(true)
+          }} disabled={loading}>
             {loading ? "Submitting..." : "Done"}
           </Button>
         </DialogFooter>

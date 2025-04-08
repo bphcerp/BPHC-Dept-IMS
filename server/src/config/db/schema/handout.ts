@@ -44,4 +44,6 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
+    deadline: timestamp("deadline", { withTimezone: true }),
+    comments: text("comments"),
 });

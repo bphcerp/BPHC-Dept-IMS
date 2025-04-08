@@ -72,7 +72,9 @@ const DCAMemberReviewForm: React.FC = () => {
         queryKey: [
           "handouts-dca",
           "handouts-faculty",
+          `handout-dcaconvenor ${handoutId}`,
           `handout-dca ${handoutId}`,
+          `handout-faculty ${handoutId}`,
         ],
       });
     },

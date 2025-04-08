@@ -1,10 +1,13 @@
 import React from "react";
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import Review from "@/components/handouts/review";
 import api from "@/lib/axios-instance";
+import { Button } from "@/components/ui/button";
+import { handoutSchemas } from "lib";
+import { isAxiosError } from "axios";
 
 interface Handout {
   id: string;
@@ -19,13 +22,15 @@ interface Handout {
 }
 
 const FacultyHandout: React.FC = () => {
-  const { id: handoutId } = useParams();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery<Handout>({
-    queryKey: [`handout-faculty ${handoutId}`],
+    queryKey: [`handout-dcaconvenor ${id}`],
     queryFn: async () => {
       try {
-        const response = await api.get(`/handout/get?handoutId=${handoutId}`);
+        const response = await api.get(`/handout/get?handoutId=${id}`);
         return response.data.handout;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -33,6 +38,34 @@ const FacultyHandout: React.FC = () => {
       }
     },
   });
+
+  const reviewMutation = useMutation({
+    mutationFn: async (data: handoutSchemas.FinalDecisionBody) => {
+      await api.post("/handout/dcaconvenor/finalDecision", data);
+    },
+    onSuccess: async () => {
+      toast.success("Review added successfully");
+      navigate("/handout/dcaconvenor");
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "handouts-dca",
+          "handouts-faculty",
+          `handout-dcaconvenor ${id}`,
+          `handout-dca ${id}`,
+          `handout-faculty ${id}`,
+        ],
+      });
+    },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        console.log("Error adding review:", error.response?.data);
+      }
+      toast.error("An error occurred while adding review");
+    },
+  });
+  function handleSubmit(status: handoutSchemas.HandoutStatus) {
+    reviewMutation.mutate({ id: id!, status });
+  }
 
   if (isLoading)
     return (
@@ -102,9 +135,13 @@ const FacultyHandout: React.FC = () => {
           </>
         ) : (
           <p className="mb-4 text-center text-muted-foreground">
-            Handout Yet To be Submitted
+            Handout Yet To be Reviewed
           </p>
         )}
+        <div className="flex w-full justify-center space-x-4">
+          <Button onClick={() => handleSubmit("approved")}>Approve</Button>
+          <Button onClick={() => handleSubmit("rejected")}>Reject</Button>
+        </div>
       </div>
     </div>
   );

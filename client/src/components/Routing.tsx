@@ -45,6 +45,9 @@ import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
 import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
 import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
+import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
+import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
+import ConferenceSubmittedApplicationView from "@/views/Conference/Submitted/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -92,7 +95,7 @@ const Routing = () => {
       title: "Conference Approval",
       icon: <FileText />,
       url: "/conference",
-      requiredPermissions: qpReviewModulePermissions,
+      requiredPermissions: conferenceModulePermissions,
     },
     {
       title: "Course Handouts",
@@ -157,7 +160,23 @@ const Routing = () => {
             {checkAccessAnyOne(conferenceModulePermissions) && (
               <Route path="/conference" element={<ConferenceLayout />}>
                 <Route index element={<Navigate to="/conference/apply" />} />
-                <Route path="apply" element={<ConferenceApplyView />} />
+                {checkAccess(permissions["/conference/createApplication"]) && (
+                  <Route path="apply" element={<ConferenceApplyView />} />
+                )}
+                {checkAccess(
+                  permissions["/conference/getSubmittedApplications"]
+                ) && (
+                  <>
+                    <Route
+                      path="submitted"
+                      element={<ConferenceSubmittedApplicationsView />}
+                    />
+                    <Route
+                      path="submitted/:id"
+                      element={<ConferenceSubmittedApplicationView />}
+                    />
+                  </>
+                )}
               </Route>
             )}
 
@@ -213,6 +232,14 @@ const Routing = () => {
                         path="assignreviewer/:id"
                         element={<AssignReviewer />}
                       />
+                      {checkAccess(
+                        permissions["/handout/dcaconvenor/finalDecision"]
+                      ) && (
+                        <Route
+                          path="dcaconvenor/review/:id"
+                          element={<DCAConvenorReview />}
+                        />
+                      )}
                     </>
                   )}
               </Route>
