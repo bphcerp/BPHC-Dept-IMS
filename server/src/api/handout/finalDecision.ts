@@ -35,7 +35,7 @@ router.post(
                 .where(eq(courseHandoutRequests.id, Number(parsed.id)))
                 .returning();
 
-            if (!result.length) {
+            if (!result.length || !handout) {
                 return next(
                     new HttpError(HttpCode.NOT_FOUND, "Handout Not Found")
                 );
@@ -43,11 +43,11 @@ router.post(
             if (parsed.status === "rejected") {
                 try {
                     await db.insert(courseHandoutRequests).values({
-                        courseCode: handout?.courseCode,
-                        courseName: handout?.courseName,
-                        icEmail: handout?.icEmail,
-                        reviewerEmail: handout?.reviewerEmail,
-                        category: handout?.category,
+                        courseCode: handout.courseCode,
+                        courseName: handout.courseName,
+                        icEmail: handout.icEmail,
+                        reviewerEmail: handout.reviewerEmail,
+                        category: handout.category,
                         previousSubmissionId: Number(parsed.id),
                         submittedOn: new Date(),
                     });
