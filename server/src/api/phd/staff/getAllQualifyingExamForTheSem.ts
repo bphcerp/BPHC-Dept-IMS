@@ -19,6 +19,7 @@ export default router.get(
         deadline: phdQualifyingExams.deadline,
         examStartDate: phdQualifyingExams.examStartDate,
         examEndDate: phdQualifyingExams.examEndDate,
+        vivaDate: phdQualifyingExams.vivaDate,
         createdAt: phdQualifyingExams.createdAt,
         semesterId: phdQualifyingExams.semesterId,
         semesterYear: phdSemesters.year,

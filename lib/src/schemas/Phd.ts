@@ -40,7 +40,8 @@ export const updateQualifyingExamSchema = z.object({
     examName: z.string().min(1),
     examStartDate: z.string().datetime(),
     examEndDate: z.string().datetime(),
-    deadline: z.string().datetime()
+    deadline: z.string().datetime(),
+    viva: z.string().datetime(),
 });
 
 export type UpdateQualifyingExamBody = z.infer<typeof updateQualifyingExamSchema>;

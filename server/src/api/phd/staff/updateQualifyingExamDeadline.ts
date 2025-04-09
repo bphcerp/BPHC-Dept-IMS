@@ -14,7 +14,7 @@ export default router.post(
     checkAccess(),
     asyncHandler(async (req, res) => {
         const parsed = phdSchemas.updateQualifyingExamSchema.parse(req.body);
-        const { semesterId, examName, examStartDate, examEndDate, deadline } = parsed;
+        const { semesterId, examName, examStartDate, examEndDate, deadline, viva } = parsed;
 
         const semester = await db
             .select()
@@ -51,6 +51,7 @@ export default router.post(
             const deadlineDate = new Date(deadline);
             const startDate = new Date(examStartDate);
             const endDate = new Date(examEndDate);
+            const vivaDate = new Date(viva)
         
             if (deadlineDate >= startDate) {
               throw new HttpError(
@@ -65,6 +66,12 @@ export default router.post(
                 "Exam start date must be before exam end date"
               );
             }
+            if (endDate >= vivaDate) {
+              throw new HttpError(
+                HttpCode.BAD_REQUEST, 
+                "Viva date must be after exam end date"
+              );
+            }
         
         const newExam = await db
             .insert(phdQualifyingExams)
@@ -74,6 +81,7 @@ export default router.post(
                 examStartDate: startDate,
                 examEndDate: endDate,
                 deadline: deadlineDate,
+                vivaDate: vivaDate,
             })
             .returning();
 
