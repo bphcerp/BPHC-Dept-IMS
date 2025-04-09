@@ -11,6 +11,12 @@ router.get(
     asyncHandler(async (_req, res, _next) => {
         const faculties = (
             await db.query.users.findMany({
+                where(cols, { and, eq }) {
+                    return and(
+                        eq(cols.type, "faculty"),
+                        eq(cols.deactivated, false)
+                    );
+                },
                 with: {
                     faculty: true,
                 },
@@ -20,7 +26,7 @@ router.get(
                 name: faculty.faculty.name,
                 email: faculty.email,
                 deactivated: faculty.deactivated,
-            }
+            };
         });
 
         res.status(200).json({ success: true, faculties });

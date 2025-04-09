@@ -26,7 +26,7 @@ router.get(
         ).map((handout) => {
             return {
                 ...handout,
-                reviewerName: handout.reviewer?.faculty.name,
+                reviewerName: handout.reviewer?.faculty?.name ?? "N/A",
             };
         });
 

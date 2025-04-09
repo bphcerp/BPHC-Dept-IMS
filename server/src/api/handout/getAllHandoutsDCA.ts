@@ -25,7 +25,7 @@ router.get(
         ).map((handout) => {
             return {
                 ...handout,
-                professorName: handout.ic.faculty.name,
+                professorName: handout.ic?.faculty?.name ?? "N/A",
             };
         });
         res.status(200).json({ success: true, handouts });

@@ -20,8 +20,9 @@ router.get(
             },
             where: (users) => {
                 return and(
-                    arrayContains(users.roles, [dcaRoleId || -1]),
-                    eq(users.deactivated, false)
+                    arrayContains(users.roles, [dcaRoleId ?? -1]),
+                    eq(users.deactivated, false),
+                    eq(users.type, "faculty")
                 );
             },
         });

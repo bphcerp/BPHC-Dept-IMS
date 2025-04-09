@@ -16,7 +16,7 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = handoutSchemas.deadlineBodySchema.parse({
-            time: new Date(req.body.time),
+            time: new Date((req.body as { time: string }).time),
         });
         const handouts = await db
             .update(courseHandoutRequests)
@@ -40,7 +40,7 @@ router.post(
                         from: env.BPHCERP_EMAIL,
                         to: handout.icEmail,
                         subject: "Handout Reminder",
-                        text: `You have to submit the handout file for ${handout.courseCode} by ${handout.deadline}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                        text: `You have to submit the handout file for ${handout.courseCode} by ${handout.deadline?.toLocaleString() ?? "(unspecified)"}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
                     });
                 } catch (e) {
                     next(
