@@ -28,7 +28,7 @@ router.get(
         });
         const dca = dcaMembers.map((member) => {
             return {
-                name: member.faculty.name,
+                name: member.faculty?.name ?? "N/A",
                 email: member.email,
                 deactivated: member.deactivated,
             };

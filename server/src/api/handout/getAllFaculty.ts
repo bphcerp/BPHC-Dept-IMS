@@ -23,7 +23,7 @@ router.get(
             })
         ).map((faculty) => {
             return {
-                name: faculty.faculty.name,
+                name: faculty.faculty?.name ?? "N/A",
                 email: faculty.email,
                 deactivated: faculty.deactivated,
             };
