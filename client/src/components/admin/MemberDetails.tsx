@@ -47,6 +47,7 @@ const editableFields = [
   "mobile",
   "personalEmail",
   "notionalSupervisorEmail",
+  "supervisorEmail",
 ] as const;
 
 export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
@@ -220,7 +221,11 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                                 .toUpperCase()}
                             </FormLabel>
                             <FormControl>
-                              <Input {...field} className="col-span-3" />
+                              <Input
+                                {...field}
+                                value={field.value ?? ""}
+                                className="col-span-3"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

@@ -98,8 +98,16 @@ export const editDetailsBodySchema = z.intersection(
     z.discriminatedUnion("type", [
         z.object({
             type: z.literal(userTypes[0]), // Faculty
-            designation: z.string().trim().array().optional(),
-            room: z.string().trim().optional(),
+            designation: z
+                .string()
+                .trim()
+                .nullish()
+                .transform((val) => (val?.length ? val : null)),
+            room: z
+                .string()
+                .trim()
+                .nullish()
+                .transform((val) => (val?.length ? val : null)),
             psrn: z.string().trim().nonempty().optional(),
         }),
         z.object({
@@ -114,7 +122,11 @@ export const editDetailsBodySchema = z.intersection(
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
-            designation: z.string().trim().array().optional(),
+            designation: z
+                .string()
+                .trim()
+                .nullish()
+                .transform((val) => (val?.length ? val : null)),
         }),
     ])
 );
@@ -128,7 +140,7 @@ export interface MemberDetailsResponse {
     deactivated: boolean;
     psrn?: string | null;
     department?: string | null;
-    designation?: string[] | null;
+    designation?: string | null;
     room?: string | null;
     phone?: string | null;
     idNumber?: string | null;
@@ -136,4 +148,6 @@ export interface MemberDetailsResponse {
     instituteEmail?: string | null;
     mobile?: string | null;
     personalEmail?: string | null;
+    notionalSupervisorEmail?: string | null;
+    supervisorEmail?: string | null;
 }
