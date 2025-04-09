@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -34,16 +33,20 @@ export interface SupervisedStudentsResponse {
 }
 
 // Extended Student interface with proposal documents
-interface StudentWithProposalDocuments extends Omit<Student, "proposalDocuments"> {
+interface StudentWithProposalDocuments
+  extends Omit<Student, "proposalDocuments"> {
   proposalDocuments: ProposalDocument[];
 }
 
 const SupervisedStudents: React.FC = () => {
-  const [selectedStudent, setSelectedStudent] = useState<StudentWithProposalDocuments | null>(null);
+  const [selectedStudent, setSelectedStudent] =
+    useState<StudentWithProposalDocuments | null>(null);
   const [showDacSuggestion, setShowDacSuggestion] = useState(false);
   const [showProposalDocuments, setShowProposalDocuments] = useState(false);
   const [showProposalReview, setShowProposalReview] = useState(false);
-  const [selectedDocumentBatch, setSelectedDocumentBatch] = useState<ProposalDocument[] | null>(null);
+  const [selectedDocumentBatch, setSelectedDocumentBatch] = useState<
+    ProposalDocument[] | null
+  >(null);
 
   const { data, isLoading, refetch } = useQuery<SupervisedStudentsResponse>({
     queryKey: ["phd-supervised-students"] as const,
@@ -51,17 +54,17 @@ const SupervisedStudents: React.FC = () => {
       const response = await api.get<SupervisedStudentsResponse>(
         "/phd/supervisor/getSupervisedStudents"
       );
-      
+
       // Ensure proper typing and handling of proposal documents
       return {
         ...response.data,
         students: response.data.students.map((student) => ({
           ...student,
-          proposalDocuments: Array.isArray(student.proposalDocuments) 
-            ? student.proposalDocuments.flatMap((doc) => 
+          proposalDocuments: Array.isArray(student.proposalDocuments)
+            ? student.proposalDocuments.flatMap((doc) =>
                 Array.isArray(doc) ? doc : [doc]
               )
-            : []
+            : [],
         })),
       };
     },
@@ -88,9 +91,11 @@ const SupervisedStudents: React.FC = () => {
       const timestamp = new Date(doc.uploadedAt).getTime();
 
       // Find an existing group within 1 minute
-      const existingGroupIndex = groups.findIndex((group) => 
-        group.some((existingDoc) => 
-          Math.abs(new Date(existingDoc.uploadedAt).getTime() - timestamp) <= 1 * 60 * 1000
+      const existingGroupIndex = groups.findIndex((group) =>
+        group.some(
+          (existingDoc) =>
+            Math.abs(new Date(existingDoc.uploadedAt).getTime() - timestamp) <=
+            1 * 60 * 1000
         )
       );
 
@@ -142,13 +147,39 @@ const SupervisedStudents: React.FC = () => {
     void refetch();
   };
 
+ 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <LoadingSpinner className="h-8 w-8" />
-      </div>
-    );
-  }
+  return (
+    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+      <Card className="mx-auto w-full max-w-4xl">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-bold">
+            Supervised Students
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-1/3">Name</TableHead>
+                <TableHead className="w-1/3">Email</TableHead>
+                <TableHead className="w-1/6">Proposal Documents</TableHead>
+                <TableHead className="w-1/6">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+              <TableCell colSpan={4} className="py-4 text-center">
+          No students under your supervision yet.
+        </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
@@ -172,7 +203,9 @@ const SupervisedStudents: React.FC = () => {
               {data?.students && data.students.length > 0 ? (
                 data.students.map((student) => {
                   // Group documents for this student
-                  const documentGroups = groupProposalDocuments(student.proposalDocuments);
+                  const documentGroups = groupProposalDocuments(
+                    student.proposalDocuments
+                  );
 
                   return (
                     <TableRow key={student.email}>
@@ -239,7 +272,8 @@ const SupervisedStudents: React.FC = () => {
           student={convertToStudent(selectedStudent)}
           documentBatch={{
             documents: selectedDocumentBatch,
-            uploadedAt: selectedDocumentBatch[0]?.uploadedAt || new Date().toISOString(),
+            uploadedAt:
+              selectedDocumentBatch[0]?.uploadedAt || new Date().toISOString(),
           }}
           onClose={handleCloseDetails}
           onReview={() => {

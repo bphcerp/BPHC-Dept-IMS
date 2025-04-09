@@ -38,6 +38,7 @@ export const phdQualifyingExams = pgTable("phd_qualifying_exams", {
     examName: text("exam_name").notNull(),
     examStartDate: timestamp("exam_start_date").default(sql`NULL`),
     examEndDate: timestamp("exam_end_date").default(sql`NULL`),
+    vivaDate: timestamp("viva_date").default(sql`NULL`),
     deadline: timestamp("deadline").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });

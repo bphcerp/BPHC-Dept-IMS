@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
+
 import { AxiosError } from "axios";
 
 interface Exam {
@@ -42,19 +43,21 @@ interface AxiosErrorResponse {
 
 const FormDeadline: React.FC = () => {
   // Fetch exam deadlines
-  const { 
-    data: examData, 
-    isLoading: isExamLoading, 
-    isError: isExamError 
-  } = useQuery<BackendResponse, Error>({
+  const { data: examData, isLoading: isExamLoading } = useQuery<
+    BackendResponse,
+    Error
+  >({
     queryKey: ["get-qualifying-exam-deadline"],
     queryFn: async () => {
       try {
-        const response = await api.get<BackendResponse>("/phd/student/getQualifyingExamDeadLine", {
-          params: {
-            name: "Regular Qualifying Exam",
+        const response = await api.get<BackendResponse>(
+          "/phd/student/getQualifyingExamDeadLine",
+          {
+            params: {
+              name: "Regular Qualifying Exam",
+            },
           }
-        });
+        );
         return response.data;
       } catch (err) {
         console.error("Error fetching exam deadline:", err);
@@ -66,15 +69,17 @@ const FormDeadline: React.FC = () => {
   });
 
   // Fetch grade status
-  const { 
-    data: gradeStatusData, 
+  const {
+    data: gradeStatusData,
     isLoading: isGradeStatusLoading,
-    error: gradeStatusError
+    error: gradeStatusError,
   } = useQuery<GradeStatusResponse, Error>({
     queryKey: ["get-grade-status"],
     queryFn: async () => {
       try {
-        const response = await api.get<GradeStatusResponse>("/phd/student/getGradeStatus");
+        const response = await api.get<GradeStatusResponse>(
+          "/phd/student/getGradeStatus"
+        );
         return response.data;
       } catch (error) {
         const axiosError = error as AxiosError<unknown, AxiosErrorResponse>;
@@ -84,7 +89,7 @@ const FormDeadline: React.FC = () => {
             allCoursesGraded: false,
             totalCourses: 0,
             gradedCourses: 0,
-            noCourseFound: true
+            noCourseFound: true,
           };
         }
         throw error;
@@ -94,28 +99,32 @@ const FormDeadline: React.FC = () => {
   });
 
   // Fetch QE application number
-  const { 
-    data: qeApplicationData, 
+  const {
+    data: qeApplicationData,
     isLoading: isQeApplicationLoading,
-    error: qeApplicationError
+    error: qeApplicationError,
   } = useQuery<QeApplicationResponse, Error>({
     queryKey: ["get-qe-application-number"],
     queryFn: async () => {
-      const response = await api.get<QeApplicationResponse>("/phd/student/getNoOfQeApplication");
+      const response = await api.get<QeApplicationResponse>(
+        "/phd/student/getNoOfQeApplication"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
   });
 
   // Fetch qualifying exam status
-  const { 
-    data: qualifyingExamStatusData, 
+  const {
+    data: qualifyingExamStatusData,
     isLoading: isQualifyingExamStatusLoading,
-    error: qualifyingExamStatusError
+    error: qualifyingExamStatusError,
   } = useQuery<QualifyingExamStatusResponse, Error>({
     queryKey: ["get-qualifying-exam-status"],
     queryFn: async () => {
-      const response = await api.get<QualifyingExamStatusResponse>("/phd/student/getQualifyingExamStatus");
+      const response = await api.get<QualifyingExamStatusResponse>(
+        "/phd/student/getQualifyingExamStatus"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -123,45 +132,45 @@ const FormDeadline: React.FC = () => {
 
   // Debug logging
   useEffect(() => {
-    console.log('Debug - Grade Status:', {
+    console.log("Debug - Grade Status:", {
       allCoursesGraded: gradeStatusData?.allCoursesGraded,
       totalCourses: gradeStatusData?.totalCourses,
       gradedCourses: gradeStatusData?.gradedCourses,
-      gradeStatusError: gradeStatusError
+      gradeStatusError: gradeStatusError,
     });
 
-    console.log('Debug - QE Application:', {
+    console.log("Debug - QE Application:", {
       nextQeApplicationNumber: qeApplicationData?.nextQeApplicationNumber,
-      qeApplicationError: qeApplicationError
+      qeApplicationError: qeApplicationError,
     });
 
-    console.log('Debug - Qualifying Exam Status:', {
+    console.log("Debug - Qualifying Exam Status:", {
       status: qualifyingExamStatusData?.status,
-      qualifyingExamStatusError: qualifyingExamStatusError
+      qualifyingExamStatusError: qualifyingExamStatusError,
     });
   }, [
-    gradeStatusData, 
-    qeApplicationData, 
+    gradeStatusData,
+    qeApplicationData,
     qualifyingExamStatusData,
     gradeStatusError,
     qeApplicationError,
-    qualifyingExamStatusError
+    qualifyingExamStatusError,
   ]);
 
   // Determine if exam form should be shown with detailed logging
   const shouldShowExamForm = (() => {
     const gradeCheck = gradeStatusData?.allCoursesGraded === true;
-    const qeApplicationCheck = 
-      qeApplicationData?.nextQeApplicationNumber === 1 || 
+    const qeApplicationCheck =
+      qeApplicationData?.nextQeApplicationNumber === 1 ||
       qeApplicationData?.nextQeApplicationNumber === 2;
-    const qualifyingExamStatusCheck = 
-      qualifyingExamStatusData?.status === 'fail' || 
-      qualifyingExamStatusData?.status === 'pending';
+    const qualifyingExamStatusCheck =
+      qualifyingExamStatusData?.status === "fail" ||
+      qualifyingExamStatusData?.status === "pending";
 
-    console.log('Debug - Exam Form Conditions:', {
+    console.log("Debug - Exam Form Conditions:", {
       gradeCheck,
       qeApplicationCheck,
-      qualifyingExamStatusCheck
+      qualifyingExamStatusCheck,
     });
 
     return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
@@ -169,51 +178,27 @@ const FormDeadline: React.FC = () => {
 
   // Loading state
   if (
-    isExamLoading || 
-    isGradeStatusLoading || 
-    isQeApplicationLoading || 
+    isExamLoading ||
+    isGradeStatusLoading ||
+    isQeApplicationLoading ||
     isQualifyingExamStatusLoading
   ) {
     return (
-      <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <p>Loading... Please wait</p>
-        </div>
-      </main>
-    );
-  }
-
-  // Error handling for specific queries
-  const errorMessages = [
-    gradeStatusError && "Grade Status Error: " + gradeStatusError.message,
-    qeApplicationError && "QE Application Error: " + qeApplicationError.message,
-    qualifyingExamStatusError && "Qualifying Exam Status Error: " + qualifyingExamStatusError.message
-  ].filter(Boolean);
-
-  if (errorMessages.length > 0) {
-    return (
-      <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-red-100 p-6 shadow">
-          {errorMessages.map((message, index) => (
-            <p key={index} className="text-center text-red-600 mb-2">
-              {message}
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
+            Qualifying Exam Registration
+          </h1>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">
+              There are currently no active qualifying exam deadlines.
             </p>
-          ))}
+            <p className="mt-2 text-center text-gray-500">
+              Registration will open when the next exam deadline is announced.
+            </p>
+          </div>
         </div>
-      </main>
-    );
-  }
-
-  // Error handling for original exam error
-  if (isExamError) {
-    return (
-      <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-red-100 p-6 shadow">
-          <p className="text-center text-red-600">
-            Failed to load exam deadline. Please try again later.
-          </p>
-        </div>
-      </main>
+      </div>
     );
   }
 
@@ -222,53 +207,61 @@ const FormDeadline: React.FC = () => {
       <h1 className="mb-8 text-center text-3xl font-bold">
         Qualifying Exam Registration
       </h1>
-      
+
       <div className="flex flex-col gap-8">
         {examData?.exams && examData.exams.length > 0 ? (
           <>
             <div className="overflow-hidden rounded-lg bg-white shadow">
-              <ExamDateDisplay 
-                examDate={examData.exams[0].deadline} 
-                title={`Registration Deadline: ${examData.exams[0].examName}`} 
+              <ExamDateDisplay
+                examDate={examData.exams[0].deadline}
+                title={`Registration Deadline: ${examData.exams[0].examName}`}
               />
             </div>
 
-            {gradeStatusData && 'noCourseFound' in gradeStatusData && (
+            {gradeStatusData && "noCourseFound" in gradeStatusData && (
               <div className="rounded-lg bg-yellow-100 p-6 shadow">
                 <p className="text-center text-lg text-yellow-800">
-                  Your notional supervisor has not added any courses for you yet.
+                  Your notional supervisor has not added any courses for you
+                  yet.
                 </p>
                 <p className="mt-2 text-center text-yellow-600">
-                  Please contact your supervisor to update your course information.
+                  Please contact your supervisor to update your course
+                  information.
                 </p>
               </div>
             )}
             {shouldShowExamForm ? (
               <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
-                <h2 className="mb-4 text-xl font-semibold">Exam Registration</h2>
+                <h2 className="mb-4 text-xl font-semibold">
+                  Exam Registration
+                </h2>
                 <p className="mb-6">
-                  Please complete the registration form below before the deadline.
+                  Please complete the registration form below before the
+                  deadline.
                   <ExamForm />
                 </p>
               </div>
             ) : (
               <div className="rounded-lg bg-white p-6 shadow">
                 <p className="text-center text-lg">
-                  You are not eligible to register for the Qualifying Exam at this time.
+                  You are not eligible to register for the Qualifying Exam at
+                  this time.
                 </p>
-                <div className="mt-2 text-center text-gray-500 space-y-2">
+                <div className="mt-2 space-y-2 text-center text-gray-500">
                   <h3 className="font-semibold">Detailed Eligibility Check:</h3>
                   <div>
-                    Courses Graded: {gradeStatusData?.allCoursesGraded ? '✓' : '✗'}
+                    Courses Graded:{" "}
+                    {gradeStatusData?.allCoursesGraded ? "✓" : "✗"}
                     {!gradeStatusData?.allCoursesGraded && (
                       <p className="text-red-500">
-                        Total Courses: {gradeStatusData?.totalCourses}, 
-                        Graded Courses: {gradeStatusData?.gradedCourses}
+                        Total Courses: {gradeStatusData?.totalCourses}, Graded
+                        Courses: {gradeStatusData?.gradedCourses}
                       </p>
                     )}
                   </div>
                   <div>
-                    QE Application Number: {qeApplicationData?.nextQeApplicationNumber}
+                    QE Application Number:{" "}
+                    {qeApplicationData?.nextQeApplicationNumber}
                     {qeApplicationData?.nextQeApplicationNumber === 3 && (
                       <p className="text-red-500">Maximum attempts reached</p>
                     )}
@@ -281,14 +274,7 @@ const FormDeadline: React.FC = () => {
             )}
           </>
         ) : (
-          <div className="rounded-lg bg-white p-6 shadow">
-            <p className="text-center text-lg">
-              There are currently no active qualifying exam deadlines.
-            </p>
-            <p className="mt-2 text-center text-gray-500">
-              Registration will open when the next exam deadline is announced.
-            </p>
-          </div>
+          <div></div>
         )}
       </div>
     </main>
