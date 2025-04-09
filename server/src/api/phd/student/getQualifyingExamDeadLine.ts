@@ -31,6 +31,7 @@ router.get(
         semesterNumber: phdSemesters.semesterNumber,
         examStartDate: phdQualifyingExams.examStartDate,
         examEndDate: phdQualifyingExams.examEndDate,
+        vivaDate: phdQualifyingExams.vivaDate,
       })
       .from(phdQualifyingExams)
       .innerJoin(

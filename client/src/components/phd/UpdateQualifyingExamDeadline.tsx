@@ -24,6 +24,7 @@ interface QualifyingExam {
   deadline: string;
   examStartDate?: string;
   examEndDate?: string;
+  vivaDate?: string;
   createdAt: string;
   semesterYear?: string;
   semesterNumber?: string;
@@ -36,6 +37,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     deadline: "",
     examStartDate: "",
     examEndDate: "",
+    viva: "", 
   });
 
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
@@ -45,7 +47,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         const response = await api.get<{
           success: boolean;
           semester: Semester;
-          isActive: boolean;
+          isActive: String;
         }>("/phd/staff/getCurrentSemester");
         return response.data;
       },
@@ -88,6 +90,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         deadline: "",
         examStartDate: "",
         examEndDate: "",
+        viva: "", 
       });
     },
     onError: (error) => {
@@ -102,16 +105,15 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!currentSemesterId) {
       toast.error("No active semester found");
       return;
     }
-
     if (
       !examForm.deadline ||
       !examForm.examStartDate ||
-      !examForm.examEndDate
+      !examForm.examEndDate ||
+      !examForm.viva 
     ) {
       toast.error("Please provide all dates");
       return;
@@ -120,14 +122,18 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     const deadlineDate = new Date(examForm.deadline);
     const startDate = new Date(examForm.examStartDate);
     const endDate = new Date(examForm.examEndDate);
+    const vivaDate = new Date(examForm.viva); 
 
     if (deadlineDate >= startDate) {
       toast.error("Registration deadline must be before exam start date");
       return;
     }
-
     if (startDate >= endDate) {
       toast.error("Exam start date must be before exam end date");
+      return;
+    }
+    if (endDate >= vivaDate) {
+      toast.error("Viva date must be after exam end date");
       return;
     }
 
@@ -136,13 +142,14 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       deadline: deadlineDate.toISOString(),
       examStartDate: startDate.toISOString(),
       examEndDate: endDate.toISOString(),
+      viva: vivaDate.toISOString(), 
       semesterId: currentSemesterId,
     };
 
     examMutation.mutate(formattedData);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: any) => {
     return new Date(dateString).toLocaleString("en-US", {
       weekday: "short",
       month: "short",
@@ -162,14 +169,13 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
             Qualifying Exam Deadline Management
           </h1>
         </div>
-
         {isLoadingCurrentSemester ? (
           <div className="flex h-64 items-center justify-center">
             <LoadingSpinner className="h-12 w-12" />
           </div>
         ) : currentSemesterData?.semester ? (
           <div className="grid gap-6 p-6 md:grid-cols-2">
-            {/* Semester Information */}
+            {}
             <div className="space-y-4 rounded-lg bg-gray-50 p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold">
@@ -200,8 +206,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Exam Deadline Form */}
+            {}
             <div>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -247,6 +252,18 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     required
                   />
                 </div>
+                <div>
+                  <Label htmlFor="viva">Viva Date</Label>
+                  <Input
+                    id="viva" 
+                    type="datetime-local"
+                    value={examForm.viva} 
+                    onChange={(e) =>
+                      setExamForm({ ...examForm, viva: e.target.value })
+                    }
+                    required
+                  />
+                </div>
                 <Button
                   type="submit"
                   disabled={examMutation.isLoading || !isActiveSemester}
@@ -275,8 +292,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
             </p>
           </div>
         )}
-
-        {/* Existing Exams Table */}
+        {}
         <div className="border-t border-gray-200 bg-gray-50 p-6">
           <h3 className="mb-4 text-lg font-medium">
             Current Qualifying Exam Deadlines
@@ -296,6 +312,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     </th>
                     <th className="border px-4 py-2 text-left">Exam Start</th>
                     <th className="border px-4 py-2 text-left">Exam End</th>
+                    <th className="border px-4 py-2 text-left">Viva Date</th>
                     <th className="border px-4 py-2 text-left">Status</th>
                   </tr>
                 </thead>
@@ -317,6 +334,11 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                         <td className="border px-4 py-2">
                           {exam.examEndDate
                             ? formatDate(exam.examEndDate)
+                            : "N/A"}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {exam.vivaDate
+                            ? formatDate(exam.vivaDate)
                             : "N/A"}
                         </td>
                         <td className="border px-4 py-2">

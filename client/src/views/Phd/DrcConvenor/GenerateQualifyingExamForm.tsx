@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -283,7 +282,23 @@ const GenerateQualifyingExamForm: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner className="mx-auto mt-10" />;
+    return (
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
+            Generating Qualifying Exam Form
+          </h1>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">
+              There are currently no students to generate form.
+            </p>
+            <p className="mt-2 text-center text-gray-500">
+              Wait till students are added
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

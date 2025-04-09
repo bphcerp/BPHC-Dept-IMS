@@ -1,6 +1,7 @@
 import { ExamStatusList } from "@/components/phd/ExamStatusList";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
 import ProposalSubmissionForm from "@/components/phd/ProposalSubmissionForm";
+import { LoadingSpinner } from "@/components/ui/spinner";
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
 
@@ -86,25 +87,42 @@ export default function CombinedExamAndProposalPage() {
     enabled: examData?.status === "pass",
   });
 
-  // Determine if proposal submission form should be shown
   const showProposalSubmissionForm =
     examData?.status === "pass" && proposalStatus?.showProposal;
-
-  // Get proposal status and comment
   const proposalStatusValue = proposalStatus?.documents.proposal[0]?.status;
-  console.log(proposalStatusValue);
   const proposalComment = proposalStatus?.documents.proposal[0]?.comment || "";
 
+  if (
+    isLoadingExamStatus ||
+    isLoadingProposalDeadline ||
+    isLoadingPassingDate
+  ) {
+    return (
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
+            PhD Proposal Submission
+          </h1>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">
+              You are not eligible to submit your proposal yet
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-center text-3xl font-bold">
+    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
           PhD Qualifying Exam Status
         </h1>
 
-        <div className="mb-10 rounded-lg bg-white p-6 shadow-md">
+        <div className="mb-8 overflow-hidden rounded-lg bg-white p-6 shadow">
           {isLoadingExamStatus ? (
-            <div className="text-center">Loading your exam status...</div>
+            <LoadingSpinner className="mx-auto" />
           ) : examError ? (
             <div className="rounded-md bg-red-50 p-4 text-red-700">
               An error occurred while retrieving your exam status. Please try
@@ -119,20 +137,18 @@ export default function CombinedExamAndProposalPage() {
               Your qualifying exam results have not been finalized yet.
             </div>
           ) : (
-            <>
-              <ExamStatusList
-                status={examData.status === "pass" ? "Pass" : "Fail"}
-              />
-            </>
+            <ExamStatusList
+              status={examData.status === "pass" ? "Pass" : "Fail"}
+            />
           )}
         </div>
 
         {examData?.success && examData.status === "pass" && (
-          <div className="rounded-lg bg-white p-6 shadow-md">
-            <h2 className="mb-6 text-2xl font-semibold">Proposal Submission</h2>
-            <div className="flex flex-col gap-8">
+          <div className="mb-8 overflow-hidden rounded-lg bg-white p-6 shadow">
+            <h2 className="mb-6 text-xl font-semibold">Proposal Submission</h2>
+            <div className="flex flex-col gap-6">
               {isLoadingProposalDeadline ? (
-                <p>Loading deadline information...</p>
+                <LoadingSpinner className="mx-auto" />
               ) : proposalDeadline?.deadline ? (
                 <ExamDateDisplay
                   examDate={proposalDeadline.deadline}
@@ -145,7 +161,7 @@ export default function CombinedExamAndProposalPage() {
               )}
 
               {isLoadingPassingDate ? (
-                <p>Loading qualifying exam passing date...</p>
+                <LoadingSpinner className="mx-auto" />
               ) : passingDate?.qualificationDate ? (
                 <ExamDateDisplay
                   examDate={passingDate.qualificationDate}
@@ -157,15 +173,18 @@ export default function CombinedExamAndProposalPage() {
                 </div>
               )}
 
-              {/* Show submission form based on new logic */}
-              {showProposalSubmissionForm && <ProposalSubmissionForm />}
+              {showProposalSubmissionForm && (
+                <div className="mt-4">
+                  <ProposalSubmissionForm />
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {proposalStatusValue === "approved" && (
-          <div className="rounded-lg bg-white p-6 text-center shadow-md">
-            <h2 className="text-2xl font-semibold text-green-600">
+          <div className="overflow-hidden rounded-lg bg-white p-6 text-center shadow">
+            <h2 className="text-xl font-semibold text-green-600">
               Proposal Approved
             </h2>
             {proposalComment && (
@@ -175,19 +194,21 @@ export default function CombinedExamAndProposalPage() {
         )}
 
         {proposalStatusValue === "rejected" && showProposalSubmissionForm && (
-          <div className="rounded-lg bg-white p-6 text-center shadow-md">
-            <h2 className="text-2xl font-semibold text-red-600">
+          <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
+            <h2 className="text-center text-xl font-semibold text-red-600">
               Proposal Rejected
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-center text-gray-600">
               Your previous proposal was rejected. Please resubmit.
             </p>
             {proposalComment && (
-              <p className="mt-2 text-gray-600">Feedback: {proposalComment}</p>
+              <p className="mt-2 text-center text-gray-600">
+                Feedback: {proposalComment}
+              </p>
             )}
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

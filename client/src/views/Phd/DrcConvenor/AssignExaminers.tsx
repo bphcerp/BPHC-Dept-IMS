@@ -223,7 +223,21 @@ const AssignExaminers: React.FC = () => {
   };
 
   if (loadingSupervisors || loadingSubAreas) {
-    return <LoadingSpinner className="mx-auto mt-10" />;
+    return (
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
+            DRC Examiner Mangement
+          </h1>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">
+            No supervisors with PhD students found
+            </p>
+            
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
