@@ -21,13 +21,15 @@ router.get(
                     faculty: true,
                 },
             })
-        ).map((faculty) => {
-            return {
-                name: faculty.faculty?.name ?? "N/A",
-                email: faculty.email,
-                deactivated: faculty.deactivated,
-            };
-        });
+        )
+            .filter((faculty) => faculty.faculty)
+            .map((faculty) => {
+                return {
+                    name: faculty.faculty.name,
+                    email: faculty.email,
+                    deactivated: faculty.deactivated,
+                };
+            });
 
         res.status(200).json({ success: true, faculties });
     })

@@ -26,13 +26,15 @@ router.get(
                 );
             },
         });
-        const dca = dcaMembers.map((member) => {
-            return {
-                name: member.faculty?.name ?? "N/A",
-                email: member.email,
-                deactivated: member.deactivated,
-            };
-        });
+        const dca = dcaMembers
+            .filter((member) => member.faculty)
+            .map((member) => {
+                return {
+                    name: member.faculty.name,
+                    email: member.email,
+                    deactivated: member.deactivated,
+                };
+            });
         res.status(200).json({ success: true, dca });
     })
 );
