@@ -1,0 +1,1 @@
+ALTER TABLE "phd_qualifying_exams" ADD COLUMN "viva_date" timestamp DEFAULT NULL;
