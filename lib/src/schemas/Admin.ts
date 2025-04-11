@@ -139,6 +139,7 @@ export interface MemberDetailsResponse {
     name: string | null;
     roles: string[];
     deactivated: boolean;
+    authorId?: string | null;
     psrn?: string | null;
     department?: string | null;
     designation?: string | null;

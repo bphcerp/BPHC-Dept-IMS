@@ -48,7 +48,6 @@ const editableFields = [
   "mobile",
   "personalEmail",
   "notionalSupervisorEmail",
-  "supervisorEmail",
 ] as const;
 
 export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
