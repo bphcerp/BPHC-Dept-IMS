@@ -10,18 +10,9 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("*"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
-        const userEmail = req.user?.email;
-
-        if (!userEmail) {
-            return next(
-                new HttpError(
-                    HttpCode.UNAUTHORIZED,
-                    "User email not found in request"
-                )
-            );
-        }
+        const userEmail = req.user!.email;
 
         const result = await db
             .select({
@@ -34,7 +25,7 @@ router.get(
             return next(
                 new HttpError(
                     HttpCode.NOT_FOUND,
-                    "Author ID not found for this user"
+                    "No Author ID found for this user."
                 )
             );
         }

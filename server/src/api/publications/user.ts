@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("*"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const parsed = publicationsSchemas.publicationQuerySchema.parse(
             req.query
