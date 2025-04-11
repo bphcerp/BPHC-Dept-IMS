@@ -21,18 +21,15 @@ import CreateRequestDialog, { Course } from "@/components/qp_review/CreateReques
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 
-const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-const [currentCourse, setCurrentCourse ] = useState<Course | null>(null);
 
-const handleEditRequest = (course: Course) => {
-  setCurrentCourse(course);
-  setIsEditDialogOpen(true);
-};
+
 const DCARequestsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("pending");
   const [courses, setCourses] = useState<Course[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentCourse, setCurrentCourse ] = useState<Course | null>(null);
 
   const statusColors: Record<string, string> = {
     pending: "bg-orange-400",
@@ -81,6 +78,10 @@ const DCARequestsView = () => {
   const handleAddRequest = (newRequest: Course) => {
     setCourses([...courses, newRequest]);
     setIsDialogOpen(false);
+  };
+  const handleEditRequest = (course: Course) => {
+    setCurrentCourse(course);
+    setIsEditDialogOpen(true);
   };
 
   const email = encodeURIComponent("dca@email.com");
