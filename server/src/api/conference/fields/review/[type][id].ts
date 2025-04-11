@@ -151,7 +151,12 @@ router.post(
         }
 
         await db.insert(fieldStatus).values(value);
-        if (status && (await areAllFieldsApprovedForApplication(application))) {
+        if (
+            status &&
+            (await areAllFieldsApprovedForApplication(
+                await getApplicationById(applId)
+            ))
+        ) {
             await db
                 .update(conferenceApprovalApplications)
                 .set({
