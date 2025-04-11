@@ -41,6 +41,7 @@ const editableFields = [
   "designation",
   "room",
   "psrn",
+  "authorId",
   "idNumber",
   "erpId",
   "instituteEmail",

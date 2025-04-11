@@ -12,7 +12,7 @@ import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
 import { allPermissions, permissions } from "lib";
-import { Computer, FileText, GraduationCap, BookOpen } from "lucide-react";
+import { Computer, FileText, GraduationCap, BookOpen, LibraryBig } from "lucide-react";
 import {
   BrowserRouter,
   Navigate,
@@ -49,6 +49,8 @@ import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
 import ConferenceViewApplicationView from "@/views/Conference/View/[id]";
 import ConferencePendingApplicationsView from "@/views/Conference/Pending";
 import ConferenceEditView from "@/views/Conference/Submitted/[id]";
+import PublicationsLayout from "@/layouts/Publications";
+import YourPublications from "@/views/Publications/YourPublications";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -69,6 +71,8 @@ const qpReviewModulePermissions: string[] = [];
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
 );
+
+const publicationsPermissions: string[] = [];
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -104,6 +108,12 @@ const Routing = () => {
       url: "/handout/faculty",
       requiredPermissions: courseHandoutsPermissions,
     },
+    {
+      title: "Publications",
+      icon: <LibraryBig />,
+      url: "/publications",
+      requiredPermissions: publicationsPermissions,
+    }
   ];
 
   return (
@@ -354,6 +364,18 @@ const Routing = () => {
             )}
           </>
         )}
+
+        {checkAccessAnyOne(publicationsPermissions) && (
+              <Route path="/publications" element={<PublicationsLayout />}>
+                <Route
+                  index
+                  element={
+                    <Navigate to="/publications/your-publications" replace={true} />
+                  }
+                />
+                <Route path="your-publications" element={<YourPublications />} />
+              </Route>
+            )}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
