@@ -30,7 +30,7 @@ router.get(
             .from(faculty)
             .where(eq(faculty.email, userEmail));
 
-        if (result[0].authorId === null) {
+        if (result.length === 0 || result[0].authorId === null) {
             return next(
                 new HttpError(
                     HttpCode.NOT_FOUND,
