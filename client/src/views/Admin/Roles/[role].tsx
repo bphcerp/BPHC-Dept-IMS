@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Permission, useAllPermissions } from "@/hooks/Admin/AllPermissions";
@@ -33,7 +33,6 @@ const RoleDetailsView = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const role = params["role"];
-  const types = ["admin", "conference", "PhD", "handout"];
   const { data: roleData } = useQuery({
     queryKey: ["role", role],
     queryFn: async () => {
@@ -46,6 +45,17 @@ const RoleDetailsView = () => {
     isFetching: isFetchingPermissions,
     isError: isErrorPermissions,
   } = useAllPermissions();
+
+  const types = useMemo(
+    () =>
+      allPermissions
+        ? allPermissions?.reduce((prev, cur) => {
+            const type = cur.permission.split(":")[0].toLowerCase();
+            return prev.includes(type) || type === "*" ? prev : [...prev, type];
+          }, [] as string[])
+        : [],
+    [allPermissions]
+  );
 
   // ✅ Mutation for updating role name
   const renameRoleMutation = useMutation({
@@ -192,6 +202,9 @@ const RoleDetailsView = () => {
       </div>
       <h2 className="text-2xl font-bold text-primary">Edit permissions</h2>
       <div>
+        <span className="mr-2 text-sm uppercase text-muted-foreground">
+          Filter:
+        </span>
         <ToggleGroup
           type="multiple"
           value={selectedTypes}
