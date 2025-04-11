@@ -88,46 +88,45 @@ export const renameRoleBodySchema = z.object({
 });
 export type RenameRoleBody = z.infer<typeof renameRoleBodySchema>;
 
+const optionalString = z
+    .string()
+    .trim()
+    .nullish()
+    .transform((val) => (val?.length ? val : null));
+const optionalEmail = z
+    .string()
+    .trim()
+    .email()
+    .nullish()
+    .transform((val) => (val?.length ? val : null));
 export const editDetailsBodySchema = z.intersection(
     z.object({
         email: z.string().email(),
-        name: z.string().trim().nonempty().optional(),
-        phone: z.string().trim().nonempty().optional(),
-        department: z.string().trim().nonempty().optional(),
+        name: optionalString,
+        phone: optionalString,
+        department: optionalString,
     }),
     z.discriminatedUnion("type", [
         z.object({
             type: z.literal(userTypes[0]), // Faculty
-            designation: z
-                .string()
-                .trim()
-                .nullish()
-                .transform((val) => (val?.length ? val : null)),
-            room: z
-                .string()
-                .trim()
-                .nullish()
-                .transform((val) => (val?.length ? val : null)),
-            psrn: z.string().trim().nonempty().optional(),
-            authorId: z.string().trim().nonempty().optional(),
+            designation: optionalString,
+            room: optionalString,
+            psrn: optionalString,
+            authorId: optionalString,
         }),
         z.object({
             type: z.literal(userTypes[1]), // PhD
-            idNumber: z.string().trim().nonempty().optional(),
-            erpId: z.string().trim().nonempty().optional(),
-            instituteEmail: z.string().email().optional(),
-            mobile: z.string().trim().nonempty().optional(),
-            personalEmail: z.string().email().optional(),
-            notionalSupervisorEmail: z.string().email().optional(),
-            supervisorEmail: z.string().email().optional(),
+            idNumber: optionalString,
+            erpId: optionalString,
+            instituteEmail: optionalEmail,
+            mobile: optionalString,
+            personalEmail: optionalEmail,
+            notionalSupervisorEmail: optionalEmail,
+            supervisorEmail: optionalEmail,
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
-            designation: z
-                .string()
-                .trim()
-                .nullish()
-                .transform((val) => (val?.length ? val : null)),
+            designation: optionalString,
         }),
     ])
 );
