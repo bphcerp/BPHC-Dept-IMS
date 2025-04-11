@@ -12,7 +12,13 @@ import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
 import { allPermissions, permissions } from "lib";
-import { Computer, FileText, GraduationCap, BookOpen, LibraryBig } from "lucide-react";
+import {
+  Computer,
+  FileText,
+  GraduationCap,
+  BookOpen,
+  LibraryBig,
+} from "lucide-react";
 import {
   BrowserRouter,
   Navigate,
@@ -72,7 +78,9 @@ const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
 );
 
-const publicationsPermissions: string[] = [];
+const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("publications:")
+);
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -113,7 +121,7 @@ const Routing = () => {
       icon: <LibraryBig />,
       url: "/publications",
       requiredPermissions: publicationsPermissions,
-    }
+    },
   ];
 
   return (
@@ -280,7 +288,10 @@ const Routing = () => {
                 ) && (
                   <Route path="notional-supervisor" element={<Outlet />}>
                     <Route path="update-grade" element={<UpdateGrade />} />
-                    <Route path="suggest-examiner" element={<SuggestExaminer />} />
+                    <Route
+                      path="suggest-examiner"
+                      element={<SuggestExaminer />}
+                    />
                   </Route>
                 )}
                 {checkAccess(
@@ -366,16 +377,16 @@ const Routing = () => {
         )}
 
         {checkAccessAnyOne(publicationsPermissions) && (
-              <Route path="/publications" element={<PublicationsLayout />}>
-                <Route
-                  index
-                  element={
-                    <Navigate to="/publications/your-publications" replace={true} />
-                  }
-                />
-                <Route path="your-publications" element={<YourPublications />} />
-              </Route>
-            )}
+          <Route path="/publications" element={<PublicationsLayout />}>
+            <Route
+              index
+              element={
+                <Navigate to="/publications/your-publications" replace={true} />
+              }
+            />
+            <Route path="your-publications" element={<YourPublications />} />
+          </Route>
+        )}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
