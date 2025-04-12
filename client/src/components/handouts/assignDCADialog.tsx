@@ -32,6 +32,8 @@ interface AssignDCADialogProps {
   isOpen?: boolean;
   setIsOpen?: (val: boolean) => void;
   onAssign: (reviewer: string, sendEmail: boolean) => void;
+  isBulkAssign?: boolean;
+  selectedCount?: number;
 }
 
 interface Faculty {
@@ -45,13 +47,14 @@ export function AssignDCADialog({
   isOpen,
   setIsOpen,
   onAssign,
+  isBulkAssign = false,
+  selectedCount = 0,
 }: AssignDCADialogProps) {
   const [reviewer, setReviewer] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [sendEmail, setSendEmail] = useState(true);
   const [shouldFetch, setShouldFetch] = useState(false);
 
-  
   useEffect(() => {
     if (isOpen) {
       setShouldFetch(true);
@@ -61,7 +64,7 @@ export function AssignDCADialog({
   const {
     data: faculties,
     isLoading,
-    refetch
+    refetch,
   } = useQuery<Faculty[]>({
     queryKey: ["faculties-list"],
     queryFn: async () => {
@@ -75,19 +78,17 @@ export function AssignDCADialog({
         throw error;
       }
     },
-    enabled: shouldFetch, 
-    staleTime: 5 * 60 * 1000, 
-    cacheTime: 10 * 60 * 1000, 
+    enabled: shouldFetch,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
   });
 
-  
   useEffect(() => {
     if (shouldFetch) {
       void refetch();
     }
   }, [shouldFetch, refetch]);
 
-  
   useEffect(() => {
     if (!isOpen) {
       setReviewer("");
@@ -97,7 +98,7 @@ export function AssignDCADialog({
 
   const handleAssign = () => {
     if (reviewer) {
-      console.log("Assigned IC:", reviewer);
+      console.log("Assigned Reviewer:", reviewer);
       console.log("Send Email:", sendEmail);
       onAssign(reviewer, sendEmail);
       if (setIsOpen) {
@@ -106,13 +107,23 @@ export function AssignDCADialog({
     }
   };
 
+  const dialogTitle = isBulkAssign
+    ? `Assign Reviewer to ${selectedCount} Handouts`
+    : "Assign Reviewer";
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Assign Reviewers</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
+          {isBulkAssign && (
+            <div className="rounded-md bg-amber-50 p-2 text-sm text-amber-600">
+              You are about to assign a reviewer to {selectedCount} handouts at
+              once.
+            </div>
+          )}
           <div>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
@@ -123,7 +134,8 @@ export function AssignDCADialog({
                   className="w-full justify-between"
                 >
                   {reviewer
-                    ? faculties?.find((f) => f.email === reviewer)?.name || "Select reviewer..."
+                    ? faculties?.find((f) => f.email === reviewer)?.name ||
+                      "Select reviewer..."
                     : "Select reviewer..."}
                   <ChevronsUpDown className="opacity-50" />
                 </Button>
@@ -137,25 +149,29 @@ export function AssignDCADialog({
                   <CommandList>
                     <CommandEmpty>No faculty found.</CommandEmpty>
                     <CommandGroup>
-                      {!isLoading && faculties && faculties
-                        .filter(f => !f.deactivated)
-                        .map((faculty) => (
-                          <CommandItem
-                            key={faculty.email}
-                            onSelect={() => {
-                              setReviewer(faculty.email);
-                              setOpen(false);
-                            }}
-                          >
-                            {faculty.name}
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                reviewer === faculty.email ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
+                      {!isLoading &&
+                        faculties &&
+                        faculties
+                          .filter((f) => !f.deactivated)
+                          .map((faculty) => (
+                            <CommandItem
+                              key={faculty.email}
+                              onSelect={() => {
+                                setReviewer(faculty.email);
+                                setOpen(false);
+                              }}
+                            >
+                              {faculty.name}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  reviewer === faculty.email
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
@@ -172,7 +188,7 @@ export function AssignDCADialog({
         </div>
         <DialogFooter>
           <Button onClick={handleAssign} disabled={!reviewer}>
-            Assign
+            {isBulkAssign ? "Assign to All Selected" : "Assign"}
           </Button>
         </DialogFooter>
       </DialogContent>

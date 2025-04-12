@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+"use client";
+import type React from "react";
+import { useState, useEffect } from "react";
 import { FilterBar } from "@/components/handouts/filterBar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +21,7 @@ import { AssignICDialog } from "@/components/handouts/updateICDialog";
 import { AssignDCADialog } from "@/components/handouts/assignDCADialog";
 import { SetDeadlineDialog } from "@/components/handouts/setDeadline";
 import { useNavigate } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface HandoutsDCAcon {
   reviewerEmail: string;
@@ -46,6 +49,9 @@ export const DCAConvenerHandouts: React.FC = () => {
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
   const [currentHandoutId, setCurrentHandoutId] = useState<string | null>(null);
+  const [selectedHandouts, setSelectedHandouts] = useState<string[]>([]);
+  const [isBulkAssign, setIsBulkAssign] = useState(false);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -111,6 +117,41 @@ export const DCAConvenerHandouts: React.FC = () => {
     },
   });
 
+  const bulkUpdateReviewerMutation = useMutation({
+    mutationFn: async ({
+      ids,
+      reviewerEmail,
+      sendEmail,
+    }: {
+      ids: string[];
+      reviewerEmail: string;
+      sendEmail: boolean;
+    }) => {
+      // For each ID, call the updateReviewer endpoint
+      const promises = ids.map((id) =>
+        api.post<{ success: boolean }>("/handout/dcaconvenor/updateReviewer", {
+          id: id.toString(),
+          reviewerEmail,
+          sendEmail,
+        })
+      );
+
+      return Promise.all(promises);
+    },
+    onSuccess: async () => {
+      toast.success(
+        `Reviewer assigned to ${selectedHandouts.length} handouts successfully`
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["handouts-dca-convenor"],
+      });
+      setSelectedHandouts([]);
+    },
+    onError: () => {
+      toast.error("Failed to assign reviewer to some handouts");
+    },
+  });
+
   const {
     data: handouts,
     isLoading,
@@ -163,6 +204,7 @@ export const DCAConvenerHandouts: React.FC = () => {
 
   const handlePencilClick = (handoutId: string, isReviewer: boolean) => {
     setCurrentHandoutId(handoutId);
+    setIsBulkAssign(false);
     if (isReviewer) {
       setIsReviewerDialogOpen(true);
     } else {
@@ -186,19 +228,63 @@ export const DCAConvenerHandouts: React.FC = () => {
   };
 
   const handleAssignReviewer = (email: string, sendEmail: boolean) => {
-    if (!currentHandoutId) {
-      toast.error("No handout selected");
-      return;
-    }
+    if (isBulkAssign) {
+      if (selectedHandouts.length === 0) {
+        toast.error("No handouts selected");
+        return;
+      }
 
-    updateReviewerMutation.mutate({
-      id: currentHandoutId,
-      reviewerEmail: email,
-      sendEmail,
-    });
+      bulkUpdateReviewerMutation.mutate({
+        ids: selectedHandouts,
+        reviewerEmail: email,
+        sendEmail,
+      });
+    } else {
+      if (!currentHandoutId) {
+        toast.error("No handout selected");
+        return;
+      }
+
+      updateReviewerMutation.mutate({
+        id: currentHandoutId,
+        reviewerEmail: email,
+        sendEmail,
+      });
+    }
 
     setIsReviewerDialogOpen(false);
   };
+
+  const handleSelectHandout = (handoutId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedHandouts((prev) => [...prev, handoutId]);
+    } else {
+      setSelectedHandouts((prev) => prev.filter((id) => id !== handoutId));
+    }
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      const allIds = filteredHandouts.map((handout) => handout.id);
+      setSelectedHandouts(allIds);
+    } else {
+      setSelectedHandouts([]);
+    }
+  };
+
+  const handleBulkAssignReviewer = () => {
+    if (selectedHandouts.length === 0) {
+      toast.error("No handouts selected");
+      return;
+    }
+
+    setIsBulkAssign(true);
+    setIsReviewerDialogOpen(true);
+  };
+
+  const isAllSelected =
+    filteredHandouts.length > 0 &&
+    selectedHandouts.length === filteredHandouts.length;
 
   if (isLoading) {
     return (
@@ -241,6 +327,15 @@ export const DCAConvenerHandouts: React.FC = () => {
                   Summary
                 </Button>
               </Link>
+              {selectedHandouts.length > 0 && (
+                <Button
+                  variant="default"
+                  className="bg-primary text-white"
+                  onClick={handleBulkAssignReviewer}
+                >
+                  Assign Reviewer ({selectedHandouts.length})
+                </Button>
+              )}
             </div>
           </div>
           <div className="ml-4">
@@ -263,6 +358,13 @@ export const DCAConvenerHandouts: React.FC = () => {
           <Table className="min-w-full">
             <TableHeader className="bg-gray-100">
               <TableRow>
+                <TableHead className="w-12 px-4 py-2">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all handouts"
+                  />
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Course Code
                 </TableHead>
@@ -290,6 +392,15 @@ export const DCAConvenerHandouts: React.FC = () => {
                     key={handout.id}
                     className="odd:bg-white even:bg-gray-100"
                   >
+                    <TableCell className="w-12 px-4 py-2">
+                      <Checkbox
+                        checked={selectedHandouts.includes(handout.id)}
+                        onCheckedChange={(checked) =>
+                          handleSelectHandout(handout.id, !!checked)
+                        }
+                        aria-label={`Select ${handout.courseName}`}
+                      />
+                    </TableCell>
                     <TableCell className="px-4 py-2">
                       {handout.courseCode}
                     </TableCell>
@@ -363,7 +474,7 @@ export const DCAConvenerHandouts: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="px-4 py-2 text-center">
+                  <TableCell colSpan={9} className="px-4 py-2 text-center">
                     No handouts found
                   </TableCell>
                 </TableRow>
@@ -383,6 +494,8 @@ export const DCAConvenerHandouts: React.FC = () => {
         isOpen={isReviewerDialogOpen}
         setIsOpen={setIsReviewerDialogOpen}
         onAssign={handleAssignReviewer}
+        isBulkAssign={isBulkAssign}
+        selectedCount={selectedHandouts.length}
       />
     </div>
   );
