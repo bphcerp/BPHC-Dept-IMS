@@ -27,7 +27,7 @@ router.get(
             return {
                 ...handout,
                 reviewerName: handout.reviewer?.faculty?.name ?? "N/A",
-                professorName: handout.ic.faculty?.name ?? "N/A",
+                professorName: handout.ic?.faculty?.name ?? "N/A",
             };
         });
 

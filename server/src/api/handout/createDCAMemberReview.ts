@@ -23,16 +23,17 @@ router.post(
 
         const result = await db
             .update(courseHandoutRequests)
-            .set(
-                updateFields as {
+            .set({
+                ...(updateFields as {
                     scopeAndObjective: boolean;
                     textBookPrescribed: boolean;
                     lecturewisePlanLearningObjective: boolean;
                     lecturewisePlanCourseTopics: boolean;
                     numberOfLP: boolean;
                     evaluationScheme: boolean;
-                }
-            )
+                }),
+                status: "reviewed",
+            })
             .where(
                 and(
                     eq(courseHandoutRequests.id, handoutId),

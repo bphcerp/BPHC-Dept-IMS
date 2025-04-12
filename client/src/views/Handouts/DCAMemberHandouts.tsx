@@ -21,7 +21,6 @@ export interface DCAHandout {
   category: string;
   professorName: string;
   submittedOn: string;
-  lecturewisePlanLearningObjective: boolean | null;
   status: string;
 }
 
@@ -190,8 +189,7 @@ export const DCAMemberHandouts: React.FC = () => {
                             navigate(`/handout/dca/review/${handout.id}`)
                           }
                         >
-                          {handout.status == "pending" &&
-                          handout.lecturewisePlanLearningObjective == null
+                          {handout.status == "review pending"
                             ? "Review"
                             : "Details"}
                         </Button>
