@@ -27,62 +27,34 @@ type PublicationResponse = {
   publications: Publication[];
 };
 
-const PublicationsView = () => {
+const AllPublications = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const {
-    data: authorId,
-    isLoading: isLoadingAuthorId,
-    isError: isAuthorIdError,
-  } = useQuery({
-    queryKey: ["authorId"],
-    queryFn: async () => {
-      const response = await api.get<{ authorId: string }>("/publications/id");
-      return response.data.authorId;
-    },
-    onError: (e) => {
-      setErrorMessage(
-        isAxiosError(e)
-          ? (e.response?.data as string)
-          : "An error occurred while fetching author ID."
-      );
-    },
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
 
   const {
     data: publicationsData,
     isLoading: isLoadingPubs,
     isError: isPubsError,
   } = useQuery({
-    queryKey: ["publications", authorId],
+    queryKey: ["publications/all"],
     queryFn: async () => {
-      if (!authorId) throw new Error("No authorId");
-      const response = await api.get<PublicationResponse>(
-        "/publications/user",
-        {
-          params: { authorId },
-        }
-      );
+      const response = await api.get<PublicationResponse>("/publications/all");
       return response.data;
     },
-    enabled: !!authorId,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
-      {isAuthorIdError || isPubsError ? (
+      {isPubsError ? (
         <p className="text-destructive">
           {errorMessage ?? "An error occurred while fetching publications"}
         </p>
-      ) : isLoadingAuthorId || isLoadingPubs ? (
+      ) : isLoadingPubs ? (
         <LoadingSpinner />
       ) : (
         <>
-          <h1 className="text-3xl font-bold text-primary">My Publications</h1>
+          <h1 className="text-3xl font-bold text-primary">All Publications</h1>
           <div className="space-y-6">
             {publicationsData?.publications?.length ? (
               publicationsData.publications
@@ -112,4 +84,4 @@ const PublicationsView = () => {
   );
 };
 
-export default PublicationsView;
+export default AllPublications;
