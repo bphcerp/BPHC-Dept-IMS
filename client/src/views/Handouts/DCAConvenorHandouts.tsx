@@ -78,7 +78,7 @@ export const DCAConvenerHandouts: React.FC = () => {
     onSuccess: async () => {
       toast.success("Instructor updated successfully");
       await queryClient.invalidateQueries({
-        queryKey: ["handouts-dca-convenor"],
+        queryKey: ["handouts-dca", "handouts-faculty", `handout-dcaconvenor`],
       });
     },
     onError: () => {
@@ -109,7 +109,7 @@ export const DCAConvenerHandouts: React.FC = () => {
     onSuccess: async () => {
       toast.success("Reviewer assigned successfully");
       await queryClient.invalidateQueries({
-        queryKey: ["handouts-dca-convenor"],
+        queryKey: ["handouts-dca", "handouts-faculty", `handout-dcaconvenor`],
       });
     },
     onError: () => {
