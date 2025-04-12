@@ -20,9 +20,9 @@ export const categoryEnum = pgEnum("category_enum", handoutSchemas.categories);
 
 export const courseHandoutRequests = pgTable("course_handout_requests", {
     id: serial("id").primaryKey(),
-    icEmail: text("ic_email")
-        .notNull()
-        .references(() => users.email, { onDelete: "cascade" }),
+    icEmail: text("ic_email").references(() => users.email, {
+        onDelete: "cascade",
+    }),
     reviewerEmail: text("reviewer_email").references(() => users.email, {
         onDelete: "cascade",
     }),
