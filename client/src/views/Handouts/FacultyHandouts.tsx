@@ -12,15 +12,10 @@ import { FilterBar } from "@/components/handouts/filterBar";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { Handout } from "@/components/handouts/types";
 import { UploadDialog } from "@/components/handouts/UploadDialog";
-import { ReUploadDialog } from "./ReUploadDialog";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-
-const revisionComments = {
-  "3": "Please add DCA Convencer comments here",
-};
 
 export const FacultyHandouts: React.FC = () => {
   const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>();
@@ -52,7 +47,6 @@ export const FacultyHandouts: React.FC = () => {
   );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isReUploadDialogOpen, setIsReUploadDialogOpen] = useState(false);
   const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(
     null
   );
@@ -90,19 +84,8 @@ export const FacultyHandouts: React.FC = () => {
     setIsUploadDialogOpen(true);
   };
 
-  // const handleReUploadClick = (handoutId: string) => {
-  //   setSelectedHandoutId(handoutId);
-  //   setIsReUploadDialogOpen(true);
-  // };
-
   const handleUploadComplete = () => {
     setIsUploadDialogOpen(false);
-    setSelectedHandoutId(null);
-  };
-
-  const handleReUploadComplete = () => {
-    console.log(`File re-uploaded for handout ${selectedHandoutId}`);
-    setIsReUploadDialogOpen(false);
     setSelectedHandoutId(null);
   };
 
@@ -236,20 +219,6 @@ export const FacultyHandouts: React.FC = () => {
         refetch={async () => {
           await refetch();
         }}
-      />
-
-      {/* ReUpload Dialog for revisions */}
-      <ReUploadDialog
-        isOpen={isReUploadDialogOpen}
-        onClose={() => setIsReUploadDialogOpen(false)}
-        onReUpload={handleReUploadComplete}
-        revisionComments={
-          selectedHandoutId
-            ? revisionComments[
-                selectedHandoutId as keyof typeof revisionComments
-              ] || "No revision comments provided."
-            : ""
-        }
       />
     </div>
   );

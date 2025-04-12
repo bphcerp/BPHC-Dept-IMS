@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-//import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 
@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    //checkAccess(),
+    checkAccess(),
     asyncHandler(async (_req, res, _next) => {
         const faculties = (
             await db.query.users.findMany({

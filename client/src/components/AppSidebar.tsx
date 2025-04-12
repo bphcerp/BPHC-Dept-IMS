@@ -55,16 +55,16 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        {items.map((group) => (
-          <SidebarGroup key={group.title} title={group.title}>
-            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items
-                  .filter((item) =>
-                    checkAccessAnyOne(item.requiredPermissions ?? [])
-                  )
-                  .map((item) => (
+        {items.map((group) => {
+          const filteredGroupItems = group.items.filter((item) =>
+            checkAccessAnyOne(item.requiredPermissions ?? [])
+          );
+          return filteredGroupItems.length ? (
+            <SidebarGroup key={group.title} title={group.title}>
+              <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredGroupItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
@@ -77,10 +77,11 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ) : null;
+        })}
       </SidebarContent>
       <SidebarFooter>
         {authState ? (

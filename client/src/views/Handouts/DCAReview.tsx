@@ -57,7 +57,7 @@ const DCAMemberReviewForm: React.FC = () => {
   });
 
   const goBack = () => {
-    navigate("/handout/dcaconvenor");
+    navigate("/handout/dca");
   };
 
   const { handleSubmit, control, setValue } = useForm<HandoutReviewFormValues>({
