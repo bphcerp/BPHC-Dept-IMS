@@ -19,7 +19,7 @@ export const handoutStatuses = [
 ];
 
 export const STATUS_COLORS: Record<string, string> = {
-  pending: "text-yellow-600",
+  "review pending": "text-yellow-600",
   approved: "text-green-600",
   rejected: "text-red-600",
   reviewed: "text-blue-600",
