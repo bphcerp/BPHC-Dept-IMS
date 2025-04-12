@@ -38,8 +38,10 @@ const HandoutLayout = () => {
                 icon: <ReaderIcon />,
                 url: "/handout/dcaconvenor",
                 requiredPermissions: [
-                  permissions["/handout/dca/get"],
-                  permissions["/handout/dca/assignReviewer"],
+                  permissions["/handout/dcaconvenor/get"],
+                  permissions["/handout/dcaconvenor/updateIC"],
+                  permissions["/handout/dcaconvenor/updateReviewer"],
+                  permissions["/handout/dcaconvenor/getAllDCAMember"],
                 ],
               },
             ],
