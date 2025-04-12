@@ -78,15 +78,12 @@ export async function getRoleAccessMap() {
     return roleAccessMap;
 }
 
-/**
- * Get flattened permissions for a given list of roles
- * @param roles - The list of roles to check access for.
- * @returns Access object containing allowed and disallowed operations.
- */
-export async function getAccess(roles: number[]): Promise<Permissions> {
+function getAccessFromMap(
+    roles: number[],
+    roleAccessMap: RoleAccessMap
+): Permissions {
     const allowed = new Set<string>();
     const disallowed = new Set<string>();
-    const roleAccessMap = await getRoleAccessMap();
     roles.forEach((roleId) => {
         const roleAccess = roleAccessMap[roleId];
         if (roleAccess) {
@@ -105,4 +102,29 @@ export async function getAccess(roles: number[]): Promise<Permissions> {
         allowed: [...allowed],
         disallowed: [...disallowed],
     };
+}
+
+/**
+ * Get flattened permissions for a given list of roles
+ * @param roles - The list of roles to check access for.
+ * @returns Access object containing allowed and disallowed operations.
+ */
+export async function getAccess(roles: number[]): Promise<Permissions> {
+    const roleAccessMap = await getRoleAccessMap();
+    return getAccessFromMap(roles, roleAccessMap);
+}
+
+/**
+ * Retrieves access permissions for multiple roles by mapping them to a role access map.
+ *
+ * @param roles - A two-dimensional array where each inner array represents a group of role IDs.
+ * @returns A promise that resolves to an array of `Permissions` objects corresponding to the provided roles.
+ *
+ * @throws Will throw an error if the role access map cannot be retrieved.
+ */
+export async function getAccessMultiple(
+    roles: number[][]
+): Promise<Permissions[]> {
+    const roleAccessMap = await getRoleAccessMap();
+    return roles.map((role) => getAccessFromMap(role, roleAccessMap));
 }

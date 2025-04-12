@@ -1,13 +1,9 @@
 import { Field } from "multer";
 import z from "zod";
-import {
-    dateFieldResponse,
-    fileFieldResponse,
-    numberFieldResponse,
-    textFieldResponse,
-} from "./Form.ts";
+import { fileFieldResponse } from "./Form.ts";
 
 export const states = [
+    "Faculty",
     "DRC Member",
     "DRC Convener",
     "HoD",
@@ -19,7 +15,8 @@ export const createApplicationBodySchema = z.object({
     contentTitle: z.string().nonempty(),
     eventName: z.string().nonempty(),
     venue: z.string().nonempty(),
-    date: z.coerce.date(),
+    dateFrom: z.coerce.date(),
+    dateTo: z.coerce.date(),
     organizedBy: z.string().nonempty(),
     modeOfEvent: z.enum(["online", "offline"], {
         message: "Should either be 'online' or 'offline'",
@@ -91,7 +88,7 @@ export const textFieldNames = [
     "description",
 ] as const;
 
-export const dateFieldNames = ["date"] as const;
+export const dateFieldNames = ["dateFrom", "dateTo"] as const;
 
 export const numberFieldNames = [
     "travelReimbursement",
@@ -120,7 +117,6 @@ export const fieldTypes = z.enum(["text", "number", "date", "file"]);
 export type submittedApplicationsResponse = {
     applications: {
         id: number;
-        status: "pending" | "approved" | "rejected";
         state: (typeof states)[number];
         createdAt: string;
     }[];
@@ -138,28 +134,26 @@ export type pendingApplicationsResponse = {
 
 export type ViewApplicationResponse = {
     id: number;
-    status: "pending" | "approved" | "rejected";
     createdAt: string;
     userEmail: string;
-    conferenceApplication: {
-        state: (typeof states)[number];
-        purpose: textFieldResponse;
-        contentTitle: textFieldResponse;
-        eventName: textFieldResponse;
-        venue: textFieldResponse;
-        date: dateFieldResponse;
-        organizedBy: textFieldResponse;
-        modeOfEvent: textFieldResponse;
-        description: textFieldResponse;
-        travelReimbursement?: numberFieldResponse;
-        registrationFeeReimbursement?: numberFieldResponse;
-        dailyAllowanceReimbursement?: numberFieldResponse;
-        accommodationReimbursement?: numberFieldResponse;
-        otherReimbursement?: numberFieldResponse;
-        letterOfInvitation?: fileFieldResponse;
-        firstPageOfPaper?: fileFieldResponse;
-        reviewersComments?: fileFieldResponse;
-        detailsOfEvent?: fileFieldResponse;
-        otherDocuments?: fileFieldResponse;
-    };
+    state: (typeof states)[number];
+    purpose: string;
+    contentTitle: string;
+    eventName: string;
+    venue: string;
+    dateFrom: string;
+    dateTo: string;
+    organizedBy: string;
+    modeOfEvent: string;
+    description: string;
+    travelReimbursement?: number;
+    registrationFeeReimbursement?: number;
+    dailyAllowanceReimbursement?: number;
+    accommodationReimbursement?: number;
+    otherReimbursement?: number;
+    letterOfInvitation?: fileFieldResponse;
+    firstPageOfPaper?: fileFieldResponse;
+    reviewersComments?: fileFieldResponse;
+    detailsOfEvent?: fileFieldResponse;
+    otherDocuments?: fileFieldResponse;
 };

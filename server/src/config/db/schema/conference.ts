@@ -5,7 +5,6 @@ import {
     pgEnum,
     text,
     timestamp,
-    decimal,
     primaryKey,
 } from "drizzle-orm/pg-core";
 import { fileFields, applications } from "./form.ts";
@@ -82,6 +81,9 @@ export const conferenceApprovalApplications = pgTable(
     "conference_approval_applications",
     {
         id: serial("id").primaryKey(),
+        userEmail: text("user_email")
+            .notNull()
+            .references(() => users.email, { onDelete: "cascade" }),
         state: conferenceStateEnum("state")
             .notNull()
             .default(conferenceSchemas.states[0]),
@@ -97,11 +99,11 @@ export const conferenceApprovalApplications = pgTable(
         organizedBy: text("organized_by"),
         modeOfEvent: text("mode_of_event"),
         description: text("description"),
-        travelReimbursement: decimal("travel_reimbursement"),
-        registrationFeeReimbursement: decimal("registration_fee_reimbursement"),
-        dailyAllowanceReimbursement: decimal("daily_allowance_reimbursement"),
-        accommodationReimbursement: decimal("accommodation_reimbursement"),
-        otherReimbursement: decimal("other_reimbursement"),
+        travelReimbursement: integer("travel_reimbursement"),
+        registrationFeeReimbursement: integer("registration_fee_reimbursement"),
+        dailyAllowanceReimbursement: integer("daily_allowance_reimbursement"),
+        accommodationReimbursement: integer("accommodation_reimbursement"),
+        otherReimbursement: integer("other_reimbursement"),
         letterOfInvitation: integer("letter_of_invitation").references(
             () => fileFields.id,
             {
