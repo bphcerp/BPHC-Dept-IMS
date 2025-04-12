@@ -30,8 +30,10 @@ export default function FacultyReview() {
           `/qp/getFilesByRequestID/${Number(requestId)}`
         );
         const data = response.data.data;
+        console.log("Files data:", data); // Log the response data
 
         setFiles(() => data);
+        console.log(files)
         console.log(files);
       } catch (error) {
         console.error("Error fetching files:", error);
@@ -47,6 +49,9 @@ export default function FacultyReview() {
   if (loading) {
     return <>Loading...</>;
   }
+
+
+  // files && console.log("Files:", files); // Log the files object
 
   return (
     <main className="w-full bg-background">
@@ -101,6 +106,7 @@ export default function FacultyReview() {
 }
 
 function DocumentDownload({ documentUrl }: { documentUrl: string | null }) {
+  console.log("Document URL:", documentUrl);  
   if (!documentUrl) {
     return (
       <div className="flex h-[75vh] items-center justify-center bg-gray-100">

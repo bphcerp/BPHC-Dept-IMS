@@ -29,7 +29,7 @@ router.get(
             courseCode: request.courseCode,
             reviewer1: request.faculty1Email,
             reviewer2: request.faculty2Email,
-            professor: request.fic?.faculty.name,
+            professor   : request.fic?.faculty.name,
             status: request.status,
             reviewed: request.reviewed,
         }));

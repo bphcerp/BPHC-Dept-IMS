@@ -20,6 +20,8 @@ type SubmissionData = {
   documentsUploaded: boolean;
 };
 
+
+
 const FicSubmissionView = () => {
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([

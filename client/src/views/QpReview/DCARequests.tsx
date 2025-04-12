@@ -42,6 +42,9 @@ const DCARequestsView = () => {
     faculty1Email: string | null,
     faculty2Email: string | null
   ) => {
+
+    console.log(id, faculty1Email, faculty2Email);
+
     if (!faculty1Email || !faculty2Email) {
       toast.error("Both reviewers must be selected before submitting.");
       return;
@@ -90,6 +93,8 @@ const DCARequestsView = () => {
       toast.error("Failed to fetch courses.");
     }
   };
+
+
 
   useEffect(() => {
     fetchCourses();
