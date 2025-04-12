@@ -94,6 +94,7 @@ export const allPermissions = {
     "handout:dca-convenor:update-ic": "",
 
     "publications:view": "View author's own publications",
+    "publications:all": "View all publications",
 } as const;
 
 export const permissions = {
@@ -233,6 +234,7 @@ export const permissions = {
 
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
+    "/publications/all": "publications:all",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
