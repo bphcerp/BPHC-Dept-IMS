@@ -2,6 +2,7 @@ import z from "zod";
 
 export const handoutStatuses = [
     "pending",
+    "reviewed",
     "approved",
     "rejected",
     "notsubmitted",
