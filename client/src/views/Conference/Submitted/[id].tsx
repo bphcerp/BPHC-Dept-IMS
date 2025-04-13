@@ -1,6 +1,6 @@
 import type React from "react";
 import { Button } from "@/components/ui/button";
-import { conferenceSchemas, formSchemas } from "lib";
+import { conferenceSchemas } from "lib";
 import {
   FormField,
   FormItem,
@@ -36,7 +36,6 @@ import { z } from "zod";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import BackButton from "@/components/BackButton";
 import { ProgressStatus } from "@/components/conference/StateProgressBar";
 
@@ -56,32 +55,9 @@ const schema = conferenceSchemas.createApplicationBodySchema.merge(
 
 type Schema = z.infer<typeof schema>;
 
-const StatusBadge = ({
-  fieldData,
-}: {
-  fieldData: formSchemas.baseFieldResponse;
-}) => (
-  <Badge
-    variant={
-      fieldData.statuses.length
-        ? fieldData.statuses[0].status
-          ? "default"
-          : "destructive"
-        : "outline"
-    }
-  >
-    {fieldData.statuses.length
-      ? fieldData.statuses[0].status
-        ? "Approved"
-        : "Rejected"
-      : "Pending review"}
-  </Badge>
-);
-
 const ConferenceEditView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [hasSetForm, setHasSetForm] = useState(false);
-  const [editableFields, setEditableFields] = useState<string[]>([]);
 
   const form = useForm<Schema>({
     resolver: zodResolver(schema),
@@ -101,48 +77,36 @@ const ConferenceEditView: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const isPending = useMemo(() => data?.status === "pending", [data]);
+  const isPending = useMemo(
+    () => (data ? conferenceSchemas.states.indexOf(data.state) < 4 : false),
+    [data]
+  );
+
+  const isEditable = useMemo(() => {
+    if (!data) return false;
+    return data.state === conferenceSchemas.states[0];
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
-    const app = data.conferenceApplication;
     if (!hasSetForm) {
       form.reset({
-        purpose: app.purpose?.value ?? "",
-        contentTitle: app.contentTitle?.value ?? "",
-        description: app.description?.value ?? "",
-        eventName: app.eventName?.value ?? "",
-        venue: app.venue?.value ?? "",
-        organizedBy: app.organizedBy?.value ?? "",
-        modeOfEvent:
-          (app.modeOfEvent?.value as "online" | "offline") ?? "offline",
-        date: app.date?.value ? new Date(app.date.value) : new Date(),
-        travelReimbursement: app.travelReimbursement?.value ?? undefined,
-        registrationFeeReimbursement:
-          app.registrationFeeReimbursement?.value ?? undefined,
-        dailyAllowanceReimbursement:
-          app.dailyAllowanceReimbursement?.value ?? undefined,
-        accommodationReimbursement:
-          app.accommodationReimbursement?.value ?? undefined,
-        otherReimbursement: app.otherReimbursement?.value ?? undefined,
+        ...data,
+        dateFrom: new Date(data.dateFrom),
+        dateTo: new Date(data.dateTo),
+        ...conferenceSchemas.fileFieldNames.reduce(
+          (acc, key) => {
+            acc[key] = undefined;
+            return acc;
+          },
+          {} as Record<
+            (typeof conferenceSchemas.fileFieldNames)[number],
+            undefined
+          >
+        ),
       });
       setHasSetForm(true);
     }
-    setEditableFields(
-      isPending
-        ? Object.entries(app).reduce(
-            (prev, [k, v]) =>
-              v &&
-              typeof v === "object" &&
-              "statuses" in v &&
-              v.statuses.length &&
-              !v.statuses[0].status
-                ? [...prev, k]
-                : prev,
-            [] as string[]
-          )
-        : []
-    );
   }, [data, form, hasSetForm, isPending]);
 
   const onSubmit: SubmitHandler<Schema> = (formData) => {
@@ -173,12 +137,12 @@ const ConferenceEditView: React.FC = () => {
           className="w-full max-w-3xl space-y-4"
         >
           <ProgressStatus
-            currentStage={data.conferenceApplication.state}
-            currentStatus={data.status}
+            currentStage={data.state}
+            currentStatus={isPending ? "pending" : "accepted"}
           />
           <div className="grid grid-cols-1 gap-4">
             {conferenceSchemas.textFieldNames.map((fieldName) => {
-              const fieldData = data.conferenceApplication[fieldName];
+              const fieldData = data[fieldName];
               return fieldData ? (
                 <FormField
                   key={fieldName}
@@ -190,13 +154,10 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        {isPending ? (
-                          <StatusBadge fieldData={fieldData} />
-                        ) : null}
                       </div>
 
                       {fieldName === "modeOfEvent" ? (
-                        editableFields.includes("modeOfEvent") ? (
+                        isEditable ? (
                           <>
                             <Select
                               onValueChange={field.onChange}
@@ -221,15 +182,9 @@ const ConferenceEditView: React.FC = () => {
                         <>
                           <FormControl>
                             {fieldName !== "description" ? (
-                              <Input
-                                {...field}
-                                disabled={!editableFields.includes(fieldName)}
-                              />
+                              <Input {...field} disabled={!isEditable} />
                             ) : (
-                              <Textarea
-                                {...field}
-                                disabled={!editableFields.includes(fieldName)}
-                              />
+                              <Textarea {...field} disabled={!isEditable} />
                             )}
                           </FormControl>
                           <FormMessage />
@@ -240,63 +195,70 @@ const ConferenceEditView: React.FC = () => {
                 />
               ) : null;
             })}
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-end justify-between">
-                    <FormLabel>DATE</FormLabel>
-                    {isPending ? (
-                      <StatusBadge
-                        fieldData={data.conferenceApplication.date!}
-                      />
-                    ) : null}
-                  </div>
-                  {editableFields.includes("date") ? (
-                    <>
-                      <Popover>
-                        <FormControl>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                !field.value && "text-muted-foreground",
-                                "w-full items-start"
-                              )}
+            {conferenceSchemas.dateFieldNames.map((fieldName) => {
+              const fieldData = data[fieldName];
+              return fieldData ? (
+                <FormField
+                  key={fieldName}
+                  control={form.control}
+                  name={fieldName}
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-end justify-between">
+                        <FormLabel>DATE</FormLabel>
+                      </div>
+                      {isEditable ? (
+                        <>
+                          <Popover>
+                            <FormControl>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    !field.value && "text-muted-foreground",
+                                    "w-full items-start"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                            </FormControl>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
                             >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                        </FormControl>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date <= new Date() ||
-                              date >= new Date("2100-01-01")
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </>
-                  ) : (
-                    <Input value={field.value.toLocaleDateString()} disabled />
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date <= new Date() ||
+                                  date >= new Date("2100-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </>
+                      ) : (
+                        <Input
+                          value={field.value.toLocaleDateString()}
+                          disabled
+                        />
+                      )}
+                    </FormItem>
                   )}
-                </FormItem>
-              )}
-            />
+                />
+              ) : null;
+            })}
             {conferenceSchemas.numberFieldNames.map((fieldName) => {
-              const fieldData = data.conferenceApplication[fieldName];
+              const fieldData = data[fieldName];
               return fieldData ? (
                 <FormField
                   key={fieldName}
@@ -308,9 +270,6 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        {isPending ? (
-                          <StatusBadge fieldData={fieldData} />
-                        ) : null}
                       </div>
                       <FormControl>
                         <Input
@@ -321,7 +280,7 @@ const ConferenceEditView: React.FC = () => {
                             else field.onChange(e);
                           }}
                           type="number"
-                          disabled={!editableFields.includes(fieldName)}
+                          disabled={!isEditable}
                         />
                       </FormControl>
                       <FormMessage />
@@ -331,7 +290,7 @@ const ConferenceEditView: React.FC = () => {
               ) : null;
             })}
             {conferenceSchemas.fileFieldNames.map((fieldName) => {
-              const fieldData = data.conferenceApplication[fieldName];
+              const fieldData = data[fieldName];
               return fieldData ? (
                 <FormField
                   key={fieldName}
@@ -343,28 +302,18 @@ const ConferenceEditView: React.FC = () => {
                         <FormLabel>
                           {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
                         </FormLabel>
-                        {isPending ? (
-                          <StatusBadge fieldData={fieldData} />
-                        ) : null}
                       </div>
 
                       <div
                         className="relative flex cursor-pointer gap-2 overflow-clip overflow-ellipsis rounded-md border bg-gray-100 p-2 pl-10 hover:bg-muted/50"
                         onClick={() => {
-                          window.open(
-                            data.conferenceApplication[fieldName]!.file
-                              .filePath,
-                            "_blank"
-                          );
+                          window.open(data[fieldName]!.file.filePath, "_blank");
                         }}
                       >
                         <FileIcon className="absolute left-2" />
-                        {
-                          data.conferenceApplication[fieldName]!.file
-                            .originalName
-                        }
+                        {data[fieldName]!.file.originalName}
                       </div>
-                      {editableFields.includes(fieldName) ? (
+                      {isEditable ? (
                         <FormControl>
                           <FileUploader
                             value={field.value ? [field.value] : []}
@@ -381,7 +330,7 @@ const ConferenceEditView: React.FC = () => {
               ) : null;
             })}
           </div>
-          {editableFields.length ? (
+          {isEditable ? (
             <div className="flex justify-end gap-2">
               <Button type="submit">Submit</Button>
             </div>
