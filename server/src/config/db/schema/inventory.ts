@@ -6,13 +6,12 @@ import {
     date,
     timestamp,
     pgEnum,
-    serial,
     char,
     type AnyPgColumn,
     primaryKey,
     uuid,
 } from "drizzle-orm/pg-core";
-import { users } from "./admin.ts";
+import { faculty, staff } from "./admin.ts";
 import { relations } from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid'
 
@@ -79,10 +78,10 @@ export const laboratories = pgTable("inventory_laboratories", {
     location: text("location"),
     code: char("code", { length: 4 }).notNull(),
     technicianInChargeEmail: text("technician_in_charge_email").references(
-        () => users.email
+        () => staff.email
     ),
     facultyInChargeEmail: text("faculty_in_charge_email").references(
-        () => users.email
+        () => faculty.email
     ),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
@@ -131,14 +130,14 @@ export const vendorCategories = pgTable(
 );
 
 export const laboratoriesRelations = relations(laboratories, ({ one }) => ({
-    technicianInCharge: one(users, {
+    technicianInCharge: one(staff, {
         fields: [laboratories.technicianInChargeEmail],
-        references: [users.email],
+        references: [staff.email],
         relationName: "technicianInCharge",
     }),
-    facultyInCharge: one(users, {
+    facultyInCharge: one(faculty, {
         fields: [laboratories.facultyInChargeEmail],
-        references: [users.email],
+        references: [faculty.email],
         relationName: "facultyInCharge",
     }),
 }));

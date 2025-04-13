@@ -10,3 +10,5 @@ router.use('/getLabs', getLabs)
 router.use('/createLab', createLab);
 router.use('/updateLab', updateLab);
 router.use('/deleteLab', deleteLab);
+
+export default router

@@ -8,6 +8,25 @@ export const inventoryStatusEnum = z.enum([
 ]);
 export const inventoryCategoryTypeEnum = z.enum(["Vendor", "Inventory"]);
 
+export const staffSchema = z.object({
+    email: z.string().email(),
+    name: z.string().optional(),
+    department: z.string().optional(),
+    phone: z.string().optional(),
+    designation: z.string().optional(),
+  });
+
+export const facultySchema = z.object({
+    psrn: z.string().optional(),
+    email: z.string().email(),
+    name: z.string().optional(),
+    department: z.string().optional(),
+    designation: z.string().optional(),
+    room: z.string().optional(),
+    phone: z.string().optional(),
+    authorId: z.string().optional(),
+});
+
 export const inventoryItemSchema = z.object({
     id: z.string().uuid(),
     serialNumber: z.number().int(),

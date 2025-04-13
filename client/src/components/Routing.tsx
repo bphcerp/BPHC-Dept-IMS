@@ -59,6 +59,7 @@ import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import InventoryLayout from "@/layouts/Inventory";
+import Settings from "@/views/Inventory/Settings";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -410,7 +411,7 @@ const Routing = () => {
             />
             <Route path="items" element={<></>} />
             <Route path="stats" element={<></>} />
-            { checkAccess('inventory:write') && <Route path="settings" element={<></>} /> }
+            { checkAccess('inventory:write') && <Route path="settings" element={<Settings />} /> }
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />
