@@ -37,11 +37,8 @@ router.get(
             );
 
         const response = {
-            id: application.id,
-            status: application.status,
+            ...application,
             createdAt: application.createdAt.toLocaleString(),
-            userEmail: application.userEmail,
-            conferenceApplication: application.conferenceApplication,
         };
 
         res.status(200).send(response);
