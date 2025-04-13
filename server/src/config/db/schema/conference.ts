@@ -1,79 +1,103 @@
-import { pgTable, serial, integer, pgEnum } from "drizzle-orm/pg-core";
 import {
-    textFields,
-    fileFields,
-    applications,
-    dateFields,
-    numberFields,
-} from "./form.ts";
+    pgTable,
+    serial,
+    integer,
+    pgEnum,
+    text,
+    timestamp,
+    primaryKey,
+} from "drizzle-orm/pg-core";
+import { fileFields, applications } from "./form.ts";
 import { conferenceSchemas } from "lib";
+import { users } from "./admin.ts";
 
 export const conferenceStateEnum = pgEnum(
     "conference_state_enum",
     conferenceSchemas.states
 );
 
+export const conferenceGlobal = pgTable("conference_global", {
+    key: text("key").primaryKey(),
+    value: text("value").notNull(),
+});
+
+export const conferenceMemberReviews = pgTable(
+    "conference_member_reviews",
+    {
+        applicationId: integer("application_id")
+            .notNull()
+            .references(() => applications.id, { onDelete: "cascade" }),
+        reviewerEmail: text("reviewer_email")
+            .notNull()
+            .references(() => users.email, { onDelete: "cascade" }),
+        comments: text("review").notNull(),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .notNull()
+            .defaultNow(),
+    },
+    (table) => [
+        primaryKey({
+            columns: [table.applicationId, table.reviewerEmail],
+        }),
+    ]
+);
+
+export const conferenceStatusLog = pgTable(
+    "conference_status_log",
+    {
+        applicationId: integer("application_id")
+            .notNull()
+            .references(() => conferenceApprovalApplications.id, {
+                onDelete: "cascade",
+            }),
+        userEmail: text("user_email")
+            .notNull()
+            .references(() => users.email, { onDelete: "cascade" }),
+        action: text("action").notNull(),
+        timestamp: timestamp("timestamp", { withTimezone: true })
+            .notNull()
+            .defaultNow(),
+        comments: text("comments"),
+    },
+    (table) => [
+        primaryKey({
+            columns: [
+                table.applicationId,
+                table.userEmail,
+                table.action,
+                table.timestamp,
+            ],
+        }),
+    ]
+);
+
 export const conferenceApprovalApplications = pgTable(
     "conference_approval_applications",
     {
         id: serial("id").primaryKey(),
-        applicationId: integer("application_id")
+        userEmail: text("user_email")
             .notNull()
-            .references(() => applications.id, { onDelete: "cascade" }),
+            .references(() => users.email, { onDelete: "cascade" }),
         state: conferenceStateEnum("state")
             .notNull()
-            .default(conferenceSchemas.states[0]),
-        purpose: integer("purpose").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        contentTitle: integer("content_title").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        eventName: integer("event_name").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        venue: integer("venue").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        date: integer("date").references(() => dateFields.id, {
-            onDelete: "set null",
-        }),
-        organizedBy: integer("organized_by").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        modeOfEvent: integer("mode_of_event").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        description: integer("description").references(() => textFields.id, {
-            onDelete: "set null",
-        }),
-        travelReimbursement: integer("travel_reimbursement").references(
-            () => numberFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        registrationFeeReimbursement: integer(
-            "registration_fee_reimbursement"
-        ).references(() => numberFields.id, {
-            onDelete: "set null",
-        }),
-        dailyAllowanceReimbursement: integer(
-            "daily_allowance_reimbursement"
-        ).references(() => numberFields.id, {
-            onDelete: "set null",
-        }),
-        accommodationReimbursement: integer(
-            "accommodation_reimbursement"
-        ).references(() => numberFields.id, {
-            onDelete: "set null",
-        }),
-        otherReimbursement: integer("other_reimbursement").references(
-            () => numberFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
+            .default(conferenceSchemas.states[1]),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .notNull()
+            .defaultNow(),
+        purpose: text("purpose"),
+        contentTitle: text("content_title"),
+        eventName: text("event_name"),
+        venue: text("venue"),
+        dateFrom: timestamp("date_from", { withTimezone: true }),
+        dateTo: timestamp("date_to", { withTimezone: true }),
+        organizedBy: text("organized_by"),
+        modeOfEvent: text("mode_of_event"),
+        description: text("description"),
+        travelReimbursement: integer("travel_reimbursement"),
+        registrationFeeReimbursement: integer("registration_fee_reimbursement"),
+        dailyAllowanceReimbursement: integer("daily_allowance_reimbursement"),
+        accommodationReimbursement: integer("accommodation_reimbursement"),
+        otherReimbursement: integer("other_reimbursement"),
         letterOfInvitation: integer("letter_of_invitation").references(
             () => fileFields.id,
             {

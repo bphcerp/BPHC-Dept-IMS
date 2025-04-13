@@ -14,6 +14,7 @@ import {
     textFieldStatus,
 } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
+import { conferenceApprovalApplications } from "./conference.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -33,6 +34,9 @@ export const usersRelations = relations(users, ({ many, one }) => ({
         fields: [users.email],
         references: [staff.email],
         relationName: "staff",
+    }),
+    conferenceAppliaction: many(conferenceApprovalApplications, {
+        relationName: "conferenceApprovalApplicationUser",
     }),
     applications: many(applications, {
         relationName: "applications",
