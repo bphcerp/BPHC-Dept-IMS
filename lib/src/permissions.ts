@@ -37,6 +37,7 @@ export const allPermissions = {
     "phd:drc-member:get-subarea-and-examiner": "",
     "phd:drc-member:get-supervisor-with-student": "",
     "phd:drc-member:get-qe-time-table": "",
+    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip":"",
 
     "phd:notifs:send": "",
 
@@ -149,6 +150,7 @@ export const permissions = {
     "/phd/drcMember/getSupervisorsWithStudents":
         "phd:drc-member:get-supervisor-with-student",
     "/phd/drcMember/getQeTimeTable": "phd:drc-member:get-qe-time-table",
+    "/phd/drcMember/getPhdApplicationFormsAsZip": "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
 
     "/phd/notifs/send": "phd:notifs:send",
 

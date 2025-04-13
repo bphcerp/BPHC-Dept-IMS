@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Download } from "lucide-react"; // Import download icon
 
 // Interfaces
 interface IStudent {
@@ -72,11 +73,6 @@ interface IExamStatus {
   qualifyingExam1EndDate: string | null;
   qualifyingExam2EndDate: string | null;
 }
-
-// interface IExamStatusResponse {
-//   success: boolean;
-//   examStatuses: IExamStatus[];
-// }
 
 interface IQualificationDate {
   email: string;
@@ -145,6 +141,10 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
   const [dateValidationErrors, setDateValidationErrors] = useState<
     Record<string, string | null>
   >({});
+  // Add state to track downloads
+  const [downloadingExamId, setDownloadingExamId] = useState<number | null>(
+    null
+  );
 
   // Fetch main application data
   const { data, isLoading } = useQuery({
@@ -307,6 +307,48 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
     const qualificationDate = new Date(date);
 
     return qualificationDate > examEndDate;
+  };
+
+  // Batch download handler for application forms
+  const handleBatchDownload = async (examId: number) => {
+    try {
+      setDownloadingExamId(examId);
+
+      // Use query parameter instead of path parameter
+      const response = await api.get(
+        "/phd/drcMember/getPhdApplicationFormsAsZip",
+        {
+          params: { examId },
+          responseType: "blob", // Important for binary data
+        }
+      );
+
+      // Create a download link for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+
+      // Find the exam to use its name in the filename
+      const exam = currentSemester.exams.find((e) => e.id === examId);
+      const fileName = exam
+        ? `${exam.examName.replace(/\s+/g, "_")}_applications.zip`
+        : `qualifying_exam_applications_${examId}.zip`;
+
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      toast.success("Application forms downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading application forms:", error);
+      toast.error("Failed to download application forms");
+    } finally {
+      setDownloadingExamId(null);
+    }
   };
 
   // Mutation for updating exam results
@@ -498,12 +540,7 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
             PhD Application Forms
           </h1>
           <div className="rounded-lg bg-white p-6 shadow">
-            <p className="text-center text-lg">
-              There are currently no students who applied.
-            </p>
-            <p className="mt-2 text-center text-gray-500">
-              Wait till students have applied
-            </p>
+            <p className="text-center text-lg">Loading application data...</p>
           </div>
         </div>
       </div>
@@ -612,116 +649,132 @@ const PhdThatAppliedForQualifyingExam: React.FC = () => {
                         No applications found for this exam
                       </div>
                     ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-1/7">
-                              Student Name
-                            </TableHead>
-                            <TableHead className="w-1/7">Email</TableHead>
-                            <TableHead className="w-1/7">ERP ID</TableHead>
-                            <TableHead className="w-1/7">
-                              Application Form
-                            </TableHead>
-                            <TableHead className="w-1/7">
-                              Submitted On
-                            </TableHead>
-                            <TableHead className="w-1/7">Status</TableHead>
-                            <TableHead className="w-1/7">
-                              Qualification Date
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {exam.students.map((student) => (
-                            <TableRow key={`${exam.id}-${student.email}`}>
-                              <TableCell className="font-medium">
-                                {student.name}
-                              </TableCell>
-                              <TableCell>{student.email}</TableCell>
-                              <TableCell>{student.erpId}</TableCell>
-                              <TableCell>
-                                {student.fileUrl ? (
-                                  <Button
-                                    variant="link"
-                                    className="text-blue-600"
-                                    asChild
-                                  >
-                                    <a
-                                      href={student.fileUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      {student.formName}
-                                    </a>
-                                  </Button>
-                                ) : (
-                                  <span className="text-gray-500">
-                                    No form available (ID: {student.erpId})
-                                  </span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {formatDate(student.uploadedAt)}
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={
-                                    student.examStatus === true
-                                      ? "pass"
-                                      : student.examStatus === false
-                                        ? "fail"
-                                        : ""
-                                  }
-                                  onValueChange={(value) =>
-                                    handleStatusChange(student.email, value)
-                                  }
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select Status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pass">Pass</SelectItem>
-                                    <SelectItem value="fail">Fail</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <Input
-                                    type="date"
-                                    disabled={student.examStatus !== true}
-                                    value={formatISODate(student.examDate)}
-                                    min={
-                                      examDateData?.exam?.examEndDate
-                                        ? formatISODate(
-                                            examDateData.exam.examEndDate
-                                          )
-                                        : undefined
-                                    }
-                                    onChange={(e) =>
-                                      handleDateChange(
-                                        student.email,
-                                        e.target.value
-                                      )
-                                    }
-                                    className={`w-full ${
-                                      dateValidationErrors[student.email]
-                                        ? "border-red-500 focus-visible:ring-red-500"
-                                        : ""
-                                    }`}
-                                  />
-                                  {dateValidationErrors[student.email] && (
-                                    <p className="text-xs text-red-500">
-                                      {dateValidationErrors[student.email]}
-                                    </p>
-                                  )}
-                                </div>
-                              </TableCell>
+                      <>
+                        {/* Add batch download button */}
+                        <div className="mb-4 flex justify-end">
+                          <Button
+                            onClick={() => handleBatchDownload(exam.id)}
+                            disabled={downloadingExamId === exam.id}
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            {downloadingExamId === exam.id
+                              ? "Downloading..."
+                              : `Download All Forms (${exam.students.length})`}
+                          </Button>
+                        </div>
+
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-1/7">
+                                Student Name
+                              </TableHead>
+                              <TableHead className="w-1/7">Email</TableHead>
+                              <TableHead className="w-1/7">ERP ID</TableHead>
+                              <TableHead className="w-1/7">
+                                Application Form
+                              </TableHead>
+                              <TableHead className="w-1/7">
+                                Submitted On
+                              </TableHead>
+                              <TableHead className="w-1/7">Status</TableHead>
+                              <TableHead className="w-1/7">
+                                Qualification Date
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {exam.students.map((student) => (
+                              <TableRow key={`${exam.id}-${student.email}`}>
+                                <TableCell className="font-medium">
+                                  {student.name}
+                                </TableCell>
+                                <TableCell>{student.email}</TableCell>
+                                <TableCell>{student.erpId}</TableCell>
+                                <TableCell>
+                                  {student.fileUrl ? (
+                                    <Button
+                                      variant="link"
+                                      className="text-blue-600"
+                                      asChild
+                                    >
+                                      <a
+                                        href={student.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        {student.formName}
+                                      </a>
+                                    </Button>
+                                  ) : (
+                                    <span className="text-gray-500">
+                                      No form available (ID: {student.erpId})
+                                    </span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {formatDate(student.uploadedAt)}
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={
+                                      student.examStatus === true
+                                        ? "pass"
+                                        : student.examStatus === false
+                                          ? "fail"
+                                          : ""
+                                    }
+                                    onValueChange={(value) =>
+                                      handleStatusChange(student.email, value)
+                                    }
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pass">Pass</SelectItem>
+                                      <SelectItem value="fail">Fail</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="space-y-1">
+                                    <Input
+                                      type="date"
+                                      disabled={student.examStatus !== true}
+                                      value={formatISODate(student.examDate)}
+                                      min={
+                                        examDateData?.exam?.examEndDate
+                                          ? formatISODate(
+                                              examDateData.exam.examEndDate
+                                            )
+                                          : undefined
+                                      }
+                                      onChange={(e) =>
+                                        handleDateChange(
+                                          student.email,
+                                          e.target.value
+                                        )
+                                      }
+                                      className={`w-full ${
+                                        dateValidationErrors[student.email]
+                                          ? "border-red-500 focus-visible:ring-red-500"
+                                          : ""
+                                      }`}
+                                    />
+                                    {dateValidationErrors[student.email] && (
+                                      <p className="text-xs text-red-500">
+                                        {dateValidationErrors[student.email]}
+                                      </p>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </>
                     )}
                   </AccordionContent>
                 </AccordionItem>
