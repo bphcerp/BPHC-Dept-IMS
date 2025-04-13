@@ -235,6 +235,7 @@ export const permissions = {
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
     "/publications/all": "publications:all",
+    "/publications/updateStatus": "publications:view",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
