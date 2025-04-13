@@ -1,4 +1,3 @@
-// Using Drizzle ORM with PostgreSQL
 import {
     pgTable,
     timestamp,
@@ -23,7 +22,10 @@ export const todos = pgTable("todos", {
     createdBy: text("created_by")
         .notNull()
         .references(() => users.email),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+    deadline: timestamp("deadline", { withTimezone: true }),
     completionEvent: text("completion_event").notNull(),
     metadata: jsonb("metadata"),
 });
