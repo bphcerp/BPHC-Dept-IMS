@@ -26,9 +26,6 @@ export const applicationsFormsRelations = relations(
         statuses: many(applicationStatus, {
             relationName: "applicationStatus",
         }),
-        conferenceApplications: many(conferenceApprovalApplications, {
-            relationName: "conferenceApprovalApplications",
-        }),
     })
 );
 
