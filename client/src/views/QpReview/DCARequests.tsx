@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import EditRequestDialog from "@/components/qp_review/EditRequest";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -20,11 +21,15 @@ import CreateRequestDialog, { Course } from "@/components/qp_review/CreateReques
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 
+
+
 const DCARequestsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("pending");
   const [courses, setCourses] = useState<Course[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentCourse, setCurrentCourse ] = useState<Course | null>(null);
 
   const statusColors: Record<string, string> = {
     pending: "bg-orange-400",
@@ -74,6 +79,10 @@ const DCARequestsView = () => {
     setCourses([...courses, newRequest]);
     setIsDialogOpen(false);
   };
+  const handleEditRequest = (course: Course) => {
+    setCurrentCourse(course);
+    setIsEditDialogOpen(true);
+  };
 
   const email = encodeURIComponent("dca@email.com");
   const fetchCourses = async () => {
@@ -108,6 +117,12 @@ const DCARequestsView = () => {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onAddRequest={handleAddRequest}
+        fetchCourses={fetchCourses}
+      />
+      <EditRequestDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        course={currentCourse}
         fetchCourses={fetchCourses}
       />
 
@@ -171,7 +186,8 @@ const DCARequestsView = () => {
               </div>
 
               {/* Edit button */}
-              <button className="text-blue-500">Edit</button>
+              <Button variant="ghost" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                onClick={() => handleEditRequest(course)}> Edit </Button>
 
               {/* Reviewer 1 Select */}
               <Select

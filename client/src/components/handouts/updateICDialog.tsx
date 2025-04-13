@@ -122,8 +122,8 @@ export function AssignICDialog({
                 >
                   {reviewer
                     ? faculties?.find((f) => f.email === reviewer)?.name ||
-                      "Select reviewer..."
-                    : "Select reviewer..."}
+                      "Select IC..."
+                    : "Select IC..."}
                   <ChevronsUpDown className="opacity-50" />
                 </Button>
               </PopoverTrigger>
