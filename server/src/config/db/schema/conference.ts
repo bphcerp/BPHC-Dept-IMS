@@ -21,23 +21,15 @@ export const conferenceGlobal = pgTable("conference_global", {
     value: text("value").notNull(),
 });
 
-export const DRCMembers = pgTable("drc_members", {
-    email: text("email")
-        .primaryKey()
-        .references(() => users.email, {
-            onDelete: "cascade",
-        }),
-});
-
-export const memberReviews = pgTable(
-    "member_reviews",
+export const conferenceMemberReviews = pgTable(
+    "conference_member_reviews",
     {
         applicationId: integer("application_id")
             .notNull()
             .references(() => applications.id, { onDelete: "cascade" }),
         reviewerEmail: text("reviewer_email")
             .notNull()
-            .references(() => DRCMembers.email, { onDelete: "cascade" }),
+            .references(() => users.email, { onDelete: "cascade" }),
         comments: text("review").notNull(),
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()
@@ -50,12 +42,14 @@ export const memberReviews = pgTable(
     ]
 );
 
-export const statusLog = pgTable(
-    "status_log",
+export const conferenceStatusLog = pgTable(
+    "conference_status_log",
     {
         applicationId: integer("application_id")
             .notNull()
-            .references(() => applications.id, { onDelete: "cascade" }),
+            .references(() => conferenceApprovalApplications.id, {
+                onDelete: "cascade",
+            }),
         userEmail: text("user_email")
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
@@ -86,7 +80,7 @@ export const conferenceApprovalApplications = pgTable(
             .references(() => users.email, { onDelete: "cascade" }),
         state: conferenceStateEnum("state")
             .notNull()
-            .default(conferenceSchemas.states[0]),
+            .default(conferenceSchemas.states[1]),
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()
             .defaultNow(),
