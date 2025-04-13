@@ -32,11 +32,11 @@ export const inventoryCategoryTypeEnum = pgEnum("inventory_category_type", [
 export const inventoryItems = pgTable("inventory_items", {
     id: uuid("id").primaryKey().default(uuidv4()),
     serialNumber: integer("serial_number").notNull(),
-    labId: integer("lab_id").references(() => laboratories.id),
-    transferId: integer("transfer_id").references(
+    labId: uuid("lab_id").references(() => laboratories.id),
+    transferId: uuid("transfer_id").references(
         (): AnyPgColumn => inventoryItems.id
     ),
-    itemCategoryId: integer("item_category_id").references(() => categories.id),
+    itemCategoryId: uuid("item_category_id").references(() => categories.id),
     itemName: text("item_name").notNull(),
     specifications: text("specifications"),
     quantity: integer("quantity").notNull(),
@@ -51,7 +51,7 @@ export const inventoryItems = pgTable("inventory_items", {
     equipmentID: text("equipment_id").unique().notNull(),
     fundingSource: inventoryFundingSourceEnum("funding_source"),
     dateOfInstallation: date("date_of_installation"),
-    vendorId: integer("vendor_id").references(() => vendors.id),
+    vendorId: uuid("vendor_id").references(() => vendors.id),
     warrantyFrom: date("warranty_from"),
     warrantyTo: date("warranty_to"),
     amcFrom: date("amc_from"),
