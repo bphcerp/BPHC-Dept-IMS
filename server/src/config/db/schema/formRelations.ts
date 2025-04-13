@@ -13,7 +13,6 @@ import {
     dateFieldStatus,
 } from "./form.ts";
 import { users } from "./admin.ts";
-import { conferenceApprovalApplications } from "./conference.ts";
 
 export const applicationsFormsRelations = relations(
     applications,
