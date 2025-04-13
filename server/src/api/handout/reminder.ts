@@ -36,6 +36,7 @@ router.post(
                             pass: env.BPHCERP_PASSWORD,
                         },
                     });
+                    if (!handout.icEmail) throw new Error("IC Email is NULL");
                     await transporter.sendMail({
                         from: env.BPHCERP_EMAIL,
                         to: handout.icEmail,

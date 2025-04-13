@@ -59,9 +59,11 @@ router.post(
                                 pass: env.BPHCERP_PASSWORD,
                             },
                         });
+                        if (!handout.icEmail)
+                            throw new Error("IC Email is NULL");
                         await transporter.sendMail({
                             from: env.BPHCERP_EMAIL,
-                            to: handout?.icEmail,
+                            to: handout.icEmail,
                             subject: "Handout Rejection",
                             text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
                         });

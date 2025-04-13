@@ -13,7 +13,6 @@ import {
     dateFieldStatus,
 } from "./form.ts";
 import { users } from "./admin.ts";
-import { conferenceApprovalApplications } from "./conference.ts";
 
 export const applicationsFormsRelations = relations(
     applications,
@@ -25,9 +24,6 @@ export const applicationsFormsRelations = relations(
         }),
         statuses: many(applicationStatus, {
             relationName: "applicationStatus",
-        }),
-        conferenceApplications: many(conferenceApprovalApplications, {
-            relationName: "conferenceApprovalApplications",
         }),
     })
 );

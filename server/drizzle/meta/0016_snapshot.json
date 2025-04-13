@@ -1,6 +1,6 @@
 {
-  "id": "b0097e28-f81c-439d-a464-631ce516599c",
-  "prevId": "fb33ee9e-d09d-43ec-9209-d1343ffe2c4b",
+  "id": "82311c11-1bf2-4f4b-aee9-1a492cbf6e69",
+  "prevId": "192ddf99-f527-41d4-a983-4251007d16c7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -614,9 +614,9 @@
           "primaryKey": true,
           "notNull": true
         },
-        "application_id": {
-          "name": "application_id",
-          "type": "integer",
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -628,51 +628,64 @@
           "notNull": true,
           "default": "'DRC Member'"
         },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
         "purpose": {
           "name": "purpose",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "content_title": {
           "name": "content_title",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "event_name": {
           "name": "event_name",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "venue": {
           "name": "venue",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "date": {
-          "name": "date",
-          "type": "integer",
+        "date_from": {
+          "name": "date_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_to": {
+          "name": "date_to",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
         "organized_by": {
           "name": "organized_by",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "mode_of_event": {
           "name": "mode_of_event",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
         "description": {
           "name": "description",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -739,186 +752,17 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "conference_approval_applications_application_id_applications_id_fk": {
-          "name": "conference_approval_applications_application_id_applications_id_fk",
+        "conference_approval_applications_user_email_users_email_fk": {
+          "name": "conference_approval_applications_user_email_users_email_fk",
           "tableFrom": "conference_approval_applications",
-          "tableTo": "applications",
+          "tableTo": "users",
           "columnsFrom": [
-            "application_id"
+            "user_email"
           ],
           "columnsTo": [
-            "id"
+            "email"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_purpose_text_fields_id_fk": {
-          "name": "conference_approval_applications_purpose_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "purpose"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_content_title_text_fields_id_fk": {
-          "name": "conference_approval_applications_content_title_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "content_title"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_event_name_text_fields_id_fk": {
-          "name": "conference_approval_applications_event_name_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "event_name"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_venue_text_fields_id_fk": {
-          "name": "conference_approval_applications_venue_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "venue"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_date_date_fields_id_fk": {
-          "name": "conference_approval_applications_date_date_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "date_fields",
-          "columnsFrom": [
-            "date"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_organized_by_text_fields_id_fk": {
-          "name": "conference_approval_applications_organized_by_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "organized_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_mode_of_event_text_fields_id_fk": {
-          "name": "conference_approval_applications_mode_of_event_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "mode_of_event"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_description_text_fields_id_fk": {
-          "name": "conference_approval_applications_description_text_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "text_fields",
-          "columnsFrom": [
-            "description"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_travel_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_travel_reimbursement_number_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "number_fields",
-          "columnsFrom": [
-            "travel_reimbursement"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_registration_fee_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_registration_fee_reimbursement_number_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "number_fields",
-          "columnsFrom": [
-            "registration_fee_reimbursement"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_daily_allowance_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_daily_allowance_reimbursement_number_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "number_fields",
-          "columnsFrom": [
-            "daily_allowance_reimbursement"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_accommodation_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_accommodation_reimbursement_number_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "number_fields",
-          "columnsFrom": [
-            "accommodation_reimbursement"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "conference_approval_applications_other_reimbursement_number_fields_id_fk": {
-          "name": "conference_approval_applications_other_reimbursement_number_fields_id_fk",
-          "tableFrom": "conference_approval_applications",
-          "tableTo": "number_fields",
-          "columnsFrom": [
-            "other_reimbursement"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "conference_approval_applications_letter_of_invitation_file_fields_id_fk": {
@@ -988,6 +832,185 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.conference_global": {
+      "name": "conference_global",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.conference_member_reviews": {
+      "name": "conference_member_reviews",
+      "schema": "",
+      "columns": {
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reviewer_email": {
+          "name": "reviewer_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review": {
+          "name": "review",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "conference_member_reviews_application_id_applications_id_fk": {
+          "name": "conference_member_reviews_application_id_applications_id_fk",
+          "tableFrom": "conference_member_reviews",
+          "tableTo": "applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "conference_member_reviews_reviewer_email_users_email_fk": {
+          "name": "conference_member_reviews_reviewer_email_users_email_fk",
+          "tableFrom": "conference_member_reviews",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewer_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "conference_member_reviews_application_id_reviewer_email_pk": {
+          "name": "conference_member_reviews_application_id_reviewer_email_pk",
+          "columns": [
+            "application_id",
+            "reviewer_email"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.conference_status_log": {
+      "name": "conference_status_log",
+      "schema": "",
+      "columns": {
+        "application_id": {
+          "name": "application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_email": {
+          "name": "user_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "conference_status_log_application_id_conference_approval_applications_id_fk": {
+          "name": "conference_status_log_application_id_conference_approval_applications_id_fk",
+          "tableFrom": "conference_status_log",
+          "tableTo": "conference_approval_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "conference_status_log_user_email_users_email_fk": {
+          "name": "conference_status_log_user_email_users_email_fk",
+          "tableFrom": "conference_status_log",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "conference_status_log_application_id_user_email_action_timestamp_pk": {
+          "name": "conference_status_log_application_id_user_email_action_timestamp_pk",
+          "columns": [
+            "application_id",
+            "user_email",
+            "action",
+            "timestamp"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1817,7 +1840,7 @@
           "name": "ic_email",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "reviewer_email": {
           "name": "reviewer_email",
@@ -2840,7 +2863,8 @@
       "name": "handout_status_enum",
       "schema": "public",
       "values": [
-        "pending",
+        "review pending",
+        "reviewed",
         "approved",
         "rejected",
         "notsubmitted"
