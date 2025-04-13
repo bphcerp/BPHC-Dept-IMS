@@ -57,6 +57,7 @@ import ConferencePendingApplicationsView from "@/views/Conference/Pending";
 import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
+import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -317,6 +318,10 @@ const Routing = () => {
                     <Route
                       path="assign-examiner"
                       element={<AssignExaminers />}
+                    ></Route>
+                    <Route
+                      path="qualifying-exam-management"
+                      element={<QualifyingExamManagement />}
                     ></Route>
                     Handout
                   </Route>
