@@ -23,7 +23,7 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    asyncHandler((req: Request, res: Response, next: NextFunction) =>
+    asyncHandler(async (req: Request, res: Response, next: NextFunction) =>
         pdfUpload.single("qualificationForm")(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
@@ -37,20 +37,19 @@ router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "PDF file is required");
         }
 
-        // Safely parse dates
         const parseDate = (dateString: string | undefined): Date | null => {
             if (!dateString) return null;
             const parsedDate = new Date(dateString);
             return !isNaN(parsedDate.getTime()) ? parsedDate : null;
         };
 
-        const examStartDate = parseDate(
-            (req.body as { examStartDate: string }).examStartDate
-        );
-        const examEndDate = parseDate(
-            (req.body as { examEndDate: string }).examEndDate
-        );
+        const examId = parseInt(req.body.examId || "0", 10);
+        if (!examId) {
+            throw new HttpError(HttpCode.BAD_REQUEST, "Exam ID is required");
+        }
 
+        const examStartDate = parseDate(req.body.examStartDate);
+        const examEndDate = parseDate(req.body.examEndDate);
         if (!examStartDate || !examEndDate) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid exam dates");
         }
@@ -71,16 +70,11 @@ router.post(
             );
         }
 
-        const {
-            qualifyingArea1,
-            qualifyingArea2,
-            examStartDate: parsedStartDate,
-            examEndDate: parsedEndDate,
-        } = parsed.data;
-
+        const { qualifyingArea1, qualifyingArea2 } = parsed.data;
         const { email } = req.user;
 
         await db.transaction(async (tx) => {
+            // Get the student record
             const student = await tx.query.phd.findFirst({
                 where: eq(phd.email, email),
             });
@@ -92,51 +86,75 @@ router.post(
                 );
             }
 
-            let shouldIncrementApplicationCount = true;
-            if (
-                (student.qualifyingExam1StartDate?.toISOString() ===
-                    new Date(parsedStartDate).toISOString() &&
-                    student.qualifyingExam1EndDate?.toISOString() ===
-                        new Date(parsedEndDate).toISOString()) ||
-                (student.qualifyingExam2StartDate?.toISOString() ===
-                    new Date(parsedStartDate).toISOString() &&
-                    student.qualifyingExam2EndDate?.toISOString() ===
-                        new Date(parsedEndDate).toISOString())
-            ) {
-                shouldIncrementApplicationCount = false;
+            // Helper function to compare dates with tolerance for timezone differences
+            const areSameDates = (
+                date1: Date | null | undefined,
+                date2: Date | null
+            ): boolean => {
+                if (!date1 || !date2) return false;
+
+                // Convert to ISO string date parts only for comparison
+                return (
+                    date1.toISOString().split("T")[0] ===
+                    date2.toISOString().split("T")[0]
+                );
+            };
+
+            // Check if this is a resubmission for an existing attempt
+            const isResubmissionForAttempt1 =
+                student.qualifyingExam1StartDate &&
+                student.qualifyingExam1EndDate &&
+                areSameDates(student.qualifyingExam1StartDate, examStartDate) &&
+                areSameDates(student.qualifyingExam1EndDate, examEndDate);
+
+            const isResubmissionForAttempt2 =
+                student.qualifyingExam2StartDate &&
+                student.qualifyingExam2EndDate &&
+                areSameDates(student.qualifyingExam2StartDate, examStartDate) &&
+                areSameDates(student.qualifyingExam2EndDate, examEndDate);
+
+            const isResubmission =
+                isResubmissionForAttempt1 || isResubmissionForAttempt2;
+
+            // Current application count
+            const currentApplicationCount = student.numberOfQeApplication ?? 0;
+
+            // If this is a new application (not resubmission), check max attempts
+            if (!isResubmission && currentApplicationCount >= 2) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Maximum number of qualifying exam attempts reached"
+                );
             }
 
-            const updateFields: Record<string, string | Date | number> = {
+            // Prepare update fields
+            const updateFields: Record<string, unknown> = {
                 qualifyingArea1,
                 qualifyingArea2,
                 qualifyingAreasUpdatedAt: new Date(),
             };
 
-            if (shouldIncrementApplicationCount) {
-                updateFields.numberOfQeApplication =
-                    (student.numberOfQeApplication ?? 0) + 1;
-                if (!student.qualifyingExam1StartDate) {
-                    updateFields.qualifyingExam1StartDate = new Date(
-                        parsedStartDate
-                    );
-                    updateFields.qualifyingExam1EndDate = new Date(
-                        parsedEndDate
-                    );
-                } else if (!student.qualifyingExam2StartDate) {
-                    updateFields.qualifyingExam2StartDate = new Date(
-                        parsedStartDate
-                    );
-                    updateFields.qualifyingExam2EndDate = new Date(
-                        parsedEndDate
-                    );
-                } else {
-                    throw new HttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Maximum number of qualifying exam attempts reached"
-                    );
+            // Determine which attempt this is for
+            if (isResubmissionForAttempt1) {
+                // Just update the areas for attempt 1
+            } else if (isResubmissionForAttempt2) {
+                // Just update the areas for attempt 2
+            } else {
+                // This is a new application
+                if (currentApplicationCount === 0) {
+                    // First attempt
+                    updateFields.numberOfQeApplication = 1;
+                    updateFields.qualifyingExam1StartDate = examStartDate;
+                    updateFields.qualifyingExam1EndDate = examEndDate;
+                } else if (currentApplicationCount === 1) {
+                    // Second attempt
+                    updateFields.numberOfQeApplication = 2;
+                    updateFields.qualifyingExam2StartDate = examStartDate;
+                    updateFields.qualifyingExam2EndDate = examEndDate;
                 }
             }
 
+            // Insert application record
             await tx
                 .insert(applications)
                 .values({
@@ -146,6 +164,7 @@ router.post(
                 })
                 .returning();
 
+            // Insert file record
             const [fileRecord] = await tx
                 .insert(files)
                 .values({
@@ -159,6 +178,7 @@ router.post(
                 })
                 .returning();
 
+            // Insert file field record
             await tx.insert(fileFields).values({
                 fileId: fileRecord.id,
                 module: modules[4],
@@ -166,6 +186,7 @@ router.post(
                 fieldName: "qualificationForm",
             });
 
+            // Insert text fields
             await tx.insert(textFields).values([
                 {
                     value: qualifyingArea1,
@@ -181,6 +202,7 @@ router.post(
                 },
             ]);
 
+            // Update the PhD record
             await tx.update(phd).set(updateFields).where(eq(phd.email, email));
         });
 
