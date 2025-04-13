@@ -10,6 +10,8 @@ export const states = [
     "Completed",
 ] as const;
 
+const modesOfEvent = ["online", "offline"] as const;
+
 export const createApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
@@ -18,7 +20,7 @@ export const createApplicationBodySchema = z.object({
     dateFrom: z.coerce.date(),
     dateTo: z.coerce.date(),
     organizedBy: z.string().nonempty(),
-    modeOfEvent: z.enum(["online", "offline"], {
+    modeOfEvent: z.enum(modesOfEvent, {
         message: "Should either be 'online' or 'offline'",
     }),
     description: z.string().nonempty(),
@@ -144,7 +146,7 @@ export type ViewApplicationResponse = {
     dateFrom: string;
     dateTo: string;
     organizedBy: string;
-    modeOfEvent: string;
+    modeOfEvent: (typeof modesOfEvent)[number];
     description: string;
     travelReimbursement?: number;
     registrationFeeReimbursement?: number;
