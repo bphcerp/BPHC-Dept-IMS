@@ -99,13 +99,6 @@
       "when": 1744360600802,
       "tag": "0013_glamorous_star_brand",
       "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1744460372972,
-      "tag": "0014_careful_catseye",
-      "breakpoints": true
     }
   ]
 }
