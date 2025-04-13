@@ -1,5 +1,3 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useState } from "react";
@@ -109,7 +107,7 @@ const PublicationsView = () => {
     onSuccess: () => {
       toast.success("Edited successfully");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Error while updating status");
     },
   });
