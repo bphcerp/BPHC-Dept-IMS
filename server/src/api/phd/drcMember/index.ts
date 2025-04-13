@@ -21,6 +21,7 @@ import notifySupervisor from "./notifySupervisor.ts";
 import updateExaminer from "./updateExaminer.ts";
 import getSupervisorsWithStudents from "./getSupervisorsWithStudents.ts";
 import getQeTimeTable from "./getQeTimeTable.ts";
+import getPhdApplicationFormsAsZip from "./getPhdApplicationFormsAsZip.ts";
 
 
 const router = express.Router();
@@ -48,5 +49,6 @@ router.use('/notifySupervisor', notifySupervisor);
 router.use('/updateExaminer', updateExaminer);
 router.use('/getSupervisorsWithStudents', getSupervisorsWithStudents);
 router.use('/getQeTimeTable', getQeTimeTable);
+router.use('/getPhdApplicationFormsAsZip', getPhdApplicationFormsAsZip);
 
 export default router;
