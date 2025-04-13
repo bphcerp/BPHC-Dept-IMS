@@ -2,17 +2,45 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
-import { 
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger 
-} from "@/components/ui/accordion";
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from "@/components/ui/table";
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
-} from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+
+interface IStudent {
+  name: string;
+  email: string;
+  erpId: string;
+  formName: string;
+  fileUrl: string | null;
+  uploadedAt: string;
+  examStatus: boolean | null;
+  examDate: string | null;
+  qualifyingArea1: string | null;
+  qualifyingArea2: string | null;
+}
+
+interface IQualifyingExam {
+  id: number;
+  examName: string;
+  deadline: string;
+  students: IStudent[];
+}
+
+interface ISemester {
+  id: number;
+  year: number;
+  semesterNumber: number;
+  startDate: string;
+  endDate: string;
+  exams: IQualifyingExam[];
+}
+
+interface IPhdApplicationsResponse {
+  success: boolean;
+  semestersWithExams: ISemester[];
+}
 
 interface ApplicationsPanelProps {
   selectedSemester: number | null;
@@ -28,10 +56,10 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
   const [downloadingExamId, setDownloadingExamId] = useState<number | null>(null);
 
   // Fetch qualifying exam applications data
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<IPhdApplicationsResponse, Error>({
     queryKey: ["phd-qualifying-exam-applications", selectedSemester],
     queryFn: async () => {
-      const response = await api.get("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
+      const response = await api.get<IPhdApplicationsResponse>("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -50,8 +78,8 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
     try {
       setDownloadingExamId(examId);
       
-      // Use query parameter instead of path parameter
-      const response = await api.get("/phd/drcMember/getApplicationFormsAsZip", {
+      // Use query parameter
+      const response = await api.get("/phd/drcMember/getPhdApplicationFormsAsZip", {
         params: { examId },
         responseType: 'blob' // Important for binary data
       });
@@ -61,7 +89,11 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
       const link = document.createElement('a');
       
       // Find the exam to use its name in the filename
-      const exam = currentSemester?.exams.find((e:any) => e.id === examId);
+      const currentSemester = data?.semestersWithExams.find(
+        (sem) => sem.id === selectedSemester
+      ) || data?.semestersWithExams[0];
+      
+      const exam = currentSemester?.exams.find(e => e.id === examId);
       const fileName = exam 
         ? `${exam.examName.replace(/\s+/g, '_')}_applications.zip`
         : `qualifying_exam_applications_${examId}.zip`;
@@ -85,7 +117,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
   };
 
   if (isLoading) {
-    return <div>Loading application data...</div>;
+    return <div className="py-8 text-center">Loading application data...</div>;
   }
 
   if (!data?.success || !data.semestersWithExams.length) {
@@ -97,7 +129,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
   }
 
   const currentSemester = data.semestersWithExams.find(
-    (sem:any) => sem.id === selectedSemester
+    (sem) => sem.id === selectedSemester
   ) || data.semestersWithExams[0];
 
   return (
@@ -113,7 +145,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
             <SelectContent>
-              {data.semestersWithExams.map((semester:any) => (
+              {data.semestersWithExams.map((semester) => (
                 <SelectItem 
                   key={semester.id} 
                   value={semester.id.toString()}
@@ -132,7 +164,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
         </div>
       ) : (
         <Accordion type="single" collapsible className="w-full">
-          {currentSemester.exams.map((exam:any) => (
+          {currentSemester.exams.map((exam) => (
             <AccordionItem key={exam.id} value={exam.id.toString()}>
               <AccordionTrigger className="rounded-lg px-4 py-2 hover:bg-gray-50">
                 <div className="flex w-full justify-between pr-4">
@@ -174,7 +206,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {exam.students.map((student:any) => (
+                        {exam.students.map((student) => (
                           <TableRow key={`${exam.id}-${student.email}`}>
                             <TableCell className="font-medium">{student.name}</TableCell>
                             <TableCell>{student.email}</TableCell>

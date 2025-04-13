@@ -14,19 +14,31 @@ import { permissions } from "lib";
 const NotionalSupervisorLayout = () => {
   const items = [
     {
-      title: "Notional Supervisor",
+      title: "Supervisor",
       items: [
         {
-          title: "Update Grade",
+          title: "Notional Supervisor Management",
           icon: <CaseUpper />,
           url: "/phd/notional-supervisor/update-grade",
           requiredPermissions: [permissions["/phd/supervisor/updateSuggestedExaminer"]],
         },
         {
-          title: "Suggest Examiner",
+          title: "Examiner Management",
           icon: <UserRoundPlus />,
           url: "/phd/notional-supervisor/suggest-examiner",
           requiredPermissions: [permissions["/phd/notionalSupervisor/updateCourseGrade"]],
+        },
+        {
+          title: "Supervisor Mangement",
+          icon: <Users />,
+          url: "/phd/phd-supervisor/supervised-students",
+          requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
+        },
+        {
+          title: "Co-Supervisor Mannagement",
+          icon: <Users />,
+          url: "/phd/phd-co-supervisor/co-supervised-students",
+          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
         },
       ],
     },
@@ -47,29 +59,7 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/drc-convenor/qualifying-exam-management",
           requiredPermissions: [
             permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"],
-            permissions["/phd/drcMember/getPhdToGenerateQualifyingExamForm"],
-            permissions["/phd/drcMember/updateExaminer"],
           ],
-        },
-        {
-          title: "Generate QE Application List",
-          icon: <Users />,
-          url: "/phd/drc-convenor/generate-qualifying-exam-form",
-          requiredPermissions: [
-            permissions["/phd/drcMember/getPhdToGenerateQualifyingExamForm"],
-          ],
-        },
-        {
-          title: "QE Application details",
-          icon: <NotepadText />,
-          url: "/phd/drc-convenor/phd-that-applied-for-qualifying-exam",
-          requiredPermissions: [permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]],
-        },
-        {
-          title: "Assign Examiner",
-          icon: <NotepadText />,
-          url: "/phd/drc-convenor/assign-examiner",
-          requiredPermissions: [permissions["/phd/drcMember/updateExaminer"]],
         },
         {
           title: "Proposal Management",
@@ -101,7 +91,7 @@ const NotionalSupervisorLayout = () => {
       title: "Staff",
       items: [
         {
-          title: "Semester Dates",
+          title: "Semester Dates Management",
           icon: <CalendarX2 />,
           url: "/phd/staff/update-semester-dates",
           requiredPermissions: [
@@ -109,41 +99,19 @@ const NotionalSupervisorLayout = () => {
           ],
         },
         {
-          title: "Deadline",
+          title: "Deadline Mangement",
           icon: <CalendarClockIcon />,
           url: "/phd/staff/update-deadlines",
           requiredPermissions: [permissions["/phd/staff/updateQualifyingExamDeadline"], permissions["/phd/staff/updateProposalDeadline"]],
         },
         {
-          title: "Sub Areas",
+          title: "Sub Areas Mangement",
           icon: <CalendarClockIcon />,
           url: "/phd/staff/update-subareas",
           requiredPermissions: [permissions["/phd/staff/updateSubAreas"], permissions["/phd/staff/getSubAreas"], permissions["/phd/staff/deleteSubArea"]],
         },
       ],
-    },
-    {
-      title: "PhD Supervisor",
-      items: [
-        {
-          title: "Supervised Students",
-          icon: <Users />,
-          url: "/phd/phd-supervisor/supervised-students",
-          requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
-        },
-      ],
-    },
-    {
-      title: "PhD Co-Supervisor",
-      items: [
-        {
-          title: "Co-Supervised Students",
-          icon: <Users />,
-          url: "/phd/phd-co-supervisor/co-supervised-students",
-          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
-        },
-      ],
-    },
+    },    
   ];
 
   return (

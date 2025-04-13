@@ -70,14 +70,7 @@ router.post(
                         eq(phdExaminer.studentEmail, studentEmail)
                     )
                 );
-        } else {
-            await db.insert(phdExaminer).values({
-                subAreaId,
-                studentEmail,
-                examiner: examinerEmail,
-                suggestedExaminer: [examinerEmail],
-            });
-        }
+        } 
 
         res.status(200).json({
             success: true,

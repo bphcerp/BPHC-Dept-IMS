@@ -1,56 +1,102 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-interface ResultsPanelProps {
-  selectedSemester: number | null;
-  onBack: () => void;
-}
-
-interface Student {
+interface IStudent {
   name: string;
   email: string;
   erpId: string;
+  formName: string;
+  fileUrl: string | null;
+  uploadedAt: string;
   examStatus: boolean | null;
   examDate: string | null;
   qualifyingArea1: string | null;
   qualifyingArea2: string | null;
 }
 
-interface Exam {
+interface IQualifyingExam {
   id: number;
   examName: string;
   deadline: string;
-  students: Student[];
+  students: IStudent[];
 }
 
-interface UpdateExamResult {
+interface ISemester {
+  id: number;
+  year: number;
+  semesterNumber: number;
+  startDate: string;
+  endDate: string;
+  exams: IQualifyingExam[];
+}
+
+interface IPhdApplicationsResponse {
+  success: boolean;
+  semestersWithExams: ISemester[];
+}
+
+interface IExamStatus {
+  email: string;
+  qualifyingExam1: boolean | null;
+  qualifyingExam2: boolean | null;
+  numberOfQeApplication: number;
+  qualifyingExam1StartDate: string | null;
+  qualifyingExam2StartDate: string | null;
+  qualifyingExam1EndDate: string | null;
+  qualifyingExam2EndDate: string | null;
+}
+
+interface IQualificationDate {
+  email: string;
+  name: string;
+  qualificationDate: string | null;
+  examStatus: boolean | null;
+}
+
+interface IQualificationDatesResponse {
+  success: boolean;
+  qualificationDates: IQualificationDate[];
+}
+
+interface IUpdateExamResult {
   email: string;
   ifPass: boolean;
 }
 
-interface UpdateExamDate {
+interface IUpdateExamDate {
   email: string;
   qualificationDate: string;
 }
 
-const ResultsPanel: React.FC<ResultsPanelProps> = ({ 
+interface IExamDatesResponse {
+  success: boolean;
+  exam: {
+    id: number;
+    examName: string;
+    examStartDate: string;
+    examEndDate: string;
+  };
+}
+
+interface ResultsPanelProps {
+  selectedSemester: number | null;
+  onBack: () => void;
+}
+
+const ResultsPanel: React.FC<ResultsPanelProps> = ({
   selectedSemester,
   onBack
 }) => {
   const queryClient = useQueryClient();
-  const [examResults, setExamResults] = useState<UpdateExamResult[]>([]);
-  const [examDates, setExamDates] = useState<UpdateExamDate[]>([]);
+  const [examResults, setExamResults] = useState<IUpdateExamResult[]>([]);
+  const [examDates, setExamDates] = useState<IUpdateExamDate[]>([]);
   const [studentStatus, setStudentStatus] = useState<
     Record<string, { status: boolean | null; numberOfQeApplication: number }>
   >({});
@@ -58,10 +104,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const [dateValidationErrors, setDateValidationErrors] = useState<Record<string, string | null>>({});
 
   // Fetch application data
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<IPhdApplicationsResponse, Error>({
     queryKey: ["phd-qualifying-exam-applications", selectedSemester],
     queryFn: async () => {
-      const response = await api.get("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
+      const response = await api.get<IPhdApplicationsResponse>("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -69,10 +115,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   });
 
   // Fetch exam status data
-  const { data: examStatusData } = useQuery({
+  const { data: examStatusData } = useQuery<{ success: boolean; examStatuses: IExamStatus[] }, Error>({
     queryKey: ["phd-exam-statuses"],
     queryFn: async () => {
-      const response = await api.get("/phd/drcMember/getPhdExamStatus");
+      const response = await api.get<{ success: boolean; examStatuses: IExamStatus[] }>("/phd/drcMember/getPhdExamStatus");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -80,10 +126,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   });
 
   // Fetch qualification dates
-  const { data: qualificationDatesData } = useQuery({
+  const { data: qualificationDatesData } = useQuery<IQualificationDatesResponse, Error>({
     queryKey: ["phd-qualification-dates"],
     queryFn: async () => {
-      const response = await api.get("/phd/drcMember/getQualificationDates");
+      const response = await api.get<IQualificationDatesResponse>("/phd/drcMember/getQualificationDates");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -91,11 +137,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   });
 
   // Fetch exam dates for validation
-  const { data: examDateData } = useQuery({
+  const { data: examDateData } = useQuery<IExamDatesResponse, Error>({
     queryKey: ["qualifying-exam-dates", selectedSemester],
     queryFn: async () => {
-      if (!selectedSemester) return { success: false, exam: null };
-      const response = await api.get(`/phd/drcMember/getDatesOfQeExam/${selectedSemester}`);
+      if (!selectedSemester) return { success: false, exam: { id: 0, examName: "", examStartDate: "", examEndDate: "" } };
+      const response = await api.get<IExamDatesResponse>(`/phd/drcMember/getDatesOfQeExam/${selectedSemester}`);
       return response.data;
     },
     enabled: !!selectedSemester,
@@ -111,7 +157,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         { status: boolean | null; numberOfQeApplication: number }
       > = {};
 
-      examStatusData.examStatuses.forEach((status: any) => {
+      examStatusData.examStatuses.forEach((status) => {
         let examStatus: boolean | null = null;
 
         // Determine exam status based on number of QE applications
@@ -133,7 +179,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     if (qualificationDatesData?.qualificationDates) {
       const newDatesMap: Record<string, string | null> = {};
 
-      qualificationDatesData.qualificationDates.forEach((item: any) => {
+      qualificationDatesData.qualificationDates.forEach((item) => {
         newDatesMap[item.email] = item.qualificationDate;
       });
 
@@ -347,7 +393,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   };
 
   if (isLoading) {
-    return <div>Loading exam results data...</div>;
+    return <div className="py-8 text-center">Loading exam results data...</div>;
   }
 
   if (!data?.success || !data.semestersWithExams.length) {
@@ -359,7 +405,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   }
 
   const currentSemester = data.semestersWithExams.find(
-    (sem:any) => sem.id === selectedSemester
+    (sem) => sem.id === selectedSemester
   ) || data.semestersWithExams[0];
 
   return (
@@ -390,7 +436,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         </div>
       )}
 
-      {currentSemester.exams.map((exam: Exam) => (
+      {currentSemester.exams.map((exam: IQualifyingExam) => (
         <div key={exam.id} className="rounded-lg border bg-white overflow-hidden">
           <div className="bg-gray-50 px-4 py-3 border-b">
             <h3 className="font-semibold">{exam.examName}</h3>

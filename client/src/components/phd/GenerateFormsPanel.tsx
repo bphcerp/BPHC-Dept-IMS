@@ -1,13 +1,50 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Printer, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+
+interface Student {
+  name: string;
+  email: string;
+  area1: string | null;
+  area2: string | null;
+  idNumber: string;
+  numberOfQeApplication: number | null;
+}
+
+interface QualifyingStudentsResponse {
+  success: boolean;
+  students: Student[];
+  examInfo?: {
+    id: number;
+    examName: string;
+    deadline: string;
+    semesterId: number;
+    semesterYear: number;
+    semesterNumber: number;
+  };
+}
+
+interface ExamDateResponse {
+  success: boolean;
+  exam: {
+    id?: number;
+    examName?: string;
+    examStartDate: string;
+    examEndDate: string;
+  };
+}
 
 interface GenerateFormsPanelProps {
   selectedSemester: number | null;
@@ -15,23 +52,24 @@ interface GenerateFormsPanelProps {
   onBack: () => void;
 }
 
-const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({ 
-  selectedSemester,
+const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
   onNext,
-  onBack
+  onBack,
 }) => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [formData, setFormData] = useState<{
-    students: any[]; 
-    examStartDate: string; 
+    students: Student[];
+    examStartDate: string;
     examEndDate: string;
   } | null>(null);
 
   // Fetch students who can be included in qualifying exam form
-  const { data, isLoading } = useQuery({
-    queryKey: ["phd-qualifying-students", selectedSemester],
+  const { data, isLoading } = useQuery<QualifyingStudentsResponse, Error>({
+    queryKey: ["phd-qualifying-students"],
     queryFn: async () => {
-      const response = await api.get("/phd/drcMember/getPhdToGenerateQualifyingExamForm");
+      const response = await api.get<QualifyingStudentsResponse>(
+        "/phd/drcMember/getPhdToGenerateQualifyingExamForm"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -39,16 +77,20 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
   });
 
   // Fetch exam dates for the selected semester
-  const { data: examDatesData } = useQuery({
-    queryKey: ["phd-qualifying-exam-dates", selectedSemester],
+  const { data: examDatesData } = useQuery<ExamDateResponse, Error>({
+    queryKey: ["phd-qualifying-exam-dates", data?.examInfo?.semesterId],
     queryFn: async () => {
       if (data?.examInfo?.semesterId) {
-        const response = await api.get(`/phd/drcMember/getDatesOfQeExam/${data.examInfo.semesterId}`);
+        const response = await api.get<ExamDateResponse>(
+          `/phd/drcMember/getDatesOfQeExam/${data.examInfo.semesterId}`
+        );
         return response.data;
       }
-      return null;
+      return { success: false, exam: { examStartDate: "", examEndDate: "" } };
     },
     enabled: !!data?.examInfo?.semesterId,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const handleSelectAll = () => {
@@ -56,7 +98,7 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
       if (selectedStudents.length === data.students.length) {
         setSelectedStudents([]);
       } else {
-        setSelectedStudents(data.students.map((student:any) => student.email));
+        setSelectedStudents(data.students.map((student) => student.email));
       }
     }
   };
@@ -76,10 +118,10 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
     }
 
     if (data?.students) {
-      const selectedStudentsData = data.students.filter((student:any) => 
+      const selectedStudentsData = data.students.filter((student) =>
         selectedStudents.includes(student.email)
       );
-      
+
       setFormData({
         students: selectedStudentsData,
         examStartDate: examDatesData.exam.examStartDate,
@@ -219,13 +261,13 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
   };
 
   if (isLoading) {
-    return <div>Loading student data...</div>;
+    return <div className="py-8 text-center">Loading student data...</div>;
   }
 
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Generate Qualifying Exam Form</h2>
-      
+
       {data?.examInfo && (
         <Alert>
           <AlertDescription>
@@ -263,7 +305,7 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
           </TableHeader>
           <TableBody>
             {data?.students && data.students.length > 0 ? (
-              data.students.map((student:any) => (
+              data.students.map((student) => (
                 <TableRow key={student.email}>
                   <TableCell>
                     <input

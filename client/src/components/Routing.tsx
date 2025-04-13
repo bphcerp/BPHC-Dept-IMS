@@ -28,8 +28,6 @@ import {
 } from "react-router-dom";
 import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
-import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
-import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
@@ -47,7 +45,6 @@ import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
-import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
 import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
@@ -304,20 +301,8 @@ const Routing = () => {
                       element={<CourseworkForm />}
                     />
                     <Route
-                      path="generate-qualifying-exam-form"
-                      element={<GenerateQualifyingExamForm />}
-                    ></Route>
-                    <Route
-                      path="phd-that-applied-for-qualifying-exam"
-                      element={<PhdThatAppliedForQualifyingExam />}
-                    ></Route>
-                    <Route
                       path="assign-dac-members"
                       element={<AssignDacMembers />}
-                    ></Route>
-                    <Route
-                      path="assign-examiner"
-                      element={<AssignExaminers />}
                     ></Route>
                     <Route
                       path="qualifying-exam-management"
