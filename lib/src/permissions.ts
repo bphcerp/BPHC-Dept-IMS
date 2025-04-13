@@ -89,6 +89,7 @@ export const allPermissions = {
     "handout:dca-convenor:get-all-dcamember": "",
     "handout:dca-convenor:update-reviewer": "",
     "handout:dca-convenor:update-ic": "",
+    "handout:dca-convenor:get-all-faculty": "",
 
     "publications:view": "View author's own publications",
 } as const;
@@ -224,7 +225,7 @@ export const permissions = {
     "/handout/dcaconvenor/updateReviewer":
         "handout:dca-convenor:update-reviewer",
     "/handout/dcaconvenor/updateIC": "handout:dca-convenor:update-ic",
-
+    "/handout/dcaconvenor/getAllFaculty": "handout:dca-convenor:get-all-faculty",
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
 } as const;
