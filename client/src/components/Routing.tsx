@@ -18,6 +18,7 @@ import {
   GraduationCap,
   BookOpen,
   LibraryBig,
+  Warehouse,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -57,6 +58,7 @@ import ConferencePendingApplicationsView from "@/views/Conference/Pending";
 import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
+import InventoryLayout from "@/layouts/Inventory";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -80,6 +82,10 @@ const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
 
 const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("publications:")
+);
+
+const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("inventory:")
 );
 
 const Routing = () => {
@@ -122,6 +128,12 @@ const Routing = () => {
       url: "/publications",
       requiredPermissions: publicationsPermissions,
     },
+    {
+      title: "Inventory",
+      icon: <Warehouse />,
+      url: "/inventory",
+      requiredPermissions: inventoryModulePermissions,
+    },
   ];
 
   return (
@@ -140,11 +152,11 @@ const Routing = () => {
               sidebarItems={
                 authState
                   ? [
-                      {
-                        title: "Modules",
-                        items: modules,
-                      },
-                    ]
+                    {
+                      title: "Modules",
+                      items: modules,
+                    },
+                  ]
                   : []
               }
             />
@@ -197,17 +209,17 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/conference/applications/pending"]
                 ) && (
-                  <>
-                    <Route
-                      path="pending"
-                      element={<ConferencePendingApplicationsView />}
-                    />
-                    <Route
-                      path="view/:id"
-                      element={<ConferenceViewApplicationView />}
-                    />
-                  </>
-                )}
+                    <>
+                      <Route
+                        path="pending"
+                        element={<ConferencePendingApplicationsView />}
+                      />
+                      <Route
+                        path="view/:id"
+                        element={<ConferenceViewApplicationView />}
+                      />
+                    </>
+                  )}
               </Route>
             )}
 
@@ -271,11 +283,11 @@ const Routing = () => {
                       {checkAccess(
                         permissions["/handout/dcaconvenor/finalDecision"]
                       ) && (
-                        <Route
-                          path="dcaconvenor/review/:id"
-                          element={<DCAConvenorReview />}
-                        />
-                      )}
+                          <Route
+                            path="dcaconvenor/review/:id"
+                            element={<DCAConvenorReview />}
+                          />
+                        )}
                     </>
                   )}
               </Route>
@@ -286,41 +298,41 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/phd/notionalSupervisor/updateCourseDetails"]
                 ) && (
-                  <Route path="notional-supervisor" element={<Outlet />}>
-                    <Route path="update-grade" element={<UpdateGrade />} />
-                    <Route
-                      path="suggest-examiner"
-                      element={<SuggestExaminer />}
-                    />
-                  </Route>
-                )}
+                    <Route path="notional-supervisor" element={<Outlet />}>
+                      <Route path="update-grade" element={<UpdateGrade />} />
+                      <Route
+                        path="suggest-examiner"
+                        element={<SuggestExaminer />}
+                      />
+                    </Route>
+                  )}
                 {checkAccess(
                   permissions["/phd/drcMember/generateCourseworkForm"]
                 ) && (
-                  <Route path="drc-convenor" element={<Outlet />}>
-                    <Route
-                      path="coursework-form"
-                      element={<CourseworkForm />}
-                    />
-                    <Route
-                      path="generate-qualifying-exam-form"
-                      element={<GenerateQualifyingExamForm />}
-                    ></Route>
-                    <Route
-                      path="phd-that-applied-for-qualifying-exam"
-                      element={<PhdThatAppliedForQualifyingExam />}
-                    ></Route>
-                    <Route
-                      path="assign-dac-members"
-                      element={<AssignDacMembers />}
-                    ></Route>
-                    <Route
-                      path="assign-examiner"
-                      element={<AssignExaminers />}
-                    ></Route>
-                    Handout
-                  </Route>
-                )}
+                    <Route path="drc-convenor" element={<Outlet />}>
+                      <Route
+                        path="coursework-form"
+                        element={<CourseworkForm />}
+                      />
+                      <Route
+                        path="generate-qualifying-exam-form"
+                        element={<GenerateQualifyingExamForm />}
+                      ></Route>
+                      <Route
+                        path="phd-that-applied-for-qualifying-exam"
+                        element={<PhdThatAppliedForQualifyingExam />}
+                      ></Route>
+                      <Route
+                        path="assign-dac-members"
+                        element={<AssignDacMembers />}
+                      ></Route>
+                      <Route
+                        path="assign-examiner"
+                        element={<AssignExaminers />}
+                      ></Route>
+                      Handout
+                    </Route>
+                  )}
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
@@ -349,28 +361,28 @@ const Routing = () => {
                 )}
                 {checkAccess(
                   permissions[
-                    "/phd/notionalSupervisor/updateCourseDetails"
+                  "/phd/notionalSupervisor/updateCourseDetails"
                   ] as string
                 ) && (
-                  <Route path="phd-co-supervisor" element={<Outlet />}>
-                    <Route
-                      path="co-supervised-students"
-                      element={<CoSupervisedStudents />}
-                    />
-                  </Route>
-                )}
+                    <Route path="phd-co-supervisor" element={<Outlet />}>
+                      <Route
+                        path="co-supervised-students"
+                        element={<CoSupervisedStudents />}
+                      />
+                    </Route>
+                  )}
                 {checkAccess(
                   permissions[
-                    "/phd/notionalSupervisor/updateCourseDetails"
+                  "/phd/notionalSupervisor/updateCourseDetails"
                   ] as string
                 ) && (
-                  <Route path="phd-supervisor" element={<Outlet />}>
-                    <Route
-                      path="supervised-students"
-                      element={<SupervisedStudents />}
-                    />
-                  </Route>
-                )}
+                    <Route path="phd-supervisor" element={<Outlet />}>
+                      <Route
+                        path="supervised-students"
+                        element={<SupervisedStudents />}
+                      />
+                    </Route>
+                  )}
               </Route>
             )}
           </>
@@ -385,6 +397,20 @@ const Routing = () => {
               }
             />
             <Route path="your-publications" element={<YourPublications />} />
+          </Route>
+        )}
+
+        {checkAccessAnyOne(inventoryModulePermissions) && (
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route
+              index
+              element={
+                <Navigate to="/inventory/items" replace={true} />
+              }
+            />
+            <Route path="items" element={<></>} />
+            <Route path="stats" element={<></>} />
+            { checkAccess('inventory:write') && <Route path="settings" element={<></>} /> }
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

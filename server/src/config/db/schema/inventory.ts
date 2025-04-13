@@ -73,7 +73,7 @@ export const inventoryItems = pgTable("inventory_items", {
         .notNull(),
 });
 
-export const laboratories = pgTable("laboratories", {
+export const laboratories = pgTable("inventory_laboratories", {
     id: uuid("id").primaryKey().default(uuidv4()),
     name: text("name").unique().notNull(),
     location: text("location"),
@@ -92,7 +92,7 @@ export const laboratories = pgTable("laboratories", {
         .notNull(),
 });
 
-export const vendors = pgTable("vendors", {
+export const vendors = pgTable("inventory_vendors", {
     id: uuid("id").primaryKey().default(uuidv4()),
     vendorId: integer("vendor_id").notNull(),
     name: text("name").notNull(),
@@ -108,7 +108,7 @@ export const vendors = pgTable("vendors", {
         .notNull(),
 });
 
-export const categories = pgTable("categories", {
+export const categories = pgTable("inventory_categories", {
     id: uuid("id").primaryKey().default(uuidv4()),
     name: text("name").unique().notNull(),
     code: text("code").notNull(),
@@ -140,11 +140,5 @@ export const laboratoriesRelations = relations(laboratories, ({ one }) => ({
         fields: [laboratories.facultyInChargeEmail],
         references: [users.email],
         relationName: "facultyInCharge",
-    }),
-}));
-
-export const vendorsRelations = relations(vendors, ({ many }) => ({
-    categories: many(vendorCategories, {
-        relationName: "vendorCategories",
     }),
 }));

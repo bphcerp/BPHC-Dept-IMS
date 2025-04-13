@@ -178,3 +178,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar (for showing fake scrollbar in DataTable.tsx (inventory) */
+/* The fake scrollbar shows at the bottom irrespective of scroll position */
+/* This reduces user effort, the user doesnt need to keep going to the bottom to scroll.  */
+
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

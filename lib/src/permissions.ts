@@ -91,6 +91,9 @@ export const allPermissions = {
     "handout:dca-convenor:update-ic": "",
 
     "publications:view": "View author's own publications",
+
+    "inventory:write": "Admin can edit the data of the inventory module",
+    "inventory:read": "Non-Admin users can view the data of the inventory module",
 } as const;
 
 export const permissions = {
@@ -227,6 +230,10 @@ export const permissions = {
 
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
+
+    "/inventory/addItem" : "inventory:write",
+    "/inventory/editItem" : "inventory:write",
+    "/inventory/deleteItem" : "inventory:write",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));
