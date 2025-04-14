@@ -378,7 +378,9 @@ const Routing = () => {
               }
             />
             <Route path="your-publications" element={<YourPublications />} />
-            <Route path="all-publications" element={<AllPublications />} />
+            {checkAccess(permissions["/publications/all"]) && (
+              <Route path="all-publications" element={<AllPublications />} />
+            )}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

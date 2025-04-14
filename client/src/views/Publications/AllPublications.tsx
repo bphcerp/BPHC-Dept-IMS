@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type CoAuthor = {
   authorId: string;
@@ -44,9 +46,22 @@ const AllPublications = () => {
     refetchOnWindowFocus: false,
   });
 
-  const handleUpdatePublications = async () => {
-    await api.post("/publications/updatePublications");
-  };
+  const updatePublicationsMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/publications/updatePublications");
+    },
+    onSuccess: () => {
+      setErrorMessage(null);
+      toast.success("Publications updated successfully");
+    },
+    onError: (error) => {
+      setErrorMessage("Failed to update publications");
+    },
+  });
+
+  function handleUpdatePublications() {
+    updatePublicationsMutation.mutate();
+  }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
