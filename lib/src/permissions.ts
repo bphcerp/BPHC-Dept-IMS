@@ -231,9 +231,15 @@ export const permissions = {
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
 
-    "/inventory/addItem" : "inventory:write",
-    "/inventory/editItem" : "inventory:write",
-    "/inventory/deleteItem" : "inventory:write",
+    // Inventory
+    "/inventory/labs/get" : "inventory:read",
+    "/inventory/labs/create" : "inventory:write",
+    "/inventory/labs/update" : "inventory:write",
+    "/inventory/labs/delete" : "inventory:write",
+    "/inventory/items/get" : "inventory:read",
+    "/inventory/items/create" : "inventory:write",
+    "/inventory/items/update" : "inventory:write",
+    "/inventory/items/delete" : "inventory:write",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

@@ -1,14 +1,14 @@
 import { Router } from "express";
-import getLabs from "./getLabs.ts";
-import createLab from "./createLab.ts";
-import updateLab from "./updateLab.ts";
-import deleteLab from "./deleteLab.ts";
+import getLabs from "./get.ts";
+import createLab from "./create.ts";
+import updateLab from "./update.ts";
+import deleteLab from "./delete.ts";
 
 const router = Router()
 
-router.use('/getLabs', getLabs)
-router.use('/createLab', createLab);
-router.use('/updateLab', updateLab);
-router.use('/deleteLab', deleteLab);
+router.use('/get', getLabs)
+router.use('/create', createLab);
+router.use('/update', updateLab);
+router.use('/delete', deleteLab);
 
 export default router

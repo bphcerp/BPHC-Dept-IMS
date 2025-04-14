@@ -68,7 +68,7 @@ const Settings = () => {
     const routeMap: Record<string, RouteMap> = {
         "Labs": {
             create: "/labs",
-            read: "/labs/getLabs",
+            read: "/labs/get",
             update: "/labs",
             delete: "/labs"
         },
