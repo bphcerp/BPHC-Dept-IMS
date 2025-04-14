@@ -55,7 +55,10 @@ router.post(
             );
         }
 
-        if (application?.userEmail !== req.user?.email) {
+        if (
+            application?.userEmail !== req.user?.email ||
+            application.state !== "Faculty"
+        ) {
             return next(
                 new HttpError(
                     HttpCode.FORBIDDEN,
