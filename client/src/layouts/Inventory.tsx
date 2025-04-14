@@ -31,7 +31,9 @@ const InventoryLayout = () => {
           },
         ]}
       />
-      <Outlet />
+      <div className="overflow-y-auto w-full">
+        <Outlet />
+      </div>
     </>
   );
 };

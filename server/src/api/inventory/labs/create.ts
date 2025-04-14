@@ -10,7 +10,7 @@ const router = Router();
 
 router.post('/',checkAccess(), asyncHandler(async (req, res, next) => {
     try {
-        const parsed = laboratorySchema.parse(req.body);
+        const parsed = laboratorySchema.omit({ id: true }).parse(req.body);
         const newLab = await db
             .insert(laboratories)
             .values(parsed)

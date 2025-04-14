@@ -236,6 +236,17 @@ export const permissions = {
     "/inventory/labs/create" : "inventory:write",
     "/inventory/labs/update" : "inventory:write",
     "/inventory/labs/delete" : "inventory:write",
+
+    "/inventory/vendors/get" : "inventory:read",
+    "/inventory/vendors/create" : "inventory:write",
+    "/inventory/vendors/update" : "inventory:write",
+    "/inventory/vendors/delete" : "inventory:write",
+
+    "/inventory/categories/get" : "inventory:read",
+    "/inventory/categories/create" : "inventory:write",
+    "/inventory/categories/update" : "inventory:write",
+    "/inventory/categories/delete" : "inventory:write",
+
     "/inventory/items/get" : "inventory:read",
     "/inventory/items/create" : "inventory:write",
     "/inventory/items/update" : "inventory:write",

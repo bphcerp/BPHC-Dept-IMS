@@ -67,35 +67,35 @@ const Settings = () => {
     }
     const routeMap: Record<string, RouteMap> = {
         "Labs": {
-            create: "/labs",
-            read: "/labs/get",
-            update: "/labs",
-            delete: "/labs"
+            create: "/inventory/labs/create",
+            read: "/inventory/labs/get",
+            update: "/inventory/labs/update",
+            delete: "/inventory/labs/delete"
         },
         "Vendors": {
-            create: "/vendors",
-            read: "/vendors/get",
-            update: "/vendors",
-            delete: "/vendors"
+            create: "/inventory/vendors/create",
+            read: "/inventory/vendors/get",
+            update: "/inventory/vendors/update",
+            delete: "/inventory/vendors/delete"
         },
         "VendorCategory": {
-            create: "/categories?type=Vendor",
-            read: "/categories?type=Vendor",
-            update: "/categories",
-            delete: "/categories"
+            create: "/inventory/categories/create?type=Vendor",
+            read: "/inventory/categories/get?type=Vendor",
+            update: "/inventory/categories/update?type=Vendor",
+            delete: "/inventory/categories/delete?type=Vendor"
         },
         "InventoryCategory": {
-            create: "/categories?type=Inventory",
-            read: "/categories?type=Inventory",
-            update: "/categories",
-            delete: "/categories"
+            create: "/inventory/categories/create?type=Inventory",
+            read: "/inventory/categories/get?type=Inventory",
+            update: "/inventory/categories/update?type=Inventory",
+            delete: "/inventory/categories/delete?type=Inventory"
         }
     };
 
     const { isSuccess, isFetching, refetch } = useQuery({
         queryKey: ["settings", selectedOption],
         queryFn: async () => {
-            const response = await api(`/inventory${routeMap[selectedOption!].read}`)
+            const response = await api(routeMap[selectedOption!].read)
             setData(response.data)
             return response.data
         },
@@ -173,7 +173,7 @@ const Settings = () => {
     };
 
     return (
-        <div className="w-full p-4">
+        <div className="p-4">
             <div className="flex justify-between items-center">
                 <Select value={selectedOption ?? undefined} onValueChange={(value) => {
                     setData([])

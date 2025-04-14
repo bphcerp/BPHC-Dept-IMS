@@ -30,7 +30,7 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
       phoneNumber: editInitialData?.phoneNumber ?? "",
       email: editInitialData?.email ?? "",
       address: editInitialData?.address ?? "",
-      categories: editInitialData?.categories.map((cat) => cat.id) ?? [],
+      categories: editInitialData?.categories?.map((cat) => cat.id) ?? [],
     } as NewVendorRequest,
     onSubmit: ({ value: data }) => {
       if (!data.vendorId || !data.name || !data.pocName || !data.phoneNumber || !data.email) {

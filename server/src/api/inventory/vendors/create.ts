@@ -10,7 +10,7 @@ const router = Router();
 
 router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
     try {
-        const parsed = vendorSchema.parse(req.body);
+        const parsed = vendorSchema.omit({ id: true }).parse(req.body);
         const newVendor = await db
             .insert(vendors)
             .values(parsed)

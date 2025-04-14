@@ -36,7 +36,7 @@ export const inventoryItems = pgTable("inventory_items", {
     transferId: uuid("transfer_id").references(
         (): AnyPgColumn => inventoryItems.id
     ),
-    itemCategoryId: uuid("item_category_id").references(() => categories.id),
+    itemCategoryId: uuid("item_category_id").references(() => inventoryCategories.id),
     itemName: text("item_name").notNull(),
     specifications: text("specifications"),
     quantity: integer("quantity").notNull(),
@@ -107,7 +107,7 @@ export const vendors = pgTable("inventory_vendors", {
         .notNull(),
 });
 
-export const categories = pgTable("inventory_categories", {
+export const inventoryCategories = pgTable("inventory_categories", {
     id: uuid("id").primaryKey().default(uuidv4()),
     name: text("name").unique().notNull(),
     code: text("code").notNull(),
@@ -124,7 +124,7 @@ export const vendorCategories = pgTable(
     "vendor_categories",
     {
         vendorId: uuid("vendor_id").references(() => vendors.id),
-        categoryId: uuid("category_id").references(() => categories.id),
+        categoryId: uuid("category_id").references(() => inventoryCategories.id),
     },
     (table) => [primaryKey({ columns: [table.vendorId, table.categoryId] })]
 );
