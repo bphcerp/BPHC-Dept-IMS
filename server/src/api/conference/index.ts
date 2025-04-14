@@ -1,6 +1,6 @@
 import express from "express";
 import createApplicationRouter from "./createApplication.ts";
-import editApplicationFieldRouter from "./editApplicationField.ts";
+import editApplicationFieldRouter from "./editApplication.ts";
 import applicationsRouter from "./applications/index.ts";
 
 const router = express.Router();
