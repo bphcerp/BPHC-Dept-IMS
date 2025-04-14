@@ -6,7 +6,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import { authUtils, permissions } from "lib";
 const permissionsMap: Record<string, string> = permissions;
 
-const dequerify = (x: string) => x.split("?")[0];
+export const dequerify = (x: string) => x.split("?")[0];
 
 /**
  * Middleware to check if the user has access to a specific operation.
