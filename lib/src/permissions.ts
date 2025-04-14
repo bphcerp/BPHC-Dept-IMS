@@ -37,6 +37,7 @@ export const allPermissions = {
     "phd:drc-member:get-subarea-and-examiner": "",
     "phd:drc-member:get-supervisor-with-student": "",
     "phd:drc-member:get-qe-time-table": "",
+    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip":"",
 
     "phd:notifs:send": "",
 
@@ -76,6 +77,7 @@ export const allPermissions = {
     "phd:staff:delete-sub-area": "",
     "phd:staff:get-sub-area": "",
     "phd:staff:update-sub-area": "",
+    "phd:staff:notify-all-users":"",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
@@ -149,6 +151,7 @@ export const permissions = {
     "/phd/drcMember/getSupervisorsWithStudents":
         "phd:drc-member:get-supervisor-with-student",
     "/phd/drcMember/getQeTimeTable": "phd:drc-member:get-qe-time-table",
+    "/phd/drcMember/getPhdApplicationFormsAsZip": "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -208,6 +211,7 @@ export const permissions = {
     "/phd/staff/deleteSubArea": "phd:staff:delete-sub-area",
     "/phd/staff/getSubAreas": "phd:staff:get-sub-area",
     "/phd/staff/updateSubAreas": "phd:staff:update-sub-area",
+    "/phd/staff/notifyAllUsers": "phd:staff:notify-all-users",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
