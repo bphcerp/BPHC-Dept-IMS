@@ -54,7 +54,7 @@ const AllPublications = () => {
       setErrorMessage(null);
       toast.success("Publications updated successfully");
     },
-    onError: (error) => {
+    onError: () => {
       setErrorMessage("Failed to update publications");
     },
   });
@@ -92,9 +92,9 @@ const AllPublications = () => {
                     key={pub.citationId}
                     className="mb-4 text-justify text-base"
                   >
-                    [{index + 1}] {authors && `${authors}, `}"{pub.title},"{" "}
-                    <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}, no.{" "}
-                    {pub.issue ?? "N/A"}, {pub.year}.
+                    [{index + 1}] {authors && `${authors}, `}&quot;{pub.title}
+                    ,&quot; <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"},
+                    no. {pub.issue ?? "N/A"}, {pub.year}.
                   </p>
                 );
               })
