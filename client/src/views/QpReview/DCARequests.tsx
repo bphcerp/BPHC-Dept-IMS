@@ -94,8 +94,6 @@ const DCARequestsView = () => {
     }
   };
 
-
-
   useEffect(() => {
     fetchCourses();
   }, []);

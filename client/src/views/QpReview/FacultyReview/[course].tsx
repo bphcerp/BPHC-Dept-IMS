@@ -33,7 +33,6 @@ export default function FacultyReview() {
         console.log("Files data:", data); // Log the response data
 
         setFiles(() => data);
-        console.log(files)
         console.log(files);
       } catch (error) {
         console.error("Error fetching files:", error);
