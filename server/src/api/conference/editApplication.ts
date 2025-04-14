@@ -165,6 +165,7 @@ router.post(
                     userEmail: req.user!.email,
                     ...insertedFileIds,
                     ...body,
+                    state: "DRC Member",
                 })
                 .where(eq(conferenceApprovalApplications.id, id))
                 .returning();
