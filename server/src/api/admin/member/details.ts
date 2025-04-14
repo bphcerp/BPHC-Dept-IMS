@@ -1,6 +1,5 @@
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { adminSchemas } from "lib";
