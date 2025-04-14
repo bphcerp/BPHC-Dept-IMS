@@ -113,6 +113,7 @@ const FicSubmissionView = () => {
       {filteredSubmissions.filter((item) => item.status === "pending") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">To Submit</h2>
+          {filteredSubmissions.length === 0 && (<p className="mt-4">Nothing to submit</p>)}
           {filteredSubmissions
             .filter((item) => item.status === "pending")
             .map((item, index) => {
@@ -136,6 +137,7 @@ const FicSubmissionView = () => {
       {filteredSubmissions.some((item) => item.status === "approved") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">Submitted</h2>
+          {filteredSubmissions.length === 0 && (<p className="mt-4">Nothing submitted yet</p>)}
           {filteredSubmissions
             .filter((item) => item.status === "approved")
             .map((item, index) => (
