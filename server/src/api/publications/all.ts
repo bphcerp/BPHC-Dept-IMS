@@ -14,15 +14,10 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
-        const parsed = publicationsSchemas.publicationQuerySchema.parse(
-            req.query
-        );
-
+    asyncHandler(async (_req, res) => {
         const authoredCitationIds = await db
             .select({ citationId: authorPublicationsTable.citationId })
-            .from(authorPublicationsTable)
-            .where(eq(authorPublicationsTable.authorId, parsed.authorId));
+            .from(authorPublicationsTable);
 
         const citationIds = authoredCitationIds.map(
             (entry) => entry.citationId
@@ -38,7 +33,6 @@ router.get(
                     publication: publicationsTable,
                     authorId: authorPublicationsTable.authorId,
                     authorName: authorPublicationsTable.authorName,
-                    status: authorPublicationsTable.status,
                 })
                 .from(authorPublicationsTable)
                 .innerJoin(
@@ -51,6 +45,7 @@ router.get(
                 .where(
                     inArray(authorPublicationsTable.citationId, citationIds)
                 );
+
             const publicationsMap = new Map<
                 string,
                 publicationsSchemas.PublicationWithCoAuthors
@@ -66,7 +61,6 @@ router.get(
                 if (!publicationsMap.has(pub.citationId)) {
                     publicationsMap.set(pub.citationId, {
                         ...pub,
-                        status: row.status ?? null,
                         coAuthors: [coAuthor],
                     });
                 } else {
@@ -79,6 +73,7 @@ router.get(
             const response = {
                 publications: Array.from(publicationsMap.values()),
             };
+
             data = response;
         }
 

@@ -55,6 +55,7 @@ import ConferencePendingApplicationsView from "@/views/Conference/Pending";
 import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
+import AllPublications from "@/views/Publications/AllPublications";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 
 const adminModulePermissions = [
@@ -377,6 +378,9 @@ const Routing = () => {
               }
             />
             <Route path="your-publications" element={<YourPublications />} />
+            {checkAccess(permissions["/publications/all"]) && (
+              <Route path="all-publications" element={<AllPublications />} />
+            )}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />
