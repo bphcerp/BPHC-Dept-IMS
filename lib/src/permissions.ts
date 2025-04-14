@@ -99,7 +99,7 @@ export const allPermissions = {
     "publications:all": "View all publications",
 } as const;
 
-export const permissions = {
+export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Admin
 
     "/admin/member/invite": "admin:member:create",
@@ -244,14 +244,3 @@ export const permissions = {
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
 } as const;
-
-const permissionsSet = new Set(Object.values(permissions));
-const allPermissionsSet = new Set(Object.keys(allPermissions));
-
-if (
-    ![...permissionsSet].every((permission) =>
-        allPermissionsSet.has(permission)
-    )
-) {
-    throw new Error("Unknown permission defined in routes");
-}
