@@ -26,6 +26,7 @@ router.post(
 
         if (env.PROD) {
             for (const handout of handouts) {
+                if (!handout.icEmail) continue;
                 try {
                     const transporter = nodemailer.createTransport({
                         host: "smtp.gmail.com",
