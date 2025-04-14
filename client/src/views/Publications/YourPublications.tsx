@@ -74,11 +74,7 @@ const PublicationsView = () => {
     refetchOnWindowFocus: false,
   });
 
-  const {
-    data: publicationsData,
-    isLoading: isLoadingPubs,
-    isError: isPubsError,
-  } = useQuery({
+  const { isLoading: isLoadingPubs, isError: isPubsError } = useQuery({
     queryKey: ["publications", authorId],
     queryFn: async () => {
       if (!authorId) throw new Error("No authorId");
@@ -246,9 +242,9 @@ const PublicationsView = () => {
                 return (
                   <div key={pub.citationId} className="mb-6 border-b pb-4">
                     <p className="mb-2 text-justify text-base">
-                      [{index + 1}] {authors && `${authors}, `}"{pub.title},"{" "}
-                      <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}, no.{" "}
-                      {pub.issue ?? "N/A"}, {pub.year}.
+                      [{index + 1}] {authors && `${authors}, `}&quot;{pub.title}
+                      ,&quot; <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}
+                      , no. {pub.issue ?? "N/A"}, {pub.year}.
                     </p>
                     <div className="mt-2 flex gap-2">
                       {pub.status === null ? (

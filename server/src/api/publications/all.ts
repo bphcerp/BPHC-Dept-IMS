@@ -14,11 +14,10 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
-
+    asyncHandler(async (_req, res) => {
         const authoredCitationIds = await db
             .select({ citationId: authorPublicationsTable.citationId })
-            .from(authorPublicationsTable)
+            .from(authorPublicationsTable);
 
         const citationIds = authoredCitationIds.map(
             (entry) => entry.citationId
