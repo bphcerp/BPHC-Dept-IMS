@@ -170,6 +170,7 @@ const DCARequestsView = () => {
         <div className="text-center">Status</div>
       </div> */}
 
+      {courses.length===0 && <p className="text-center mt-4">No requests found</p>}
       {/* Course rows */}
       <div className="border-t mt-4">
         {courses
