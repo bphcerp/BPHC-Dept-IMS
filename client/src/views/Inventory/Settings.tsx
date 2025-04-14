@@ -223,12 +223,14 @@ const Settings = () => {
                     )}
                 </div>
             </div>
-
-            { isFetching ? (
-                <div className="mt-4 space-y-2">
+            {isFetching ? (
+                selectedOption ? <div className="mt-4 space-y-2">
                     <Skeleton className="h-8 w-full" />
                     <Skeleton className="h-96 w-full" />
                     <Skeleton className="h-8 w-full" />
+                </div> : <div className="flex flex-col items-center justify-center h-64">
+                    <p className="text-lg text-gray-500">No data available</p>
+                    <p className="text-sm text-gray-400">Please select a setting to view the data</p>
                 </div>
             ) : (
                 <div className="mt-4">
