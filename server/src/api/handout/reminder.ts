@@ -26,6 +26,7 @@ router.post(
 
         if (env.PROD) {
             for (const handout of handouts) {
+                if (!handout.icEmail) continue;
                 try {
                     const transporter = nodemailer.createTransport({
                         host: "smtp.gmail.com",
@@ -35,7 +36,6 @@ router.post(
                             pass: env.BPHCERP_PASSWORD,
                         },
                     });
-                    if (!handout.icEmail) throw new Error("IC Email is NULL");
                     await transporter.sendMail({
                         from: env.BPHCERP_EMAIL,
                         to: handout.icEmail,
