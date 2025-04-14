@@ -2,7 +2,7 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { type conferenceSchemas, modules } from "lib";
+import { type conferenceSchemas } from "lib";
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ router.get(
     checkAccess(),
     asyncHandler(async (_, res) => {
         const pendingApplications = (
-            await db.query.applications.findMany({
+            await db.query.conferenceApprovalApplications.findMany({
                 with: {
                     user: {
                         with: {
@@ -20,21 +20,17 @@ router.get(
                             phd: true,
                         },
                     },
-                    conferenceApplications: true,
                 },
-                where: ({ status, module }, { and, eq }) =>
-                    and(eq(status, "pending"), eq(module, modules[0])),
+                // TODO: change state to fetch depending on member, convener, hod
+                where: ({ state }, { and, eq }) => and(eq(state, "DRC Member")),
             })
-        )
-            .filter((appl) => appl.conferenceApplications.length)
-            .map(({ user, ...appl }) => ({
-                id: appl.id,
-                confId: appl.conferenceApplications[0].id,
-                createdAt: appl.createdAt.toString(),
-                userName: (user.faculty ?? user.staff ?? user.phd).name,
-                userEmail: user.email,
-                state: appl.conferenceApplications[0].state,
-            }));
+        ).map(({ user, ...appl }) => ({
+            id: appl.id,
+            createdAt: appl.createdAt.toString(),
+            userName: (user.faculty ?? user.staff ?? user.phd).name,
+            userEmail: user.email,
+            state: appl.state,
+        }));
 
         const response: conferenceSchemas.pendingApplicationsResponse = {
             applications: pendingApplications,

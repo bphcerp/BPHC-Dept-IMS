@@ -40,13 +40,15 @@ interface CreateRequestDialogProps {
   onClose: () => void;
   onAddRequest: (data: Course) => void;
   fetchCourses: () => Promise<void>;
+  fics: any;
 }
 
 const CreateRequestDialog = ({
   isOpen,
   onClose,
   onAddRequest,
-  fetchCourses
+  fetchCourses,
+  fics
 }: CreateRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -135,7 +137,11 @@ const CreateRequestDialog = ({
             <Select onValueChange={setFIC}>
               <SelectTrigger>{fic || "Select..."}</SelectTrigger>
               <SelectContent>
-                <SelectItem value="fic@email.com">FIC</SelectItem>
+                {fics.map((fic: any) => (
+                  <SelectItem key={fic.email} value={fic.email}>
+                    {fic.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

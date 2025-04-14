@@ -4,6 +4,7 @@ export const PublicationSchema = z.object({
     citationId: z.string(),
     title: z.string(),
     type: z.string().nullable(),
+    status: z.boolean().nullable(),
     journal: z.string().nullable(),
     volume: z.string().nullable(),
     issue: z.string().nullable(),
@@ -18,6 +19,12 @@ export const CoAuthorSchema = z.object({
     authorName: z.string().nullable(),
 });
 
+export const updatePublicationStatusSchema = z.object({
+    citationId: z.string(),
+    authorId: z.string(),
+    status: z.boolean(),
+});
+
 export const PublicationWithCoAuthorsSchema = PublicationSchema.extend({
     coAuthors: z.array(CoAuthorSchema),
 });
@@ -26,6 +33,7 @@ export const PublicationRowSchema = z.object({
     publication: PublicationSchema,
     authorId: z.string(),
     authorName: z.string().nullable(),
+    status: z.boolean().nullable(),
 });
 
 export const publicationQuerySchema = z.object({

@@ -138,47 +138,70 @@ const ConferenceApplyView: React.FC = () => {
                 />
               );
             })}
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>DATE</FormLabel>
-                  <Popover>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            !field.value && "text-muted-foreground",
-                            "w-full items-start"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date <= new Date() || date >= new Date("2100-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {conferenceSchemas.dateFieldNames.map((fieldName) => (
+              <FormField
+                key={fieldName}
+                control={form.control}
+                name={fieldName}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
+                    </FormLabel>
+                    <Popover>
+                      <FormControl>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              !field.value && "text-muted-foreground",
+                              "w-full items-start"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                      </FormControl>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => {
+                            const otherFieldName =
+                              fieldName === "dateFrom" ? "dateTo" : "dateFrom";
+                            const otherDate = form.getValues(otherFieldName);
+
+                            if (
+                              (fieldName === "dateFrom" &&
+                                otherDate &&
+                                date >= otherDate) ||
+                              (fieldName === "dateTo" &&
+                                otherDate &&
+                                date <= otherDate)
+                            ) {
+                              return true;
+                            }
+
+                            return (
+                              date <= new Date() ||
+                              date >= new Date("2100-01-01")
+                            );
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
             {conferenceSchemas.numberFieldNames.map((fieldName) => {
               return (
                 <FormField

@@ -10,34 +10,53 @@ import assert from "assert";
 const router = express.Router();
 
 router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res) => {
-    assert(req.user);
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        assert(req.user);
+        const { email } = req.user;
 
-    const { email } = req.user;
-    const student = await db.query.phd.findFirst({
-      where: eq(phd.email, email),
-      columns: {
-        numberOfQeApplication: true
-      }
-    });
+        const student = await db.query.phd.findFirst({
+            where: eq(phd.email, email),
+            columns: {
+                numberOfQeApplication: true,
+                qualifyingExam1: true,
+                qualifyingExam2: true,
+            },
+        });
 
-    if (!student) {
-      throw new HttpError(HttpCode.NOT_FOUND, "Student record not found");
-    }
+        if (!student) {
+            throw new HttpError(HttpCode.NOT_FOUND, "Student record not found");
+        }
 
-    const nextQeApplicationNumber = (student.numberOfQeApplication ?? 0) + 1;
+        // If either of the exams is passed, don't allow more applications
+        if (
+            student.qualifyingExam1 === true ||
+            student.qualifyingExam2 === true
+        ) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "You have already passed the qualifying exam"
+            );
+        }
 
-    if (nextQeApplicationNumber > 3) {
-      throw new HttpError(HttpCode.BAD_REQUEST, "Maximum number of qualifying exam attempts reached");
-    }
+        const currentApplicationNumber = student.numberOfQeApplication ?? 0;
 
-    res.status(HttpCode.OK).json({
-      success: true,
-      nextQeApplicationNumber
-    });
-  })
+        // Check if max attempts reached (limit is 2)
+        if (currentApplicationNumber >= 2) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "Maximum number of qualifying exam attempts reached"
+            );
+        }
+
+        const nextQeApplicationNumber = currentApplicationNumber + 1;
+
+        res.status(HttpCode.OK).json({
+            success: true,
+            nextQeApplicationNumber,
+        });
+    })
 );
 
 export default router;

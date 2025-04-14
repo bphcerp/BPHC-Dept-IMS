@@ -1,5 +1,5 @@
 {
-  "id": "8e6b54cb-5715-4414-9ec6-8d2621ee1569",
+  "id": "b0097e28-f81c-439d-a464-631ce516599c",
   "prevId": "fb33ee9e-d09d-43ec-9209-d1343ffe2c4b",
   "version": "7",
   "dialect": "postgresql",
@@ -1817,7 +1817,7 @@
           "name": "ic_email",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "reviewer_email": {
           "name": "reviewer_email",
@@ -2797,6 +2797,7 @@
       "name": "conference_state_enum",
       "schema": "public",
       "values": [
+        "Faculty",
         "DRC Member",
         "DRC Convener",
         "HoD",
@@ -2839,8 +2840,7 @@
       "name": "handout_status_enum",
       "schema": "public",
       "values": [
-        "review pending",
-        "reviewed",
+        "pending",
         "approved",
         "rejected",
         "notsubmitted"

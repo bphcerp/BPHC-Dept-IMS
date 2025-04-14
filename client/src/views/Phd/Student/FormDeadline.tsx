@@ -1,16 +1,18 @@
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
-import React, { useEffect } from "react";
+import React from "react";
 import ExamForm from "@/components/phd/QualifyingExamForm";
 import ExamDateDisplay from "@/components/phd/ExamDateDisplay";
-
 import { AxiosError } from "axios";
 
 interface Exam {
   id: number;
   examName: string;
   deadline: string;
-  semesterYear?: number;
+  examStartDate: string;
+  examEndDate: string;
+  vivaDate?: string;
+  semesterYear?: string;
   semesterNumber?: number;
 }
 
@@ -38,6 +40,9 @@ interface QualifyingExamStatusResponse {
 interface AxiosErrorResponse {
   response?: {
     status?: number;
+    data?: {
+      message?: string;
+    };
   };
 }
 
@@ -69,11 +74,10 @@ const FormDeadline: React.FC = () => {
   });
 
   // Fetch grade status
-  const {
-    data: gradeStatusData,
-    isLoading: isGradeStatusLoading,
-    error: gradeStatusError,
-  } = useQuery<GradeStatusResponse, Error>({
+  const { data: gradeStatusData, isLoading: isGradeStatusLoading } = useQuery<
+    GradeStatusResponse & { noCourseFound?: boolean },
+    Error
+  >({
     queryKey: ["get-grade-status"],
     queryFn: async () => {
       try {
@@ -99,26 +103,39 @@ const FormDeadline: React.FC = () => {
   });
 
   // Fetch QE application number
-  const {
-    data: qeApplicationData,
-    isLoading: isQeApplicationLoading,
-    error: qeApplicationError,
-  } = useQuery<QeApplicationResponse, Error>({
-    queryKey: ["get-qe-application-number"],
-    queryFn: async () => {
-      const response = await api.get<QeApplicationResponse>(
-        "/phd/student/getNoOfQeApplication"
-      );
-      return response.data;
-    },
-    refetchOnWindowFocus: false,
-  });
+  const { data: qeApplicationData, isLoading: isQeApplicationLoading } =
+    useQuery<QeApplicationResponse, Error>({
+      queryKey: ["get-qe-application-number"],
+      queryFn: async () => {
+        try {
+          const response = await api.get<QeApplicationResponse>(
+            "/phd/student/getNoOfQeApplication"
+          );
+          return response.data;
+        } catch (error) {
+          const axiosError = error as AxiosError<AxiosErrorResponse>;
+          if (
+            axiosError.response?.status === 400 &&
+            (
+              axiosError.response.data as { message?: string }
+            )?.message?.includes("Maximum number")
+          ) {
+            // When student has reached max attempts
+            return {
+              success: false,
+              nextQeApplicationNumber: 3, // Indicating max reached
+            };
+          }
+          throw error;
+        }
+      },
+      refetchOnWindowFocus: false,
+    });
 
   // Fetch qualifying exam status
   const {
     data: qualifyingExamStatusData,
     isLoading: isQualifyingExamStatusLoading,
-    error: qualifyingExamStatusError,
   } = useQuery<QualifyingExamStatusResponse, Error>({
     queryKey: ["get-qualifying-exam-status"],
     queryFn: async () => {
@@ -130,50 +147,24 @@ const FormDeadline: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Debug - Grade Status:", {
-      allCoursesGraded: gradeStatusData?.allCoursesGraded,
-      totalCourses: gradeStatusData?.totalCourses,
-      gradedCourses: gradeStatusData?.gradedCourses,
-      gradeStatusError: gradeStatusError,
-    });
-
-    console.log("Debug - QE Application:", {
-      nextQeApplicationNumber: qeApplicationData?.nextQeApplicationNumber,
-      qeApplicationError: qeApplicationError,
-    });
-
-    console.log("Debug - Qualifying Exam Status:", {
-      status: qualifyingExamStatusData?.status,
-      qualifyingExamStatusError: qualifyingExamStatusError,
-    });
-  }, [
-    gradeStatusData,
-    qeApplicationData,
-    qualifyingExamStatusData,
-    gradeStatusError,
-    qeApplicationError,
-    qualifyingExamStatusError,
-  ]);
-
-  // Determine if exam form should be shown with detailed logging
+  // Determine if exam form should be shown
   const shouldShowExamForm = (() => {
-    const gradeCheck = gradeStatusData?.allCoursesGraded === true;
+    // Check if grades are complete
+    //const gradeCheck = gradeStatusData?.allCoursesGraded === true;
+
+    // Check if within allowed application attempts (1 or 2)
     const qeApplicationCheck =
       qeApplicationData?.nextQeApplicationNumber === 1 ||
       qeApplicationData?.nextQeApplicationNumber === 2;
+
+    // Check exam status - can only apply if pending or failed
     const qualifyingExamStatusCheck =
       qualifyingExamStatusData?.status === "fail" ||
       qualifyingExamStatusData?.status === "pending";
 
-    console.log("Debug - Exam Form Conditions:", {
-      gradeCheck,
-      qeApplicationCheck,
-      qualifyingExamStatusCheck,
-    });
-
-    return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
+    // Student must meet all criteria
+    //return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
+    return  qeApplicationCheck && qualifyingExamStatusCheck;
   })();
 
   // Loading state
@@ -183,6 +174,22 @@ const FormDeadline: React.FC = () => {
     isQeApplicationLoading ||
     isQualifyingExamStatusLoading
   ) {
+    return (
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
+            Qualifying Exam Registration
+          </h1>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">Loading application status...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No active exam deadlines
+  if (!examData?.exams || examData.exams.length === 0) {
     return (
       <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
@@ -209,72 +216,89 @@ const FormDeadline: React.FC = () => {
       </h1>
 
       <div className="flex flex-col gap-8">
-        {examData?.exams && examData.exams.length > 0 ? (
-          <>
-            <div className="overflow-hidden rounded-lg bg-white shadow">
-              <ExamDateDisplay
-                examDate={examData.exams[0].deadline}
-                title={`Registration Deadline: ${examData.exams[0].examName}`}
-              />
-            </div>
+        <div className="overflow-hidden rounded-lg bg-white shadow">
+          <ExamDateDisplay
+            examDate={examData.exams[0].deadline}
+            title={`Registration Deadline: ${examData.exams[0].examName}`}
+          />
+        </div>
 
-            {gradeStatusData && "noCourseFound" in gradeStatusData && (
-              <div className="rounded-lg bg-yellow-100 p-6 shadow">
-                <p className="text-center text-lg text-yellow-800">
-                  Your notional supervisor has not added any courses for you
-                  yet.
-                </p>
-                <p className="mt-2 text-center text-yellow-600">
-                  Please contact your supervisor to update your course
-                  information.
-                </p>
-              </div>
-            )}
-            {shouldShowExamForm ? (
-              <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
-                <h2 className="mb-4 text-xl font-semibold">
-                  Exam Registration
-                </h2>
-                <p className="mb-6">
-                  Please complete the registration form below before the
-                  deadline.
-                  <ExamForm />
-                </p>
-              </div>
-            ) : (
-              <div className="rounded-lg bg-white p-6 shadow">
-                <p className="text-center text-lg">
-                  You are not eligible to register for the Qualifying Exam at
-                  this time.
-                </p>
-                <div className="mt-2 space-y-2 text-center text-gray-500">
-                  <h3 className="font-semibold">Detailed Eligibility Check:</h3>
-                  <div>
-                    Courses Graded:{" "}
-                    {gradeStatusData?.allCoursesGraded ? "✓" : "✗"}
-                    {!gradeStatusData?.allCoursesGraded && (
-                      <p className="text-red-500">
-                        Total Courses: {gradeStatusData?.totalCourses}, Graded
-                        Courses: {gradeStatusData?.gradedCourses}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    QE Application Number:{" "}
-                    {qeApplicationData?.nextQeApplicationNumber}
-                    {qeApplicationData?.nextQeApplicationNumber === 3 && (
-                      <p className="text-red-500">Maximum attempts reached</p>
-                    )}
-                  </div>
-                  <div>
-                    Qualifying Exam Status: {qualifyingExamStatusData?.status}
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
+        {gradeStatusData && "noCourseFound" in gradeStatusData && (
+          <div className="rounded-lg bg-yellow-100 p-6 shadow">
+            <p className="text-center text-lg text-yellow-800">
+              Your courses have not been added yet, conttact your department.
+            </p>
+            <p className="mt-2 text-center text-yellow-600">
+              Please contact your supervisor to update your course information.
+            </p>
+          </div>
+        )}
+
+        {/* Show attempt number information */}
+        {qeApplicationData && (
+          <div className="rounded-lg bg-blue-50 p-4 shadow">
+            <p className="text-center text-blue-800">
+              {qeApplicationData.nextQeApplicationNumber > 2
+                ? "You have used all your qualifying exam attempts."
+                : `This will be your attempt #${
+                    qeApplicationData.nextQeApplicationNumber < 3 ? 1 : 2
+                  } out of 2 allowed attempts.`}
+            </p>
+          </div>
+        )}
+
+        {shouldShowExamForm ? (
+          <div className="overflow-hidden rounded-lg bg-white p-6 shadow">
+            <h2 className="mb-4 text-xl font-semibold">
+              Exam Application Form
+            </h2>
+            <p className="mb-6">
+              Please complete the registration form below before the deadline.
+            </p>
+            <ExamForm exam={examData.exams[0]} />
+          </div>
         ) : (
-          <div></div>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <p className="text-center text-lg">
+              You are not eligible to register for the Qualifying Exam at this
+              time.
+            </p>
+            <div className="mt-4 space-y-2 text-center text-gray-500">
+              <h3 className="font-semibold">Eligibility Requirements:</h3>
+              <div>
+                <span className="font-medium">Course Completion: </span>
+                {gradeStatusData?.allCoursesGraded ? (
+                  <span className="text-green-600">✓ Complete</span>
+                ) : (
+                  <span className="text-red-600">✗ Incomplete</span>
+                )}
+                {!gradeStatusData?.allCoursesGraded && (
+                  <p className="text-sm text-red-500">
+                    ({gradeStatusData?.gradedCourses} of{" "}
+                    {gradeStatusData?.totalCourses} courses graded)
+                  </p>
+                )}
+              </div>
+              <div>
+                <span className="font-medium">Application Limit: </span>
+                {(qeApplicationData?.nextQeApplicationNumber ?? 0) <= 2 ? (
+                  <span className="text-green-600">✓ Available</span>
+                ) : (
+                  <span className="text-red-600">
+                    ✗ Maximum attempts reached
+                  </span>
+                )}
+              </div>
+              <div>
+                <span className="font-medium">Current Status: </span>
+                {qualifyingExamStatusData?.status === "pass" ? (
+                  <span className="text-green-600">✓ Already Passed</span>
+                ) : (
+                  <span>{qualifyingExamStatusData?.status}</span>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </main>

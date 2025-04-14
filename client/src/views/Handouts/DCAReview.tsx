@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import ReviewField from "@/components/handouts/reviewField";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 import { BASE_API_URL } from "@/lib/constants";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface HandoutReviewFormValues {
   handoutId: string;
@@ -25,6 +25,10 @@ export interface Handout {
   id: string;
   courseName: string;
   courseCode: string;
+  category: string;
+  professorName: string;
+  submittedOn: string;
+  status: string;
   scopeAndObjective: boolean;
   textBookPrescribed: boolean;
   lecturewisePlanLearningObjective: boolean;
@@ -56,9 +60,42 @@ const DCAMemberReviewForm: React.FC = () => {
     },
   });
 
+  const { data: allHandouts } = useQuery({
+    queryKey: ["handouts-dca"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{
+          handouts: Handout[];
+          success: boolean;
+        }>("/handout/dca/get");
+        return response.data.handouts;
+      } catch (error) {
+        toast.error("Failed to fetch handouts");
+        throw error;
+      }
+    },
+  });
+
   const goBack = () => {
     navigate("/handout/dca");
   };
+
+  const goToNextPendingHandout = useCallback(() => {
+    if (!allHandouts) return;
+
+    const pendingHandouts = allHandouts.filter(
+      (handout) =>
+        handout.status === "review pending" && handout.id !== handoutId
+    );
+
+    if (pendingHandouts.length > 0) {
+      navigate(`/handout/dca/review/${pendingHandouts[0].id}`);
+      toast.success("Navigated to next pending handout");
+    } else {
+      navigate("/handout/dca");
+      toast.info("No more pending handouts to review");
+    }
+  }, [allHandouts, handoutId, navigate]);
 
   const { handleSubmit, control, setValue } = useForm<HandoutReviewFormValues>({
     defaultValues: {
@@ -134,14 +171,27 @@ const DCAMemberReviewForm: React.FC = () => {
 
   return (
     <div className="container mx-auto max-w-3xl px-2 py-10">
-      <Button
-        variant={"ghost"}
-        onClick={goBack}
-        className="size-sm mb-4 flex items-center"
-      >
-        <ChevronLeft className="mr-1" size={16} />
-        Back to Dashboard
-      </Button>
+      <div className="mb-4 flex justify-between">
+        <Button
+          variant={"ghost"}
+          onClick={goBack}
+          className="size-sm flex items-center"
+        >
+          <ChevronLeft className="mr-1" size={16} />
+          Back to Dashboard
+        </Button>
+
+        {data.lecturewisePlanCourseTopics == null && (
+          <Button
+            variant={"ghost"}
+            onClick={goToNextPendingHandout}
+            className="size-sm flex items-center"
+          >
+            Next Pending Handout
+            <ChevronRight className="ml-1" size={16} />
+          </Button>
+        )}
+      </div>
       <h1 className="mb-4 text-center text-2xl font-bold">Handout Review</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
@@ -219,7 +269,7 @@ const DCAMemberReviewForm: React.FC = () => {
               ""
             )}
           </div>
-          {data.lecturewisePlanCourseTopics == null ? (
+          {data.status == "review pending" ? (
             <>
               <Separator />
               <div className="flex items-center justify-center">
@@ -238,7 +288,16 @@ const DCAMemberReviewForm: React.FC = () => {
               </Button>
             </>
           ) : (
-            <></>
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={goToNextPendingHandout}
+                className="flex items-center"
+              >
+                Next Pending Handout
+                <ChevronRight className="ml-1" size={16} />
+              </Button>
+            </div>
           )}
         </form>
       </div>
