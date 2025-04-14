@@ -2,7 +2,7 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
-import { faculty, phd, staff, users } from "@/config/db/schema/admin.ts";
+import { users } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
