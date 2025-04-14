@@ -44,8 +44,8 @@ const AllPublications = () => {
     refetchOnWindowFocus: false,
   });
 
-  const handleUpdatePublications = () => {
-    console.log("test");
+  const handleUpdatePublications = async () => {
+    await api.post("/publications/updatePublications");
   };
 
   return (
@@ -93,4 +93,3 @@ const AllPublications = () => {
 };
 
 export default AllPublications;
-  

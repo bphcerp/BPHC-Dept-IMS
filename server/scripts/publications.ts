@@ -198,7 +198,7 @@ const getPublicationsFromAuthor = async (
     }
 };
 
-async function main() {
+export async function runPublicationSync() {
     const users = await db.select().from(faculty);
     let count = 1;
     const total = users.length;
@@ -224,5 +224,3 @@ async function main() {
 
     console.log("\n✅ All publications processed and logged.");
 }
-
-await main();
