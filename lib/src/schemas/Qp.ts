@@ -73,15 +73,15 @@ export const assignQpReviewerSchema = z.object({
 export type AssignQpReviewer = z.infer<typeof assignQpReviewerSchema>;
 
 export const editQpReviewSchema = z.object({
-    courseName: z.string().nonempty().optional(),
-    courseNo: z.string().nonempty().optional(),
-    dcaMemberEmail: z.string().email().optional(),
-    ficEmail: z.string().email().optional(),
-    faculty1Email: z.string().email().optional(),
-    faculty2Email: z.string().email().optional(),
+    // courseName: z.string().nonempty().optional(),
+    // courseNo: z.string().nonempty().optional(),
+    // dcaMemberEmail: z.string().email().optional(),
+    // ficEmail: z.string().email().optional(),
+    // faculty1Email: z.string().email().optional(),
+    // faculty2Email: z.string().email().optional(),
     ficDeadline: z.string().datetime().optional(),
     reviewDeadline: z.string().datetime().optional(),
-    status: z.enum(["pending", "approved", "rejected", "inprogress"]).optional(),
+    // status: z.enum(["pending", "approved", "rejected", "inprogress"]).optional(),
 });
 
 export type EditQpReview = z.infer<typeof editQpReviewSchema>;

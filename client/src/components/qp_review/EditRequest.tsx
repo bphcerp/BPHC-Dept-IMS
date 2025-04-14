@@ -58,15 +58,16 @@ const EditRequestDialog = ({
       setFIC(course.fic || "");
 
       // Format dates if they exist
-      if (course.ficDeadline) {
-        const ficDate = new Date(course.ficDeadline);
-        setFicDeadline(ficDate.toISOString().split("T")[0]);
-      }
+      // if (course.ficDeadline) {
+      //   console.log(course.ficDeadline);
+      //   const ficDate = new Date(course.ficDeadline);
+      //   setFicDeadline(ficDate);
+      // }
 
-      if (course.reviewDeadline) {
-        const reviewDate = new Date(course.reviewDeadline);
-        setSrDeadline(reviewDate.toISOString().split("T")[0]);
-      }
+      // if (course.reviewDeadline) {
+      //   const reviewDate = new Date(course.reviewDeadline);
+      //   setSrDeadline(reviewDate);
+      // }
     }
   }, [course]);
 

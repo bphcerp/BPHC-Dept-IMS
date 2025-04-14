@@ -40,6 +40,7 @@ const ToSubmit = ({
 
   console.log(requestId)
 
+
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -118,7 +119,8 @@ const ToSubmit = ({
       {/* Upload Dialog */}
       <Dialog>
         <DialogTrigger>
-          <Upload size="20" className="cursor-pointer" />
+        {!documentsUploaded && <Upload size="20" className="cursor-pointer" /> }
+          
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>

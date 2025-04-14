@@ -79,10 +79,12 @@ export default function FacultyReview() {
                 </TabsList>
               </div>
 
+{console.log(files[tabItems[0].value])}
+
               {tabItems.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value} className="m-0">
                   <DocumentDownload documentUrl={files[tab.value]} />
-                </TabsContent>
+                </TabsContent>    
               ))}
             </Tabs>
           </div>
@@ -111,6 +113,7 @@ function DocumentDownload({ documentUrl }: { documentUrl: string | null }) {
 
   return (
     <div className="relative flex h-[75vh] items-center justify-center bg-gray-100">
+      <iframe src={documentUrl} className=" h-full w-full" frameborder="0"></iframe>
       <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
         <Button size="sm" className="absolute right-2 top-2 flex gap-2">
           <Download className="h-5 w-5" />
