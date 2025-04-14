@@ -312,12 +312,6 @@ export const DCAConvenerHandouts: React.FC = () => {
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
             <div className="mt-2 flex gap-2">
               <SetDeadlineDialog />
-              <Button
-                variant="outline"
-                className="hover:bg-primary hover:text-white"
-              >
-                Export
-              </Button>
               <Link to="/handout/summary">
                 <Button
                   variant="outline"
