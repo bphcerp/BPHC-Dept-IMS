@@ -7,14 +7,9 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import api from "@/lib/axios-instance";
-import { Laboratory, Faculty, Staff } from "@/views/Inventory/types";
+import { Laboratory, Faculty, Staff, NewLaboratoryRequest } from "@/views/Inventory/types";
 import { Member } from "../admin/MemberList";
 import { useQuery } from "@tanstack/react-query";
-
-export interface NewLaboratoryRequest extends Omit<Laboratory, "technicianInCharge" | "facultyInCharge"> {
-  technicianInCharge: string
-  facultyInCharge: string
-}
 
 interface AddLabDialogProps {
   isOpen: boolean;
@@ -50,11 +45,11 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
       name: editInitialData?.name ?? "",
       code: editInitialData?.code ?? "",
       location: editInitialData?.location ?? "",
-      technicianInCharge: editInitialData?.technicianInChargeEmail ?? "",
-      facultyInCharge: editInitialData?.facultyInChargeEmail ?? "",
+      technicianInChargeEmail: editInitialData?.technicianInCharge.email ?? "",
+      facultyInChargeEmail: editInitialData?.facultyInCharge.email ?? "",
     } as NewLaboratoryRequest,
     onSubmit: ({ value: data, formApi: form }) => {
-      if (!data.name || !data.code || !data.location || !data.technicianInCharge || !data.facultyInCharge) {
+      if (!data.name || !data.code || !data.location || !data.technicianInChargeEmail || !data.facultyInChargeEmail) {
         toast.error("Some fields are missing");
         return;
       }
@@ -137,7 +132,7 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
               )}
             </Field>
           </div>
-          <Field name="technicianInCharge">
+          <Field name="technicianInChargeEmail">
             {({ state, handleChange }) => (
               <>
                 <Label htmlFor="technician-in-charge">Technician In Charge</Label>
@@ -164,7 +159,7 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
               </>
             )}
           </Field>
-          <Field name="facultyInCharge">
+          <Field name="facultyInChargeEmail">
             {({ state, handleChange }) => (
               <>
                 <Label htmlFor="faculty-in-charge">Faculty In Charge</Label>

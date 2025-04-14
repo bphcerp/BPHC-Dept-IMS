@@ -75,8 +75,6 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
     const fakeScrollbarRef = useRef<HTMLDivElement>(null);
     const [tableWidth, setTableWidth] = useState(0);
 
-    const [cellLeftMap, setCellLeftMap] = useState<{ [key: string]: number }>({})
-
     // Improved scroll synchronization with debounce for performance
     useEffect(() => {
         const tableContainer = tableContainerRef.current;
@@ -123,12 +121,6 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
             fakeScrollbar.removeEventListener("scroll", handleFakeScroll);
         };
     }, []);
-
-    useEffect(() => {
-        if (data.length) table.getAllColumns().filter(column => column.getIsPinned()).map(pinnedColumn => setCellLeftMap((prev) => ({
-            ...prev, [pinnedColumn.id]: document.getElementById(pinnedColumn.id)!.offsetLeft
-        })))
-    }, [])
 
     const isWithinRange = (row: Row<T>, columnId: string, value: any) => {
         const date = new Date(row.getValue(columnId));
@@ -412,7 +404,7 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
-                                <TableHead className="z-2 w-[20px] sticky left-0 bg-background">
+                                <TableHead>
                                     <Checkbox
                                         checked={
                                             table.getIsAllPageRowsSelected() ||
@@ -422,27 +414,7 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                                         aria-label="Select all"
                                     />
                                 </TableHead>
-                                {headerGroup.headers.filter((header) => header.column.getIsPinned()).map((header) => {
-                                    return (
-                                        <TableHead onClick={header.column.getToggleSortingHandler()} style={{ left: cellLeftMap[header.column.id] }} className={` ${header.column.getCanSort() ? 'cursor-pointer select-none' : ''} sticky bg-background h-full`} id={header.column.id} colSpan={header.colSpan} key={header.id}>
-                                            <div className='flex flex-col w-max gap-y-2'>
-                                                <div className="flex space-x-2">
-                                                    {header.isPlaceholder
-                                                        ? null
-                                                        : flexRender(
-                                                            header.column.columnDef.header,
-                                                            header.getContext()
-                                                        )}
-                                                    {header.column.getIsSorted() === "asc" ? <ArrowUp /> : header.column.getIsSorted() === "desc" ? <ArrowDown /> : null}
-                                                </div>
-                                                <div onClick={(e) => e.stopPropagation()}>
-                                                    {(!mainSearchColumn || header.column.columnDef.header?.toString().toLowerCase() !== mainSearchColumn.toString().toLowerCase()) && renderFilter(header.column)}
-                                                </div>
-                                            </div>
-                                        </TableHead>
-                                    )
-                                })}
-                                {headerGroup.headers.filter((header) => !header.column.getIsPinned()).map((header) => {
+                                {headerGroup.headers.map((header) => {
                                     return (
                                         <TableHead  {...{
                                             className: header.column.getCanSort() ? 'cursor-pointer select-none' : '',
@@ -476,31 +448,14 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
 
                                     data-state={row.getIsSelected() && "selected"}
                                 >
-                                    <TableCell className="z-2 sticky left-0 bg-background w-[20px]">
+                                    <TableCell>
                                         <Checkbox
                                             checked={row.getIsSelected()}
                                             onCheckedChange={(value) => row.toggleSelected(!!value)}
                                             aria-label="Select row"
                                         />
                                     </TableCell>
-                                    {row.getVisibleCells().filter((cell) => cell.column.getIsPinned()).map((cell) => (
-                                        <TableCell
-                                            className={`${cell.column.id === 'S.No' ? 'min-w-2' : 'min-w-52'} sticky left-0 bg-background ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
-                                            style={{ left: cellLeftMap[cell.column.id] }}
-                                            key={cell.id}
-                                            title={cell.getValue() && (cell.getValue() as any).toString().length > 20 ? (cell.getValue() as any).toString() : undefined}
-                                        >
-                                            {
-                                                (typeof (columns.find(column => column.header === cell.column.columnDef.header)?.cell) === 'function' || (cell.getValue() && typeof cell.getValue() !== 'string')) ?
-                                                    flexRender(
-                                                        cell.column.columnDef.cell,
-                                                        cell.getContext()
-                                                    ) :
-                                                    cell.getValue() ? <OverflowHandler text={cell.getValue() as string} /> : <div className="w-full text-start p-0.5">Not Provided</div>
-                                            }
-                                        </TableCell>
-                                    ))}
-                                    {row.getVisibleCells().filter((cell) => !cell.column.getIsPinned()).map((cell) => (
+                                    {row.getVisibleCells().map((cell) => (
                                         <TableCell
                                             className={`${cell.column.id === 'S.No' ? 'min-w-2' : 'min-w-52'}  ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
                                             key={cell.id}

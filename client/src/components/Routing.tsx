@@ -60,6 +60,8 @@ import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
+import { ItemsView } from "@/views/Inventory/ItemsView";
+import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -409,9 +411,10 @@ const Routing = () => {
                 <Navigate to="/inventory/items" replace={true} />
               }
             />
-            <Route path="items" element={<></>} />
+            <Route path="items" element={<ItemsView />} />
+            {checkAccess('inventory:write') && <Route path="items/add-item" element={<AddInventoryItem />} />}
             <Route path="stats" element={<></>} />
-            { checkAccess('inventory:write') && <Route path="settings" element={<Settings />} /> }
+            {checkAccess('inventory:write') && <Route path="settings" element={<Settings />} />}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

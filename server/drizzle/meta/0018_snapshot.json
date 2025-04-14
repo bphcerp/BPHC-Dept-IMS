@@ -1,5 +1,5 @@
 {
-  "id": "45f9d722-13fe-4281-8293-21aae7eb9905",
+  "id": "85cd59f0-8206-4968-8088-5f5e24c537b5",
   "prevId": "6faa582c-b060-4442-a759-3f462ac52935",
   "version": "7",
   "dialect": "postgresql",
@@ -2005,8 +2005,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "'aca579b9-dcac-46d6-8ef9-6166d833d8cc'"
+          "notNull": true
         },
         "name": {
           "name": "name",
@@ -2066,8 +2065,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "'84b8da6b-b5e8-4445-913e-ce9a473e1191'"
+          "notNull": true
         },
         "serial_number": {
           "name": "serial_number",
@@ -2349,8 +2347,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "'9cd4e83e-3e92-4d4b-aa4a-ff4462838bd9'"
+          "notNull": true
         },
         "name": {
           "name": "name",
@@ -2508,8 +2505,7 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true,
-          "default": "'4ba2276e-2526-4a8a-8f58-2202fed155cf'"
+          "notNull": true
         },
         "vendor_id": {
           "name": "vendor_id",
