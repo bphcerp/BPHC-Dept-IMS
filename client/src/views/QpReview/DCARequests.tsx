@@ -30,17 +30,16 @@ const DCARequestsView = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse ] = useState<Course | null>(null);
+  const [finalReviewers, setFinalReviewers] = useState([
+    { name: "Prof. BVVSN RAO", email: "bvvsnrao@university.com" },
+    { name: "Prof. BhanuMurthy", email: "bhanumurthy@university.com" },
+    { name: "Prof. Harish V Dixit", email: "harishdixit@university.com" },
+  ]);
 
   const statusColors: Record<string, string> = {
     pending: "bg-orange-400",
     approved: "bg-green-500",
   };
-
-  const reviewers = [
-    { name: "Prof. BVVSN RAO", email: "bvvsnrao@university.com" },
-    { name: "Prof. BhanuMurthy", email: "bhanumurthy@university.com" },
-    { name: "Prof. Harish V Dixit", email: "harishdixit@university.com" },
-  ];
 
   const handleFacultyAssignment = async (
     id: string,
@@ -100,6 +99,22 @@ const DCARequestsView = () => {
     }
   };
 
+  useEffect(()=>{
+    const getFaculty = async () => {
+      try {
+        const response = await api.get("/handout/dcaconvenor/getAllFaculty");
+        console.log(response.data.faculties)
+        if (response.status === 200) {
+          setFinalReviewers((prev)=>{console.log(prev); return response.data.faculties})
+          console.log(finalReviewers)
+        } 
+      } catch (error) {
+        console.error("Error fetching faculties:", error);
+      }
+    }
+    getFaculty();
+  },[])
+
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -118,6 +133,7 @@ const DCARequestsView = () => {
         onClose={() => setIsDialogOpen(false)}
         onAddRequest={handleAddRequest}
         fetchCourses={fetchCourses}
+        fics = {finalReviewers}
       />
       <EditRequestDialog
         isOpen={isEditDialogOpen}
@@ -211,7 +227,7 @@ const DCARequestsView = () => {
                   <SelectValue placeholder="Select Reviewer 1" />
                 </SelectTrigger>
                 <SelectContent>
-                  {reviewers.map((reviewer) => (
+                  {finalReviewers.map((reviewer) => (
                     <SelectItem
                       key={reviewer.email}
                       value={reviewer.email}
@@ -244,7 +260,7 @@ const DCARequestsView = () => {
                   <SelectValue placeholder="Select Reviewer 2" />
                 </SelectTrigger>
                 <SelectContent>
-                  {reviewers.map((reviewer) => (
+                  {finalReviewers.map((reviewer) => (
                     <SelectItem
                       key={reviewer.email}
                       value={reviewer.email}
