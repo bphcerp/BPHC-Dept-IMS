@@ -141,6 +141,13 @@
       "when": 1744622295681,
       "tag": "0019_panoramic_phil_sheldon",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1744635761561,
+      "tag": "0020_friendly_stature",
+      "breakpoints": true
     }
   ]
 }

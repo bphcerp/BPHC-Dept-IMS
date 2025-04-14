@@ -19,13 +19,6 @@ router.post(
         });
         if (!user)
             return next(new HttpError(HttpCode.NOT_FOUND, "User not found"));
-        const table =
-            user.type === adminSchemas.userTypes[0]
-                ? faculty
-                : user.type === adminSchemas.userTypes[1]
-                  ? phd
-                  : staff;
-        await db.delete(table).where(eq(table.email, parsed.email));
         await db.delete(users).where(eq(users.email, parsed.email));
         res.status(HttpCode.OK).send();
     })
