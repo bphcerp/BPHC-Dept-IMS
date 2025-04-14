@@ -37,7 +37,7 @@ export const allPermissions = {
     "phd:drc-member:get-subarea-and-examiner": "",
     "phd:drc-member:get-supervisor-with-student": "",
     "phd:drc-member:get-qe-time-table": "",
-    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip":"",
+    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip": "",
 
     "phd:notifs:send": "",
 
@@ -59,7 +59,7 @@ export const allPermissions = {
     "phd:student:get-qe-application": "",
     "phd:student:get-grade-status": "",
     "phd:student:get-sub-area": "",
-    "phd:student:get-profile-details":"",
+    "phd:student:get-profile-details": "",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
@@ -78,7 +78,7 @@ export const allPermissions = {
     "phd:staff:delete-sub-area": "",
     "phd:staff:get-sub-area": "",
     "phd:staff:update-sub-area": "",
-    "phd:staff:notify-all-users":"",
+    "phd:staff:notify-all-users": "",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
@@ -92,6 +92,7 @@ export const allPermissions = {
     "handout:dca-convenor:get-all-dcamember": "",
     "handout:dca-convenor:update-reviewer": "",
     "handout:dca-convenor:update-ic": "",
+    "handout:dca-convenor:export-summary": "",
     "handout:dca-convenor:get-all-faculty": "",
 
     "publications:view": "View author's own publications",
@@ -154,7 +155,8 @@ export const permissions = {
     "/phd/drcMember/getSupervisorsWithStudents":
         "phd:drc-member:get-supervisor-with-student",
     "/phd/drcMember/getQeTimeTable": "phd:drc-member:get-qe-time-table",
-    "/phd/drcMember/getPhdApplicationFormsAsZip": "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
+    "/phd/drcMember/getPhdApplicationFormsAsZip":
+        "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -232,7 +234,10 @@ export const permissions = {
     "/handout/dcaconvenor/updateReviewer":
         "handout:dca-convenor:update-reviewer",
     "/handout/dcaconvenor/updateIC": "handout:dca-convenor:update-ic",
-    "/handout/dcaconvenor/getAllFaculty": "handout:dca-convenor:get-all-faculty",
+    "/handout/dcaconvenor/exportSummary": "handout:dca-convenor:export-summary",
+
+    "/handout/dcaconvenor/getAllFaculty":
+        "handout:dca-convenor:get-all-faculty",
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
     "/publications/all": "publications:all",
