@@ -65,7 +65,7 @@ export default router.get(
                     exams.map(async (exam) => {
                         const deadlineDate = new Date(exam.deadline);
                         const threeMonthsBefore = new Date(deadlineDate);
-                        threeMonthsBefore.setMonth(deadlineDate.getMonth() - 3);
+                        threeMonthsBefore.setMonth(deadlineDate.getMonth() - 5);
 
                         // Get students who filled the application form
                         const students = await db
@@ -79,6 +79,7 @@ export default router.get(
                                 examDateEnd1: phd.qualifyingExam1EndDate,
                                 examDateStart2: phd.qualifyingExam2StartDate,
                                 examDateEnd2: phd.qualifyingExam2EndDate,
+                                maxCreatedAt: sql`MAX(${applications.createdAt})`.as('maxCreatedAt'),
                             })
                             .from(phd)
                             .innerJoin(
@@ -90,8 +91,18 @@ export default router.get(
                                     eq(applications.module, modules[4]),
                                     sql`${applications.createdAt} BETWEEN ${threeMonthsBefore} AND ${deadlineDate}`
                                 )
-                            )
-                            .orderBy(desc(applications.createdAt));
+                            ).groupBy(
+                                phd.email,
+                                phd.name,
+                                phd.erpId,
+                                phd.qualifyingExam1,
+                                phd.qualifyingExam2,
+                                phd.qualifyingExam1StartDate,
+                                phd.qualifyingExam1EndDate,
+                                phd.qualifyingExam2StartDate,
+                                phd.qualifyingExam2EndDate
+                            );
+                            
 
                         // Process students with documents
                         const studentsWithDocuments = await Promise.all(

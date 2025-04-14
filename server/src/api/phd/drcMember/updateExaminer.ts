@@ -4,65 +4,79 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdExaminer, phdSubAreas } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { phd } from "@/config/db/schema/admin.ts";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
 const router = express.Router();
 
 router.post(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    const examinerSchema = z.object({
-      subAreaId: z.number().int().positive(),
-      examinerEmail: z.string().email()
-    });
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const examinerSchema = z.object({
+            subAreaId: z.number().int().positive(),
+            examinerEmail: z.string().email(),
+            studentEmail: z.string().email(),
+        });
 
-    const parsed = examinerSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return next(
-        new HttpError(HttpCode.BAD_REQUEST, "Invalid input format", parsed.error.message)
-      );
-    }
+        const parsed = examinerSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Invalid input format",
+                    parsed.error.message
+                )
+            );
+        }
 
-    const { subAreaId, examinerEmail } = parsed.data;
+        const { subAreaId, examinerEmail, studentEmail } = parsed.data;
 
-    // Check if the sub area exists
-    const subArea = await db.query.phdSubAreas.findFirst({
-      where: eq(phdSubAreas.id, subAreaId)
-    });
+        const subArea = await db.query.phdSubAreas.findFirst({
+            where: eq(phdSubAreas.id, subAreaId),
+        });
 
-    if (!subArea) {
-      return next(
-        new HttpError(HttpCode.NOT_FOUND, "Sub area not found")
-      );
-    }
+        if (!subArea) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Sub area not found")
+            );
+        }
 
-    // Check if examiner entry exists for this sub area
-    const existingExaminer = await db.query.phdExaminer.findFirst({
-      where: eq(phdExaminer.subAreaId, subAreaId)
-    });
+        // Check if the student exists
+        const student = await db.query.phd.findFirst({
+            where: eq(phd.email, studentEmail),
+        });
 
-    if (existingExaminer) {
-      // Update existing entry
-      await db
-        .update(phdExaminer)
-        .set({ examiner: examinerEmail })
-        .where(eq(phdExaminer.subAreaId, subAreaId));
-    } else {
-      // Create new entry
-      await db.insert(phdExaminer).values({
-        subAreaId,
-        examiner: examinerEmail,
-        suggestedExaminer: [examinerEmail]
-      });
-    }
+        if (!student) {
+            return next(new HttpError(HttpCode.NOT_FOUND, "Student not found"));
+        }
 
-    res.status(200).json({
-      success: true,
-      message: "Examiner updated successfully"
-    });
-  })
+        // Check if examiner entry already exists for this student and subarea
+        const existingExaminer = await db.query.phdExaminer.findFirst({
+            where: and(
+                eq(phdExaminer.subAreaId, subAreaId),
+                eq(phdExaminer.studentEmail, studentEmail)
+            ),
+        });
+
+        if (existingExaminer) {
+            await db
+                .update(phdExaminer)
+                .set({ examiner: examinerEmail })
+                .where(
+                    and(
+                        eq(phdExaminer.subAreaId, subAreaId),
+                        eq(phdExaminer.studentEmail, studentEmail)
+                    )
+                );
+        } 
+
+        res.status(200).json({
+            success: true,
+            message: "Examiner updated successfully",
+        });
+    })
 );
 
 export default router;
