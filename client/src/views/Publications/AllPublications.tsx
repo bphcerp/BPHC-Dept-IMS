@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { isAxiosError } from "axios";
+import { Button } from "@/components/ui/button";
 
 type CoAuthor = {
   authorId: string;
@@ -44,8 +44,19 @@ const AllPublications = () => {
     refetchOnWindowFocus: false,
   });
 
+  const handleUpdatePublications = () => {
+    console.log("test");
+  };
+
   return (
     <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
+      <div className="flex w-full items-center justify-between">
+        <h1 className="text-3xl font-bold text-primary">All Publications</h1>
+        <Button onClick={handleUpdatePublications} className="ml-auto">
+          Update Publications
+        </Button>
+      </div>
+
       {isPubsError ? (
         <p className="text-destructive">
           {errorMessage ?? "An error occurred while fetching publications"}
@@ -53,35 +64,33 @@ const AllPublications = () => {
       ) : isLoadingPubs ? (
         <LoadingSpinner />
       ) : (
-        <>
-          <h1 className="text-3xl font-bold text-primary">All Publications</h1>
-          <div className="space-y-6">
-            {publicationsData?.publications?.length ? (
-              publicationsData.publications
-                .sort((a, b) => Number(b.year) - Number(a.year))
-                .map((pub, index) => {
-                  const authors = pub.coAuthors
-                    ?.map((a) => a.authorName)
-                    .join(", ");
-                  return (
-                    <p
-                      key={pub.citationId}
-                      className="mb-4 text-justify text-base"
-                    >
-                      [{index + 1}] {authors && `${authors}, `}“{pub.title},”{" "}
-                      <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}, no.{" "}
-                      {pub.issue ?? "N/A"}, {pub.year}.
-                    </p>
-                  );
-                })
-            ) : (
-              <p>No publications found.</p>
-            )}
-          </div>
-        </>
+        <div className="w-full space-y-6">
+          {publicationsData?.publications?.length ? (
+            publicationsData.publications
+              .sort((a, b) => Number(b.year) - Number(a.year))
+              .map((pub, index) => {
+                const authors = pub.coAuthors
+                  ?.map((a) => a.authorName)
+                  .join(", ");
+                return (
+                  <p
+                    key={pub.citationId}
+                    className="mb-4 text-justify text-base"
+                  >
+                    [{index + 1}] {authors && `${authors}, `}"{pub.title},"{" "}
+                    <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}, no.{" "}
+                    {pub.issue ?? "N/A"}, {pub.year}.
+                  </p>
+                );
+              })
+          ) : (
+            <p>No publications found.</p>
+          )}
+        </div>
       )}
     </div>
   );
 };
 
 export default AllPublications;
+  
