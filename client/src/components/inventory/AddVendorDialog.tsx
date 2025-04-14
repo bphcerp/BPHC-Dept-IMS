@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useForm } from "@tanstack/react-form";
 import { Textarea } from "../ui/textarea";
 import api from "@/lib/axios-instance";
 import { NewVendorRequest, Vendor, Category } from "@/views/Inventory/types";
+import { useQuery } from "@tanstack/react-query";
 
 interface AddVendorDialogProps {
   isOpen: boolean;
@@ -41,11 +42,17 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
     },
   });
 
-  useEffect(() => {
-    api("/categories?type=Vendor")
-      .then(({ data }) => setAvailableCategories(data))
-      .catch((err) => console.error("Error fetching categories:", err));
-  }, []);
+  useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await api("/categories?type=Vendor")
+      setAvailableCategories(response.data)
+      return response.data
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+    enabled: isOpen,
+  });
 
   return (
     <Dialog

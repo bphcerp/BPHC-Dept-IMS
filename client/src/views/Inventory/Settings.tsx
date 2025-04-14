@@ -13,6 +13,7 @@ import AddVendorCategoryDialog from "@/components/inventory/AddVendorCategoryDia
 import AddVendorDialog from "@/components/inventory/AddVendorDialog";
 import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 const labColumns: ColumnDef<Laboratory>[] = [
     { accessorFn: () => 'S.No', header: 'S.No', cell: ({ row }) => row.index + 1 },
@@ -49,7 +50,6 @@ const Settings = () => {
     const [searchParams] = useSearchParams()
     const [selectedOption, setSelectedOption] = useState<string | null>(searchParams.get("view"));
     const [data, setData] = useState<Laboratory[] | Vendor[] | Category[]>([]);
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const [isLabAddDialogOpen, setIsLabAddDialogOpen] = useState(false)
@@ -74,7 +74,7 @@ const Settings = () => {
         },
         "Vendors": {
             create: "/vendors",
-            read: "/vendors",
+            read: "/vendors/get",
             update: "/vendors",
             delete: "/vendors"
         },
@@ -92,21 +92,17 @@ const Settings = () => {
         }
     };
 
-    const fetchData = () => {
-        if (selectedOption) {
-            if (!routeMap[selectedOption]) {
-                navigate("", { replace: true });
-                setSelectedOption(null);
-                return;
-            }
-            setLoading(true);
-            api(`/inventory${routeMap[selectedOption].read}`)
-                .then(({ data }) => {
-                    setData(data);
-                    setLoading(false);
-                });
-        }
-    }
+    const { isSuccess, isFetching, refetch } = useQuery({
+        queryKey: ["settings", selectedOption],
+        queryFn: async () => {
+            const response = await api(`/inventory${routeMap[selectedOption!].read}`)
+            setData(response.data)
+            return response.data
+        },
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 5,
+        enabled: !!selectedOption,
+    });
 
     useEffect(() => {
         const addItemParam = searchParams.get('action')
@@ -115,7 +111,7 @@ const Settings = () => {
         else if (addItemParam === 'addVendorCategory') setIsInventoryCategoryAddDialogOpen(true)
         else if (addItemParam === 'addInventoryCategory') setIsInventoryCategoryAddDialogOpen(true)
 
-        fetchData()
+        refetch()
     }, [selectedOption]);
 
     const handleAddLab = (newLab: NewLaboratoryRequest, edit?: boolean) => {
@@ -123,7 +119,7 @@ const Settings = () => {
         const method = edit ? api.patch : api.post;
         method(route, { ...newLab, id: edit ? selected[0].id : undefined })
             .then(() => {
-                fetchData();
+                refetch();
                 toast.success(edit ? "Lab edited successfully" : "Lab added successfully");
             })
             .catch((err) => {
@@ -137,7 +133,7 @@ const Settings = () => {
         const method = edit ? api.patch : api.post;
         method(route, { ...newVendor, id: edit ? selected[0].id : undefined })
             .then(() => {
-                fetchData();
+                refetch();
                 toast.success(edit ? "Vendor edited successfully" : "Vendor added successfully");
             })
             .catch((err) => {
@@ -151,7 +147,7 @@ const Settings = () => {
         const method = edit ? api.patch : api.post;
         method(route, { ...newCategory, id: edit ? selected[0].id : undefined, type })
             .then(() => {
-                fetchData();
+                refetch();
                 toast.success(edit ? "Category edited successfully" : "Category added successfully");
             })
             .catch((err) => {
@@ -167,7 +163,7 @@ const Settings = () => {
         api
             .delete(route)
             .then(() => {
-                fetchData();
+                refetch();
                 toast.success("Item deleted successfully");
             })
             .catch((err) => {
@@ -228,7 +224,7 @@ const Settings = () => {
                 </div>
             </div>
 
-            {loading ? (
+            { isFetching ? (
                 <div className="mt-4 space-y-2">
                     <Skeleton className="h-8 w-full" />
                     <Skeleton className="h-96 w-full" />
@@ -236,7 +232,7 @@ const Settings = () => {
                 </div>
             ) : (
                 <div className="mt-4">
-                    {data.length > 0 ? (
+                    {isSuccess ? (
                         selectedOption === "Labs" ? (
                             <DataTable<Laboratory> data={data as Laboratory[]} columns={labColumns} mainSearchColumn="name" setSelected={setSelected as any} />
                         ) : selectedOption === 'Vendors' ? (
@@ -247,9 +243,9 @@ const Settings = () => {
                             <DataTable<Category> data={data as Category[]} columns={categoryColumns} mainSearchColumn="name" setSelected={setSelected as any} /> // Vendor table
                         )
                     ) : <div>
-                        <div className="flex flex-col items-center justify-center h-64">
-                            <p className="text-lg text-gray-500">No data available</p>
-                            {!selectedOption && <p className="text-sm text-gray-400">Please select a setting to view the data</p>}
+                        <div className="flex flex-col items-center justify-center h-64 text-red-500">
+                            <p className="text-lg">Something went wrong</p>
+                            <p className="text-sm text-red-400">Please contact the website administrator</p>
                         </div>
                     </div>}
                 </div>
