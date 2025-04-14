@@ -53,7 +53,8 @@ router.post(
                     });
                     if (env.PROD) {
                         const transporter = nodemailer.createTransport({
-                            service: "gmail",
+                            host: "smtp.gmail.com",
+                            port: 587,
                             auth: {
                                 user: env.BPHCERP_EMAIL,
                                 pass: env.BPHCERP_PASSWORD,
