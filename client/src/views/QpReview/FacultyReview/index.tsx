@@ -99,6 +99,7 @@ function QPReviewList({
           </TabsList>
 
           <TabsContent value="pending" className="mt-0">
+            {pendingCourses.length === 0 && (<p>No Submissions to be reviewed</p>)}
             <div className="space-y-4">
               {pendingCourses.map((course, index) => (
                 <CourseItem key={index} course={course} />
@@ -108,6 +109,7 @@ function QPReviewList({
 
           <TabsContent value="reviewed" className="mt-0">
             <div className="space-y-4">
+              {reviewedCourses.length === 0 && (<p>No Submissions reviewed yet</p>)}
               {reviewedCourses.map((course, index) => (
                 <CourseItem key={index} course={course} />
               ))}
