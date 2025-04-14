@@ -15,4 +15,13 @@ export type TodosResponseType = {
         deadline: string | null;
         metadata: unknown;
     }[];
+    notifications: {
+        id: number;
+        userEmail: string;
+        title: string;
+        content: string | null;
+        module: (typeof modules)[number];
+        createdAt: string;
+        read: boolean;
+    }[];
 };

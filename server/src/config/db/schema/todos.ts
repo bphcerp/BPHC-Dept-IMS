@@ -46,7 +46,7 @@ export const notifications = pgTable(
             .references(() => users.email),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         link: text("link"),
-        read: boolean("read").default(false),
+        read: boolean("read").notNull().default(false),
     },
     (table) => [
         index("read_idx").on(table.read),

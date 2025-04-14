@@ -21,15 +21,29 @@ router.get(
         const todos = (
             await db.query.todos.findMany({
                 where: (cols, { eq }) => eq(cols.assignedTo, req.user!.email),
-                orderBy: (cols, { desc }) => desc(cols.deadline),
+                orderBy: (cols, { desc }) => [
+                    desc(cols.deadline),
+                    desc(cols.createdAt),
+                ],
             })
         ).map(({ completionEvent: _, ...todo }) => ({
             ...todo,
             createdAt: todo.createdAt.toLocaleString(),
             deadline: todo.deadline?.toLocaleString() ?? null,
         }));
+
+        const notifications = (
+            await db.query.notifications.findMany({
+                where: (cols, { eq }) => eq(cols.userEmail, req.user!.email),
+                orderBy: (cols, { desc }) => [desc(cols.createdAt)],
+            })
+        ).map((notif) => ({
+            ...notif,
+            createdAt: notif.createdAt.toLocaleString(),
+        }));
         const response: todosSchemas.TodosResponseType = {
             todos,
+            notifications,
             name: userDetails.name,
             roles: userDetails.roles,
         };

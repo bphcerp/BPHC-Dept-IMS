@@ -3,6 +3,13 @@ import TodoCard from "@/components/home/TodoCard";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
@@ -10,6 +17,10 @@ import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useQuery } from "@tanstack/react-query";
 import { modules as allModules, todosSchemas } from "lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { BellIcon } from "lucide-react";
+import { NotificationItem } from "@/components/home/NotificationItem";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
   const { authState, setNewAuthToken } = useAuth();
@@ -79,6 +90,35 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
           <LoadingSpinner />
         ) : data ? (
           <>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button className="absolute right-4 top-4 items-start">
+                  <BellIcon /> Notifications
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent side="right" className="pr-3">
+                <SheetHeader className="pb-4">
+                  <SheetTitle>Notifications</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(100%-3em)] pr-3">
+                  <div className="flex flex-col gap-4">
+                    {data.notifications.length ? (
+                      data.notifications.map((notification) => (
+                        <NotificationItem
+                          key={notification.id}
+                          {...notification}
+                        />
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No notifications available.
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
             <h3 className="text-2xl">
               Welcome,{" "}
               <span className="font-semibold">{data.name ?? "User"}</span>
