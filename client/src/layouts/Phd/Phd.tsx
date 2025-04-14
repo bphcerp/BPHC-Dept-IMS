@@ -1,12 +1,18 @@
 import { AppSidebar } from "@/components/AppSidebar";
 import {
-  CalendarClockIcon,
-  List,
+  ClipboardCheck,
+  UserCheck,
   Users,
-  CaseUpper,
-  NotepadText,
-  CalendarX2,
-  UserRoundPlus,
+  FileText,
+  UserPlus,
+  UserCog,
+  Presentation,
+  UserCircle,
+  FileQuestion,
+  FileSpreadsheet,
+  Calendar,
+  Clock,
+  BookOpen
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -17,25 +23,25 @@ const NotionalSupervisorLayout = () => {
       title: "Supervisor",
       items: [
         {
-          title: "Notional Supervisor Management",
-          icon: <CaseUpper />,
+          title: "Grades Management",
+          icon: <UserCog />,
           url: "/phd/notional-supervisor/update-grade",
           requiredPermissions: [permissions["/phd/supervisor/updateSuggestedExaminer"]],
         },
         {
           title: "Examiner Management",
-          icon: <UserRoundPlus />,
+          icon: <UserCheck />,
           url: "/phd/notional-supervisor/suggest-examiner",
           requiredPermissions: [permissions["/phd/notionalSupervisor/updateCourseGrade"]],
         },
         {
-          title: "Supervisor Mangement",
-          icon: <Users />,
+          title: "Supervisor Management",
+          icon: <UserPlus />,
           url: "/phd/phd-supervisor/supervised-students",
           requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
         },
         {
-          title: "Co-Supervisor Mannagement",
+          title: "Co-Supervisor Management",
           icon: <Users />,
           url: "/phd/phd-co-supervisor/co-supervised-students",
           requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
@@ -46,8 +52,8 @@ const NotionalSupervisorLayout = () => {
       title: "DRC Convenor",
       items: [
         {
-          title: "Coursework Mangement",
-          icon: <List />,
+          title: "Coursework Management",
+          icon: <BookOpen />,
           url: "/phd/drc-convenor/coursework-form",
           requiredPermissions: [
             permissions["/phd/drcMember/generateCourseworkForm"],
@@ -55,7 +61,7 @@ const NotionalSupervisorLayout = () => {
         },
         {
           title: "Qualifying Exam Management",
-          icon: <NotepadText />,
+          icon: <FileQuestion />,
           url: "/phd/drc-convenor/qualifying-exam-management",
           requiredPermissions: [
             permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"],
@@ -63,25 +69,31 @@ const NotionalSupervisorLayout = () => {
         },
         {
           title: "Proposal Management",
-          icon: <UserRoundPlus />,
+          icon: <Presentation />,
           url: "/phd/drc-convenor/assign-dac-members",
           requiredPermissions: [permissions["/phd/drcMember/updateFinalDac"]],
         },
       ],
     },
     {
-      title: "PhD Student",
+      title: "PhD Scholar",
       items: [
         {
-          title: "Qualifying Exam Manegement",
-          icon: <CalendarClockIcon />,
+          title: "My Profile",
+          icon: <UserCircle />,
+          url: "/phd/phd-student/my-profile",
+          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
+        },
+        {
+          title: "Qualifying Exam Management",
+          icon: <ClipboardCheck />,
           url: "/phd/phd-student/form-deadline",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
         
         {
           title: "Proposal Management",
-          icon: <NotepadText />,
+          icon: <FileText />,
           url: "/phd/phd-student/proposal-submission",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
@@ -92,21 +104,21 @@ const NotionalSupervisorLayout = () => {
       items: [
         {
           title: "Semester Dates Management",
-          icon: <CalendarX2 />,
+          icon: <Calendar />,
           url: "/phd/staff/update-semester-dates",
           requiredPermissions: [
             permissions["/phd/staff/getAllSem"],
           ],
         },
         {
-          title: "Deadline Mangement",
-          icon: <CalendarClockIcon />,
+          title: "Deadline Management",
+          icon: <Clock />,
           url: "/phd/staff/update-deadlines",
           requiredPermissions: [permissions["/phd/staff/updateQualifyingExamDeadline"], permissions["/phd/staff/updateProposalDeadline"]],
         },
         {
-          title: "Sub Areas Mangement",
-          icon: <CalendarClockIcon />,
+          title: "Sub Areas Management",
+          icon: <FileSpreadsheet />,
           url: "/phd/staff/update-subareas",
           requiredPermissions: [permissions["/phd/staff/updateSubAreas"], permissions["/phd/staff/getSubAreas"], permissions["/phd/staff/deleteSubArea"]],
         },

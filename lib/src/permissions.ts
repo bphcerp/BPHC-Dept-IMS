@@ -59,6 +59,7 @@ export const allPermissions = {
     "phd:student:get-qe-application": "",
     "phd:student:get-grade-status": "",
     "phd:student:get-sub-area": "",
+    "phd:student:get-profile-details":"",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
@@ -182,6 +183,7 @@ export const permissions = {
     "/phd/student/getNoOfQeApplication": "phd:student:get-qe-application",
     "/phd/student/getGradeStatus": "phd:student:get-grade-status",
     "/phd/student/getSubAreas": "phd:student:get-sub-area",
+    "/phd/student/getProfileDetails": "phd:student:get-profile-details",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":

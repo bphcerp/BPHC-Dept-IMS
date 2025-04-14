@@ -32,6 +32,7 @@ import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
+import Profile from "@/views/Phd/Student/Profile";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
@@ -314,6 +315,7 @@ const Routing = () => {
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
+                    <Route path="my-profile" element={<Profile />} />
 
                     <Route
                       path="proposal-submission"
