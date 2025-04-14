@@ -12,6 +12,8 @@ import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { generateExcel } from "@/lib/excel";
 
 interface HandoutSummary {
   id: string;
@@ -28,6 +30,11 @@ interface HandoutSummary {
   lecturewisePlanCourseTopics: boolean;
   numberOfLP: boolean;
   evaluationScheme: boolean;
+}
+
+interface ExcelResponse {
+  handouts: Record<string, string>[];
+  headers: string[];
 }
 
 const DCAConvenerSummary: React.FC = () => {
@@ -89,6 +96,32 @@ const DCAConvenerSummary: React.FC = () => {
     setFilteredData(results);
   }, [handouts, searchQuery, activeCategoryFilters, activeStatusFilters]);
 
+  const { data: summary, refetch } = useQuery<ExcelResponse>({
+    queryKey: ["handout_export"],
+    queryFn: async () => {
+      const response = await api.get("/handout/dcaconvenor/exportSummary");
+      return response.data;
+    },
+    enabled: false,
+  });
+
+  const handleExport = async () => {
+    await refetch();
+    console.log(summary);
+    if (summary) {
+      const workbook = generateExcel(summary.headers, summary.handouts);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "handout_summary.xlsx";
+      anchor.click();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-4">
@@ -114,7 +147,19 @@ const DCAConvenerSummary: React.FC = () => {
               Summary Page DCA Convenor
             </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="outline"
+                className="hover:bg-primary hover:text-white"
+                onClick={() => {
+                  void handleExport();
+                }}
+              >
+                Export
+              </Button>
+            </div>
           </div>
+
           <div className="ml-4">
             <FilterBar
               searchQuery={searchQuery}

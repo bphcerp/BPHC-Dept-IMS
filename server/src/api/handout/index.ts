@@ -13,6 +13,7 @@ import updateIC from "./updateIC.ts";
 import updateReviewer from "./updateReviewer.ts";
 import getAllDCAMember from "./getAllDCAMember.ts";
 import reminder from "./reminder.ts";
+import exportSummary from "./exportSummary.ts";
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use("/dcaconvenor/updateReviewer", updateReviewer);
 router.use("/dcaconvenor/getAllDCAMember", getAllDCAMember);
 router.use("/dcaconvenor/finalDecision", finalDecision);
 router.use("/dcaconvenor/reminder", reminder);
+router.use("/dcaconvenor/exportSummary", exportSummary);
 
 export default router;

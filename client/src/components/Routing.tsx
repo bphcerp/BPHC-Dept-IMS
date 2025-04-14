@@ -267,7 +267,14 @@ const Routing = () => {
                             element={<DCAConvenorHandouts />}
                           />
                         )}
-                      <Route path="summary" element={<DCAConvenerSummary />} />
+                      {checkAccess(
+                        permissions["/handout/dcaconvenor/exportSummary"]
+                      ) && (
+                        <Route
+                          path="summary"
+                          element={<DCAConvenerSummary />}
+                        />
+                      )}
                       {checkAccess(
                         permissions["/handout/dcaconvenor/finalDecision"]
                       ) && (
