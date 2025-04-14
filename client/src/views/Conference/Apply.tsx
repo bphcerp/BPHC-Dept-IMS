@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { FileUploader } from "@/components/ui/file-uploader";
 
-const schema = conferenceSchemas.createApplicationBodySchema.merge(
+const schema = conferenceSchemas.upsertApplicationBodySchema.merge(
   z.object(
     Object.fromEntries(
       conferenceSchemas.fileFieldNames.map((x) => [

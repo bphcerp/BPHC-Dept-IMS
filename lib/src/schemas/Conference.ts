@@ -12,7 +12,7 @@ export const states = [
 
 const modesOfEvent = ["online", "offline"] as const;
 
-export const createApplicationBodySchema = z.object({
+export const upsertApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
     eventName: z.string().nonempty(),
@@ -43,7 +43,7 @@ export const createApplicationBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
-export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;
+export type CreateApplicationBody = z.infer<typeof upsertApplicationBodySchema>;
 
 export const pendingApplicationsQuerySchema = z.object({
     state: z.enum(states),

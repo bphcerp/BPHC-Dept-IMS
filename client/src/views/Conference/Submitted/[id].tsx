@@ -39,7 +39,7 @@ import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/BackButton";
 import { ProgressStatus } from "@/components/conference/StateProgressBar";
 
-const schema = conferenceSchemas.createApplicationBodySchema.merge(
+const schema = conferenceSchemas.upsertApplicationBodySchema.merge(
   z.object(
     Object.fromEntries(
       conferenceSchemas.fileFieldNames.map((x) => [
