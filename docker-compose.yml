@@ -46,7 +46,7 @@ services:
       timeout: 30s
       retries: 3
     volumes:
-      - postgres_db_4:/var/lib/postgresql/data
+      - postgres_db:/var/lib/postgresql/data
     profiles:
       - "dev"
       - "prod"
@@ -79,7 +79,7 @@ services:
       - "dev"
 
 volumes:
-  postgres_db_4:
+  postgres_db:
 
 networks:
   default:
