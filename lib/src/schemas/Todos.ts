@@ -1,6 +1,8 @@
 import { modules } from "./Form.ts";
 
 export type TodosResponseType = {
+    name: string | null;
+    roles: string[];
     todos: {
         id: number;
         module: (typeof modules)[number];

@@ -33,9 +33,18 @@ export const getUserDetails = async (userEmail: string) => {
         },
     });
     if (!user) return null;
-    const { faculty, phd, staff, ...userData } = user;
+    const roles = (await db.query.roles.findMany()).reduce(
+        (acc, role) => {
+            acc[role.id] = role.roleName;
+            return acc;
+        },
+        {} as Record<number, string>
+    );
+    const { faculty, phd, staff, ...rest } = user;
+    const { roles: userRoles, ...userData } = rest;
     return {
         ...userData,
         ...(phd || faculty || staff),
+        roles: userRoles.map((role) => roles[role]),
     };
 };
