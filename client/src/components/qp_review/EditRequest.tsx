@@ -41,7 +41,7 @@ const EditRequestDialog = ({
   isOpen,
   onClose,
   course,
-  fetchCourses
+  fetchCourses,
 }: EditRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -56,39 +56,39 @@ const EditRequestDialog = ({
       setCourseName(course.courseName || "");
       setCourseCode(course.courseNo || "");
       setFIC(course.fic || "");
-      
+
       // Format dates if they exist
       if (course.ficDeadline) {
         const ficDate = new Date(course.ficDeadline);
-        setFicDeadline(ficDate.toISOString().split('T')[0]);
+        setFicDeadline(ficDate.toISOString().split("T")[0]);
       }
-      
+
       if (course.reviewDeadline) {
         const reviewDate = new Date(course.reviewDeadline);
-        setSrDeadline(reviewDate.toISOString().split('T')[0]);
+        setSrDeadline(reviewDate.toISOString().split("T")[0]);
       }
     }
   }, [course]);
 
   const handleUpdate = async () => {
-    if (!courseName || !courseCode || !fic) {
-      alert("Please fill in all fields.");
-      return;
-    }
     
+
     const requestData = {
       id: course?.id,
-      dcaMemberEmail: "dca@email.com",
-      courseNo: courseCode,
-      courseName: courseName,
-      fic: fic,
+      // dcaMemberEmail: "dca@email.com",
+      // courseNo: courseCode,
+      // courseName: courseName,
+      // fic: fic,
       ficDeadline: ficDeadline ? new Date(ficDeadline) : new Date(),
       reviewDeadline: srDeadline ? new Date(srDeadline) : new Date(),
     };
 
     try {
       setLoading(true);
-      const response = await api.put(`/qp/updateQpRequest/${course?.id}`, requestData);
+      const response = await api.put(
+        `/qp/editQpRequest/${course?.id}`,
+        requestData
+      );
 
       console.log("Full API Response:", response);
       console.log("Response Data:", response.data);
@@ -112,40 +112,6 @@ const EditRequestDialog = ({
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p>Course Name</p>
-            <Select value={courseName} onValueChange={setCourseName}>
-              <SelectTrigger>{courseName || "Select..."}</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Analog Communication">
-                  Analog Communication
-                </SelectItem>
-                <SelectItem value="Data Mining">Data Mining</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <p>Course Code</p>
-            <Select value={courseCode} onValueChange={setCourseCode}>
-              <SelectTrigger>{courseCode || "Select..."}</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ECE F341">ECE F341</SelectItem>
-                <SelectItem value="CS F432">CS F432</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <p>FIC</p>
-            <Select value={fic} onValueChange={setFIC}>
-              <SelectTrigger>{fic || "Select..."}</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="fic@email.com">FIC</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div>
             <p>FIC Deadline</p>
             <Input
@@ -178,4 +144,4 @@ const EditRequestDialog = ({
   );
 };
 
-export default EditRequestDialog;   
+export default EditRequestDialog;
