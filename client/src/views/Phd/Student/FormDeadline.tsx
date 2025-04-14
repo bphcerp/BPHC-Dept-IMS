@@ -150,7 +150,7 @@ const FormDeadline: React.FC = () => {
   // Determine if exam form should be shown
   const shouldShowExamForm = (() => {
     // Check if grades are complete
-    const gradeCheck = gradeStatusData?.allCoursesGraded === true;
+    //const gradeCheck = gradeStatusData?.allCoursesGraded === true;
 
     // Check if within allowed application attempts (1 or 2)
     const qeApplicationCheck =
@@ -163,7 +163,8 @@ const FormDeadline: React.FC = () => {
       qualifyingExamStatusData?.status === "pending";
 
     // Student must meet all criteria
-    return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
+    //return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
+    return  qeApplicationCheck && qualifyingExamStatusCheck;
   })();
 
   // Loading state
@@ -225,7 +226,7 @@ const FormDeadline: React.FC = () => {
         {gradeStatusData && "noCourseFound" in gradeStatusData && (
           <div className="rounded-lg bg-yellow-100 p-6 shadow">
             <p className="text-center text-lg text-yellow-800">
-              Your notional supervisor has not added any courses for you yet.
+              Your courses have not been added yet, conttact your department.
             </p>
             <p className="mt-2 text-center text-yellow-600">
               Please contact your supervisor to update your course information.
