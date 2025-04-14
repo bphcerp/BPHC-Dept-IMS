@@ -5,10 +5,10 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
 import { users } from "@/config/db/schema/admin.ts";
-import { notifications } from "@/config/db/schema/todos.ts";
 import { eq, and, gt } from "drizzle-orm";
 import { phdSchemas } from "lib";
 import assert from "assert";
+import { createNotifications } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -134,19 +134,14 @@ export default router.post(
   `.trim();
 
         // Create notifications for all users
-        const notificationPromises = allUsers.map((user) =>
-            db.insert(notifications).values({
+        await createNotifications(
+            allUsers.map((user) => ({
                 module: "PhD Qe Application",
                 title: `New PhD Qualifying Exam: ${examName}`,
                 content: notificationContent,
                 userEmail: user.email,
-                createdAt: new Date(),
-                read: false,
-            })
+            }))
         );
-
-        // Wait for all notifications to be created
-        await Promise.all(notificationPromises);
 
         res.status(201).json({
             success: true,

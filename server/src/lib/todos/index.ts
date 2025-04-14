@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { todos } from "@/config/db/schema/todos.ts";
+import { notifications, todos } from "@/config/db/schema/todos.ts";
 import { eq, and } from "drizzle-orm";
 import type { modules } from "lib";
 
@@ -45,4 +45,20 @@ export async function completeTodo({
         );
 
     return result.rowCount;
+}
+
+/**
+ * Creates new notifications in the database.
+ */
+export async function createNotifications(
+    values: {
+        module: (typeof modules)[number];
+        title: string;
+        content?: string;
+        link?: string;
+        userEmail: string;
+    }[]
+) {
+    const newNotifs = await db.insert(notifications).values(values).returning();
+    return newNotifs;
 }

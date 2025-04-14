@@ -18,6 +18,7 @@ import multer from "multer";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { modules } from "lib";
 import type { Request, Response, NextFunction } from "express";
+import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.post(
             },
         });
 
-        const studentName = student?.name || email;
+        const studentName = student?.name ?? email;
 
         const parsed = phdSchemas.uploadProposalSchema.safeParse({
             ...req.body,
@@ -160,27 +161,28 @@ router.post(
                 .where(eq(phd.email, email));
 
             // Create notification for supervisor
-            await tx.insert(notifications).values({
-                module: "PhD Proposal",
-                title: "New PhD Thesis Proposal Submission",
-                content: `${studentName} (${email}) has submitted their PhD thesis proposal documents for your review. Please review the documents at your earliest convenience.`,
-                userEmail: supervisor,
-                createdAt: new Date(),
-                link: `/phd/proposals/${application.id}`,
-                read: false,
-            });
+            await createNotifications([
+                {
+                    module: "PhD Proposal",
+                    title: "New PhD Thesis Proposal Submission",
+                    content: `${studentName} (${email}) has submitted their PhD thesis proposal documents for your review. Please review the documents at your earliest convenience.`,
+                    userEmail: supervisor,
+                    link: `/phd/proposals/${application.id}`,
+                },
+            ]);
 
             // Create todo for supervisor
-            await tx.insert(todos).values({
-                module: "PhD Proposal",
-                title: "Review PhD Thesis Proposal",
-                description: `Review the thesis proposal submitted by ${studentName} (${email}). The proposal includes three documents that require your evaluation.`,
-                link: "/supervised-students",
-                assignedTo: supervisor,
-                createdBy: email,
-                createdAt: new Date(),
-                completionEvent: "proposal_approval",
-            });
+            await createTodos([
+                {
+                    module: "PhD Proposal",
+                    title: "Review PhD Thesis Proposal",
+                    description: `Review the thesis proposal submitted by ${studentName} (${email}). The proposal includes three documents that require your evaluation.`,
+                    link: "/supervised-students",
+                    assignedTo: supervisor,
+                    createdBy: email,
+                    completionEvent: "proposal_approval_" + application.id,
+                },
+            ]);
         });
 
         res.status(HttpCode.OK).json({
