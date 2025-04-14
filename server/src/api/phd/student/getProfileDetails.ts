@@ -43,7 +43,7 @@ router.get(
     let formattedCourses: CourseItem[] = [];
 
     // Format student courses with proper null checks
-    if (courses && courses.courseNames) {
+    if (courses?.courseNames) {
       // Combine course details from parallel arrays
       formattedCourses = courses.courseNames.map((name, index) => ({
         courseName: name,

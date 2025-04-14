@@ -20,10 +20,10 @@ export const todos = pgTable(
         link: text("link"),
         assignedTo: text("assigned_to")
             .notNull()
-            .references(() => users.email),
+            .references(() => users.email, { onDelete: "cascade" }),
         createdBy: text("created_by")
             .notNull()
-            .references(() => users.email),
+            .references(() => users.email, { onDelete: "cascade" }),
         createdAt: timestamp("created_at", { withTimezone: true })
             .defaultNow()
             .notNull(),
@@ -43,7 +43,7 @@ export const notifications = pgTable(
         content: text("content"),
         userEmail: text("user_email")
             .notNull()
-            .references(() => users.email),
+            .references(() => users.email, { onDelete: "cascade" }),
         createdAt: timestamp("created_at").defaultNow().notNull(),
         link: text("link"),
         read: boolean("read").notNull().default(false),

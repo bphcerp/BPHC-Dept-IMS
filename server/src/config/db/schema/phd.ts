@@ -60,6 +60,6 @@ export const phdExaminer = pgTable("phd_examiner", {
         .array()
         .default(sql`'{}'::text[]`),
     examiner: text("examiner").references(() => users.email, {
-        onDelete: "restrict",
+        onDelete: "cascade",
     }),
 });
