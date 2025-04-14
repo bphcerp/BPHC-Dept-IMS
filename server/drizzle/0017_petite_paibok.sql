@@ -1,0 +1,2 @@
+ALTER TABLE "phd_examiner" ADD COLUMN "student_email" text;--> statement-breakpoint
+ALTER TABLE "phd_examiner" ADD CONSTRAINT "phd_examiner_student_email_phd_email_fk" FOREIGN KEY ("student_email") REFERENCES "public"."phd"("email") ON DELETE cascade ON UPDATE no action;
