@@ -7,7 +7,7 @@ import {
     publicationsTable,
 } from "@/config/db/schema/publications.ts";
 import { eq, inArray } from "drizzle-orm";
-import { publicationsSchemas } from "lib";
+import type { publicationsSchemas } from "lib";
 
 const router = express.Router();
 
