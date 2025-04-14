@@ -9,6 +9,7 @@ import {
     fileFields,
     textFields,
 } from "@/config/db/schema/form.ts";
+import { todos, notifications } from "@/config/db/schema/todos.ts";
 import { eq } from "drizzle-orm";
 import assert from "assert";
 import { phdSchemas } from "lib";
@@ -54,6 +55,16 @@ router.post(
 
         const { email } = req.user;
 
+        // Get student name for notifications
+        const student = await db.query.phd.findFirst({
+            where: eq(phd.email, email),
+            columns: {
+                name: true,
+            },
+        });
+
+        const studentName = student?.name || email;
+
         const parsed = phdSchemas.uploadProposalSchema.safeParse({
             ...req.body,
             fileUrl1: uploadedFiles.proposalDocument1[0].path,
@@ -71,7 +82,8 @@ router.post(
         const { supervisor, coSupervisor1, coSupervisor2 } = parsed.data;
 
         await db.transaction(async (tx) => {
-            await tx
+            // Insert application
+            const [application] = await tx
                 .insert(applications)
                 .values({
                     module: modules[3],
@@ -146,6 +158,29 @@ router.post(
                     coSupervisorEmail2: coSupervisor2,
                 })
                 .where(eq(phd.email, email));
+
+            // Create notification for supervisor
+            await tx.insert(notifications).values({
+                module: "PhD Proposal",
+                title: "New PhD Thesis Proposal Submission",
+                content: `${studentName} (${email}) has submitted their PhD thesis proposal documents for your review. Please review the documents at your earliest convenience.`,
+                userEmail: supervisor,
+                createdAt: new Date(),
+                link: `/phd/proposals/${application.id}`,
+                read: false,
+            });
+
+            // Create todo for supervisor
+            await tx.insert(todos).values({
+                module: "PhD Proposal",
+                title: "Review PhD Thesis Proposal",
+                description: `Review the thesis proposal submitted by ${studentName} (${email}). The proposal includes three documents that require your evaluation.`,
+                link: "/supervised-students",
+                assignedTo: supervisor,
+                createdBy: email,
+                createdAt: new Date(),
+                completionEvent: "proposal_approval",
+            });
         });
 
         res.status(HttpCode.OK).json({
