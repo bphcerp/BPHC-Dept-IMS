@@ -6,6 +6,7 @@ import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
+    conferenceGlobal,
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
@@ -35,6 +36,19 @@ router.post(
                 )
             );
 
+        // Check if we are in the direct flow
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+        if (!current) {
+            await db.insert(conferenceGlobal).values({
+                key: "directFlow",
+                value: "false",
+            });
+        }
+        const isDirect = current && current.value === "true";
+
         const application = await getApplicationById(id);
 
         if (!application)
@@ -60,7 +74,8 @@ router.post(
                 .update(conferenceApprovalApplications)
                 .set({
                     state: conferenceSchemas.states[
-                        applicationStateIndex + (status ? 1 : -2)
+                        applicationStateIndex +
+                            (status ? (isDirect ? 2 : 1) : -2)
                     ],
                 })
                 .where(eq(conferenceApprovalApplications.id, id));

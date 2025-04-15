@@ -43,6 +43,10 @@ export const upsertApplicationBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
+export const flowBodySchema = z.object({
+    directFlow: z.boolean(),
+});
+
 export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
     z.object({
         status: z.literal(true),
@@ -53,14 +57,6 @@ export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
         comments: z.string().trim().nonempty(),
     }),
 ]);
-
-export const editFieldBodySchema = z.object({
-    value: z.union([
-        z.string().nonempty(),
-        z.coerce.number().positive().finite(),
-        z.coerce.date(),
-    ]),
-});
 
 export const textFieldNames = [
     "purpose",

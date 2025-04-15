@@ -10,6 +10,7 @@ import { pdfUpload } from "@/config/multer.ts";
 import multer from "multer";
 import {
     conferenceApprovalApplications,
+    conferenceGlobal,
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "node:fs";
@@ -47,6 +48,19 @@ router.post(
         if (isNaN(id)) {
             return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
         }
+
+        // Check if we are in the direct flow
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+        if (!current) {
+            await db.insert(conferenceGlobal).values({
+                key: "directFlow",
+                value: "false",
+            });
+        }
+        const isDirect = current && current.value === "true";
 
         const application =
             await db.query.conferenceApprovalApplications.findFirst({
@@ -172,7 +186,7 @@ router.post(
                     userEmail: req.user!.email,
                     ...insertedFileIds,
                     ...body,
-                    state: "DRC Member",
+                    state: isDirect ? "DRC Convener" : "DRC Member",
                 })
                 .where(eq(conferenceApprovalApplications.id, id))
                 .returning();
