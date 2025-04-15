@@ -10,11 +10,13 @@ import {
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/:id",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const id = parseInt(req.params.id);
         if (isNaN(id) || id <= 0)
