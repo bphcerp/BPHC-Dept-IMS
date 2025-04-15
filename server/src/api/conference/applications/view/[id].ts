@@ -44,10 +44,9 @@ router.get(
         ).length;
 
         if (
-            (isMember && application.state !== "DRC Member") ||
-            (isConvener && application.state !== "DRC Convener") ||
-            (isHoD && application.state !== "HoD") ||
-            isReviewed
+            !(application.userEmail === req.user!.email) &&
+            isMember &&
+            (application.state !== "DRC Member" || isReviewed)
         )
             return next(
                 new HttpError(

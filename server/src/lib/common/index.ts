@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { allPermissions } from "lib";
+import type { allPermissions } from "lib";
 import { getAccessMultiple } from "../auth/index.ts";
 
 /**
