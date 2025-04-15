@@ -7,6 +7,7 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceMemberReviews,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -94,6 +95,12 @@ router.post(
                     comments: comments,
                 },
             ]);
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: application.id,
+                userEmail: req.user!.email,
+                action: `Member ${status ? "approved" : "rejected"}`,
+                comments,
+            });
         });
 
         res.status(200).send();

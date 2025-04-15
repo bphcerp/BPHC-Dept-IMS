@@ -7,6 +7,7 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceMemberReviews,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -58,14 +59,18 @@ router.post(
                 .delete(conferenceMemberReviews)
                 .where(eq(conferenceMemberReviews.applicationId, id));
 
-            await tx.insert(conferenceMemberReviews).values([
-                {
-                    applicationId: application.id,
-                    reviewerEmail: req.user!.email,
-                    status: status,
-                    comments: comments,
-                },
-            ]);
+            await tx.insert(conferenceMemberReviews).values({
+                applicationId: application.id,
+                reviewerEmail: req.user!.email,
+                status: status,
+                comments: comments,
+            });
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: application.id,
+                userEmail: req.user!.email,
+                action: `HoD ${status ? "approved" : "rejected"}`,
+                comments,
+            });
         });
         res.status(200).send();
     })
