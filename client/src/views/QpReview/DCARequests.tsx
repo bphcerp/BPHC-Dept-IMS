@@ -302,7 +302,7 @@ export const DCAConvenerQP: React.FC = () => {
   };
 
   const bulkUpdateReviewerMutation = useMutation({
-    mutationFn: async ({
+     mutationFn: async ({
       ids,
       reviewerEmail,
       sendEmail,
