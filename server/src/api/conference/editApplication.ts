@@ -8,7 +8,10 @@ import { eq } from "drizzle-orm";
 import { conferenceSchemas, modules } from "lib";
 import { pdfUpload } from "@/config/multer.ts";
 import multer from "multer";
-import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
+import {
+    conferenceApprovalApplications,
+    conferenceMemberReviews,
+} from "@/config/db/schema/conference.ts";
 import { unlink } from "node:fs";
 
 const router = express.Router();
@@ -158,6 +161,10 @@ router.post(
                     insertedFileIds[field.fieldName! as FileField] = field.id;
                 });
             }
+
+            tx.delete(conferenceMemberReviews).where(
+                eq(conferenceMemberReviews.applicationId, id)
+            );
 
             return await tx
                 .update(conferenceApprovalApplications)
