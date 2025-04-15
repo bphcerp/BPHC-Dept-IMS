@@ -127,11 +127,11 @@ export type ViewApplicationResponse = {
         organizedBy: string;
         modeOfEvent: (typeof modesOfEvent)[number];
         description: string;
-        travelReimbursement?: number;
-        registrationFeeReimbursement?: number;
-        dailyAllowanceReimbursement?: number;
-        accommodationReimbursement?: number;
-        otherReimbursement?: number;
+        travelReimbursement: number;
+        registrationFeeReimbursement: number;
+        dailyAllowanceReimbursement: number;
+        accommodationReimbursement: number;
+        otherReimbursement: number;
         letterOfInvitation?: fileFieldResponse;
         firstPageOfPaper?: fileFieldResponse;
         reviewersComments?: fileFieldResponse;
@@ -143,4 +143,24 @@ export type ViewApplicationResponse = {
         comments: string | null;
         createdAt: string;
     }[];
+};
+
+export const fieldsToFrontend = {
+    purpose: "Purpose",
+    contentTitle: "Title of the Paper / Talk / Poster",
+    eventName: "Name of the Journal / Conference / Workshop / Laboratory",
+    venue: "Venue",
+    organizedBy: "Organized by",
+    modeOfEvent: "Mode of event",
+    description: "Brief Description or Justification of the purpose",
+    travelReimbursement: "Travel",
+    registrationFeeReimbursement: "Registration Fee / Page Charges",
+    dailyAllowanceReimbursement: "Daily Allowance",
+    accommodationReimbursement: "Accommodation",
+    otherReimbursement: "Any Other, if any",
+    letterOfInvitation: "Letter of Invitation / Acceptance of the paper",
+    firstPageOfPaper: "First page of paper",
+    reviewersComments: "Reviewers Comments",
+    detailsOfEvent: "Details of the conference / Journal",
+    otherDocuments: "Any other documents",
 };

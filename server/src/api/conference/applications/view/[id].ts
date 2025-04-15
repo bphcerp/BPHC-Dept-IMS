@@ -38,6 +38,7 @@ router.get(
 
         const reviews = await db.query.conferenceMemberReviews.findMany({
             where: (review, { eq }) => eq(review.applicationId, application.id),
+            orderBy: (cols, { desc }) => desc(cols.createdAt),
         });
         const isReviewed = reviews.filter(
             (r) => r.reviewerEmail === req.user?.email
@@ -67,10 +68,20 @@ router.get(
                           return {
                               status: x.status,
                               comments: x.comments,
-                              createdAt: x.createdAt.toLocaleString(),
+                              createdAt: x.createdAt,
                           };
                       })
-                    : [],
+                    : application.userEmail === req.user!.email &&
+                        application.state === "Faculty" &&
+                        reviews[0]
+                      ? [
+                            {
+                                comments: reviews[0].comments,
+                                status: reviews[0].status,
+                                createdAt: reviews[0].createdAt,
+                            },
+                        ]
+                      : [],
         };
 
         res.status(200).send(response);

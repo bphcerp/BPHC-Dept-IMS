@@ -8,7 +8,7 @@ import applicationsRouter from "./applications/index.ts";
 const router = express.Router();
 
 router.use("/createApplication", createApplicationRouter);
-router.use("/edit", editApplicationRouter);
+router.use("/editApplication", editApplicationRouter);
 router.use("/applications", applicationsRouter);
 router.use("/getFlow", getFlowRouter);
 router.use("/setFlow", setFlowRouter);
