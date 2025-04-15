@@ -54,11 +54,11 @@ router.post(
                 })
                 .where(eq(conferenceApprovalApplications.id, id));
 
-            tx.delete(conferenceMemberReviews).where(
-                eq(conferenceMemberReviews.applicationId, id)
-            );
+            await tx
+                .delete(conferenceMemberReviews)
+                .where(eq(conferenceMemberReviews.applicationId, id));
 
-            tx.insert(conferenceMemberReviews).values([
+            await tx.insert(conferenceMemberReviews).values([
                 {
                     applicationId: application.id,
                     reviewerEmail: req.user!.email,

@@ -177,9 +177,9 @@ router.post(
                 insertedFileIds[field.fieldName! as FileField] = field.id;
             });
 
-            tx.delete(conferenceMemberReviews).where(
-                eq(conferenceMemberReviews.applicationId, id)
-            );
+            await tx
+                .delete(conferenceMemberReviews)
+                .where(eq(conferenceMemberReviews.applicationId, id));
 
             return await tx
                 .update(conferenceApprovalApplications)

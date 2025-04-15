@@ -86,7 +86,7 @@ router.post(
                 });
             }
 
-            tx.insert(conferenceMemberReviews).values([
+            await tx.insert(conferenceMemberReviews).values([
                 {
                     applicationId: application.id,
                     reviewerEmail: req.user!.email,
