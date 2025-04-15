@@ -105,7 +105,7 @@ router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
                     else if (col === 'Vendor POC Name') return item.vendor?.pocName ?? "Vendor Not Specified"
                     else if (col === 'Vendor Phone Number') return item.vendor?.phoneNumber ?? "Vendor Not Specified"
                     else if (col === 'Vendor Email') return item.vendor?.email ?? "Vendor Not Specified"
-                    else if (col === 'equipmentID' && item['quantity'] > 1) return `${cellValue}-${(item['quantity'] as number).toString().padStart(2, '0')}`
+                    else if (col === 'equipmentID' && item['quantity'] > 1) return `${(cellValue as string).split('-')[0]}-01-${(item['quantity'] as number).toString().padStart(2, '0')}`
                     else if (cellValue instanceof Date) return cellValue.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
                     return cellValue;
                 });
