@@ -136,7 +136,7 @@ const ConferenceEditView: React.FC = () => {
       {isEditable ? (
         <>
           <div className="flex w-full max-w-3xl flex-col gap-2 rounded-md border bg-destructive/20 p-2">
-            <h4 className="text-destructive">Requested changes</h4>
+            <h4 className="text-destructive">Changes requested</h4>
             <p className="text-sm text-muted-foreground">
               You can edit the fields below and submit the application again.
             </p>

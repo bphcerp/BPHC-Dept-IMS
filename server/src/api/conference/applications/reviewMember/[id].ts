@@ -82,9 +82,14 @@ router.post(
         await db.transaction(async (tx) => {
             if (allReviewers.difference(otherReviewers).size === 0) {
                 // If all DRC Members have reviewed the application, move state to DRC member
-                await tx.update(conferenceApprovalApplications).set({
-                    state: conferenceSchemas.states[applicationStateIndex + 1],
-                });
+                await tx
+                    .update(conferenceApprovalApplications)
+                    .set({
+                        state: conferenceSchemas.states[
+                            applicationStateIndex + 1
+                        ],
+                    })
+                    .where(eq(conferenceApprovalApplications.id, id));
             }
 
             await tx.insert(conferenceMemberReviews).values([

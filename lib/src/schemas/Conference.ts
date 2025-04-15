@@ -47,6 +47,8 @@ export const flowBodySchema = z.object({
     directFlow: z.boolean(),
 });
 
+export type FlowBody = z.infer<typeof flowBodySchema>;
+
 export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
     z.object({
         status: z.literal(true),
@@ -57,6 +59,8 @@ export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
         comments: z.string().trim().nonempty(),
     }),
 ]);
+
+export type ReviewApplicationBody = z.infer<typeof reviewApplicationBodySchema>;
 
 export const textFieldNames = [
     "purpose",
@@ -110,6 +114,7 @@ export type pendingApplicationsResponse = {
         userEmail: string;
         userName: string | null;
     }[];
+    isDirect?: boolean;
 };
 
 export type ViewApplicationResponse = {
@@ -143,6 +148,7 @@ export type ViewApplicationResponse = {
         comments: string | null;
         createdAt: string;
     }[];
+    isDirect?: boolean;
 };
 
 export const fieldsToFrontend = {

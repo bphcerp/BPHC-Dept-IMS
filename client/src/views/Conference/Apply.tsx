@@ -6,8 +6,11 @@ import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { ApplyForm, schema, Schema } from "@/components/conference/ApplyForm";
+import { useNavigate } from "react-router-dom";
 
 const ConferenceApplyView: React.FC = () => {
+  const navigate = useNavigate();
+
   const form = useForm<Schema>({
     resolver: zodResolver(schema),
   });
@@ -34,6 +37,8 @@ const ConferenceApplyView: React.FC = () => {
     },
     onSuccess: () => {
       toast.success("Application submitted successfully");
+      form.reset();
+      navigate("../submitted");
     },
   });
 

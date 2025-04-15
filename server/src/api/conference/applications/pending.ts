@@ -23,6 +23,10 @@ router.get(
             "conference:application:review-application-convener",
             req.user!.permissions
         );
+        const canGetFlow = authUtils.checkAccess(
+            "conference:application:get-flow",
+            req.user!.permissions
+        );
 
         if (!(isMember || isHoD || isConvener)) {
             return next(
@@ -66,8 +70,18 @@ router.get(
             userName: user.faculty.name ?? user.staff.name ?? user.phd.name,
         }));
 
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+
+        const isDirect = canGetFlow
+            ? ((current && current.value === "true") ?? false)
+            : undefined;
+
         const response: conferenceSchemas.pendingApplicationsResponse = {
             applications: pendingApplications,
+            isDirect,
         };
 
         res.status(200).json(response);

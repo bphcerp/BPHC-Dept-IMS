@@ -56,6 +56,15 @@ router.get(
                 )
             );
 
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+
+        const isDirect = isConvener
+            ? ((current && current.value === "true") ?? false)
+            : undefined;
+
         const response = {
             application: {
                 ...application,
@@ -82,6 +91,7 @@ router.get(
                             },
                         ]
                       : [],
+            isDirect,
         };
 
         res.status(200).send(response);
