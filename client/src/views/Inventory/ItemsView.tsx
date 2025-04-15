@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
@@ -114,12 +114,9 @@ export const ItemsView = () => {
             });
     };
 
-    useEffect(() => {
-        refetch()
-    }, []);
-
     return (
         <div className="inventory p-2">
+            <h1 className="text-3xl font-bold text-primary">Inventory</h1>
             {isFetching ? (
                 <div className="flex flex-col w-full h-full space-y-2 my-2">
                     <Skeleton className="w-full h-8" />

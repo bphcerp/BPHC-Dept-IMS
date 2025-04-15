@@ -173,7 +173,8 @@ const Settings = () => {
     };
 
     return (
-        <div className="p-4">
+        <div className="flex flex-col space-y-4 p-4">
+            <h1 className="text-3xl font-bold text-primary">Settings</h1>
             <div className="flex justify-between items-center">
                 <Select value={selectedOption ?? undefined} onValueChange={(value) => {
                     setData([])
