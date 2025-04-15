@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.put(
     "/:id",
-    // checkAccess(),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const { id } = req.params;
         const parsed = qpSchemas.editQpReviewSchema.parse(req.body);

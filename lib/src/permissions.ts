@@ -93,6 +93,13 @@ export const allPermissions = {
     "handout:dca-convenor:update-reviewer": "",
     "handout:dca-convenor:update-ic": "",
 
+    "qp:faculty:submit": "",
+    "qp:dca-convenor:assignreviewer": "",
+    "qp:dca-convenor:final-decision": "",
+    "qp:dca-convenor:get-all": "",
+    "qp:faculty:get-all-qp": "",
+
+
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
 } as const;
@@ -237,6 +244,20 @@ export const permissions = {
     "/publications/all": "publications:all",
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
+
+    //QP
+    "/qp/createQpRerequest": "",
+    "/qp/uploadFICDocuments": "qp:faculty:submit",
+    "/qp/getFilesByRequestId": "qp:faculty:get-all-qp",
+    "/qp/submitReview": "qp:faculty:submit",
+    "/qp/approveSubmission": "qp:dca-convenor:final-decision",
+    "/qp/assignFaculty": "qp:dca-convenor:assignreviewer",
+    "/qp/getAllFICSubmissions": "qp:dca-convenor:get-all",
+    "/qp/editQpRequest/:id": "qp:dca-convenor:assignreviewer",
+    "/qp/getAllDcaRequests": "qp:dca-convenor:get-all",
+    "/qp/getAllFacultyRequests": "qp:faculty:get-all-qp",
+    "/qp/getReviews": "qp:dca-convenor:assignreviewer",
+
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

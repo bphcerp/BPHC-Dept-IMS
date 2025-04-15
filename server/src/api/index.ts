@@ -38,6 +38,4 @@ router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
 router.use("/todos", todosRouter);
 
-
-
 export default router;
