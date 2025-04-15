@@ -31,11 +31,11 @@ export const inventoryCategoryTypeEnum = pgEnum("inventory_category_type", [
 export const inventoryItems = pgTable("inventory_items", {
     id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
     serialNumber: integer("serial_number").notNull(),
-    labId: uuid("lab_id").references(() => laboratories.id),
+    labId: uuid("lab_id").references(() => laboratories.id).notNull(),
     transferId: uuid("transfer_id").references(
         (): AnyPgColumn => inventoryItems.id
     ),
-    itemCategoryId: uuid("item_category_id").references(() => inventoryCategories.id),
+    itemCategoryId: uuid("item_category_id").references(() => inventoryCategories.id).notNull(),
     itemName: text("item_name").notNull(),
     specifications: text("specifications"),
     quantity: integer("quantity").notNull(),

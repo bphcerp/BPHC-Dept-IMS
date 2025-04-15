@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import api from "@/lib/axios-instance";
-import { Laboratory, Faculty, Staff, NewLaboratoryRequest } from "@/views/Inventory/types";
 import { Member } from "../admin/MemberList";
 import { useQuery } from "@tanstack/react-query";
+import { NewLaboratoryRequest, Laboratory, Staff, Faculty } from "node_modules/lib/src/types/inventory";
 
 interface AddLabDialogProps {
   isOpen: boolean;

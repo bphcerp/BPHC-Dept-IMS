@@ -37,7 +37,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { ReactNode, useEffect, useRef, useState } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import OverflowHandler from "./OverflowHandler"
 
 interface DataTableProps<T> {
@@ -70,57 +70,6 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
     const [columnVisibility, setColumnVisibility] =
         useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = useState({})
-
-    const tableContainerRef = useRef<HTMLDivElement>(null);
-    const fakeScrollbarRef = useRef<HTMLDivElement>(null);
-    const [tableWidth, setTableWidth] = useState(0);
-
-    // Improved scroll synchronization with debounce for performance
-    useEffect(() => {
-        const tableContainer = tableContainerRef.current;
-        const fakeScrollbar = fakeScrollbarRef.current;
-
-        if (!tableContainer || !fakeScrollbar) return;
-
-        // Update the fake scrollbar width when table dimensions change
-        const updateTableWidth = () => {
-            const tableElement = tableContainer.querySelector("table");
-            if (tableElement) {
-                const actualWidth = Math.max(tableElement.clientWidth, tableContainer.clientWidth);
-                setTableWidth(actualWidth);
-            }
-        };
-
-        // Initialize observer to watch for DOM changes that affect table size
-        const resizeObserver = new ResizeObserver(() => {
-            updateTableWidth();
-        });
-
-        resizeObserver.observe(tableContainer);
-
-        // Run once on mount
-        updateTableWidth();
-
-        // Handle real table scrolling
-        const handleTableScroll = () => {
-            fakeScrollbar.scrollLeft = tableContainer.scrollLeft;
-        };
-
-        // Handle fake scrollbar scrolling
-        const handleFakeScroll = () => {
-            tableContainer.scrollLeft = fakeScrollbar.scrollLeft;
-        };
-
-        // Add event listeners
-        tableContainer.addEventListener("scroll", handleTableScroll);
-        fakeScrollbar.addEventListener("scroll", handleFakeScroll);
-
-        return () => {
-            resizeObserver.disconnect();
-            tableContainer.removeEventListener("scroll", handleTableScroll);
-            fakeScrollbar.removeEventListener("scroll", handleFakeScroll);
-        };
-    }, []);
 
     const isWithinRange = (row: Row<T>, columnId: string, value: any) => {
         const date = new Date(row.getValue(columnId));
@@ -399,8 +348,8 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                     </div>
                 </div>
             </div>
-            {data.length ? <div className="relative rounded-md border p-2">
-                <Table hideScrollBar tableContainerRef={tableContainerRef} className='table-auto'>
+            {data.length ? <div className="relative rounded-md border p-2 overflow-x-auto">
+                <Table className='table-auto'>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
@@ -457,7 +406,7 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                                     </TableCell>
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell
-                                            className={`${cell.column.id === 'S.No' ? 'min-w-2' : 'min-w-52'}  ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
+                                            className={`${cell.column.id === 'S.No' ? 'min-w-2' : 'min-w-64'}  ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
                                             key={cell.id}
                                             title={cell.getValue() && (cell.getValue() as any).toString().length > 20 ? (cell.getValue() as any).toString() : undefined}
                                         >
@@ -497,12 +446,6 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                         </div>
                     </div>}
                 </Table>
-                <div
-                    ref={fakeScrollbarRef}
-                    className="h-4 sticky bottom-1 left-0 overflow-x-auto bg-zinc-100 dark:bg-zinc-800 rounded mt-1"
-                >
-                    <div style={{ width: `${tableWidth}px`, height: '1px' }}></div>
-                </div>
             </div> : <div>
                 <div className="flex flex-col items-center justify-center border-1 border-primary rounded-md h-40">
                     <p className="text-lg text-gray-500">No data</p>

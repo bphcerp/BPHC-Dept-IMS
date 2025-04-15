@@ -10,10 +10,10 @@ import { TransferConfirmationDialog } from "@/components/inventory/TransferConfi
 import VendorDetailsDialog from "@/components/inventory/VendorDetailsDialog";
 import api from "@/lib/axios-instance";
 import { Link, useNavigate } from "react-router-dom";
-import { InventoryItem, Vendor } from "./types";
 import { useAuth } from "@/hooks/Auth";
 import { useQuery } from "@tanstack/react-query";
 import { permissions } from "lib";
+import { InventoryItem, Vendor } from 'node_modules/lib/src/types/inventory'
 
 export const ItemsView = () => {
     // const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);

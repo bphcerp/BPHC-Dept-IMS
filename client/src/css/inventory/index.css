@@ -1,0 +1,5 @@
+/* Automatic red star for all required fields */
+label:has(+ *:required)::after {
+    content: ' *';
+    color: red;
+  }

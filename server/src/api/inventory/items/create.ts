@@ -4,9 +4,8 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 import { Router } from "express";
-import { inventoryItemSchema } from "node_modules/lib/src/schemas/Inventory.ts";
+import { inventoryItemSchema, multipleEntrySchema } from "node_modules/lib/src/schemas/Inventory.ts";
 import { getLastItemNumber } from "../labs/getLastItemNumber.ts";
-import { z } from "zod";
 
 const router = Router();
 
@@ -32,8 +31,6 @@ router.post('/', checkAccess(), asyncHandler(async (req, res) => {
         const updatedItem = inventoryItemSchema.omit({ id: true, transferId: true }).parse({ ...parsed, serialNumber: lastItemNumber + 1 })
 
         if (quantity > 1) {
-            const multipleEntrySchema = z.array(inventoryItemSchema.omit({ id: true, transferId: true }))
-
             const items = multipleEntrySchema.parse(Array.from({ length: quantity }, (_, i) => ({
                 ...parsed,
                 equipmentID: `${baseEquipmentID}-${(i + 1).toString().padStart(2, '0')}`,

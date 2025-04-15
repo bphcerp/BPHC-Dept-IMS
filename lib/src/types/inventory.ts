@@ -1,14 +1,5 @@
-import { inviteMemberBodySchema } from "node_modules/lib/src/schemas/Admin";
-import { categorySchema, facultySchema, inventoryItemSchema, laboratorySchema, staffSchema, vendorSchema } from "node_modules/lib/src/schemas/Inventory";
+import { facultySchema, staffSchema, laboratorySchema, vendorSchema, categorySchema, inventoryItemSchema } from "@/schemas/Inventory.ts";
 import { z } from "zod";
-
-
-export interface SheetInfo {
-    sheetName: string;
-    columnOffset: number;
-    dataOffset: number;
-    columnIndexMap: Record<string, number>;
-};
 
 export type Faculty = z.infer<typeof facultySchema>
 export type Staff = z.infer<typeof staffSchema>
@@ -20,7 +11,7 @@ export type Vendor = z.infer<typeof vendorSchema> & {
     categories: Category[];
 };
 export type Category = z.infer<typeof categorySchema>;
-export type InventoryItem = Omit<z.infer<typeof inventoryItemSchema>, "labId", "itemCategoryId", "transferId", "vendorId"> &{
+export type InventoryItem = Omit<z.infer<typeof inventoryItemSchema>, "labId" | "itemCategoryId" | "transferId" | "vendorId"> &{
     lab: Laboratory
     itemCategory: Category
     transfer: InventoryItem | null

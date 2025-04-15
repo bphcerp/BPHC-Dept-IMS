@@ -39,19 +39,19 @@ export const inventoryItemSchema = z.object({
     noOfLicenses: z.number().int().nullable(),
     natureOfLicense: z.string().nullable(),
     yearOfLease: z.number().int().nullable(),
-    poAmount: z.string(),
+    poAmount: z.number().transform((val) => val.toFixed(2)),
     poNumber: z.string().nullable(),
-    poDate: z.string().nullable(),
+    poDate: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
     labInchargeAtPurchase: z.string().nullable(),
     labTechnicianAtPurchase: z.string().nullable(),
     equipmentID: z.string().trim().nonempty(),
     fundingSource: inventoryFundingSourceEnum.nullable(),
-    dateOfInstallation: z.string().nullable(),
+    dateOfInstallation: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
     vendorId: z.string().uuid().nullable(),
-    warrantyFrom: z.string().nullable(),
-    warrantyTo: z.string().nullable(),
-    amcFrom: z.string().nullable(),
-    amcTo: z.string().nullable(),
+    warrantyFrom: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    warrantyTo: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    amcFrom: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    amcTo: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
     currentLocation: z.string().trim().nonempty(),
     softcopyOfPO: z.string().nullable(),
     softcopyOfInvoice: z.string().nullable(),
@@ -61,6 +61,8 @@ export const inventoryItemSchema = z.object({
     equipmentPhoto: z.string().nullable(),
     remarks: z.string().nullable(),
 });
+
+export const multipleEntrySchema = z.array(inventoryItemSchema.omit({ id: true, transferId: true }))
 
 export const laboratorySchema = z.object({
     id: z.string().uuid(),

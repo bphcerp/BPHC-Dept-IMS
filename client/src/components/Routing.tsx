@@ -62,6 +62,7 @@ import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
 import { ItemsView } from "@/views/Inventory/ItemsView";
 import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
+import BulkAddView from "@/views/Inventory/BulkAddView";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -412,7 +413,10 @@ const Routing = () => {
               }
             />
             <Route path="items" element={<ItemsView />} />
-            {checkAccess('inventory:write') && <Route path="items/add-item" element={<AddInventoryItem />} />}
+            {checkAccess('inventory:write') && <>
+              <Route path="items/add-item" element={<AddInventoryItem />} />
+              <Route path="items/add-item/excel" element={<BulkAddView />} />
+            </>}
             <Route path="stats" element={<></>} />
             {checkAccess('inventory:write') && <Route path="settings" element={<Settings />} />}
           </Route>

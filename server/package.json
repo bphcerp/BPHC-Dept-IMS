@@ -13,6 +13,7 @@
     "db:publications": "tsx scripts/publications.ts"
   },
   "dependencies": {
+    "any-date-parser": "^2.0.3",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -30,6 +31,7 @@
     "pg": "^8.14.0",
     "uuid": "^11.1.0",
     "winston": "^3.14.2",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },

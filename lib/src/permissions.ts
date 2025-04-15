@@ -251,6 +251,7 @@ export const permissions = {
     "/inventory/items/get" : "inventory:read",
     "/inventory/items/export" : "inventory:export",
     "/inventory/items/create" : "inventory:write",
+    "/inventory/items/excel" : "inventory:write",
     "/inventory/items/update" : "inventory:write",
     "/inventory/items/delete" : "inventory:write",
 } as const;

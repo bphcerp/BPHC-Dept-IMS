@@ -2,10 +2,11 @@ import db from "@/config/db/index.ts";
 import { inventoryItems } from "@/config/db/schema/inventory.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq, max } from "drizzle-orm";
+import { PgTransaction } from "drizzle-orm/pg-core";
 import { Router } from "express";
 
-export const getLastItemNumber = async (labId: string) => {
-    const result = await db
+export const getLastItemNumber = async (labId: string, tx? : PgTransaction<any,any,any>) => {
+    const result = await ( tx ?? db )
         .select({
             maxSerialNumber: max(inventoryItems.serialNumber),
         })

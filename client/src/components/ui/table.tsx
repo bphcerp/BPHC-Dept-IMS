@@ -1,14 +1,12 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Ref } from "react";
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement> & { tableContainerRef?: Ref<HTMLDivElement>; hideScrollBar?: boolean }
->(({ className, tableContainerRef, hideScrollBar = false, ...props }, ref) => (
-  <div className={`relative w-full overflow-x-auto ${hideScrollBar ? 'hide-scrollbar' : ''}`}
-    ref={tableContainerRef} >
+  React.HTMLAttributes<HTMLTableElement>
+>(({ className, ...props }, ref) => (
+  <div className="relative w-full overflow-auto">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}

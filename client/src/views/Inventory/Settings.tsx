@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { TableFilterType, DataTable } from "@/components/inventory/DataTable";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
-import { Laboratory, Category, Vendor, NewLaboratoryRequest, NewVendorRequest, NewCategoryRequest } from "./types";
 import AddInventoryCategoryDialog from "@/components/inventory/AddInventoryCategoryDialog";
 import AddLabDialog from "@/components/inventory/AddLabDialog";
 import AddVendorCategoryDialog from "@/components/inventory/AddVendorCategoryDialog";
@@ -14,6 +13,7 @@ import AddVendorDialog from "@/components/inventory/AddVendorDialog";
 import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { Laboratory, Category, Vendor, NewLaboratoryRequest, NewVendorRequest, NewCategoryRequest } from "node_modules/lib/src/types/inventory";
 
 const labColumns: ColumnDef<Laboratory>[] = [
     { accessorFn: () => 'S.No', header: 'S.No', cell: ({ row }) => row.index + 1 },

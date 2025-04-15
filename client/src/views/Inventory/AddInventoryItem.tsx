@@ -12,7 +12,7 @@ import { AlertTriangle } from "lucide-react";
 import { AxiosError } from "axios";
 import api from "@/lib/axios-instance";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Laboratory, Category, Vendor } from "./types";
+import { Laboratory, Category, Vendor } from "node_modules/lib/src/types/inventory";
 
 const AddInventoryItem = () => {
     const [labs, setLabs] = useState<Laboratory[]>([]);

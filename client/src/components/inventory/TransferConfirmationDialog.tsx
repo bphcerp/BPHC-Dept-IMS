@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
-import { InventoryItem } from "@/views/Inventory/types";
+import { InventoryItem } from "node_modules/lib/src/types/inventory";
 
 interface TransferConfirmationDialogProps {
     open: boolean;

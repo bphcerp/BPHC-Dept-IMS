@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { NewCategoryRequest, Category } from "@/views/Inventory/types";
+import { NewCategoryRequest, Category } from "node_modules/lib/src/types/inventory";
 
 interface AddVendorCategoryDialogProps {
   isOpen: boolean;

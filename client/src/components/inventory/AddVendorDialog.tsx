@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { Textarea } from "../ui/textarea";
 import api from "@/lib/axios-instance";
-import { NewVendorRequest, Vendor, Category } from "@/views/Inventory/types";
+import { NewVendorRequest, Vendor, Category } from "node_modules/lib/src/types/inventory";
 import { useQuery } from "@tanstack/react-query";
 
 interface AddVendorDialogProps {
