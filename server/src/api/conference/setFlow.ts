@@ -7,7 +7,7 @@ import {
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { conferenceSchemas } from "lib";
 
 const router = express.Router();
@@ -41,61 +41,52 @@ router.post(
             if (body.directFlow) {
                 // If we are moving to direct flow, DRC Member states must be set to DRC Convener, and HoD states must be set to Completed
                 const memberApplications = tx
-                    .$with("member_applications")
-                    .as(
-                        tx
-                            .select({ id: conferenceApprovalApplications.id })
-                            .from(conferenceApprovalApplications)
-                            .where(
-                                eq(
-                                    conferenceApprovalApplications.state,
-                                    "DRC Member"
-                                )
-                            )
+                    .select({
+                        applicationId: conferenceApprovalApplications.id,
+                    })
+                    .from(conferenceApprovalApplications)
+                    .where(
+                        eq(conferenceApprovalApplications.state, "DRC Member")
                     );
-                tx.with(memberApplications)
+                await tx
                     .delete(conferenceMemberReviews)
                     .where(
-                        eq(
+                        inArray(
                             conferenceMemberReviews.applicationId,
-                            memberApplications.id
+                            memberApplications
                         )
                     );
-                tx.with(memberApplications)
+                await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
                     .where(
-                        eq(
+                        inArray(
                             conferenceApprovalApplications.id,
-                            memberApplications.id
+                            memberApplications
                         )
                     );
 
                 const hodApplications = tx
-                    .$with("hod_applications")
-                    .as(
-                        tx
-                            .select({ id: conferenceApprovalApplications.id })
-                            .from(conferenceApprovalApplications)
-                            .where(
-                                eq(conferenceApprovalApplications.state, "HoD")
-                            )
-                    );
-                tx.with(hodApplications)
+                    .select({
+                        applicationId: conferenceApprovalApplications.id,
+                    })
+                    .from(conferenceApprovalApplications)
+                    .where(eq(conferenceApprovalApplications.state, "HoD"));
+                await tx
                     .delete(conferenceMemberReviews)
                     .where(
-                        eq(
+                        inArray(
                             conferenceMemberReviews.applicationId,
-                            hodApplications.id
+                            hodApplications
                         )
                     );
-                tx.with(hodApplications)
+                await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "Completed" })
                     .where(
-                        eq(
+                        inArray(
                             conferenceApprovalApplications.id,
-                            hodApplications.id
+                            hodApplications
                         )
                     );
             }
