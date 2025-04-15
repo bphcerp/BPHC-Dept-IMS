@@ -31,7 +31,7 @@ router.post(
 
         if (
             (current && current?.value === String(body.directFlow)) ||
-            body.directFlow === false
+            (!current && body.directFlow === false)
         ) {
             res.status(200).send();
             return;
