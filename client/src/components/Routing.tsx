@@ -63,6 +63,7 @@ import Settings from "@/views/Inventory/Settings";
 import { ItemsView } from "@/views/Inventory/ItemsView";
 import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
+import Stats from "@/views/Inventory/Stats";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -413,6 +414,9 @@ const Routing = () => {
               }
             />
             <Route path="items" element={<ItemsView />} />
+            { checkAccessAnyOne(Object.keys(permissions).filter(perm => perm.startsWith('inventory:stats'))) && 
+              <Route path="stats" element={<Stats />} />
+            }
             {checkAccess('inventory:write') && <>
               <Route path="items/add-item" element={<AddInventoryItem />} />
               <Route path="items/add-item/excel" element={<BulkAddView />} />

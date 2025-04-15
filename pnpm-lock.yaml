@@ -108,6 +108,9 @@ importers:
       date-fns:
         specifier: ^3.0.0
         version: 3.6.0
+      human-date:
+        specifier: ^1.4.0
+        version: 1.4.0
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -163,6 +166,9 @@ importers:
       '@tanstack/eslint-plugin-query':
         specifier: ^5.62.9
         version: 5.67.2(eslint@9.22.0(jiti@1.21.7))(typescript@5.8.2)
+      '@types/human-date':
+        specifier: ^1.4.5
+        version: 1.4.5
       '@types/node':
         specifier: ^22.5.4
         version: 22.13.10
@@ -2193,6 +2199,9 @@ packages:
   '@types/http-errors@2.0.4':
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
 
+  '@types/human-date@1.4.5':
+    resolution: {integrity: sha512-v5j3cmL6kCy3DwUoxYeVFTl+tQGlUtciMlKgSHONE1YW7uqrvaLO0UcovWYQq8cP/v+0W0hoQUjAfQghFrO7aQ==}
+
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -3600,6 +3609,9 @@ packages:
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
+
+  human-date@1.4.0:
+    resolution: {integrity: sha512-jhEvaL0yj8LZnphQqOylapYTLB91ZIaNuDnrHqDR/3/P1Mhil1kh1qgm75xQ/qi7iZSPKIjqrEx6kw9gTcdeuA==}
 
   human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
@@ -7255,6 +7267,8 @@ snapshots:
 
   '@types/http-errors@2.0.4': {}
 
+  '@types/human-date@1.4.5': {}
+
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/istanbul-lib-report@3.0.3':
@@ -8936,6 +8950,8 @@ snapshots:
       debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
+
+  human-date@1.4.0: {}
 
   human-signals@2.1.0: {}
 

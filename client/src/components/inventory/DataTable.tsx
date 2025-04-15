@@ -59,6 +59,7 @@ declare module '@tanstack/react-table' {
         calculateSum?: (rows: TData[]) => string
         truncateLength?: number
         filterType?: TableFilterType
+        tailwindWidthString?: string
     }
 }
 
@@ -406,7 +407,7 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                                     </TableCell>
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell
-                                            className={`${cell.column.id === 'S.No' ? 'min-w-2' : 'min-w-64'}  ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
+                                            className={`${cell.column.id === 'S.No' ? 'min-w-2' : cell.column.columnDef.meta?.tailwindWidthString ?? ''}  ${(cell.column.columnDef.meta && ['date-range', 'number-range'].includes(cell.column.columnDef.meta.filterType ?? '')) ? 'text-center' : ''}`}
                                             key={cell.id}
                                             title={cell.getValue() && (cell.getValue() as any).toString().length > 20 ? (cell.getValue() as any).toString() : undefined}
                                         >
@@ -425,13 +426,13 @@ export function DataTable<T>({ data, columns, mainSearchColumn, initialState, se
                         }
                         {
                             columns.some(column => column.meta?.calculateSum) ? <TableRow>
-                                <TableCell className="z-2 sticky left-0 bg-background w-[20px]">
+                                <TableCell className="z-2 sticky left-0 w-[20px]">
                                     {/* Empty cell for the checkbox column */}
                                 </TableCell>
                                 {table.getVisibleLeafColumns().map((column) => (
                                     <TableCell
                                         key={column.id}
-                                        className={`${column.getIsPinned() ? 'sticky left-0 bg-background' : ''} font-bold`}
+                                        className='font-bold'
                                     >
                                         {column.columnDef.meta?.calculateSum
                                             ? column.columnDef.meta.calculateSum(table.getRowModel().rows.map(row => row.original))

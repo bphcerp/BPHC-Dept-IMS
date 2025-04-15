@@ -40,17 +40,15 @@ export const ItemsView = () => {
 
     const columns: ColumnDef<InventoryItem>[] = [
 
-        // Three pinned columns: EquipmentID, Item Name, Category, PO Number
         { accessorFn: () => 'S.No', header: 'S.No', cell: ({ row }) => row.index + 1 },
-        { accessorKey: 'equipmentID', header: 'Equipment ID', meta: { filterType: 'search' as TableFilterType } },
-        { accessorKey: 'itemName', header: 'Item Name' },
-        { accessorKey: 'itemCategory.name', header: 'Category', meta: { filterType: 'dropdown' as TableFilterType } },
+        { accessorKey: 'equipmentID', header: 'Equipment ID', meta: { filterType: 'search' as TableFilterType, tailwindWidthString: 'min-w-64' } },
+        { accessorKey: 'itemName', header: 'Item Name', meta: { tailwindWidthString: 'min-w-44' } },
+        { accessorKey: 'itemCategory.name', header: 'Category', meta: { filterType: 'dropdown' as TableFilterType, tailwindWidthString: 'min-w-28' } },
         { accessorKey: 'poNumber', header: 'PO Number', meta: { filterType: 'search' as TableFilterType } },
 
-        // Unpinned columns
         { accessorKey: 'createdAt', header: 'Created At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
         { accessorKey: 'updatedAt', header: 'Updated At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
-        { accessorKey: 'lab.name', header: 'Laboratory', meta: { filterType: 'multiselect' as TableFilterType } },
+        { accessorKey: 'lab.name', header: 'Laboratory', meta: { filterType: 'multiselect' as TableFilterType, tailwindWidthString: 'min-w-32' } },
         { accessorKey: 'labInchargeAtPurchase', header: 'Lab Incharge at Purchase' },
         { accessorKey: 'labTechnicianAtPurchase', header: 'Lab Technician at Purchase' },
         { accessorFn: (row) => Number(row.poAmount), header: 'PO Amount', cell: ({ getValue }) => (getValue() as number).toLocaleString('en-IN', { style: "currency", currency: "INR" }), meta: { filterType: 'number-range' as TableFilterType } },
