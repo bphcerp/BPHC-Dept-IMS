@@ -18,6 +18,10 @@ export const allPermissions = {
         "Review application as DRC convener",
     "conference:application:review-application-hod":
         "Review application as HOD",
+    "conference:application:get-flow":
+        "Get conference application approval flow",
+    "conference:application:set-flow":
+        "Set conference application approval flow",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -129,6 +133,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
         "conference:application:review-application-convener",
     "/conference/applications/reviewHod":
         "conference:application:review-application-hod",
+    "/conference/getFlow": "conference:application:get-flow",
+    "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
 
