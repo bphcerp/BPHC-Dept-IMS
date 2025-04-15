@@ -11,7 +11,7 @@ import { useForm } from "@tanstack/react-form";
 import { AlertTriangle } from "lucide-react";
 import { AxiosError } from "axios";
 import api from "@/lib/axios-instance";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Laboratory, Category, Vendor } from "./types";
 
 const AddInventoryItem = () => {
@@ -23,6 +23,7 @@ const AddInventoryItem = () => {
 
     const location = useLocation()
     const editMode = !!(location.state?.toBeEditedItem ?? false)
+    const navigate = useNavigate()
 
     useEffect(() => {
         api("/inventory/labs/get").then(({ data }) => {
@@ -92,25 +93,27 @@ const AddInventoryItem = () => {
                 api.patch(`/inventory/items/update/${location.state!.toBeEditedItem.id}`, editedItem)
                     .then(() => toast.success("Edit successful"))
                     .catch((err) => toast.error(((err as AxiosError).response?.data as any).message ?? "Error editing item"));
-                return
             }
-            try {
-                if (!data.fundingSource) {
-                    toast.error("Funding Source is required")
-                    return
+            else {
+                try {
+                    if (!data.fundingSource) {
+                        toast.error("Funding Source is required")
+                        return
+                    }
+                    toast.info("Submitting...")
+                    const response = await api.post("/inventory/items/create", data);
+    
+                    if (response.status === 201) {
+                        toast.success(`Item${data.quantity > 1 ? 's' : ''} added successfully!`);
+                    } else {
+                        toast.error(`Failed to add item${data.quantity > 1 ? 's' : ''}.`);
+                    }
+                } catch (error) {
+                    console.error("Error adding item:", error);
+                    toast.error("An error occurred while adding the item.");
                 }
-                toast.info("Submitting...")
-                const response = await api.post("/inventory/items/create", data);
-
-                if (response.status === 201) {
-                    toast.success(`Item${data.quantity > 1 ? 's' : ''} added successfully!`);
-                } else {
-                    toast.error(`Failed to add item${data.quantity > 1 ? 's' : ''}.`);
-                }
-            } catch (error) {
-                console.error("Error adding item:", error);
-                toast.error("An error occurred while adding the item.");
             }
+            navigate('/inventory/items')
         },
     });
 
@@ -124,7 +127,7 @@ const AddInventoryItem = () => {
 
             <span className="flex justify-center items-center mt-2 mb-10 w-full text-3xl text-primary text-center">{editMode ? "Edit Inventory Item" : "Add an item to the inventory"}</span>
 
-            {!editMode && <Link to='/bulk-add'><Button className="absolute m-5 top-2 right-0">Add with Excel</Button></Link>}
+            {!editMode && <Link to='excel'><Button className="absolute m-5 top-2 right-0">Add with Excel</Button></Link>}
 
             {/* Left Side - Form Fields */}
             <form className="flex flex-col space-y-6" id="inventory-form" onSubmit={(e) => {
@@ -154,7 +157,7 @@ const AddInventoryItem = () => {
                                                 <Input name="lab" onKeyDown={(e) => e.stopPropagation()} className="col-span-3" placeholder="Search Labs..." onChange={(e) => {
                                                     setFilteredLabs(labs.filter(lab => lab.name.includes(e.target.value)));
                                                 }} />
-                                                <Link to="/settings?view=Labs&action=addLab" state={values}><Button>Add</Button></Link> </div>
+                                                <Link to="/inventory/settings?view=Labs&action=addLab" state={values}><Button>Add</Button></Link> </div>
                                             {filteredLabs.map((lab) => (
                                                 <SelectItem key={lab.id} value={lab.id}>
                                                     {lab.name}
@@ -491,8 +494,8 @@ const AddInventoryItem = () => {
 
                 {/* Submit Button */}
                 <div className="col-span-3 flex justify-end">
-                    <Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-                        {([canSubmit, isSubmitting]) => <Button disabled={!canSubmit || isSubmitting} form="inventory-form">{isSubmitting ? "Processing..." : editMode ? "Edit Item" : "Add Item"}</Button>}
+                    <Subscribe selector={(state) => [state.canSubmit, state.isSubmitting, state.isSubmitted]}>
+                        {([canSubmit, isSubmitting, isSubmitted]) => <Button disabled={!canSubmit || isSubmitting || isSubmitted} form="inventory-form">{isSubmitting ? "Processing..." : editMode ? "Edit Item" : "Add Item"}</Button>}
                     </Subscribe>
                 </div>
             </form>

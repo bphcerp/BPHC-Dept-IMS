@@ -2,7 +2,7 @@ CREATE TYPE "public"."inventory_category_type" AS ENUM('Vendor', 'Inventory');--
 CREATE TYPE "public"."inventory_funding_source" AS ENUM('Institute', 'Project');--> statement-breakpoint
 CREATE TYPE "public"."inventory_status" AS ENUM('Working', 'Not Working', 'Under Repair');--> statement-breakpoint
 CREATE TABLE "inventory_categories" (
-	"id" uuid PRIMARY KEY DEFAULT '1afffedc-757d-4a80-8472-a2022a8cef1e' NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"code" text NOT NULL,
 	"type" "inventory_category_type" NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE "inventory_categories" (
 );
 --> statement-breakpoint
 CREATE TABLE "inventory_items" (
-	"id" uuid PRIMARY KEY DEFAULT 'd96062ad-6449-4e52-abc8-ffef0f65d31a' NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"serial_number" integer NOT NULL,
 	"lab_id" uuid,
 	"transfer_id" uuid,
@@ -50,7 +50,7 @@ CREATE TABLE "inventory_items" (
 );
 --> statement-breakpoint
 CREATE TABLE "inventory_laboratories" (
-	"id" uuid PRIMARY KEY DEFAULT 'a221b25b-9b75-426c-b0a5-b96ff27aa554' NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"location" text,
 	"code" char(4) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE "vendor_categories" (
 );
 --> statement-breakpoint
 CREATE TABLE "inventory_vendors" (
-	"id" uuid PRIMARY KEY DEFAULT '439d9bfa-0dc8-49c0-b707-c23a52363333' NOT NULL,
+	"id" uuid PRIMARY KEY NOT NULL,
 	"vendor_id" integer NOT NULL,
 	"name" text NOT NULL,
 	"address" text,

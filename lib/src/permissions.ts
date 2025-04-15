@@ -94,6 +94,7 @@ export const allPermissions = {
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read": "Non-Admin users can view the data of the inventory module",
+    "inventory:export": "Export the data as an Excel file"
 } as const;
 
 export const permissions = {
@@ -248,6 +249,7 @@ export const permissions = {
     "/inventory/categories/delete" : "inventory:write",
 
     "/inventory/items/get" : "inventory:read",
+    "/inventory/items/export" : "inventory:export",
     "/inventory/items/create" : "inventory:write",
     "/inventory/items/update" : "inventory:write",
     "/inventory/items/delete" : "inventory:write",

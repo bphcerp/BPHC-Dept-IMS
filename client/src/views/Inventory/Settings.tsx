@@ -23,7 +23,7 @@ const labColumns: ColumnDef<Laboratory>[] = [
     { accessorKey: 'code', header: 'Code', meta: { filterType: 'search' as TableFilterType } },
     { accessorKey: 'location', header: 'Location', meta: { filterType: 'search' as TableFilterType } },
     { accessorKey: 'technicianInCharge.name', header: 'Technician In Charge' },
-    { accessorKey: 'technicianInCharge.name', header: 'Faculty In Charge' },
+    { accessorKey: 'facultyInCharge.name', header: 'Faculty In Charge' },
 ];
 
 const categoryColumns: ColumnDef<Category>[] = [

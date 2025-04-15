@@ -13,9 +13,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { InventoryItem, Vendor } from "./types";
 import { useAuth } from "@/hooks/Auth";
 import { useQuery } from "@tanstack/react-query";
+import { permissions } from "lib";
 
 export const ItemsView = () => {
-    const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
+    // const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
 
     const [vendorDetails, setVendorDetails] = useState<Vendor | null>(null);
     const [isVendorDialogOpen, setVendorDialogOpen] = useState(false);
@@ -83,18 +84,20 @@ export const ItemsView = () => {
         { accessorKey: 'remarks', header: 'Remarks' },
     ];
 
-    const { isFetching, refetch } = useQuery({
+    const { data: inventoryData, isFetching, refetch } = useQuery({
         queryKey: ['inventory'],
-        queryFn: () => {
-            api('/inventory/items/get')
-                .then(({ data }) => setInventoryData(data))
-                .catch(error => {
-                    toast.error('Error fetching inventory data')
-                    console.error({ message: 'Error fetching inventory data:', error });
-                })
+        queryFn: async () => {
+            try {
+                const response = await api('/inventory/items/get')
+                return response.data;
+            }
+            catch (error) {
+                toast.error('Error fetching inventory data')
+                console.error({ message: 'Error fetching inventory data:', error });
+            }
         },
         refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 5        
+        staleTime: 1000 * 60 * 5
     })
 
     const handleDelete = () => {
@@ -123,12 +126,15 @@ export const ItemsView = () => {
                     <Skeleton className="w-full h-96" />
                 </div>
             ) : (
-                <DataTable<InventoryItem> data={inventoryData} exportFunction={(itemIds, columnsVisible) => {
-                    columnsVisible = columnsVisible.map(column => column === 'PO Amount' ? 'poAmount' : column);
+                <DataTable<InventoryItem> data={inventoryData} exportFunction={checkAccess(permissions['/inventory/items/export']) ? (itemIds, columnsVisible) => {
+
+                    if (!itemIds || !itemIds.length) return toast.warning("No data to export")
 
                     columnsVisible = columnsVisible.map(column => column === 'PO Amount' ? 'poAmount' : column);
 
-                    api.post('/inventory/export', { itemIds, columnsVisible }, { responseType: 'blob' })
+                    columnsVisible = columnsVisible.map(column => column === 'PO Amount' ? 'poAmount' : column);
+
+                    api.post('/inventory/items/export', { itemIds, columnsVisible }, { responseType: 'blob' })
                         .then(response => {
                             const blob = new Blob([response.data], { type: response.headers['content-type'] });
                             const link = document.createElement('a');
@@ -144,7 +150,7 @@ export const ItemsView = () => {
                             console.error('Error:', error);
                             toast.error('Failed to download file');
                         });
-                }} columns={columns} mainSearchColumn="itemName" setSelected={setSelectedItems} additionalButtons={<>
+                } : undefined} columns={columns} mainSearchColumn="itemName" setSelected={setSelectedItems} additionalButtons={<>
                     {selectedItems.length ? (
                         <Button variant="outline" onClick={() => setTransferDialogOpen(true)}>
                             Transfer
