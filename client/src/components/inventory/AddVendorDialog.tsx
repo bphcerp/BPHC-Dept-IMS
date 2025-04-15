@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { Textarea } from "../ui/textarea";
 import api from "@/lib/axios-instance";
 import { NewVendorRequest, Vendor, Category } from "node_modules/lib/src/types/inventory";
 import { useQuery } from "@tanstack/react-query";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 interface AddVendorDialogProps {
   isOpen: boolean;
@@ -30,7 +30,7 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
       phoneNumber: editInitialData?.phoneNumber ?? "",
       email: editInitialData?.email ?? "",
       address: editInitialData?.address ?? "",
-      categories: editInitialData?.categories?.map((cat) => cat.id) ?? [],
+      categories: editInitialData?.categories?.map((cat: Category) => cat.id) ?? [],
     } as NewVendorRequest,
     onSubmit: ({ value: data }) => {
       if (!data.vendorId || !data.name || !data.pocName || !data.phoneNumber || !data.email) {
@@ -43,14 +43,13 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
   });
 
   useQuery({
-    queryKey: ["categories"],
+    queryKey: ["categories", isOpen],
     queryFn: async () => {
-      const response = await api("/categories?type=Vendor")
+      const response = await api("/inventory/categories/get?type=Vendor")
       setAvailableCategories(response.data)
       return response.data
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5,
     enabled: isOpen,
   });
 
@@ -175,27 +174,39 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
             {(field) => (
               <>
                 <Label htmlFor="vendor-categories">Vendor Categories</Label>
-                <Select
-                  onValueChange={(value) =>
-                    field.handleChange([...field.state.value, value])
-                  }
-                >
-                  <SelectTrigger id="vendor-categories">
-                    <span>Select Categories</span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCategories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full justify-between rounded-md border px-3 py-2 text-sm shadow-sm hover:bg-muted"
+                    >
+                      {field.state.value.length > 0
+                        ? `${field.state.value.length} selected`
+                        : "Select Categories"}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    {availableCategories.map((category: Category) => (
+                      <DropdownMenuCheckboxItem
+                        key={category.id}
+                        checked={field.state.value.includes(category.id)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...field.state.value, category.id]
+                            : field.state.value.filter((id: string) => id !== category.id)
+                          field.handleChange(newValue)
+                        }}
+                      >
                         {category.name}
-                      </SelectItem>
+                      </DropdownMenuCheckboxItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   {field.state.value.map((category, index) => (
                     <div
                       key={index}
-                      className="flex p-1 justify-center items-center space-x-1 border-1 border-primary rounded-md"
+                      className="flex p-1 justify-center items-center space-x-1 bg-primary/20 hover:bg-primary/30  rounded-md"
                     >
                       <span>
                         {

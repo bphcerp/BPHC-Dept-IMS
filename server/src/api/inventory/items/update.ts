@@ -8,7 +8,7 @@ import { inventoryItemSchema } from "node_modules/lib/src/schemas/Inventory.ts";
 
 const router = Router();
 
-router.put('/:id', checkAccess(), asyncHandler(async (req, res) => {
+router.patch('/:id', checkAccess(), asyncHandler(async (req, res) => {
     try {
         const parsed = inventoryItemSchema.partial().parse(req.body);
         const updatedItem = await db.update(inventoryItems).set(parsed).where(eq(inventoryItems.id, req.params.id)).returning();

@@ -1,5 +1,6 @@
 import db from "@/config/db/index.ts";
-import { inventoryCategories } from "@/config/db/schema/inventory.ts";
+import { inventoryCategories, inventoryItems } from "@/config/db/schema/inventory.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { and, eq } from "drizzle-orm";
@@ -8,7 +9,7 @@ import { categorySchema, inventoryCategoryTypeEnum } from "node_modules/lib/src/
 
 const router = Router();
 
-router.put('/:id', checkAccess(), asyncHandler(async (req, res) => {
+router.patch('/:id', checkAccess(), asyncHandler(async (req, res, next) => {
     try {
         const { type } = req.query;
         if (!type) {
@@ -17,6 +18,15 @@ router.put('/:id', checkAccess(), asyncHandler(async (req, res) => {
         }
 
         const parsedType = inventoryCategoryTypeEnum.parse(type)
+
+        if (parsedType === 'Inventory') {
+            const categoryItems = await db.select().from(inventoryItems).where(eq(inventoryItems.itemCategoryId, req.params.id))
+            if (req.body.code && categoryItems.length) {
+                return next(
+                    new HttpError(HttpCode.BAD_REQUEST, "Cannot update category code, this category has inventory")
+                )
+            }
+        }
 
         const parsed = categorySchema.partial().parse(req.body);
         const updatedCategory = await db

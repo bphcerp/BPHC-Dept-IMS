@@ -19,7 +19,7 @@ const labColumns: ColumnDef<Laboratory>[] = [
     { accessorFn: () => 'S.No', header: 'S.No', cell: ({ row }) => row.index + 1 },
     { accessorKey: 'createdAt', header: 'Created At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
     { accessorKey: 'updatedAt', header: 'Updated At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
-    { accessorKey: 'name', header: 'Name', meta: { filterType: 'search' as TableFilterType } },
+    { accessorKey: 'name', header: 'Name', meta: { tailwindWidthString: 'min-w-28' } },
     { accessorKey: 'code', header: 'Code', meta: { filterType: 'search' as TableFilterType } },
     { accessorKey: 'location', header: 'Location', meta: { filterType: 'search' as TableFilterType } },
     { accessorKey: 'technicianInCharge.name', header: 'Technician In Charge' },
@@ -30,7 +30,7 @@ const categoryColumns: ColumnDef<Category>[] = [
     { accessorFn: () => 'S.No', header: 'S.No', cell: ({ row }) => row.index + 1 },
     { accessorKey: 'createdAt', header: 'Created At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
     { accessorKey: 'updatedAt', header: 'Updated At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
-    { accessorKey: 'name', header: 'Name', meta: { filterType: 'search' as TableFilterType } },
+    { accessorKey: 'name', header: 'Name' },
     { accessorKey: 'code', header: 'Code', meta: { filterType: 'search' as TableFilterType } },
 ];
 
@@ -39,7 +39,7 @@ const vendorColumns: ColumnDef<Vendor>[] = [
     { accessorKey: 'createdAt', header: 'Created At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
     { accessorKey: 'updatedAt', header: 'Updated At', cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(), enableColumnFilter: false },
     { accessorKey: 'vendorId', header: 'Vendor ID', meta: { filterType: 'search' as TableFilterType } },
-    { accessorKey: 'name', header: 'Name', meta: { filterType: 'search' as TableFilterType } },
+    { accessorKey: 'name', header: 'Name', meta: { tailwindWidthString: 'min-w-52' } },
     { accessorKey: 'address', header: 'Address' },
     { accessorKey: 'pocName', header: 'POC Name' },
     { accessorKey: 'phoneNumber', header: 'Phone Number' },
@@ -62,8 +62,8 @@ const Settings = () => {
     type RouteMap = {
         create: string
         read: string
-        update: string
-        delete: string
+        update: string | ((id: string) => string)
+        delete: string | ((id: string) => string)
     }
     const routeMap: Record<string, RouteMap> = {
         "Labs": {
@@ -81,14 +81,14 @@ const Settings = () => {
         "VendorCategory": {
             create: "/inventory/categories/create?type=Vendor",
             read: "/inventory/categories/get?type=Vendor",
-            update: "/inventory/categories/update?type=Vendor",
-            delete: "/inventory/categories/delete?type=Vendor"
+            update: (id: string) => `/inventory/categories/update/${id}?type=Vendor`,
+            delete: (id: string) => `/inventory/categories/delete/${id}?type=Vendor`
         },
         "InventoryCategory": {
             create: "/inventory/categories/create?type=Inventory",
             read: "/inventory/categories/get?type=Inventory",
-            update: "/inventory/categories/update?type=Inventory",
-            delete: "/inventory/categories/delete?type=Inventory"
+            update: (id: string) => `/inventory/categories/update/${id}?type=Inventory`,
+            delete: (id: string) => `/inventory/categories/delete/${id}?type=Inventory`
         }
     };
 
@@ -100,7 +100,6 @@ const Settings = () => {
             return response.data
         },
         refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 5,
         enabled: !!selectedOption,
     });
 
@@ -124,7 +123,7 @@ const Settings = () => {
             })
             .catch((err) => {
                 console.error({ message: `Error ${edit ? "editing" : "adding"} lab`, err });
-                toast.error(((err as AxiosError).response?.data as any).message ?? `Error ${edit ? "editing" : "adding"} lab`);
+                toast.error(((err as AxiosError).response?.data as any).message ?? (err as AxiosError).response?.data ?? `Error ${edit ? "editing" : "adding"} lab`);
             });
     };
 
@@ -138,12 +137,12 @@ const Settings = () => {
             })
             .catch((err) => {
                 console.error({ message: `Error ${edit ? "editing" : "adding"} vendor`, err });
-                toast.error(((err as AxiosError).response?.data as any).message ?? `Error ${edit ? "editing" : "adding"} vendor`);
+                toast.error(((err as AxiosError).response?.data as any).message ?? (err as AxiosError).response?.data ?? `Error ${edit ? "editing" : "adding"} vendor`);
             });
     };
 
     const handleAddCategory = (newCategory: NewCategoryRequest, type: "Vendor" | "Inventory", edit?: boolean) => {
-        const route = edit ? `${routeMap[type === "Vendor" ? "VendorCategory" : "InventoryCategory"].update}/${selected[0].id}` : routeMap[type === "Vendor" ? "VendorCategory" : "InventoryCategory"].create;
+        const route = edit ? (routeMap[type === "Vendor" ? "VendorCategory" : "InventoryCategory"].update as (id: string) => string)(selected[0].id) : routeMap[type === "Vendor" ? "VendorCategory" : "InventoryCategory"].create;
         const method = edit ? api.patch : api.post;
         method(route, { ...newCategory, id: edit ? selected[0].id : undefined, type })
             .then(() => {
@@ -152,7 +151,7 @@ const Settings = () => {
             })
             .catch((err) => {
                 console.error({ message: `Error ${edit ? "editing" : "adding"} category`, err });
-                toast.error(((err as AxiosError).response?.data as any).message ?? `Error ${edit ? "editing" : "adding"} category`);
+                toast.error(((err as AxiosError).response?.data as any).message ?? (err as AxiosError).response?.data ?? `Error ${edit ? "editing" : "adding"} category`);
             });
     };
 

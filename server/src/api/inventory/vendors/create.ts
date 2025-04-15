@@ -4,7 +4,8 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { Router } from "express";
-import { vendorSchema } from "node_modules/lib/src/schemas/Inventory.ts";
+import { vendorCategorySchema, vendorSchema } from "node_modules/lib/src/schemas/Inventory.ts";
+import { z } from "zod";
 
 const router = Router();
 
@@ -14,7 +15,6 @@ router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
         const newVendor = await db
             .insert(vendors)
             .values(parsed)
-            .onConflictDoNothing()
             .returning();
 
         if (newVendor.length === 0) {
@@ -22,6 +22,18 @@ router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
                 new HttpError(HttpCode.CONFLICT, "Vendor already exists")
             );
         };
+
+        if (req.body.categories){
+            const vendorCategories = req.body.categories.map((categoryId: string) => ({
+                vendorId: newVendor[0].id,
+                categoryId,
+              }))
+            
+            const vendorCategoriesParsed = z.array(vendorCategorySchema).parse(vendorCategories)
+            
+            await db.insert(vendorCategories).values(vendorCategoriesParsed)
+        }
+
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ message: 'Error creating vendor', error });

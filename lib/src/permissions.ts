@@ -98,7 +98,6 @@ export const allPermissions = {
     "inventory:stats-lab-year": "Member can view stats per laboratory per year",
     "inventory:stats-lab-category": "Member can view stats per laboratory per category",
     "inventory:stats-vendor-year": "Member can view stats per vendor per year",
-    "inventory:stats-vendor-category-list": "Member can view what categories each vendor supplies"
 } as const;
 
 export const permissions = {
@@ -262,7 +261,6 @@ export const permissions = {
     "/inventory/stats/lab-year": "inventory:stats-lab-year",
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
-    "/inventory/stats/vendor-categories": "inventory:stats-vendor-category-list",
 } as const;
 
 const permissionsSet = new Set(Object.values(permissions));

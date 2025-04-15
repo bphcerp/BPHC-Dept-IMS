@@ -10,6 +10,8 @@ import VendorStatsPerYear from '@/components/inventory/VendorStatsPerYear';
 import api from '@/lib/axios-instance';
 import { InventoryItem } from 'node_modules/lib/src/types/inventory';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/Auth';
+import { permissions } from 'lib';
 
 // Utility function to check if a date is before another date
 const isBefore = (date: Date, comparisonDate: Date): boolean => {
@@ -36,10 +38,12 @@ const checkDateStatus = (date: string | Date | null | undefined, daysThreshold: 
 
 const Stats = () => {
     const [importantDates, setImportantDates] = useState<InventoryItem[]>([]);
-    const [selectedStat, setSelectedStat] = useState<string>("inventory/stats/lab-year");
+    const [selectedStat, setSelectedStat] = useState<string>();
     const [statData, setStatData] = useState<any[]>([]);
     const [vendorDetails, setVendorDetails] = useState(null);
     const [isVendorDialogOpen, setVendorDialogOpen] = useState(false);
+
+    const { checkAccess } = useAuth()
 
     const handleVendorClick = (vendor: any) => {
         setVendorDetails(vendor);
@@ -72,6 +76,7 @@ const Stats = () => {
         queryKey: ['stats', selectedStat],
         queryFn: async () => {
             try {
+                if (!selectedStat) return 0;
                 const response = await api(selectedStat);
                 setStatData(response.data);
                 return 0;
@@ -81,7 +86,6 @@ const Stats = () => {
         },
         refetchOnWindowFocus: false,
         enabled: !!selectedStat,
-        cacheTime: 0
     })
 
     return (
@@ -96,19 +100,20 @@ const Stats = () => {
                             <SelectValue placeholder="Select a statistic" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="inventory/stats/lab-year">Lab Sum Per Year</SelectItem>
-                            <SelectItem value="inventory/stats/lab-category">Lab Sum Per Category</SelectItem>
-                            <SelectItem value="inventory/stats/vendor-year">Vendor Sum Per Year</SelectItem>
-                            <SelectItem value="inventory/stats/vendor-categories">Vendor Categories</SelectItem>
+                            { checkAccess(permissions["/inventory/stats/lab-year"]) && <SelectItem value="inventory/stats/lab-year">Lab Sum Per Year</SelectItem> }
+                            { checkAccess(permissions["/inventory/stats/lab-category"]) && <SelectItem value="inventory/stats/lab-category">Lab Sum Per Category</SelectItem> }
+                            { checkAccess(permissions["/inventory/stats/vendor-year"]) && <SelectItem value="inventory/stats/vendor-year">Vendor Sum Per Year</SelectItem> }
+                            { checkAccess(permissions["/inventory/vendors/get"]) && <SelectItem value="inventory/vendors/get">Vendor Categories</SelectItem> }
                         </SelectContent>
                     </Select>
                 </div>
                 {selectedStat === "inventory/stats/lab-year" && isSuccess ? <LabStatsPerYear data={statData} /> : <></>}
                 {selectedStat === "inventory/stats/lab-category" && isSuccess ? <LabStatsPerCategory data={statData} /> : <></>}
                 {selectedStat === "inventory/stats/vendor-year" && isSuccess ? <VendorStatsPerYear data={statData} /> : <></>}
-                {selectedStat === "inventory/stats/vendor-categories" && isSuccess ? (
+                {selectedStat === "inventory/vendors/get" && isSuccess ? (
                     <VendorStatsCategories data={statData} onVendorClick={handleVendorClick} />
                 ) : <></>}
+                { !selectedStat && <p className="text-sm text-gray-400">Please select a statistic to view the data</p> }
             </div>
             <div className="w-1/4 h-screen rounded-md overflow-y-auto px-4">
                 <h3 className="sticky underline top-0 left-0 p-4 bg-background text-lg text-center font-semibold mb-4">Upcoming Important Dates</h3>
