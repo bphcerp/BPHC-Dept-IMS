@@ -17,12 +17,8 @@ import {
 import api from "@/lib/axios-instance";
 
 interface RequestData {
-  dcaMemberEmail: string;
-  courseNo: string;
-  courseName: string;
   fic: string;
   ficDeadline: Date;
-  reviewDeadline: Date;
 }
 
 export interface Course {
@@ -59,7 +55,7 @@ const CreateRequestDialog = ({
   const [loading, setLoading] = useState(false);
 
   const handleAdd = async () => {
-    if (!courseName || !courseCode || !fic) {
+    if (!ficDeadline || !srDeadline) {
       alert("Please fill in all fields.");
       return;
     }
@@ -104,65 +100,27 @@ const CreateRequestDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create/Edit New Request</DialogTitle>
+          <DialogTitle>Send New Request</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p>Course Name</p>
-            <Select onValueChange={setCourseName}>
-              <SelectTrigger>{courseName || "Select..."}</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Analog Communication">
-                  Analog Communication
-                </SelectItem>
-                <SelectItem value="Data Mining">Data Mining</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <p>Course Code</p>
-            <Select onValueChange={setCourseCode}>
-              <SelectTrigger>{courseCode || "Select..."}</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ECE F341">ECE F341</SelectItem>
-                <SelectItem value="CS F432">CS F432</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <p>FIC</p>
-            <Select onValueChange={setFIC}>
-              <SelectTrigger>{fic || "Select..."}</SelectTrigger>
-              <SelectContent>
-                {fics.map((fic: any) => (
-                  <SelectItem key={fic.email} value={fic.email}>
-                    {fic.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <p>FIC Deadline</p>
+            <p>Select the FIC Deadline</p>
             <Input
               type="date"
               onChange={(e) => setFicDeadline(e.target.value)}
             />
           </div>
-
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <p>SR Deadline</p>
+            <p>Select the Reviewer Deadline</p>
             <Input
               type="date"
               onChange={(e) => setSrDeadline(e.target.value)}
             />
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
@@ -170,7 +128,7 @@ const CreateRequestDialog = ({
           <Button onClick={() =>{ void handleAdd()
           setCreated(true)
           }} disabled={loading}>
-            {loading ? "Submitting..." : "Done"}
+            {loading ? "Submitting..." : "Send"}
           </Button>
         </DialogFooter>
       </DialogContent>
