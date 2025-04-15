@@ -14,6 +14,7 @@ import {
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "node:fs";
+import assert from "node:assert";
 
 const router = express.Router();
 
@@ -83,12 +84,13 @@ router.post(
                 )
             );
         }
+        let insertedFiles: (typeof files.$inferInsert)[] = [];
 
         // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
             if (req.files && Object.entries(req.files).length) {
-                const insertedFiles = await tx
+                insertedFiles = await tx
                     .insert(files)
                     .values(
                         Object.entries(req.files).map(([fieldName, files]) => {
@@ -105,14 +107,17 @@ router.post(
                         })
                     )
                     .returning();
+            }
 
-                for (const fileFieldName of conferenceSchemas.fileFieldNames) {
-                    const updatedFile = insertedFiles.filter(
-                        (x) => x.fieldName === fileFieldName
-                    );
+            for (const fileFieldName of conferenceSchemas.fileFieldNames) {
+                const updatedFile = insertedFiles.filter(
+                    (x) => x.fieldName === fileFieldName
+                );
 
-                    const fileFieldID = application[fileFieldName];
-                    if (fileFieldID === null) {
+                const fileFieldID = application[fileFieldName];
+                if (fileFieldID === null) {
+                    if (updatedFile.length > 0) {
+                        assert(updatedFile[0].id !== undefined);
                         // File did not previously exist, so make a fileField
                         insertedFileFields.push(
                             (
@@ -129,52 +134,48 @@ router.post(
                                     .returning()
                             )[0]
                         );
-                        continue;
                     }
-
-                    // Weird drizzle bug where the return type doesn't have the right type
-                    const oldFile = (await tx.query.fileFields.findFirst({
-                        where: eq(fileFields.id, fileFieldID),
-                        with: {
-                            file: true,
-                        },
-                    })) as typeof fileFields.$inferSelect & {
-                        file: typeof files.$inferSelect;
-                    };
-
-                    if (updatedFile.length === 0) {
-                        // Delete fileField, and null out the fileField on application
-                        await tx
-                            .update(conferenceApprovalApplications)
-                            .set({
-                                [fileFieldName]: null,
-                            })
-                            .where(eq(conferenceApprovalApplications.id, id));
-                        await tx
-                            .delete(fileFields)
-                            .where(eq(fileFields.id, fileFieldID));
-                    } else {
-                        // Else, update the file we uploaded and delete the old file entry
-                        await tx
-                            .delete(files)
-                            .where(eq(files.id, oldFile.file.id));
-                        await tx
-                            .update(fileFields)
-                            .set({
-                                fileId: updatedFile[0].id,
-                            })
-                            .where(eq(fileFields.id, fileFieldID));
-                    }
-
-                    // Delete the old file
-                    unlink(oldFile.file.filePath, (err) => {
-                        if (err) throw err;
-                    });
+                    continue;
                 }
-                insertedFileFields.forEach((field) => {
-                    insertedFileIds[field.fieldName! as FileField] = field.id;
+
+                // Weird drizzle bug where the return type doesn't have the right type
+                const oldFile = (await tx.query.fileFields.findFirst({
+                    where: eq(fileFields.id, fileFieldID),
+                    with: {
+                        file: true,
+                    },
+                })) as typeof fileFields.$inferSelect & {
+                    file: typeof files.$inferSelect;
+                };
+
+                if (updatedFile.length === 0) {
+                    // Delete fileField, and null out the fileField on application
+                    await tx
+                        .update(conferenceApprovalApplications)
+                        .set({
+                            [fileFieldName]: null,
+                        })
+                        .where(eq(conferenceApprovalApplications.id, id));
+                    await tx.delete(files).where(eq(files.id, oldFile.file.id));
+                } else {
+                    // Else, update the file we uploaded and delete the old file entry
+                    await tx
+                        .update(fileFields)
+                        .set({
+                            fileId: updatedFile[0].id,
+                        })
+                        .where(eq(fileFields.id, fileFieldID));
+                    await tx.delete(files).where(eq(files.id, oldFile.file.id));
+                }
+
+                // Delete the old file
+                unlink(oldFile.file.filePath, (err) => {
+                    if (err) throw err;
                 });
             }
+            insertedFileFields.forEach((field) => {
+                insertedFileIds[field.fieldName! as FileField] = field.id;
+            });
 
             tx.delete(conferenceMemberReviews).where(
                 eq(conferenceMemberReviews.applicationId, id)
