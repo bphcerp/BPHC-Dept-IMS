@@ -6,8 +6,9 @@ import {
     text,
     timestamp,
     primaryKey,
+    boolean,
 } from "drizzle-orm/pg-core";
-import { fileFields, applications } from "./form.ts";
+import { fileFields } from "./form.ts";
 import { conferenceSchemas } from "lib";
 import { users } from "./admin.ts";
 
@@ -26,11 +27,14 @@ export const conferenceMemberReviews = pgTable(
     {
         applicationId: integer("application_id")
             .notNull()
-            .references(() => applications.id, { onDelete: "cascade" }),
+            .references(() => conferenceApprovalApplications.id, {
+                onDelete: "cascade",
+            }),
         reviewerEmail: text("reviewer_email")
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
-        comments: text("review").notNull(),
+        status: boolean("status").notNull(),
+        comments: text("review"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()
             .defaultNow(),

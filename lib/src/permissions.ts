@@ -12,14 +12,16 @@ export const allPermissions = {
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
     "conference:application:view-pending": "View pending applications",
-    "conference:application:review-fields":
-        "Approve or Reject fields of applications",
-    "conference:application:overwrite-field-review":
-        "Overwrite a review for a particular field of an application",
-    "conference:application:review-application-hod":
-        "Review application as HOD",
+    "conference:application:review-application-member":
+        "Review application as DRC Member",
     "conference:application:review-application-convener":
         "Review application as DRC convener",
+    "conference:application:review-application-hod":
+        "Review application as HOD",
+    "conference:application:get-flow":
+        "Get conference application approval flow",
+    "conference:application:set-flow":
+        "Set conference application approval flow",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -99,7 +101,7 @@ export const allPermissions = {
     "publications:all": "View all publications",
 } as const;
 
-export const permissions = {
+export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Admin
 
     "/admin/member/invite": "admin:member:create",
@@ -121,11 +123,18 @@ export const permissions = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-    "/conference/applications/details": "conference:application:view-pending",
+    "/conference/edit": "conference:application:submitted",
     "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",
-    "/conference/fields/review": "conference:application:review-fields",
+    "/conference/applications/reviewMember":
+        "conference:application:review-application-member",
+    "/conference/applications/reviewConvener":
+        "conference:application:review-application-convener",
+    "/conference/applications/reviewHod":
+        "conference:application:review-application-hod",
+    "/conference/getFlow": "conference:application:get-flow",
+    "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
 
@@ -244,14 +253,3 @@ export const permissions = {
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
 } as const;
-
-const permissionsSet = new Set(Object.values(permissions));
-const allPermissionsSet = new Set(Object.keys(allPermissions));
-
-if (
-    ![...permissionsSet].every((permission) =>
-        allPermissionsSet.has(permission)
-    )
-) {
-    throw new Error("Unknown permission defined in routes");
-}

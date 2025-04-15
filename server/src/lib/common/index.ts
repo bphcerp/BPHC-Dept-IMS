@@ -1,4 +1,6 @@
 import db from "@/config/db/index.ts";
+import { allPermissions } from "lib";
+import { getAccessMultiple } from "../auth/index.ts";
 
 /**
  * Retrieves user details based on the provided email address.
@@ -47,4 +49,18 @@ export const getUserDetails = async (userEmail: string) => {
         ...(phd || faculty || staff),
         roles: userRoles.map((role) => roles[role]),
     };
+};
+
+export const getUsersWithPermission = async (
+    permission: keyof typeof allPermissions
+) => {
+    const users = await db.query.users.findMany();
+    const userPermissions = await getAccessMultiple(
+        users.map((user) => {
+            return user.roles;
+        })
+    );
+    return users.filter((_, i) => {
+        return userPermissions[i].allowed.includes(permission);
+    });
 };

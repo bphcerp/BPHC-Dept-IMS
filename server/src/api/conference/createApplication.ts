@@ -1,5 +1,8 @@
 import db from "@/config/db/index.ts";
-import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
+import {
+    conferenceApprovalApplications,
+    conferenceGlobal,
+} from "@/config/db/schema/conference.ts";
 import { fileFields, files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
@@ -30,9 +33,23 @@ router.post(
         )
     ),
     asyncHandler(async (req, res) => {
-        const body = conferenceSchemas.createApplicationBodySchema.parse(
+        const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
         );
+
+        // Check if we are in the direct flow
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+        if (!current) {
+            await db.insert(conferenceGlobal).values({
+                key: "directFlow",
+                value: "false",
+            });
+        }
+        const isDirect = current && current.value === "true";
+
         // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
@@ -77,6 +94,7 @@ router.post(
                 userEmail: req.user!.email,
                 ...insertedFileIds,
                 ...body,
+                state: isDirect ? "DRC Convener" : "DRC Member",
             });
         });
 
