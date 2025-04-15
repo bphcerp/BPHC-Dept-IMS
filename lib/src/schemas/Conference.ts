@@ -43,17 +43,7 @@ export const createApplicationBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
-export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;
-
-export const pendingApplicationsQuerySchema = z.object({
-    state: z.enum(states),
-});
-
-export type PendingApplicationsQuery = z.infer<
-    typeof pendingApplicationsQuerySchema
->;
-
-export const reviewFieldBodySchema = z.discriminatedUnion("status", [
+export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
     z.object({
         status: z.literal(true),
         comments: z.string().optional(),
@@ -64,20 +54,12 @@ export const reviewFieldBodySchema = z.discriminatedUnion("status", [
     }),
 ]);
 
-export const reviewApplicationBodySchema = z.object({
-    status: z.boolean(),
-});
-
 export const editFieldBodySchema = z.object({
     value: z.union([
         z.string().nonempty(),
         z.coerce.number().positive().finite(),
         z.coerce.date(),
     ]),
-});
-
-export const finalizeApproveApplicationSchema = z.object({
-    approve: z.boolean(),
 });
 
 export const textFieldNames = [
@@ -135,27 +117,34 @@ export type pendingApplicationsResponse = {
 };
 
 export type ViewApplicationResponse = {
-    id: number;
-    createdAt: string;
-    userEmail: string;
-    state: (typeof states)[number];
-    purpose: string;
-    contentTitle: string;
-    eventName: string;
-    venue: string;
-    dateFrom: string;
-    dateTo: string;
-    organizedBy: string;
-    modeOfEvent: (typeof modesOfEvent)[number];
-    description: string;
-    travelReimbursement?: number;
-    registrationFeeReimbursement?: number;
-    dailyAllowanceReimbursement?: number;
-    accommodationReimbursement?: number;
-    otherReimbursement?: number;
-    letterOfInvitation?: fileFieldResponse;
-    firstPageOfPaper?: fileFieldResponse;
-    reviewersComments?: fileFieldResponse;
-    detailsOfEvent?: fileFieldResponse;
-    otherDocuments?: fileFieldResponse;
+    application: {
+        id: number;
+        createdAt: string;
+        userEmail: string;
+        state: (typeof states)[number];
+        purpose: string;
+        contentTitle: string;
+        eventName: string;
+        venue: string;
+        dateFrom: string;
+        dateTo: string;
+        organizedBy: string;
+        modeOfEvent: (typeof modesOfEvent)[number];
+        description: string;
+        travelReimbursement?: number;
+        registrationFeeReimbursement?: number;
+        dailyAllowanceReimbursement?: number;
+        accommodationReimbursement?: number;
+        otherReimbursement?: number;
+        letterOfInvitation?: fileFieldResponse;
+        firstPageOfPaper?: fileFieldResponse;
+        reviewersComments?: fileFieldResponse;
+        detailsOfEvent?: fileFieldResponse;
+        otherDocuments?: fileFieldResponse;
+    };
+    reviews: {
+        status: boolean;
+        comments: string | null;
+        createdAt: string;
+    }[];
 };
