@@ -30,7 +30,7 @@ router.post(
         )
     ),
     asyncHandler(async (req, res) => {
-        const body = conferenceSchemas.createApplicationBodySchema.parse(
+        const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
         );
         // TODO: Cleanup files in case of errors in transaction

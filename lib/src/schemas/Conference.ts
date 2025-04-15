@@ -12,7 +12,7 @@ export const states = [
 
 const modesOfEvent = ["online", "offline"] as const;
 
-export const createApplicationBodySchema = z.object({
+export const upsertApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
     eventName: z.string().nonempty(),
