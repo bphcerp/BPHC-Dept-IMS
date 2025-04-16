@@ -17,10 +17,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import api from "@/lib/axios-instance";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/Auth";
+import { isAxiosError } from "axios";
+import { toast } from "sonner";
+import { format } from "date-fns";
 
 const columns: ColumnDef<{
   id: number;
@@ -97,7 +101,11 @@ const columns: ColumnDef<{
     },
     cell({ row }) {
       const createdAt: string = row.getValue("createdAt");
-      return new Date(createdAt).toLocaleString();
+      return (
+        <p className="text-muted-foreground">
+          {format(createdAt, "LLL dd, y • hh:mm a")}
+        </p>
+      );
     },
     accessorKey: "createdAt",
   },
@@ -106,6 +114,11 @@ const columns: ColumnDef<{
 const ConferencePendingApplicationsView = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { checkAccess } = useAuth();
+
+  const canSetFlow = checkAccess("conference:application:set-flow");
+  const canViewFlow = checkAccess("conference:application:get-flow");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["conference", "pending"],
@@ -118,12 +131,30 @@ const ConferencePendingApplicationsView = () => {
     },
   });
 
+  const toggleFlowMutation = useMutation({
+    mutationFn: async (flowBody: conferenceSchemas.FlowBody) => {
+      return await api.post("/conference/setFlow", flowBody);
+    },
+    onSuccess: (_res, vars) => {
+      toast.success(
+        "Changed flow to " + (vars.directFlow ? "DIRECT" : "PROCESS")
+      );
+      void queryClient.refetchQueries({
+        queryKey: ["conference", "pending"],
+      });
+    },
+    onError: (err) => {
+      if (isAxiosError(err))
+        toast.error((err.response?.data as string) ?? "An error occurred");
+    },
+  });
+
   const table = useReactTable({
     data:
-      data?.applications.map(({ userEmail, userName, ...appl }) => ({
+      data?.applications?.map(({ userEmail, userName, ...appl }) => ({
         ...appl,
         user: {
-          name: userName,
+          name: userName || "Unknown",
           email: userEmail,
         },
       })) ?? [],
@@ -139,11 +170,29 @@ const ConferencePendingApplicationsView = () => {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center gap-6 bg-background-faded p-8">
-      <h2 className="self-start text-3xl font-normal">
-        Submitted Applications
-      </h2>
+      <h2 className="self-start text-3xl font-normal">Pending Applications</h2>
       {isLoading && <p>Loading...</p>}
       {isError && <p>Error loading applications</p>}
+      {canViewFlow ? (
+        <div className="flex items-center gap-2 self-stretch">
+          <span className="text-muted-foreground">
+            Current flow:{" "}
+            <span className="text-foreground underline">
+              {data?.isDirect ? "DIRECT" : "PROCESS"}
+            </span>
+          </span>
+          {canSetFlow ? (
+            <Button
+              onClick={() =>
+                toggleFlowMutation.mutate({ directFlow: !data?.isDirect })
+              }
+              disabled={toggleFlowMutation.isLoading}
+            >
+              Toggle
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {data && (
         <>
           <Table>

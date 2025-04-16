@@ -47,6 +47,8 @@ export const flowBodySchema = z.object({
     directFlow: z.boolean(),
 });
 
+export type FlowBody = z.infer<typeof flowBodySchema>;
+
 export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
     z.object({
         status: z.literal(true),
@@ -57,6 +59,8 @@ export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
         comments: z.string().trim().nonempty(),
     }),
 ]);
+
+export type ReviewApplicationBody = z.infer<typeof reviewApplicationBodySchema>;
 
 export const textFieldNames = [
     "purpose",
@@ -110,6 +114,7 @@ export type pendingApplicationsResponse = {
         userEmail: string;
         userName: string | null;
     }[];
+    isDirect?: boolean;
 };
 
 export type ViewApplicationResponse = {
@@ -127,11 +132,11 @@ export type ViewApplicationResponse = {
         organizedBy: string;
         modeOfEvent: (typeof modesOfEvent)[number];
         description: string;
-        travelReimbursement?: number;
-        registrationFeeReimbursement?: number;
-        dailyAllowanceReimbursement?: number;
-        accommodationReimbursement?: number;
-        otherReimbursement?: number;
+        travelReimbursement: number;
+        registrationFeeReimbursement: number;
+        dailyAllowanceReimbursement: number;
+        accommodationReimbursement: number;
+        otherReimbursement: number;
         letterOfInvitation?: fileFieldResponse;
         firstPageOfPaper?: fileFieldResponse;
         reviewersComments?: fileFieldResponse;
@@ -143,4 +148,25 @@ export type ViewApplicationResponse = {
         comments: string | null;
         createdAt: string;
     }[];
+    isDirect?: boolean;
+};
+
+export const fieldsToFrontend = {
+    purpose: "Purpose",
+    contentTitle: "Title of the Paper / Talk / Poster",
+    eventName: "Name of the Journal / Conference / Workshop / Laboratory",
+    venue: "Venue",
+    organizedBy: "Organized by",
+    modeOfEvent: "Mode of event",
+    description: "Brief Description or Justification of the purpose",
+    travelReimbursement: "Travel",
+    registrationFeeReimbursement: "Registration Fee / Page Charges",
+    dailyAllowanceReimbursement: "Daily Allowance",
+    accommodationReimbursement: "Accommodation",
+    otherReimbursement: "Any Other, if any",
+    letterOfInvitation: "Letter of Invitation / Acceptance of the paper",
+    firstPageOfPaper: "First page of paper",
+    reviewersComments: "Reviewers Comments",
+    detailsOfEvent: "Details of the conference / Journal",
+    otherDocuments: "Any other documents",
 };

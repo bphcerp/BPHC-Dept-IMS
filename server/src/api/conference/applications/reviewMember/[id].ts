@@ -7,6 +7,7 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceMemberReviews,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -81,9 +82,14 @@ router.post(
         await db.transaction(async (tx) => {
             if (allReviewers.difference(otherReviewers).size === 0) {
                 // If all DRC Members have reviewed the application, move state to DRC member
-                await tx.update(conferenceApprovalApplications).set({
-                    state: conferenceSchemas.states[applicationStateIndex + 1],
-                });
+                await tx
+                    .update(conferenceApprovalApplications)
+                    .set({
+                        state: conferenceSchemas.states[
+                            applicationStateIndex + 1
+                        ],
+                    })
+                    .where(eq(conferenceApprovalApplications.id, id));
             }
 
             await tx.insert(conferenceMemberReviews).values([
@@ -94,6 +100,12 @@ router.post(
                     comments: comments,
                 },
             ]);
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: application.id,
+                userEmail: req.user!.email,
+                action: `Member ${status ? "approved" : "rejected"}`,
+                comments,
+            });
         });
 
         res.status(200).send();

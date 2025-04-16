@@ -123,7 +123,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-    "/conference/edit": "conference:application:submitted",
+    "/conference/editApplication": "conference:application:submitted",
     "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",

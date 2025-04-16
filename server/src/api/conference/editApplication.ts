@@ -39,7 +39,7 @@ router.post(
     asyncHandler(async (req, res, next) => {
         const insertedFileIds: Partial<Record<FileField, number>> = {};
 
-        let insertedFileFields: (typeof fileFields.$inferSelect)[] = [];
+        const insertedFileFields: (typeof fileFields.$inferSelect)[] = [];
 
         const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
