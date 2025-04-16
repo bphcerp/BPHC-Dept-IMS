@@ -80,25 +80,30 @@ export default function ReviewPage() {
   }, []);
 */
 
+
+
 export const FicSubmission: React.FC = () => {
-  const [filteredHandouts, setFilteredHandouts] = useState<Handout[]>();
+  const [pendingCourses, setPendingCourses] = useState<Course[]>([]);
+  const [reviewedCourses, setReviewedCourses] = useState<Course[]>([]);  
+  const [filteredHandouts, setFilteredHandouts] = useState<Course[]>();
   const navigate = useNavigate();
   const {
-    data: handouts,
+    data,
     isLoading,
     isError,
     refetch,
-  } = useQuery<Handout[]>({
-    queryKey: ["handouts-faculty"],
+  } = useQuery<Course[]>({
+    queryKey: ["qp-requests"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ data: Handout[] }>(
-          "/handout/faculty/get"
+        const response = await api.get<{ data: Course[] }>(
+          "/qp/getAllFacultyRequests/${encodeURIComponent(facultyEmail)}"
         );
+        
         if (response.data.data) setFilteredHandouts(response.data.data);
         return response.data.data;
       } catch (error) {
-        toast.error("Failed to fetch handouts");
+        toast.error("Failed to fetch Requests");
         throw error;
       }
     },
@@ -115,15 +120,15 @@ export const FicSubmission: React.FC = () => {
   );
 
   useMemo(() => {
-    if (handouts) {
-      let results = handouts;
+    if (filteredHandouts) {
+      let results = filteredHandouts;
       if (searchQuery) {
         results = results.filter(
-          (handout) =>
-            handout.courseName
+          (Course) =>
+            Course.name
               .toLowerCase()
               .includes(searchQuery.toLowerCase()) ||
-            handout.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+            Course.code.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
       results = results.filter((handout) => {
@@ -140,7 +145,7 @@ export const FicSubmission: React.FC = () => {
 
       setFilteredHandouts(results);
     }
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, handouts]);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, pendingCourses, reviewedCourses]);
 
   const handleUploadClick = (handoutId: string) => {
     setSelectedHandoutId(handoutId);
@@ -211,41 +216,41 @@ export const FicSubmission: React.FC = () => {
             </TableHeader>
             <TableBody className="divide-y divide-gray-300">
               {filteredHandouts?.length ? (
-                filteredHandouts.map((handout) => (
+                filteredHandouts.map((Course) => (
                   <TableRow
-                    key={handout.id}
+                    key={Course.id}
                     className="odd:bg-white even:bg-gray-100"
                   >
                     <TableCell className="px-4 py-2">
-                      {handout.courseCode}
+                      {Course.code}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.courseName}
+                      {Course.name}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.category}
+                      {Course.category}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.reviewerName || "Unassigned"}
+                      {Course.reviewer || "Unassigned"}
                     </TableCell>
                     <TableCell className="px-4 py-2 uppercase">
-                      <span className={STATUS_COLORS[handout.status]}>
-                        {handout.status}
+                      <span className={STATUS_COLORS[Course.status]}>
+                        {Course.status}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {!handout.submittedOn ? (
+                      {!Course.timeLeft ? (
                         <span className="mx-3">NA</span>
                       ) : (
-                        new Date(handout.submittedOn).toLocaleDateString()
+                        new Date(Course.timeLeft).toLocaleDateString()
                       )}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {handout.status === "notsubmitted" ? (
+                      {Course.status === "notsubmitted" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
-                          onClick={() => handleUploadClick(handout.id)}
+                          onClick={() => handleUploadClick(Course.id)}
                         >
                           Upload
                         </Button>
@@ -253,7 +258,7 @@ export const FicSubmission: React.FC = () => {
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
-                          onClick={() => navigate(`/handout/${handout.id}`)}
+                          onClick={() => navigate(`/handout/${Course.id}`)}
                         >
                           Details
                         </Button>
@@ -288,16 +293,18 @@ export const FicSubmission: React.FC = () => {
 };
 export default FicSubmission;
 
-/*
+
 interface Course {
-  id: number;
+  id: string;
   code: string;
-  DCA: string;
-  role: string;
+  name: string;
+  category: string;
+  reviewer: string;
+  //role: string;
   timeLeft: string;
   status: string;
 }
-
+/*
 function QPReviewList({
   pendingCourses,
   reviewedCourses,
