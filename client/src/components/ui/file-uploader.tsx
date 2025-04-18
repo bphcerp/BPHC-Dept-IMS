@@ -278,9 +278,8 @@ interface FileCardProps {
 
 function FileCard({ file, progress, onRemove }: FileCardProps) {
   return (
-    <div className="relative flex items-center gap-2.5">
-      <div className="flex flex-1 gap-2.5">
-        {isFileWithPreview(file) ? <FilePreview file={file} /> : null}
+    <div className="relative flex items-center gap-2 overflow-hidden">
+      <div className="flex flex-1 flex-col gap-2">
         <div className="flex w-full flex-col gap-2">
           <div className="flex flex-col gap-px">
             <p className="line-clamp-1 text-sm font-medium text-foreground/80">
@@ -292,6 +291,7 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
           </div>
           {progress ? <Progress value={progress} /> : null}
         </div>
+        {isFileWithPreview(file) ? <FilePreview file={file} /> : null}
       </div>
       <div className="flex items-center gap-2">
         <Button
@@ -327,6 +327,17 @@ function FilePreview({ file }: FilePreviewProps) {
         height={48}
         loading="lazy"
         className="aspect-square shrink-0 rounded-md object-cover"
+      />
+    );
+  }
+
+  if (file.type.includes("pdf")) {
+    return (
+      <iframe
+        src={file.preview}
+        title={file.name}
+        className="w-full shrink-0 rounded-md"
+        loading="lazy"
       />
     );
   }

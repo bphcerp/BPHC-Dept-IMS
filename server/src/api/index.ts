@@ -8,6 +8,7 @@ import conferenceRouter from "./conference/index.ts";
 import qpRouter from "./qp/index.ts";
 import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
+import todosRouter from "./todos.ts";
 import inventoryRouter from "./inventory/index.ts";
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.use("/handout", handoutRouter);
 router.use("/conference", conferenceRouter);
 router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
-router.use('/inventory', inventoryRouter)
+router.use("/todos", todosRouter);
+router.use("/inventory", inventoryRouter);
 
 export default router;

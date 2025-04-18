@@ -53,10 +53,13 @@ export const phdExaminer = pgTable("phd_examiner", {
     subAreaId: integer("sub_area_id")
         .notNull()
         .references(() => phdSubAreas.id, { onDelete: "cascade" }),
+    studentEmail: text("student_email").references(() => phd.email, {
+        onDelete: "cascade",
+    }),
     suggestedExaminer: text("suggested_examiner")
         .array()
         .default(sql`'{}'::text[]`),
     examiner: text("examiner").references(() => users.email, {
-        onDelete: "restrict",
+        onDelete: "cascade",
     }),
 });

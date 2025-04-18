@@ -1,15 +1,17 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Review from "@/components/handouts/review";
 import api from "@/lib/axios-instance";
 import { Handout } from "./DCAReview";
 import { BASE_API_URL } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 const FacultyHandout: React.FC = () => {
   const { id } = useParams();
-
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useQuery({
     queryKey: [`handout-faculty ${id}`],
     queryFn: async () => {
@@ -38,8 +40,20 @@ const FacultyHandout: React.FC = () => {
         Error fetching handouts
       </div>
     );
+
+  const goBack = () => {
+    navigate("/handout/faculty");
+  };
   return (
     <div className="container mx-auto max-w-3xl px-4 py-10">
+      <Button
+        variant={"ghost"}
+        onClick={goBack}
+        className="size-sm mb-4 flex items-center"
+      >
+        <ChevronLeft className="mr-1" size={16} />
+        Back to Dashboard
+      </Button>
       <h1 className="mb-4 text-center text-2xl font-bold">Handout</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}

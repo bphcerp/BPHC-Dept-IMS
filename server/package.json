@@ -23,6 +23,7 @@
     "google-auth-library": "^9.14.2",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "lib": "workspace:*",
     "module-alias": "^2.2.3",
     "ms": "^2.1.3",

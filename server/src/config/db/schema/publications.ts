@@ -1,4 +1,4 @@
-import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, text,boolean } from "drizzle-orm/pg-core";
  
  export const publicationsTable = pgTable("publications", {
      title: text("title").notNull(),
@@ -19,6 +19,7 @@ import { pgTable, primaryKey, text } from "drizzle-orm/pg-core";
          authorId: text("author_id").notNull(),
          citationId: text("citation_id").notNull(),
          authorName: text("author_name"),
+         status: boolean("status")
      },
      (table) => [primaryKey({ columns: [table.authorId, table.citationId] })]
  );

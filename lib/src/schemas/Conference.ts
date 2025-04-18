@@ -12,7 +12,7 @@ export const states = [
 
 const modesOfEvent = ["online", "offline"] as const;
 
-export const createApplicationBodySchema = z.object({
+export const upsertApplicationBodySchema = z.object({
     purpose: z.string().nonempty(),
     contentTitle: z.string().nonempty(),
     eventName: z.string().nonempty(),
@@ -43,17 +43,13 @@ export const createApplicationBodySchema = z.object({
     otherReimbursement: z.coerce.number().positive().finite().optional(),
 });
 
-export type CreateApplicationBody = z.infer<typeof createApplicationBodySchema>;
-
-export const pendingApplicationsQuerySchema = z.object({
-    state: z.enum(states),
+export const flowBodySchema = z.object({
+    directFlow: z.boolean(),
 });
 
-export type PendingApplicationsQuery = z.infer<
-    typeof pendingApplicationsQuerySchema
->;
+export type FlowBody = z.infer<typeof flowBodySchema>;
 
-export const reviewFieldBodySchema = z.discriminatedUnion("status", [
+export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
     z.object({
         status: z.literal(true),
         comments: z.string().optional(),
@@ -64,21 +60,7 @@ export const reviewFieldBodySchema = z.discriminatedUnion("status", [
     }),
 ]);
 
-export const reviewApplicationBodySchema = z.object({
-    status: z.boolean(),
-});
-
-export const editFieldBodySchema = z.object({
-    value: z.union([
-        z.string().nonempty(),
-        z.coerce.number().positive().finite(),
-        z.coerce.date(),
-    ]),
-});
-
-export const finalizeApproveApplicationSchema = z.object({
-    approve: z.boolean(),
-});
+export type ReviewApplicationBody = z.infer<typeof reviewApplicationBodySchema>;
 
 export const textFieldNames = [
     "purpose",
@@ -132,30 +114,59 @@ export type pendingApplicationsResponse = {
         userEmail: string;
         userName: string | null;
     }[];
+    isDirect?: boolean;
 };
 
 export type ViewApplicationResponse = {
-    id: number;
-    createdAt: string;
-    userEmail: string;
-    state: (typeof states)[number];
-    purpose: string;
-    contentTitle: string;
-    eventName: string;
-    venue: string;
-    dateFrom: string;
-    dateTo: string;
-    organizedBy: string;
-    modeOfEvent: (typeof modesOfEvent)[number];
-    description: string;
-    travelReimbursement?: number;
-    registrationFeeReimbursement?: number;
-    dailyAllowanceReimbursement?: number;
-    accommodationReimbursement?: number;
-    otherReimbursement?: number;
-    letterOfInvitation?: fileFieldResponse;
-    firstPageOfPaper?: fileFieldResponse;
-    reviewersComments?: fileFieldResponse;
-    detailsOfEvent?: fileFieldResponse;
-    otherDocuments?: fileFieldResponse;
+    application: {
+        id: number;
+        createdAt: string;
+        userEmail: string;
+        state: (typeof states)[number];
+        purpose: string;
+        contentTitle: string;
+        eventName: string;
+        venue: string;
+        dateFrom: string;
+        dateTo: string;
+        organizedBy: string;
+        modeOfEvent: (typeof modesOfEvent)[number];
+        description: string;
+        travelReimbursement: number;
+        registrationFeeReimbursement: number;
+        dailyAllowanceReimbursement: number;
+        accommodationReimbursement: number;
+        otherReimbursement: number;
+        letterOfInvitation?: fileFieldResponse;
+        firstPageOfPaper?: fileFieldResponse;
+        reviewersComments?: fileFieldResponse;
+        detailsOfEvent?: fileFieldResponse;
+        otherDocuments?: fileFieldResponse;
+    };
+    reviews: {
+        status: boolean;
+        comments: string | null;
+        createdAt: string;
+    }[];
+    isDirect?: boolean;
+};
+
+export const fieldsToFrontend = {
+    purpose: "Purpose",
+    contentTitle: "Title of the Paper / Talk / Poster",
+    eventName: "Name of the Journal / Conference / Workshop / Laboratory",
+    venue: "Venue",
+    organizedBy: "Organized by",
+    modeOfEvent: "Mode of event",
+    description: "Brief Description or Justification of the purpose",
+    travelReimbursement: "Travel",
+    registrationFeeReimbursement: "Registration Fee / Page Charges",
+    dailyAllowanceReimbursement: "Daily Allowance",
+    accommodationReimbursement: "Accommodation",
+    otherReimbursement: "Any Other, if any",
+    letterOfInvitation: "Letter of Invitation / Acceptance of the paper",
+    firstPageOfPaper: "First page of paper",
+    reviewersComments: "Reviewers Comments",
+    detailsOfEvent: "Details of the conference / Journal",
+    otherDocuments: "Any other documents",
 };

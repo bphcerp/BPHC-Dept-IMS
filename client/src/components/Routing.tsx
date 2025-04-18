@@ -29,12 +29,11 @@ import {
 } from "react-router-dom";
 import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
 import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
-import GenerateQualifyingExamForm from "@/views/Phd/DrcConvenor/GenerateQualifyingExamForm";
-import PhdThatAppliedForQualifyingExam from "@/views/Phd/DrcConvenor/PhdThatAppliedForQualifyingExam";
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
 import FormDeadline from "@/views/Phd/Student/FormDeadline";
 import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
+import Profile from "@/views/Phd/Student/Profile";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
@@ -48,7 +47,6 @@ import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
-import AssignExaminers from "@/views/Phd/DrcConvenor/AssignExaminers";
 import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
@@ -58,6 +56,8 @@ import ConferencePendingApplicationsView from "@/views/Conference/Pending";
 import ConferenceEditView from "@/views/Conference/Submitted/[id]";
 import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
+import AllPublications from "@/views/Publications/AllPublications";
+import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
 import { ItemsView } from "@/views/Inventory/ItemsView";
@@ -157,11 +157,11 @@ const Routing = () => {
               sidebarItems={
                 authState
                   ? [
-                    {
-                      title: "Modules",
-                      items: modules,
-                    },
-                  ]
+                      {
+                        title: "Modules",
+                        items: modules,
+                      },
+                    ]
                   : []
               }
             />
@@ -214,17 +214,17 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/conference/applications/pending"]
                 ) && (
-                    <>
-                      <Route
-                        path="pending"
-                        element={<ConferencePendingApplicationsView />}
-                      />
-                      <Route
-                        path="view/:id"
-                        element={<ConferenceViewApplicationView />}
-                      />
-                    </>
-                  )}
+                  <>
+                    <Route
+                      path="pending"
+                      element={<ConferencePendingApplicationsView />}
+                    />
+                    <Route
+                      path="view/:id"
+                      element={<ConferenceViewApplicationView />}
+                    />
+                  </>
+                )}
               </Route>
             )}
 
@@ -284,15 +284,22 @@ const Routing = () => {
                             element={<DCAConvenorHandouts />}
                           />
                         )}
-                      <Route path="summary" element={<DCAConvenerSummary />} />
+                      {checkAccess(
+                        permissions["/handout/dcaconvenor/exportSummary"]
+                      ) && (
+                        <Route
+                          path="summary"
+                          element={<DCAConvenerSummary />}
+                        />
+                      )}
                       {checkAccess(
                         permissions["/handout/dcaconvenor/finalDecision"]
                       ) && (
-                          <Route
-                            path="dcaconvenor/review/:id"
-                            element={<DCAConvenorReview />}
-                          />
-                        )}
+                        <Route
+                          path="dcaconvenor/review/:id"
+                          element={<DCAConvenorReview />}
+                        />
+                      )}
                     </>
                   )}
               </Route>
@@ -303,44 +310,37 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/phd/notionalSupervisor/updateCourseDetails"]
                 ) && (
-                    <Route path="notional-supervisor" element={<Outlet />}>
-                      <Route path="update-grade" element={<UpdateGrade />} />
-                      <Route
-                        path="suggest-examiner"
-                        element={<SuggestExaminer />}
-                      />
-                    </Route>
-                  )}
+                  <Route path="notional-supervisor" element={<Outlet />}>
+                    <Route path="update-grade" element={<UpdateGrade />} />
+                    <Route
+                      path="suggest-examiner"
+                      element={<SuggestExaminer />}
+                    />
+                  </Route>
+                )}
                 {checkAccess(
                   permissions["/phd/drcMember/generateCourseworkForm"]
                 ) && (
-                    <Route path="drc-convenor" element={<Outlet />}>
-                      <Route
-                        path="coursework-form"
-                        element={<CourseworkForm />}
-                      />
-                      <Route
-                        path="generate-qualifying-exam-form"
-                        element={<GenerateQualifyingExamForm />}
-                      ></Route>
-                      <Route
-                        path="phd-that-applied-for-qualifying-exam"
-                        element={<PhdThatAppliedForQualifyingExam />}
-                      ></Route>
-                      <Route
-                        path="assign-dac-members"
-                        element={<AssignDacMembers />}
-                      ></Route>
-                      <Route
-                        path="assign-examiner"
-                        element={<AssignExaminers />}
-                      ></Route>
-                      Handout
-                    </Route>
-                  )}
+                  <Route path="drc-convenor" element={<Outlet />}>
+                    <Route
+                      path="coursework-form"
+                      element={<CourseworkForm />}
+                    />
+                    <Route
+                      path="assign-dac-members"
+                      element={<AssignDacMembers />}
+                    ></Route>
+                    <Route
+                      path="qualifying-exam-management"
+                      element={<QualifyingExamManagement />}
+                    ></Route>
+                    Handout
+                  </Route>
+                )}
                 {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
                   <Route path="phd-student" element={<Outlet />}>
                     <Route path="form-deadline" element={<FormDeadline />} />
+                    <Route path="my-profile" element={<Profile />} />
 
                     <Route
                       path="proposal-submission"
@@ -366,28 +366,28 @@ const Routing = () => {
                 )}
                 {checkAccess(
                   permissions[
-                  "/phd/notionalSupervisor/updateCourseDetails"
+                    "/phd/notionalSupervisor/updateCourseDetails"
                   ] as string
                 ) && (
-                    <Route path="phd-co-supervisor" element={<Outlet />}>
-                      <Route
-                        path="co-supervised-students"
-                        element={<CoSupervisedStudents />}
-                      />
-                    </Route>
-                  )}
+                  <Route path="phd-co-supervisor" element={<Outlet />}>
+                    <Route
+                      path="co-supervised-students"
+                      element={<CoSupervisedStudents />}
+                    />
+                  </Route>
+                )}
                 {checkAccess(
                   permissions[
-                  "/phd/notionalSupervisor/updateCourseDetails"
+                    "/phd/notionalSupervisor/updateCourseDetails"
                   ] as string
                 ) && (
-                    <Route path="phd-supervisor" element={<Outlet />}>
-                      <Route
-                        path="supervised-students"
-                        element={<SupervisedStudents />}
-                      />
-                    </Route>
-                  )}
+                  <Route path="phd-supervisor" element={<Outlet />}>
+                    <Route
+                      path="supervised-students"
+                      element={<SupervisedStudents />}
+                    />
+                  </Route>
+                )}
               </Route>
             )}
           </>
@@ -402,6 +402,9 @@ const Routing = () => {
               }
             />
             <Route path="your-publications" element={<YourPublications />} />
+            {checkAccess(permissions["/publications/all"]) && (
+              <Route path="all-publications" element={<AllPublications />} />
+            )}
           </Route>
         )}
 
@@ -409,20 +412,49 @@ const Routing = () => {
           <Route path="/inventory" element={<InventoryLayout />}>
             <Route
               index
-              element={
-                <Navigate to="/inventory/items" replace={true} />
-              }
+              element={<Navigate to="/inventory/items" replace={true} />}
             />
             <Route path="items" element={<ItemsView />} />
-            { checkAccessAnyOne(Object.keys(permissions).filter(perm => perm.startsWith('inventory:stats'))) && 
-              <Route path="stats" element={<Stats />} />
-            }
-            {checkAccess('inventory:write') && <>
-              <Route path="items/add-item" element={<AddInventoryItem />} />
-              <Route path="items/add-item/excel" element={<BulkAddView />} />
-            </>}
+            {checkAccessAnyOne(
+              Object.keys(permissions).filter((perm) =>
+                perm.startsWith("inventory:stats")
+              )
+            ) && <Route path="stats" element={<Stats />} />}
+            {checkAccess("inventory:write") && (
+              <>
+                <Route path="items/add-item" element={<AddInventoryItem />} />
+                <Route path="items/add-item/excel" element={<BulkAddView />} />
+              </>
+            )}
             <Route path="stats" element={<></>} />
-            {checkAccess('inventory:write') && <Route path="settings" element={<Settings />} />}
+            {checkAccess("inventory:write") && (
+              <Route path="settings" element={<Settings />} />
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(inventoryModulePermissions) && (
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
+            <Route path="items" element={<ItemsView />} />
+            {checkAccessAnyOne(
+              Object.keys(permissions).filter((perm) =>
+                perm.startsWith("inventory:stats")
+              )
+            ) && <Route path="stats" element={<Stats />} />}
+            {checkAccess("inventory:write") && (
+              <>
+                <Route path="items/add-item" element={<AddInventoryItem />} />
+                <Route path="items/add-item/excel" element={<BulkAddView />} />
+              </>
+            )}
+            <Route path="stats" element={<></>} />
+            {checkAccess("inventory:write") && (
+              <Route path="settings" element={<Settings />} />
+            )}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

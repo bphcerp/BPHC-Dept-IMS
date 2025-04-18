@@ -49,7 +49,7 @@ export const faculty = pgTable("faculty", {
     psrn: text("psrn").unique(),
     email: text("email")
         .primaryKey()
-        .references(() => users.email, { onDelete: "restrict" }),
+        .references(() => users.email, { onDelete: "cascade" }),
     name: text("name"),
     department: text("department"),
     designation: text("designation"),
@@ -61,7 +61,7 @@ export const faculty = pgTable("faculty", {
 export const phd = pgTable("phd", {
     email: text("email")
         .primaryKey()
-        .references(() => users.email, { onDelete: "restrict" }),
+        .references(() => users.email, { onDelete: "cascade" }),
     department: text("department"),
     phone: text("phone"),
 
@@ -74,24 +74,24 @@ export const phd = pgTable("phd", {
 
     notionalSupervisorEmail: text("notional_supervisor_email").references(
         () => users.email,
-        { onDelete: "restrict" }
+        { onDelete: "cascade" }
     ),
     supervisorEmail: text("supervisor_email").references(() => users.email, {
-        onDelete: "restrict",
+        onDelete: "cascade",
     }),
     coSupervisorEmail: text("co_supervisor_email").references(
         () => users.email,
-        { onDelete: "restrict" }
+        { onDelete: "cascade" }
     ),
     coSupervisorEmail2: text("co_supervisor_email_2").references(
         () => users.email,
-        { onDelete: "restrict" }
+        { onDelete: "cascade" }
     ),
     dac1Email: text("dac_1_email").references(() => users.email, {
-        onDelete: "restrict",
+        onDelete: "cascade",
     }),
     dac2Email: text("dac_2_email").references(() => users.email, {
-        onDelete: "restrict",
+        onDelete: "cascade",
     }),
 
     natureOfPhD: text("nature_of_phd"),
@@ -130,7 +130,7 @@ export const phd = pgTable("phd", {
 export const staff = pgTable("staff", {
     email: text("email")
         .primaryKey()
-        .references(() => users.email, { onDelete: "restrict" }),
+        .references(() => users.email, { onDelete: "cascade" }),
     name: text("name"),
     department: text("department"),
     phone: text("phone"),

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import EmailTemplateEditor from "./EmailTemplateEditor";
 
 interface Semester {
   id: number;
@@ -35,7 +37,8 @@ const UpdateProposalDeadline: React.FC = () => {
     examName: "Thesis Proposal",
     deadline: "",
   });
-
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [createdDeadline, setCreatedDeadline] = useState<string | null>(null);
   // Query for current semester
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
     useQuery({
@@ -99,17 +102,25 @@ const UpdateProposalDeadline: React.FC = () => {
     mutationFn: async (
       formData: typeof proposalForm & { semesterId: number }
     ) => {
-      const response = await api.post<{ deadline: Date }>(
+      const response = await api.post<{ proposal: ProposalDeadline }>(
         "/phd/staff/updateProposalDeadline",
         formData
       );
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Thesis proposal deadline updated successfully");
+
+      // Store the created deadline for email notification
+      setCreatedDeadline(data.proposal.deadline);
+
+      // Show option to send notification
+      setShowEmailDialog(true);
+
       void queryClient.invalidateQueries({
         queryKey: ["phd-proposal-deadlines", currentSemesterId],
       });
+
       setProposalForm({
         examName: "Thesis Proposal",
         deadline: "",
@@ -175,167 +186,181 @@ const UpdateProposalDeadline: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="border-b border-gray-200 bg-gray-100 px-6 py-4">
-          <h1 className="text-center text-3xl font-bold text-gray-800">
-            Thesis Proposal Deadline Management
-          </h1>
-        </div>
-
-        {isLoadingCurrentSemester ? (
-          <div className="flex h-64 items-center justify-center">
-            <LoadingSpinner className="h-12 w-12" />
+    <>
+      <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-xl">
+          <div className="border-b border-gray-200 bg-gray-100 px-6 py-4">
+            <h1 className="text-center text-3xl font-bold text-gray-800">
+              Thesis Proposal Deadline Management
+            </h1>
           </div>
-        ) : currentSemesterData?.semester ? (
-          <div className="grid gap-6 p-6 md:grid-cols-2">
-            {/* Semester Information */}
-            <div className="space-y-4 rounded-lg bg-gray-50 p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
-                  Current Academic Semester
-                </h2>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    isActiveSemester
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {isActiveSemester ? "Active" : "Recent"}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <p className="text-lg font-medium">
-                  {currentSemesterData.semester.year}-Semester{" "}
-                  {currentSemesterData.semester.semesterNumber}
-                </p>
-                <div className="text-sm text-gray-500">
-                  <div>
-                    Start: {formatDate(currentSemesterData.semester.startDate)}
-                  </div>
-                  <div>
-                    End: {formatDate(currentSemesterData.semester.endDate)}
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Exam Deadline Form */}
-            <div>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <Label>Exam Name:</Label>
-                  <div className="font-bold">Thesis Proposal</div>
+          {isLoadingCurrentSemester ? (
+            <div className="flex h-64 items-center justify-center">
+              <LoadingSpinner className="h-12 w-12" />
+            </div>
+          ) : currentSemesterData?.semester ? (
+            <div className="grid gap-6 p-6 md:grid-cols-2">
+              {/* Semester Information */}
+              <div className="space-y-4 rounded-lg bg-gray-50 p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">
+                    Current Academic Semester
+                  </h2>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      isActiveSemester
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {isActiveSemester ? "Active" : "Recent"}
+                  </span>
                 </div>
-                <div>
-                  <Label htmlFor="deadline">Registration Deadline</Label>
-                  <Input
-                    id="deadline"
-                    type="datetime-local"
-                    value={proposalForm.deadline}
-                    onChange={(e) =>
-                      setProposalForm({
-                        ...proposalForm,
-                        deadline: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                  {regularQEData?.exams && regularQEData.exams.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      Latest Regular QE End Date:{" "}
-                      {formatDate(regularQEData.exams[0].examEndDate || "")}
-                    </div>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  disabled={proposalMutation.isLoading || !isActiveSemester}
-                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  {proposalMutation.isLoading ? (
-                    <LoadingSpinner className="h-5 w-5" />
-                  ) : (
-                    "Update Proposal Deadline"
-                  )}
-                </Button>
-                {!isActiveSemester && (
-                  <p className="text-sm text-amber-600">
-                    Warning: You are setting deadlines for a semester that is
-                    not currently active.
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">
+                    {currentSemesterData.semester.year}-Semester{" "}
+                    {currentSemesterData.semester.semesterNumber}
                   </p>
-                )}
-              </form>
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center">
-            <p className="text-red-500">
-              No semester configuration found. Please contact the system
-              administrator.
-            </p>
-          </div>
-        )}
+                  <div className="text-sm text-gray-500">
+                    <div>
+                      Start:{" "}
+                      {formatDate(currentSemesterData.semester.startDate)}
+                    </div>
+                    <div>
+                      End: {formatDate(currentSemesterData.semester.endDate)}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        {/* Existing Exams Table */}
-        <div className="border-t border-gray-200 bg-gray-50 p-6">
-          <h3 className="mb-4 text-lg font-medium">
-            Current Thesis Proposal Deadlines
-          </h3>
-          {isLoadingProposals ? (
-            <div className="flex justify-center py-4">
-              <LoadingSpinner className="h-6 w-6" />
-            </div>
-          ) : proposalData?.exams && proposalData.exams.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border px-4 py-2 text-left">Exam Name</th>
-                    <th className="border px-4 py-2 text-left">
-                      Registration Deadline
-                    </th>
-                    <th className="border px-4 py-2 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {proposalData.exams.map((proposal) => {
-                    const deadlineDate = new Date(proposal.deadline);
-                    const isActive = deadlineDate > new Date();
-                    return (
-                      <tr key={proposal.id}>
-                        <td className="border px-4 py-2">
-                          {proposal.examName}
-                        </td>
-                        <td className="border px-4 py-2">
-                          {formatDate(proposal.deadline)}
-                        </td>
-                        <td className="border px-4 py-2">
-                          <span
-                            className={`rounded-full px-2 py-1 text-xs font-medium ${
-                              isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {isActive ? "Active" : "Expired"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Exam Deadline Form */}
+              <div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label>Exam Name:</Label>
+                    <div className="font-bold">Thesis Proposal</div>
+                  </div>
+                  <div>
+                    <Label htmlFor="deadline">Registration Deadline</Label>
+                    <Input
+                      id="deadline"
+                      type="datetime-local"
+                      value={proposalForm.deadline}
+                      onChange={(e) =>
+                        setProposalForm({
+                          ...proposalForm,
+                          deadline: e.target.value,
+                        })
+                      }
+                      required
+                    />
+                    {regularQEData?.exams && regularQEData.exams.length > 0 && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        Latest Regular QE End Date:{" "}
+                        {formatDate(regularQEData.exams[0].examEndDate || "")}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={proposalMutation.isLoading || !isActiveSemester}
+                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {proposalMutation.isLoading ? (
+                      <LoadingSpinner className="h-5 w-5" />
+                    ) : (
+                      "Update Proposal Deadline"
+                    )}
+                  </Button>
+                  {!isActiveSemester && (
+                    <p className="text-sm text-amber-600">
+                      Warning: You are setting deadlines for a semester that is
+                      not currently active.
+                    </p>
+                  )}
+                </form>
+              </div>
             </div>
           ) : (
-            <p className="py-4 text-center text-gray-500">
-              No Thesis Proposal deadlines set for this semester.
-            </p>
+            <div className="p-8 text-center">
+              <p className="text-red-500">
+                No semester configuration found. Please contact the system
+                administrator.
+              </p>
+            </div>
           )}
+
+          {/* Existing Exams Table */}
+          <div className="border-t border-gray-200 bg-gray-50 p-6">
+            <h3 className="mb-4 text-lg font-medium">
+              Current Thesis Proposal Deadlines
+            </h3>
+            {isLoadingProposals ? (
+              <div className="flex justify-center py-4">
+                <LoadingSpinner className="h-6 w-6" />
+              </div>
+            ) : proposalData?.exams && proposalData.exams.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border px-4 py-2 text-left">Exam Name</th>
+                      <th className="border px-4 py-2 text-left">
+                        Registration Deadline
+                      </th>
+                      <th className="border px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {proposalData.exams.map((proposal) => {
+                      const deadlineDate = new Date(proposal.deadline);
+                      const isActive = deadlineDate > new Date();
+                      return (
+                        <tr key={proposal.id}>
+                          <td className="border px-4 py-2">
+                            {proposal.examName}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {formatDate(proposal.deadline)}
+                          </td>
+                          <td className="border px-4 py-2">
+                            <span
+                              className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {isActive ? "Active" : "Expired"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="py-4 text-center text-gray-500">
+                No Thesis Proposal deadlines set for this semester.
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="max-w-3xl">
+          {createdDeadline && (
+            <EmailTemplateEditor
+              examType="Thesis Proposal"
+              dates={{ deadline: createdDeadline }}
+              onClose={() => setShowEmailDialog(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

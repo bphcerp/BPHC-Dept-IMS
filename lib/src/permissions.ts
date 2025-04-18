@@ -12,14 +12,16 @@ export const allPermissions = {
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
     "conference:application:view-pending": "View pending applications",
-    "conference:application:review-fields":
-        "Approve or Reject fields of applications",
-    "conference:application:overwrite-field-review":
-        "Overwrite a review for a particular field of an application",
-    "conference:application:review-application-hod":
-        "Review application as HOD",
+    "conference:application:review-application-member":
+        "Review application as DRC Member",
     "conference:application:review-application-convener":
         "Review application as DRC convener",
+    "conference:application:review-application-hod":
+        "Review application as HOD",
+    "conference:application:get-flow":
+        "Get conference application approval flow",
+    "conference:application:set-flow":
+        "Set conference application approval flow",
 
     "phd:drc-member:generate-coursework-form": "",
     "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
@@ -37,6 +39,7 @@ export const allPermissions = {
     "phd:drc-member:get-subarea-and-examiner": "",
     "phd:drc-member:get-supervisor-with-student": "",
     "phd:drc-member:get-qe-time-table": "",
+    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip": "",
 
     "phd:notifs:send": "",
 
@@ -58,6 +61,7 @@ export const allPermissions = {
     "phd:student:get-qe-application": "",
     "phd:student:get-grade-status": "",
     "phd:student:get-sub-area": "",
+    "phd:student:get-profile-details": "",
 
     "phd:co-supervisor:get-co-supervised-students": "",
     "phd:supervisor:get-supervised-students": "",
@@ -76,6 +80,7 @@ export const allPermissions = {
     "phd:staff:delete-sub-area": "",
     "phd:staff:get-sub-area": "",
     "phd:staff:update-sub-area": "",
+    "phd:staff:notify-all-users": "",
 
     "handout:faculty:submit": "",
     "handout:dca-convenor:assignreviewer": "",
@@ -89,18 +94,23 @@ export const allPermissions = {
     "handout:dca-convenor:get-all-dcamember": "",
     "handout:dca-convenor:update-reviewer": "",
     "handout:dca-convenor:update-ic": "",
+    "handout:dca-convenor:export-summary": "",
+    "handout:dca-convenor:get-all-faculty": "",
 
     "publications:view": "View author's own publications",
+    "publications:all": "View all publications",
 
     "inventory:write": "Admin can edit the data of the inventory module",
-    "inventory:read": "Non-Admin users can view the data of the inventory module",
+    "inventory:read":
+        "Non-Admin users can view the data of the inventory module",
     "inventory:export": "Export the data as an Excel file",
     "inventory:stats-lab-year": "Member can view stats per laboratory per year",
-    "inventory:stats-lab-category": "Member can view stats per laboratory per category",
+    "inventory:stats-lab-category":
+        "Member can view stats per laboratory per category",
     "inventory:stats-vendor-year": "Member can view stats per vendor per year",
 } as const;
 
-export const permissions = {
+export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Admin
 
     "/admin/member/invite": "admin:member:create",
@@ -122,11 +132,18 @@ export const permissions = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-    "/conference/applications/details": "conference:application:view-pending",
+    "/conference/editApplication": "conference:application:submitted",
     "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",
-    "/conference/fields/review": "conference:application:review-fields",
+    "/conference/applications/reviewMember":
+        "conference:application:review-application-member",
+    "/conference/applications/reviewConvener":
+        "conference:application:review-application-convener",
+    "/conference/applications/reviewHod":
+        "conference:application:review-application-hod",
+    "/conference/getFlow": "conference:application:get-flow",
+    "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
 
@@ -156,6 +173,8 @@ export const permissions = {
     "/phd/drcMember/getSupervisorsWithStudents":
         "phd:drc-member:get-supervisor-with-student",
     "/phd/drcMember/getQeTimeTable": "phd:drc-member:get-qe-time-table",
+    "/phd/drcMember/getPhdApplicationFormsAsZip":
+        "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
 
     "/phd/notifs/send": "phd:notifs:send",
 
@@ -186,6 +205,7 @@ export const permissions = {
     "/phd/student/getNoOfQeApplication": "phd:student:get-qe-application",
     "/phd/student/getGradeStatus": "phd:student:get-grade-status",
     "/phd/student/getSubAreas": "phd:student:get-sub-area",
+    "/phd/student/getProfileDetails": "phd:student:get-profile-details",
 
     //Co-Supervisor
     "/phd/coSupervisor/getCoSupervisedStudents":
@@ -215,6 +235,7 @@ export const permissions = {
     "/phd/staff/deleteSubArea": "phd:staff:delete-sub-area",
     "/phd/staff/getSubAreas": "phd:staff:get-sub-area",
     "/phd/staff/updateSubAreas": "phd:staff:update-sub-area",
+    "/phd/staff/notifyAllUsers": "phd:staff:notify-all-users",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
@@ -231,45 +252,40 @@ export const permissions = {
     "/handout/dcaconvenor/updateReviewer":
         "handout:dca-convenor:update-reviewer",
     "/handout/dcaconvenor/updateIC": "handout:dca-convenor:update-ic",
+    "/handout/dcaconvenor/exportSummary": "handout:dca-convenor:export-summary",
 
+    "/handout/dcaconvenor/getAllFaculty":
+        "handout:dca-convenor:get-all-faculty",
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
+    "/publications/all": "publications:all",
+    "/publications/updateStatus": "publications:view",
+    "/publications/updatePublications": "publications:all",
 
     // Inventory
-    "/inventory/labs/get" : "inventory:read",
-    "/inventory/labs/create" : "inventory:write",
-    "/inventory/labs/update" : "inventory:write",
-    "/inventory/labs/delete" : "inventory:write",
+    "/inventory/labs/get": "inventory:read",
+    "/inventory/labs/create": "inventory:write",
+    "/inventory/labs/update": "inventory:write",
+    "/inventory/labs/delete": "inventory:write",
 
-    "/inventory/vendors/get" : "inventory:read",
-    "/inventory/vendors/create" : "inventory:write",
-    "/inventory/vendors/update" : "inventory:write",
-    "/inventory/vendors/delete" : "inventory:write",
+    "/inventory/vendors/get": "inventory:read",
+    "/inventory/vendors/create": "inventory:write",
+    "/inventory/vendors/update": "inventory:write",
+    "/inventory/vendors/delete": "inventory:write",
 
-    "/inventory/categories/get" : "inventory:read",
-    "/inventory/categories/create" : "inventory:write",
-    "/inventory/categories/update" : "inventory:write",
-    "/inventory/categories/delete" : "inventory:write",
+    "/inventory/categories/get": "inventory:read",
+    "/inventory/categories/create": "inventory:write",
+    "/inventory/categories/update": "inventory:write",
+    "/inventory/categories/delete": "inventory:write",
 
-    "/inventory/items/get" : "inventory:read",
-    "/inventory/items/export" : "inventory:export",
-    "/inventory/items/create" : "inventory:write",
-    "/inventory/items/excel" : "inventory:write",
-    "/inventory/items/update" : "inventory:write",
-    "/inventory/items/delete" : "inventory:write",
+    "/inventory/items/get": "inventory:read",
+    "/inventory/items/export": "inventory:export",
+    "/inventory/items/create": "inventory:write",
+    "/inventory/items/excel": "inventory:write",
+    "/inventory/items/update": "inventory:write",
+    "/inventory/items/delete": "inventory:write",
 
     "/inventory/stats/lab-year": "inventory:stats-lab-year",
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
 } as const;
-
-const permissionsSet = new Set(Object.values(permissions));
-const allPermissionsSet = new Set(Object.keys(allPermissions));
-
-if (
-    ![...permissionsSet].every((permission) =>
-        allPermissionsSet.has(permission)
-    )
-) {
-    throw new Error("Unknown permission defined in routes");
-}

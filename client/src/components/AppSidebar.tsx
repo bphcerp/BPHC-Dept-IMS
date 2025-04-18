@@ -17,6 +17,7 @@ import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { ArrowLeftIcon } from "lucide-react";
 
 export interface SidebarMenuItem {
   title: string;
@@ -50,8 +51,12 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
     <Sidebar>
       <SidebarHeader>
         <Link to="/" className="flex items-center gap-1">
-          <img src={logo} alt="Logo" className="h-auto w-16" />
-          <span className="text-lg font-bold">EEE ERP</span>
+          {pathname === "/" ? (
+            <img src={logo} alt="Logo" className="h-auto w-16" />
+          ) : (
+            <ArrowLeftIcon className="h-12 w-12 p-2" />
+          )}
+          <span className="text-lg font-bold">EEE IMS</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

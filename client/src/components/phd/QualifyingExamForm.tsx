@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import api from "@/lib/axios-instance";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { 
@@ -28,13 +28,9 @@ interface Exam {
   deadline: string;
   examStartDate: string;
   examEndDate: string;
+  vivaDate?: string;
   semesterYear?: string;
   semesterNumber?: number;
-}
-
-interface BackendResponse {
-  success: boolean;
-  exams: Exam[];
 }
 
 interface SubAreasResponse {
@@ -42,13 +38,18 @@ interface SubAreasResponse {
   subAreas: PhdSubArea[];
 }
 
-export default function ExamForm() {
+interface ExamFormProps {
+  exam: Exam;
+}
+
+export default function ExamForm({ exam }: ExamFormProps) {
+  const queryClient = useQueryClient();
   const [qualifyingArea1, setQualifyingArea1] = useState("");
   const [qualifyingArea2, setQualifyingArea2] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
 
-  // New state for checkboxes
+  // Checkboxes for form sections
   const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
   const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
   const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
@@ -62,10 +63,8 @@ export default function ExamForm() {
   } = useQuery<SubAreasResponse, Error>({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
-      console.log("Fetching sub-areas...");
       try {
         const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
-        console.log("Sub-areas response:", response.data);
         return response.data;
       } catch (error) {
         console.error("Error fetching sub-areas:", error);
@@ -73,32 +72,6 @@ export default function ExamForm() {
       }
     },
     refetchOnWindowFocus: false,
-  });
-
-  // Fetch exam deadline and dates
-  const { 
-    data: examData, 
-    isLoading: isExamDataLoading 
-  } = useQuery<BackendResponse, Error>({
-    queryKey: ["get-qualifying-exam-deadline"],
-    queryFn: async (): Promise<BackendResponse> => {
-      try {
-        const response = await api.get<BackendResponse>(
-          "/phd/student/getQualifyingExamDeadLine",
-          {
-            params: {
-              name: "Regular Qualifying Exam",
-            },
-          }
-        );
-        return response.data;
-      } catch (err) {
-        console.error("Error fetching exam deadline:", err);
-        throw err;
-      }
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const submitMutation = useMutation({
@@ -122,11 +95,15 @@ export default function ExamForm() {
       setAcademicInfoChecked(false);
       setAnticipatedPlanChecked(false);
       setQualifyingExamDetailsChecked(false);
+      
+      // Refresh the application data
+      queryClient.invalidateQueries({ queryKey: ["get-qe-application-number"] });
+      queryClient.invalidateQueries({ queryKey: ["get-qualifying-exam-status"] });
     },
     onError: (error) => {
       toast.error(
         isAxiosError(error)
-          ? (error.response?.data as string) || "Submission failed"
+          ? error.response?.data?.message || "Submission failed"
           : "Submission failed"
       );
       console.error("Submission error:", error);
@@ -135,11 +112,6 @@ export default function ExamForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!examData || examData.exams.length === 0) {
-      toast.error("No valid exam dates found");
-      return;
-    }
 
     // Check if all required fields and checkboxes are filled
     if (
@@ -159,14 +131,13 @@ export default function ExamForm() {
       return;
     }
 
-    const selectedExam = examData.exams[0]; // Use the first exam if multiple
-
     const formData = new FormData();
     formData.append("qualificationForm", file);
     formData.append("qualifyingArea1", qualifyingArea1);
     formData.append("qualifyingArea2", qualifyingArea2);
-    formData.append("examStartDate", selectedExam.examStartDate);
-    formData.append("examEndDate", selectedExam.examEndDate);
+    formData.append("examId", exam.id.toString());
+    formData.append("examStartDate", exam.examStartDate);
+    formData.append("examEndDate", exam.examEndDate);
 
     submitMutation.mutate(formData);
   };
@@ -193,7 +164,6 @@ export default function ExamForm() {
 
   // Additional debugging for empty sub-areas
   if (!subAreasData || subAreasData.subAreas.length === 0) {
-    console.error("No sub-areas found!");
     return <div>No research sub-areas available</div>;
   }
 
@@ -201,6 +171,11 @@ export default function ExamForm() {
     <Card className="mx-auto max-w-2xl">
       <CardContent className="space-y-4 pt-6">
         <h2 className="text-2xl font-bold">Qualifying Exam Application</h2>
+        
+        <div className="mb-4 text-sm text-gray-500">
+          <p>Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} to {new Date(exam.examEndDate).toLocaleDateString()}</p>
+          <p>Registration Deadline: {new Date(exam.deadline).toLocaleDateString()}</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
@@ -253,7 +228,7 @@ export default function ExamForm() {
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="qualificationForm">Research Proposal (PDF) *</Label>
+            <Label htmlFor="qualificationForm">Qualifying Application Form (PDF) *</Label>
             <div className="flex items-center gap-2">
               <Input
                 id="qualificationForm"
@@ -354,11 +329,7 @@ export default function ExamForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={
-              submitMutation.isLoading || 
-              isExamDataLoading || 
-              isSubAreasLoading
-            }
+            disabled={submitMutation.isLoading}
           >
             {submitMutation.isLoading ? "Submitting..." : "Submit Application"}
           </Button>

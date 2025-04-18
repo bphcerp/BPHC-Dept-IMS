@@ -44,6 +44,8 @@
     "cmdk": "^1.0.4",
     "date-fns": "^3.0.0",
     "human-date": "^1.4.0",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "lib": "workspace:*",
     "lucide-react": "^0.441.0",

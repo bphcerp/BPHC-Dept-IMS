@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   drizzle-orm@0.40.0:
-    hash: edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f
+    hash: 3oqolxumisrbar4ooxdrjwtj4a
     path: patches/drizzle-orm@0.40.0.patch
 
 importers:
@@ -108,9 +108,15 @@ importers:
       date-fns:
         specifier: ^3.0.0
         version: 3.6.0
+      exceljs:
+        specifier: ^4.4.0
+        version: 4.4.0
       human-date:
         specifier: ^1.4.0
         version: 1.4.0
+      jszip:
+        specifier: ^3.10.1
+        version: 3.10.1
       jwt-decode:
         specifier: ^4.0.0
         version: 4.0.0
@@ -274,7 +280,7 @@ importers:
         version: 16.4.7
       drizzle-orm:
         specifier: ^0.40.0
-        version: 0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
+        version: 0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
@@ -290,6 +296,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
+      jszip:
+        specifier: ^3.10.1
+        version: 3.10.1
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -8097,7 +8106,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
+  drizzle-orm@0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
     optionalDependencies:
       '@types/pg': 8.11.11
       gel: 2.0.1
