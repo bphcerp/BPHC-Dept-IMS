@@ -263,10 +263,11 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
 
     // Inventory
-    "/inventory/labs/get": "inventory:read",
-    "/inventory/labs/create": "inventory:write",
-    "/inventory/labs/update": "inventory:write",
-    "/inventory/labs/delete": "inventory:write",
+    "/inventory/labs/get" : "inventory:read",
+    "/inventory/labs/lastItemNumber" : "inventory:read",
+    "/inventory/labs/create" : "inventory:write",
+    "/inventory/labs/update" : "inventory:write",
+    "/inventory/labs/delete" : "inventory:write",
 
     "/inventory/vendors/get": "inventory:read",
     "/inventory/vendors/create": "inventory:write",
@@ -288,4 +289,5 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/inventory/stats/lab-year": "inventory:stats-lab-year",
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
+    "/inventory/stats/important-dates": "inventory:read",
 } as const;

@@ -1,10 +1,11 @@
 import db from "@/config/db/index.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { Router } from "express";
 
 const router = Router();
 
-router.get('/', asyncHandler(async (_req, res) => {
+router.get('/',checkAccess(), asyncHandler(async (_req, res) => {
     try {
         const labs = await db.query.laboratories.findMany({
             with: {

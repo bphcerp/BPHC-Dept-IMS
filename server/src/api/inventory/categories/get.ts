@@ -1,5 +1,6 @@
 import db from "@/config/db/index.ts";
 import { inventoryCategories } from "@/config/db/schema/inventory.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 import { Router } from "express";
@@ -7,7 +8,7 @@ import { inventoryCategoryTypeEnum } from "node_modules/lib/src/schemas/Inventor
 
 const router = Router();
 
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/',checkAccess(), asyncHandler(async (req, res) => {
     try {
         const { type } = req.query;
         if (!type) {

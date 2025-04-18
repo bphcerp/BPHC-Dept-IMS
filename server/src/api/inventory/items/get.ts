@@ -1,12 +1,13 @@
 import db from "@/config/db/index.ts";
 import { inventoryItems } from "@/config/db/schema/inventory.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { isNull } from "drizzle-orm";
 import { Router } from "express";
 
 const router = Router();
 
-router.get('/', asyncHandler(async (_req, res) => {
+router.get('/',checkAccess(), asyncHandler(async (_req, res) => {
     try {
         const items = await db.query.inventoryItems.findMany({
             with: {
