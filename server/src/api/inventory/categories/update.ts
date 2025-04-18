@@ -10,38 +10,33 @@ import { categorySchema, inventoryCategoryTypeEnum } from "node_modules/lib/src/
 const router = Router();
 
 router.patch('/:id', checkAccess(), asyncHandler(async (req, res, next) => {
-    try {
-        const { type } = req.query;
-        if (!type) {
-            res.status(400).json({ message: "Query parameter 'type' is required" });
-            return
-        }
-
-        const parsedType = inventoryCategoryTypeEnum.parse(type)
-
-        if (parsedType === 'Inventory') {
-            const categoryItems = await db.select().from(inventoryItems).where(eq(inventoryItems.itemCategoryId, req.params.id))
-            if (req.body.code && categoryItems.length) {
-                return next(
-                    new HttpError(HttpCode.BAD_REQUEST, "Cannot update category code, this category has inventory")
-                )
-            }
-        }
-
-        const parsed = categorySchema.partial().parse(req.body);
-        const updatedCategory = await db
-            .update(inventoryCategories)
-            .set(parsed)
-            .where(and(
-                eq(inventoryCategories.id, req.params.id),
-                eq(inventoryCategories.type, parsedType)
-            ))
-            .returning();
-        res.status(200).json(updatedCategory);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating category', error });
-        console.error(error);
+    const { type } = req.query;
+    if (!type) {
+        res.status(400).json({ message: "Query parameter 'type' is required" });
+        return
     }
+
+    const parsedType = inventoryCategoryTypeEnum.parse(type)
+
+    if (parsedType === 'Inventory') {
+        const categoryItems = await db.select().from(inventoryItems).where(eq(inventoryItems.itemCategoryId, req.params.id))
+        if (req.body.code && categoryItems.length) {
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Cannot update category code, this category has inventory")
+            )
+        }
+    }
+
+    const parsed = categorySchema.partial().parse(req.body);
+    const updatedCategory = await db
+        .update(inventoryCategories)
+        .set(parsed)
+        .where(and(
+            eq(inventoryCategories.id, req.params.id),
+            eq(inventoryCategories.type, parsedType)
+        ))
+        .returning();
+    res.status(200).json(updatedCategory);
 }));
 
 export default router;

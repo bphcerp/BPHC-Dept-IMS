@@ -10,35 +10,30 @@ import { z } from "zod";
 const router = Router();
 
 router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
-    try {
-        const parsed = vendorSchema.omit({ id: true }).parse(req.body);
-        const newVendor = await db
-            .insert(vendors)
-            .values(parsed)
-            .returning();
+    const parsed = vendorSchema.omit({ id: true }).parse(req.body);
+    const newVendor = await db
+        .insert(vendors)
+        .values(parsed)
+        .returning();
 
-        if (newVendor.length === 0) {
-            return next(
-                new HttpError(HttpCode.CONFLICT, "Vendor already exists")
-            );
-        };
+    if (newVendor.length === 0) {
+        return next(
+            new HttpError(HttpCode.CONFLICT, "Vendor already exists")
+        );
+    };
 
-        if (req.body.categories){
-            const vendorCategories = req.body.categories.map((categoryId: string) => ({
-                vendorId: newVendor[0].id,
-                categoryId,
-              }))
-            
-            const vendorCategoriesParsed = z.array(vendorCategorySchema).parse(vendorCategories)
-            
-            await db.insert(vendorCategories).values(vendorCategoriesParsed)
-        }
+    if (req.body.categories) {
+        const vendorCategories = req.body.categories.map((categoryId: string) => ({
+            vendorId: newVendor[0].id,
+            categoryId,
+        }))
 
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating vendor', error });
-        console.error(error);
+        const vendorCategoriesParsed = z.array(vendorCategorySchema).parse(vendorCategories)
+
+        await db.insert(vendorCategories).values(vendorCategoriesParsed)
     }
+
+    res.json({ success: true });
 }));
 
 export default router;

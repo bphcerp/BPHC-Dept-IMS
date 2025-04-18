@@ -6,8 +6,8 @@ import { eq, max } from "drizzle-orm";
 import { PgTransaction } from "drizzle-orm/pg-core";
 import { Router } from "express";
 
-export const getLastItemNumber = async (labId: string, tx? : PgTransaction<any,any,any>) => {
-    const result = await ( tx ?? db )
+export const getLastItemNumber = async (labId: string, tx?: PgTransaction<any, any, any>) => {
+    const result = await (tx ?? db)
         .select({
             maxSerialNumber: max(inventoryItems.serialNumber),
         })
@@ -20,13 +20,8 @@ export const getLastItemNumber = async (labId: string, tx? : PgTransaction<any,a
 
 const router = Router();
 
-router.get('/:labId',checkAccess(), asyncHandler(async (req, res) => {
-    try {
-        res.status(200).json({ lastItemNumber : await getLastItemNumber(req.params.labId) });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching laboratories', error });
-        console.error(error);
-    }
+router.get('/:labId', checkAccess(), asyncHandler(async (req, res) => {
+    res.status(200).json({ lastItemNumber: await getLastItemNumber(req.params.labId) });
 }))
 
 export default router;

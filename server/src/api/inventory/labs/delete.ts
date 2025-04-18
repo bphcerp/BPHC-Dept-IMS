@@ -7,14 +7,9 @@ import { Router } from "express";
 
 const router = Router();
 
-router.delete('/:id',checkAccess(), asyncHandler(async (req, res) => {
-    try {
-        await db.delete(laboratories).where(eq(laboratories.id,req.params.id));
-        res.status(200).json({ message: 'Laboratory deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting laboratory', error });
-        console.error(error);
-    }
+router.delete('/:id', checkAccess(), asyncHandler(async (req, res) => {
+    await db.delete(laboratories).where(eq(laboratories.id, req.params.id));
+    res.status(200).json({ message: 'Laboratory deleted successfully' });
 }));
 
 export default router;

@@ -8,25 +8,20 @@ import { laboratorySchema } from "node_modules/lib/src/schemas/Inventory.ts";
 
 const router = Router();
 
-router.post('/',checkAccess(), asyncHandler(async (req, res, next) => {
-    try {
-        const parsed = laboratorySchema.omit({ id: true }).parse(req.body);
-        const newLab = await db
-            .insert(laboratories)
-            .values(parsed)
-            .onConflictDoNothing()
-            .returning();
+router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
+    const parsed = laboratorySchema.omit({ id: true }).parse(req.body);
+    const newLab = await db
+        .insert(laboratories)
+        .values(parsed)
+        .onConflictDoNothing()
+        .returning();
 
-        if (newLab.length === 0) {
-            return next(
-                new HttpError(HttpCode.CONFLICT, "Lab already exists")
-            );
-        };
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating laboratory', error });
-        console.error(error);
-    }
+    if (newLab.length === 0) {
+        return next(
+            new HttpError(HttpCode.CONFLICT, "Lab already exists")
+        );
+    };
+    res.json({ success: true });
 }));
 
 export default router;

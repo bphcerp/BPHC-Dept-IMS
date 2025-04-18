@@ -212,8 +212,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 router.post('/', checkAccess(), upload.single('excel'), asyncHandler(async (req, res, next) => {
-    try {
-
         const { labId } = req.body
 
         const sheetInfo = getIsValidLabSheet(req.file!.buffer)
@@ -227,10 +225,6 @@ router.post('/', checkAccess(), upload.single('excel'), asyncHandler(async (req,
         await getAndSaveDataFromSheet(sheetInfo.workbook, sheetInfo, labId)
 
         res.status(201).json({ success: true });
-    } catch (error) {
-        res.status(500).json({ message: (error as Error).message ?? 'Error adding items in bulk', error });
-        console.error('Error adding items in bulk', error);
-    }
 }));
 
 export default router

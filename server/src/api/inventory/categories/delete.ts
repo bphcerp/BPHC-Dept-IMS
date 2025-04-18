@@ -9,28 +9,23 @@ import { inventoryCategoryTypeEnum } from "node_modules/lib/src/schemas/Inventor
 const router = Router();
 
 router.delete('/:id', checkAccess(), asyncHandler(async (req, res) => {
-    try {
-        const { type } = req.query;
-        if (!type) {
-            res.status(400).json({ message: "Query parameter 'type' is required" });
-            return
-        }
-
-        const parsedType = inventoryCategoryTypeEnum.parse(type)
-
-        await db
-            .delete(inventoryCategories)
-            .where(
-                and(
-                    eq(inventoryCategories.id, req.params.id),
-                    eq(inventoryCategories.type, parsedType)
-                )
-            );
-        res.status(200).json({ message: 'Category deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error deleting category', error });
-        console.error(error);
+    const { type } = req.query;
+    if (!type) {
+        res.status(400).json({ message: "Query parameter 'type' is required" });
+        return
     }
+
+    const parsedType = inventoryCategoryTypeEnum.parse(type)
+
+    await db
+        .delete(inventoryCategories)
+        .where(
+            and(
+                eq(inventoryCategories.id, req.params.id),
+                eq(inventoryCategories.type, parsedType)
+            )
+        );
+    res.status(200).json({ message: 'Category deleted successfully' });
 }));
 
 export default router;

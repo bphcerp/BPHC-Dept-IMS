@@ -9,14 +9,9 @@ import { inventoryItemSchema } from "node_modules/lib/src/schemas/Inventory.ts";
 const router = Router();
 
 router.patch('/:id', checkAccess(), asyncHandler(async (req, res) => {
-    try {
-        const parsed = inventoryItemSchema.partial().parse(req.body);
-        const updatedItem = await db.update(inventoryItems).set(parsed).where(eq(inventoryItems.id, req.params.id)).returning();
-        res.status(200).json(updatedItem);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating item', error });
-        console.error(error);
-    }
+    const parsed = inventoryItemSchema.partial().parse(req.body);
+    const updatedItem = await db.update(inventoryItems).set(parsed).where(eq(inventoryItems.id, req.params.id)).returning();
+    res.status(200).json(updatedItem);
 }));
 
 export default router;

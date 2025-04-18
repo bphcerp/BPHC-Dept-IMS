@@ -11,12 +11,10 @@ export const getYearRange = () => {
     return { start: '2008-01-01', end: `${currentYear}-12-31` };
 };
 
-router.get('/',checkAccess(), asyncHandler(async (_req, res) => {
-    try {
+router.get('/', checkAccess(), asyncHandler(async (_req, res) => {
+    const { start, end } = getYearRange();
 
-        const { start, end } = getYearRange();
-
-        const data = await db.execute(sql`
+    const data = await db.execute(sql`
             SELECT 
                 "subquery"."lab_id" AS "labId",
                 "subquery".year AS year,
@@ -37,11 +35,7 @@ router.get('/',checkAccess(), asyncHandler(async (_req, res) => {
             ORDER BY "subquery".year DESC;
 
         `)
-        res.status(200).json(data.rows);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching laboratory stats per year', error });
-        console.error(error);
-    }
+    res.status(200).json(data.rows);
 }))
 
 export default router
