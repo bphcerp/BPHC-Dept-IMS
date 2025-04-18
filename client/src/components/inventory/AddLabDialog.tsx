@@ -35,8 +35,8 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
 
   useEffect(() => {
     if (isSuccess && members) {
-      setTechnicians(members.filter((member: Member) => member.type === "staff") as Staff[]);
-      setFaculties(members.filter((member: Member) => member.type === "faculty") as Faculty[]);
+      setTechnicians(members.filter((member: Member) => member.type === "staff") as unknown as Staff[]);
+      setFaculties(members.filter((member: Member) => member.type === "faculty") as unknown as Faculty[]);
     }
   }, [isSuccess, members])
 
@@ -45,8 +45,8 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
       name: editInitialData?.name ?? "",
       code: editInitialData?.code ?? "",
       location: editInitialData?.location ?? "",
-      technicianInChargeEmail: editInitialData?.technicianInCharge.email ?? "",
-      facultyInChargeEmail: editInitialData?.facultyInCharge.email ?? "",
+      technicianInChargeEmail: editInitialData?.technicianInCharge?.email ?? "",
+      facultyInChargeEmail: editInitialData?.facultyInCharge?.email ?? "",
     } as NewLaboratoryRequest,
     onSubmit: ({ value: data, formApi: form }) => {
       if (!data.name || !data.code || !data.location || !data.technicianInChargeEmail || !data.facultyInChargeEmail) {

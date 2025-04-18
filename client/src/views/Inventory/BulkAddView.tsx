@@ -38,7 +38,7 @@ const BulkAddView = () => {
         })
         .catch((err) => {
             handleNextStage(1)
-            const errMessage = ((err as AxiosError).response?.data as { message: string }).message
+            const errMessage = ((err as AxiosError).response?.data as { message: string }).message ?? (err as AxiosError).response?.data
             toast.error(errMessage ?? (err as Error).message ?? "Error uploading file")
             console.error(errMessage ?? (err as Error).message)
         })

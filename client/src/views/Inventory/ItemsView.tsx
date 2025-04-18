@@ -95,6 +95,7 @@ export const ItemsView = () => {
             }
         },
         refetchOnWindowFocus: false,
+        refetchOnMount: 'always',
         staleTime: 1000 * 60 * 5
     })
 
@@ -108,7 +109,7 @@ export const ItemsView = () => {
             })
             .catch((err) => {
                 console.error({ message: "Error deleting item", err });
-                toast.error(((err as AxiosError).response?.data as any).message ?? "Error deleting item");
+                toast.error(((err as AxiosError).response?.data as any).message?? (err as AxiosError).response?.data ?? "Error deleting item");
             });
     };
 
@@ -159,7 +160,7 @@ export const ItemsView = () => {
                             const item = selectedItems[0];
                             ["createdAt", "updatedAt", "poDate", "dateOfInstallation", "warrantyFrom", "warrantyTo", "amcFrom", "amcTo"].forEach((field) => {
                                 if (item[field as keyof InventoryItem]) {
-                                    (item[field as keyof InventoryItem] as Date) = new Date(item[field as keyof InventoryItem]);
+                                    (item[field as keyof InventoryItem] as unknown as Date) = new Date(item[field as keyof InventoryItem] as string);
                                 }
                             });
                             ["itemCategory", "lab", "vendor"].forEach((field) => {

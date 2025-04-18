@@ -10,21 +10,21 @@ export const inventoryCategoryTypeEnum = z.enum(["Vendor", "Inventory"]);
 
 export const staffSchema = z.object({
     email: z.string().email(),
-    name: z.string().optional(),
-    department: z.string().optional(),
-    phone: z.string().optional(),
-    designation: z.string().optional(),
-  });
+    name: z.string().nullable(),
+    department: z.string().nullable(),
+    phone: z.string().nullable(),
+    designation: z.string().nullable(),
+});
 
 export const facultySchema = z.object({
-    psrn: z.string().optional(),
+    psrn: z.string().nullable(),
     email: z.string().email(),
-    name: z.string().optional(),
-    department: z.string().optional(),
-    designation: z.string().optional(),
-    room: z.string().optional(),
-    phone: z.string().optional(),
-    authorId: z.string().optional(),
+    name: z.string().nullable(),
+    department: z.string().nullable(),
+    designation: z.string().nullable(),
+    room: z.string().nullable(),
+    phone: z.string().nullable(),
+    authorId: z.string().nullable(),
 });
 
 export const inventoryItemSchema = z.object({
@@ -41,17 +41,17 @@ export const inventoryItemSchema = z.object({
     yearOfLease: z.number().int().nullable(),
     poAmount: z.number().transform((val) => val.toFixed(2)),
     poNumber: z.string().nullable(),
-    poDate: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    poDate: z.string().nullable(),
     labInchargeAtPurchase: z.string().nullable(),
     labTechnicianAtPurchase: z.string().nullable(),
     equipmentID: z.string().trim().nonempty(),
     fundingSource: inventoryFundingSourceEnum.nullable(),
-    dateOfInstallation: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    dateOfInstallation: z.string().nullable(),
     vendorId: z.string().uuid().nullable(),
-    warrantyFrom: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
-    warrantyTo: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
-    amcFrom: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
-    amcTo: z.date().transform((d) => d.toISOString().split("T")[0]).nullable(),
+    warrantyFrom: z.string().nullable(),
+    warrantyTo: z.string().nullable(),
+    amcFrom: z.string().nullable(),
+    amcTo: z.string().nullable(),
     currentLocation: z.string().trim().nonempty(),
     softcopyOfPO: z.string().nullable(),
     softcopyOfInvoice: z.string().nullable(),

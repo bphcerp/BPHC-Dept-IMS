@@ -92,7 +92,7 @@ const AddInventoryItem = () => {
                 toast.info("Saving Edits...")
                 api.patch(`/inventory/items/update/${location.state!.toBeEditedItem.id}`, editedItem)
                     .then(() => toast.success("Edit successful"))
-                    .catch((err) => toast.error(((err as AxiosError).response?.data as any).message ?? "Error editing item"));
+                    .catch((err) => toast.error(((err as AxiosError).response?.data as any).message ?? (err as AxiosError).response?.data ?? "Error editing item"));
             }
             else {
                 try {

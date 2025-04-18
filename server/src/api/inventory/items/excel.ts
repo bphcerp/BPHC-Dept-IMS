@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { Router } from "express";
 import multer from "multer";
 import { inventoryItemSchema, multipleEntrySchema } from "node_modules/lib/src/schemas/Inventory.ts";
-import { InventoryItem, Laboratory } from "node_modules/lib/src/types/inventory.ts";
+import { Laboratory, RawInventoryItem } from "node_modules/lib/src/types/inventory.ts";
 import * as XLSX from 'xlsx'
 import { getLastItemNumber } from "../labs/getLastItemNumber.ts";
 import parser from "any-date-parser";
@@ -67,16 +67,18 @@ const getIsValidLabSheet = (buffer: Buffer<ArrayBufferLike>): SheetInfo & { work
     };
 };
 
+const dateToPGDateString = (date: Date) => date.toISOString().split("T")[0]
+
 // Some dates have dots in them
 const parseDate = (date: any | Date) => {
     if (!date) return null
 
-    if (date instanceof Date) return date
-    if (!isNaN(new Date(date.toString()).getTime())) return new Date(date.toString())
+    if (date instanceof Date) return dateToPGDateString(date)
+    if (!isNaN(new Date(date.toString()).getTime())) return dateToPGDateString(new Date(date.toString()))
 
     // For those edge cases where there are dots or slashes instead of dashes
     const parsedDate = parser.fromAny(date.toString())
-    return parsedDate.invalid ? null : parsedDate
+    return parsedDate.invalid ? null : dateToPGDateString(parsedDate)
 }
 
 // Sanitize NA-like values to null
@@ -109,7 +111,7 @@ async function mapToInventoryItemAndSave(data: any[], selectedLab: Laboratory, c
 
     data = sanitizeFlatArray(data)
 
-    const baseItem: Partial<InventoryItem> = {
+    const baseItem: Partial<RawInventoryItem> = {
         itemCategoryId: itemCategory.id,
         serialNumber: lastItemNumber,
         itemName: data[columnIndexMap["item name"]],
@@ -128,8 +130,8 @@ async function mapToInventoryItemAndSave(data: any[], selectedLab: Laboratory, c
         labId: selectedLab.id,
         // labInchargeAtPurchase: data[columnIndexMap["lab incharge at the time of purchase"]],
         // labTechnicianAtPurchase: data[columnIndexMap["lab technician at the time of purchase"]],
-        labInchargeAtPurchase: selectedLab.facultyInCharge.name,
-        labTechnicianAtPurchase: selectedLab.technicianInCharge.name,
+        labInchargeAtPurchase: selectedLab.facultyInCharge?.name ?? "Not Specified",
+        labTechnicianAtPurchase: selectedLab.technicianInCharge?.name ?? "Not Specified",
         fundingSource: data[columnIndexMap["funding source"]],
         dateOfInstallation: parseDate(data[columnIndexMap["date of installation"]]),
         vendorId: vendor?.id ?? null,
@@ -199,7 +201,7 @@ const getAndSaveDataFromSheet = async (workbook: XLSX.WorkBook, sheetInfo: Sheet
         },
         where: eq(laboratories.id, selectedLabId)
     })
-
+    
     await db.transaction(async (tx) => {
         for (const item of filteredData) {
             if (!item[sheetInfo.columnIndexMap['item name']]) continue; // Skip empty rows
@@ -222,7 +224,14 @@ router.post('/', checkAccess(), upload.single('excel'), asyncHandler(async (req,
             )
         }
 
-        await getAndSaveDataFromSheet(sheetInfo.workbook, sheetInfo, labId)
+        try{
+            await getAndSaveDataFromSheet(sheetInfo.workbook, sheetInfo, labId)
+        }
+        catch(e){
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, (e as Error).message)
+            )
+        }
 
         res.status(201).json({ success: true });
 }));

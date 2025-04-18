@@ -167,7 +167,7 @@ const Settings = () => {
             })
             .catch((err) => {
                 console.error({ message: "Error deleting item", err });
-                toast.error(((err as AxiosError).response?.data as any).message ?? "Error deleting item");
+                toast.error(((err as AxiosError).response?.data as any).message ?? (err as AxiosError).response?.data ?? "Error deleting item");
             });
     };
 
