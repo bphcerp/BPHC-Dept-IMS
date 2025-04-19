@@ -168,13 +168,9 @@
   #root {
     @apply flex min-h-screen min-w-80 flex-col;
   }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
+  .scroll-container {
+    & > div {
+      @apply !flex !max-w-full flex-col;
+    }
   }
 }
