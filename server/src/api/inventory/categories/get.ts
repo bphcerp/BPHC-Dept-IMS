@@ -8,19 +8,25 @@ import { inventoryCategoryTypeEnum } from "node_modules/lib/src/schemas/Inventor
 
 const router = Router();
 
-router.get('/', checkAccess(), asyncHandler(async (req, res) => {
-    const { type } = req.query;
-    if (!type) {
-        res.status(400).json({ message: "Query parameter 'type' is required" });
-        return
-    }
+router.get(
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        const { type } = req.query;
+        if (!type) {
+            res.status(400).json({
+                message: "Query parameter 'type' is required",
+            });
+            return;
+        }
 
-    const parsedType = inventoryCategoryTypeEnum.parse(type)
+        const parsedType = inventoryCategoryTypeEnum.parse(type);
 
-    const result = await db.query.inventoryCategories.findMany({
-        where: eq(inventoryCategories.type, parsedType),
-    });
-    res.status(200).json(result)
-}));
+        const result = await db.query.inventoryCategories.findMany({
+            where: eq(inventoryCategories.type, parsedType),
+        });
+        res.status(200).json(result);
+    })
+);
 
 export default router;

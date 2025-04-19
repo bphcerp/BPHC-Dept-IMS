@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import {  phdCourses } from "./phd.ts";
+import { phdCourses } from "./phd.ts";
 import { phd } from "./admin.ts";
 
 export const phdCoursesRelations = relations(phdCourses, ({ one }) => ({

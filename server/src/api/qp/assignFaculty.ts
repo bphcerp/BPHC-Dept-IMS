@@ -26,7 +26,7 @@ router.post(
                 success: false,
                 message: "QP review request not found",
             });
-            return; 
+            return;
         }
 
         const faculty1Exists = await db.query.users.findFirst({
@@ -39,15 +39,14 @@ router.post(
             columns: { email: true },
         });
 
-        console.log(faculty1Exists, faculty2Exists)
-
+        console.log(faculty1Exists, faculty2Exists);
 
         if (!faculty1Exists || !faculty2Exists) {
             res.status(400).json({
                 success: false,
                 message: "One or both faculty members are not registered users",
             });
-            return; 
+            return;
         }
 
         const updatedRequest = await db
@@ -64,7 +63,7 @@ router.post(
             message: "Faculty assigned successfully",
             data: updatedRequest[0],
         });
-        return; 
+        return;
     })
 );
 

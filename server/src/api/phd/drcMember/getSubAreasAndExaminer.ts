@@ -21,7 +21,7 @@ router.get(
                 examiner: phdExaminer.examiner,
             })
             .from(phdExaminer)
-            .innerJoin(phdSubAreas, eq(phdExaminer.subAreaId, phdSubAreas.id)); 
+            .innerJoin(phdSubAreas, eq(phdExaminer.subAreaId, phdSubAreas.id));
 
         const mappedSubAreas = subAreas.map((subArea) => ({
             ...subArea,

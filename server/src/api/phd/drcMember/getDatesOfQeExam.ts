@@ -3,8 +3,8 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
-import {  phdQualifyingExams } from "@/config/db/schema/phd.ts";
-import { eq, and , desc} from "drizzle-orm";
+import { phdQualifyingExams } from "@/config/db/schema/phd.ts";
+import { eq, and, desc } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -22,18 +22,23 @@ export default router.get(
                 id: phdQualifyingExams.id,
                 examName: phdQualifyingExams.examName,
                 examStartDate: phdQualifyingExams.examStartDate,
-                examEndDate: phdQualifyingExams.examEndDate
+                examEndDate: phdQualifyingExams.examEndDate,
             })
             .from(phdQualifyingExams)
             .where(
-                and(eq(phdQualifyingExams.semesterId, semesterId),
-                eq(phdQualifyingExams.examName, "Regular Qualifying Exam"))
+                and(
+                    eq(phdQualifyingExams.semesterId, semesterId),
+                    eq(phdQualifyingExams.examName, "Regular Qualifying Exam")
+                )
             )
-            .orderBy(desc(phdQualifyingExams.createdAt)) 
+            .orderBy(desc(phdQualifyingExams.createdAt))
             .limit(1);
 
         if (latestExam.length === 0) {
-            throw new HttpError(HttpCode.NOT_FOUND, "No Regular Qualifying Exam found for this semester");
+            throw new HttpError(
+                HttpCode.NOT_FOUND,
+                "No Regular Qualifying Exam found for this semester"
+            );
         }
 
         res.status(200).json({

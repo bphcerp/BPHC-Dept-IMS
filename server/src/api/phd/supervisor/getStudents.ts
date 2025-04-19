@@ -10,24 +10,24 @@ import assert from "assert";
 const router = express.Router();
 
 router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res) => {
-    assert(req.user, "User should be defined");
-    const supervisorEmail = req.user.email;
-    
-    const students = await db.query.phd.findMany({
-      where: eq(phd.supervisorEmail, supervisorEmail),
-      columns: {
-        email: true,
-        name: true,
-        qualifyingArea1: true,
-        qualifyingArea2: true
-      }
-    });
-    console.log(students);
-    res.status(HttpCode.OK).json({ success: true, students });
-  })
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        assert(req.user, "User should be defined");
+        const supervisorEmail = req.user.email;
+
+        const students = await db.query.phd.findMany({
+            where: eq(phd.supervisorEmail, supervisorEmail),
+            columns: {
+                email: true,
+                name: true,
+                qualifyingArea1: true,
+                qualifyingArea2: true,
+            },
+        });
+        console.log(students);
+        res.status(HttpCode.OK).json({ success: true, students });
+    })
 );
 
 export default router;

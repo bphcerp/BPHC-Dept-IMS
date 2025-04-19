@@ -40,7 +40,7 @@ const FicSubmissionView = () => {
           const formattedData = data.map((item: SubmissionData) => {
             const deadline = item.deadline ? new Date(item.deadline) : null;
             return {
-              id:item.id,
+              id: item.id,
               courseName: item.courseName,
               courseCode: item.courseCode,
               deadline: deadline?.toLocaleDateString("en-GB"),
@@ -73,7 +73,7 @@ const FicSubmissionView = () => {
     selectedStatuses.includes(item.status)
   );
 
-  console.log(filteredSubmissions)
+  console.log(filteredSubmissions);
 
   return (
     <div className="flex w-full flex-col gap-4 px-10 pt-4">
@@ -113,7 +113,9 @@ const FicSubmissionView = () => {
       {filteredSubmissions.filter((item) => item.status === "pending") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">To Submit</h2>
-          {filteredSubmissions.length === 0 && (<p className="mt-4">Nothing to submit</p>)}
+          {filteredSubmissions.length === 0 && (
+            <p className="mt-4">Nothing to submit</p>
+          )}
           {filteredSubmissions
             .filter((item) => item.status === "pending")
             .map((item, index) => {
@@ -125,10 +127,10 @@ const FicSubmissionView = () => {
                   courseName={item.courseName}
                   ficDeadline={item.deadline || "N/A"}
                   daysLeft={item.daysLeft || 0}
-                  courseCode={item.courseCode} 
-                  ficEmail={ficEmail}     
+                  courseCode={item.courseCode}
+                  ficEmail={ficEmail}
                   documentsUploaded={item.documentsUploaded}
-                  />
+                />
               );
             })}
         </div>
@@ -137,7 +139,9 @@ const FicSubmissionView = () => {
       {filteredSubmissions.some((item) => item.status === "approved") && (
         <div>
           <h2 className="mt-4 text-2xl font-semibold">Submitted</h2>
-          {filteredSubmissions.length === 0 && (<p className="mt-4">Nothing submitted yet</p>)}
+          {filteredSubmissions.length === 0 && (
+            <p className="mt-4">Nothing submitted yet</p>
+          )}
           {filteredSubmissions
             .filter((item) => item.status === "approved")
             .map((item, index) => (

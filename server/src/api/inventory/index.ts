@@ -7,10 +7,10 @@ import statsRouter from "./stats/index.ts";
 
 const router = express.Router();
 
-router.use('/labs', labRouter)
-router.use('/vendors', vendorRouter)
-router.use('/categories', categoryRouter)
-router.use('/items', inventoryRouter)
-router.use('/stats', statsRouter)
+router.use("/labs", labRouter);
+router.use("/vendors", vendorRouter);
+router.use("/categories", categoryRouter);
+router.use("/items", inventoryRouter);
+router.use("/stats", statsRouter);
 
 export default router;

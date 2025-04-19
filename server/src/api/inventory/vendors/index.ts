@@ -6,9 +6,9 @@ import deleteVendor from "./delete.ts";
 
 const router = Router();
 
-router.use('/get', getVendors);
-router.use('/create', createVendor);
-router.use('/update', updateVendor);
-router.use('/delete', deleteVendor);
+router.use("/get", getVendors);
+router.use("/create", createVendor);
+router.use("/update", updateVendor);
+router.use("/delete", deleteVendor);
 
 export default router;

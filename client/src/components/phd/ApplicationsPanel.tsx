@@ -2,9 +2,27 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Download, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,18 +66,22 @@ interface ApplicationsPanelProps {
   onNext: () => void;
 }
 
-const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({ 
-  selectedSemester, 
+const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
+  selectedSemester,
   onSelectSemester,
-  onNext 
+  onNext,
 }) => {
-  const [downloadingExamId, setDownloadingExamId] = useState<number | null>(null);
+  const [downloadingExamId, setDownloadingExamId] = useState<number | null>(
+    null
+  );
 
   // Fetch qualifying exam applications data
   const { data, isLoading } = useQuery<IPhdApplicationsResponse, Error>({
     queryKey: ["phd-qualifying-exam-applications", selectedSemester],
     queryFn: async () => {
-      const response = await api.get<IPhdApplicationsResponse>("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
+      const response = await api.get<IPhdApplicationsResponse>(
+        "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -77,36 +99,39 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
   const handleBatchDownload = async (examId: number) => {
     try {
       setDownloadingExamId(examId);
-      
+
       // Use query parameter
-      const response = await api.get("/phd/drcMember/getPhdApplicationFormsAsZip", {
-        params: { examId },
-        responseType: 'blob' // Important for binary data
-      });
-      
+      const response = await api.get(
+        "/phd/drcMember/getPhdApplicationFormsAsZip",
+        {
+          params: { examId },
+          responseType: "blob", // Important for binary data
+        }
+      );
+
       // Create a download link for the blob
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      
+      const link = document.createElement("a");
+
       // Find the exam to use its name in the filename
-      const currentSemester = data?.semestersWithExams.find(
-        (sem) => sem.id === selectedSemester
-      ) || data?.semestersWithExams[0];
-      
-      const exam = currentSemester?.exams.find(e => e.id === examId);
-      const fileName = exam 
-        ? `${exam.examName.replace(/\s+/g, '_')}_applications.zip`
+      const currentSemester =
+        data?.semestersWithExams.find((sem) => sem.id === selectedSemester) ||
+        data?.semestersWithExams[0];
+
+      const exam = currentSemester?.exams.find((e) => e.id === examId);
+      const fileName = exam
+        ? `${exam.examName.replace(/\s+/g, "_")}_applications.zip`
         : `qualifying_exam_applications_${examId}.zip`;
-      
+
       link.href = url;
-      link.setAttribute('download', fileName);
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
-      
+
       toast.success("Application forms downloaded successfully");
     } catch (error) {
       console.error("Error downloading application forms:", error);
@@ -128,9 +153,9 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
     );
   }
 
-  const currentSemester = data.semestersWithExams.find(
-    (sem) => sem.id === selectedSemester
-  ) || data.semestersWithExams[0];
+  const currentSemester =
+    data.semestersWithExams.find((sem) => sem.id === selectedSemester) ||
+    data.semestersWithExams[0];
 
   return (
     <div className="space-y-6">
@@ -138,7 +163,9 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
         <h2 className="text-xl font-semibold">Student Applications</h2>
         <div className="flex gap-4">
           <Select
-            value={selectedSemester?.toString() || currentSemester.id.toString()}
+            value={
+              selectedSemester?.toString() || currentSemester.id.toString()
+            }
             onValueChange={(value) => onSelectSemester(parseInt(value))}
           >
             <SelectTrigger className="w-56">
@@ -146,10 +173,7 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
             </SelectTrigger>
             <SelectContent>
               {data.semestersWithExams.map((semester) => (
-                <SelectItem 
-                  key={semester.id} 
-                  value={semester.id.toString()}
-                >
+                <SelectItem key={semester.id} value={semester.id.toString()}>
                   {semester.year}-Semester {semester.semesterNumber}
                 </SelectItem>
               ))}
@@ -188,12 +212,12 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
                         className="bg-blue-600 text-white hover:bg-blue-700"
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        {downloadingExamId === exam.id 
-                          ? "Downloading..." 
+                        {downloadingExamId === exam.id
+                          ? "Downloading..."
                           : `Download All Forms (${exam.students.length})`}
                       </Button>
                     </div>
-                    
+
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -208,7 +232,9 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
                       <TableBody>
                         {exam.students.map((student) => (
                           <TableRow key={`${exam.id}-${student.email}`}>
-                            <TableCell className="font-medium">{student.name}</TableCell>
+                            <TableCell className="font-medium">
+                              {student.name}
+                            </TableCell>
                             <TableCell>{student.email}</TableCell>
                             <TableCell>{student.erpId}</TableCell>
                             <TableCell>
@@ -236,7 +262,9 @@ const ApplicationsPanel: React.FC<ApplicationsPanelProps> = ({
                                 </span>
                               )}
                             </TableCell>
-                            <TableCell>{formatDate(student.uploadedAt)}</TableCell>
+                            <TableCell>
+                              {formatDate(student.uploadedAt)}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

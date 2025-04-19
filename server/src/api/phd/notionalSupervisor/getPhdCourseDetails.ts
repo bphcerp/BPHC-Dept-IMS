@@ -17,19 +17,36 @@ export default router.get(
         assert(req.user);
         const { studentEmail } = req.query;
         if (!studentEmail) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Student email is required"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Student email is required")
+            );
         }
 
-        const [phdStudent] = await db.select().from(phd).where(eq(phd.email, studentEmail as string)).limit(1);
+        const [phdStudent] = await db
+            .select()
+            .from(phd)
+            .where(eq(phd.email, studentEmail as string))
+            .limit(1);
         if (!phdStudent) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         if (phdStudent.notionalSupervisorEmail !== req.user.email) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not the notional supervisor of this student"
+                )
+            );
         }
 
-        const [studentCourses] = await db.select().from(phdCourses).where(eq(phdCourses.studentEmail, studentEmail as string)).limit(1);
+        const [studentCourses] = await db
+            .select()
+            .from(phdCourses)
+            .where(eq(phdCourses.studentEmail, studentEmail as string))
+            .limit(1);
 
         if (!studentCourses?.courseNames) {
             res.json({ success: true, courses: [] });
@@ -38,9 +55,17 @@ export default router.get(
 
         const courses = studentCourses.courseNames.map((courseName, index) => ({
             name: courseName,
-            grade: studentCourses.courseGrades ? studentCourses.courseGrades[index] !== "NULL" ? studentCourses.courseGrades[index] : null : null,
-            units: studentCourses.courseUnits ? studentCourses.courseUnits[index] : null,
-            id: studentCourses.courseIds ? studentCourses.courseIds[index] : null,
+            grade: studentCourses.courseGrades
+                ? studentCourses.courseGrades[index] !== "NULL"
+                    ? studentCourses.courseGrades[index]
+                    : null
+                : null,
+            units: studentCourses.courseUnits
+                ? studentCourses.courseUnits[index]
+                : null,
+            id: studentCourses.courseIds
+                ? studentCourses.courseIds[index]
+                : null,
         }));
 
         res.json({ success: true, courses });

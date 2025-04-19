@@ -7,12 +7,16 @@ import { Router } from "express";
 
 const router = Router();
 
-router.delete('/:id', checkAccess(), asyncHandler(async (req, res) => {
-    await db.delete(vendors).where(eq(vendors.id, req.params.id));
-    await db
-        .delete(vendorCategories)
-        .where(eq(vendorCategories.vendorId, req.params.id))
-    res.status(200).json({ message: 'Vendor deleted successfully' });
-}));
+router.delete(
+    "/:id",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        await db.delete(vendors).where(eq(vendors.id, req.params.id));
+        await db
+            .delete(vendorCategories)
+            .where(eq(vendorCategories.vendorId, req.params.id));
+        res.status(200).json({ message: "Vendor deleted successfully" });
+    })
+);
 
 export default router;

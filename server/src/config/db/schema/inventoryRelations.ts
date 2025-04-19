@@ -1,6 +1,11 @@
 import { relations } from "drizzle-orm";
 import { staff, faculty } from "./admin.ts";
-import { inventoryItems, laboratories, inventoryCategories, vendors } from "./inventory.ts";
+import {
+    inventoryItems,
+    laboratories,
+    inventoryCategories,
+    vendors,
+} from "./inventory.ts";
 
 export const laboratoriesRelations = relations(laboratories, ({ one }) => ({
     technicianInCharge: one(staff, {

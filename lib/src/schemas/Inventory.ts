@@ -62,7 +62,9 @@ export const inventoryItemSchema = z.object({
     remarks: z.string().nullable(),
 });
 
-export const multipleEntrySchema = z.array(inventoryItemSchema.omit({ id: true, transferId: true }))
+export const multipleEntrySchema = z.array(
+    inventoryItemSchema.omit({ id: true, transferId: true })
+);
 
 export const laboratorySchema = z.object({
     id: z.string().uuid(),

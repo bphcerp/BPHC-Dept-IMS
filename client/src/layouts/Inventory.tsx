@@ -2,7 +2,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { BarChartIcon, GearIcon } from "@radix-ui/react-icons";
 import { Warehouse } from "lucide-react";
 import { Outlet } from "react-router-dom";
-import '@/css/inventory/index.css'
+import "@/css/inventory/index.css";
 
 const InventoryLayout = () => {
   return (
@@ -32,7 +32,7 @@ const InventoryLayout = () => {
           },
         ]}
       />
-      <div className="overflow-y-auto w-full">
+      <div className="w-full overflow-y-auto">
         <Outlet />
       </div>
     </>

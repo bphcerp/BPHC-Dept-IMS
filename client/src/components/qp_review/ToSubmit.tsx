@@ -38,7 +38,7 @@ const ToSubmit = ({
     compreSolFile: null,
   });
 
-  console.log(requestId)
+  console.log(requestId);
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,49 +61,45 @@ const ToSubmit = ({
 
     formData.append("ficEmail", ficEmail);
 
-
     Object.entries(uploadedFiles).forEach(([key, file]) => {
-        if (file) {
-            console.log(`Appending file: ${key}, Name: ${file.name}`);
-            formData.append(key, file);
-        }
+      if (file) {
+        console.log(`Appending file: ${key}, Name: ${file.name}`);
+        formData.append(key, file);
+      }
     });
 
     try {
-        setUploading(true);
-        setError(null);
-        setSuccess(null);
+      setUploading(true);
+      setError(null);
+      setSuccess(null);
 
-        const response = await api.post("/qp/uploadFICDocuments", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
+      const response = await api.post("/qp/uploadFICDocuments", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-        if (response.status === 200) {
-            setSuccess("Documents uploaded successfully.");
-        } else {
-            setError("Failed to upload documents. Please try again.");
-        }
+      if (response.status === 200) {
+        setSuccess("Documents uploaded successfully.");
+      } else {
+        setError("Failed to upload documents. Please try again.");
+      }
     } catch (err) {
-        console.error("Upload error:", err);
-        setError("Error uploading documents. Please check your connection.");
+      console.error("Upload error:", err);
+      setError("Error uploading documents. Please check your connection.");
     } finally {
-        setUploading(false);
+      setUploading(false);
     }
-};
+  };
 
   return (
     <div className="flex justify-between border-b-2 border-gray-200 p-4">
       <div className="flex items-center gap-3">
-        {
-          documentsUploaded?
-          (
-            <>
+        {documentsUploaded ? (
+          <>
             <Check size="20" className="text-green-500" />
-            </>
-          ):(
-            <CircleAlert size="20" className="text-red-500" />
-          )
-        }
+          </>
+        ) : (
+          <CircleAlert size="20" className="text-red-500" />
+        )}
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{courseName}</h1>
           <p>|</p>

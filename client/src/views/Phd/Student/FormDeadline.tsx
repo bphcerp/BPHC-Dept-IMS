@@ -164,7 +164,7 @@ const FormDeadline: React.FC = () => {
 
     // Student must meet all criteria
     //return gradeCheck && qeApplicationCheck && qualifyingExamStatusCheck;
-    return  qeApplicationCheck && qualifyingExamStatusCheck;
+    return qeApplicationCheck && qualifyingExamStatusCheck;
   })();
 
   // Loading state

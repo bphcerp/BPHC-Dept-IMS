@@ -147,39 +147,38 @@ const SupervisedStudents: React.FC = () => {
     void refetch();
   };
 
- 
   if (isLoading) {
-  return (
-    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="mx-auto w-full max-w-4xl">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold">
-            Supervised Students
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/3">Name</TableHead>
-                <TableHead className="w-1/3">Email</TableHead>
-                <TableHead className="w-1/6">Proposal Documents</TableHead>
-                <TableHead className="w-1/6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-              <TableCell colSpan={4} className="py-4 text-center">
-          No students under your supervision yet.
-        </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+    return (
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <Card className="mx-auto w-full max-w-4xl">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl font-bold">
+              Supervised Students
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/3">Name</TableHead>
+                  <TableHead className="w-1/3">Email</TableHead>
+                  <TableHead className="w-1/6">Proposal Documents</TableHead>
+                  <TableHead className="w-1/6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={4} className="py-4 text-center">
+                    No students under your supervision yet.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">

@@ -11,7 +11,6 @@ import { phdSchemas } from "lib";
 
 const router = express.Router();
 
-
 export default router.delete(
     "/",
     checkAccess(),
@@ -20,7 +19,9 @@ export default router.delete(
 
         const parsed = phdSchemas.deletePhdCourseBodySchema.safeParse(req.body);
         if (!parsed.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid request body"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid request body")
+            );
         }
 
         const { studentEmail, courseId } = parsed.data;
@@ -32,11 +33,18 @@ export default router.delete(
             .limit(1);
 
         if (phdStudent.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         if (phdStudent[0].notionalSupervisorEmail !== req.user.email) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not the notional supervisor of this student"
+                )
+            );
         }
 
         const existingCourses = await db
@@ -46,7 +54,9 @@ export default router.delete(
             .limit(1);
 
         if (existingCourses.length === 0) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD course record not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD course record not found")
+            );
         }
 
         const courseRecord = existingCourses[0];
@@ -63,9 +73,15 @@ export default router.delete(
         }
 
         const updatedCourseIds = currentCourseIds.filter((_, i) => i !== index);
-        const updatedCourseNames = currentCourseNames.filter((_, i) => i !== index);
-        const updatedCourseUnits = currentCourseUnits.filter((_, i) => i !== index);
-        const updatedCourseGrades = currentCourseGrades.filter((_, i) => i !== index);
+        const updatedCourseNames = currentCourseNames.filter(
+            (_, i) => i !== index
+        );
+        const updatedCourseUnits = currentCourseUnits.filter(
+            (_, i) => i !== index
+        );
+        const updatedCourseGrades = currentCourseGrades.filter(
+            (_, i) => i !== index
+        );
 
         const updated = await db
             .update(phdCourses)
@@ -73,7 +89,7 @@ export default router.delete(
                 courseIds: updatedCourseIds,
                 courseNames: updatedCourseNames,
                 courseUnits: updatedCourseUnits,
-                courseGrades: updatedCourseGrades
+                courseGrades: updatedCourseGrades,
             })
             .where(eq(phdCourses.studentEmail, studentEmail))
             .returning();

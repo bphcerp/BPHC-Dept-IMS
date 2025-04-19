@@ -70,7 +70,7 @@ router.post(
                         eq(phdExaminer.studentEmail, studentEmail)
                     )
                 );
-        } 
+        }
 
         res.status(200).json({
             success: true,

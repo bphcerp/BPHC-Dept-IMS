@@ -15,17 +15,18 @@ router.get(
             .select({
                 email: phd.email,
                 name: phd.name,
-                suggestedDacMembers: phd.suggestedDacMembers
+                suggestedDacMembers: phd.suggestedDacMembers,
             })
             .from(phd)
-            .where(sql`phd.suggested_dac_members IS NOT NULL AND array_length(phd.suggested_dac_members, 1) > 0`);
+            .where(
+                sql`phd.suggested_dac_members IS NOT NULL AND array_length(phd.suggested_dac_members, 1) > 0`
+            );
 
         res.json({
             success: true,
-            students
+            students,
         });
     })
 );
-
 
 export default router;

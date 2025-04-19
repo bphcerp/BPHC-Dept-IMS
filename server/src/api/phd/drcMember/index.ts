@@ -1,5 +1,5 @@
 import express from "express";
-import generateCourseworkForm from "./generateCourseworkForm.ts"
+import generateCourseworkForm from "./generateCourseworkForm.ts";
 import getPhdToGenerateQualifyingExamForm from "./getPhdToGenerateQualifyingExamForm.ts";
 import updatePassingDatesOfPhd from "./updatePassingDatesOfPhd.ts";
 import updateProposalDeadline from "../staff/updateProposalDeadline.ts";
@@ -23,32 +23,40 @@ import getSupervisorsWithStudents from "./getSupervisorsWithStudents.ts";
 import getQeTimeTable from "./getQeTimeTable.ts";
 import getPhdApplicationFormsAsZip from "./getPhdApplicationFormsAsZip.ts";
 
-
 const router = express.Router();
 
-router.use('/generateCourseworkForm', generateCourseworkForm);
-router.use('/updateQualifyingExamDeadline', updateQualifyingExamDeadline);
-router.use('/generateCourseworkForm', generateCourseworkForm);
-router.use('/getPhdToGenerateQualifyingExamForm', getPhdToGenerateQualifyingExamForm);
-router.use('/updatePassingDatesOfPhd', updatePassingDatesOfPhd);
-router.use('/updateProposalDeadline', updateProposalDeadline);
-router.use('/getPhdDataOfWhoFilledApplicationForm', getPhdDataOfWhoFilledApplicationForm);
-router.use('/getSuggestedDacMember', getSuggestedDacMember);
-router.use('/updateFinalDac', updateFinalDac);
-router.use('/suggestTwoBestDacMember', suggestTwoBestDacMember);
-router.use('/updateQualifyingExamResultsOfAllStudents', updateQualifyingExamResultsOfAllStudents);
-router.use('/updateSemesterDates', updateSemesterDates);
-router.use('/getAllSem', getAllSem);
-router.use('/getAllQualifyingExamForTheSem', getAllQualifyingExamForTheSem);
-router.use('/getCurrentSemester', getCurrentSemester);
-router.use('/getPhdExamStatus', getPhdExamStatus);
-router.use('/getQualificationDates', getQualificationDates);
-router.use('/getDatesOfQeExam', getDatesOfQeExam);
-router.use('/getSubAreasAndExaminer', getSubAreasAndExaminer);
-router.use('/notifySupervisor', notifySupervisor);
-router.use('/updateExaminer', updateExaminer);
-router.use('/getSupervisorsWithStudents', getSupervisorsWithStudents);
-router.use('/getQeTimeTable', getQeTimeTable);
-router.use('/getPhdApplicationFormsAsZip', getPhdApplicationFormsAsZip);
+router.use("/generateCourseworkForm", generateCourseworkForm);
+router.use("/updateQualifyingExamDeadline", updateQualifyingExamDeadline);
+router.use("/generateCourseworkForm", generateCourseworkForm);
+router.use(
+    "/getPhdToGenerateQualifyingExamForm",
+    getPhdToGenerateQualifyingExamForm
+);
+router.use("/updatePassingDatesOfPhd", updatePassingDatesOfPhd);
+router.use("/updateProposalDeadline", updateProposalDeadline);
+router.use(
+    "/getPhdDataOfWhoFilledApplicationForm",
+    getPhdDataOfWhoFilledApplicationForm
+);
+router.use("/getSuggestedDacMember", getSuggestedDacMember);
+router.use("/updateFinalDac", updateFinalDac);
+router.use("/suggestTwoBestDacMember", suggestTwoBestDacMember);
+router.use(
+    "/updateQualifyingExamResultsOfAllStudents",
+    updateQualifyingExamResultsOfAllStudents
+);
+router.use("/updateSemesterDates", updateSemesterDates);
+router.use("/getAllSem", getAllSem);
+router.use("/getAllQualifyingExamForTheSem", getAllQualifyingExamForTheSem);
+router.use("/getCurrentSemester", getCurrentSemester);
+router.use("/getPhdExamStatus", getPhdExamStatus);
+router.use("/getQualificationDates", getQualificationDates);
+router.use("/getDatesOfQeExam", getDatesOfQeExam);
+router.use("/getSubAreasAndExaminer", getSubAreasAndExaminer);
+router.use("/notifySupervisor", notifySupervisor);
+router.use("/updateExaminer", updateExaminer);
+router.use("/getSupervisorsWithStudents", getSupervisorsWithStudents);
+router.use("/getQeTimeTable", getQeTimeTable);
+router.use("/getPhdApplicationFormsAsZip", getPhdApplicationFormsAsZip);
 
 export default router;

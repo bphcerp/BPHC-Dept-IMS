@@ -8,11 +8,11 @@ import deleteItem from "./delete.ts";
 
 const router = Router();
 
-router.use('/get', getItems);
-router.use('/excel', excelAddItems);
-router.use('/export', exportItems);
-router.use('/create', createItem);
-router.use('/update', updateItem);
-router.use('/delete', deleteItem);
+router.use("/get", getItems);
+router.use("/excel", excelAddItems);
+router.use("/export", exportItems);
+router.use("/create", createItem);
+router.use("/update", updateItem);
+router.use("/delete", deleteItem);
 
 export default router;

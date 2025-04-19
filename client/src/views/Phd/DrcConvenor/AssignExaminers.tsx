@@ -22,10 +22,19 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 // Interfaces
@@ -87,7 +96,9 @@ interface ITimetableResponse {
 const AssignExaminers: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedExaminer, setSelectedExaminer] = useState<string>("");
-  const [selectedSubAreaId, setSelectedSubAreaId] = useState<number | null>(null);
+  const [selectedSubAreaId, setSelectedSubAreaId] = useState<number | null>(
+    null
+  );
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [selectedSupervisors, setSelectedSupervisors] = useState<string[]>([]);
@@ -98,7 +109,9 @@ const AssignExaminers: React.FC = () => {
   const { data: supervisorsData, isLoading: loadingSupervisors } = useQuery({
     queryKey: ["phd-supervisors"],
     queryFn: async () => {
-      const response = await api.get<ISupervisorsResponse>("/phd/drcMember/getSupervisorsWithStudents");
+      const response = await api.get<ISupervisorsResponse>(
+        "/phd/drcMember/getSupervisorsWithStudents"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -109,7 +122,9 @@ const AssignExaminers: React.FC = () => {
   const { data: subAreasData, isLoading: loadingSubAreas } = useQuery({
     queryKey: ["phd-sub-areas-examiners"],
     queryFn: async () => {
-      const response = await api.get<ISubAreasExaminerResponse>("/phd/drcMember/getSubAreasAndExaminer");
+      const response = await api.get<ISubAreasExaminerResponse>(
+        "/phd/drcMember/getSubAreasAndExaminer"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -117,14 +132,16 @@ const AssignExaminers: React.FC = () => {
   });
 
   // New query for timetable
-  const { 
-    data: timetableData, 
-    isLoading: loadingTimetable, 
-    refetch: refetchTimetable 
+  const {
+    data: timetableData,
+    isLoading: loadingTimetable,
+    refetch: refetchTimetable,
   } = useQuery({
     queryKey: ["phd-exam-timetable"],
     queryFn: async () => {
-      const response = await api.get<ITimetableResponse>("/phd/drcMember/getQeTimeTable");
+      const response = await api.get<ITimetableResponse>(
+        "/phd/drcMember/getQeTimeTable"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -134,7 +151,10 @@ const AssignExaminers: React.FC = () => {
 
   // Mutation for notifying supervisors
   const notifySupervisorMutation = useMutation({
-    mutationFn: async (data: { supervisorEmail: string; deadline?: string }) => {
+    mutationFn: async (data: {
+      supervisorEmail: string;
+      deadline?: string;
+    }) => {
       return await api.post("/phd/drcMember/notifySupervisor", data);
     },
     onSuccess: () => {
@@ -155,7 +175,9 @@ const AssignExaminers: React.FC = () => {
     },
     onSuccess: () => {
       toast.success("Examiner updated successfully");
-      void queryClient.invalidateQueries({ queryKey: ["phd-sub-areas-examiners"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["phd-sub-areas-examiners"],
+      });
       setSelectedExaminer("");
       setSelectedSubAreaId(null);
     },
@@ -171,16 +193,16 @@ const AssignExaminers: React.FC = () => {
     if (selectedSupervisors.length === supervisorsData.supervisors.length) {
       setSelectedSupervisors([]);
     } else {
-      setSelectedSupervisors(supervisorsData.supervisors.map(sup => sup.email));
+      setSelectedSupervisors(
+        supervisorsData.supervisors.map((sup) => sup.email)
+      );
     }
   };
 
   // Toggle selection of an individual supervisor
   const toggleSupervisorSelection = (email: string) => {
-    setSelectedSupervisors(prev => 
-      prev.includes(email) 
-        ? prev.filter(e => e !== email) 
-        : [...prev, email]
+    setSelectedSupervisors((prev) =>
+      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
     );
   };
 
@@ -192,10 +214,10 @@ const AssignExaminers: React.FC = () => {
     }
 
     // Send notification to each selected supervisor
-    selectedSupervisors.forEach(supervisorEmail => {
+    selectedSupervisors.forEach((supervisorEmail) => {
       notifySupervisorMutation.mutate({
         supervisorEmail,
-        deadline: deadline ? deadline.toISOString() : undefined
+        deadline: deadline ? deadline.toISOString() : undefined,
       });
     });
   };
@@ -209,17 +231,19 @@ const AssignExaminers: React.FC = () => {
 
     updateExaminerMutation.mutate({
       subAreaId: selectedSubAreaId,
-      examinerEmail: selectedExaminer
+      examinerEmail: selectedExaminer,
     });
   };
 
   // Handle viewing timetable
   const handleViewTimetable = () => {
-    refetchTimetable().then(() => {
-      setTimetableDialogOpen(true);
-    }).catch(() => {
-      toast.error("Failed to fetch timetable data");
-    });
+    refetchTimetable()
+      .then(() => {
+        setTimetableDialogOpen(true);
+      })
+      .catch(() => {
+        toast.error("Failed to fetch timetable data");
+      });
   };
 
   if (loadingSupervisors || loadingSubAreas) {
@@ -231,9 +255,8 @@ const AssignExaminers: React.FC = () => {
           </h1>
           <div className="rounded-lg bg-white p-6 shadow">
             <p className="text-center text-lg">
-            No supervisors with PhD students found
+              No supervisors with PhD students found
             </p>
-            
           </div>
         </div>
       </div>
@@ -244,7 +267,9 @@ const AssignExaminers: React.FC = () => {
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-6xl">
         <CardHeader>
-          <CardTitle className="text-xl font-bold">DRC Examiner Management</CardTitle>
+          <CardTitle className="text-xl font-bold">
+            DRC Examiner Management
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -258,15 +283,16 @@ const AssignExaminers: React.FC = () => {
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-medium">PhD Supervisors</h3>
                 <div className="flex gap-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={handleSelectAllSupervisors}
                   >
-                    {selectedSupervisors.length === supervisorsData?.supervisors.length 
-                      ? "Deselect All" 
+                    {selectedSupervisors.length ===
+                    supervisorsData?.supervisors.length
+                      ? "Deselect All"
                       : "Select All"}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setNotificationDialogOpen(true)}
                     disabled={selectedSupervisors.length === 0}
                   >
@@ -275,7 +301,8 @@ const AssignExaminers: React.FC = () => {
                 </div>
               </div>
 
-              {!supervisorsData?.supervisors || supervisorsData.supervisors.length === 0 ? (
+              {!supervisorsData?.supervisors ||
+              supervisorsData.supervisors.length === 0 ? (
                 <div className="py-8 text-center text-gray-500">
                   No supervisors with PhD students found
                 </div>
@@ -296,17 +323,23 @@ const AssignExaminers: React.FC = () => {
                         <TableCell>
                           <input
                             type="checkbox"
-                            checked={selectedSupervisors.includes(supervisor.email)}
-                            onChange={() => toggleSupervisorSelection(supervisor.email)}
+                            checked={selectedSupervisors.includes(
+                              supervisor.email
+                            )}
+                            onChange={() =>
+                              toggleSupervisorSelection(supervisor.email)
+                            }
                             className="h-4 w-4"
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{supervisor.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {supervisor.name}
+                        </TableCell>
                         <TableCell>{supervisor.email}</TableCell>
                         <TableCell>{supervisor.students.length}</TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setSelectedSupervisors([supervisor.email]);
@@ -326,13 +359,16 @@ const AssignExaminers: React.FC = () => {
             {/* Examiners Tab */}
             <TabsContent value="examiners">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-medium">PhD Sub-Areas and Examiners</h3>
+                <h3 className="text-lg font-medium">
+                  PhD Sub-Areas and Examiners
+                </h3>
                 <Button onClick={handleViewTimetable}>
                   View Exam Timetable
                 </Button>
               </div>
               <p className="mb-4 text-sm text-gray-500">
-                View suggested examiners for each sub-area and assign final examiners.
+                View suggested examiners for each sub-area and assign final
+                examiners.
               </p>
 
               {!subAreasData?.subAreas || subAreasData.subAreas.length === 0 ? (
@@ -342,7 +378,10 @@ const AssignExaminers: React.FC = () => {
               ) : (
                 <Accordion type="single" collapsible className="w-full">
                   {subAreasData.subAreas.map((subArea) => (
-                    <AccordionItem key={subArea.id} value={subArea.id.toString()}>
+                    <AccordionItem
+                      key={subArea.id}
+                      value={subArea.id.toString()}
+                    >
                       <AccordionTrigger className="rounded-lg px-4 py-2 hover:bg-gray-50">
                         <div className="flex w-full justify-between pr-4">
                           <span>{subArea.subarea}</span>
@@ -355,7 +394,8 @@ const AssignExaminers: React.FC = () => {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-4 p-2">
-                          {(!subArea.examiners || subArea.examiners.length === 0) ? (
+                          {!subArea.examiners ||
+                          subArea.examiners.length === 0 ? (
                             <div className="py-2 text-center text-gray-500">
                               No examiners suggested yet
                             </div>
@@ -366,68 +406,91 @@ const AssignExaminers: React.FC = () => {
                                   <TableHeader>
                                     <TableRow>
                                       <TableHead>Suggested Examiners</TableHead>
-                                      <TableHead className="text-right">Actions</TableHead>
+                                      <TableHead className="text-right">
+                                        Actions
+                                      </TableHead>
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody>
                                     {subArea.examiners.map((examiner) => (
                                       <React.Fragment key={examiner.id}>
-                                        {examiner.suggestedExaminer.map((suggested, index) => (
-                                          <TableRow key={`${examiner.id}-${index}`}>
-                                            <TableCell>
-                                              {suggested}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                              <Button 
-                                                variant="outline" 
-                                                size="sm"
-                                                onClick={() => {
-                                                  setSelectedExaminer(suggested);
-                                                  setSelectedSubAreaId(subArea.id);
-                                                }}
-                                              >
-                                                Select
-                                              </Button>
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
+                                        {examiner.suggestedExaminer.map(
+                                          (suggested, index) => (
+                                            <TableRow
+                                              key={`${examiner.id}-${index}`}
+                                            >
+                                              <TableCell>{suggested}</TableCell>
+                                              <TableCell className="text-right">
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    setSelectedExaminer(
+                                                      suggested
+                                                    );
+                                                    setSelectedSubAreaId(
+                                                      subArea.id
+                                                    );
+                                                  }}
+                                                >
+                                                  Select
+                                                </Button>
+                                              </TableCell>
+                                            </TableRow>
+                                          )
+                                        )}
                                       </React.Fragment>
                                     ))}
                                   </TableBody>
                                 </Table>
                               </div>
-                              
+
                               <div className="rounded-md border bg-gray-50 p-4">
-                                <h4 className="mb-2 font-medium">Assign Final Examiner</h4>
+                                <h4 className="mb-2 font-medium">
+                                  Assign Final Examiner
+                                </h4>
                                 <div className="flex items-end gap-4">
                                   <div className="flex-1">
-                                    <p className="mb-1 text-sm">Current Examiner:</p>
+                                    <p className="mb-1 text-sm">
+                                      Current Examiner:
+                                    </p>
                                     <p className="font-medium">
-                                      {subArea.examiners[0]?.examiner || "Not assigned"}
+                                      {subArea.examiners[0]?.examiner ||
+                                        "Not assigned"}
                                     </p>
                                   </div>
                                   {selectedSubAreaId === subArea.id && (
                                     <div className="flex-1">
-                                      <p className="mb-1 text-sm">New Examiner:</p>
-                                      <Input 
+                                      <p className="mb-1 text-sm">
+                                        New Examiner:
+                                      </p>
+                                      <Input
                                         type="email"
                                         value={selectedExaminer}
-                                        onChange={(e) => setSelectedExaminer(e.target.value)}
+                                        onChange={(e) =>
+                                          setSelectedExaminer(e.target.value)
+                                        }
                                         placeholder="Email address"
                                         className="mb-2"
                                       />
-                                      <Button 
+                                      <Button
                                         onClick={handleUpdateExaminer}
                                         className="w-full"
-                                        disabled={updateExaminerMutation.isLoading}
+                                        disabled={
+                                          updateExaminerMutation.isLoading
+                                        }
                                       >
-                                        {updateExaminerMutation.isLoading ? "Updating..." : "Update Examiner"}
+                                        {updateExaminerMutation.isLoading
+                                          ? "Updating..."
+                                          : "Update Examiner"}
                                       </Button>
                                     </div>
                                   )}
                                   {selectedSubAreaId !== subArea.id && (
-                                    <Button 
-                                      onClick={() => setSelectedSubAreaId(subArea.id)}
+                                    <Button
+                                      onClick={() =>
+                                        setSelectedSubAreaId(subArea.id)
+                                      }
                                       variant="outline"
                                     >
                                       Change Examiner
@@ -449,17 +512,24 @@ const AssignExaminers: React.FC = () => {
       </Card>
 
       {/* Notification Dialog */}
-      <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
+      <Dialog
+        open={notificationDialogOpen}
+        onOpenChange={setNotificationDialogOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Notify Supervisor(s)</DialogTitle>
           </DialogHeader>
           <div className="p-4">
             <div className="mb-4">
-              <h4 className="mb-2 text-sm font-medium">Selected Supervisors:</h4>
+              <h4 className="mb-2 text-sm font-medium">
+                Selected Supervisors:
+              </h4>
               <ul className="max-h-32 overflow-y-auto rounded-md border p-2">
                 {selectedSupervisors.map((email) => {
-                  const supervisor = supervisorsData?.supervisors.find(s => s.email === email);
+                  const supervisor = supervisorsData?.supervisors.find(
+                    (s) => s.email === email
+                  );
                   return (
                     <li key={email} className="py-1">
                       {supervisor?.name || email}
@@ -482,7 +552,11 @@ const AssignExaminers: React.FC = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
+                    {deadline ? (
+                      format(deadline, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -503,12 +577,14 @@ const AssignExaminers: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleNotifySupervisors}
                 className="flex-1"
                 disabled={notifySupervisorMutation.isLoading}
               >
-                {notifySupervisorMutation.isLoading ? "Sending..." : "Send Notification"}
+                {notifySupervisorMutation.isLoading
+                  ? "Sending..."
+                  : "Send Notification"}
               </Button>
             </div>
           </div>
@@ -528,24 +604,29 @@ const AssignExaminers: React.FC = () => {
               </div>
             ) : timetableData ? (
               <div className="space-y-6">
-                {timetableData.conflicts && timetableData.conflicts.length > 0 && (
-                  <div className="rounded-md border border-red-200 bg-red-50 p-4">
-                    <h4 className="mb-2 font-medium text-red-700">Scheduling Conflicts</h4>
-                    <p className="text-sm text-red-600">
-                      The following students have scheduling conflicts:
-                    </p>
-                    <ul className="mt-2 list-inside list-disc text-sm text-red-600">
-                      {timetableData.conflicts.map((email, idx) => (
-                        <li key={idx}>{email}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                {timetableData.conflicts &&
+                  timetableData.conflicts.length > 0 && (
+                    <div className="rounded-md border border-red-200 bg-red-50 p-4">
+                      <h4 className="mb-2 font-medium text-red-700">
+                        Scheduling Conflicts
+                      </h4>
+                      <p className="text-sm text-red-600">
+                        The following students have scheduling conflicts:
+                      </p>
+                      <ul className="mt-2 list-inside list-disc text-sm text-red-600">
+                        {timetableData.conflicts.map((email, idx) => (
+                          <li key={idx}>{email}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                 {timetableData.timetable.map((session) => (
                   <Card key={session.sessionNumber} className="overflow-hidden">
                     <CardHeader className="bg-gray-50 pb-2">
-                      <CardTitle className="text-lg">Session {session.sessionNumber}</CardTitle>
+                      <CardTitle className="text-lg">
+                        Session {session.sessionNumber}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                       <Table>
@@ -560,14 +641,19 @@ const AssignExaminers: React.FC = () => {
                         <TableBody>
                           {session.exams.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4 text-gray-500">
+                              <TableCell
+                                colSpan={4}
+                                className="py-4 text-center text-gray-500"
+                              >
                                 No exams scheduled for this session
                               </TableCell>
                             </TableRow>
                           ) : (
                             session.exams.map((exam, idx) => (
                               <TableRow key={idx}>
-                                <TableCell className="font-medium">{exam.name}</TableCell>
+                                <TableCell className="font-medium">
+                                  {exam.name}
+                                </TableCell>
                                 <TableCell>{exam.email}</TableCell>
                                 <TableCell>{exam.subArea}</TableCell>
                                 <TableCell>{exam.examiner}</TableCell>

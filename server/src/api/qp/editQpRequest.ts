@@ -33,7 +33,10 @@ router.put(
                 where: eq(users.email, parsed.dcaMemberEmail),
             });
             if (!dcaExists) {
-                res.status(400).json({ success: false, message: "DCA member not found" });
+                res.status(400).json({
+                    success: false,
+                    message: "DCA member not found",
+                });
                 return;
             }
         }
@@ -43,7 +46,10 @@ router.put(
                 where: eq(users.email, parsed.ficEmail),
             });
             if (!ficExists) {
-                res.status(400).json({ success: false, message: "FIC not found" });
+                res.status(400).json({
+                    success: false,
+                    message: "FIC not found",
+                });
                 return;
             }
         }
@@ -53,7 +59,10 @@ router.put(
                 where: eq(users.email, parsed.faculty1Email),
             });
             if (!faculty1Exists) {
-                res.status(400).json({ success: false, message: "Faculty 1 not found" });
+                res.status(400).json({
+                    success: false,
+                    message: "Faculty 1 not found",
+                });
                 return;
             }
         }
@@ -63,7 +72,10 @@ router.put(
                 where: eq(users.email, parsed.faculty2Email),
             });
             if (!faculty2Exists) {
-                res.status(400).json({ success: false, message: "Faculty 2 not found" });
+                res.status(400).json({
+                    success: false,
+                    message: "Faculty 2 not found",
+                });
                 return;
             }
         }

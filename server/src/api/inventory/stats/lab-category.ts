@@ -5,8 +5,11 @@ import { Router } from "express";
 
 const router = Router();
 
-router.get('/', checkAccess(), asyncHandler(async (_req, res) => {
-    const data = await db.execute(`
+router.get(
+    "/",
+    checkAccess(),
+    asyncHandler(async (_req, res) => {
+        const data = await db.execute(`
             SELECT 
                 "subquery"."lab_id" AS "labId",
                 "subquery"."item_category_id" AS "categoryId",
@@ -24,8 +27,9 @@ router.get('/', checkAccess(), asyncHandler(async (_req, res) => {
                     WHERE inventory_items.transfer_id IS NULL
                 ) "subquery"
             GROUP BY "subquery"."lab_id", "subquery"."item_category_id";
-        `)
-    res.status(200).json(data.rows);
-}))
+        `);
+        res.status(200).json(data.rows);
+    })
+);
 
-export default router
+export default router;

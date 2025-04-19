@@ -17,34 +17,55 @@ export default router.post(
         assert(req.user);
         const parsed = phdSchemas.addPhdCourseBodySchema.safeParse(req.body);
         if (!parsed.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid request body"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid request body")
+            );
         }
 
-        const [phdStudent] = await db.select().from(phd).where(eq(phd.email, parsed.data.studentEmail)).limit(1);
+        const [phdStudent] = await db
+            .select()
+            .from(phd)
+            .where(eq(phd.email, parsed.data.studentEmail))
+            .limit(1);
         if (!phdStudent) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         if (phdStudent.notionalSupervisorEmail !== req.user.email) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "You are not the notional supervisor of this student"));
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not the notional supervisor of this student"
+                )
+            );
         }
 
-        const [existingCourses] = await db.select().from(phdCourses).where(eq(phdCourses.studentEmail, parsed.data.studentEmail)).limit(1);
+        const [existingCourses] = await db
+            .select()
+            .from(phdCourses)
+            .where(eq(phdCourses.studentEmail, parsed.data.studentEmail))
+            .limit(1);
 
         if (!existingCourses) {
             await db.insert(phdCourses).values({
                 studentEmail: parsed.data.studentEmail,
                 courseNames: [],
                 courseUnits: [],
-                courseIds: []
+                courseIds: [],
             });
         }
 
-        const updated = await db.update(phdCourses).set({
-            courseNames: sql`array_append(${phdCourses.courseNames}, ${sql.join(parsed.data.courses.map(c => c.name))})`,
-            courseUnits: sql`array_append(${phdCourses.courseUnits}, ${sql.join(parsed.data.courses.map(c => c.units))})`,
-            courseIds: sql`array_append(${phdCourses.courseIds}, ${sql.join(parsed.data.courses.map(c => c.courseId))})`,
-        }).where(eq(phdCourses.studentEmail, parsed.data.studentEmail)).returning();
+        const updated = await db
+            .update(phdCourses)
+            .set({
+                courseNames: sql`array_append(${phdCourses.courseNames}, ${sql.join(parsed.data.courses.map((c) => c.name))})`,
+                courseUnits: sql`array_append(${phdCourses.courseUnits}, ${sql.join(parsed.data.courses.map((c) => c.units))})`,
+                courseIds: sql`array_append(${phdCourses.courseIds}, ${sql.join(parsed.data.courses.map((c) => c.courseId))})`,
+            })
+            .where(eq(phdCourses.studentEmail, parsed.data.studentEmail))
+            .returning();
 
         res.json({ success: true, phdCourses: updated[0] });
     })

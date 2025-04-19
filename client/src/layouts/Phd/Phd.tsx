@@ -12,7 +12,7 @@ import {
   FileSpreadsheet,
   Calendar,
   Clock,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -26,25 +26,33 @@ const NotionalSupervisorLayout = () => {
           title: "Grades Management",
           icon: <UserCog />,
           url: "/phd/notional-supervisor/update-grade",
-          requiredPermissions: [permissions["/phd/supervisor/updateSuggestedExaminer"]],
+          requiredPermissions: [
+            permissions["/phd/supervisor/updateSuggestedExaminer"],
+          ],
         },
         {
           title: "Examiner Management",
           icon: <UserCheck />,
           url: "/phd/notional-supervisor/suggest-examiner",
-          requiredPermissions: [permissions["/phd/notionalSupervisor/updateCourseGrade"]],
+          requiredPermissions: [
+            permissions["/phd/notionalSupervisor/updateCourseGrade"],
+          ],
         },
         {
           title: "Supervisor Management",
           icon: <UserPlus />,
           url: "/phd/phd-supervisor/supervised-students",
-          requiredPermissions: [permissions["/phd/supervisor/getSupervisedStudents"]],
+          requiredPermissions: [
+            permissions["/phd/supervisor/getSupervisedStudents"],
+          ],
         },
         {
           title: "Co-Supervisor Management",
           icon: <Users />,
           url: "/phd/phd-co-supervisor/co-supervised-students",
-          requiredPermissions: [permissions["/phd/coSupervisor/getCoSupervisedStudents"]],
+          requiredPermissions: [
+            permissions["/phd/coSupervisor/getCoSupervisedStudents"],
+          ],
         },
       ],
     },
@@ -90,7 +98,7 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/phd-student/form-deadline",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
         },
-        
+
         {
           title: "Proposal Management",
           icon: <FileText />,
@@ -106,24 +114,29 @@ const NotionalSupervisorLayout = () => {
           title: "Semester Dates Management",
           icon: <Calendar />,
           url: "/phd/staff/update-semester-dates",
-          requiredPermissions: [
-            permissions["/phd/staff/getAllSem"],
-          ],
+          requiredPermissions: [permissions["/phd/staff/getAllSem"]],
         },
         {
           title: "Deadline Management",
           icon: <Clock />,
           url: "/phd/staff/update-deadlines",
-          requiredPermissions: [permissions["/phd/staff/updateQualifyingExamDeadline"], permissions["/phd/staff/updateProposalDeadline"]],
+          requiredPermissions: [
+            permissions["/phd/staff/updateQualifyingExamDeadline"],
+            permissions["/phd/staff/updateProposalDeadline"],
+          ],
         },
         {
           title: "Sub Areas Management",
           icon: <FileSpreadsheet />,
           url: "/phd/staff/update-subareas",
-          requiredPermissions: [permissions["/phd/staff/updateSubAreas"], permissions["/phd/staff/getSubAreas"], permissions["/phd/staff/deleteSubArea"]],
+          requiredPermissions: [
+            permissions["/phd/staff/updateSubAreas"],
+            permissions["/phd/staff/getSubAreas"],
+            permissions["/phd/staff/deleteSubArea"],
+          ],
         },
       ],
-    },    
+    },
   ];
 
   return (

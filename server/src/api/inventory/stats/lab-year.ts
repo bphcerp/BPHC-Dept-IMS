@@ -8,13 +8,16 @@ const router = Router();
 
 export const getYearRange = () => {
     const currentYear = new Date().getFullYear();
-    return { start: '2008-01-01', end: `${currentYear}-12-31` };
+    return { start: "2008-01-01", end: `${currentYear}-12-31` };
 };
 
-router.get('/', checkAccess(), asyncHandler(async (_req, res) => {
-    const { start, end } = getYearRange();
+router.get(
+    "/",
+    checkAccess(),
+    asyncHandler(async (_req, res) => {
+        const { start, end } = getYearRange();
 
-    const data = await db.execute(sql`
+        const data = await db.execute(sql`
             SELECT 
                 "subquery"."lab_id" AS "labId",
                 "subquery".year AS year,
@@ -34,8 +37,9 @@ router.get('/', checkAccess(), asyncHandler(async (_req, res) => {
             GROUP BY "subquery"."lab_id", "subquery".year
             ORDER BY "subquery".year DESC;
 
-        `)
-    res.status(200).json(data.rows);
-}))
+        `);
+        res.status(200).json(data.rows);
+    })
+);
 
-export default router
+export default router;

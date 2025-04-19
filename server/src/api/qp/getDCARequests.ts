@@ -13,7 +13,8 @@ router.get(
 
         const requests = (
             await db.query.qpReviewRequests.findMany({
-                where: (request, { eq }) => eq(request.dcaMemberEmail, dcaMemberEmail),
+                where: (request, { eq }) =>
+                    eq(request.dcaMemberEmail, dcaMemberEmail),
                 with: {
                     fic: {
                         with: {
@@ -33,7 +34,6 @@ router.get(
             status: request.status,
             reviewed: request.reviewed,
         }));
-
 
         res.status(200).json({
             success: true,

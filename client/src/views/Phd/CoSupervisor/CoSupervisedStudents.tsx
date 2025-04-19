@@ -70,8 +70,8 @@ const CoSupervisedStudents: React.FC = () => {
                           student.applicationStatus?.status === "approved"
                             ? "default"
                             : student.applicationStatus?.status === "rejected"
-                            ? "destructive"
-                            : "outline"
+                              ? "destructive"
+                              : "outline"
                         }
                       >
                         {student.applicationStatus?.status || "Pending"}

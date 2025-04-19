@@ -20,7 +20,6 @@ export const createQpReviewSchema = z.object({
 
 export type CreateQpReview = z.infer<typeof createQpReviewSchema>;
 
-
 const reviewFieldSchema = z.object({
     language: z.string().default(""),
     length: z.string().default(""),
@@ -28,23 +27,24 @@ const reviewFieldSchema = z.object({
     coverLearning: z.string().default(""),
     solution: z.string().default(""),
     remarks: z.string().optional().default(""),
-  });
+});
 
 export const submitQpReviewSchema = z.object({
     requestId: z.number().int().positive("Invalid request ID"),
     email: z.string().email("Invalid email format"),
-    review: z.record(z.string(), reviewFieldSchema)
+    review: z.record(z.string(), reviewFieldSchema),
 });
 
-
 export type SubmitQpReview = z.infer<typeof submitQpReviewSchema>;
-export const qpReviewResponseSchema = z.object({
-    faculty1Email: z.string().email(),
-    faculty2Email: z.string().email(),
-    review1: z.any().optional(),
-    review2: z.any().optional(),
-    reviewed: z.string().optional(),
-  }).passthrough();
+export const qpReviewResponseSchema = z
+    .object({
+        faculty1Email: z.string().email(),
+        faculty2Email: z.string().email(),
+        review1: z.any().optional(),
+        review2: z.any().optional(),
+        reviewed: z.string().optional(),
+    })
+    .passthrough();
 
 export type QpReviewResponse = z.infer<typeof qpReviewResponseSchema>;
 
@@ -81,7 +81,9 @@ export const editQpReviewSchema = z.object({
     faculty2Email: z.string().email().optional(),
     ficDeadline: z.string().datetime().optional(),
     reviewDeadline: z.string().datetime().optional(),
-    status: z.enum(["pending", "approved", "rejected", "inprogress"]).optional(),
+    status: z
+        .enum(["pending", "approved", "rejected", "inprogress"])
+        .optional(),
 });
 
 export type EditQpReview = z.infer<typeof editQpReviewSchema>;
@@ -95,10 +97,9 @@ export type UploadFICDocuments = z.infer<typeof uploadFICDocumentsSchema>;
 
 export const requestIdSchema = z.object({
     requestId: z.preprocess(
-      (val) => Number(val), // Convert string to number
-      z.number().int().positive() // Ensure it's a positive integer
+        (val) => Number(val), // Convert string to number
+        z.number().int().positive() // Ensure it's a positive integer
     ),
-  });
+});
 
 export type RequestId = z.infer<typeof requestIdSchema>;
-

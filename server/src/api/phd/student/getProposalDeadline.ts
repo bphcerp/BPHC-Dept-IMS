@@ -25,10 +25,16 @@ export default router.get(
 
         if (deadlineEntry.length === 0) {
             return next(
-                new HttpError(HttpCode.NOT_FOUND, "Proposal request deadline not set")
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "Proposal request deadline not set"
+                )
             );
         }
 
-        res.status(200).json({ success: true, deadline: deadlineEntry[0].deadline });
+        res.status(200).json({
+            success: true,
+            deadline: deadlineEntry[0].deadline,
+        });
     })
 );

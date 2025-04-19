@@ -14,16 +14,19 @@ router.get(
         const requests = (
             await db.query.qpReviewRequests.findMany({
                 where: (request, { eq, or }) =>
-                    or(eq(request.faculty1Email, facultyEmail), eq(request.faculty2Email, facultyEmail)),
+                    or(
+                        eq(request.faculty1Email, facultyEmail),
+                        eq(request.faculty2Email, facultyEmail)
+                    ),
                 with: {
                     dcaMember: {
                         with: {
-                            faculty: true, 
+                            faculty: true,
                         },
                     },
                     fic: {
                         with: {
-                            faculty: true, 
+                            faculty: true,
                         },
                     },
                 },
@@ -38,20 +41,20 @@ router.get(
             DCA: `DCA: ${request.dcaMember?.faculty.name || "Unknown"}`,
             status: request.status,
         }));
-        
 
         const getTimeLeft = (deadline: Date | null) => {
-            let timeLeft = "NA"
-            if(deadline){
+            let timeLeft = "NA";
+            if (deadline) {
                 const deadlineDate = new Date(deadline); // Convert to Date object
                 const today = new Date(); // Get today's date
                 const diffTime = deadlineDate.getTime() - today.getTime(); // Difference in milliseconds
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
-                timeLeft = diffDays > 0 ? `${diffDays} days left` : "Deadline passed"; // Handle past deadlines
+                timeLeft =
+                    diffDays > 0 ? `${diffDays} days left` : "Deadline passed"; // Handle past deadlines
             }
 
             return timeLeft;
-        }
+        };
 
         const formattedRequests = requests.map((req) => ({
             id: req.id,

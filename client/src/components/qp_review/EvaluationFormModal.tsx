@@ -24,10 +24,20 @@ import { toast } from "sonner";
 const SECTIONS = ["MidSem", "Compre", "Others"];
 const FIELDS = [
   { key: "language", label: "Language is simple and clear" },
-  { key: "length", label: "Length of the paper is appropriate to the time allocated" },
-  { key: "mixOfQuestions", label: "Has good mix of questions representing different order of thinking skills" },
+  {
+    key: "length",
+    label: "Length of the paper is appropriate to the time allocated",
+  },
+  {
+    key: "mixOfQuestions",
+    label:
+      "Has good mix of questions representing different order of thinking skills",
+  },
   { key: "coverLearning", label: "Questions cover important learning aspects" },
-  { key: "solution", label: "Solution is well-prepared and mark distribution is shown in detail" },
+  {
+    key: "solution",
+    label: "Solution is well-prepared and mark distribution is shown in detail",
+  },
 ];
 
 interface FormData {
@@ -66,7 +76,7 @@ export default function EvaluationFormModal({
         mixOfQuestions: "",
         coverLearning: "",
         solution: "",
-        remarks: ""
+        remarks: "",
       };
     });
     return initialData;
@@ -75,18 +85,18 @@ export default function EvaluationFormModal({
   // Fetch existing review data
   const fetchReview = async () => {
     if (!requestId || !email) return;
-    
+
     setLoading(true);
     try {
       const response = await api.get(`/qp/getReviews/${email}/${requestId}`);
       if (response.data.success && response.data.data) {
         // Merge fetched data with initialized form structure
         const initializedData = initializeFormData();
-        SECTIONS.forEach(section => {
+        SECTIONS.forEach((section) => {
           if (response.data.data[section]) {
             initializedData[section] = {
               ...initializedData[section],
-              ...response.data.data[section]
+              ...response.data.data[section],
             };
           }
         });
@@ -119,16 +129,16 @@ export default function EvaluationFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const payload = {
         requestId: Number(requestId),
         email,
-        review: formData
+        review: formData,
       };
 
       const response = await api.post("/qp/submitReview", payload);
-      
+
       if (response.data.success) {
         toast.success("Review submitted successfully");
         onOpenChange(false);
@@ -168,11 +178,20 @@ export default function EvaluationFormModal({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[180px] font-medium">Evaluation Component</TableHead>
+                      <TableHead className="w-[180px] font-medium">
+                        Evaluation Component
+                      </TableHead>
                       {FIELDS.map((field) => (
-                        <TableHead key={field.key} className="text-center font-medium">{field.label}</TableHead>
+                        <TableHead
+                          key={field.key}
+                          className="text-center font-medium"
+                        >
+                          {field.label}
+                        </TableHead>
                       ))}
-                      <TableHead className="text-center font-medium">Remarks (if any)</TableHead>
+                      <TableHead className="text-center font-medium">
+                        Remarks (if any)
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -185,7 +204,13 @@ export default function EvaluationFormModal({
                               type="text"
                               className="text-center"
                               value={formData[section]?.[field.key] || ""}
-                              onChange={(e) => handleInputChange(section, field.key, e.target.value)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  section,
+                                  field.key,
+                                  e.target.value
+                                )
+                              }
                               required
                             />
                           </TableCell>
@@ -206,11 +231,7 @@ export default function EvaluationFormModal({
                 </Table>
               </div>
               <div className="mt-6 flex justify-center">
-                <Button 
-                  type="submit" 
-                  className="px-8"
-                  disabled={submitting}
-                >
+                <Button type="submit" className="px-8" disabled={submitting}>
                   {submitting ? "Submitting..." : "Submit"}
                 </Button>
               </div>
@@ -221,7 +242,9 @@ export default function EvaluationFormModal({
       <RemarksModal
         open={remarksModalOpen}
         onOpenChange={setRemarksModalOpen}
-        initialValue={currentSection ? formData[currentSection]?.remarks || "" : ""}
+        initialValue={
+          currentSection ? formData[currentSection]?.remarks || "" : ""
+        }
         onSave={handleRemarksSave}
       />
     </>

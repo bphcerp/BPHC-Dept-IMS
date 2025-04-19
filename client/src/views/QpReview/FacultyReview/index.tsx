@@ -17,9 +17,9 @@ export default function ReviewPage() {
           `/qp/getAllFacultyRequests/${encodeURIComponent(facultyEmail)}`
         );
 
-        const data = response.data
+        const data = response.data;
 
-        console.log(data)
+        console.log(data);
 
         if (data.success) {
           const pending = data.data.filter(
@@ -42,7 +42,7 @@ export default function ReviewPage() {
 
           setReviewedCourses(
             reviewed.map((req: any) => ({
-              id:req.id,
+              id: req.id,
               code: req.courseCode,
               DCA: ` ${req.dcaName}`,
               role: ` ${req.ficName}`,
@@ -88,7 +88,7 @@ function QPReviewList({
   reviewedCourses: Course[];
 }) {
   return (
-    <div className="rounded-lg border bg-white shadow-sm w-full">
+    <div className="w-full rounded-lg border bg-white shadow-sm">
       <div className="p-6">
         <h2 className="mb-4 text-xl font-semibold">QP To Review</h2>
 
@@ -99,7 +99,9 @@ function QPReviewList({
           </TabsList>
 
           <TabsContent value="pending" className="mt-0">
-            {pendingCourses.length === 0 && (<p>No Submissions to be reviewed</p>)}
+            {pendingCourses.length === 0 && (
+              <p>No Submissions to be reviewed</p>
+            )}
             <div className="space-y-4">
               {pendingCourses.map((course, index) => (
                 <CourseItem key={index} course={course} />
@@ -109,7 +111,9 @@ function QPReviewList({
 
           <TabsContent value="reviewed" className="mt-0">
             <div className="space-y-4">
-              {reviewedCourses.length === 0 && (<p>No Submissions reviewed yet</p>)}
+              {reviewedCourses.length === 0 && (
+                <p>No Submissions reviewed yet</p>
+              )}
               {reviewedCourses.map((course, index) => (
                 <CourseItem key={index} course={course} />
               ))}

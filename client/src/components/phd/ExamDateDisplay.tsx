@@ -3,14 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExamDateDisplayProps {
   examDate: string | Date; // ISO date string
-  title:string;
+  title: string;
 }
 
 export default function ExamDateDisplay({
   examDate,
-  title
+  title,
 }: ExamDateDisplayProps) {
-
   const date = new Date(examDate);
 
   const formattedDate = date.toLocaleDateString("en-US", {

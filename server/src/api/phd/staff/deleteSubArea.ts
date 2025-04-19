@@ -15,16 +15,25 @@ router.delete(
         const subAreaId = parseInt(req.params.id, 10);
 
         if (isNaN(subAreaId) || subAreaId <= 0) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid sub-area ID"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid sub-area ID")
+            );
         }
 
-        const deleted = await db.delete(phdSubAreas).where(eq(phdSubAreas.id, subAreaId));
+        const deleted = await db
+            .delete(phdSubAreas)
+            .where(eq(phdSubAreas.id, subAreaId));
 
         if (!deleted.rowCount) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "Sub-area not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Sub-area not found")
+            );
         }
 
-        res.status(200).json({ success: true, message: "Sub-area deleted successfully" });
+        res.status(200).json({
+            success: true,
+            message: "Sub-area deleted successfully",
+        });
     })
 );
 

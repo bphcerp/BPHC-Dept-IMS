@@ -1,24 +1,46 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import api from "@/lib/axios-instance";
 import { Member } from "../admin/MemberList";
 import { useQuery } from "@tanstack/react-query";
-import { NewLaboratoryRequest, Laboratory, Staff, Faculty } from "node_modules/lib/src/types/inventory";
+import {
+  NewLaboratoryRequest,
+  Laboratory,
+  Staff,
+  Faculty,
+} from "node_modules/lib/src/types/inventory";
 
 interface AddLabDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onAddLab: (newLab: NewLaboratoryRequest, edit?: boolean) => void;
-  editInitialData?: Laboratory
+  editInitialData?: Laboratory;
 }
 
-const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDialogProps) => {
+const AddLabDialog = ({
+  isOpen,
+  setIsOpen,
+  onAddLab,
+  editInitialData,
+}: AddLabDialogProps) => {
   const [technicians, setTechnicians] = useState<Staff[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
 
@@ -35,10 +57,18 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
 
   useEffect(() => {
     if (isSuccess && members) {
-      setTechnicians(members.filter((member: Member) => member.type === "staff") as unknown as Staff[]);
-      setFaculties(members.filter((member: Member) => member.type === "faculty") as unknown as Faculty[]);
+      setTechnicians(
+        members.filter(
+          (member: Member) => member.type === "staff"
+        ) as unknown as Staff[]
+      );
+      setFaculties(
+        members.filter(
+          (member: Member) => member.type === "faculty"
+        ) as unknown as Faculty[]
+      );
     }
-  }, [isSuccess, members])
+  }, [isSuccess, members]);
 
   const { Field, Subscribe, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -49,15 +79,29 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
       facultyInChargeEmail: editInitialData?.facultyInCharge?.email ?? "",
     } as NewLaboratoryRequest,
     onSubmit: ({ value: data, formApi: form }) => {
-      if (!data.name || !data.code || !data.location || !data.technicianInChargeEmail || !data.facultyInChargeEmail) {
+      if (
+        !data.name ||
+        !data.code ||
+        !data.location ||
+        !data.technicianInChargeEmail ||
+        !data.facultyInChargeEmail
+      ) {
         toast.error("Some fields are missing");
         return;
       }
 
-      const dirtyFields = Object.entries(form.state.fieldMetaBase).filter(([_key, value]) => value.isDirty).map(([key]) => key)
+      const dirtyFields = Object.entries(form.state.fieldMetaBase)
+        .filter(([_key, value]) => value.isDirty)
+        .map(([key]) => key);
 
-      if (editInitialData) onAddLab(Object.fromEntries(Object.entries(data).filter(([key]) => dirtyFields.includes(key))) as NewLaboratoryRequest, true)
-      else onAddLab(data)
+      if (editInitialData)
+        onAddLab(
+          Object.fromEntries(
+            Object.entries(data).filter(([key]) => dirtyFields.includes(key))
+          ) as NewLaboratoryRequest,
+          true
+        );
+      else onAddLab(data);
       setIsOpen(false);
     },
   });
@@ -71,11 +115,22 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
       }}
     >
       <DialogTrigger asChild>
-        {editInitialData ? <Button variant="outline" className="text-blue-500 hover:text-blue-700 hover:bg-background">Edit Lab</Button> : <Button>Add Lab</Button>}
+        {editInitialData ? (
+          <Button
+            variant="outline"
+            className="text-blue-500 hover:bg-background hover:text-blue-700"
+          >
+            Edit Lab
+          </Button>
+        ) : (
+          <Button>Add Lab</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editInitialData ? "Edit Lab" : "Add New Lab"}</DialogTitle>
+          <DialogTitle>
+            {editInitialData ? "Edit Lab" : "Add New Lab"}
+          </DialogTitle>
         </DialogHeader>
         <form
           className="space-y-4"
@@ -135,7 +190,9 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
           <Field name="technicianInChargeEmail">
             {({ state, handleChange }) => (
               <>
-                <Label htmlFor="technician-in-charge">Technician In Charge</Label>
+                <Label htmlFor="technician-in-charge">
+                  Technician In Charge
+                </Label>
                 <Select
                   value={state.value}
                   onValueChange={(value) => handleChange(value)}
@@ -144,7 +201,7 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
                     <span>
                       {state.value
                         ? technicians.find((tech) => tech.email === state.value)
-                          ?.name
+                            ?.name
                         : "Select Technician In Charge"}
                     </span>
                   </SelectTrigger>
@@ -170,8 +227,9 @@ const AddLabDialog = ({ isOpen, setIsOpen, onAddLab, editInitialData }: AddLabDi
                   <SelectTrigger className="w-full">
                     <span>
                       {state.value
-                        ? faculties.find((faculty) => faculty.email === state.value)
-                          ?.name
+                        ? faculties.find(
+                            (faculty) => faculty.email === state.value
+                          )?.name
                         : "Select Faculty In Charge"}
                     </span>
                   </SelectTrigger>

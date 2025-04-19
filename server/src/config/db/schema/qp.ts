@@ -20,8 +20,8 @@ export const qpStatusEnum = pgEnum("qp_status_enum", [
 export const qpReviewRequests = pgTable("qp_review_requests", {
     id: serial("id").primaryKey(),
     dcaMemberEmail: text("dca_member_email")
-    .notNull()
-    .references(() => users.email, { onDelete: "cascade" }), 
+        .notNull()
+        .references(() => users.email, { onDelete: "cascade" }),
     ficEmail: text("fic_email").references(() => users.email, {
         onDelete: "cascade",
     }),
@@ -53,9 +53,9 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
             onDelete: "set null",
         }
     ),
-    review1: jsonb("review_1"), 
+    review1: jsonb("review_1"),
     review2: jsonb("review_2"),
-    reviewed: text("reviewed").notNull().default("review pending"), 
+    reviewed: text("reviewed").notNull().default("review pending"),
     documentsUploaded: boolean("documents_uploaded").notNull().default(false),
     status: qpStatusEnum("status").notNull().default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true })

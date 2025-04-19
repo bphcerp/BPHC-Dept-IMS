@@ -8,25 +8,33 @@ import { categorySchema } from "node_modules/lib/src/schemas/Inventory.ts";
 
 const router = Router();
 
-router.post('/', checkAccess(), asyncHandler(async (req, res, next) => {
-    const { type } = req.query;
-    if (!type) {
-        res.status(400).json({ message: "Query parameter 'type' is required" });
-        return
-    }
-    const parsed = categorySchema.omit({ id: true }).parse({ ...req.body, type });
-    const newCategory = await db
-        .insert(inventoryCategories)
-        .values(parsed)
-        .onConflictDoNothing()
-        .returning();
+router.post(
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const { type } = req.query;
+        if (!type) {
+            res.status(400).json({
+                message: "Query parameter 'type' is required",
+            });
+            return;
+        }
+        const parsed = categorySchema
+            .omit({ id: true })
+            .parse({ ...req.body, type });
+        const newCategory = await db
+            .insert(inventoryCategories)
+            .values(parsed)
+            .onConflictDoNothing()
+            .returning();
 
-    if (newCategory.length === 0) {
-        return next(
-            new HttpError(HttpCode.CONFLICT, "Category already exists")
-        );
-    }
-    res.json({ success: true });
-}));
+        if (newCategory.length === 0) {
+            return next(
+                new HttpError(HttpCode.CONFLICT, "Category already exists")
+            );
+        }
+        res.json({ success: true });
+    })
+);
 
 export default router;

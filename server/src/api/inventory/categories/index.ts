@@ -6,9 +6,9 @@ import deleteCategory from "./delete.ts";
 
 const router = Router();
 
-router.use('/get', getCategories);
-router.use('/create', createCategory);
-router.use('/update', updateCategory);
-router.use('/delete', deleteCategory);
+router.use("/get", getCategories);
+router.use("/create", createCategory);
+router.use("/update", updateCategory);
+router.use("/delete", deleteCategory);
 
 export default router;

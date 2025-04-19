@@ -17,11 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import CreateRequestDialog, { Course } from "@/components/qp_review/CreateRequest";
+import CreateRequestDialog, {
+  Course,
+} from "@/components/qp_review/CreateRequest";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-
-
 
 const DCARequestsView = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -29,7 +29,7 @@ const DCARequestsView = () => {
   const [sortBy, setSortBy] = useState("pending");
   const [courses, setCourses] = useState<Course[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentCourse, setCurrentCourse ] = useState<Course | null>(null);
+  const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
   const [finalReviewers, setFinalReviewers] = useState([
     { name: "Prof. BVVSN RAO", email: "bvvsnrao@university.com" },
     { name: "Prof. BhanuMurthy", email: "bhanumurthy@university.com" },
@@ -99,21 +99,24 @@ const DCARequestsView = () => {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     const getFaculty = async () => {
       try {
         const response = await api.get("/handout/dcaconvenor/getAllFaculty");
-        console.log(response.data.faculties)
+        console.log(response.data.faculties);
         if (response.status === 200) {
-          setFinalReviewers((prev)=>{console.log(prev); return response.data.faculties})
-          console.log(finalReviewers)
-        } 
+          setFinalReviewers((prev) => {
+            console.log(prev);
+            return response.data.faculties;
+          });
+          console.log(finalReviewers);
+        }
       } catch (error) {
         console.error("Error fetching faculties:", error);
       }
-    }
+    };
     getFaculty();
-  },[])
+  }, []);
 
   useEffect(() => {
     fetchCourses();
@@ -123,7 +126,10 @@ const DCARequestsView = () => {
     <div className="flex w-full flex-col gap-4 px-10 pt-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">Courses</h1>
-        <Button className="flex items-center gap-2" onClick={() => setIsDialogOpen(true)}>
+        <Button
+          className="flex items-center gap-2"
+          onClick={() => setIsDialogOpen(true)}
+        >
           <Plus size={16} /> Create New Request
         </Button>
       </div>
@@ -133,7 +139,7 @@ const DCARequestsView = () => {
         onClose={() => setIsDialogOpen(false)}
         onAddRequest={handleAddRequest}
         fetchCourses={fetchCourses}
-        fics = {finalReviewers}
+        fics={finalReviewers}
       />
       <EditRequestDialog
         isOpen={isEditDialogOpen}
@@ -159,7 +165,10 @@ const DCARequestsView = () => {
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuTrigger className="flex items-center gap-2 border px-4 py-2">
-                Sort By <span className=" font-bold">{sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}</span>
+                Sort By{" "}
+                <span className="font-bold">
+                  {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
+                </span>
               </NavigationMenuTrigger>
               <NavigationMenuContent className="rounded-md border bg-white p-2 shadow-md">
                 {Object.keys(statusColors).map((status) => (
@@ -186,25 +195,38 @@ const DCARequestsView = () => {
         <div className="text-center">Status</div>
       </div> */}
 
-      {courses.length===0 && <p className="text-center mt-4">No requests found</p>}
+      {courses.length === 0 && (
+        <p className="mt-4 text-center">No requests found</p>
+      )}
       {/* Course rows */}
-      <div className="border-t mt-4">
+      <div className="mt-4 border-t">
         {courses
           .filter((course) => course.status === sortBy)
           .map((course, index) => (
-            <div key={index} className="grid grid-cols-5 items-center gap-4 border-b py-4">
+            <div
+              key={index}
+              className="grid grid-cols-5 items-center gap-4 border-b py-4"
+            >
               {/* Course info */}
               <div>
                 <p className="font-semibold">{course.courseName}</p>
                 <p className="text-sm text-gray-500">FIC</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {course.reviewed === "Review Complete" ? "Reviewed" : "Pending Review"}
+                <p className="mt-1 text-xs text-gray-400">
+                  {course.reviewed === "Review Complete"
+                    ? "Reviewed"
+                    : "Pending Review"}
                 </p>
               </div>
 
               {/* Edit button */}
-              <Button variant="ghost" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                onClick={() => handleEditRequest(course)}> Edit </Button>
+              <Button
+                variant="ghost"
+                className="text-blue-500 hover:bg-blue-50 hover:text-blue-700"
+                onClick={() => handleEditRequest(course)}
+              >
+                {" "}
+                Edit{" "}
+              </Button>
 
               {/* Reviewer 1 Select */}
               <Select
@@ -217,10 +239,17 @@ const DCARequestsView = () => {
                   }
 
                   const updatedCourses = [...courses];
-                  updatedCourses[index] = { ...updatedCourses[index], reviewer1: value };
+                  updatedCourses[index] = {
+                    ...updatedCourses[index],
+                    reviewer1: value,
+                  };
                   setCourses(updatedCourses);
 
-                  handleFacultyAssignment(course.id.toString(), value, course.reviewer2);
+                  handleFacultyAssignment(
+                    course.id.toString(),
+                    value,
+                    course.reviewer2
+                  );
                 }}
               >
                 <SelectTrigger className="w-full border p-1">
@@ -250,10 +279,17 @@ const DCARequestsView = () => {
                   }
 
                   const updatedCourses = [...courses];
-                  updatedCourses[index] = { ...updatedCourses[index], reviewer2: value };
+                  updatedCourses[index] = {
+                    ...updatedCourses[index],
+                    reviewer2: value,
+                  };
                   setCourses(updatedCourses);
 
-                  handleFacultyAssignment(course.id.toString(), course.reviewer1, value);
+                  handleFacultyAssignment(
+                    course.id.toString(),
+                    course.reviewer1,
+                    value
+                  );
                 }}
               >
                 <SelectTrigger className="w-full border p-1">
@@ -273,10 +309,11 @@ const DCARequestsView = () => {
               </Select>
 
               {/* Status */}
-              <span className={`rounded-md mx-12 px-3 py-1 text-white text-center ${statusColors[course.status]}`}>
+              <span
+                className={`mx-12 rounded-md px-3 py-1 text-center text-white ${statusColors[course.status]}`}
+              >
                 {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
               </span>
-
             </div>
           ))}
       </div>

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +15,18 @@ import { X } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
 import { Textarea } from "../ui/textarea";
 import api from "@/lib/axios-instance";
-import { NewVendorRequest, Vendor, Category } from "node_modules/lib/src/types/inventory";
+import {
+  NewVendorRequest,
+  Vendor,
+  Category,
+} from "node_modules/lib/src/types/inventory";
 import { useQuery } from "@tanstack/react-query";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface AddVendorDialogProps {
   isOpen: boolean;
@@ -19,8 +35,15 @@ interface AddVendorDialogProps {
   editInitialData?: Vendor;
 }
 
-const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: AddVendorDialogProps) => {
-  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+const AddVendorDialog = ({
+  isOpen,
+  setIsOpen,
+  onAddVendor,
+  editInitialData,
+}: AddVendorDialogProps) => {
+  const [availableCategories, setAvailableCategories] = useState<Category[]>(
+    []
+  );
 
   const { Field, Subscribe, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -30,10 +53,17 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
       phoneNumber: editInitialData?.phoneNumber ?? "",
       email: editInitialData?.email ?? "",
       address: editInitialData?.address ?? "",
-      categories: editInitialData?.categories?.map((cat: Category) => cat.id) ?? [],
+      categories:
+        editInitialData?.categories?.map((cat: Category) => cat.id) ?? [],
     } as NewVendorRequest,
     onSubmit: ({ value: data }) => {
-      if (!data.vendorId || !data.name || !data.pocName || !data.phoneNumber || !data.email) {
+      if (
+        !data.vendorId ||
+        !data.name ||
+        !data.pocName ||
+        !data.phoneNumber ||
+        !data.email
+      ) {
         toast.error("Fields are missing");
         return;
       }
@@ -45,9 +75,9 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
   useQuery({
     queryKey: ["categories", isOpen],
     queryFn: async () => {
-      const response = await api("/inventory/categories/get?type=Vendor")
-      setAvailableCategories(response.data)
-      return response.data
+      const response = await api("/inventory/categories/get?type=Vendor");
+      setAvailableCategories(response.data);
+      return response.data;
     },
     refetchOnWindowFocus: false,
     enabled: isOpen,
@@ -63,7 +93,10 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
     >
       <DialogTrigger asChild>
         {editInitialData ? (
-          <Button variant="outline" className="text-blue-500 hover:text-blue-700 hover:bg-background">
+          <Button
+            variant="outline"
+            className="text-blue-500 hover:bg-background hover:text-blue-700"
+          >
             Edit Vendor
           </Button>
         ) : (
@@ -72,7 +105,9 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
       </DialogTrigger>
       <DialogContent className="!max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{editInitialData ? "Edit Vendor" : "Add Vendor"}</DialogTitle>
+          <DialogTitle>
+            {editInitialData ? "Edit Vendor" : "Add Vendor"}
+          </DialogTitle>
         </DialogHeader>
         <form
           className="space-y-4"
@@ -158,7 +193,7 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
           </Field>
           <Field name="address">
             {(field) => (
-              <div className="grid grid-rows-2 h-36">
+              <div className="grid h-36 grid-rows-2">
                 <Label htmlFor="vendor-address">Vendor Address</Label>
                 <Textarea
                   id="vendor-address"
@@ -193,8 +228,10 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
                         onCheckedChange={(checked) => {
                           const newValue = checked
                             ? [...field.state.value, category.id]
-                            : field.state.value.filter((id: string) => id !== category.id)
-                          field.handleChange(newValue)
+                            : field.state.value.filter(
+                                (id: string) => id !== category.id
+                              );
+                          field.handleChange(newValue);
                         }}
                       >
                         {category.name}
@@ -202,11 +239,11 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="mt-2 grid grid-cols-3 gap-2">
                   {field.state.value.map((category, index) => (
                     <div
                       key={index}
-                      className="flex p-1 justify-center items-center space-x-1 bg-primary/20 hover:bg-primary/30  rounded-md"
+                      className="flex items-center justify-center space-x-1 rounded-md bg-primary/20 p-1 hover:bg-primary/30"
                     >
                       <span>
                         {
@@ -225,7 +262,7 @@ const AddVendorDialog = ({ isOpen, setIsOpen, onAddVendor, editInitialData }: Ad
                             )
                           )
                         }
-                        className="hover:cursor-pointer text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:cursor-pointer hover:text-red-700"
                       >
                         <X size={15} />
                       </button>
