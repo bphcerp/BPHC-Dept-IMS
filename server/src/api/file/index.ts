@@ -48,6 +48,7 @@ router.get(
             next(new HttpError(HttpCode.NOT_FOUND, "File not found"));
         });
         stream.pipe(res);
+    })
 );
 
 export default router;
