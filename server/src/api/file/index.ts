@@ -43,7 +43,7 @@ router.get(
             );
         }
         const stream = fs.createReadStream(file.filePath);
-        stream.once("error", (err) => {
+        stream.once("error", (_) => {
             stream.destroy();
             next(new HttpError(HttpCode.NOT_FOUND, "File not found"));
         });
