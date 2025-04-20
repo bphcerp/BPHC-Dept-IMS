@@ -42,7 +42,11 @@ router.get(
                 `inline; filename="${file.originalName}"`
             );
         }
-        fs.createReadStream(file.filePath).pipe(res);
+        try {
+            fs.createReadStream(file.filePath).pipe(res);
+        } catch (e) {
+            next(new HttpError(HttpCode.NOT_FOUND, "File not found"));
+        }
     })
 );
 
