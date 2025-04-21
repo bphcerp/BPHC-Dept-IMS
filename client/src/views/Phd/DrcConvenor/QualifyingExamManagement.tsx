@@ -14,26 +14,36 @@ const QualifyingExamManagement: React.FC = () => {
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-7xl">
         <CardContent className="p-6">
-          <h1 className="mb-6 text-2xl font-bold">PhD Qualifying Exam Management</h1>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <h1 className="mb-6 text-2xl font-bold">
+            PhD Qualifying Exam Management
+          </h1>
+
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="applications">1. Student Applications</TabsTrigger>
+              <TabsTrigger value="applications">
+                1. Student Applications
+              </TabsTrigger>
               <TabsTrigger value="forms">2. Generate Forms</TabsTrigger>
-              <TabsTrigger value="examiners">3. Examiner Management</TabsTrigger>
+              <TabsTrigger value="examiners">
+                3. Examiner Management
+              </TabsTrigger>
               <TabsTrigger value="results">4. Exam Results</TabsTrigger>
             </TabsList>
 
             <TabsContent value="applications" className="mt-6">
-              <ApplicationsPanel 
-                selectedSemester={selectedSemester} 
-                onSelectSemester={setSelectedSemester} 
+              <ApplicationsPanel
+                selectedSemester={selectedSemester}
+                onSelectSemester={setSelectedSemester}
                 onNext={() => setActiveTab("forms")}
               />
             </TabsContent>
 
             <TabsContent value="forms" className="mt-6">
-              <GenerateFormsPanel 
+              <GenerateFormsPanel
                 selectedSemester={selectedSemester}
                 onNext={() => setActiveTab("examiners")}
                 onBack={() => setActiveTab("applications")}
@@ -41,7 +51,7 @@ const QualifyingExamManagement: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="examiners" className="mt-6">
-              <ExaminerManagementPanel 
+              <ExaminerManagementPanel
                 selectedSemester={selectedSemester}
                 onNext={() => setActiveTab("results")}
                 onBack={() => setActiveTab("forms")}
@@ -49,7 +59,7 @@ const QualifyingExamManagement: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="results" className="mt-6">
-              <ResultsPanel 
+              <ResultsPanel
                 selectedSemester={selectedSemester}
                 onBack={() => setActiveTab("examiners")}
               />

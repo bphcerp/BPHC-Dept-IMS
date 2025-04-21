@@ -4,7 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 interface Course {
@@ -44,9 +51,10 @@ const StudentProfile: React.FC = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["student-profile"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; student: StudentProfile }>(
-        "/phd/student/getProfileDetails"
-      );
+      const response = await api.get<{
+        success: boolean;
+        student: StudentProfile;
+      }>("/phd/student/getProfileDetails");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -67,7 +75,9 @@ const StudentProfile: React.FC = () => {
       <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
         <Card className="w-full max-w-4xl">
           <CardContent className="p-6">
-            <p className="text-center text-red-500">Failed to load profile: {(error as Error).message}</p>
+            <p className="text-center text-red-500">
+              Failed to load profile: {(error as Error).message}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -79,7 +89,9 @@ const StudentProfile: React.FC = () => {
       <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
         <Card className="w-full max-w-4xl">
           <CardContent className="p-6">
-            <p className="text-center text-gray-500">No profile data available</p>
+            <p className="text-center text-gray-500">
+              No profile data available
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -91,11 +103,13 @@ const StudentProfile: React.FC = () => {
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-5xl space-y-8">
-        <h1 className="text-3xl font-bold text-center">My Profile</h1>
-        
+        <h1 className="text-center text-3xl font-bold">My Profile</h1>
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Personal Information</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Personal Information
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -109,11 +123,15 @@ const StudentProfile: React.FC = () => {
                   <span>{student.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Institute Email</span>
+                  <span className="font-medium text-gray-500">
+                    Institute Email
+                  </span>
                   <span>{student.instituteEmail || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Personal Email</span>
+                  <span className="font-medium text-gray-500">
+                    Personal Email
+                  </span>
                   <span>{student.personalEmail || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
@@ -121,7 +139,7 @@ const StudentProfile: React.FC = () => {
                   <span>{student.department || "N/A"}</span>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-500">Phone</span>
@@ -140,7 +158,9 @@ const StudentProfile: React.FC = () => {
                   <span>{student.erpId || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Nature of PhD</span>
+                  <span className="font-medium text-gray-500">
+                    Nature of PhD
+                  </span>
                   <span>{student.natureOfPhD || "N/A"}</span>
                 </div>
               </div>
@@ -150,47 +170,65 @@ const StudentProfile: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Academic Information</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Academic Information
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Notional Supervisor</span>
-                  <span>{student.notionalSupervisorEmail || "Not Assigned"}</span>
+                  <span className="font-medium text-gray-500">
+                    Notional Supervisor
+                  </span>
+                  <span>
+                    {student.notionalSupervisorEmail || "Not Assigned"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-500">Supervisor</span>
                   <span>{student.supervisorEmail || "Not Assigned"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Co-Supervisor</span>
+                  <span className="font-medium text-gray-500">
+                    Co-Supervisor
+                  </span>
                   <span>{student.coSupervisorEmail || "Not Assigned"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Co-Supervisor</span>
+                  <span className="font-medium text-gray-500">
+                    Co-Supervisor
+                  </span>
                   <span>{student.coSupervisorEmail2 || "Not Assigned"}</span>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">DAC Member 1</span>
+                  <span className="font-medium text-gray-500">
+                    DAC Member 1
+                  </span>
                   <span>{student.dac1Email || "Not Assigned"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">DAC Member 2</span>
+                  <span className="font-medium text-gray-500">
+                    DAC Member 2
+                  </span>
                   <span>{student.dac2Email || "Not Assigned"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Number of QE Attempts</span>
+                  <span className="font-medium text-gray-500">
+                    Number of QE Attempts
+                  </span>
                   <span>{student.numberOfQeApplication || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Qualification Date</span>
+                  <span className="font-medium text-gray-500">
+                    Qualification Date
+                  </span>
                   <span>
-                    {student.qualificationDate 
-                      ? new Date(student.qualificationDate).toLocaleDateString() 
+                    {student.qualificationDate
+                      ? new Date(student.qualificationDate).toLocaleDateString()
                       : "Not Qualified Yet"}
                   </span>
                 </div>
@@ -201,41 +239,55 @@ const StudentProfile: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Qualifying Exam Status</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Qualifying Exam Status
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Qualifying Area 1</span>
+                  <span className="font-medium text-gray-500">
+                    Qualifying Area 1
+                  </span>
                   <span>{student.qualifyingArea1 || "Not Selected"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Exam 1 Status</span>
+                  <span className="font-medium text-gray-500">
+                    Exam 1 Status
+                  </span>
                   <span>
                     {student.qualifyingExam1 === null ? (
                       "Not Attempted"
                     ) : (
-                      <Badge className={`${student.qualifyingExam1 ? "bg-green-500" : "bg-red-500"}`}>
+                      <Badge
+                        className={`${student.qualifyingExam1 ? "bg-green-500" : "bg-red-500"}`}
+                      >
                         {student.qualifyingExam1 ? "Passed" : "Failed"}
                       </Badge>
                     )}
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Qualifying Area 2</span>
+                  <span className="font-medium text-gray-500">
+                    Qualifying Area 2
+                  </span>
                   <span>{student.qualifyingArea2 || "Not Selected"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Exam 2 Status</span>
+                  <span className="font-medium text-gray-500">
+                    Exam 2 Status
+                  </span>
                   <span>
                     {student.qualifyingExam2 === null ? (
                       "Not Attempted"
                     ) : (
-                      <Badge className={`${student.qualifyingExam2 ? "bg-green-500" : "bg-red-500"}`}>
+                      <Badge
+                        className={`${student.qualifyingExam2 ? "bg-green-500" : "bg-red-500"}`}
+                      >
                         {student.qualifyingExam2 ? "Passed" : "Failed"}
                       </Badge>
                     )}
@@ -248,7 +300,9 @@ const StudentProfile: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Courses and Grades</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Courses and Grades
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {student.courses && student.courses.length > 0 ? (
@@ -266,14 +320,20 @@ const StudentProfile: React.FC = () => {
                     <TableRow key={index}>
                       <TableCell>{course.courseId || "N/A"}</TableCell>
                       <TableCell>{course.courseName}</TableCell>
-                      <TableCell className="text-center">{course.courseUnits || "N/A"}</TableCell>
-                      <TableCell className="text-center">{course.courseGrade || "N/A"}</TableCell>
+                      <TableCell className="text-center">
+                        {course.courseUnits || "N/A"}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {course.courseGrade || "N/A"}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             ) : (
-              <p className="py-4 text-center text-gray-500">No courses taken yet</p>
+              <p className="py-4 text-center text-gray-500">
+                No courses taken yet
+              </p>
             )}
           </CardContent>
         </Card>

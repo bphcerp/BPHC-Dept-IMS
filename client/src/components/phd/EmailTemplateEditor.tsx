@@ -29,9 +29,15 @@ const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({
   // Initialize default templates when component mounts
   useEffect(() => {
     const deadlineDate = new Date(dates.deadline).toLocaleString();
-    const startDate = dates.examStartDate ? new Date(dates.examStartDate).toLocaleString() : 'N/A';
-    const endDate = dates.examEndDate ? new Date(dates.examEndDate).toLocaleString() : 'N/A';
-    const vivaDate = dates.vivaDate ? new Date(dates.vivaDate).toLocaleString() : 'N/A';
+    const startDate = dates.examStartDate
+      ? new Date(dates.examStartDate).toLocaleString()
+      : "N/A";
+    const endDate = dates.examEndDate
+      ? new Date(dates.examEndDate).toLocaleString()
+      : "N/A";
+    const vivaDate = dates.vivaDate
+      ? new Date(dates.vivaDate).toLocaleString()
+      : "N/A";
 
     // Set default subject
     setSubject(`New ${examType} Deadline Announced`);
@@ -96,9 +102,9 @@ PhD Administration</p>
   });
 
   return (
-    <div className="space-y-6 p-6 bg-white rounded-md shadow-lg">
+    <div className="space-y-6 rounded-md bg-white p-6 shadow-lg">
       <h2 className="text-xl font-bold">Email Notification Template</h2>
-      
+
       <div className="space-y-2">
         <label htmlFor="subject" className="font-medium">
           Subject
@@ -124,10 +130,10 @@ PhD Administration</p>
         />
       </div>
 
-      <div className="bg-gray-100 border p-4 rounded-md">
-        <h3 className="font-medium mb-2">Preview:</h3>
-        <div 
-          className="p-4 bg-white border rounded-md" 
+      <div className="rounded-md border bg-gray-100 p-4">
+        <h3 className="mb-2 font-medium">Preview:</h3>
+        <div
+          className="rounded-md border bg-white p-4"
           dangerouslySetInnerHTML={{ __html: body }}
         />
       </div>

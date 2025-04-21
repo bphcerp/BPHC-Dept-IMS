@@ -16,7 +16,7 @@ export default function CourseItem({ course }: CourseItemProps) {
   const router = useNavigate();
   const courseCode = course.code;
   const requestId = course.id;
-  console.log(requestId)
+  console.log(requestId);
   const slug = encodeURIComponent(
     courseCode.toLowerCase().replace(/\s+/g, "-")
   );
@@ -25,7 +25,9 @@ export default function CourseItem({ course }: CourseItemProps) {
     <div
       className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-gray-200"
       onClick={() =>
-        router(`/qpReview/FacultyReview/${slug}`, { state: { courseCode, requestId } })
+        router(`/qpReview/FacultyReview/${slug}`, {
+          state: { courseCode, requestId },
+        })
       }
     >
       <div className="flex items-start justify-between">

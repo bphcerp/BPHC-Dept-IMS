@@ -13,7 +13,7 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        assert(req.user)
+        assert(req.user);
         const userEmail = req.user.email;
 
         const result = await db
@@ -23,7 +23,12 @@ router.get(
             .limit(1);
 
         if (!result.length) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "Qualification date not found for the user"));
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "Qualification date not found for the user"
+                )
+            );
         }
 
         res.status(200).json({

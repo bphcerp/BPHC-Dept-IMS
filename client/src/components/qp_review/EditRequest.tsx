@@ -41,7 +41,7 @@ const EditRequestDialog = ({
   isOpen,
   onClose,
   course,
-  fetchCourses
+  fetchCourses,
 }: EditRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -56,16 +56,16 @@ const EditRequestDialog = ({
       setCourseName(course.courseName || "");
       setCourseCode(course.courseNo || "");
       setFIC(course.fic || "");
-      
+
       // Format dates if they exist
       if (course.ficDeadline) {
         const ficDate = new Date(course.ficDeadline);
-        setFicDeadline(ficDate.toISOString().split('T')[0]);
+        setFicDeadline(ficDate.toISOString().split("T")[0]);
       }
-      
+
       if (course.reviewDeadline) {
         const reviewDate = new Date(course.reviewDeadline);
-        setSrDeadline(reviewDate.toISOString().split('T')[0]);
+        setSrDeadline(reviewDate.toISOString().split("T")[0]);
       }
     }
   }, [course]);
@@ -75,7 +75,7 @@ const EditRequestDialog = ({
       alert("Please fill in all fields.");
       return;
     }
-    
+
     const requestData = {
       id: course?.id,
       dcaMemberEmail: "dca@email.com",
@@ -88,7 +88,10 @@ const EditRequestDialog = ({
 
     try {
       setLoading(true);
-      const response = await api.put(`/qp/updateQpRequest/${course?.id}`, requestData);
+      const response = await api.put(
+        `/qp/updateQpRequest/${course?.id}`,
+        requestData
+      );
 
       console.log("Full API Response:", response);
       console.log("Response Data:", response.data);
@@ -178,4 +181,4 @@ const EditRequestDialog = ({
   );
 };
 
-export default EditRequestDialog;   
+export default EditRequestDialog;

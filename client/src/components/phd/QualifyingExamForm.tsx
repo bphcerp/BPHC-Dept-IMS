@@ -6,12 +6,12 @@ import api from "@/lib/axios-instance";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -53,18 +53,21 @@ export default function ExamForm({ exam }: ExamFormProps) {
   const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
   const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
   const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
-  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] = useState(false);
+  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] =
+    useState(false);
 
   // Fetch sub-areas
-  const { 
-    data: subAreasData, 
-    isLoading: isSubAreasLoading, 
-    error: subAreasError 
+  const {
+    data: subAreasData,
+    isLoading: isSubAreasLoading,
+    error: subAreasError,
   } = useQuery<SubAreasResponse, Error>({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
       try {
-        const response = await api.get<SubAreasResponse>("/phd/student/getSubAreas");
+        const response = await api.get<SubAreasResponse>(
+          "/phd/student/getSubAreas"
+        );
         return response.data;
       } catch (error) {
         console.error("Error fetching sub-areas:", error);
@@ -95,10 +98,14 @@ export default function ExamForm({ exam }: ExamFormProps) {
       setAcademicInfoChecked(false);
       setAnticipatedPlanChecked(false);
       setQualifyingExamDetailsChecked(false);
-      
+
       // Refresh the application data
-      queryClient.invalidateQueries({ queryKey: ["get-qe-application-number"] });
-      queryClient.invalidateQueries({ queryKey: ["get-qualifying-exam-status"] });
+      queryClient.invalidateQueries({
+        queryKey: ["get-qe-application-number"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["get-qualifying-exam-status"],
+      });
     },
     onError: (error) => {
       toast.error(
@@ -124,9 +131,10 @@ export default function ExamForm({ exam }: ExamFormProps) {
       !anticipatedPlanChecked ||
       !qualifyingExamDetailsChecked
     ) {
-      toast.error(qualifyingArea1 === qualifyingArea2 
-        ? "Please select two different research sub-areas" 
-        : "All fields and checkboxes are required"
+      toast.error(
+        qualifyingArea1 === qualifyingArea2
+          ? "Please select two different research sub-areas"
+          : "All fields and checkboxes are required"
       );
       return;
     }
@@ -156,8 +164,10 @@ export default function ExamForm({ exam }: ExamFormProps) {
   if (subAreasError) {
     return (
       <div>
-        Error loading sub-areas: 
-        {subAreasError instanceof Error ? subAreasError.message : "Unknown error"}
+        Error loading sub-areas:
+        {subAreasError instanceof Error
+          ? subAreasError.message
+          : "Unknown error"}
       </div>
     );
   }
@@ -171,16 +181,22 @@ export default function ExamForm({ exam }: ExamFormProps) {
     <Card className="mx-auto max-w-2xl">
       <CardContent className="space-y-4 pt-6">
         <h2 className="text-2xl font-bold">Qualifying Exam Application</h2>
-        
+
         <div className="mb-4 text-sm text-gray-500">
-          <p>Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} to {new Date(exam.examEndDate).toLocaleDateString()}</p>
-          <p>Registration Deadline: {new Date(exam.deadline).toLocaleDateString()}</p>
+          <p>
+            Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} to{" "}
+            {new Date(exam.examEndDate).toLocaleDateString()}
+          </p>
+          <p>
+            Registration Deadline:{" "}
+            {new Date(exam.deadline).toLocaleDateString()}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="qualifyingArea1">Research Sub-Area 1 *</Label>
-            <Select 
+            <Select
               value={qualifyingArea1}
               onValueChange={setQualifyingArea1}
               disabled={isSubAreasLoading}
@@ -190,10 +206,7 @@ export default function ExamForm({ exam }: ExamFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {subAreasData.subAreas.map((subArea) => (
-                  <SelectItem 
-                    key={subArea.id} 
-                    value={subArea.subarea}
-                  >
+                  <SelectItem key={subArea.id} value={subArea.subarea}>
                     {subArea.subarea}
                   </SelectItem>
                 ))}
@@ -203,7 +216,7 @@ export default function ExamForm({ exam }: ExamFormProps) {
 
           <div className="space-y-3">
             <Label htmlFor="qualifyingArea2">Research Sub-Area 2 *</Label>
-            <Select 
+            <Select
               value={qualifyingArea2}
               onValueChange={setQualifyingArea2}
               disabled={isSubAreasLoading}
@@ -213,22 +226,20 @@ export default function ExamForm({ exam }: ExamFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {subAreasData.subAreas
-                  .filter(subArea => subArea.subarea !== qualifyingArea1)
+                  .filter((subArea) => subArea.subarea !== qualifyingArea1)
                   .map((subArea) => (
-                    <SelectItem 
-                      key={subArea.id} 
-                      value={subArea.subarea}
-                    >
+                    <SelectItem key={subArea.id} value={subArea.subarea}>
                       {subArea.subarea}
                     </SelectItem>
-                  ))
-                }
+                  ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="qualificationForm">Qualifying Application Form (PDF) *</Label>
+            <Label htmlFor="qualificationForm">
+              Qualifying Application Form (PDF) *
+            </Label>
             <div className="flex items-center gap-2">
               <Input
                 id="qualificationForm"

@@ -14,14 +14,19 @@ router.post(
     asyncHandler(async (req, res, next) => {
         const parsedBody = phdSchemas.updateSubAreasSchema.safeParse(req.body);
         if (!parsedBody.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid subAreas input"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid subAreas input")
+            );
         }
 
         const { subAreas } = parsedBody.data;
         const insertData = subAreas.map(({ subarea }) => ({ subarea }));
         await db.insert(phdSubAreas).values(insertData);
 
-        res.status(201).json({ success: true, message: "Sub-areas added successfully" });
+        res.status(201).json({
+            success: true,
+            message: "Sub-areas added successfully",
+        });
     })
 );
 

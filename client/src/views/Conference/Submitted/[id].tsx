@@ -1,63 +1,24 @@
 import type React from "react";
-import { Button } from "@/components/ui/button";
 import { conferenceSchemas } from "lib";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { CalendarIcon, FileIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Textarea } from "@/components/ui/textarea";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
-import { z } from "zod";
-import { FileUploader } from "@/components/ui/file-uploader";
 import { useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/BackButton";
-import { ProgressStatus } from "@/components/conference/StateProgressBar";
-
-const schema = conferenceSchemas.upsertApplicationBodySchema.merge(
-  z.object(
-    Object.fromEntries(
-      conferenceSchemas.fileFieldNames.map((x) => [
-        x,
-        z.instanceof(File).optional(),
-      ])
-    ) as Record<
-      (typeof conferenceSchemas.fileFieldNames)[number],
-      z.ZodOptional<z.ZodType<File>>
-    >
-  )
-);
-
-type Schema = z.infer<typeof schema>;
+import { ApplyForm, schema, Schema } from "@/components/conference/ApplyForm";
+import { ViewApplication } from "@/components/conference/ViewApplication";
+import { isEqual } from "date-fns";
+import { toast } from "sonner";
 
 const ConferenceEditView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [hasSetForm, setHasSetForm] = useState(false);
+  const queryClient = useQueryClient();
+  const [resetValues, setResetValues] = useState<undefined | Partial<Schema>>(
+    undefined
+  );
 
   const form = useForm<Schema>({
     resolver: zodResolver(schema),
@@ -77,43 +38,86 @@ const ConferenceEditView: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  const isPending = useMemo(
-    () => (data ? conferenceSchemas.states.indexOf(data.state) < 4 : false),
-    [data]
-  );
+  const submitMutation = useMutation({
+    mutationFn: async (data: Partial<Schema>) => {
+      const formData = new FormData();
+      for (const [key, value] of Object.entries(data)) {
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else if (value) {
+          formData.append(key, value as string);
+        }
+      }
+      return await api.post(`/conference/editApplication/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+    onError: (err) => {
+      if (isAxiosError(err))
+        toast.error((err.response?.data as string) ?? "An error occurred");
+    },
+    onSuccess: () => {
+      toast.success("Application edited successfully");
+      form.reset();
+      setResetValues(undefined);
+      void queryClient.removeQueries({
+        queryKey: ["conference", "applications", parseInt(id!)],
+      });
+    },
+  });
 
   const isEditable = useMemo(() => {
     if (!data) return false;
-    return data.state === conferenceSchemas.states[0];
+    return data.application.state === conferenceSchemas.states[0];
   }, [data]);
 
   useEffect(() => {
     if (!data) return;
-    if (!hasSetForm) {
-      form.reset({
-        ...data,
-        dateFrom: new Date(data.dateFrom),
-        dateTo: new Date(data.dateTo),
+    if (resetValues === undefined) {
+      const _resetValues = {
+        ...data.application,
+        dateFrom: new Date(data.application.dateFrom),
+        dateTo: new Date(data.application.dateTo),
         ...conferenceSchemas.fileFieldNames.reduce(
           (acc, key) => {
-            acc[key] = undefined;
+            acc[key] = data.application[key]?.file.filePath;
             return acc;
           },
           {} as Record<
             (typeof conferenceSchemas.fileFieldNames)[number],
-            undefined
+            string | undefined
           >
         ),
-      });
-      setHasSetForm(true);
+      };
+      form.reset(_resetValues);
+      setResetValues(_resetValues);
     }
-  }, [data, form, hasSetForm, isPending]);
+  }, [data, form, resetValues]);
 
   const onSubmit: SubmitHandler<Schema> = (formData) => {
-    console.log(formData);
+    if (!resetValues) return;
+    const changedFields: Partial<Schema> = {};
+    // Compare each field in formData with the initial values
+    for (const k in formData) {
+      const key = k as keyof Schema;
+      if (formData[key] instanceof Date && resetValues[key] instanceof Date) {
+        // Check date equality
+        if (!isEqual(formData[key], resetValues[key])) {
+          changedFields[key] = formData[key] as unknown as undefined;
+        }
+      } else if (formData[key] !== resetValues[key]) {
+        changedFields[key] = formData[key] as undefined;
+      }
+    }
+    if (Object.keys(changedFields).length === 0)
+      return toast.error("No changes made to the application");
+
+    submitMutation.mutate(formData);
   };
 
-  if (isError || !hasSetForm || !data)
+  if (isError || !resetValues || !data)
     return (
       <div className="relative flex min-h-screen w-full flex-col items-start justify-start gap-6 bg-background-faded p-8">
         <BackButton />
@@ -126,217 +130,30 @@ const ConferenceEditView: React.FC = () => {
     );
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-start gap-6 bg-background-faded p-8">
+    <div className="relative flex min-h-screen w-full flex-col gap-6 p-8">
       <BackButton />
       <h2 className="self-start text-3xl">Application No. {id}</h2>
-      <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            void form.handleSubmit(onSubmit)(e);
-          }}
-          className="w-full max-w-3xl space-y-4"
-        >
-          <ProgressStatus
-            currentStage={data.state}
-            currentStatus={isPending ? "pending" : "accepted"}
-          />
-          <div className="grid grid-cols-1 gap-4">
-            {conferenceSchemas.textFieldNames.map((fieldName) => {
-              const fieldData = data[fieldName];
-              return fieldData ? (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-end justify-between">
-                        <FormLabel>
-                          {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
-                        </FormLabel>
-                      </div>
-
-                      {fieldName === "modeOfEvent" ? (
-                        isEditable ? (
-                          <>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="online">Online</SelectItem>
-                                <SelectItem value="offline">Offline</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </>
-                        ) : (
-                          <Input {...field} disabled />
-                        )
-                      ) : (
-                        <>
-                          <FormControl>
-                            {fieldName !== "description" ? (
-                              <Input {...field} disabled={!isEditable} />
-                            ) : (
-                              <Textarea {...field} disabled={!isEditable} />
-                            )}
-                          </FormControl>
-                          <FormMessage />
-                        </>
-                      )}
-                    </FormItem>
-                  )}
-                />
-              ) : null;
-            })}
-            {conferenceSchemas.dateFieldNames.map((fieldName) => {
-              const fieldData = data[fieldName];
-              return fieldData ? (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-end justify-between">
-                        <FormLabel>DATE</FormLabel>
-                      </div>
-                      {isEditable ? (
-                        <>
-                          <Popover>
-                            <FormControl>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    !field.value && "text-muted-foreground",
-                                    "w-full items-start"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                            </FormControl>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date <= new Date() ||
-                                  date >= new Date("2100-01-01")
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </>
-                      ) : (
-                        <Input
-                          value={field.value.toLocaleDateString()}
-                          disabled
-                        />
-                      )}
-                    </FormItem>
-                  )}
-                />
-              ) : null;
-            })}
-            {conferenceSchemas.numberFieldNames.map((fieldName) => {
-              const fieldData = data[fieldName];
-              return fieldData ? (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-end justify-between">
-                        <FormLabel>
-                          {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
-                        </FormLabel>
-                      </div>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          onChange={(e) => {
-                            if (!e.target.value.length)
-                              form.setValue(fieldName, undefined);
-                            else field.onChange(e);
-                          }}
-                          type="number"
-                          disabled={!isEditable}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : null;
-            })}
-            {conferenceSchemas.fileFieldNames.map((fieldName) => {
-              const fieldData = data[fieldName];
-              return fieldData ? (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-end justify-between">
-                        <FormLabel>
-                          {fieldName.replace(/([A-Z]+)/g, " $1").toUpperCase()}
-                        </FormLabel>
-                      </div>
-
-                      <div
-                        className="relative flex cursor-pointer gap-2 overflow-clip overflow-ellipsis rounded-md border bg-gray-100 p-2 pl-10 hover:bg-muted/50"
-                        onClick={() => {
-                          window.open(data[fieldName]!.file.filePath, "_blank");
-                        }}
-                      >
-                        <FileIcon className="absolute left-2" />
-                        {data[fieldName]!.file.originalName}
-                      </div>
-                      {isEditable ? (
-                        <FormControl>
-                          <FileUploader
-                            value={field.value ? [field.value] : []}
-                            onValueChange={(val) => field.onChange(val[0])}
-                            accept={{ "application/pdf": [] }}
-                          />
-                        </FormControl>
-                      ) : null}
-
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : null;
-            })}
+      {isEditable ? (
+        <>
+          <div className="flex w-full max-w-3xl flex-col gap-2 rounded-md border bg-destructive/20 p-2">
+            <h4 className="text-destructive">Changes requested</h4>
+            <p className="text-sm text-muted-foreground">
+              You can edit the fields below and submit the application again.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Comments: {data.reviews[0]?.comments ?? "N/A"}
+            </p>
           </div>
-          {isEditable ? (
-            <div className="flex justify-end gap-2">
-              <Button type="submit">Submit</Button>
-            </div>
-          ) : null}
-        </form>
-      </Form>
+          <ApplyForm
+            form={form}
+            isLoading={false}
+            submitHandler={onSubmit}
+            originalValues={resetValues}
+          />
+        </>
+      ) : (
+        <ViewApplication data={data} />
+      )}
     </div>
   );
 };

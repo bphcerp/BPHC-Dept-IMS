@@ -9,19 +9,20 @@ import z from "zod";
 
 const router = express.Router();
 
-
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const schema = z.object({
             email: z.string().email(),
-            finalDacMembers: z.array(z.string().email()).length(2)
+            finalDacMembers: z.array(z.string().email()).length(2),
         });
 
         const parsed = schema.safeParse(req.body);
         if (!parsed.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input format"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid input format")
+            );
         }
 
         const { email, finalDacMembers } = parsed.data;
@@ -30,23 +31,25 @@ router.post(
             .select()
             .from(phd)
             .where(eq(phd.email, email))
-            .then(rows => rows[0] || null);
+            .then((rows) => rows[0] || null);
 
         if (!student) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         await db
             .update(phd)
             .set({
                 dac1Email: finalDacMembers[0],
-                dac2Email: finalDacMembers[1]
+                dac2Email: finalDacMembers[1],
             })
             .where(eq(phd.email, email));
 
         res.json({
             success: true,
-            message: "DAC members assigned successfully"
+            message: "DAC members assigned successfully",
         });
     })
 );

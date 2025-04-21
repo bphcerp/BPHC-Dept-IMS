@@ -28,11 +28,11 @@ export const NotificationItem = ({
         {title}
       </CardHeader>
       <CardContent className="p-0">
-        <p className="text-sm text-muted-foreground">
+        <p className="overflow-hidden text-ellipsis whitespace-pre-wrap text-sm text-muted-foreground">
           {content ?? "No content available"}
         </p>
       </CardContent>
-      <CardFooter className="justify-end p-0 text-sm text-muted-foreground">
+      <CardFooter className="justify-end p-0 pt-2 text-sm text-muted-foreground">
         {createdAt}
       </CardFooter>
     </Card>

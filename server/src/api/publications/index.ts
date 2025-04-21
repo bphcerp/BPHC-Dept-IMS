@@ -14,5 +14,4 @@ router.use("/all", allRouter);
 router.use("/updateStatus", updateStatusRouter);
 router.use("/updatePublications", updatePublicationsRouter);
 
-
 export default router;

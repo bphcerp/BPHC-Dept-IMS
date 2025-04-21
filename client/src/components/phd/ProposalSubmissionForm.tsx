@@ -55,8 +55,10 @@ export default function ProposalSubmissionForm() {
 
   // New state for checkboxes
   const [appendixIChecked, setAppendixIChecked] = useState(false);
-  const [summaryResearchProposalChecked, setSummaryResearchProposalChecked] = useState(false);
-  const [outlineProposedTopicChecked, setOutlineProposedTopicChecked] = useState(false);
+  const [summaryResearchProposalChecked, setSummaryResearchProposalChecked] =
+    useState(false);
+  const [outlineProposedTopicChecked, setOutlineProposedTopicChecked] =
+    useState(false);
 
   const proposalMutation = useMutation<UploadResponse, Error, FormData>({
     mutationFn: async (data: FormData): Promise<UploadResponse> => {
@@ -73,7 +75,7 @@ export default function ProposalSubmissionForm() {
     },
     onSuccess: () => {
       toast.success("Proposal submitted successfully.");
-      
+
       setFormData({
         proposalDocument1: null,
         proposalDocument2: null,
@@ -126,7 +128,11 @@ export default function ProposalSubmissionForm() {
     }
 
     // Validate checkboxes
-    if (!appendixIChecked || !summaryResearchProposalChecked || !outlineProposedTopicChecked) {
+    if (
+      !appendixIChecked ||
+      !summaryResearchProposalChecked ||
+      !outlineProposedTopicChecked
+    ) {
       toast.error("Please confirm you have filled all required forms");
       return;
     }
@@ -215,35 +221,35 @@ export default function ProposalSubmissionForm() {
             {/* New Checkbox Sections */}
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="appendixI" 
+                <input
+                  type="checkbox"
+                  id="appendixI"
                   className="form-checkbox h-4 w-4"
                   checked={appendixIChecked}
                   onChange={(e) => setAppendixIChecked(e.target.checked)}
-                  required 
+                  required
                 />
-                <Label 
-                  htmlFor="appendixI" 
-                  className="text-sm font-medium"
-                >
-                  I have filled everything in Appendix I to be attached with Research Proposals *
+                <Label htmlFor="appendixI" className="text-sm font-medium">
+                  I have filled everything in Appendix I to be attached with
+                  Research Proposals *
                 </Label>
               </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="summaryResearchProposal" 
+                <input
+                  type="checkbox"
+                  id="summaryResearchProposal"
                   className="form-checkbox h-4 w-4"
                   checked={summaryResearchProposalChecked}
-                  onChange={(e) => setSummaryResearchProposalChecked(e.target.checked)}
-                  required 
+                  onChange={(e) =>
+                    setSummaryResearchProposalChecked(e.target.checked)
+                  }
+                  required
                 />
-                <Label 
-                  htmlFor="summaryResearchProposal" 
+                <Label
+                  htmlFor="summaryResearchProposal"
                   className="text-sm font-medium"
                 >
                   I have filled everything in Summary of Research Proposal *
@@ -253,19 +259,22 @@ export default function ProposalSubmissionForm() {
 
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="outlineProposedTopic" 
+                <input
+                  type="checkbox"
+                  id="outlineProposedTopic"
                   className="form-checkbox h-4 w-4"
                   checked={outlineProposedTopicChecked}
-                  onChange={(e) => setOutlineProposedTopicChecked(e.target.checked)}
-                  required 
+                  onChange={(e) =>
+                    setOutlineProposedTopicChecked(e.target.checked)
+                  }
+                  required
                 />
-                <Label 
-                  htmlFor="outlineProposedTopic" 
+                <Label
+                  htmlFor="outlineProposedTopic"
                   className="text-sm font-medium"
                 >
-                  I have filled everything in Outline of the Proposed Topic of Research *
+                  I have filled everything in Outline of the Proposed Topic of
+                  Research *
                 </Label>
               </div>
             </div>
@@ -323,9 +332,9 @@ export default function ProposalSubmissionForm() {
           </div>
         </CardContent>
         <CardFooter>
-        <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={proposalMutation.isLoading}
           >
             {proposalMutation.isLoading ? "Submitting..." : "Submit Proposal"}

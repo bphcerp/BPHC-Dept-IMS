@@ -1,5 +1,5 @@
 {
-  "id": "5658db00-298a-43bf-883e-4e07be4baba6",
+  "id": "0119b1ba-ba56-4970-92e1-928f596a5cea",
   "prevId": "28d63a94-d06a-4f64-b02d-57f24791b728",
   "version": "7",
   "dialect": "postgresql",
@@ -2003,6 +2003,575 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.inventory_categories": {
+      "name": "inventory_categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "inventory_category_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "inventory_categories_name_unique": {
+          "name": "inventory_categories_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inventory_items": {
+      "name": "inventory_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "serial_number": {
+          "name": "serial_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lab_id": {
+          "name": "lab_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transfer_id": {
+          "name": "transfer_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "item_category_id": {
+          "name": "item_category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_name": {
+          "name": "item_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "specifications": {
+          "name": "specifications",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "no_of_licenses": {
+          "name": "no_of_licenses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nature_of_license": {
+          "name": "nature_of_license",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "year_of_lease": {
+          "name": "year_of_lease",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "po_amount": {
+          "name": "po_amount",
+          "type": "numeric(15, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "po_number": {
+          "name": "po_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "po_date": {
+          "name": "po_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lab_incharge_at_purchase": {
+          "name": "lab_incharge_at_purchase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lab_technician_at_purchase": {
+          "name": "lab_technician_at_purchase",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipment_id": {
+          "name": "equipment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "funding_source": {
+          "name": "funding_source",
+          "type": "inventory_funding_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_of_installation": {
+          "name": "date_of_installation",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "warranty_from": {
+          "name": "warranty_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "warranty_to": {
+          "name": "warranty_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amc_from": {
+          "name": "amc_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amc_to": {
+          "name": "amc_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_location": {
+          "name": "current_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "softcopy_of_po": {
+          "name": "softcopy_of_po",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softcopy_of_invoice": {
+          "name": "softcopy_of_invoice",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softcopy_of_nfa": {
+          "name": "softcopy_of_nfa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "softcopy_of_amc": {
+          "name": "softcopy_of_amc",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "inventory_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipment_photo": {
+          "name": "equipment_photo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "inventory_items_lab_id_inventory_laboratories_id_fk": {
+          "name": "inventory_items_lab_id_inventory_laboratories_id_fk",
+          "tableFrom": "inventory_items",
+          "tableTo": "inventory_laboratories",
+          "columnsFrom": [
+            "lab_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inventory_items_transfer_id_inventory_items_id_fk": {
+          "name": "inventory_items_transfer_id_inventory_items_id_fk",
+          "tableFrom": "inventory_items",
+          "tableTo": "inventory_items",
+          "columnsFrom": [
+            "transfer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inventory_items_item_category_id_inventory_categories_id_fk": {
+          "name": "inventory_items_item_category_id_inventory_categories_id_fk",
+          "tableFrom": "inventory_items",
+          "tableTo": "inventory_categories",
+          "columnsFrom": [
+            "item_category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inventory_items_vendor_id_inventory_vendors_id_fk": {
+          "name": "inventory_items_vendor_id_inventory_vendors_id_fk",
+          "tableFrom": "inventory_items",
+          "tableTo": "inventory_vendors",
+          "columnsFrom": [
+            "vendor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "inventory_items_equipment_id_unique": {
+          "name": "inventory_items_equipment_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "equipment_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inventory_laboratories": {
+      "name": "inventory_laboratories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "code": {
+          "name": "code",
+          "type": "char(4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "technician_in_charge_email": {
+          "name": "technician_in_charge_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "faculty_in_charge_email": {
+          "name": "faculty_in_charge_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "inventory_laboratories_technician_in_charge_email_staff_email_fk": {
+          "name": "inventory_laboratories_technician_in_charge_email_staff_email_fk",
+          "tableFrom": "inventory_laboratories",
+          "tableTo": "staff",
+          "columnsFrom": [
+            "technician_in_charge_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inventory_laboratories_faculty_in_charge_email_faculty_email_fk": {
+          "name": "inventory_laboratories_faculty_in_charge_email_faculty_email_fk",
+          "tableFrom": "inventory_laboratories",
+          "tableTo": "faculty",
+          "columnsFrom": [
+            "faculty_in_charge_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "inventory_laboratories_name_unique": {
+          "name": "inventory_laboratories_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.vendor_categories": {
+      "name": "vendor_categories",
+      "schema": "",
+      "columns": {
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "vendor_categories_vendor_id_inventory_vendors_id_fk": {
+          "name": "vendor_categories_vendor_id_inventory_vendors_id_fk",
+          "tableFrom": "vendor_categories",
+          "tableTo": "inventory_vendors",
+          "columnsFrom": [
+            "vendor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vendor_categories_category_id_inventory_categories_id_fk": {
+          "name": "vendor_categories_category_id_inventory_categories_id_fk",
+          "tableFrom": "vendor_categories",
+          "tableTo": "inventory_categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "vendor_categories_vendor_id_category_id_pk": {
+          "name": "vendor_categories_vendor_id_category_id_pk",
+          "columns": [
+            "vendor_id",
+            "category_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.inventory_vendors": {
+      "name": "inventory_vendors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poc_name": {
+          "name": "poc_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.patent_inventors": {
       "name": "patent_inventors",
       "schema": "",
@@ -2609,14 +3178,26 @@
           "primaryKey": true,
           "notNull": true
         },
-        "ic_email": {
-          "name": "ic_email",
+        "dca_member_email": {
+          "name": "dca_member_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fic_email": {
+          "name": "fic_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "reviewer_email": {
-          "name": "reviewer_email",
+        "faculty_1_email": {
+          "name": "faculty_1_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "faculty_2_email": {
+          "name": "faculty_2_email",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -2633,42 +3214,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "previous_submission_id": {
-          "name": "previous_submission_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mid_sem_file_path": {
-          "name": "mid_sem_file_path",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mid_sem_sol_file_path": {
-          "name": "mid_sem_sol_file_path",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compre_file_path": {
-          "name": "compre_file_path",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "compre_sol_file_path": {
-          "name": "compre_sol_file_path",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "review": {
-          "name": "review",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "fic_deadline": {
           "name": "fic_deadline",
           "type": "timestamp with time zone",
@@ -2680,6 +3225,49 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "mid_sem_file_id": {
+          "name": "mid_sem_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mid_sem_sol_file_id": {
+          "name": "mid_sem_sol_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compre_file_id": {
+          "name": "compre_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compre_sol_file_id": {
+          "name": "compre_sol_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_1": {
+          "name": "review_1",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_2": {
+          "name": "review_2",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed": {
+          "name": "reviewed",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'review pending'"
         },
         "documents_uploaded": {
           "name": "documents_uploaded",
@@ -2694,7 +3282,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'notsubmitted'"
+          "default": "'pending'"
         },
         "created_at": {
           "name": "created_at",
@@ -2702,23 +3290,16 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "category": {
-          "name": "category",
-          "type": "category_enum",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "qp_review_requests_ic_email_users_email_fk": {
-          "name": "qp_review_requests_ic_email_users_email_fk",
+        "qp_review_requests_dca_member_email_users_email_fk": {
+          "name": "qp_review_requests_dca_member_email_users_email_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "users",
           "columnsFrom": [
-            "ic_email"
+            "dca_member_email"
           ],
           "columnsTo": [
             "email"
@@ -2726,12 +3307,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "qp_review_requests_reviewer_email_users_email_fk": {
-          "name": "qp_review_requests_reviewer_email_users_email_fk",
+        "qp_review_requests_fic_email_users_email_fk": {
+          "name": "qp_review_requests_fic_email_users_email_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "users",
           "columnsFrom": [
-            "reviewer_email"
+            "fic_email"
           ],
           "columnsTo": [
             "email"
@@ -2739,12 +3320,38 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "qp_review_requests_mid_sem_file_path_file_fields_id_fk": {
-          "name": "qp_review_requests_mid_sem_file_path_file_fields_id_fk",
+        "qp_review_requests_faculty_1_email_users_email_fk": {
+          "name": "qp_review_requests_faculty_1_email_users_email_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "faculty_1_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_faculty_2_email_users_email_fk": {
+          "name": "qp_review_requests_faculty_2_email_users_email_fk",
+          "tableFrom": "qp_review_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "faculty_2_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "qp_review_requests_mid_sem_file_id_file_fields_id_fk": {
+          "name": "qp_review_requests_mid_sem_file_id_file_fields_id_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "file_fields",
           "columnsFrom": [
-            "mid_sem_file_path"
+            "mid_sem_file_id"
           ],
           "columnsTo": [
             "id"
@@ -2752,12 +3359,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "qp_review_requests_mid_sem_sol_file_path_file_fields_id_fk": {
-          "name": "qp_review_requests_mid_sem_sol_file_path_file_fields_id_fk",
+        "qp_review_requests_mid_sem_sol_file_id_file_fields_id_fk": {
+          "name": "qp_review_requests_mid_sem_sol_file_id_file_fields_id_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "file_fields",
           "columnsFrom": [
-            "mid_sem_sol_file_path"
+            "mid_sem_sol_file_id"
           ],
           "columnsTo": [
             "id"
@@ -2765,12 +3372,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "qp_review_requests_compre_file_path_file_fields_id_fk": {
-          "name": "qp_review_requests_compre_file_path_file_fields_id_fk",
+        "qp_review_requests_compre_file_id_file_fields_id_fk": {
+          "name": "qp_review_requests_compre_file_id_file_fields_id_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "file_fields",
           "columnsFrom": [
-            "compre_file_path"
+            "compre_file_id"
           ],
           "columnsTo": [
             "id"
@@ -2778,12 +3385,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "qp_review_requests_compre_sol_file_path_file_fields_id_fk": {
-          "name": "qp_review_requests_compre_sol_file_path_file_fields_id_fk",
+        "qp_review_requests_compre_sol_file_id_file_fields_id_fk": {
+          "name": "qp_review_requests_compre_sol_file_id_file_fields_id_fk",
           "tableFrom": "qp_review_requests",
           "tableTo": "file_fields",
           "columnsFrom": [
-            "compre_sol_file_path"
+            "compre_sol_file_id"
           ],
           "columnsTo": [
             "id"
@@ -3096,15 +3703,38 @@
         "notsubmitted"
       ]
     },
+    "public.inventory_category_type": {
+      "name": "inventory_category_type",
+      "schema": "public",
+      "values": [
+        "Vendor",
+        "Inventory"
+      ]
+    },
+    "public.inventory_funding_source": {
+      "name": "inventory_funding_source",
+      "schema": "public",
+      "values": [
+        "Institute",
+        "Project"
+      ]
+    },
+    "public.inventory_status": {
+      "name": "inventory_status",
+      "schema": "public",
+      "values": [
+        "Working",
+        "Not Working",
+        "Under Repair"
+      ]
+    },
     "public.qp_status_enum": {
       "name": "qp_status_enum",
       "schema": "public",
       "values": [
-        "review pending",
-        "reviewed",
+        "pending",
         "approved",
-        "rejected",
-        "notsubmitted"
+        "rejected"
       ]
     }
   },

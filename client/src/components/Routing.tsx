@@ -18,6 +18,7 @@ import {
   GraduationCap,
   BookOpen,
   LibraryBig,
+  Warehouse,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -57,6 +58,12 @@ import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import AllPublications from "@/views/Publications/AllPublications";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
+import InventoryLayout from "@/layouts/Inventory";
+import Settings from "@/views/Inventory/Settings";
+import { ItemsView } from "@/views/Inventory/ItemsView";
+import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
+import BulkAddView from "@/views/Inventory/BulkAddView";
+import Stats from "@/views/Inventory/Stats";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -80,6 +87,10 @@ const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
 
 const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("publications:")
+);
+
+const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("inventory:")
 );
 
 const Routing = () => {
@@ -121,6 +132,12 @@ const Routing = () => {
       icon: <LibraryBig />,
       url: "/publications",
       requiredPermissions: publicationsPermissions,
+    },
+    {
+      title: "Inventory",
+      icon: <Warehouse />,
+      url: "/inventory",
+      requiredPermissions: inventoryModulePermissions,
     },
   ];
 
@@ -387,6 +404,56 @@ const Routing = () => {
             <Route path="your-publications" element={<YourPublications />} />
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="all-publications" element={<AllPublications />} />
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(inventoryModulePermissions) && (
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
+            <Route path="items" element={<ItemsView />} />
+            {checkAccessAnyOne(
+              Object.keys(permissions).filter((perm) =>
+                perm.startsWith("inventory:stats")
+              )
+            ) && <Route path="stats" element={<Stats />} />}
+            {checkAccess("inventory:write") && (
+              <>
+                <Route path="items/add-item" element={<AddInventoryItem />} />
+                <Route path="items/add-item/excel" element={<BulkAddView />} />
+              </>
+            )}
+            <Route path="stats" element={<></>} />
+            {checkAccess("inventory:write") && (
+              <Route path="settings" element={<Settings />} />
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(inventoryModulePermissions) && (
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
+            <Route path="items" element={<ItemsView />} />
+            {checkAccessAnyOne(
+              Object.keys(permissions).filter((perm) =>
+                perm.startsWith("inventory:stats")
+              )
+            ) && <Route path="stats" element={<Stats />} />}
+            {checkAccess("inventory:write") && (
+              <>
+                <Route path="items/add-item" element={<AddInventoryItem />} />
+                <Route path="items/add-item/excel" element={<BulkAddView />} />
+              </>
+            )}
+            <Route path="stats" element={<></>} />
+            {checkAccess("inventory:write") && (
+              <Route path="settings" element={<Settings />} />
             )}
           </Route>
         )}

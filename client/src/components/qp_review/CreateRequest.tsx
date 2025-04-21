@@ -48,7 +48,7 @@ const CreateRequestDialog = ({
   onClose,
   onAddRequest,
   fetchCourses,
-  fics
+  fics,
 }: CreateRequestDialogProps) => {
   const [courseName, setCourseName] = useState("");
   const [courseCode, setCourseCode] = useState("");
@@ -64,12 +64,12 @@ const CreateRequestDialog = ({
       return;
     }
     createDCARequest();
-  }
+  };
 
   useEffect(() => {
     fetchCourses();
-    setCreated(false)
-  },[created])
+    setCreated(false);
+  }, [created]);
 
   const requestData: RequestData = {
     dcaMemberEmail: "dca@email.com",
@@ -80,8 +80,7 @@ const CreateRequestDialog = ({
     reviewDeadline: srDeadline ? new Date(srDeadline) : new Date(),
   };
 
-
-   const createDCARequest = async () => {
+  const createDCARequest = async () => {
     try {
       setLoading(true);
       const response = await api.post("/qp/createQpRequest", requestData);
@@ -167,9 +166,13 @@ const CreateRequestDialog = ({
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={() =>{ void handleAdd()
-          setCreated(true)
-          }} disabled={loading}>
+          <Button
+            onClick={() => {
+              void handleAdd();
+              setCreated(true);
+            }}
+            disabled={loading}
+          >
             {loading ? "Submitting..." : "Done"}
           </Button>
         </DialogFooter>

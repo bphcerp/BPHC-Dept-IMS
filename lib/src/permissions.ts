@@ -99,6 +99,15 @@ export const allPermissions = {
 
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
+
+    "inventory:write": "Admin can edit the data of the inventory module",
+    "inventory:read":
+        "Non-Admin users can view the data of the inventory module",
+    "inventory:export": "Export the data as an Excel file",
+    "inventory:stats-lab-year": "Member can view stats per laboratory per year",
+    "inventory:stats-lab-category":
+        "Member can view stats per laboratory per category",
+    "inventory:stats-vendor-year": "Member can view stats per vendor per year",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -123,7 +132,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Conference
 
     "/conference/createApplication": "conference:application:create",
-    "/conference/edit": "conference:application:submitted",
+    "/conference/editApplication": "conference:application:submitted",
     "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
     "/conference/applications/view": "conference:application:submitted",
@@ -252,4 +261,33 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/all": "publications:all",
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
+
+    // Inventory
+    "/inventory/labs/get": "inventory:read",
+    "/inventory/labs/lastItemNumber": "inventory:read",
+    "/inventory/labs/create": "inventory:write",
+    "/inventory/labs/update": "inventory:write",
+    "/inventory/labs/delete": "inventory:write",
+
+    "/inventory/vendors/get": "inventory:read",
+    "/inventory/vendors/create": "inventory:write",
+    "/inventory/vendors/update": "inventory:write",
+    "/inventory/vendors/delete": "inventory:write",
+
+    "/inventory/categories/get": "inventory:read",
+    "/inventory/categories/create": "inventory:write",
+    "/inventory/categories/update": "inventory:write",
+    "/inventory/categories/delete": "inventory:write",
+
+    "/inventory/items/get": "inventory:read",
+    "/inventory/items/export": "inventory:export",
+    "/inventory/items/create": "inventory:write",
+    "/inventory/items/excel": "inventory:write",
+    "/inventory/items/update": "inventory:write",
+    "/inventory/items/delete": "inventory:write",
+
+    "/inventory/stats/lab-year": "inventory:stats-lab-year",
+    "/inventory/stats/lab-category": "inventory:stats-lab-category",
+    "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
+    "/inventory/stats/important-dates": "inventory:read",
 } as const;

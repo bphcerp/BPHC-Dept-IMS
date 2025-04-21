@@ -15,12 +15,14 @@ router.post(
     asyncHandler(async (req, res, next) => {
         const schema = z.object({
             email: z.string().email(),
-            selectedDacMembers: z.array(z.string().email())
+            selectedDacMembers: z.array(z.string().email()),
         });
 
         const parsed = schema.safeParse(req.body);
         if (!parsed.success) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid input format"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid input format")
+            );
         }
 
         const { email, selectedDacMembers } = parsed.data;
@@ -29,15 +31,22 @@ router.post(
             .select()
             .from(phd)
             .where(eq(phd.email, email))
-            .then(rows => rows[0] || null);
+            .then((rows) => rows[0] || null);
 
         if (!student) {
-            return next(new HttpError(HttpCode.NOT_FOUND, "PhD student not found"));
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "PhD student not found")
+            );
         }
 
         // Ensure we have suggested DAC members to choose from
         if (!selectedDacMembers || selectedDacMembers.length < 2) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Not enough suggested DAC members"));
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Not enough suggested DAC members"
+                )
+            );
         }
 
         // Get workload for each suggested faculty member
@@ -50,21 +59,23 @@ router.post(
                     phd.co_supervisor_email = ${faculty.email} OR 
                     phd.dac_1_email = ${faculty.email} OR 
                     phd.dac_2_email = ${faculty.email}
-                )`
+                )`,
             })
             .from(faculty)
             .where(inArray(faculty.email, selectedDacMembers));
 
         // Sort faculty by workload (ascending)
-        const sortedFaculty = facultyWorkload.sort((a, b) => (a.studentCount || 0) - (b.studentCount || 0));
-        
+        const sortedFaculty = facultyWorkload.sort(
+            (a, b) => (a.studentCount || 0) - (b.studentCount || 0)
+        );
+
         // Get the two faculty members with the least workload
-        const topChoices = sortedFaculty.slice(0, 2).map(f => f.facultyEmail);
-        
+        const topChoices = sortedFaculty.slice(0, 2).map((f) => f.facultyEmail);
+
         res.json({
             success: true,
             topChoices,
-            message: "Suggested two DAC members with the least workload"
+            message: "Suggested two DAC members with the least workload",
         });
     })
 );

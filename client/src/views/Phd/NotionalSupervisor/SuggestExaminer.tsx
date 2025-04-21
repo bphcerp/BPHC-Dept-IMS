@@ -19,9 +19,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { X, Plus,  } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Interfaces
 interface ISubArea {
@@ -56,7 +61,9 @@ const SupervisorManageExaminers: React.FC = () => {
   const queryClient = useQueryClient();
   const [examinerDialogOpen, setExaminerDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<IStudent | null>(null);
-  const [selectedSubAreaName, setSelectedSubAreaName] = useState<string | null>(null);
+  const [selectedSubAreaName, setSelectedSubAreaName] = useState<string | null>(
+    null
+  );
   const [examiners, setExaminers] = useState<string[]>([]);
   const [newExaminer, setNewExaminer] = useState("");
   const [examinerError, setExaminerError] = useState("");
@@ -245,10 +252,14 @@ const SupervisorManageExaminers: React.FC = () => {
                       <CardDescription>{student.email}</CardDescription>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {student.qualifyingArea1 && (
-                          <Badge variant="outline">{student.qualifyingArea1}</Badge>
+                          <Badge variant="outline">
+                            {student.qualifyingArea1}
+                          </Badge>
                         )}
                         {student.qualifyingArea2 && (
-                          <Badge variant="outline">{student.qualifyingArea2}</Badge>
+                          <Badge variant="outline">
+                            {student.qualifyingArea2}
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -258,25 +269,35 @@ const SupervisorManageExaminers: React.FC = () => {
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="examiners">
                       <AccordionTrigger className="px-4 py-3">
-                        <span className="text-sm font-medium">Manage Examiners</span>
+                        <span className="text-sm font-medium">
+                          Manage Examiners
+                        </span>
                       </AccordionTrigger>
                       <AccordionContent className="px-4 pb-4">
                         <div className="space-y-4">
-                          {!student.qualifyingArea1 && !student.qualifyingArea2 ? (
-                            <p className="text-center text-sm text-gray-500 py-2">
+                          {!student.qualifyingArea1 &&
+                          !student.qualifyingArea2 ? (
+                            <p className="py-2 text-center text-sm text-gray-500">
                               No qualifying areas assigned to this student
                             </p>
                           ) : (
                             <>
                               {student.qualifyingArea1 && (
                                 <div className="rounded-lg border p-3">
-                                  <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
+                                  <div className="xs:flex-row xs:items-center flex flex-col items-start justify-between gap-2">
                                     <div>
-                                      <h4 className="text-sm font-medium">Area 1: {student.qualifyingArea1}</h4>
+                                      <h4 className="text-sm font-medium">
+                                        Area 1: {student.qualifyingArea1}
+                                      </h4>
                                     </div>
                                     <Button
                                       size="sm"
-                                      onClick={() => openExaminerDialog(student, student.qualifyingArea1!)}
+                                      onClick={() =>
+                                        openExaminerDialog(
+                                          student,
+                                          student.qualifyingArea1!
+                                        )
+                                      }
                                     >
                                       Suggest Examiners
                                     </Button>
@@ -285,13 +306,20 @@ const SupervisorManageExaminers: React.FC = () => {
                               )}
                               {student.qualifyingArea2 && (
                                 <div className="rounded-lg border p-3">
-                                  <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2">
+                                  <div className="xs:flex-row xs:items-center flex flex-col items-start justify-between gap-2">
                                     <div>
-                                      <h4 className="text-sm font-medium">Area 2: {student.qualifyingArea2}</h4>
+                                      <h4 className="text-sm font-medium">
+                                        Area 2: {student.qualifyingArea2}
+                                      </h4>
                                     </div>
                                     <Button
                                       size="sm"
-                                      onClick={() => openExaminerDialog(student, student.qualifyingArea2!)}
+                                      onClick={() =>
+                                        openExaminerDialog(
+                                          student,
+                                          student.qualifyingArea2!
+                                        )
+                                      }
                                     >
                                       Suggest Examiners
                                     </Button>

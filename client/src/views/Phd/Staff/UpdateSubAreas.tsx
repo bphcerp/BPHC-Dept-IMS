@@ -19,14 +19,18 @@ const UpdateSubAreas: React.FC = () => {
   const { data: subAreasData, isLoading } = useQuery({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; subAreas: SubArea[] }>("/phd/staff/getSubAreas");
+      const response = await api.get<{ success: boolean; subAreas: SubArea[] }>(
+        "/phd/staff/getSubAreas"
+      );
       return response.data;
     },
   });
 
   const updateSubAreasMutation = useMutation({
     mutationFn: async (newSubAreas: string[]) => {
-      await api.post("/phd/staff/updateSubAreas", { subAreas: newSubAreas.map(subarea => ({ subarea })) });
+      await api.post("/phd/staff/updateSubAreas", {
+        subAreas: newSubAreas.map((subarea) => ({ subarea })),
+      });
     },
     onSuccess: () => {
       toast.success("Sub-areas added successfully");
@@ -61,7 +65,7 @@ const UpdateSubAreas: React.FC = () => {
           </CardHeader>
           <CardContent>
             {subAreas.map((subarea, index) => (
-              <div key={index} className="flex gap-4 mb-2">
+              <div key={index} className="mb-2 flex gap-4">
                 <Input
                   type="text"
                   value={subarea}
@@ -73,20 +77,30 @@ const UpdateSubAreas: React.FC = () => {
                 />
                 <Button
                   variant="destructive"
-                  onClick={() => setSubAreas(subAreas.filter((_, i) => i !== index))}
+                  onClick={() =>
+                    setSubAreas(subAreas.filter((_, i) => i !== index))
+                  }
                   disabled={subAreas.length === 1}
                 >
                   Remove
                 </Button>
               </div>
             ))}
-            <Button onClick={() => setSubAreas([...subAreas, ""])}>Add More</Button>
+            <Button onClick={() => setSubAreas([...subAreas, ""])}>
+              Add More
+            </Button>
             <Button
               className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() => updateSubAreasMutation.mutate(subAreas.filter(Boolean))}
+              onClick={() =>
+                updateSubAreasMutation.mutate(subAreas.filter(Boolean))
+              }
               disabled={updateSubAreasMutation.isLoading}
             >
-              {updateSubAreasMutation.isLoading ? <LoadingSpinner className="h-5 w-5" /> : "Save Sub-Areas"}
+              {updateSubAreasMutation.isLoading ? (
+                <LoadingSpinner className="h-5 w-5" />
+              ) : (
+                "Save Sub-Areas"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -119,7 +133,11 @@ const UpdateSubAreas: React.FC = () => {
                             onClick={() => deleteSubAreaMutation.mutate(id)}
                             disabled={deleteSubAreaMutation.isLoading}
                           >
-                            {deleteSubAreaMutation.isLoading ? <LoadingSpinner className="h-5 w-5" /> : "Delete"}
+                            {deleteSubAreaMutation.isLoading ? (
+                              <LoadingSpinner className="h-5 w-5" />
+                            ) : (
+                              "Delete"
+                            )}
                           </Button>
                         </td>
                       </tr>

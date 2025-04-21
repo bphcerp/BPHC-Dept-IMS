@@ -29,11 +29,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           placeholder="SEARCH"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full sm:w-96 pl-9 border-gray-300"
+          className="w-full border-gray-300 pl-9 sm:w-96"
         />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
       </div>
-      
+
       <div className="flex flex-wrap gap-2">
         <ToggleGroup
           type="multiple"
@@ -43,18 +43,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         >
           <ToggleGroupItem
             value="FD"
-            className="border border-gray-300 text-sm bg-white data-[state=on]:bg-gray-100"
+            className="border border-gray-300 bg-white text-sm data-[state=on]:bg-gray-100"
           >
             FD
           </ToggleGroupItem>
           <ToggleGroupItem
             value="HD"
-            className="border border-gray-300 text-sm bg-white data-[state=on]:bg-gray-100"
+            className="border border-gray-300 bg-white text-sm data-[state=on]:bg-gray-100"
           >
             HD
           </ToggleGroupItem>
         </ToggleGroup>
-        
+
         <ToggleGroup
           type="multiple"
           value={activeStatusFilters}
@@ -65,7 +65,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <ToggleGroupItem
               key={status}
               value={status}
-              className="border border-gray-300 capitalize text-xs md:text-sm bg-white data-[state=on]:bg-gray-100"
+              className="border border-gray-300 bg-white text-xs capitalize data-[state=on]:bg-gray-100 md:text-sm"
             >
               {status}
             </ToggleGroupItem>

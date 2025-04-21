@@ -12,20 +12,30 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res: any) => {
         const { requestId } = req.body;
-        
+
         const request = await db.query.qpReviewRequests.findFirst({
             where: eq(qpReviewRequests.id, Number(requestId)),
             columns: { reviewed: true },
         });
-        
+
         if (!request) {
-            return res.status(404).json({ success: false, message: "QP review request not found" });
+            return res
+                .status(404)
+                .json({
+                    success: false,
+                    message: "QP review request not found",
+                });
         }
-        
+
         if (request.reviewed !== "reviewed") {
-            return res.status(400).json({ success: false, message: "Review must be completed before approval." });
+            return res
+                .status(400)
+                .json({
+                    success: false,
+                    message: "Review must be completed before approval.",
+                });
         }
-        
+
         const [updatedRequest] = await db
             .update(qpReviewRequests)
             .set({ reviewed: "approved" })
@@ -33,7 +43,12 @@ router.post(
             .returning();
 
         if (!updatedRequest) {
-            return res.status(500).json({ success: false, message: "Failed to approve submission." });
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message: "Failed to approve submission.",
+                });
         }
 
         return res.status(200).json({

@@ -24,7 +24,7 @@ router.use("/submitReview", submitReviewRouter);
 router.use("/approveSubmission", approveSubmissionRouter);
 router.use("/assignFaculty", assignFacultyRouter);
 router.use("/getAllFICSubmissions", getFicSubmissionsRouter);
-router.use("/editQpRequest/:id", editQpRequestRouter);  
+router.use("/editQpRequest/:id", editQpRequestRouter);
 router.use("/getAllDcaRequests", getDCARequestRouter);
 router.use("/getAllDcaMemberRequests", getDcaMemberRequestsRouter);
 router.use("/getReviews", getReviews);

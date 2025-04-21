@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -92,7 +105,7 @@ interface ResultsPanelProps {
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({
   selectedSemester,
-  onBack
+  onBack,
 }) => {
   const queryClient = useQueryClient();
   const [examResults, setExamResults] = useState<IUpdateExamResult[]>([]);
@@ -100,14 +113,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const [studentStatus, setStudentStatus] = useState<
     Record<string, { status: boolean | null; numberOfQeApplication: number }>
   >({});
-  const [studentDates, setStudentDates] = useState<Record<string, string | null>>({});
-  const [dateValidationErrors, setDateValidationErrors] = useState<Record<string, string | null>>({});
+  const [studentDates, setStudentDates] = useState<
+    Record<string, string | null>
+  >({});
+  const [dateValidationErrors, setDateValidationErrors] = useState<
+    Record<string, string | null>
+  >({});
 
   // Fetch application data
   const { data, isLoading } = useQuery<IPhdApplicationsResponse, Error>({
     queryKey: ["phd-qualifying-exam-applications", selectedSemester],
     queryFn: async () => {
-      const response = await api.get<IPhdApplicationsResponse>("/phd/drcMember/getPhdDataOfWhoFilledApplicationForm");
+      const response = await api.get<IPhdApplicationsResponse>(
+        "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -115,10 +134,16 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   });
 
   // Fetch exam status data
-  const { data: examStatusData } = useQuery<{ success: boolean; examStatuses: IExamStatus[] }, Error>({
+  const { data: examStatusData } = useQuery<
+    { success: boolean; examStatuses: IExamStatus[] },
+    Error
+  >({
     queryKey: ["phd-exam-statuses"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; examStatuses: IExamStatus[] }>("/phd/drcMember/getPhdExamStatus");
+      const response = await api.get<{
+        success: boolean;
+        examStatuses: IExamStatus[];
+      }>("/phd/drcMember/getPhdExamStatus");
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -126,10 +151,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   });
 
   // Fetch qualification dates
-  const { data: qualificationDatesData } = useQuery<IQualificationDatesResponse, Error>({
+  const { data: qualificationDatesData } = useQuery<
+    IQualificationDatesResponse,
+    Error
+  >({
     queryKey: ["phd-qualification-dates"],
     queryFn: async () => {
-      const response = await api.get<IQualificationDatesResponse>("/phd/drcMember/getQualificationDates");
+      const response = await api.get<IQualificationDatesResponse>(
+        "/phd/drcMember/getQualificationDates"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -140,8 +170,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const { data: examDateData } = useQuery<IExamDatesResponse, Error>({
     queryKey: ["qualifying-exam-dates", selectedSemester],
     queryFn: async () => {
-      if (!selectedSemester) return { success: false, exam: { id: 0, examName: "", examStartDate: "", examEndDate: "" } };
-      const response = await api.get<IExamDatesResponse>(`/phd/drcMember/getDatesOfQeExam/${selectedSemester}`);
+      if (!selectedSemester)
+        return {
+          success: false,
+          exam: { id: 0, examName: "", examStartDate: "", examEndDate: "" },
+        };
+      const response = await api.get<IExamDatesResponse>(
+        `/phd/drcMember/getDatesOfQeExam/${selectedSemester}`
+      );
       return response.data;
     },
     enabled: !!selectedSemester,
@@ -197,7 +233,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         if (dateStr) {
           const qualificationDate = new Date(dateStr);
           if (qualificationDate <= examEndDate) {
-            errors[email] = `Date must be after ${formatDate(examDateData.exam.examEndDate)}`;
+            errors[email] =
+              `Date must be after ${formatDate(examDateData.exam.examEndDate)}`;
           } else {
             errors[email] = null;
           }
@@ -211,7 +248,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   // Mutation for updating exam results
   const updateExamResultsMutation = useMutation({
     mutationFn: async () => {
-      return await api.post("/phd/drcMember/updateQualifyingExamResultsOfAllStudents", examResults);
+      return await api.post(
+        "/phd/drcMember/updateQualifyingExamResultsOfAllStudents",
+        examResults
+      );
     },
     onSuccess: (response) => {
       toast.success("Exam results updated successfully");
@@ -221,13 +261,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
         response.data.updatedStudents.forEach((student: any) => {
           const existingRecord = newStatusMap[student.email];
-          
+
           if (existingRecord) {
             newStatusMap[student.email] = {
               ...existingRecord,
-              status: "qualifyingExam1" in student 
-                ? student.qualifyingExam1 
-                : student.qualifyingExam2,
+              status:
+                "qualifyingExam1" in student
+                  ? student.qualifyingExam1
+                  : student.qualifyingExam2,
             };
           }
         });
@@ -246,14 +287,19 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   // Mutation for updating qualification dates
   const updateExamDatesMutation = useMutation({
     mutationFn: async () => {
-      const validDates = examDates.filter((item) => isDateValid(item.qualificationDate));
-      
+      const validDates = examDates.filter((item) =>
+        isDateValid(item.qualificationDate)
+      );
+
       const formattedDates = validDates.map((item) => ({
         email: item.email,
         qualificationDate: new Date(item.qualificationDate).toISOString(),
       }));
 
-      return await api.post("/phd/drcMember/updatePassingDatesOfPhd", formattedDates);
+      return await api.post(
+        "/phd/drcMember/updatePassingDatesOfPhd",
+        formattedDates
+      );
     },
     onSuccess: (response) => {
       toast.success("Qualification dates updated successfully");
@@ -263,14 +309,17 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
         response.data.updatedStudents.forEach((student: any) => {
           if (student.qualificationDate) {
-            newDatesMap[student.email] = student.qualificationDate.toISOString();
+            newDatesMap[student.email] =
+              student.qualificationDate.toISOString();
           }
         });
 
         setStudentDates(newDatesMap);
       }
 
-      void queryClient.invalidateQueries({ queryKey: ["phd-qualification-dates"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["phd-qualification-dates"],
+      });
       setExamDates([]);
     },
     onError: (error) => {
@@ -304,7 +353,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   const handleStatusChange = (email: string, status: string) => {
     const ifPass = status === "pass";
-    const numberOfQeApplication = studentStatus[email]?.numberOfQeApplication ?? 1;
+    const numberOfQeApplication =
+      studentStatus[email]?.numberOfQeApplication ?? 1;
 
     // Update local state immediately for UI feedback
     setStudentStatus((prev) => ({
@@ -382,11 +432,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     if (examResults.length > 0) {
       updateExamResultsMutation.mutate();
     }
-    
+
     if (examDates.length > 0) {
       updateExamDatesMutation.mutate();
     }
-    
+
     if (examResults.length === 0 && examDates.length === 0) {
       toast.info("No changes to save");
     }
@@ -404,25 +454,28 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
     );
   }
 
-  const currentSemester = data.semestersWithExams.find(
-    (sem) => sem.id === selectedSemester
-  ) || data.semestersWithExams[0];
+  const currentSemester =
+    data.semestersWithExams.find((sem) => sem.id === selectedSemester) ||
+    data.semestersWithExams[0];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Exam Results & Qualification Dates</h2>
-        <Button 
+        <h2 className="text-xl font-semibold">
+          Exam Results & Qualification Dates
+        </h2>
+        <Button
           onClick={saveChanges}
           className="bg-green-600 text-white hover:bg-green-700"
           disabled={
-            updateExamResultsMutation.isLoading || 
-            updateExamDatesMutation.isLoading || 
+            updateExamResultsMutation.isLoading ||
+            updateExamDatesMutation.isLoading ||
             Object.values(dateValidationErrors).some((error) => error !== null)
           }
         >
-          {updateExamResultsMutation.isLoading || updateExamDatesMutation.isLoading 
-            ? "Saving..." 
+          {updateExamResultsMutation.isLoading ||
+          updateExamDatesMutation.isLoading
+            ? "Saving..."
             : "Save Changes"}
         </Button>
       </div>
@@ -430,19 +483,25 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       {examDateData?.success && examDateData.exam && (
         <div className="mb-4 rounded-md bg-blue-50 p-3 text-blue-800">
           <p className="text-sm">
-            <strong>Note:</strong> Qualification dates must be after the exam end date:
+            <strong>Note:</strong> Qualification dates must be after the exam
+            end date:
             <strong> {formatDate(examDateData.exam.examEndDate)}</strong>
           </p>
         </div>
       )}
 
       {currentSemester.exams.map((exam: IQualifyingExam) => (
-        <div key={exam.id} className="rounded-lg border bg-white overflow-hidden">
-          <div className="bg-gray-50 px-4 py-3 border-b">
+        <div
+          key={exam.id}
+          className="overflow-hidden rounded-lg border bg-white"
+        >
+          <div className="border-b bg-gray-50 px-4 py-3">
             <h3 className="font-semibold">{exam.examName}</h3>
-            <p className="text-sm text-gray-500">Deadline: {formatDate(exam.deadline)}</p>
+            <p className="text-sm text-gray-500">
+              Deadline: {formatDate(exam.deadline)}
+            </p>
           </div>
-          
+
           {exam.students.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               No applications found for this exam
@@ -461,7 +520,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               <TableBody>
                 {exam.students.map((student) => (
                   <TableRow key={student.email}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {student.name}
+                    </TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>
                       <div>1. {student.qualifyingArea1 || "N/A"}</div>
@@ -476,7 +537,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                               ? "fail"
                               : ""
                         }
-                        onValueChange={(value) => handleStatusChange(student.email, value)}
+                        onValueChange={(value) =>
+                          handleStatusChange(student.email, value)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Status" />
@@ -491,14 +554,18 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                       <div className="space-y-1">
                         <Input
                           type="date"
-                          disabled={studentStatus[student.email]?.status !== true}
+                          disabled={
+                            studentStatus[student.email]?.status !== true
+                          }
                           value={formatISODate(studentDates[student.email])}
                           min={
                             examDateData?.exam?.examEndDate
                               ? formatISODate(examDateData.exam.examEndDate)
                               : undefined
                           }
-                          onChange={(e) => handleDateChange(student.email, e.target.value)}
+                          onChange={(e) =>
+                            handleDateChange(student.email, e.target.value)
+                          }
                           className={`w-full ${
                             dateValidationErrors[student.email]
                               ? "border-red-500 focus-visible:ring-red-500"

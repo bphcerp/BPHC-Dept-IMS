@@ -8,15 +8,27 @@ import { publicationsSchemas } from "lib";
 
 const router = express.Router();
 
-router.post("/", checkAccess(), asyncHandler(async (req,res)=>{
+router.post(
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        const parsed = publicationsSchemas.updatePublicationStatusSchema.parse(
+            req.body
+        );
+        await db
+            .update(authorPublicationsTable)
+            .set({ status: parsed.status })
+            .where(
+                and(
+                    eq(authorPublicationsTable.citationId, parsed.citationId),
+                    eq(authorPublicationsTable.authorId, parsed.authorId)
+                )
+            );
 
-    const parsed = publicationsSchemas.updatePublicationStatusSchema.parse(req.body);
-    await db
-        .update(authorPublicationsTable)
-        .set({ status: parsed.status })
-        .where(and(eq(authorPublicationsTable.citationId, parsed.citationId),eq(authorPublicationsTable.authorId, parsed.authorId)));
-
-    res.status(200).json({ message: "Publication status updated successfully" });
-}));
+        res.status(200).json({
+            message: "Publication status updated successfully",
+        });
+    })
+);
 
 export default router;

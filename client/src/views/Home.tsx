@@ -13,17 +13,19 @@ import {
 import { useAuth } from "@/hooks/Auth";
 import api from "@/lib/axios-instance";
 import { LOGIN_ENDPOINT } from "@/lib/constants";
-import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { useQuery } from "@tanstack/react-query";
-import { modules as allModules, todosSchemas } from "lib";
+import { type CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { modules as allModules, todosSchemas } from "lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BellIcon } from "lucide-react";
 import { NotificationItem } from "@/components/home/NotificationItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
   const { authState, setNewAuthToken } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedModules, setSelectedModules] = useState<typeof modules>([]);
   const [filteredTodos, setFilteredTodos] = useState<
     todosSchemas.TodosResponseType["todos"]
@@ -40,11 +42,57 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
           setNewAuthToken(response.data.token);
         })
         .catch(() => {
-          // notify login failed
+          toast.error("An error occurred while logging in");
         });
     },
     [setNewAuthToken]
   );
+
+  const clearNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      return await api.post("/clearNotifications");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData<todosSchemas.TodosResponseType>(
+        ["todos"],
+        (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            notifications: [],
+          };
+        }
+      );
+    },
+  });
+
+  const readNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      return await api.post("/readNotifications");
+    },
+    onSuccess: () => {
+      setTimeout(
+        () =>
+          queryClient.setQueryData<todosSchemas.TodosResponseType>(
+            ["todos"],
+            (oldData) => {
+              if (!oldData) return oldData;
+              const updatedNotifications = oldData.notifications.map(
+                (notification) => ({
+                  ...notification,
+                  read: true,
+                })
+              );
+              return {
+                ...oldData,
+                notifications: updatedNotifications,
+              };
+            }
+          ),
+        2000
+      );
+    },
+  });
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["todos"],
@@ -60,7 +108,8 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
       data
         ? data.todos?.reduce(
             (prev, cur) => {
-              return prev.includes(cur.module) ? prev : [...prev, cur.module];
+              if (!prev.includes(cur.module)) prev.push(cur.module);
+              return prev;
             },
             [] as (typeof allModules)[number][]
           )
@@ -92,17 +141,31 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
           <>
             <Sheet>
               <SheetTrigger asChild>
-                <Button className="absolute right-4 top-4 items-start">
+                <Button
+                  className="absolute right-4 top-4 items-start"
+                  onClick={() => readNotificationsMutation.mutate()}
+                >
                   <BellIcon /> Notifications
                 </Button>
               </SheetTrigger>
 
-              <SheetContent side="right" className="pr-3">
+              <SheetContent side="right" className="">
                 <SheetHeader className="pb-4">
                   <SheetTitle>Notifications</SheetTitle>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() =>
+                      data.notifications.length
+                        ? clearNotificationsMutation.mutate()
+                        : undefined
+                    }
+                  >
+                    Clear
+                  </Button>
                 </SheetHeader>
-                <ScrollArea className="h-[calc(100%-3em)] pr-3">
-                  <div className="flex flex-col gap-4">
+                <ScrollArea className="h-[calc(100%-3em)] w-full">
+                  <div className="flex max-w-full flex-col gap-4">
                     {data.notifications.length ? (
                       data.notifications.map((notification) => (
                         <NotificationItem
@@ -127,9 +190,9 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
               <span className="text-sm uppercase text-muted-foreground">
                 My Roles:
               </span>
-              {data.roles.map((role, index) => (
+              {data.roles.map((role) => (
                 <Badge
-                  key={index}
+                  key={role}
                   variant="secondary"
                   className="flex gap-1 pt-1"
                 >

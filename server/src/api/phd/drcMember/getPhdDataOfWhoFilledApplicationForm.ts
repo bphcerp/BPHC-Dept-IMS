@@ -79,7 +79,10 @@ export default router.get(
                                 examDateEnd1: phd.qualifyingExam1EndDate,
                                 examDateStart2: phd.qualifyingExam2StartDate,
                                 examDateEnd2: phd.qualifyingExam2EndDate,
-                                maxCreatedAt: sql`MAX(${applications.createdAt})`.as('maxCreatedAt'),
+                                maxCreatedAt:
+                                    sql`MAX(${applications.createdAt})`.as(
+                                        "maxCreatedAt"
+                                    ),
                             })
                             .from(phd)
                             .innerJoin(
@@ -91,7 +94,8 @@ export default router.get(
                                     eq(applications.module, modules[4]),
                                     sql`${applications.createdAt} BETWEEN ${threeMonthsBefore} AND ${deadlineDate}`
                                 )
-                            ).groupBy(
+                            )
+                            .groupBy(
                                 phd.email,
                                 phd.name,
                                 phd.erpId,
@@ -102,7 +106,6 @@ export default router.get(
                                 phd.qualifyingExam2StartDate,
                                 phd.qualifyingExam2EndDate
                             );
-                            
 
                         // Process students with documents
                         const studentsWithDocuments = await Promise.all(

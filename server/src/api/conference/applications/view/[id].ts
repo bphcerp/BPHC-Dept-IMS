@@ -38,16 +38,16 @@ router.get(
 
         const reviews = await db.query.conferenceMemberReviews.findMany({
             where: (review, { eq }) => eq(review.applicationId, application.id),
+            orderBy: (cols, { desc }) => desc(cols.createdAt),
         });
         const isReviewed = reviews.filter(
             (r) => r.reviewerEmail === req.user?.email
         ).length;
 
         if (
-            (isMember && application.state !== "DRC Member") ||
-            (isConvener && application.state !== "DRC Convener") ||
-            (isHoD && application.state !== "HoD") ||
-            isReviewed
+            !(application.userEmail === req.user!.email) &&
+            isMember &&
+            (application.state !== "DRC Member" || isReviewed)
         )
             return next(
                 new HttpError(
@@ -55,6 +55,15 @@ router.get(
                     "You are not allowed to view this application"
                 )
             );
+
+        const current = await db.query.conferenceGlobal.findFirst({
+            where: (conferenceGlobal, { eq }) =>
+                eq(conferenceGlobal.key, "directFlow"),
+        });
+
+        const isDirect = isConvener
+            ? ((current && current.value === "true") ?? false)
+            : undefined;
 
         const response = {
             application: {
@@ -68,10 +77,21 @@ router.get(
                           return {
                               status: x.status,
                               comments: x.comments,
-                              createdAt: x.createdAt.toLocaleString(),
+                              createdAt: x.createdAt,
                           };
                       })
-                    : [],
+                    : application.userEmail === req.user!.email &&
+                        application.state === "Faculty" &&
+                        reviews[0]
+                      ? [
+                            {
+                                comments: reviews[0].comments,
+                                status: reviews[0].status,
+                                createdAt: reviews[0].createdAt,
+                            },
+                        ]
+                      : [],
+            isDirect,
         };
 
         res.status(200).send(response);

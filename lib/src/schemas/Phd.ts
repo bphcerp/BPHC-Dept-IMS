@@ -12,12 +12,10 @@ export const updatePhdExamStatusSchema = z.object({
     email: z.string().email(),
     examNumber: z.number().int().min(1).max(2),
     status: z.enum(["pass", "fail"]),
-    date: z.string().optional() 
-  });
-  
-  export type UpdatePhdExamStatusBody = z.infer<
-    typeof updatePhdExamStatusSchema
-  >;
+    date: z.string().optional(),
+});
+
+export type UpdatePhdExamStatusBody = z.infer<typeof updatePhdExamStatusSchema>;
 
 export const updateQualifyingExamStatusSchema = z.record(
     z.string(),
@@ -30,10 +28,12 @@ export type UpdateQualifyingExamStatusBody = z.infer<
 
 export const updateProposalDeadlineSchema = z.object({
     semesterId: z.number().int().positive(),
-    deadline: z.string().datetime()
+    deadline: z.string().datetime(),
 });
 
-export type UpdateProposalDeadlineBody = z.infer<typeof updateProposalDeadlineSchema>;
+export type UpdateProposalDeadlineBody = z.infer<
+    typeof updateProposalDeadlineSchema
+>;
 
 export const updateQualifyingExamSchema = z.object({
     semesterId: z.number().int().positive(),
@@ -44,14 +44,18 @@ export const updateQualifyingExamSchema = z.object({
     viva: z.string().datetime(),
 });
 
-export type UpdateQualifyingExamBody = z.infer<typeof updateQualifyingExamSchema>;
+export type UpdateQualifyingExamBody = z.infer<
+    typeof updateQualifyingExamSchema
+>;
 
 export const updateSubAreasSchema = z.object({
-    subAreas: z.array(
-        z.object({
-            subarea: z.string().min(1), 
-        })
-    ).nonempty(),
+    subAreas: z
+        .array(
+            z.object({
+                subarea: z.string().min(1),
+            })
+        )
+        .nonempty(),
 });
 
 export type UpdateSubAreasBody = z.infer<typeof updateSubAreasSchema>;
@@ -78,8 +82,8 @@ export type UpdateQualificationDateBody = z.infer<
 
 export const suggestDacMembersSchema = z.object({
     dacMembers: z.array(z.string().email()),
-    studentEmail: z.string().email()
-  });
+    studentEmail: z.string().email(),
+});
 
 export type SuggestDacMembersBody = z.infer<typeof suggestDacMembersSchema>;
 

@@ -32,19 +32,23 @@ export default router.get(
         const courseGrades = courseRecord.courseGrades ?? [];
 
         // Check if all grades are valid (not empty, not NC/nc, and not '-')
-        const allGraded = courseGrades.length > 0 && courseGrades.every(grade => {
-            if (!grade) return false;
-            const normalizedGrade = grade.trim().toLowerCase();
-            return normalizedGrade !== 'nc' && normalizedGrade !== '-';
-        });
+        const allGraded =
+            courseGrades.length > 0 &&
+            courseGrades.every((grade) => {
+                if (!grade) return false;
+                const normalizedGrade = grade.trim().toLowerCase();
+                return normalizedGrade !== "nc" && normalizedGrade !== "-";
+            });
 
-        res.json({ 
+        res.json({
             allCoursesGraded: allGraded,
             totalCourses: courseRecord.courseNames?.length ?? 0,
-            gradedCourses: courseGrades.filter(grade => {
+            gradedCourses: courseGrades.filter((grade) => {
                 const normalizedGrade = grade.trim().toLowerCase();
-                return grade && normalizedGrade !== 'nc' && normalizedGrade !== '-';
-            }).length
+                return (
+                    grade && normalizedGrade !== "nc" && normalizedGrade !== "-"
+                );
+            }).length,
         });
     })
 );

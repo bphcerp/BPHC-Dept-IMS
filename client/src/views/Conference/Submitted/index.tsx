@@ -1,4 +1,4 @@
-import { conferenceSchemas, formSchemas } from "lib";
+import { conferenceSchemas } from "lib";
 import {
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 const columns: ColumnDef<{
   id: number;
@@ -47,21 +48,21 @@ const columns: ColumnDef<{
         <Button
           variant="link"
           onClick={() => column.toggleSorting(column.getIsSorted() !== "desc")}
-          className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
+          className="flex w-full min-w-32 items-center justify-start p-0 font-semibold text-foreground"
         >
           Status
         </Button>
       );
     },
-    accessorKey: "status",
+    accessorKey: "state",
     cell: ({ row }) => {
-      const status: (typeof formSchemas.applicationStatuses)[number] =
-        row.getValue("status");
-      return status === "approved"
-        ? "Accepted"
-        : status === "rejected"
-          ? "Rejected"
-          : "Pending";
+      const state: (typeof conferenceSchemas.states)[number] =
+        row.getValue("state");
+      return state === "Faculty"
+        ? "Changes requested"
+        : conferenceSchemas.states.indexOf(state) < 4
+          ? "Pending"
+          : "Accepted";
     },
   },
   {
@@ -73,6 +74,14 @@ const columns: ColumnDef<{
       );
     },
     accessorKey: "createdAt",
+    cell: ({ row }) => {
+      const createdAt: string = row.getValue("createdAt");
+      return (
+        <p className="text-muted-foreground">
+          {format(createdAt, "LLL dd, y • hh:mm a")}
+        </p>
+      );
+    },
   },
 ];
 
@@ -143,7 +152,7 @@ const ConferenceSubmittedApplicationsView = () => {
                     }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
+                      <TableCell key={cell.id} className="py-3">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()
