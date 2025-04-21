@@ -14,7 +14,11 @@ ALTER TABLE "qp_review_requests" DROP CONSTRAINT "qp_review_requests_compre_file
 --> statement-breakpoint
 ALTER TABLE "qp_review_requests" DROP CONSTRAINT "qp_review_requests_compre_sol_file_id_file_fields_id_fk";
 --> statement-breakpoint
+<<<<<<< Updated upstream
 ALTER TABLE "qp_review_requests" ALTER COLUMN "status" SET DEFAULT 'notsubmitted';--> statement-breakpoint
+=======
+ALTER TABLE "qp_review_requests" ALTER COLUMN "status" DROP DEFAULT;--> statement-breakpoint
+>>>>>>> Stashed changes
 ALTER TABLE "qp_review_requests" ADD COLUMN "ic_email" text;--> statement-breakpoint
 ALTER TABLE "qp_review_requests" ADD COLUMN "reviewer_email" text;--> statement-breakpoint
 ALTER TABLE "qp_review_requests" ADD COLUMN "previous_submission_id" integer;--> statement-breakpoint
@@ -45,3 +49,4 @@ ALTER TABLE "public"."qp_review_requests" ALTER COLUMN "status" SET DATA TYPE te
 DROP TYPE "public"."qp_status_enum";--> statement-breakpoint
 CREATE TYPE "public"."qp_status_enum" AS ENUM('review pending', 'reviewed', 'approved', 'rejected', 'notsubmitted');--> statement-breakpoint
 ALTER TABLE "public"."qp_review_requests" ALTER COLUMN "status" SET DATA TYPE "public"."qp_status_enum" USING "status"::"public"."qp_status_enum";
+ALTER TABLE "qp_review_requests" ALTER COLUMN "status" SET DEFAULT 'notsubmitted';--> statement-breakpoint
