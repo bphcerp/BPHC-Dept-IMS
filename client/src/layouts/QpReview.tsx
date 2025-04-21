@@ -8,30 +8,30 @@ const QpReviewLayout = () => {
       <AppSidebar
         items={[
           {
-            title: "FIC Submission",
+            title: "Faculty In Charge",
             items: [
               {
-                title: "FicSubmission",
+                title: "See Requests",
                 icon: <FileText />,
                 url: "/qpReview/ficSubmission",
               },
             ],
           },
           {
-            title: "DCA Requests",
+            title: "DCA Convenor",
             items: [
               {
-                title: "DCA Requests",
+                title: "Create Review Requests",
                 icon: <FileText />,
                 url: "/qpReview/dcaRequests",
               },
             ],
           },
           {
-            title: "Faculty Review",
+            title: "DCA Member",
             items: [
               {
-                title: "Faculty Review",
+                title: "DCA Member Review",
                 icon: <FileText />,
                 url: "/qpReview/facultyReview",
               },
