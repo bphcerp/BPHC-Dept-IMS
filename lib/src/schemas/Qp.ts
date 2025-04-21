@@ -1,13 +1,38 @@
 import z from "zod";
 
 export const qpReviewStatuses = [
-    "pending",
+    "review pending",
+    "reviewed",
     "approved",
     "rejected",
-    "inprogress",
+    "notsubmitted",
 ] as const;
 
-export type QPReviewStatus = (typeof qpReviewStatuses)[number];
+
+export type QpStatus = (typeof qpReviewStatuses)[number];
+
+export const categories = ["HD", "FD"] as const;
+
+export const assignICBodySchema = z.object({
+    courseName: z.string().nonempty(),
+    courseCode: z.string().nonempty(),
+    icEmail: z.string().email(),
+    category: z.enum(categories),
+});
+
+export type AssignICBody = z.infer<typeof assignICBodySchema>;
+
+export const updateIcBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid qp id",
+        }),
+    icEmail: z.string().email(),
+});
+
+export type UpdateICBody = z.infer<typeof updateIcBodySchema>;
 
 export const createQpReviewSchema = z.object({
     courseName: z.string().nonempty(),
@@ -59,18 +84,29 @@ export const getQpReviewQuerySchema = z.object({
 
 export type GetQpReviewQuery = z.infer<typeof getQpReviewQuerySchema>;
 
-export const assignQpReviewerSchema = z.object({
+export const assignReviewerBodySchema = z.object({
     id: z
         .string()
         .nonempty()
         .refine((val) => !isNaN(Number(val)), {
-            message: "Invalid review id",
+            message: "Invalid handout id",
         }),
-    faculty1Email: z.string() || null,
-    faculty2Email: z.string() || null,
+    reviewerEmail: z.string().email(),
 });
 
-export type AssignQpReviewer = z.infer<typeof assignQpReviewerSchema>;
+export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;
+
+export const updateReviewerBodySchema = z.object({
+    id: z
+        .string()
+        .nonempty()
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid handout id",
+        }),
+    reviewerEmail: z.string().email(),
+});
+
+export type UpdateReviewerBody = z.infer<typeof updateReviewerBodySchema>;
 
 export const editQpReviewSchema = z.object({
     courseName: z.string().nonempty().optional(),
@@ -88,12 +124,20 @@ export const editQpReviewSchema = z.object({
 
 export type EditQpReview = z.infer<typeof editQpReviewSchema>;
 
-export const uploadFICDocumentsSchema = z.object({
-    requestId: z.string().regex(/^\d+$/, "requestId must be a numeric string"),
-    ficEmail: z.string().email("Invalid email format"),
+export const uploadDocumentsSchema = z.object({
+    id: z
+        .string({
+            required_error: "Request ID is required",
+            invalid_type_error: "Request ID must be a string",
+        })
+        .min(1, "Request ID cannot be empty")
+        .refine((val) => !isNaN(Number(val)), {
+            message: "Invalid request ID",
+        }),
+        field: z.string()
 });
 
-export type UploadFICDocuments = z.infer<typeof uploadFICDocumentsSchema>;
+export type UploadFICDocuments = z.infer<typeof uploadDocumentsSchema>;
 
 export const requestIdSchema = z.object({
     requestId: z.preprocess(

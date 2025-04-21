@@ -1,120 +1,90 @@
-import express from "express";
 import db from "@/config/db/index.ts";
-import { qpSchemas, modules } from "lib";
-import { HttpCode } from "@/config/errors.ts";
-import { pdfUpload } from "@/config/multer.ts";
+import { fileFields, files } from "@/config/db/schema/form.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
-import { files as dbFiles, fileFields } from "@/config/db/schema/form.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import { pdfUpload } from "@/config/multer.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import assert from "assert";
 import { eq } from "drizzle-orm";
+import express from "express";
+import { modules } from "lib";
+import multer from "multer";
 import { z } from "zod";
 
 const router = express.Router();
 
+const uploadDocumentsSchema = z.object({
+  id: z.string().min(1),
+  field: z.enum(["midSemFile", "midSemSolFile", "compreFile", "compreSolFile"])
+});
+
 router.post(
-    "/",
-    pdfUpload.fields([
-        { name: "midSemFile", maxCount: 1 },
-        { name: "midSemSolFile", maxCount: 1 },
-        { name: "compreFile", maxCount: 1 },
-        { name: "compreSolFile", maxCount: 1 },
-    ]),
-    async (req, res) => {
-        try {
-            const { requestId, ficEmail } =
-                qpSchemas.uploadFICDocumentsSchema.parse(req.body);
-
-            console.log("Request ID:", requestId);
-
-            if (!req.files || Object.keys(req.files).length === 0) {
-                return res.status(HttpCode.BAD_REQUEST).json({
-                    success: false,
-                    message: "No files uploaded",
-                });
-            }
-
-            const uploadedFiles = req.files as Record<
-                string,
-                Express.Multer.File[]
-            >;
-
-            await db.transaction(async (tx) => {
-                const insertFile = async (
-                    file: Express.Multer.File | undefined
-                ) => {
-                    if (!file) return null;
-
-                    const [insertedFile] = await tx
-                        .insert(dbFiles)
-                        .values({
-                            userEmail: ficEmail,
-                            filePath: file.path,
-                            originalName: file.originalname,
-                            mimetype: file.mimetype,
-                            size: file.size,
-                            fieldName: file.fieldname,
-                            module: modules[5],
-                        })
-                        .returning();
-
-                    const [insertedFileField] = await tx
-                        .insert(fileFields)
-                        .values({
-                            userEmail: ficEmail,
-                            fileId: insertedFile.id,
-                            fieldName: file.fieldname,
-                            module: modules[5],
-                        })
-                        .returning();
-
-                    return insertedFileField?.id || null;
-                };
-
-                const midSemFileId = uploadedFiles.midSemFile
-                    ? await insertFile(uploadedFiles.midSemFile[0])
-                    : null;
-                const midSemSolFileId = uploadedFiles.midSemSolFile
-                    ? await insertFile(uploadedFiles.midSemSolFile[0])
-                    : null;
-                const compreFileId = uploadedFiles.compreFile
-                    ? await insertFile(uploadedFiles.compreFile[0])
-                    : null;
-                const compreSolFileId = uploadedFiles.compreSolFile
-                    ? await insertFile(uploadedFiles.compreSolFile[0])
-                    : null;
-
-                await tx
-                    .update(qpReviewRequests)
-                    .set({
-                        midSemFileId,
-                        midSemSolFileId,
-                        compreFileId,
-                        compreSolFileId,
-                        documentsUploaded: true,
-                    })
-                    .where(eq(qpReviewRequests.id, Number(requestId)));
-            });
-
-            return res.status(HttpCode.OK).json({
-                success: true,
-                message: "Documents uploaded successfully.",
-            });
-        } catch (error) {
-            console.error("Upload error:", error);
-
-            if (error instanceof z.ZodError) {
-                return res.status(HttpCode.BAD_REQUEST).json({
-                    success: false,
-                    message: "Invalid request data",
-                    errors: error.errors,
-                });
-            }
-
-            return res.status(HttpCode.INTERNAL_SERVER_ERROR).json({
-                success: false,
-                message: "Failed to upload documents",
-            });
-        }
+  "/",
+  asyncHandler(async (req, res, next) =>
+    pdfUpload.single("file")(req, res, (err) => {
+      if (err instanceof multer.MulterError)
+        return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
+      next(err);
+    })
+  ),
+  asyncHandler(async (req, res, next) => {
+    if (!req.file) {
+      return next(new HttpError(HttpCode.BAD_REQUEST, "No File Uploaded"));
     }
+
+    console.log(req.query);
+    const { id, field } = uploadDocumentsSchema.parse(req.query);
+
+    const fieldMap = {
+      midSemFile: "midSemFilePath",
+      midSemSolFile: "midSemSolFilePath",
+      compreFile: "compreFilePath",
+      compreSolFile: "compreSolFilePath"
+    };
+
+    await db.transaction(async (tx) => {
+      assert(req.user);
+      const insertedFile = await tx
+        .insert(files)
+        .values({
+          userEmail: req.user.email,
+          filePath: req.file!.path,
+          originalName: req.file!.originalname,
+          mimetype: req.file!.mimetype,
+          size: req.file!.size,
+          fieldName: field,  
+          module: modules[5], 
+        })
+        .returning();
+
+      const insertedFileField = await tx
+        .insert(fileFields)
+        .values({
+          module: modules[5],
+          userEmail: req.user.email,
+          fileId: insertedFile[0].id,
+          fieldName: field,
+        })
+        .returning();
+
+      const updateData: Record<string, any> = {
+        [fieldMap[field]]: insertedFileField[0].id
+      };
+
+      if (field === "compreSolFile") {
+        updateData.documentsUploaded = true;
+        updateData.status = "review pending";
+        updateData.submittedOn = new Date();
+      }
+
+      await tx
+        .update(qpReviewRequests)
+        .set(updateData)
+        .where(eq(qpReviewRequests.id, Number(id)));
+    });
+
+    res.status(201).json({ success: true });
+  })
 );
 
 export default router;

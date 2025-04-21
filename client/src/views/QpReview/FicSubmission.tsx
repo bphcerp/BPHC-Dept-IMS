@@ -1,161 +1,237 @@
-import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import ToSubmit from "@/components/qp_review/ToSubmit";
-import Submitted from "@/components/qp_review/Submitted";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { FilterBar } from "@/components/handouts/filterBar";
+import { STATUS_COLORS } from "@/components/handouts/types";
+import { UploadDialogBox } from "@/components/qp_review/uploadDialogBox";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { qpSchemas } from "lib";
 
-const statuses = ["pending", "approved"];
-const ficEmail = "fic@email.com";
-
-type SubmissionData = {
-  courseName: string;
-  courseCode: string;
-  deadline?: string;
-  daysLeft?: number;
+interface FacultyCourse {
   id: string;
-  status: string;
-  documentsUploaded: boolean;
-};
+  courseCode: string;
+  courseName: string;
+  category: "FD" | "HD"; // New property
+  reviewerName: string;
+  submittedOn: string;
+  status: qpSchemas.QpStatus;
+}
 
-const FicSubmissionView = () => {
-  const [search, setSearch] = useState("");
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
-    "pending",
-    "approved",
-  ]);
-  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
-
-  useEffect(() => {
-    const fetchSubmissions = async () => {
+export const FacultyHandouts: React.FC = () => {
+  const [filteredCourses, setFilteredCourses] = useState<FacultyCourse[]>();
+  const navigate = useNavigate();
+  const {
+    data: courses,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery<FacultyCourse[]>({
+    queryKey: ["*"],
+    queryFn: async () => {
       try {
-        const response = await api.get(
-          `/qp/getAllFICSubmissions/${encodeURIComponent(ficEmail)}`
+        const response = await api.get<{ data: FacultyCourse[] }>(
+          "/qp/getAllFICSubmissions"
         );
-
-        if (response.status === 200) {
-          const data = response.data.data;
-          const formattedData = data.map((item: SubmissionData) => {
-            const deadline = item.deadline ? new Date(item.deadline) : null;
-            return {
-              id: item.id,
-              courseName: item.courseName,
-              courseCode: item.courseCode,
-              deadline: deadline?.toLocaleDateString("en-GB"),
-              daysLeft: deadline
-                ? Math.ceil(
-                    (deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                  )
-                : undefined,
-              status: item.status,
-              documentsUploaded: item.documentsUploaded,
-            };
-          });
-          setSubmissions(formattedData);
-
-          console.log("Fetched submissions:", formattedData);
-        }
+        if (response.data.data) setFilteredCourses(response.data.data);
+        return response.data.data;
       } catch (error) {
-        console.error("Error fetching submissions:", error);
+        toast.error("Failed to fetch handouts");
+        throw error;
       }
-    };
+    },
+  });
 
-    fetchSubmissions();
-  }, []);
-
-  const handleStatusChange = (statuses: string[]) => {
-    setSelectedStatuses(statuses.length ? statuses : ["pending"]);
-  };
-
-  const filteredSubmissions = submissions.filter((item) =>
-    selectedStatuses.includes(item.status)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(
+    null
   );
 
-  console.log(filteredSubmissions);
+  useMemo(() => {
+    if (courses) {
+      let results = courses;
+      if (searchQuery) {
+        results = results.filter(
+          (course) =>
+            course.courseName
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()) ||
+            course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      results = results.filter((course) => {
+        const matchesCategory =
+          activeCategoryFilters.length > 0
+            ? activeCategoryFilters.includes(course.category)
+            : true;
+        const matchesStatus =
+          activeStatusFilters.length > 0
+            ? activeStatusFilters.includes(course.status)
+            : true;
+        return matchesCategory && matchesStatus;
+      });
 
+      setFilteredCourses(results);
+    }
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+
+  const handleUploadClick = (handoutId: string) => {
+    setSelectedHandoutId(handoutId);
+    setIsUploadDialogOpen(true);
+  };
+
+  const handleUploadComplete = () => {
+    setIsUploadDialogOpen(false);
+    setSelectedHandoutId(null);
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
+  if (isError)
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        Error fetching handouts
+      </div>
+    );
   return (
-    <div className="flex w-full flex-col gap-4 px-10 pt-4">
-      <h1 className="text-3xl font-bold text-primary">Courses</h1>
-
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-gray-400" />
-          <Input
-            type="search"
-            placeholder="Search courses..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64 pl-9"
-          />
+    <div className="w-full px-4">
+      <div className="px-2 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">
+              Faculty Upload Requests
+            </h1>
+            <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
+          </div>
+          <div className="ml-4">
+            <FilterBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeCategoryFilters={activeCategoryFilters}
+              onCategoryFilterChange={setActiveCategoryFilters}
+              activeStatusFilters={activeStatusFilters}
+              onStatusFilterChange={setActiveStatusFilters}
+            />
+          </div>
         </div>
-        <Button>Search</Button>
-        <ToggleGroup
-          type="multiple"
-          value={selectedStatuses}
-          onValueChange={handleStatusChange}
-          className="bg-transparent"
-        >
-          {statuses.map((status) => (
-            <ToggleGroupItem
-              key={status}
-              value={status}
-              aria-label={`Filter by ${status}`}
-              className="border border-gray-300"
-            >
-              <span className="capitalize">{status}</span>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
       </div>
 
-      {filteredSubmissions.filter((item) => item.status === "pending") && (
-        <div>
-          <h2 className="mt-4 text-2xl font-semibold">To Submit</h2>
-          {filteredSubmissions.length === 0 && (
-            <p className="mt-4">Nothing to submit</p>
-          )}
-          {filteredSubmissions
-            .filter((item) => item.status === "pending")
-            .map((item, index) => {
-              console.log(item);
-              return (
-                <ToSubmit
-                  key={index}
-                  requestId={item.id}
-                  courseName={item.courseName}
-                  ficDeadline={item.deadline || "N/A"}
-                  daysLeft={item.daysLeft || 0}
-                  courseCode={item.courseCode}
-                  ficEmail={ficEmail}
-                  documentsUploaded={item.documentsUploaded}
-                />
-              );
-            })}
-        </div>
-      )}
+      <hr className="my-1 border-gray-300" />
 
-      {filteredSubmissions.some((item) => item.status === "approved") && (
-        <div>
-          <h2 className="mt-4 text-2xl font-semibold">Submitted</h2>
-          {filteredSubmissions.length === 0 && (
-            <p className="mt-4">Nothing submitted yet</p>
-          )}
-          {filteredSubmissions
-            .filter((item) => item.status === "approved")
-            .map((item, index) => (
-              <Submitted
-                key={index}
-                courseName={item.courseName}
-                courseCode={item.courseCode}
-                status={item.status}
-              />
-            ))}
+      <div className="w-full overflow-x-auto bg-white shadow">
+        <div className="inline-block min-w-full align-middle">
+          <Table className="min-w-full">
+            <TableHeader className="bg-gray-100">
+              <TableRow>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Code
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Course Name
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
+                <TableHead className="px-4 py-2 text-left">Status</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Submitted On
+                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-gray-300">
+              {filteredCourses?.length ? (
+                filteredCourses.map((course) => (
+                  <TableRow
+                    key={course.id}
+                    className="odd:bg-white even:bg-gray-100"
+                  >
+                    <TableCell className="px-4 py-2">
+                      {course.courseCode}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {course.courseName}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {course.category}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {course.reviewerName || "Unassigned"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2 uppercase">
+                      <span className={STATUS_COLORS[course.status]}>
+                        {course.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {!course.submittedOn ? (
+                        <span className="mx-3">NA</span>
+                      ) : (
+                        new Date(course.submittedOn).toLocaleDateString()
+                      )}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
+                      {course.status === "notsubmitted" ? (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => handleUploadClick(course.id)}
+                        >
+                          Upload
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => navigate(`/qpReview/FacultyReview/`)}
+                        >
+                          Details
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="px-4 py-2 text-center">
+                    No handouts found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
-      )}
+      </div>
+
+      {/* Upload Dialog for new uploads */}
+      <UploadDialogBox
+        isOpen={isUploadDialogOpen}
+        onClose={() => setIsUploadDialogOpen(false)}
+        onUploadSuccess={handleUploadComplete}
+        id={selectedHandoutId!}
+        refetch={async () => {
+          await refetch();
+        }}
+      />
     </div>
   );
 };
 
-export default FicSubmissionView;
+export default FacultyHandouts;

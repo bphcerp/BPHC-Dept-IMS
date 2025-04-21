@@ -22,10 +22,8 @@ router.get("/:email/:requestId", async (req, res) => {
 
         // Determine which review to return based on email
         let reviewData;
-        if (request.faculty1Email === email) {
-            reviewData = request.review1;
-        } else if (request.faculty2Email === email) {
-            reviewData = request.review2;
+        if (request.reviewerEmail === email) {
+            reviewData = request.review;
         } else {
             return res.status(403).json({
                 success: false,

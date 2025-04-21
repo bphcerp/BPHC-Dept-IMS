@@ -1,19 +1,19 @@
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import assert from "assert";
 const router = express.Router();
 
 router.get(
     "/",
-    asyncHandler(async (req, res, _next) => {
-        assert(req.user);
-
+    asyncHandler(async (_req, res, _next) => {
         const courses = (
             await db.query.qpReviewRequests.findMany({
-                where: (course, { eq }) =>
-                    eq(course.icEmail, req.user!.email),
                 with: {
+                    ic: {
+                        with: {
+                            faculty: true,
+                        },
+                    },
                     reviewer: {
                         with: {
                             faculty: true,
@@ -25,13 +25,11 @@ router.get(
             return {
                 ...course,
                 reviewerName: course.reviewer?.faculty?.name ?? "N/A",
+                professorName: course.ic?.faculty?.name ?? "N/A",
             };
         });
 
-        res.status(200).json({
-            success: true,
-            data: courses,
-        });
+        res.status(200).json({ success: true, courses });
     })
 );
 

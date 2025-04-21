@@ -6,43 +6,33 @@ import { fileFields } from "./form.ts";
 export const qpReviewRequestsRelations = relations(
     qpReviewRequests,
     ({ one }) => ({
-        dcaMember: one(users, {
-            fields: [qpReviewRequests.dcaMemberEmail],
+        ic: one(users, {
+            fields: [qpReviewRequests.icEmail],
             references: [users.email],
-            relationName: "qpDcaMember",
+            relationName: "ic",
         }),
-        fic: one(users, {
-            fields: [qpReviewRequests.ficEmail],
-            references: [users.email],
-            relationName: "qpFic",
-        }),
-        faculty1: one(users, {
-            fields: [qpReviewRequests.faculty1Email],
+        reviewer: one(users, {
+            fields: [qpReviewRequests.reviewerEmail],
             references: [users.email],
             relationName: "qpFaculty1",
         }),
-        faculty2: one(users, {
-            fields: [qpReviewRequests.faculty2Email],
-            references: [users.email],
-            relationName: "qpFaculty2",
-        }),
-        midSemFile: one(fileFields, {
-            fields: [qpReviewRequests.midSemFileId],
+        midSemFilePath: one(fileFields, {
+            fields: [qpReviewRequests.midSemFilePath],
             references: [fileFields.id],
-            relationName: "qpMidSemFile",
+            relationName: "qpMidSemFilePath",
         }),
         midSemSolFile: one(fileFields, {
-            fields: [qpReviewRequests.midSemSolFileId],
+            fields: [qpReviewRequests.midSemSolFilePath],
             references: [fileFields.id],
             relationName: "qpMidSemSolFile",
         }),
         compreFile: one(fileFields, {
-            fields: [qpReviewRequests.compreFileId],
+            fields: [qpReviewRequests.compreFilePath],
             references: [fileFields.id],
             relationName: "qpCompreFile",
         }),
         compreSolFile: one(fileFields, {
-            fields: [qpReviewRequests.compreSolFileId],
+            fields: [qpReviewRequests.compreSolFilePath],
             references: [fileFields.id],
             relationName: "qpCompreSolFile",
         }),

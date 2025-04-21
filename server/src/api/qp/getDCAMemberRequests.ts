@@ -1,20 +1,21 @@
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import express from "express";
 import assert from "assert";
+import express from "express";
+// import { checkAccess } from "@/middleware/auth.ts";
 const router = express.Router();
 
 router.get(
     "/",
+    // checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
-
         const courses = (
             await db.query.qpReviewRequests.findMany({
                 where: (course, { eq }) =>
-                    eq(course.icEmail, req.user!.email),
+                    eq(course.reviewerEmail, req.user!.email),
                 with: {
-                    reviewer: {
+                    ic: {
                         with: {
                             faculty: true,
                         },
@@ -24,14 +25,10 @@ router.get(
         ).map((course) => {
             return {
                 ...course,
-                reviewerName: course.reviewer?.faculty?.name ?? "N/A",
+                professorName: course.ic?.faculty?.name ?? "N/A",
             };
         });
-
-        res.status(200).json({
-            success: true,
-            data: courses,
-        });
+        res.status(200).json({ success: true, courses });
     })
 );
 

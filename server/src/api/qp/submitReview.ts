@@ -34,11 +34,9 @@ router.post("/", async (req, res) => {
 
         const updateFields: Record<string, any> = {};
 
-        if (request.faculty1Email === email) {
+        if (request.reviewerEmail === email) {
             updateFields.review1 = review;
-        } else if (request.faculty2Email === email) {
-            updateFields.review2 = review;
-        } else {
+        }else {
             return res.status(403).json({
                 success: false,
                 message: "Unauthorized to submit review",
@@ -47,8 +45,7 @@ router.post("/", async (req, res) => {
 
         // Mark as reviewed if both reviews are complete
         if (
-            (updateFields.review1 ?? request.review1) &&
-            (updateFields.review2 ?? request.review2)
+            (updateFields.review1 ?? request.review) 
         ) {
             updateFields.reviewed = "reviewed";
         }
