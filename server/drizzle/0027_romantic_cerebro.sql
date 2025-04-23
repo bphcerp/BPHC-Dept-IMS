@@ -1,0 +1,1 @@
+ALTER TABLE "author_publications" ADD COLUMN "comments" text;

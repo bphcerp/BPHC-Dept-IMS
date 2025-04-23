@@ -12,6 +12,7 @@ export const PublicationSchema = z.object({
     link: z.string().nullable(),
     citations: z.string().nullable(),
     authorNames: z.string().nullable(),
+    comments: z.string().nullable(),
 });
 
 export const CoAuthorSchema = z.object({
@@ -23,6 +24,7 @@ export const updatePublicationStatusSchema = z.object({
     citationId: z.string(),
     authorId: z.string(),
     status: z.boolean(),
+    comments: z.string().nullable(),
 });
 
 export const PublicationWithCoAuthorsSchema = PublicationSchema.extend({
@@ -34,6 +36,7 @@ export const PublicationRowSchema = z.object({
     authorId: z.string(),
     authorName: z.string().nullable(),
     status: z.boolean().nullable(),
+    comments: z.string().nullable(),
 });
 
 export const publicationQuerySchema = z.object({

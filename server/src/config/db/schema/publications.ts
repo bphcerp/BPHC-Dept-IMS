@@ -20,6 +20,7 @@ export const authorPublicationsTable = pgTable(
         citationId: text("citation_id").notNull(),
         authorName: text("author_name"),
         status: boolean("status"),
+        comments: text("comments")
     },
     (table) => [primaryKey({ columns: [table.authorId, table.citationId] })]
 );

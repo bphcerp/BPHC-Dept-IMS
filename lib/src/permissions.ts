@@ -261,6 +261,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/all": "publications:all",
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
+    "/publications/edit": "publications:all",
 
     // Inventory
     "/inventory/labs/get": "inventory:read",

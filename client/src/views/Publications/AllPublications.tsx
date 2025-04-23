@@ -92,7 +92,7 @@ const AllPublications = () => {
                     key={pub.citationId}
                     className="mb-4 text-justify text-base"
                   >
-                    [{index + 1}] {authors && `${authors}, `}&quot;{pub.title}
+                    [{index + 1}] {pub.authorNames} {", "}&quot;{pub.title}
                     ,&quot; <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"},
                     no. {pub.issue ?? "N/A"}, {pub.year}.
                   </p>

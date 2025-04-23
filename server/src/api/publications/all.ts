@@ -33,6 +33,8 @@ router.get(
                     publication: publicationsTable,
                     authorId: authorPublicationsTable.authorId,
                     authorName: authorPublicationsTable.authorName,
+                    status: authorPublicationsTable.status,
+                    comments: authorPublicationsTable.comments,
                 })
                 .from(authorPublicationsTable)
                 .innerJoin(
@@ -61,6 +63,8 @@ router.get(
                 if (!publicationsMap.has(pub.citationId)) {
                     publicationsMap.set(pub.citationId, {
                         ...pub,
+                        status: row.status ?? null,
+                        comments: row.comments ?? null,
                         coAuthors: [coAuthor],
                     });
                 } else {
@@ -76,7 +80,7 @@ router.get(
 
             data = response;
         }
-
+        console.log("Fetched all publications:", data);
         res.status(200).json(data);
     })
 );
