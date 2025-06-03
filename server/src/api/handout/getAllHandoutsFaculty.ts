@@ -13,8 +13,11 @@ router.get(
 
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq }) =>
-                    eq(handout.icEmail, req.user!.email),
+                where: (handout, { eq, and, isNotNull }) =>
+                    and(
+                        eq(handout.icEmail, req.user!.email),
+                        isNotNull(handout.deadline)
+                    ),
                 with: {
                     reviewer: {
                         with: {
