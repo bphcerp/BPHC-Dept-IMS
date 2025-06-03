@@ -21,9 +21,52 @@ router.get(
             "Number of Lectures/Practical are adequate as per the Units of the Course",
             "Evaluation Scheme is as per academic regulations",
         ];
-        const handouts = (
+        const hdHandouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq }) => eq(handout.status, "approved"),
+                where: (handout, { eq, and }) =>
+                    and(
+                        eq(handout.status, "approved"),
+                        eq(handout.category, "HD")
+                    ),
+                with: {
+                    ic: {
+                        with: {
+                            faculty: true,
+                        },
+                    },
+                },
+            })
+        ).map((handout, i) => {
+            return {
+                [headers[0]]: i + 1,
+                [headers[1]]: handout.courseCode,
+                [headers[2]]: handout.courseName,
+                [headers[3]]: handout.ic?.faculty?.name,
+                [headers[4]]:
+                    handout.scopeAndObjective == true ? "\u2713" : "\u00D7",
+                [headers[5]]:
+                    handout.textBookPrescribed == true ? "\u2713" : "\u00D7",
+                [headers[6]]:
+                    handout.lecturewisePlanLearningObjective == true
+                        ? "\u2713"
+                        : "\u00D7",
+                [headers[7]]:
+                    handout.lecturewisePlanCourseTopics == true
+                        ? "\u2713"
+                        : "\u00D7",
+                [headers[8]]: handout.numberOfLP == true ? "\u2713" : "\u00D7",
+                [headers[9]]:
+                    handout.evaluationScheme == true ? "\u2713" : "\u00D7",
+            };
+        });
+
+        const fdHandouts = (
+            await db.query.courseHandoutRequests.findMany({
+                where: (handout, { eq, and }) =>
+                    and(
+                        eq(handout.status, "approved"),
+                        eq(handout.category, "FD")
+                    ),
                 with: {
                     ic: {
                         with: {
@@ -59,7 +102,8 @@ router.get(
         res.status(200).json({
             success: true,
             headers,
-            handouts,
+            hdHandouts,
+            fdHandouts,
         });
     })
 );
