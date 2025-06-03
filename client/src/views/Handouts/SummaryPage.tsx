@@ -33,7 +33,8 @@ interface HandoutSummary {
 }
 
 interface ExcelResponse {
-  handouts: Record<string, string>[];
+  hdHandouts: Record<string, string>[];
+  fdHandouts: Record<string, string>[];
   headers: string[];
 }
 
@@ -105,20 +106,35 @@ const DCAConvenerSummary: React.FC = () => {
     enabled: false,
   });
 
-  const handleExport = async () => {
+  const handleExportHD = async () => {
     await refetch();
-    console.log(summary);
     if (summary) {
-      const workbook = generateExcel(summary.headers, summary.handouts);
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
+      const hd_workbook = generateExcel(summary.headers, summary.hdHandouts);
+      const hd_buffer = await hd_workbook.xlsx.writeBuffer();
+      const hd_blob = new Blob([hd_buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "handout_summary.xlsx";
-      anchor.click();
+      const hd_url = window.URL.createObjectURL(hd_blob);
+      const hd_anchor = document.createElement("a");
+      hd_anchor.href = hd_url;
+      hd_anchor.download = "hd_handout_summary.xlsx";
+      hd_anchor.click();
+    }
+  };
+
+  const handleExportFD = async () => {
+    await refetch();
+    if (summary) {
+      const fd_workbook = generateExcel(summary.headers, summary.fdHandouts);
+      const fd_buffer = await fd_workbook.xlsx.writeBuffer();
+      const fd_blob = new Blob([fd_buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const fd_url = window.URL.createObjectURL(fd_blob);
+      const fd_anchor = document.createElement("a");
+      fd_anchor.href = fd_url;
+      fd_anchor.download = "fd_handout_summary.xlsx";
+      fd_anchor.click();
     }
   };
 
@@ -152,10 +168,19 @@ const DCAConvenerSummary: React.FC = () => {
                 variant="outline"
                 className="hover:bg-primary hover:text-white"
                 onClick={() => {
-                  void handleExport();
+                  void handleExportHD();
                 }}
               >
-                Export
+                Export HD
+              </Button>
+              <Button
+                variant="outline"
+                className="hover:bg-primary hover:text-white"
+                onClick={() => {
+                  void handleExportFD();
+                }}
+              >
+                Export FD
               </Button>
             </div>
           </div>
