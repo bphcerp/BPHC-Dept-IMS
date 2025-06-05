@@ -8,6 +8,7 @@ import qpRouter from "./qp/index.ts";
 import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
 import inventoryRouter from "./inventory/index.ts";
+import profileRouter from "./profile/index.ts";
 
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
@@ -37,5 +38,6 @@ router.use("/inventory", inventoryRouter);
 router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);
+router.use("/profile", profileRouter);
 
 export default router;

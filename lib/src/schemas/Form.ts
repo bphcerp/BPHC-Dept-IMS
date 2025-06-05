@@ -7,6 +7,7 @@ export const modules = [
     "Question Paper",
     "SFC Meeting",
     "Project Info",
+    "Profile",
     "Patent Info",
 ] as const;
 

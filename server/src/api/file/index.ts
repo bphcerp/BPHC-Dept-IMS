@@ -32,6 +32,7 @@ router.get(
             `frame-ancestors 'self' ${httpUrl} ${httpsUrl}`
         );
 
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         res.setHeader("content-type", file.mimetype ?? "application/pdf");
         if (file.size !== null) {
             res.setHeader("content-length", file.size);
