@@ -22,10 +22,13 @@ import { BellIcon } from "lucide-react";
 import { NotificationItem } from "@/components/home/NotificationItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { UserIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
   const { authState, setNewAuthToken } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [selectedModules, setSelectedModules] = useState<typeof modules>([]);
   const [filteredTodos, setFilteredTodos] = useState<
     todosSchemas.TodosResponseType["todos"]
@@ -127,6 +130,10 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
     }
   }, [data, selectedModules]);
 
+  const handleProfileClick = () => {
+    navigate('/profile');
+  };
+
   return (
     <>
       <AppSidebar items={sidebarItems ?? []} />
@@ -139,49 +146,65 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
           <LoadingSpinner />
         ) : data ? (
           <>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  className="absolute right-4 top-4 items-start"
-                  onClick={() => readNotificationsMutation.mutate()}
-                >
-                  <BellIcon /> Notifications
-                </Button>
-              </SheetTrigger>
-
-              <SheetContent side="right" className="">
-                <SheetHeader className="pb-4">
-                  <SheetTitle>Notifications</SheetTitle>
+            <div className="absolute right-4 top-4 flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={handleProfileClick}
+                title="Go to Profile"
+              >
+                <UserIcon className="h-4 w-4" />
+              </Button>
+              <Sheet>
+                <SheetTrigger asChild>
                   <Button
                     variant="outline"
-                    type="button"
-                    onClick={() =>
-                      data.notifications.length
-                        ? clearNotificationsMutation.mutate()
-                        : undefined
-                    }
+                    onClick={() => readNotificationsMutation.mutate()}
                   >
-                    Clear
-                  </Button>
-                </SheetHeader>
-                <ScrollArea className="h-[calc(100%-3em)] w-full">
-                  <div className="flex max-w-full flex-col gap-4">
-                    {data.notifications.length ? (
-                      data.notifications.map((notification) => (
-                        <NotificationItem
-                          key={notification.id}
-                          {...notification}
-                        />
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No notifications available.
-                      </p>
+                    <BellIcon className="h-4 w-4 mr-2" />
+                    Notifications
+                    {data.notifications.filter(n => !n.read).length > 0 && (
+                      <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
+                        {data.notifications.filter(n => !n.read).length}
+                      </Badge>
                     )}
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
+                  </Button>
+                </SheetTrigger>
+
+                <SheetContent side="right" className="">
+                  <SheetHeader className="pb-4">
+                    <SheetTitle>Notifications</SheetTitle>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        data.notifications.length
+                          ? clearNotificationsMutation.mutate()
+                          : undefined
+                      }
+                    >
+                      Clear
+                    </Button>
+                  </SheetHeader>
+                  <ScrollArea className="h-[calc(100%-3em)] w-full">
+                    <div className="flex max-w-full flex-col gap-4">
+                      {data.notifications.length ? (
+                        data.notifications.map((notification) => (
+                          <NotificationItem
+                            key={notification.id}
+                            {...notification}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No notifications available.
+                        </p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
             <h3 className="text-2xl">
               Welcome,{" "}
               <span className="font-semibold">{data.name ?? "User"}</span>

@@ -64,6 +64,7 @@ import { ItemsView } from "@/views/Inventory/ItemsView";
 import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
+import ProfilePage from "@/views/Profile/ProfilePage";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -167,6 +168,12 @@ const Routing = () => {
             />
           }
         />
+        
+        {authState && (
+          <Route path="/profile" element={<ProfilePage />} />
+        )}
+        {!authState && <Route path="*" element={<Navigate to="/" />} />}
+
         {authState && (
           <>
             {checkAccessAnyOne(adminModulePermissions) && (
