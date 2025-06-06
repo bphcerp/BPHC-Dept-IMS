@@ -60,8 +60,8 @@ const getformFields = (appData: any, userData: any) => {
         makeFieldEntry(438, 569, "-", 0, 1), // PSRN No. missing
         makeFieldEntry(138, 543, "-", 0, 1), // Designation missing
         makeFieldEntry(110, 568, userData.name ?? "", 0, 42),
-        makeFieldEntry(320, 542, userData.email ?? "", 0, 15),
-        makeFieldEntry(480, 542, userData.mobile ?? "9999999999", 0, 12),
+        makeFieldEntry(320, 543, userData.email ?? "", 0, 15),
+        makeFieldEntry(480, 543, userData.mobile ?? "", 0, 12),
         makeFieldEntry(85, 318, appData.contentTitle ?? "", 0, 85),
         makeFieldEntry(85, 259, appData.eventName ?? "", 0, 85),
         makeFieldEntry(110, 231, appData.venue ?? "", 0, 30),
