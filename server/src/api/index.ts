@@ -12,6 +12,7 @@ import inventoryRouter from "./inventory/index.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
+import { generateApplicationFormPDF } from "@/lib/conference/form.ts";
 
 const router = express.Router();
 
@@ -21,6 +22,22 @@ router.get("/hello", (_req, res) => {
         message: "Hello!",
     });
 });
+
+// only for testing pdf generation
+router.get("/test", async (_req, res) => {
+    const id = 5;
+    let pdf = await generateApplicationFormPDF(id);
+
+    if (pdf) {
+        res.set({
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename="${id}.pdf"`,
+            "Content-Length": pdf.length,
+        });
+        res.send(Buffer.from(pdf));
+    }
+});
+
 router.use("/f", fileRouter);
 
 // Auth routes and middleware
