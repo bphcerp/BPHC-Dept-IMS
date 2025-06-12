@@ -21,6 +21,7 @@ router.get("/hello", (_req, res) => {
         message: "Hello!",
     });
 });
+
 router.use("/f", fileRouter);
 
 // Auth routes and middleware

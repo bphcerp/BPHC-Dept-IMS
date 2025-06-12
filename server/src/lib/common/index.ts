@@ -46,7 +46,9 @@ export const getUserDetails = async (userEmail: string) => {
     const { roles: userRoles, ...userData } = rest;
     return {
         ...userData,
-        ...(phd || faculty || staff),
+        ...(faculty ?? {}),
+        ...(phd ?? {}),
+        ...(staff ?? {}),
         roles: userRoles.map((role) => roles[role]),
     };
 };
