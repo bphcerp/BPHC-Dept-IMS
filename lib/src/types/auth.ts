@@ -1,4 +1,4 @@
-import { adminSchemas } from "@/index.ts";
+import { userTypes } from "../schemas/Admin.ts";
 
 export interface Permissions {
     allowed: string[];
@@ -7,7 +7,7 @@ export interface Permissions {
 
 export interface JwtPayload {
     email: string;
-    userType: (typeof adminSchemas.userTypes)[number];
+    userType: (typeof userTypes)[number];
     permissions: Permissions;
     sessionExpiry: number;
 }

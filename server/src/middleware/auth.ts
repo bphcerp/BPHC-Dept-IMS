@@ -3,7 +3,7 @@ import env from "@/config/environment.ts";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { authUtils, permissions } from "lib";
+import { adminSchemas, authUtils, permissions } from "lib";
 const permissionsMap: Record<string, string> = permissions;
 
 export const dequerify = (x: string) => x.split("?")[0];
@@ -83,6 +83,7 @@ export const authMiddleware = (
         }
         const jwtPayloadSchema = z.object({
             email: z.string(),
+            userType: z.enum(adminSchemas.userTypes),
             permissions: z.object({
                 allowed: z.array(z.string()),
                 disallowed: z.array(z.string()),
