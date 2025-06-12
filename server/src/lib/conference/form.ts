@@ -1,5 +1,5 @@
 import { getApplicationById } from "./index.ts";
-import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, type PDFFont, StandardFonts, rgb } from "pdf-lib";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,7 +14,9 @@ interface FieldEntry {
     font?: PDFFont;
 }
 
-export const generateApplicationFormPDF = async (id: number) => {
+export const generateApplicationFormPDF = async (
+    id: number
+): Promise<Uint8Array | null> => {
     // loads application & user data
     const applicationData = await getApplicationById(id);
     if (!applicationData) return null;
@@ -35,7 +37,7 @@ export const generateApplicationFormPDF = async (id: number) => {
     templateDoc.setTitle("Conference Appplication");
 
     // converts application data into fields
-    var fields: FieldEntry[] = getformFields(applicationData, userData);
+    const fields: FieldEntry[] = getFormFields(applicationData, userData);
 
     // populates PDF file with the fields
     for (const field of fields) {
@@ -53,12 +55,15 @@ export const generateApplicationFormPDF = async (id: number) => {
     return generatedFormBytes;
 };
 
-const getformFields = (appData: any, userData: any) => {
-    var fields: FieldEntry[] = [];
+const getFormFields = (
+    appData: NonNullable<Awaited<ReturnType<typeof getApplicationById>>>,
+    userData: NonNullable<Awaited<ReturnType<typeof getUserDetails>>>
+): FieldEntry[] => {
+    const fields: FieldEntry[] = [];
     fields.push(
         makeFieldEntry(485, 635, new Date().toLocaleDateString("en-GB"), 0, 10),
-        makeFieldEntry(438, 569, "-", 0, 1), // PSRN No. missing
-        makeFieldEntry(138, 543, "-", 0, 1), // Designation missing
+        makeFieldEntry(438, 569, userData.psrn ?? "", 0, 1),
+        makeFieldEntry(138, 543, userData.designation ?? "", 0, 1),
         makeFieldEntry(110, 568, userData.name ?? "", 0, 42),
         makeFieldEntry(320, 543, userData.email ?? "", 0, 15),
         makeFieldEntry(480, 543, userData.mobile ?? "", 0, 12),
@@ -85,15 +90,15 @@ const getformFields = (appData: any, userData: any) => {
     }
     // Description
     if (appData.description) {
-        var text = appData.description;
-        var n = Math.min(800, text.length);
+        let text = appData.description;
+        let n = Math.min(800, text.length);
         const lineLen = 100;
 
         if (n < text.length) {
             text = text.slice(0, n - 3) + "...";
             n += 3;
         }
-        for (var i = 0; i < n; i += lineLen)
+        for (let i = 0; i < n; i += lineLen) {
             fields.push(
                 makeFieldEntry(
                     75,
@@ -103,6 +108,7 @@ const getformFields = (appData: any, userData: any) => {
                     90
                 )
             );
+        }
     }
 
     // Reimbursements
@@ -126,7 +132,7 @@ const getformFields = (appData: any, userData: any) => {
             "V" + "      " + String(appData.dailyAllowanceReimbursement);
         fields.push(makeFieldEntry(395, 543, text, 1, 25));
     }
-    // for some reason Accommodation Reimbursement isnt in the PDF so i have added it to other Reimbursement
+    // for some reason Accommodation Reimbursement isn't in the PDF so I have added it to other Reimbursement
     if (
         appData?.otherReimbursement &&
         appData?.accommodationReimbursement &&
@@ -141,7 +147,7 @@ const getformFields = (appData: any, userData: any) => {
             );
         fields.push(makeFieldEntry(395, 510, text, 1, 25));
     }
-    var totalReimbursement =
+    const totalReimbursement =
         (appData.travelReimbursement ?? 0) +
         (appData.registrationFeeReimbursement ?? 0) +
         (appData.dailyAllowanceReimbursement ?? 0) +
@@ -165,7 +171,7 @@ const getformFields = (appData: any, userData: any) => {
 };
 
 // determines x and y for the tick in Purpose field
-const getTickCoordinates = (purpose: string) => {
+const getTickCoordinates = (purpose: string): { x: number; y: number } => {
     const tickPos = {
         x: 0,
         y: 0,
@@ -211,7 +217,6 @@ const getTickCoordinates = (purpose: string) => {
             tickPos.x = 532;
             tickPos.y = 398;
             break;
-
         default:
             break;
     }
