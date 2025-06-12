@@ -17,4 +17,4 @@ jobs:
           cd bphcerp/ERP
           git pull
           docker compose --profile prod up --build -d
-          docker compose exec erp-server-prod pnpm db:migrate
+          docker compose exec server-prod pnpm db:migrate
