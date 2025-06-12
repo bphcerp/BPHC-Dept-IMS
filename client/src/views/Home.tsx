@@ -23,12 +23,11 @@ import { NotificationItem } from "@/components/home/NotificationItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { UserIcon } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
   const { authState, setNewAuthToken } = useAuth();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [selectedModules, setSelectedModules] = useState<typeof modules>([]);
   const [filteredTodos, setFilteredTodos] = useState<
     todosSchemas.TodosResponseType["todos"]
