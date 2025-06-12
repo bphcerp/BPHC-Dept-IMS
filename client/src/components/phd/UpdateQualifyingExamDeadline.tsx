@@ -55,7 +55,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         const response = await api.get<{
           success: boolean;
           semester: Semester;
-          isActive: String;
+          isActive: string;
         }>("/phd/staff/getCurrentSemester");
         return response.data;
       },

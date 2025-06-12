@@ -64,6 +64,7 @@ import { ItemsView } from "@/views/Inventory/ItemsView";
 import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
+import ProfilePage from "@/views/Profile/ProfilePage";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -167,230 +168,211 @@ const Routing = () => {
             />
           }
         />
-        {authState && (
-          <>
-            {checkAccessAnyOne(adminModulePermissions) && (
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route
-                  index
-                  element={<Navigate to="/admin/members" replace={true} />}
-                />
-                {checkAccess(permissions["/admin/member/details"]) && (
-                  <>
-                    <Route path="members" element={<MembersView />} />
-                    <Route
-                      path="members/:member"
-                      element={<MemberDetailsView />}
-                    />
-                  </>
-                )}
-                {checkAccess(permissions["/admin/role"]) && (
-                  <>
-                    <Route path="roles" element={<RolesView />} />
-                    <Route path="roles/:role" element={<RoleDetailsView />} />
-                  </>
-                )}
-              </Route>
-            )}
 
-            {checkAccessAnyOne(conferenceModulePermissions) && (
-              <Route path="/conference" element={<ConferenceLayout />}>
-                <Route index element={<Navigate to="/conference/apply" />} />
-                {checkAccess(permissions["/conference/createApplication"]) && (
-                  <Route path="apply" element={<ConferenceApplyView />} />
-                )}
-                {checkAccess(permissions["/conference/applications/my"]) && (
-                  <>
-                    <Route
-                      path="submitted"
-                      element={<ConferenceSubmittedApplicationsView />}
-                    />
-                    <Route
-                      path="submitted/:id"
-                      element={<ConferenceEditView />}
-                    />
-                  </>
-                )}
-                {checkAccess(
-                  permissions["/conference/applications/pending"]
-                ) && (
-                  <>
-                    <Route
-                      path="pending"
-                      element={<ConferencePendingApplicationsView />}
-                    />
-                    <Route
-                      path="view/:id"
-                      element={<ConferenceViewApplicationView />}
-                    />
-                  </>
-                )}
-              </Route>
-            )}
+        {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
-            {checkAccessAnyOne(qpReviewModulePermissions) && (
-              <Route path="/qpReview" element={<QpReviewLayout />}>
-                <Route
-                  index
-                  element={
-                    <Navigate to="/qpReview/ficSubmission" replace={true} />
-                  }
-                />
-                <Route path="ficSubmission" element={<FicSubmissionView />} />
-                <Route path="dcarequests" element={<DCARequestsView />} />
-                <Route path="facultyReview" element={<ReviewPage />} />
-                <Route
-                  path="facultyReview/:course"
-                  element={<FacultyReview />}
-                />
-              </Route>
-            )}
+        {authState?.userType === "faculty" && (
+          <Route path="/profile" element={<ProfilePage />} />
+        )}
 
-            {checkAccessAnyOne(courseHandoutsPermissions) && (
-              <Route path="/handout" element={<HandoutLayout />}>
-                {checkAccess(permissions["/handout/faculty/get"]) &&
-                  checkAccess(permissions["/handout/faculty/submit"]) && (
-                    <Route path="faculty" element={<FacultyHandouts />} />
+        {checkAccessAnyOne(adminModulePermissions) && (
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route
+              index
+              element={<Navigate to="/admin/members" replace={true} />}
+            />
+            {checkAccess(permissions["/admin/member/details"]) && (
+              <>
+                <Route path="members" element={<MembersView />} />
+                <Route path="members/:member" element={<MemberDetailsView />} />
+              </>
+            )}
+            {checkAccess(permissions["/admin/role"]) && (
+              <>
+                <Route path="roles" element={<RolesView />} />
+                <Route path="roles/:role" element={<RoleDetailsView />} />
+              </>
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(conferenceModulePermissions) && (
+          <Route path="/conference" element={<ConferenceLayout />}>
+            <Route index element={<Navigate to="/conference/apply" />} />
+            {checkAccess(permissions["/conference/createApplication"]) && (
+              <Route path="apply" element={<ConferenceApplyView />} />
+            )}
+            {checkAccess(permissions["/conference/applications/my"]) && (
+              <>
+                <Route
+                  path="submitted"
+                  element={<ConferenceSubmittedApplicationsView />}
+                />
+                <Route path="submitted/:id" element={<ConferenceEditView />} />
+              </>
+            )}
+            {checkAccess(permissions["/conference/applications/pending"]) && (
+              <>
+                <Route
+                  path="pending"
+                  element={<ConferencePendingApplicationsView />}
+                />
+                <Route
+                  path="view/:id"
+                  element={<ConferenceViewApplicationView />}
+                />
+              </>
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(qpReviewModulePermissions) && (
+          <Route path="/qpReview" element={<QpReviewLayout />}>
+            <Route
+              index
+              element={<Navigate to="/qpReview/ficSubmission" replace={true} />}
+            />
+            <Route path="ficSubmission" element={<FicSubmissionView />} />
+            <Route path="dcarequests" element={<DCARequestsView />} />
+            <Route path="facultyReview" element={<ReviewPage />} />
+            <Route path="facultyReview/:course" element={<FacultyReview />} />
+          </Route>
+        )}
+
+        {checkAccessAnyOne(courseHandoutsPermissions) && (
+          <Route path="/handout" element={<HandoutLayout />}>
+            {checkAccess(permissions["/handout/faculty/get"]) &&
+              checkAccess(permissions["/handout/faculty/submit"]) && (
+                <Route path="faculty" element={<FacultyHandouts />} />
+              )}
+            {checkAccess(permissions["/handout/get"]) && (
+              <Route path=":id" element={<FacultyHandout />} />
+            )}
+            {checkAccess(permissions["/handout/dca/get"]) && (
+              <>
+                <Route path="dca" element={<DCAMemberHandouts />} />
+                {checkAccess(permissions["/handout/dca/review"]) &&
+                  checkAccess(permissions["/handout/get"]) && (
+                    <Route
+                      path="dca/review/:id"
+                      element={<DCAMemberReviewForm />}
+                    />
                   )}
-                {checkAccess(permissions["/handout/get"]) && (
-                  <Route path=":id" element={<FacultyHandout />} />
-                )}
-                {checkAccess(permissions["/handout/dca/get"]) && (
-                  <>
-                    <Route path="dca" element={<DCAMemberHandouts />} />
-                    {checkAccess(permissions["/handout/dca/review"]) &&
-                      checkAccess(permissions["/handout/get"]) && (
-                        <Route
-                          path="dca/review/:id"
-                          element={<DCAMemberReviewForm />}
-                        />
-                      )}
-                  </>
-                )}
-                {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
-                  checkAccess(permissions["/handout/dca/assignReviewer"]) &&
-                  checkAccess(
-                    permissions["/handout/dcaconvenor/getAllDCAMember"]
+              </>
+            )}
+            {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
+              checkAccess(permissions["/handout/dca/assignReviewer"]) &&
+              checkAccess(
+                permissions["/handout/dcaconvenor/getAllDCAMember"]
+              ) && (
+                <>
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/updateReviewer"]
+                  ) &&
+                    checkAccess(
+                      permissions["/handout/dcaconvenor/updateIC"]
+                    ) && (
+                      <Route
+                        path="dcaconvenor"
+                        element={<DCAConvenorHandouts />}
+                      />
+                    )}
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/exportSummary"]
                   ) && (
-                    <>
-                      {checkAccess(
-                        permissions["/handout/dcaconvenor/updateReviewer"]
-                      ) &&
-                        checkAccess(
-                          permissions["/handout/dcaconvenor/updateIC"]
-                        ) && (
-                          <Route
-                            path="dcaconvenor"
-                            element={<DCAConvenorHandouts />}
-                          />
-                        )}
-                      {checkAccess(
-                        permissions["/handout/dcaconvenor/exportSummary"]
-                      ) && (
-                        <Route
-                          path="summary"
-                          element={<DCAConvenerSummary />}
-                        />
-                      )}
-                      {checkAccess(
-                        permissions["/handout/dcaconvenor/finalDecision"]
-                      ) && (
-                        <Route
-                          path="dcaconvenor/review/:id"
-                          element={<DCAConvenorReview />}
-                        />
-                      )}
-                    </>
+                    <Route path="summary" element={<DCAConvenerSummary />} />
                   )}
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/finalDecision"]
+                  ) && (
+                    <Route
+                      path="dcaconvenor/review/:id"
+                      element={<DCAConvenorReview />}
+                    />
+                  )}
+                </>
+              )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(phdModulePermissions) && (
+          <Route path="/phd" element={<PhdLayout />}>
+            {checkAccess(
+              permissions["/phd/notionalSupervisor/updateCourseDetails"]
+            ) && (
+              <Route path="notional-supervisor" element={<Outlet />}>
+                <Route path="update-grade" element={<UpdateGrade />} />
+                <Route path="suggest-examiner" element={<SuggestExaminer />} />
               </Route>
             )}
-
-            {checkAccessAnyOne(phdModulePermissions) && (
-              <Route path="/phd" element={<PhdLayout />}>
-                {checkAccess(
-                  permissions["/phd/notionalSupervisor/updateCourseDetails"]
-                ) && (
-                  <Route path="notional-supervisor" element={<Outlet />}>
-                    <Route path="update-grade" element={<UpdateGrade />} />
-                    <Route
-                      path="suggest-examiner"
-                      element={<SuggestExaminer />}
-                    />
-                  </Route>
-                )}
-                {checkAccess(
-                  permissions["/phd/drcMember/generateCourseworkForm"]
-                ) && (
-                  <Route path="drc-convenor" element={<Outlet />}>
-                    <Route
-                      path="coursework-form"
-                      element={<CourseworkForm />}
-                    />
-                    <Route
-                      path="assign-dac-members"
-                      element={<AssignDacMembers />}
-                    ></Route>
-                    <Route
-                      path="qualifying-exam-management"
-                      element={<QualifyingExamManagement />}
-                    ></Route>
-                    Handout
-                  </Route>
-                )}
-                {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
-                  <Route path="phd-student" element={<Outlet />}>
-                    <Route path="form-deadline" element={<FormDeadline />} />
-                    <Route path="my-profile" element={<Profile />} />
-
-                    <Route
-                      path="proposal-submission"
-                      element={<ProposalSubmission />}
-                    />
-                  </Route>
-                )}
-                {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-                  <Route path="staff" element={<Outlet />}>
-                    <Route
-                      path="update-semester-dates"
-                      element={<UpdateSemesterDates />}
-                    />
-                    <Route
-                      path="update-deadlines"
-                      element={<UpdateDeadlinesPage />}
-                    />
-                    <Route
-                      path="update-subareas"
-                      element={<UpdateSubAreasPage />}
-                    />
-                  </Route>
-                )}
-                {checkAccess(
-                  permissions[
-                    "/phd/notionalSupervisor/updateCourseDetails"
-                  ] as string
-                ) && (
-                  <Route path="phd-co-supervisor" element={<Outlet />}>
-                    <Route
-                      path="co-supervised-students"
-                      element={<CoSupervisedStudents />}
-                    />
-                  </Route>
-                )}
-                {checkAccess(
-                  permissions[
-                    "/phd/notionalSupervisor/updateCourseDetails"
-                  ] as string
-                ) && (
-                  <Route path="phd-supervisor" element={<Outlet />}>
-                    <Route
-                      path="supervised-students"
-                      element={<SupervisedStudents />}
-                    />
-                  </Route>
-                )}
+            {checkAccess(
+              permissions["/phd/drcMember/generateCourseworkForm"]
+            ) && (
+              <Route path="drc-convenor" element={<Outlet />}>
+                <Route path="coursework-form" element={<CourseworkForm />} />
+                <Route
+                  path="assign-dac-members"
+                  element={<AssignDacMembers />}
+                ></Route>
+                <Route
+                  path="qualifying-exam-management"
+                  element={<QualifyingExamManagement />}
+                ></Route>
+                Handout
               </Route>
             )}
-          </>
+            {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
+              <Route path="phd-student" element={<Outlet />}>
+                <Route path="form-deadline" element={<FormDeadline />} />
+                <Route path="my-profile" element={<Profile />} />
+
+                <Route
+                  path="proposal-submission"
+                  element={<ProposalSubmission />}
+                />
+              </Route>
+            )}
+            {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+              <Route path="staff" element={<Outlet />}>
+                <Route
+                  path="update-semester-dates"
+                  element={<UpdateSemesterDates />}
+                />
+                <Route
+                  path="update-deadlines"
+                  element={<UpdateDeadlinesPage />}
+                />
+                <Route
+                  path="update-subareas"
+                  element={<UpdateSubAreasPage />}
+                />
+              </Route>
+            )}
+            {checkAccess(
+              permissions[
+                "/phd/notionalSupervisor/updateCourseDetails"
+              ] as string
+            ) && (
+              <Route path="phd-co-supervisor" element={<Outlet />}>
+                <Route
+                  path="co-supervised-students"
+                  element={<CoSupervisedStudents />}
+                />
+              </Route>
+            )}
+            {checkAccess(
+              permissions[
+                "/phd/notionalSupervisor/updateCourseDetails"
+              ] as string
+            ) && (
+              <Route path="phd-supervisor" element={<Outlet />}>
+                <Route
+                  path="supervised-students"
+                  element={<SupervisedStudents />}
+                />
+              </Route>
+            )}
+          </Route>
         )}
 
         {checkAccessAnyOne(publicationsPermissions) && (

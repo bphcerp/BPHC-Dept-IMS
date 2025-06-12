@@ -91,6 +91,7 @@ router.post(
             );
             const accessToken = generateAccessToken(
                 ticketPayload.email,
+                user.type,
                 sessionExpiry,
                 await getAccess(user.roles)
             );

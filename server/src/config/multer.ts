@@ -20,8 +20,26 @@ const pdfUpload = multer({
                 )
             );
         }
-        return callback(null, true);
+        callback(null, true);
     },
 });
 
-export { pdfUpload };
+const imageUpload = multer({
+    storage,
+    limits: {
+        fileSize: 1024 * 1024 * 1, // 1 MB
+    },
+    fileFilter(_req, file, callback) {
+        if (!["image/jpeg", "image/png", "image/jpg"].includes(file.mimetype)) {
+            return callback(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Only JPEG or PNG images are allowed"
+                )
+            );
+        }
+        callback(null, true);
+    },
+});
+
+export { pdfUpload, imageUpload };

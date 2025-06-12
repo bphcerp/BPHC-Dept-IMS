@@ -89,6 +89,7 @@ router.post(
 
                 const accessToken = generateAccessToken(
                     parsed.data.email,
+                    storedTokenData.user.type,
                     sessionExpiry,
                     await getAccess(storedTokenData.user.roles)
                 );

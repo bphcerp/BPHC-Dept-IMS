@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
 import { adminSchemas } from "lib";
+import { files } from "./form.ts";
 
 export const userType = pgEnum("user_type", adminSchemas.userTypes);
 
@@ -56,6 +57,9 @@ export const faculty = pgTable("faculty", {
     room: text("room"),
     phone: text("phone"),
     authorId: text("author_id").unique(),
+    signatureFileId: integer("signature_file_id").references(() => files.id, {
+    onDelete: "set null",
+  }),
 });
 
 export const phd = pgTable("phd", {
