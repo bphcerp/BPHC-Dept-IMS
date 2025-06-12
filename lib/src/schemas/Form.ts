@@ -1,3 +1,4 @@
+// DO NOT change the order of the modules
 export const modules = [
     "Conference Approval",
     "Course Handout",

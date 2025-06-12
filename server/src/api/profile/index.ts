@@ -1,5 +1,5 @@
 import express from "express";
-import signatureRouter from "./signature/signature.ts";
+import signatureRouter from "./signature.ts";
 
 const router = express.Router();
 

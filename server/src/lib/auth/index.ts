@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { JwtPayload, Permissions, RoleAccessMap } from "@/types/auth.ts";
 import type { Transaction } from "@/types/custom.ts";
 import db from "@/config/db/index.ts";
-import { authUtils } from "lib";
+import { type adminSchemas, authUtils } from "lib";
 
 /**
  * Generates an access token for the given email, session expiry, and operations.
@@ -16,11 +16,13 @@ import { authUtils } from "lib";
  */
 export const generateAccessToken = (
     email: string,
+    userType: (typeof adminSchemas.userTypes)[number],
     sessionExpiry: number,
     permissions: Permissions
 ): string => {
     const jwtPayload: JwtPayload = {
         email,
+        userType,
         sessionExpiry,
         permissions,
     };

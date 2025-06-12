@@ -17,13 +17,13 @@ import { type CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { modules as allModules, todosSchemas } from "lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { BellIcon } from "lucide-react";
 import { NotificationItem } from "@/components/home/NotificationItem";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { UserIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
   const { authState, setNewAuthToken } = useAuth();
@@ -130,10 +130,6 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
     }
   }, [data, selectedModules]);
 
-  const handleProfileClick = () => {
-    navigate('/profile');
-  };
-
   return (
     <>
       <AppSidebar items={sidebarItems ?? []} />
@@ -147,25 +143,32 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
         ) : data ? (
           <>
             <div className="absolute right-4 top-4 flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={handleProfileClick}
-                title="Go to Profile"
-              >
-                <UserIcon className="h-4 w-4" />
-              </Button>
+              {authState.userType === "faculty" && (
+                <Link
+                  to="profile"
+                  className={buttonVariants({
+                    variant: "outline",
+                    size: "icon",
+                  })}
+                >
+                  <UserIcon className="h-4 w-4" />
+                </Link>
+              )}
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
                     onClick={() => readNotificationsMutation.mutate()}
+                    className="items-start"
                   >
-                    <BellIcon className="h-4 w-4 mr-2" />
+                    <BellIcon className="mr-1 h-4 w-4" />
                     Notifications
-                    {data.notifications.filter(n => !n.read).length > 0 && (
-                      <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 text-xs">
-                        {data.notifications.filter(n => !n.read).length}
+                    {data.notifications.filter((n) => !n.read).length > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="ml-2 h-5 w-5 p-0 text-xs"
+                      >
+                        {data.notifications.filter((n) => !n.read).length}
                       </Badge>
                     )}
                   </Button>
