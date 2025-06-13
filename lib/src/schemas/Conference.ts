@@ -24,23 +24,39 @@ export const upsertApplicationBodySchema = z.object({
         message: "Should either be 'online' or 'offline'",
     }),
     description: z.string().nonempty(),
-    travelReimbursement: z.coerce.number().positive().finite().optional(),
-    registrationFeeReimbursement: z.coerce
-        .number()
-        .positive()
-        .finite()
-        .optional(),
-    dailyAllowanceReimbursement: z.coerce
-        .number()
-        .positive()
-        .finite()
-        .optional(),
-    accommodationReimbursement: z.coerce
-        .number()
-        .positive()
-        .finite()
-        .optional(),
-    otherReimbursement: z.coerce.number().positive().finite().optional(),
+    reimbursements: z.preprocess(
+        (val) => {
+            if (typeof val === "string") {
+                try {
+                    return JSON.parse(val);
+                } catch {
+                    return undefined;
+                }
+            }
+            return val;
+        },
+        z
+            .array(
+                z.object({
+                    key: z
+                        .string()
+                        .min(1, "Field name is required")
+                        .max(50, "Field name is too long"),
+                    amount: z.string().regex(/^\d+(\.\d{1,2})?$/, {
+                        message:
+                            "Amount must be a number with at most 2 decimal places",
+                    }),
+                })
+            )
+            .max(10, "Maximum of 10 fields allowed")
+            .refine(
+                (arr) => {
+                    const keys = arr.map((f) => f.key.trim().toLowerCase());
+                    return new Set(keys).size === keys.length;
+                },
+                { message: "Field names must be unique" }
+            )
+    ),
 });
 
 export const flowBodySchema = z.object({
@@ -73,14 +89,6 @@ export const textFieldNames = [
 ] as const;
 
 export const dateFieldNames = ["dateFrom", "dateTo"] as const;
-
-export const numberFieldNames = [
-    "travelReimbursement",
-    "registrationFeeReimbursement",
-    "dailyAllowanceReimbursement",
-    "accommodationReimbursement",
-    "otherReimbursement",
-] as const;
 
 export const fileFieldNames = [
     "letterOfInvitation",
@@ -132,11 +140,10 @@ export type ViewApplicationResponse = {
         organizedBy: string;
         modeOfEvent: (typeof modesOfEvent)[number];
         description: string;
-        travelReimbursement: number;
-        registrationFeeReimbursement: number;
-        dailyAllowanceReimbursement: number;
-        accommodationReimbursement: number;
-        otherReimbursement: number;
+        reimbursements: {
+            key: string;
+            amount: string;
+        }[];
         letterOfInvitation?: fileFieldResponse;
         firstPageOfPaper?: fileFieldResponse;
         reviewersComments?: fileFieldResponse;
@@ -159,11 +166,7 @@ export const fieldsToFrontend = {
     organizedBy: "Organized by",
     modeOfEvent: "Mode of event",
     description: "Brief Description or Justification of the purpose",
-    travelReimbursement: "Travel",
-    registrationFeeReimbursement: "Registration Fee / Page Charges",
-    dailyAllowanceReimbursement: "Daily Allowance",
-    accommodationReimbursement: "Accommodation",
-    otherReimbursement: "Any Other, if any",
+    reimbursements: "Reimbursements",
     letterOfInvitation: "Letter of Invitation / Acceptance of the paper",
     firstPageOfPaper: "First page of paper",
     reviewersComments: "Reviewers Comments",

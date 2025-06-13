@@ -7,6 +7,7 @@ import {
     timestamp,
     primaryKey,
     boolean,
+    jsonb,
 } from "drizzle-orm/pg-core";
 import { fileFields } from "./form.ts";
 import { conferenceSchemas } from "lib";
@@ -97,11 +98,7 @@ export const conferenceApprovalApplications = pgTable(
         organizedBy: text("organized_by"),
         modeOfEvent: text("mode_of_event"),
         description: text("description"),
-        travelReimbursement: integer("travel_reimbursement"),
-        registrationFeeReimbursement: integer("registration_fee_reimbursement"),
-        dailyAllowanceReimbursement: integer("daily_allowance_reimbursement"),
-        accommodationReimbursement: integer("accommodation_reimbursement"),
-        otherReimbursement: integer("other_reimbursement"),
+        reimbursements: jsonb("reimbursements").notNull().default([]),
         letterOfInvitation: integer("letter_of_invitation").references(
             () => fileFields.id,
             {

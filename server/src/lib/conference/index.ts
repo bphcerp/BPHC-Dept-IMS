@@ -31,11 +31,7 @@ export const getApplicationById = async (id: number) => {
         }
     );
     if (!application) return undefined;
-    for (const numberFieldName of conferenceSchemas.numberFieldNames) {
-        // Weird bug in drizzle where the joined values doesn't have the correct types
-        (application[numberFieldName] as number | undefined) =
-            application[numberFieldName] ?? undefined;
-    }
+
     for (const fileFieldName of conferenceSchemas.fileFieldNames) {
         const fileField = application[fileFieldName];
         if (!fileField) continue;

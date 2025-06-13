@@ -112,48 +112,48 @@ const getFormFields = (
     }
 
     // Reimbursements
-    if (appData?.travelReimbursement && appData?.travelReimbursement > 0) {
-        const text = "V" + "      " + String(appData.travelReimbursement);
-        fields.push(makeFieldEntry(395, 608, text, 1, 25));
-    }
-    if (
-        appData?.registrationFeeReimbursement &&
-        appData?.registrationFeeReimbursement > 0
-    ) {
-        const text =
-            "V" + "      " + String(appData.registrationFeeReimbursement);
-        fields.push(makeFieldEntry(395, 575, text, 1, 25));
-    }
-    if (
-        appData?.dailyAllowanceReimbursement &&
-        appData?.dailyAllowanceReimbursement > 0
-    ) {
-        const text =
-            "V" + "      " + String(appData.dailyAllowanceReimbursement);
-        fields.push(makeFieldEntry(395, 543, text, 1, 25));
-    }
-    // for some reason Accommodation Reimbursement isn't in the PDF so I have added it to other Reimbursement
-    if (
-        appData?.otherReimbursement &&
-        appData?.accommodationReimbursement &&
-        appData?.otherReimbursement + appData?.accommodationReimbursement > 0
-    ) {
-        const text =
-            "V" +
-            "      " +
-            String(
-                appData?.otherReimbursement +
-                    appData?.accommodationReimbursement
-            );
-        fields.push(makeFieldEntry(395, 510, text, 1, 25));
-    }
-    const totalReimbursement =
-        (appData.travelReimbursement ?? 0) +
-        (appData.registrationFeeReimbursement ?? 0) +
-        (appData.dailyAllowanceReimbursement ?? 0) +
-        (appData.accommodationReimbursement ?? 0) +
-        (appData.otherReimbursement ?? 0);
-    fields.push(makeFieldEntry(420, 478, String(totalReimbursement), 1, 18));
+    // if (appData?.travelReimbursement && appData?.travelReimbursement > 0) {
+    //     const text = "V" + "      " + String(appData.travelReimbursement);
+    //     fields.push(makeFieldEntry(395, 608, text, 1, 25));
+    // }
+    // if (
+    //     appData?.registrationFeeReimbursement &&
+    //     appData?.registrationFeeReimbursement > 0
+    // ) {
+    //     const text =
+    //         "V" + "      " + String(appData.registrationFeeReimbursement);
+    //     fields.push(makeFieldEntry(395, 575, text, 1, 25));
+    // }
+    // if (
+    //     appData?.dailyAllowanceReimbursement &&
+    //     appData?.dailyAllowanceReimbursement > 0
+    // ) {
+    //     const text =
+    //         "V" + "      " + String(appData.dailyAllowanceReimbursement);
+    //     fields.push(makeFieldEntry(395, 543, text, 1, 25));
+    // }
+    // // for some reason Accommodation Reimbursement isn't in the PDF so I have added it to other Reimbursement
+    // if (
+    //     appData?.otherReimbursement &&
+    //     appData?.accommodationReimbursement &&
+    //     appData?.otherReimbursement + appData?.accommodationReimbursement > 0
+    // ) {
+    //     const text =
+    //         "V" +
+    //         "      " +
+    //         String(
+    //             appData?.otherReimbursement +
+    //                 appData?.accommodationReimbursement
+    //         );
+    //     fields.push(makeFieldEntry(395, 510, text, 1, 25));
+    // }
+    // const totalReimbursement =
+    //     (appData.travelReimbursement ?? 0) +
+    //     (appData.registrationFeeReimbursement ?? 0) +
+    //     (appData.dailyAllowanceReimbursement ?? 0) +
+    //     (appData.accommodationReimbursement ?? 0) +
+    //     (appData.otherReimbursement ?? 0);
+    // fields.push(makeFieldEntry(420, 478, String(totalReimbursement), 1, 18));
 
     // enclosures
     if (appData.letterOfInvitation)

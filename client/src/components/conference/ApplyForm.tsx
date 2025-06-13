@@ -12,10 +12,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { conferenceSchemas } from "lib";
-import { CalendarIcon, XIcon } from "lucide-react";
+import { CalendarIcon, Trash2, XIcon } from "lucide-react";
 import { format, isEqual } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { SubmitHandler, UseFormReturn } from "react-hook-form";
+import { SubmitHandler, UseFormReturn, useFieldArray } from "react-hook-form";
 import { FileUploader } from "../ui/file-uploader";
 import {
   FormField,
@@ -24,12 +24,12 @@ import {
   FormControl,
   FormMessage,
   Form,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
-import { Calendar } from "../ui/calendar";
-import { Separator } from "../ui/separator";
+import { Calendar } from "@/components/ui/calendar";
+import { Separator } from "@/components/ui/separator";
 
 export const schema = conferenceSchemas.upsertApplicationBodySchema.merge(
   z.object(
@@ -79,6 +79,18 @@ export const ApplyForm = ({
 }) => {
   const dateTo = form.watch("dateTo");
   const dateFrom = form.watch("dateFrom");
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "reimbursements",
+  });
+  const totalReimbursement =
+    form
+      .watch("reimbursements")
+      ?.reduce(
+        (acc: number, item: { amount?: string }) =>
+          acc + (item?.amount ? parseFloat(item.amount) || 0 : 0),
+        0
+      ) ?? 0;
   return (
     <Form {...form}>
       <form
@@ -222,52 +234,85 @@ export const ApplyForm = ({
             (Final Approval will be by Accounts)
           </p>
           <div className="flex gap-4 p-4 pt-0">
-            <div className="flex max-w-96 flex-1 flex-col gap-4">
-              {conferenceSchemas.numberFieldNames.map((fieldName) => {
-                return (
+            <div className="flex flex-1 flex-col gap-4">
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex items-start gap-4">
+                  {/* Field Name Input */}
                   <FormField
-                    key={fieldName}
                     control={form.control}
-                    name={fieldName}
+                    name={`reimbursements.${index}.key`}
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="min-h-[96px] w-64">
                         <FormLabel className="font-semibold">
-                          {conferenceSchemas.fieldsToFrontend[fieldName]}
-                          <ChangedIndicator
-                            isChanged={
-                              originalValues &&
-                              originalValues[fieldName] !== field.value
-                            }
-                          />
+                          Field Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., Travel" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Amount Input */}
+                  <FormField
+                    control={form.control}
+                    name={`reimbursements.${index}.amount`}
+                    render={({ field }) => (
+                      <FormItem className="min-h-[96px] w-48">
+                        <FormLabel className="font-semibold">
+                          Amount (₹)
                         </FormLabel>
                         <FormControl>
                           <Input
+                            type="number"
+                            inputMode="decimal"
+                            placeholder="0.00"
                             {...field}
                             onChange={(e) => {
-                              if (!e.target.value.length)
-                                form.setValue(fieldName, undefined);
-                              else field.onChange(e);
+                              const value = e.target.value;
+                              field.onChange(value === "" ? undefined : value);
                             }}
-                            type="number"
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                );
-              })}
+
+                  {/* Delete Button */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mt-6"
+                    onClick={() => remove(index)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+
+              {/* Add Field Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => append({ key: "", amount: "" })}
+                className="self-start"
+              >
+                + Add Field
+              </Button>
+
+              {/* Root Error */}
+              {form.formState.errors.reimbursements?.message && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.reimbursements.message}
+                </p>
+              )}
             </div>
-            <div className="flex items-center justify-center">
-              Total Amount in ₹:{" "}
-              {conferenceSchemas.numberFieldNames
-                .map((fieldName) => form.watch(fieldName))
-                .reduce(
-                  (prev, cur) =>
-                    prev !== undefined && cur ? prev + +cur : prev,
-                  0
-                )
-                ?.toFixed(2)}
+
+            <div className="flex items-center justify-center text-lg font-medium">
+              Total Amount in ₹: {totalReimbursement.toFixed(2)}
             </div>
           </div>
           <Separator />
