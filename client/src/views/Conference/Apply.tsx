@@ -21,8 +21,12 @@ const ConferenceApplyView: React.FC = () => {
       for (const [key, value] of Object.entries(data)) {
         if (value instanceof File) {
           formData.append(key, value);
-        } else if (value) {
-          formData.append(key, value as string);
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       }
       return await api.post("/conference/createApplication", formData, {

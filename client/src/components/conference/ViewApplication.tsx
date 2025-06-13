@@ -76,13 +76,10 @@ export const ViewApplication = ({
       )}
       <Separator />
       <div>Reimbursement expectations</div>
-      {conferenceSchemas.numberFieldNames.map((k) =>
-        data.application[k] ? (
-          <FieldDisplay key={k} label={k} value={data.application[k]} />
-        ) : null
-      )}
-      {!conferenceSchemas.numberFieldNames.filter((k) => data.application[k])
-        .length ? (
+      {data.application.reimbursements.map(({ key, amount }) => (
+        <FieldDisplay key={key} label={key} value={amount} />
+      ))}
+      {!data.application.reimbursements.length ? (
         <span className="text-muted-foreground">
           No reimbursement expectations
         </span>
