@@ -61,7 +61,6 @@ type EditingPublication = Publication & {
 };
 
 const AllPublications = () => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [editingPublications, setEditingPublications] = useState<
     Record<string, EditingPublication>
   >({});
@@ -84,8 +83,6 @@ const AllPublications = () => {
   const updatePublicationMutation = useMutation({
     mutationFn: async (publication: Publication) => {
       const filteredPublication = PublicationSchema.parse(publication);
-
-      console.log("Filtered publication:", filteredPublication);
 
       const response = await api.patch("/publications/edit", {
         publication: filteredPublication,
@@ -151,7 +148,7 @@ const AllPublications = () => {
 
       {isPubsError ? (
         <p className="text-destructive">
-          {errorMessage ?? "An error occurred while fetching publications"}
+          An error occurred while fetching publications.
         </p>
       ) : isLoadingPubs ? (
         <LoadingSpinner />
