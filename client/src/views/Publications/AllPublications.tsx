@@ -84,9 +84,6 @@ const AllPublications = () => {
             publicationsData.publications
               .sort((a, b) => Number(b.year) - Number(a.year))
               .map((pub, index) => {
-                const authors = pub.coAuthors
-                  ?.map((a) => a.authorName)
-                  .join(", ");
                 return (
                   <p
                     key={pub.citationId}

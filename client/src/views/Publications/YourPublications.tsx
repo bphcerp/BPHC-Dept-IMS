@@ -381,9 +381,6 @@ const PublicationsView = () => {
           <div className="w-full space-y-6">
             {filteredPublications?.length ? (
               filteredPublications.map((pub, index) => {
-                const authors = pub.coAuthors
-                  ?.map((a) => a.authorName)
-                  .join(", ");
                 return (
                   <div key={pub.citationId} className="mb-6 border-b pb-4">
                     <p className="mb-2 text-justify text-base">
