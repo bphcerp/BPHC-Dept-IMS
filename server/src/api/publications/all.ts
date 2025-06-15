@@ -80,7 +80,6 @@ router.get(
 
             data = response;
         }
-        console.log("Fetched all publications:", data);
         res.status(200).json(data);
     })
 );

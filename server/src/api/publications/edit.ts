@@ -14,7 +14,6 @@ router.patch(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        console.log("Updating publication with data:", req.body);
         const parsed = publicationsSchemas.PublicationSchema.parse(req.body.publication);
 
         // Update the publication in the publications table
