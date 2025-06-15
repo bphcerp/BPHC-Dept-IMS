@@ -17,7 +17,10 @@ router.post(
         );
         await db
             .update(authorPublicationsTable)
-            .set({ status: parsed.status })
+            .set({
+                status: parsed.status,
+                comments: parsed.comments ? parsed.comments : null,
+            })
             .where(
                 and(
                     eq(authorPublicationsTable.citationId, parsed.citationId),
