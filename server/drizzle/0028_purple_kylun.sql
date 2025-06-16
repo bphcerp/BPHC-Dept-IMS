@@ -1,0 +1,1 @@
+ALTER TABLE "conference_approval_applications" ADD COLUMN "funding_split" jsonb DEFAULT '[]'::jsonb NOT NULL;
