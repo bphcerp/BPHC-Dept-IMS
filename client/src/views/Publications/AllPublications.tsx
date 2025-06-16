@@ -67,7 +67,14 @@ const AllPublications = () => {
     <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
       <div className="flex w-full items-center justify-between">
         <h1 className="text-3xl font-bold text-primary">All Publications</h1>
-        <Button onClick={handleUpdatePublications} className="ml-auto">
+        <Button
+          onClick={handleUpdatePublications}
+          className="ml-auto flex items-center gap-2"
+          disabled={updatePublicationsMutation.isLoading}
+        >
+          {updatePublicationsMutation.isLoading && (
+            <LoadingSpinner className="h-4 w-4" />
+          )}
           Update Publications
         </Button>
       </div>
