@@ -24,7 +24,13 @@ const ConferenceApplyView: React.FC = () => {
         } else if (value instanceof Date) {
           formData.append(key, value.toISOString());
         } else if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
+          const filteredArray =
+            key === "reimbursements" || key === "fundingSplit"
+              ? value.filter(
+                  (item: any) => item.amount && parseFloat(item.amount) > 0
+                )
+              : value;
+          formData.append(key, JSON.stringify(filteredArray));
         } else if (value !== undefined && value !== null) {
           formData.append(key, value);
         }

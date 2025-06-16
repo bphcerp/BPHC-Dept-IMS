@@ -181,20 +181,7 @@ export const ApplyForm = ({
     <Form {...form}>
       <form
         onSubmit={(e) => {
-          e.preventDefault();
-          const formData = form.getValues();
-          const filteredReimbursements = (formData.reimbursements || []).filter(
-            (item) => item.amount && parseFloat(item.amount) > 0
-          );
-          const filteredFundingSplit = (formData.fundingSplit || []).filter(
-            (item) => item.amount && parseFloat(item.amount) > 0
-          );
-          const cleanedData = {
-            ...formData,
-            reimbursements: filteredReimbursements,
-            fundingSplit: filteredFundingSplit,
-          };
-          submitHandler(cleanedData);
+          void form.handleSubmit(submitHandler)(e);
         }}
         className="w-full max-w-3xl space-y-4"
       >
@@ -528,11 +515,7 @@ export const ApplyForm = ({
           })}
         </div>
         <div className="flex justify-end gap-2">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            onClick={() => console.log(form.formState.errors)}
-          >
+          <Button type="submit" disabled={isLoading}>
             Submit
           </Button>
         </div>
