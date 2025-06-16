@@ -99,6 +99,7 @@ export const conferenceApprovalApplications = pgTable(
         modeOfEvent: text("mode_of_event"),
         description: text("description"),
         reimbursements: jsonb("reimbursements").notNull().default([]),
+        fundingSplit: jsonb("funding_split").notNull().default([]),
         letterOfInvitation: integer("letter_of_invitation").references(
             () => fileFields.id,
             {
