@@ -6,15 +6,19 @@ import {
     authorPublicationsTable,
     publicationsTable,
 } from "@/config/db/schema/publications.ts";
-import { eq, } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { publicationsSchemas } from "lib";
+import { createNotifications } from "@/lib/todos/index.ts";
+import { faculty } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
 router.patch(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const parsed = publicationsSchemas.PublicationSchema.parse(req.body.publication);
+        const parsed = publicationsSchemas.PublicationSchema.parse(
+            req.body.publication
+        );
 
         // Update the publication in the publications table
         await db
@@ -28,7 +32,7 @@ router.patch(
                 issue: parsed.issue,
                 link: parsed.link,
                 citations: parsed.citations,
-                authorNames: parsed.authorNames
+                authorNames: parsed.authorNames,
             })
             .where(eq(publicationsTable.citationId, parsed.citationId));
 
@@ -39,9 +43,23 @@ router.patch(
                 status: null,
                 comments: null,
             })
-            .where(
-                eq(authorPublicationsTable.citationId, parsed.citationId)
-            );
+            .where(eq(authorPublicationsTable.citationId, parsed.citationId));
+
+        const authorIds = await db.select({
+            authorId: authorPublicationsTable.authorId
+        }).from(authorPublicationsTable).where(eq(authorPublicationsTable.citationId, parsed.citationId)).limit(1);
+
+        const emailId = await db.select({
+            email: faculty.email
+        }).from(faculty).where(eq(faculty.authorId, authorIds[0]?.authorId));
+
+        await createNotifications([{
+                module: "Publications",
+                title: `Your publication has been updated`,
+                content: `Your publication with ID  "${parsed.citationId}" has been updated`,
+                userEmail: emailId[0]?.email,
+            }]
+        );
 
         res.status(200).json({
             message: "Publication updated successfully",
