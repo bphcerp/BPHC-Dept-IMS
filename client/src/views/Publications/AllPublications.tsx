@@ -73,7 +73,7 @@ const AllPublications = () => {
           disabled={updatePublicationsMutation.isLoading}
         >
           {updatePublicationsMutation.isLoading && (
-            <LoadingSpinner className="h-4 w-4" />
+            <LoadingSpinner className="h-4 w-4" role="status" aria-label="Loading" />
           )}
           Update Publications
         </Button>
