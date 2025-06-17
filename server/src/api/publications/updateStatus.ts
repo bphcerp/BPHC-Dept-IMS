@@ -37,7 +37,7 @@ router.post(
                 `• Author ID: ${parsed.authorId}`,
                 `• Status: ${parsed.status}`,
                 `• Comments:`,
-                parsed.comments ?? "No comments provided."
+                parsed.comments
             ].join('\n');
             await createNotifications(
                 users.map((user) => ({
