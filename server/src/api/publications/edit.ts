@@ -65,7 +65,7 @@ router.patch(
                 {
                     module: "Publications",
                     title: `Your publication has been updated`,
-                    content: `Your publication with ID  "${parsed.citationId}" has been updated`,
+                    content: `Your publication with ID "${parsed.citationId}" has been updated`,
                     userEmail: emailId[0]?.email,
                 },
             ]);
