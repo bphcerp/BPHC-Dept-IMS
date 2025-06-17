@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -30,6 +30,8 @@ type PublicationResponse = {
 };
 
 const AllPublications = () => {
+    const queryClient = useQueryClient();
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
@@ -53,6 +55,7 @@ const AllPublications = () => {
     onSuccess: () => {
       setErrorMessage(null);
       toast.success("Publications updated successfully");
+      void queryClient.invalidateQueries({ queryKey: ["publications/all"] });
     },
     onError: () => {
       setErrorMessage("Failed to update publications");
