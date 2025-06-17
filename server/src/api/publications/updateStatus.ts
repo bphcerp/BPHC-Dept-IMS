@@ -32,13 +32,13 @@ router.post(
 
         if (parsed.comments) {
             const users = await getUsersWithPermission("publications:all");
-            const content = `
-    • Citation ID: ${parsed.citationId}
-    • Author ID: ${parsed.authorId}
-    • Status: ${parsed.status}
-    • Comments: 
-    ${parsed.comments ?? "No comments provided."}    
-  `.trim();
+            const content = [
+                `• Citation ID: ${parsed.citationId}`,
+                `• Author ID: ${parsed.authorId}`,
+                `• Status: ${parsed.status}`,
+                `• Comments:`,
+                parsed.comments ?? "No comments provided."
+            ].join('\n');
             await createNotifications(
                 users.map((user) => ({
                     module: "Publications",

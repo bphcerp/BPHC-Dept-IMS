@@ -45,21 +45,31 @@ router.patch(
             })
             .where(eq(authorPublicationsTable.citationId, parsed.citationId));
 
-        const authorIds = await db.select({
-            authorId: authorPublicationsTable.authorId
-        }).from(authorPublicationsTable).where(eq(authorPublicationsTable.citationId, parsed.citationId)).limit(1);
+        const authorIds = await db
+            .select({
+                authorId: authorPublicationsTable.authorId,
+            })
+            .from(authorPublicationsTable)
+            .where(eq(authorPublicationsTable.citationId, parsed.citationId))
+            .limit(1);
 
-        const emailId = await db.select({
-            email: faculty.email
-        }).from(faculty).where(eq(faculty.authorId, authorIds[0]?.authorId));
+        const emailId = await db
+            .select({
+                email: faculty.email,
+            })
+            .from(faculty)
+            .where(eq(faculty.authorId, authorIds[0]?.authorId));
 
-        await createNotifications([{
-                module: "Publications",
-                title: `Your publication has been updated`,
-                content: `Your publication with ID  "${parsed.citationId}" has been updated`,
-                userEmail: emailId[0]?.email,
-            }]
-        );
+        if (emailId[0]?.email) {
+            await createNotifications([
+                {
+                    module: "Publications",
+                    title: `Your publication has been updated`,
+                    content: `Your publication with ID  "${parsed.citationId}" has been updated`,
+                    userEmail: emailId[0]?.email,
+                },
+            ]);
+        }
 
         res.status(200).json({
             message: "Publication updated successfully",
