@@ -160,7 +160,6 @@ const PublicationsView = () => {
         : { comments: null }),
     };
 
-    console.log("Submitting with data:", requestData); // Debug log
     editStatusMutation.mutate(requestData);
   }
 

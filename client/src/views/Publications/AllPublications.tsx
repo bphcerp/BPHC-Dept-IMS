@@ -42,7 +42,6 @@ const AllPublications = () => {
     queryKey: ["publications/all"],
     queryFn: async () => {
       const response = await api.get<PublicationResponse>("/publications/all");
-      console.log("Publications data:", response.data);
       return response.data;
     },
     retry: false,
