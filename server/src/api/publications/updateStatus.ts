@@ -36,17 +36,18 @@ router.post(
                 `• Citation ID: ${parsed.citationId}`,
                 `• Author ID: ${parsed.authorId}`,
                 `• Status: ${parsed.status}`,
-                `• Comments:`,
-                parsed.comments
+                `• Comments: ${parsed.comments}`,   
             ].join('\n');
-            await createNotifications(
-                users.map((user) => ({
-                    module: "Publications",
-                    title: `Publication modification requested`,
-                    content: content,
-                    userEmail: user.email,
-                }))
-            );
+            if (users.length > 0){
+                await createNotifications(
+                    users.map((user) => ({
+                        module: "Publications",
+                        title: `Publication modification requested`,
+                        content: content,
+                        userEmail: user.email,
+                    }))
+                );
+            };
         }
 
         res.status(200).json({

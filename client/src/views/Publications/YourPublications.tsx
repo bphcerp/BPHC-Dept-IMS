@@ -122,7 +122,7 @@ const PublicationsView = () => {
       citationId: string;
       authorId: string;
       status: boolean;
-      comments?: string;
+      comments: string | null;
     }) => {
       await api.post("/publications/updateStatus", data);
     },
@@ -151,12 +151,13 @@ const PublicationsView = () => {
     });
     setPublications(updatedPublications);
 
-    // Prepare data for backend
     const requestData = {
       citationId,
       authorId,
       status,
-      ...(comments && comments.trim() !== "" && { comments: comments.trim() }),
+      ...(comments && comments.trim() !== ""
+        ? { comments: comments.trim() }
+        : { comments: null }),
     };
 
     console.log("Submitting with data:", requestData); // Debug log
@@ -384,9 +385,15 @@ const PublicationsView = () => {
                 return (
                   <div key={pub.citationId} className="mb-6 border-b pb-4">
                     <p className="mb-2 text-justify text-base">
-                      [{index + 1}] {pub.authorNames} {", "} &quot;{pub.title}
-                      ,&quot; <em>{pub.journal}</em>, vol. {pub.volume ?? "N/A"}
-                      , no. {pub.issue ?? "N/A"}, {pub.year}.
+                      [{index + 1}]{" "}
+                      {pub.authorNames
+                        .replace(/,\s*\.\.\.\s*$/, "")
+                        .replace(/\.\.\.\s*$/, "")
+                        .trim()}
+                      {", "} &quot;{pub.title}
+                      ,&quot; <em>{pub.journal}</em>
+                      {pub.volume && `, vol. ${pub.volume}`}
+                      {pub.issue && `, no. ${pub.issue}`}, {pub.year}.
                     </p>
                     <div className="row mt-2 flex gap-2">
                       {pub.status === null ? (

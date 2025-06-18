@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Edit2, Save, X } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type CoAuthor = {
   authorId: string;
@@ -60,7 +61,7 @@ type EditingPublication = Publication & {
   isEditing?: boolean;
 };
 
-const AllPublications = () => {
+const EditPublications = () => {
   const [editingPublications, setEditingPublications] = useState<
     Record<string, EditingPublication>
   >({});
@@ -136,29 +137,51 @@ const AllPublications = () => {
     });
   };
 
-  const sortedPublications = publicationsData?.publications
-    ? [...publicationsData.publications].sort(
-        (a, b) => Number(b.year) - Number(a.year)
+  // Group publications by type
+  const groupedPublications = publicationsData?.publications
+    ? publicationsData.publications.reduce(
+        (groups, publication) => {
+          const type = publication.type || "Uncategorized";
+          if (!groups[type]) {
+            groups[type] = [];
+          }
+          groups[type].push(publication);
+          return groups;
+        },
+        {} as Record<string, Publication[]>
       )
-    : [];
+    : {};
 
-  return (
-    <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
-      <h1 className="text-3xl font-bold text-primary">All Publications</h1>
+  const sortedGroupedPublications = Object.keys(groupedPublications)
+    .sort()
+    .reduce(
+      (sorted, type) => {
+        sorted[type] = groupedPublications[type].sort(
+          (a, b) => Number(b.year) - Number(a.year)
+        );
+        return sorted;
+      },
+      {} as Record<string, Publication[]>
+    );
 
-      {isPubsError ? (
-        <p className="text-destructive">
-          An error occurred while fetching publications.
-        </p>
-      ) : isLoadingPubs ? (
-        <LoadingSpinner />
-      ) : (
+  const renderPublicationsTable = (
+    publications: Publication[],
+    type: string
+  ) => (
+    <Card key={type} className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-2xl font-semibold text-primary">
+          {type} ({publications.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
         <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Authors</TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Journal</TableHead>
                 <TableHead>Volume</TableHead>
                 <TableHead>Issue</TableHead>
@@ -168,167 +191,227 @@ const AllPublications = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedPublications.length > 0 ? (
-                sortedPublications.map((publication) => {
-                  const isEditing =
-                    !!editingPublications[publication.citationId];
-                  const editingPublication = isEditing
-                    ? editingPublications[publication.citationId]
-                    : publication;
+              {publications.map((publication) => {
+                const isEditing = !!editingPublications[publication.citationId];
+                const editingPublication = isEditing
+                  ? editingPublications[publication.citationId]
+                  : publication;
 
-                  return (
-                    <TableRow key={publication.citationId}>
-                      <TableCell className="font-medium">
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.authorNames}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "authorNames",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          publication.authorNames
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.title}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "title",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          publication.title
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.journal}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "journal",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          <em>{publication.journal}</em>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.volume || ""}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "volume",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          publication.volume || "N/A"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.issue || ""}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "issue",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          publication.issue || "N/A"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editingPublication.year}
-                            onChange={(e) =>
-                              handleChange(
-                                publication.citationId,
-                                "year",
-                                e.target.value
-                              )
-                            }
-                            className="w-full"
-                          />
-                        ) : (
-                          publication.year
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {publication.comments ? publication.comments : "N/A"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isEditing ? (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleSave(publication.citationId)}
-                            >
-                              <Save className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() =>
-                                handleCancelEdit(publication.citationId)
-                              }
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
+                return (
+                  <TableRow key={publication.citationId}>
+                    <TableCell className="font-medium">
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.authorNames}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "authorNames",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        publication.authorNames
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.title}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "title",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        publication.title
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.type}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "type",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        <span className="rounded-md bg-secondary px-2 py-1 text-sm text-secondary-foreground">
+                          {publication.type}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.journal}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "journal",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        <em>{publication.journal}</em>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.volume || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "volume",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        publication.volume || "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.issue || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "issue",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        publication.issue || "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.year}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "year",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        <span className="font-semibold">
+                          {publication.year}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={editingPublication.comments || ""}
+                          onChange={(e) =>
+                            handleChange(
+                              publication.citationId,
+                              "comments",
+                              e.target.value
+                            )
+                          }
+                          className="w-full"
+                        />
+                      ) : (
+                        publication.comments || "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isEditing ? (
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => handleEdit(publication)}
+                            onClick={() => handleSave(publication.citationId)}
                           >
-                            <Edit2 className="h-4 w-4" />
+                            <Save className="h-4 w-4" />
                           </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center">
-                    No publications found.
-                  </TableCell>
-                </TableRow>
-              )}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              handleCancelEdit(publication.citationId)
+                            }
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleEdit(publication)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
+      <div className="flex w-full items-center justify-between">
+        <h1 className="text-3xl font-bold text-primary">
+          Edit Publications
+        </h1>
+        <div className="text-sm text-muted-foreground">
+          Total: {publicationsData?.publications?.length || 0} publications
+        </div>
+      </div>
+
+      {isPubsError ? (
+        <p className="text-destructive">
+          An error occurred while fetching publications.
+        </p>
+      ) : isLoadingPubs ? (
+        <LoadingSpinner />
+      ) : Object.keys(sortedGroupedPublications).length > 0 ? (
+        <div className="w-full">
+          {Object.entries(sortedGroupedPublications).map(
+            ([type, publications]) =>
+              renderPublicationsTable(publications, type)
+          )}
+        </div>
+      ) : (
+        <Card className="w-full">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">No publications found.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 };
 
-export default AllPublications;
+export default EditPublications;
