@@ -199,6 +199,10 @@ export type ViewApplicationResponse = {
             key: string;
             amount: string;
         }[];
+        fundingSplit: {
+            source: string;
+            amount: string;
+        }[];
         letterOfInvitation?: fileFieldResponse;
         firstPageOfPaper?: fileFieldResponse;
         reviewersComments?: fileFieldResponse;
