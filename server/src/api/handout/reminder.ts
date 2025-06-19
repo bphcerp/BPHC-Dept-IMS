@@ -8,6 +8,7 @@ import env from "@/config/environment.ts";
 import nodemailer from "nodemailer";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -40,7 +41,7 @@ router.post(
                         from: env.BPHCERP_EMAIL,
                         to: handout.icEmail,
                         subject: "Handout Reminder",
-                        text: `You have to submit the handout file for ${handout.courseCode} by ${handout.deadline?.toLocaleString() ?? "(unspecified)"}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                        text: `You have to submit the handout file for ${handout.courseCode} by ${handout.deadline?.toLocaleString() ?? "(unspecified)"}. Please visit the ${environment.DEPARTMENT_NAME} IMS Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
                     });
                 } catch (e) {
                     next(

@@ -13,3 +13,5 @@ export const BASE_API_URL = BASE_URL;
 
 export const LOGIN_ENDPOINT = "auth/login";
 export const REFRESH_ENDPOINT = "auth/refresh";
+
+export const DEPARTMENT_NAME = import.meta.env.VITE_DEPARTMENT_NAME as string;

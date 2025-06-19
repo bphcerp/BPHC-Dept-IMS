@@ -2,7 +2,7 @@
   "name": "server",
   "type": "module",
   "version": "1.0.0",
-  "description": "EEE ERP express server",
+  "description": "IMS express server",
   "scripts": {
     "start": "tsx src/bin.ts",
     "db:push": "drizzle-kit push",

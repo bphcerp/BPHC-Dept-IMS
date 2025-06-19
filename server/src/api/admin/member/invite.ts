@@ -7,6 +7,7 @@ import nodemailer from "nodemailer";
 import env from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ router.post(
                             from: env.BPHCERP_EMAIL,
                             to: parsed.email,
                             subject: "Member invitation",
-                            text: `Hello! You are invited to access the EEE ERP portal. Website link: ${env.FRONTEND_URL}`,
+                            text: `Hello! You are invited to access the ${environment.DEPARTMENT_NAME} IMS portal. Website link: ${env.FRONTEND_URL}`,
                         });
                     } catch (e) {
                         throw new HttpError(

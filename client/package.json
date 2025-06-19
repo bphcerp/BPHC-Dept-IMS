@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "EEE ERP frontend",
+  "description": "IMS frontend",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

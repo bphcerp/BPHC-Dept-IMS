@@ -23,6 +23,7 @@ import {
   Category,
   Vendor,
 } from "node_modules/lib/src/types/inventory";
+import { DEPARTMENT_NAME } from "@/lib/constants";
 
 const AddInventoryItem = () => {
   const [labs, setLabs] = useState<Laboratory[]>([]);
@@ -312,7 +313,7 @@ const AddInventoryItem = () => {
 
                 const equipmentID =
                   lab && categoryCode && lastItemNumber
-                    ? `BITS/EEE/${lab.code}/${categoryCode}/${quantity > 1 ? `${lastItemNumber.toString().padStart(4, "0")}-(01-${quantity.toString().padStart(2, "0")})` : lastItemNumber.toString().padStart(4, "0")}`
+                    ? `BITS/${DEPARTMENT_NAME}/${lab.code}/${categoryCode}/${quantity > 1 ? `${lastItemNumber.toString().padStart(4, "0")}-(01-${quantity.toString().padStart(2, "0")})` : lastItemNumber.toString().padStart(4, "0")}`
                     : "";
                 setFieldValue("equipmentID", equipmentID);
               }

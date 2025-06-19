@@ -13,8 +13,9 @@ import { faculty } from "@/config/db/schema/admin.ts";
 import db from "@/config/db/index.ts";
 import { and, eq } from "drizzle-orm";
 import { createNotifications } from "@/lib/todos/index.ts";
+import environment from "@/config/environment.ts";
 
-const API_KEY = process.env.SERP_API_KEY!;
+const API_KEY = environment.SERP_API_KEY;
 const logs: {
     publication: typeof publicationsTable.$inferInsert;
     authorPublications: (typeof authorPublicationsTable.$inferInsert)[];

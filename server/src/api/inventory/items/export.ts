@@ -11,6 +11,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq, getTableColumns, inArray } from "drizzle-orm";
 import { Router } from "express";
 import ExcelJS from "exceljs";
+import environment from "@/config/environment.ts";
 
 const router = Router();
 
@@ -203,7 +204,7 @@ router.post(
         );
         res.setHeader(
             "Content-Disposition",
-            'attachment; filename="EEE_Department_-_Export_Inventory.xlsx"'
+            `attachment; filename="${environment.DEPARTMENT_NAME}_Department_-_Export_Inventory.xlsx"`
         );
 
         res.send(buffer);
