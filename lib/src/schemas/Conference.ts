@@ -42,10 +42,14 @@ export const upsertApplicationClientSchema = z.object({
                         .string()
                         .min(1, "Field name is required")
                         .max(50, "Field name is too long"),
-                    amount: z.string().regex(/^\d+(\.\d{1,2})?$/, {
-                        message:
-                            "Amount must be a number with at most 2 decimal places",
-                    }),
+                    amount: z
+                        .string()
+                        .trim()
+                        .regex(/^$|^\d+(\.\d{1,2})?$/, {
+                            message:
+                                "Amount must be a number with at most 2 decimal places",
+                        })
+                        .optional(),
                 })
             )
             .max(10, "Maximum of 10 fields allowed")
@@ -77,10 +81,14 @@ export const upsertApplicationClientSchema = z.object({
                         .string()
                         .min(1, "Funding source is required")
                         .max(100, "Funding source name is too long"),
-                    amount: z.string().regex(/^\d+(\.\d{1,2})?$/, {
-                        message:
-                            "Amount must be a number with at most 2 decimal places",
-                    }),
+                    amount: z
+                        .string()
+                        .trim()
+                        .regex(/^$|^\d+(\.\d{1,2})?$/, {
+                            message:
+                                "Amount must be a number with at most 2 decimal places",
+                        })
+                        .optional(),
                 })
             )
             .max(5, "Maximum of 5 funding sources allowed")
@@ -96,23 +104,34 @@ export const upsertApplicationClientSchema = z.object({
     ),
 });
 
-export const upsertApplicationBodySchema = upsertApplicationClientSchema.refine(
-    (data) => {
-        const reimbursementTotal = data.reimbursements.reduce(
-            (sum, item) => sum + parseFloat(item.amount || "0"),
-            0
-        );
-        const fundingTotal = data.fundingSplit.reduce(
-            (sum, item) => sum + parseFloat(item.amount || "0"),
-            0
-        );
-        return Math.abs(reimbursementTotal - fundingTotal) < 0.01;
-    },
-    {
-        message: "Total funding split must equal total reimbursement amount",
-        path: ["fundingSplit"],
-    }
-);
+export const upsertApplicationBodySchema = upsertApplicationClientSchema
+    .transform((data) => {
+        data.reimbursements = data.reimbursements.filter((item) => {
+            return item.amount && parseFloat(item.amount) > 0;
+        });
+        data.fundingSplit = data.fundingSplit.filter((item) => {
+            return item.amount && parseFloat(item.amount) > 0;
+        });
+        return data;
+    })
+    .refine(
+        (data) => {
+            const reimbursementTotal = data.reimbursements.reduce(
+                (sum, item) => sum + parseFloat(item.amount || "0"),
+                0
+            );
+            const fundingTotal = data.fundingSplit.reduce(
+                (sum, item) => sum + parseFloat(item.amount || "0"),
+                0
+            );
+            return Math.abs(reimbursementTotal - fundingTotal) < 0.01;
+        },
+        {
+            message:
+                "Total funding split must equal total reimbursement amount",
+            path: ["fundingSplit"],
+        }
+    );
 
 export const flowBodySchema = z.object({
     directFlow: z.boolean(),

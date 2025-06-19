@@ -16,7 +16,7 @@ import { conferenceSchemas } from "lib";
 
 export interface FundingSplit {
   source: string;
-  amount: string;
+  amount?: string;
 }
 
 interface FundingSplitDialogProps {
@@ -316,7 +316,7 @@ export function FundingSplitDialog({
                       />
                     </div>
                     <div className="mt-6 text-sm text-muted-foreground">
-                      {getPercentage(split.amount).toFixed(2)}%
+                      {getPercentage(split.amount ?? "0").toFixed(2)}%
                     </div>
                   </div>
 
@@ -325,7 +325,7 @@ export function FundingSplitDialog({
                       Percentage of Total
                     </Label>
                     <Slider
-                      value={[getPercentage(split.amount)]}
+                      value={[getPercentage(split.amount ?? "0")]}
                       onValueChange={([value]) =>
                         updateAmountFromSlider(index, value)
                       }
