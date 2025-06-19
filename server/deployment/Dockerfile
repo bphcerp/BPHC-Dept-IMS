@@ -24,7 +24,6 @@ RUN apt update && apt install -y --no-install-recommends \
     libxshmfence1 \
     libglu1-mesa \
     chromium \
-    fonts-liberation \
     fonts-noto \
     fonts-noto-color-emoji \
     fonts-dejavu \
