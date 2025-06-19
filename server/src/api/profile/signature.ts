@@ -4,7 +4,10 @@ import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
-import { imageUpload } from "@/config/multer.ts";
+import {
+    signatureUpload,
+    validateAndSaveSignatureMiddleware,
+} from "@/config/multer.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { modules } from "lib";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -45,12 +48,13 @@ router.get(
 router.post(
     "/",
     asyncHandler((req, res, next) =>
-        imageUpload.single("signature")(req, res, (err) => {
+        signatureUpload.single("signature")(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
             next(err);
         })
     ),
+    asyncHandler(validateAndSaveSignatureMiddleware),
     asyncHandler(async (req, res, next) => {
         if (!req.file) {
             return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));

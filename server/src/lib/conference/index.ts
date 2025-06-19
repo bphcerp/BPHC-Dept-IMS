@@ -45,7 +45,17 @@ export const getApplicationById = async (id: number) => {
             }
         ).file.filePath = environment.SERVER_URL + "/f/" + fileID;
     }
-    return application;
+    return {
+        ...application,
+        reimbursements: application.reimbursements as Array<{
+            key: string;
+            amount: string;
+        }>,
+        fundingSplit: application.fundingSplit as Array<{
+            source: string;
+            amount: string;
+        }>,
+    };
 };
 
 export type Application = Awaited<ReturnType<typeof getApplicationById>>;

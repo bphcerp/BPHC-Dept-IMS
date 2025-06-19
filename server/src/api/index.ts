@@ -14,6 +14,11 @@ import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
 
+const favicon = Buffer.from(
+    "AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA",
+    "base64"
+);
+
 const router = express.Router();
 
 // Public routes
@@ -21,6 +26,16 @@ router.get("/hello", (_req, res) => {
     res.status(200).json({
         message: "Hello!",
     });
+});
+
+router.get("/favicon.ico", (_req, res) => {
+    const headers = new Headers({
+        "Content-Type": "image/x-icon",
+        "Content-Length": favicon.length.toString(),
+        "Cache-Control": "public, max-age=259200",
+        Expires: new Date(Date.now() + 259200000).toUTCString(),
+    });
+    res.status(200).setHeaders(headers).send(favicon);
 });
 
 router.use("/f", fileRouter);

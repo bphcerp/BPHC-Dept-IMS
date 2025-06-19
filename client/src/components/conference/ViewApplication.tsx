@@ -21,7 +21,7 @@ const FieldDisplay = ({ label, value, file }: FieldProps) => {
         <strong className="text-base font-semibold text-muted-foreground">
           {conferenceSchemas.fieldsToFrontend[
             label as keyof typeof conferenceSchemas.fieldsToFrontend
-          ] ?? label.replace(/([A-Z])/g, " $1")}
+          ] ?? label}
         </strong>
         <div
           className={cn(
@@ -60,30 +60,79 @@ export const ViewApplication = ({
     [data]
   );
 
+  const totalReimbursement = useMemo(
+    () =>
+      data.application.reimbursements.reduce(
+        (sum, { amount }) => sum + parseFloat(amount || "0"),
+        0
+      ),
+    [data.application.reimbursements]
+  );
+
+  const totalFunding = useMemo(
+    () =>
+      data.application.fundingSplit?.reduce(
+        (sum, { amount }) => sum + parseFloat(amount || "0"),
+        0
+      ) || 0,
+    [data.application.fundingSplit]
+  );
+
+  const dateRange = useMemo(() => {
+    const fromDate = new Date(data.application.dateFrom).toLocaleDateString();
+    const toDate = new Date(data.application.dateTo).toLocaleDateString();
+    return fromDate === toDate ? fromDate : `${fromDate} - ${toDate}`;
+  }, [data.application.dateFrom, data.application.dateTo]);
+
   return (
     <div className="flex flex-col gap-4">
       <ProgressStatus
         currentStage={data.application.state}
         currentStatus={isPending ? "pending" : "accepted"}
       />
-      {[
-        ...conferenceSchemas.textFieldNames,
-        ...conferenceSchemas.dateFieldNames,
-      ].map((k) =>
-        data.application[k] ? (
+      {conferenceSchemas.textFieldNames.map((k) =>
+        data.application[k] && !["dateFrom", "dateTo"].includes(k) ? (
           <FieldDisplay key={k} label={k} value={data.application[k]} />
         ) : null
       )}
+      <FieldDisplay key="date" label="Date" value={dateRange} />
       <Separator />
-      <div>Reimbursement expectations</div>
+      <div className="flex items-center justify-between">
+        <span>Reimbursement expectations</span>
+        <span className="text-sm font-medium">
+          Total: ₹{totalReimbursement.toFixed(2)}
+        </span>
+      </div>
       {data.application.reimbursements.map(({ key, amount }) => (
-        <FieldDisplay key={key} label={key} value={amount} />
+        <FieldDisplay
+          key={key}
+          label={key}
+          value={parseFloat(amount).toFixed(2)}
+        />
       ))}
       {!data.application.reimbursements.length ? (
         <span className="text-muted-foreground">
           No reimbursement expectations
         </span>
       ) : null}
+      {data.application.fundingSplit?.length ? (
+        <>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <span>Funding Split</span>
+            <span className="text-sm font-medium">
+              Total: ₹{totalFunding.toFixed(2)}
+            </span>
+          </div>
+        </>
+      ) : null}
+      {data.application.fundingSplit?.map(({ source, amount }) => (
+        <FieldDisplay
+          key={source}
+          label={source}
+          value={parseFloat(amount).toFixed(2)}
+        />
+      ))}
       <Separator />
       <div>Enclosures</div>
       {conferenceSchemas.fileFieldNames.map((k) =>

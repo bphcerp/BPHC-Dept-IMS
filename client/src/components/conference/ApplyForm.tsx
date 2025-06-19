@@ -65,16 +65,10 @@ const purposeOptions = [
 ];
 
 const defaultReimbursementFields = [
-  { key: "travelReimbursement", label: "Travel Reimbursement" },
-  {
-    key: "registrationFeeReimbursement",
-    label: "Registration Fee Reimbursement",
-  },
-  {
-    key: "dailyAllowanceReimbursement",
-    label: "Daily Allowance Reimbursement",
-  },
-  { key: "accommodationReimbursement", label: "Accommodation Reimbursement" },
+  "Travel",
+  "Registration Fee",
+  "Daily Allowance",
+  "Accommodation",
 ];
 
 const ChangedIndicator = ({ isChanged }: { isChanged?: boolean }) => {
@@ -110,9 +104,9 @@ export const ApplyForm = ({
   useEffect(() => {
     const reimbursements = form.getValues("reimbursements") || [];
     let changed = false;
-    defaultReimbursementFields.forEach((def, idx) => {
-      if (!reimbursements[idx] || reimbursements[idx].key !== def.key) {
-        reimbursements[idx] = { key: def.key, amount: "" };
+    defaultReimbursementFields.forEach((label, idx) => {
+      if (!reimbursements[idx] || reimbursements[idx].key !== label) {
+        reimbursements[idx] = { key: label, amount: "" };
         changed = true;
       }
     });
@@ -169,8 +163,8 @@ export const ApplyForm = ({
 
   useEffect(() => {
     if (fields.length === 0) {
-      const initialReimbursements = defaultReimbursementFields.map((def) => ({
-        key: def.key,
+      const initialReimbursements = defaultReimbursementFields.map((label) => ({
+        key: label,
         amount: "",
       }));
       form.setValue("reimbursements", initialReimbursements);
@@ -323,10 +317,8 @@ export const ApplyForm = ({
             <div className="flex flex-1 flex-col gap-4">
               {fields.map((field, index) => {
                 const isDefault = defaultReimbursementFields.some(
-                  (def, idx) => idx === index && field.key === def.key
+                  (label, idx) => idx === index && field.key === label
                 );
-                const defaultLabel =
-                  defaultReimbursementFields[index]?.label || "Field Name";
                 return (
                   <div key={field.id} className="flex items-start gap-4">
                     {/* Field Name Input */}
@@ -337,7 +329,7 @@ export const ApplyForm = ({
                         <FormItem className="w-64">
                           <FormControl>
                             {isDefault ? (
-                              <Input value={defaultLabel} readOnly />
+                              <Input value={field.key} readOnly />
                             ) : (
                               <Input placeholder="e.g., Other" {...keyField} />
                             )}
