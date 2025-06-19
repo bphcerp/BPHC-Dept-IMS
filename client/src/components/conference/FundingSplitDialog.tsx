@@ -44,13 +44,13 @@ export function FundingSplitDialog({
     const errors: string[] = [];
 
     try {
-      // Validate using the schema from lib
       conferenceSchemas.upsertApplicationClientSchema.shape.fundingSplit.parse(
         split
       );
-    } catch (error: any) {
-      if (error.errors) {
-        errors.push(...error.errors.map((e: any) => e.message));
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "errors" in error) {
+        const zodError = error as { errors: Array<{ message: string }> };
+        errors.push(...zodError.errors.map((e) => e.message));
       }
     }
 
