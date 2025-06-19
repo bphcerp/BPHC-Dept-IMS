@@ -5,7 +5,7 @@ import { HttpCode, HttpError } from "./errors.ts";
 
 const allowedOrigins: string[] = [];
 const allowedDomainPattern =
-    /^https:\/\/[a-zA-Z0-9-]+\.bits-hyderabad\.ac\.in$/;
+    /^https:\/\/[a-zA-Z0-9-]+\.ims\.bits-hyderabad\.ac\.in$/;
 
 if (!PROD)
     allowedOrigins.push("http://localhost:5173", "http://localhost:9000");
