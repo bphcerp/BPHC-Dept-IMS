@@ -18,3 +18,4 @@ jobs:
           git pull
           docker compose --profile prod up --build -d
           docker compose exec server-prod pnpm db:migrate
+          docker compose exec server-prod pnpm db:seed
