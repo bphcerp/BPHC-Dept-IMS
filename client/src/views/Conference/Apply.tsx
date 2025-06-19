@@ -27,7 +27,8 @@ const ConferenceApplyView: React.FC = () => {
           const filteredArray =
             key === "reimbursements" || key === "fundingSplit"
               ? value.filter(
-                  (item: any) => item.amount && parseFloat(item.amount) > 0
+                  (item: { amount: string }) =>
+                    item.amount && parseFloat(item.amount) > 0
                 )
               : value;
           formData.append(key, JSON.stringify(filteredArray));

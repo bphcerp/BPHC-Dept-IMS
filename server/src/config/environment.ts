@@ -40,6 +40,7 @@ export const REFRESH_TOKEN_COOKIE = "amogus";
 export const ACCESS_TOKEN_EXPIRY: StringValue = "5m";
 export const REFRESH_TOKEN_EXPIRY: StringValue = "7d";
 export const FILES_DIR = path.join(import.meta.dirname ?? "", "../../files");
+export const STATIC_DIR = path.join(import.meta.dirname ?? "", "../../static");
 
 export default {
     PROD,

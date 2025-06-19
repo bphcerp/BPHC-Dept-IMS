@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Conference Approval - {{applicantName}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm 1cm 1cm 1cm;
+        }
+
+        body {
+            font-family: "Times New Roman", serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+            color: #000;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #003366;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 6px auto;
+            display: block;
+        }
+
+        .institution-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #003366;
+            margin: 3px 0;
+        }
+
+        .department-name {
+            font-size: 14px;
+            color: #003366;
+            margin: 2px 0;
+        }
+
+        .form-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
+            margin: 8px 0;
+        }
+
+        .section {
+            margin-bottom: 18px;
+            page-break-inside: avoid;
+        }
+
+        .field-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .field-value {
+            border-bottom: 1px solid #000;
+            padding: 6px 8px;
+            min-height: 20px;
+            font-size: 12px;
+            word-wrap: break-word;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin: 7px 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .checkbox {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #000;
+            margin-right: 6px;
+            display: inline-block;
+            text-align: center;
+            line-height: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        .checked {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 7px 0;
+            font-size: 12px;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid #000;
+            padding: 5px 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .table .amount {
+            text-align: right;
+            width: 80px;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #f8f8f8;
+        }
+
+        .approval-section {
+            margin-top: 15px;
+            page-break-inside: avoid;
+        }
+
+        .drc-reviews {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 12px 0;
+        }
+
+        .drc-review-item {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .final-approval {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 20px;
+            page-break-inside: avoid;
+        }
+
+        .approval-box {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border: 1px solid #000;
+            page-break-inside: avoid;
+        }
+
+        .signature-img {
+            width: 150px;
+            height: 60px;
+            object-fit: contain;
+            border: 1px solid #ccc;
+            margin: 10px auto;
+            display: block;
+        }
+
+        .signature-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .compact-financial {
+            display: flex;
+            gap: 15px;
+        }
+
+        .compact-financial>div {
+            flex: 1;
+        }
+
+        /* Ensure approval section stays together */
+        .approval-section {
+            page-break-before: auto;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        /* Force page break before approval if needed */
+        .force-page-break {
+            page-break-before: always;
+        }
+
+        @media print {
+            body {
+                font-size: 12px;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .section {
+                margin-bottom: 8px;
+                page-break-inside: avoid;
+            }
+
+            .approval-section {
+                margin-top: 12px;
+                page-break-inside: avoid;
+            }
+
+            .final-approval {
+                page-break-inside: avoid;
+            }
+
+            .approval-box {
+                page-break-inside: avoid;
+            }
+
+            .header {
+                page-break-after: avoid;
+            }
+
+            .checkbox {
+                border: 1px solid #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .table {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Balanced spacing */
+        .balanced .section {
+            margin-bottom: 16px;
+        }
+
+        .balanced .field-row {
+            margin-bottom: 12px;
+        }
+
+        .balanced .table {
+            margin: 10px 0;
+        }
+
+        .balanced .checkbox-grid {
+            margin: 10px 0;
+        }
+
+        .balanced .header {
+            margin-bottom: 22px;
+            padding-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body class="balanced">
+    <!-- Header with Logo -->
+    <div class="header">
+        {{#logoBase64}}
+        <img src="{{logoBase64}}" alt="BITS Pilani Logo" class="logo" />
+        {{/logoBase64}} {{^logoBase64}}
+        <div style="
+                    width: 80px;
+                    height: 80px;
+                    margin: 6px auto;
+                    border: 1px dashed #ccc;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 10px;
+                    color: #666;
+                ">
+            Logo
+        </div>
+        {{/logoBase64}}
+        <div class="institution-name">
+            Birla Institute of Technology & Science, Pilani – Hyderabad
+            Campus
+        </div>
+        <div class="department-name">
+            Department of Electrical & Electronics Engineering
+        </div>
+        <div class="form-title">
+            Approval for Attending Academic Conferences / Visiting Centers
+            for Research Through Personal Contingency
+        </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="section">
+        <div class="field-row">
+            <div class="field" style="flex: 0 0 120px">
+                <span class="field-label">Date:</span>
+                <div class="field-value">{{submissionDate}}</div>
+            </div>
+            <div class="field" style="flex: 0 0 100px">
+                <span class="field-label">Application ID:</span>
+                <div class="field-value">{{applicationId}}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applicant Details -->
+    <div class="section">
+        <div class="field-row">
+            <div class="field">
+                <span class="field-label">Name:</span>
+                <div class="field-value">{{applicantName}}</div>
+            </div>
+            <div class="field">
+                <span class="field-label">PSRN No:</span>
+                <div class="field-value">{{psrnNumber}}</div>
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <span class="field-label">Designation:</span>
+                <div class="field-value">{{designation}}</div>
+            </div>
+            <div class="field">
+                <span class="field-label">Email Address:</span>
+                <div class="field-value">{{emailAddress}}</div>
+            </div>
+            <div class="field">
+                <span class="field-label">Phone No:</span>
+                <div class="field-value">{{phoneNumber}}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purpose Section -->
+    <div class="section">
+        <div class="field-label" style="margin-bottom: 7px">
+            <strong>Purpose: (Selected option marked)</strong>
+        </div>
+        <div class="checkbox-grid">
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeInvitedSpeaker}}checked{{/purposeInvitedSpeaker}}">{{#purposeInvitedSpeaker}}✓{{/purposeInvitedSpeaker}}</span>
+                Invited Speaker
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeKeynoteLecture}}checked{{/purposeKeynoteLecture}}">{{#purposeKeynoteLecture}}✓{{/purposeKeynoteLecture}}</span>
+                Keynote Lecture
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposePresentingPaper}}checked{{/purposePresentingPaper}}">{{#purposePresentingPaper}}✓{{/purposePresentingPaper}}</span>
+                Presenting Paper
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeChairingSession}}checked{{/purposeChairingSession}}">{{#purposeChairingSession}}✓{{/purposeChairingSession}}</span>
+                Chairing Session
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeAttendingConference}}checked{{/purposeAttendingConference}}">{{#purposeAttendingConference}}✓{{/purposeAttendingConference}}</span>
+                Attending Conference
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeAttendingWorkshop}}checked{{/purposeAttendingWorkshop}}">{{#purposeAttendingWorkshop}}✓{{/purposeAttendingWorkshop}}</span>
+                Attending Workshop
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeVisitingLaboratory}}checked{{/purposeVisitingLaboratory}}">{{#purposeVisitingLaboratory}}✓{{/purposeVisitingLaboratory}}</span>
+                Visiting Laboratory
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposePresentingPoster}}checked{{/purposePresentingPoster}}">{{#purposePresentingPoster}}✓{{/purposePresentingPoster}}</span>
+                Presenting Poster
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeJournalPageCharges}}checked{{/purposeJournalPageCharges}}">{{#purposeJournalPageCharges}}✓{{/purposeJournalPageCharges}}</span>
+                Journal Page Charges
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#purposeOthers}}checked{{/purposeOthers}}">{{#purposeOthers}}✓{{/purposeOthers}}</span>
+                Others: {{otherPurposeDetails}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details -->
+    <div class="section">
+        <div class="field" style="margin-bottom: 12px">
+            <span class="field-label">Title of the Paper / Talk / Poster:</span>
+            <div class="field-value">{{contentTitle}}</div>
+        </div>
+        <div class="field" style="margin-bottom: 12px">
+            <span class="field-label">Name of the Journal / Conference / Workshop /
+                Laboratory:</span>
+            <div class="field-value">{{eventName}}</div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <span class="field-label">Venue:</span>
+                <div class="field-value">{{venue}}</div>
+            </div>
+            <div class="field">
+                <span class="field-label">Date:</span>
+                <div class="field-value">{{eventDateRange}}</div>
+            </div>
+            <div class="field" style="flex: 1">
+                <span class="field-label">Mode of Event:</span>
+                <div class="field-value">{{modeOfEvent}}</div>
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field" style="flex: 2">
+                <span class="field-label">Organized by:</span>
+                <div class="field-value">{{organizedBy}}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    <div class="section">
+        <div class="field" style="margin-bottom: 10px">
+            <span class="field-label">Brief Description or Justification of the Purpose:</span>
+            <div class="field-value" style="white-space: pre-line">{{description}}</div>
+        </div>
+    </div>
+
+    <!-- Financial Details - Compact Layout -->
+    {{#hasFinancialDetails}}
+    <div class="section">
+        <div class="field-label" style="margin-bottom: 7px">
+            <strong>Reimbursement Expectations: ₹{{totalAmount}}</strong>
+        </div>
+
+        <div class="compact-financial">
+            <!-- Reimbursement Table -->
+            <div>
+                <div class="field-label">Expectations Breakdown:</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th class="amount">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#reimbursements}}
+                        <tr>
+                            <td>{{key}}</td>
+                            <td class="amount">{{amount}}</td>
+                        </tr>
+                        {{/reimbursements}}
+                        <tr class="total-row">
+                            <td><strong>Total</strong></td>
+                            <td class="amount">
+                                <strong>{{totalAmount}}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Funding Split Table -->
+            {{#hasFundingSplit}}
+            <div>
+                <div class="field-label">Funding Source Breakdown:</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Funding Source</th>
+                            <th class="amount">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#fundingSplit}}
+                        <tr>
+                            <td>{{source}}</td>
+                            <td class="amount">{{amount}}</td>
+                        </tr>
+                        {{/fundingSplit}}
+                        <tr class="total-row">
+                            <td><strong>Total</strong></td>
+                            <td class="amount">
+                                <strong>{{totalAmount}}</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {{/hasFundingSplit}}
+        </div>
+    </div>
+    {{/hasFinancialDetails}} {{^hasFinancialDetails}}
+    <div class="section">
+        <div class="field-label" style="margin-bottom: 7px">
+            <strong>No reimbursement expected (Total: ₹0.00)</strong>
+        </div>
+    </div>
+    {{/hasFinancialDetails}}
+
+    <!-- Enclosures -->
+    <div class="section">
+        <div class="field-label" style="margin-bottom: 7px">
+            <strong>Enclosures (Submitted documents marked):</strong>
+        </div>
+        <div class="checkbox-grid">
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#hasLetterOfInvitation}}checked{{/hasLetterOfInvitation}}">{{#hasLetterOfInvitation}}✓{{/hasLetterOfInvitation}}</span>
+                Letter of Invitation / Acceptance
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#hasFirstPageOfPaper}}checked{{/hasFirstPageOfPaper}}">{{#hasFirstPageOfPaper}}✓{{/hasFirstPageOfPaper}}</span>
+                Hard copy of first page of paper
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#hasReviewersComments}}checked{{/hasReviewersComments}}">{{#hasReviewersComments}}✓{{/hasReviewersComments}}</span>
+                Reviewers' comments
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#hasDetailsOfEvent}}checked{{/hasDetailsOfEvent}}">{{#hasDetailsOfEvent}}✓{{/hasDetailsOfEvent}}</span>
+                Details of the conference / journal
+            </div>
+            <div class="checkbox-item">
+                <span
+                    class="checkbox {{#hasOtherDocuments}}checked{{/hasOtherDocuments}}">{{#hasOtherDocuments}}✓{{/hasOtherDocuments}}</span>
+                Other essential documents
+            </div>
+        </div>
+    </div>
+
+    <!-- DRC Members' Recommendation - Simplified -->
+    <div class="approval-section">
+        <div class="field-label">DRC Members' Recommendation:</div>
+
+        {{#drcReviews.length}}
+        <div class="drc-reviews">
+            {{#drcReviews}}
+            <div class="drc-review-item">
+                Reviewer {{reviewerNumber}}:
+                {{#status}}RECOMMENDED{{/status}}{{^status}}NOT
+                RECOMMENDED{{/status}}
+            </div>
+            {{/drcReviews}}
+        </div>
+        {{/drcReviews.length}} {{^drcReviews.length}}
+        <div style="
+                    text-align: center;
+                    padding: 15px;
+                    color: #666;
+                    font-style: italic;
+                ">
+            Pending DRC Review
+        </div>
+        {{/drcReviews.length}}
+
+        <!-- Final Approval Signatures -->
+        <div class="final-approval">
+            <div class="approval-box">
+                {{#drcConvenerSignatureBase64}}
+                <img src="{{drcConvenerSignatureBase64}}" alt="DRC Convener Signature" class="signature-img" />
+                {{/drcConvenerSignatureBase64}}
+                {{^drcConvenerSignatureBase64}}
+                <div class="signature-img" style="
+                            border: 1px dashed #ccc;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 10px;
+                            color: #666;
+                        ">
+                    Signature
+                </div>
+                {{/drcConvenerSignatureBase64}}
+                <div class="signature-label">
+                    DRC Convener<br />{{drcConvenerName}}<br />Date:
+                    {{drcApprovalDate}}
+                </div>
+            </div>
+
+            <div class="approval-box">
+                {{#hodSignatureBase64}}
+                <img src="{{hodSignatureBase64}}" alt="HoD Signature" class="signature-img" />
+                {{/hodSignatureBase64}} {{^hodSignatureBase64}}
+                <div class="signature-img" style="
+                            border: 1px dashed #ccc;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 10px;
+                            color: #666;
+                        ">
+                    Signature
+                </div>
+                {{/hodSignatureBase64}}
+                <div class="signature-label">
+                    Head, Dept. of EEE<br />{{hodName}}<br />Date:
+                    {{hodApprovalDate}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="
+                margin-top: 15px;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+            ">
+        Generated on {{generationDate}} | Application ID: {{applicationId}}
+    </div>
+</body>
+
+</html>
