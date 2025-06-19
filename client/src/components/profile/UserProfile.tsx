@@ -21,6 +21,7 @@ import "react-image-crop/dist/ReactCrop.css";
 
 const TARGET_HEIGHT = 60;
 const TARGET_WIDTH = 150;
+const MAX_FILE_SIZE = 8; // MB
 
 const validateFile = (file: File): boolean => {
   if (!file.type.startsWith("image/")) {
@@ -28,8 +29,8 @@ const validateFile = (file: File): boolean => {
     return false;
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    toast.error("Image must be less than 8MB");
+  if (file.size > MAX_FILE_SIZE * 1024 * 1024) {
+    toast.error(`Image must be less than ${MAX_FILE_SIZE}MB`);
     return false;
   }
 
@@ -140,8 +141,8 @@ const Profile = () => {
             reject(new Error("Canvas is empty"));
             return;
           }
-          resolve(new File([blob], fileName, { type: "image/png" }));
-        }, "image/png");
+          resolve(new File([blob], fileName, { type: "image/webp" }));
+        }, "image/webp");
       });
     },
     []
@@ -324,7 +325,7 @@ const Profile = () => {
                     Drag and drop your signature image here, or click to browse
                   </p>
                   <p className="text-xs text-gray-500">
-                    Supports: PNG, JPG, JPEG (max 10MB)
+                    Supports: PNG, JPG, JPEG, WebP (max {MAX_FILE_SIZE}MB)
                   </p>
                 </div>
 

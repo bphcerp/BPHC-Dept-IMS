@@ -32,10 +32,10 @@ export const pdfUpload = multer({
 export const signatureUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 1024 * 1024 * 2,
+        fileSize: 1024 * 1024 * 1,
     },
     fileFilter: (_req: Request, file, callback) => {
-        if (!["image/png"].includes(file.mimetype)) {
+        if (!["image/png", "image/webp"].includes(file.mimetype)) {
             return callback(
                 new HttpError(
                     HttpCode.BAD_REQUEST,
