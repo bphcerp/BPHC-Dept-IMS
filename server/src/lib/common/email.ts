@@ -4,6 +4,7 @@ import { type ConnectionOptions, Queue, Worker } from "bullmq";
 import logger from "@/config/logger.ts";
 
 const QUEUE_NAME = "emailQueue";
+const JOB_NAME = "sendEmail";
 
 const redisConfig: ConnectionOptions = {
     host: environment.REDIS_HOST,
@@ -61,16 +62,13 @@ emailWorker.on("failed", (job, err) => {
 });
 
 export async function sendEmail(emailData: Omit<SendMailOptions, "from">) {
-    return await emailQueue.add("sendEmail", emailData);
+    return await emailQueue.add(JOB_NAME, emailData);
 }
 
 export async function sendBulkEmails(emails: Omit<SendMailOptions, "from">[]) {
-    const jobs = emails.map((emailData, index) => ({
-        name: "sendEmail", // Same name for all - this is fine!
+    const jobs = emails.map((emailData) => ({
+        name: JOB_NAME,
         data: emailData,
-        opts: {
-            delay: index * 100,
-        },
     }));
 
     return await emailQueue.addBulk(jobs);
