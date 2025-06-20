@@ -65,6 +65,5 @@ WORKDIR /usr/local/app/server
 RUN node node_modules/puppeteer/install.mjs
 
 RUN pnpm tsc --build
-RUN mkdir -p logs files && chown node:node logs files
 
 CMD ["pnpm", "tsx", "src/bin.ts"]

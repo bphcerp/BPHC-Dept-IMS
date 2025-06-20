@@ -36,8 +36,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./server/logs:/usr/local/app/server/logs
-      - ./server/files:/usr/local/app/server/files
+      - app-logs:/usr/local/app/server/logs
+      - app-files:/usr/local/app/server/files
     profiles:
       - "prod"
 
