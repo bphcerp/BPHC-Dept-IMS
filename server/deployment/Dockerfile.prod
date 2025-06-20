@@ -37,6 +37,11 @@ RUN chown -R node /usr/local/app
 RUN chgrp -R node /usr/local/app
 RUN npm install -g pnpm
 
+RUN mkdir -p /usr/local/app/server/files && chown -R node:node /usr/local/app/server/files
+RUN mkdir -p /usr/local/app/server/logs && chown -R node:node /usr/local/app/server/logs
+RUN mkdir -p /usr/local/app/server/node_modules /usr/local/app/node_modules \
+    && chown -R node:node /usr/local/app/server /usr/local/app/node_modules
+
 USER node
 
 COPY --chown=node:node ./lib ./lib
