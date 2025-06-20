@@ -84,7 +84,11 @@ router.post(
                     .delete(files)
                     .where(eq(files.id, fac.signatureFileId!))
                     .returning();
-                if (deleted.length) await fs.unlink(deleted[0].filePath);
+                if (deleted.length)
+                    await fs.unlink(deleted[0].filePath).catch((err) => {
+                        if ((err as { code: string }).code !== "ENOENT")
+                            throw err;
+                    });
             });
         }
         await db
@@ -122,7 +126,9 @@ router.delete(
                     .update(faculty)
                     .set({ signatureFileId: null })
                     .where(eq(faculty.email, email));
-                await fs.unlink(deleted[0].filePath);
+                await fs.unlink(deleted[0].filePath).catch((err) => {
+                    if ((err as { code: string }).code !== "ENOENT") throw err;
+                });
             }
         });
 
