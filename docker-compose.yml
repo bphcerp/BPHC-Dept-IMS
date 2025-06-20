@@ -36,8 +36,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - app-logs:/usr/local/app/server/logs
-      - app-files:/usr/local/app/server/files
+      - server_logs:/usr/local/app/server/logs
+      - server_files:/usr/local/app/server/files
     profiles:
       - "prod"
 
@@ -103,6 +103,8 @@ services:
 
 volumes:
   postgres_db:
+  server_logs:
+  server_files:
 
 networks:
   default:
