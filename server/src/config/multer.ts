@@ -55,31 +55,26 @@ export const validateAndSaveSignatureMiddleware = async (
     if (!req.file) {
         return next();
     }
-    try {
-        const metadata = await sharp(req.file.buffer).metadata();
-        const widthValid = metadata.width === 150;
-        const heightValid = metadata.height === 60;
-        if (!widthValid || !heightValid)
-            logger.debug(
-                `Invalid image dimensions: ${metadata.width}x${metadata.height}. Expected 150x60.`
-            );
-        const filename = crypto.randomBytes(16).toString("hex");
-        const filePath = path.join(FILES_DIR, filename);
-        const saved = await sharp(req.file.buffer)
-            .resize(150, 60, {
-                fit: "fill",
-                kernel: sharp.kernel.lanczos3,
-            })
-            .png({ quality: 100 })
-            .toFile(filePath);
-        const extendedFile = req.file;
-        extendedFile.filename = filename;
-        extendedFile.path = filePath;
-        extendedFile.destination = FILES_DIR;
-        extendedFile.size = saved.size;
-        next();
-    } catch (error) {
-        if (error instanceof HttpError) return next(error);
-        next(new HttpError(HttpCode.BAD_REQUEST, "Invalid image file"));
-    }
+    const metadata = await sharp(req.file.buffer).metadata();
+    const widthValid = metadata.width === 150;
+    const heightValid = metadata.height === 60;
+    if (!widthValid || !heightValid)
+        logger.debug(
+            `Invalid image dimensions: ${metadata.width}x${metadata.height}. Expected 150x60.`
+        );
+    const filename = crypto.randomBytes(16).toString("hex");
+    const filePath = path.join(FILES_DIR, filename);
+    const saved = await sharp(req.file.buffer)
+        .resize(150, 60, {
+            fit: "fill",
+            kernel: sharp.kernel.lanczos3,
+        })
+        .png({ quality: 100 })
+        .toFile(filePath);
+    const extendedFile = req.file;
+    extendedFile.filename = filename;
+    extendedFile.path = filePath;
+    extendedFile.destination = FILES_DIR;
+    extendedFile.size = saved.size;
+    next();
 };
