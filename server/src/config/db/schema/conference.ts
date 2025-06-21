@@ -9,7 +9,7 @@ import {
     boolean,
     jsonb,
 } from "drizzle-orm/pg-core";
-import { fileFields } from "./form.ts";
+import { files } from "./form.ts";
 import { conferenceSchemas } from "lib";
 import { users } from "./admin.ts";
 
@@ -86,6 +86,10 @@ export const conferenceApprovalApplications = pgTable(
         state: conferenceStateEnum("state")
             .notNull()
             .default(conferenceSchemas.states[1]),
+        approvalFormFileId: integer("approval_form_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
+        ),
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()
             .defaultNow(),
@@ -100,35 +104,22 @@ export const conferenceApprovalApplications = pgTable(
         description: text("description").notNull(),
         reimbursements: jsonb("reimbursements").notNull().default([]),
         fundingSplit: jsonb("funding_split").notNull().default([]),
-        letterOfInvitation: integer("letter_of_invitation").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
+        letterOfInvitationFileId: integer(
+            "letter_of_invitation_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        firstPageOfPaperFileId: integer(
+            "first_page_of_paper_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        reviewersCommentsFileId: integer(
+            "reviewers_comments_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        detailsOfEventFileId: integer("details_of_event_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
         ),
-        firstPageOfPaper: integer("first_page_of_paper").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        reviewersComments: integer("reviewers_comments").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        detailsOfEvent: integer("details_of_event").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        otherDocuments: integer("other_documents").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
+        otherDocumentsFileId: integer("other_documents_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
         ),
     }
 );

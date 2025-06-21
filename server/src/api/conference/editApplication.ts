@@ -1,10 +1,10 @@
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { fileFields, files } from "@/config/db/schema/form.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { conferenceSchemas, modules } from "lib";
 import { pdfUpload } from "@/config/multer.ts";
 import multer from "multer";
@@ -13,12 +13,9 @@ import {
     conferenceGlobal,
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
-import { unlink } from "node:fs";
-import assert from "node:assert";
+import { unlink } from "fs/promises";
 
 const router = express.Router();
-
-type FileField = (typeof conferenceSchemas.fileFieldNames)[number];
 
 router.post(
     "/:id",
@@ -37,9 +34,7 @@ router.post(
         )
     ),
     asyncHandler(async (req, res, next) => {
-        const insertedFileIds: Partial<Record<FileField, number>> = {};
-
-        const insertedFileFields: (typeof fileFields.$inferSelect)[] = [];
+        const newFileIds: Partial<Record<string, number | null>> = {};
 
         const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
@@ -66,6 +61,13 @@ router.post(
         const application =
             await db.query.conferenceApprovalApplications.findFirst({
                 where: (app, { eq }) => eq(app.id, id),
+                with: {
+                    detailsOfEvent: true,
+                    firstPageOfPaper: true,
+                    letterOfInvitation: true,
+                    otherDocuments: true,
+                    reviewersComments: true,
+                },
             });
         if (!application) {
             return next(
@@ -93,104 +95,61 @@ router.post(
                 insertedFiles = await tx
                     .insert(files)
                     .values(
-                        Object.entries(req.files).map(([fieldName, files]) => {
-                            const file = files[0];
-                            return {
-                                userEmail: req.user!.email,
-                                filePath: file.path,
-                                originalName: file.originalname,
-                                mimetype: file.mimetype,
-                                size: file.size,
-                                fieldName,
-                                module: modules[0],
-                            };
-                        })
+                        Object.entries(req.files).map(
+                            ([fieldName, uploads]) => {
+                                const file = uploads[0];
+                                return {
+                                    userEmail: req.user!.email,
+                                    filePath: file.path,
+                                    originalName: file.originalname,
+                                    mimetype: file.mimetype,
+                                    size: file.size,
+                                    fieldName,
+                                    module: modules[0],
+                                };
+                            }
+                        )
                     )
                     .returning();
             }
 
-            for (const fileFieldName of conferenceSchemas.fileFieldNames) {
-                const updatedFile = insertedFiles.filter(
-                    (x) => x.fieldName === fileFieldName
-                );
-
-                const fileFieldID = application[fileFieldName];
-                if (fileFieldID === null) {
-                    if (updatedFile.length > 0) {
-                        assert(updatedFile[0].id !== undefined);
-                        // File did not previously exist, so make a fileField
-                        insertedFileFields.push(
-                            (
-                                await tx
-                                    .insert(fileFields)
-                                    .values([
-                                        {
-                                            fileId: updatedFile[0].id,
-                                            module: updatedFile[0].module,
-                                            userEmail: updatedFile[0].userEmail,
-                                            fieldName: updatedFile[0].fieldName,
-                                        },
-                                    ])
-                                    .returning()
-                            )[0]
-                        );
+            const fileIdsToDelete = conferenceSchemas.fileFieldNames.reduce(
+                (acc, fileField) => {
+                    if (!(fileField in req.body) && application[fileField]) {
+                        acc.push(application[fileField].id);
+                        newFileIds[fileField + "FileId"] = null;
                     }
-                    continue;
-                }
+                    return acc;
+                },
+                [] as number[]
+            );
 
-                // Weird drizzle bug where the return type doesn't have the right type
-                const oldFile = (await tx.query.fileFields.findFirst({
-                    where: eq(fileFields.id, fileFieldID),
-                    with: {
-                        file: true,
-                    },
-                })) as typeof fileFields.$inferSelect & {
-                    file: typeof files.$inferSelect;
-                };
-
-                if (updatedFile.length === 0) {
-                    // Delete fileField, and null out the fileField on application
-                    await tx
-                        .update(conferenceApprovalApplications)
-                        .set({
-                            [fileFieldName]: null,
-                        })
-                        .where(eq(conferenceApprovalApplications.id, id));
-                    await tx.delete(files).where(eq(files.id, oldFile.file.id));
-                } else {
-                    // Else, update the file we uploaded and delete the old file entry
-                    await tx
-                        .update(fileFields)
-                        .set({
-                            fileId: updatedFile[0].id,
-                        })
-                        .where(eq(fileFields.id, fileFieldID));
-                    await tx.delete(files).where(eq(files.id, oldFile.file.id));
-                }
-
-                // Delete the old file
-                unlink(oldFile.file.filePath, (err) => {
-                    if (err) throw err;
-                });
-            }
-            insertedFileFields.forEach((field) => {
-                insertedFileIds[field.fieldName! as FileField] = field.id;
+            insertedFiles.forEach((file) => {
+                newFileIds[file.fieldName! + "FileId"] = file.id;
             });
 
             await tx
                 .delete(conferenceMemberReviews)
                 .where(eq(conferenceMemberReviews.applicationId, id));
 
-            return await tx
+            await tx
                 .update(conferenceApprovalApplications)
                 .set({
                     userEmail: req.user!.email,
-                    ...insertedFileIds,
+                    ...newFileIds,
                     ...body,
                     state: isDirect ? "DRC Convener" : "DRC Member",
                 })
                 .where(eq(conferenceApprovalApplications.id, id))
                 .returning();
+
+            const deleted = await tx
+                .delete(files)
+                .where(inArray(files.id, fileIdsToDelete))
+                .returning();
+            for (const file of deleted) {
+                void unlink(file.filePath).catch(() => undefined);
+            }
         });
 
         res.status(200).send();

@@ -3,7 +3,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { authUtils } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
-import { getApplicationById } from "@/lib/conference/index.ts";
+import { getApplicationWithFileUrls } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 
 const router = express.Router();
@@ -29,7 +29,7 @@ router.get(
             req.user!.permissions
         );
 
-        const application = await getApplicationById(id);
+        const application = await getApplicationWithFileUrls(id);
 
         if (!application)
             return next(

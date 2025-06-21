@@ -34,6 +34,7 @@ const serverSchema = z.object({
     BPHCERP_PASSWORD: z.string(),
     SERP_API_KEY: z.string(),
     DEPARTMENT_NAME: z.string(),
+    DEPARTMENT_EMAIL: z.string().email().optional(),
 });
 
 const parsed = serverSchema.parse(process.env);

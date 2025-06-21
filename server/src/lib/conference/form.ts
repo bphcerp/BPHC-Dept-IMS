@@ -1,4 +1,4 @@
-import { getApplicationById } from "./index.ts";
+import { getApplicationWithFilePaths } from "./index.ts";
 import fs from "fs/promises";
 import path from "path";
 import {
@@ -33,10 +33,8 @@ export const generateApplicationFormPdf = async (
     ) as unknown as Promise<Buffer>);
 };
 
-export const generateApplicationFormHtml = async (
-    id: number
-): Promise<string> => {
-    const applicationData = await getApplicationById(id);
+const generateApplicationFormHtml = async (id: number): Promise<string> => {
+    const applicationData = await getApplicationWithFilePaths(id);
     if (!applicationData)
         throw new HttpError(HttpCode.NOT_FOUND, "Application not found");
     if (!(applicationData.state === "Completed"))

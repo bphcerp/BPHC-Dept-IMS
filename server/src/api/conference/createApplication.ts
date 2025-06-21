@@ -3,7 +3,7 @@ import {
     conferenceApprovalApplications,
     conferenceGlobal,
 } from "@/config/db/schema/conference.ts";
-import { fileFields, files } from "@/config/db/schema/form.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -55,7 +55,6 @@ router.post(
             if (Array.isArray(req.files)) throw new Error("Invalid files");
             const insertedFileIds: Partial<Record<FileField, number>> = {};
 
-            let insertedFileFields: (typeof fileFields.$inferSelect)[] = [];
             if (req.files && Object.entries(req.files).length) {
                 const insertedFiles = await tx
                     .insert(files)
@@ -74,19 +73,8 @@ router.post(
                         })
                     )
                     .returning();
-                insertedFileFields = await tx
-                    .insert(fileFields)
-                    .values(
-                        insertedFiles.map((file) => ({
-                            fileId: file.id,
-                            module: file.module,
-                            userEmail: file.userEmail,
-                            fieldName: file.fieldName,
-                        }))
-                    )
-                    .returning();
-                insertedFileFields.forEach((field) => {
-                    insertedFileIds[field.fieldName! as FileField] = field.id;
+                insertedFiles.forEach((file) => {
+                    insertedFileIds[file.fieldName! as FileField] = file.id;
                 });
             }
 

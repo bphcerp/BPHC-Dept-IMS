@@ -13,6 +13,71 @@ import { ViewApplication } from "@/components/conference/ViewApplication";
 import { isEqual } from "date-fns";
 import { toast } from "sonner";
 
+const getChangedFields = (
+  formData: Schema,
+  originalValues: Partial<Schema>
+): Partial<Schema> => {
+  const changedFields: Partial<Schema> = {};
+
+  for (const k in formData) {
+    const key = k as keyof Schema;
+    let currentValue = formData[key];
+    const originalValue = originalValues[key];
+
+    if (key === "reimbursements") {
+      currentValue = formData[key].filter(
+        (item) =>
+          item.key?.trim().length && item.amount && parseFloat(item.amount) > 0
+      );
+    }
+
+    if (key === "fundingSplit") {
+      currentValue = formData[key].filter(
+        (item) =>
+          item.source?.trim().length &&
+          item.amount &&
+          parseFloat(item.amount) > 0
+      );
+    }
+
+    if (currentValue instanceof Date && originalValue instanceof Date) {
+      // Check date equality
+      if (!isEqual(currentValue, originalValue)) {
+        changedFields[key] = currentValue as unknown as undefined;
+      }
+    } else if (
+      currentValue instanceof Array &&
+      originalValue instanceof Array
+    ) {
+      const normalizeArray = (arr: Array<Record<string, string>>) =>
+        arr
+          .map((item) => {
+            if (typeof item === "object" && item !== null) {
+              const keys = Object.keys(item).sort();
+              const normalized: Record<string, string> = {};
+              for (const k of keys) {
+                normalized[k] = item[k];
+              }
+              return normalized;
+            }
+            return item;
+          })
+          .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+
+      if (
+        JSON.stringify(normalizeArray(currentValue)) !==
+        JSON.stringify(normalizeArray(originalValue))
+      ) {
+        changedFields[key] = currentValue as unknown as undefined;
+      }
+    } else if (currentValue !== originalValue) {
+      changedFields[key] = currentValue as undefined;
+    }
+  }
+
+  return changedFields;
+};
+
 const ConferenceEditView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -44,8 +109,12 @@ const ConferenceEditView: React.FC = () => {
       for (const [key, value] of Object.entries(data)) {
         if (value instanceof File) {
           formData.append(key, value);
-        } else if (value) {
-          formData.append(key, value as string);
+        } else if (value instanceof Date) {
+          formData.append(key, value.toISOString());
+        } else if (Array.isArray(value)) {
+          formData.append(key, JSON.stringify(value));
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, value);
         }
       }
       return await api.post(`/conference/editApplication/${id}`, formData, {
@@ -82,7 +151,7 @@ const ConferenceEditView: React.FC = () => {
         dateTo: new Date(data.application.dateTo),
         ...conferenceSchemas.fileFieldNames.reduce(
           (acc, key) => {
-            acc[key] = data.application[key]?.file.filePath;
+            acc[key] = data.application[key]?.url;
             return acc;
           },
           {} as Record<
@@ -91,26 +160,23 @@ const ConferenceEditView: React.FC = () => {
           >
         ),
       };
-      form.reset(_resetValues);
-      setResetValues(_resetValues);
+
+      const schemaKeys = Object.keys(schema.shape) as (keyof Schema)[];
+      const filteredResetValues = schemaKeys.reduce((acc, key) => {
+        acc[key] = _resetValues[key] as never;
+        return acc;
+      }, {} as Partial<Schema>);
+
+      form.reset(filteredResetValues);
+      setResetValues(filteredResetValues);
     }
   }, [data, form, resetValues]);
 
   const onSubmit: SubmitHandler<Schema> = (formData) => {
     if (!resetValues) return;
-    const changedFields: Partial<Schema> = {};
-    // Compare each field in formData with the initial values
-    for (const k in formData) {
-      const key = k as keyof Schema;
-      if (formData[key] instanceof Date && resetValues[key] instanceof Date) {
-        // Check date equality
-        if (!isEqual(formData[key], resetValues[key])) {
-          changedFields[key] = formData[key] as unknown as undefined;
-        }
-      } else if (formData[key] !== resetValues[key]) {
-        changedFields[key] = formData[key] as undefined;
-      }
-    }
+
+    const changedFields = getChangedFields(formData, resetValues);
+
     if (Object.keys(changedFields).length === 0)
       return toast.error("No changes made to the application");
 
@@ -149,6 +215,7 @@ const ConferenceEditView: React.FC = () => {
             isLoading={false}
             submitHandler={onSubmit}
             originalValues={resetValues}
+            getChangedFields={getChangedFields}
           />
         </>
       ) : (

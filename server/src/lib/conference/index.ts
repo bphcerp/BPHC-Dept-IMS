@@ -1,52 +1,30 @@
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { conferenceSchemas } from "lib";
-import type * as FormTables from "@/config/db/schema/form.ts";
 
-const withFile = {
-    with: {
-        file: true,
-    },
-} as const;
-
-export const getApplicationById = async (id: number) => {
+export const getApplicationWithFilePaths = async (id: number) => {
     const application = await db.query.conferenceApprovalApplications.findFirst(
         {
             where: (app, { eq }) => eq(app.id, id),
-            columns: {
-                letterOfInvitation: false,
-                firstPageOfPaper: false,
-                reviewersComments: false,
-                detailsOfEvent: false,
-                otherDocuments: false,
-            },
             with: {
                 user: true,
-                letterOfInvitation: withFile,
-                firstPageOfPaper: withFile,
-                reviewersComments: withFile,
-                detailsOfEvent: withFile,
-                otherDocuments: withFile,
+                letterOfInvitation: true,
+                firstPageOfPaper: true,
+                reviewersComments: true,
+                detailsOfEvent: true,
+                otherDocuments: true,
             },
         }
     );
     if (!application) return undefined;
 
-    for (const fileFieldName of conferenceSchemas.fileFieldNames) {
-        const fileField = application[fileFieldName];
-        if (!fileField) continue;
-        // Weird bug in drizzle where the joined values doesn't have the correct types
-        const fileID = fileField.fileId;
-        (
-            application[
-                fileFieldName
-            ] as typeof FormTables.fileFields.$inferSelect & {
-                file: typeof FormTables.files.$inferSelect;
-            }
-        ).file.filePath = environment.SERVER_URL + "/f/" + fileID;
-    }
     return {
         ...application,
+        modeOfEvent:
+            application.modeOfEvent as (typeof conferenceSchemas.modesOfEvent)[number],
+        approvalForm: application.approvalFormFileId
+            ? environment.SERVER_URL + "/f/" + application.approvalFormFileId
+            : undefined,
         reimbursements: application.reimbursements as Array<{
             key: string;
             amount: string;
@@ -58,4 +36,36 @@ export const getApplicationById = async (id: number) => {
     };
 };
 
-export type Application = Awaited<ReturnType<typeof getApplicationById>>;
+export const getApplicationWithFileUrls = async (id: number) => {
+    const application = await getApplicationWithFilePaths(id);
+    if (!application) return undefined;
+
+    const fileUrls = Object.fromEntries(
+        conferenceSchemas.fileFieldNames.map((fieldName) => [
+            fieldName,
+            application[fieldName]
+                ? ({
+                      fileName: application[fieldName].originalName ?? "file",
+                      url:
+                          environment.SERVER_URL +
+                          "/f/" +
+                          application[fieldName].id,
+                  } satisfies conferenceSchemas.File)
+                : undefined,
+        ])
+    ) as Record<
+        (typeof conferenceSchemas.fileFieldNames)[number],
+        conferenceSchemas.File | undefined
+    >;
+
+    return {
+        ...application,
+        ...fileUrls,
+    } satisfies conferenceSchemas.ViewApplicationResponse["application"];
+};
+
+export const getApplicationById = async (id: number) => {
+    return await db.query.conferenceApprovalApplications.findFirst({
+        where: (app, { eq }) => eq(app.id, id),
+    });
+};

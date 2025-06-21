@@ -211,6 +211,13 @@
       "when": 1750366808779,
       "tag": "0029_jazzy_roland_deschain",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1750511461752,
+      "tag": "0030_pale_may_parker",
+      "breakpoints": true
     }
   ]
 }
