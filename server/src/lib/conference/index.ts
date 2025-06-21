@@ -22,6 +22,9 @@ export const getApplicationWithFilePaths = async (id: number) => {
         ...application,
         modeOfEvent:
             application.modeOfEvent as (typeof conferenceSchemas.modesOfEvent)[number],
+        approvalForm: application.approvalFormFileId
+            ? environment.SERVER_URL + "/f/" + application.approvalFormFileId
+            : undefined,
         reimbursements: application.reimbursements as Array<{
             key: string;
             amount: string;

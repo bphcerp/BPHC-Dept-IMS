@@ -86,6 +86,7 @@ export const ViewApplication = ({
       <ProgressStatus
         currentStage={data.application.state}
         currentStatus={isPending ? "pending" : "accepted"}
+        approvalForm={data.application.approvalForm}
       />
       {conferenceSchemas.textFieldNames.map((k) =>
         data.application[k] && !["dateFrom", "dateTo"].includes(k) ? (

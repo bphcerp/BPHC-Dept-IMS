@@ -211,6 +211,7 @@ export type ViewApplicationResponse = {
         createdAt: Date | string;
         userEmail: string;
         state: (typeof states)[number];
+        approvalForm?: string;
         purpose: string;
         contentTitle: string;
         eventName: string;
