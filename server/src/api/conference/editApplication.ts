@@ -115,7 +115,6 @@ router.post(
 
             const fileIdsToDelete = conferenceSchemas.fileFieldNames.reduce(
                 (acc, fileField) => {
-                    console.log(fileField, req.body);
                     if (!(fileField in req.body) && application[fileField]) {
                         acc.push(application[fileField].id);
                         newFileIds[fileField + "FileId"] = null;
