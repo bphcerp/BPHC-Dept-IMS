@@ -16,11 +16,11 @@ interface ApplicationData {
     description: string;
     fundingSplit: Array<{ source: string; amount: string }>;
     reimbursements: Array<{ key: string; amount: string }>;
-    letterOfInvitation?: object | null;
-    firstPageOfPaper?: object | null;
-    reviewersComments?: object | null;
-    detailsOfEvent?: object | null;
-    otherDocuments?: object | null;
+    letterOfInvitation: object | null;
+    firstPageOfPaper: object | null;
+    reviewersComments: object | null;
+    detailsOfEvent: object | null;
+    otherDocuments: object | null;
     drcReviews: Array<boolean>;
     logoBase64?: string;
     drcConvenerSignatureBase64?: string;

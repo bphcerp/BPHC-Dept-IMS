@@ -1,6 +1,5 @@
 import { Field } from "multer";
 import z from "zod";
-import { fileFieldResponse } from "./Form.ts";
 
 export const states = [
     "Faculty",
@@ -10,7 +9,7 @@ export const states = [
     "Completed",
 ] as const;
 
-const modesOfEvent = ["online", "offline"] as const;
+export const modesOfEvent = ["online", "offline"] as const;
 
 export const upsertApplicationClientSchema = z.object({
     purpose: z.string().nonempty(),
@@ -40,6 +39,7 @@ export const upsertApplicationClientSchema = z.object({
                 z.object({
                     key: z
                         .string()
+                        .trim()
                         .min(1, "Field name is required")
                         .max(50, "Field name is too long"),
                     amount: z
@@ -79,6 +79,7 @@ export const upsertApplicationClientSchema = z.object({
                 z.object({
                     source: z
                         .string()
+                        .trim()
                         .min(1, "Funding source is required")
                         .max(100, "Funding source name is too long"),
                     amount: z
@@ -199,18 +200,23 @@ export type pendingApplicationsResponse = {
     isDirect?: boolean;
 };
 
+export type File = {
+    fileName: string;
+    url: string;
+};
+
 export type ViewApplicationResponse = {
     application: {
         id: number;
-        createdAt: string;
+        createdAt: Date | string;
         userEmail: string;
         state: (typeof states)[number];
         purpose: string;
         contentTitle: string;
         eventName: string;
         venue: string;
-        dateFrom: string;
-        dateTo: string;
+        dateFrom: Date | string;
+        dateTo: Date | string;
         organizedBy: string;
         modeOfEvent: (typeof modesOfEvent)[number];
         description: string;
@@ -222,11 +228,11 @@ export type ViewApplicationResponse = {
             source: string;
             amount: string;
         }[];
-        letterOfInvitation?: fileFieldResponse;
-        firstPageOfPaper?: fileFieldResponse;
-        reviewersComments?: fileFieldResponse;
-        detailsOfEvent?: fileFieldResponse;
-        otherDocuments?: fileFieldResponse;
+        letterOfInvitation?: File;
+        firstPageOfPaper?: File;
+        reviewersComments?: File;
+        detailsOfEvent?: File;
+        otherDocuments?: File;
     };
     reviews: {
         status: boolean;

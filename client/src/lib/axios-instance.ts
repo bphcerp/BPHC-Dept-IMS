@@ -54,9 +54,9 @@ api.interceptors.response.use(
           originalRequest.url !== REFRESH_ENDPOINT &&
           originalRequest.url !== LOGIN_ENDPOINT
         ) {
+          originalRequest._retried = true;
           if (!api.isRefreshing) {
             api.isRefreshing = true;
-            originalRequest._retried = true;
             try {
               const response = await axios.post<{ token: string }>(
                 BASE_API_URL + REFRESH_ENDPOINT,

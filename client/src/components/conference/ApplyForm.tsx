@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { conferenceSchemas } from "lib";
 import { CalendarIcon, Trash2, XIcon } from "lucide-react";
-import { format, isEqual } from "date-fns";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, UseFormReturn, useFieldArray } from "react-hook-form";
 import { FileUploader } from "@/components/ui/file-uploader";
@@ -82,11 +82,16 @@ export const ApplyForm = ({
   isLoading,
   form,
   originalValues,
+  getChangedFields,
 }: {
   submitHandler: SubmitHandler<Schema>;
   isLoading: boolean;
   form: UseFormReturn<Schema>;
   originalValues?: Partial<Schema>;
+  getChangedFields?: (
+    formData: Schema,
+    originalValues: Partial<Schema>
+  ) => Partial<Schema>;
 }) => {
   const dateTo = form.watch("dateTo");
   const dateFrom = form.watch("dateFrom");
@@ -171,6 +176,13 @@ export const ApplyForm = ({
     }
   }, [fields.length, form]);
 
+  const isFieldChanged = (fieldName: keyof Schema): boolean => {
+    if (!originalValues || !getChangedFields) return false;
+    const currentFormData = form.getValues();
+    const changedFields = getChangedFields(currentFormData, originalValues);
+    return fieldName in changedFields;
+  };
+
   return (
     <Form {...form}>
       <form
@@ -190,12 +202,7 @@ export const ApplyForm = ({
                   <FormItem>
                     <FormLabel className="font-semibold">
                       {conferenceSchemas.fieldsToFrontend[fieldName]}
-                      <ChangedIndicator
-                        isChanged={
-                          originalValues &&
-                          originalValues[fieldName] !== field.value
-                        }
-                      />
+                      <ChangedIndicator isChanged={isFieldChanged(fieldName)} />
                     </FormLabel>
                     {fieldName !== "modeOfEvent" && fieldName !== "purpose" ? (
                       <FormControl>
@@ -252,9 +259,7 @@ export const ApplyForm = ({
                   Date Range
                   <ChangedIndicator
                     isChanged={
-                      originalValues &&
-                      (!isEqual(originalValues.dateFrom ?? "", dateFrom) ||
-                        !isEqual(originalValues.dateTo ?? "", dateTo))
+                      isFieldChanged("dateFrom") || isFieldChanged("dateTo")
                     }
                   />
                 </FormLabel>
@@ -312,6 +317,7 @@ export const ApplyForm = ({
             Reimbursement expectations (Indicate Approximate Amounts for each):
             <br />
             (Final Approval will be by Accounts)
+            <ChangedIndicator isChanged={isFieldChanged("reimbursements")} />
           </p>
           <div className="flex items-center gap-4">
             <div className="flex flex-1 flex-col gap-4">
@@ -416,6 +422,9 @@ export const ApplyForm = ({
                     <div className="mt-2 w-full min-w-[250px] space-y-2 rounded-lg border p-2">
                       <div className="text-sm font-medium">
                         Funding Breakdown:
+                        <ChangedIndicator
+                          isChanged={isFieldChanged("fundingSplit")}
+                        />
                       </div>
                       {fundingSplit.map((split, index) => (
                         <div
@@ -446,12 +455,7 @@ export const ApplyForm = ({
                   <FormItem>
                     <FormLabel className="font-semibold">
                       {conferenceSchemas.fieldsToFrontend[fieldName]}
-                      <ChangedIndicator
-                        isChanged={
-                          originalValues &&
-                          originalValues[fieldName] !== field.value
-                        }
-                      />
+                      <ChangedIndicator isChanged={isFieldChanged(fieldName)} />
                     </FormLabel>
                     <FormControl>
                       <>

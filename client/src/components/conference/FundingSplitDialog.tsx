@@ -300,7 +300,14 @@ export function FundingSplitDialog({
                         step="0.01"
                         max={totalAmount}
                         onChange={(e) => {
-                          const value = e.target.value;
+                          let value = e.target.value;
+                          const decimalIndex = value.indexOf(".");
+                          if (
+                            decimalIndex !== -1 &&
+                            value.length > decimalIndex + 3
+                          ) {
+                            value = value.substring(0, decimalIndex + 3);
+                          }
                           if (parseFloat(value || "0") <= totalAmount + 0.001) {
                             updateFundingSource(index, "amount", value);
                           }

@@ -8,10 +8,7 @@ import { Separator } from "../ui/separator";
 interface FieldProps {
   label: string;
   value?: string | number;
-  file?: {
-    originalName: string;
-    filePath: string;
-  };
+  file?: conferenceSchemas.File;
 }
 
 const FieldDisplay = ({ label, value, file }: FieldProps) => {
@@ -30,7 +27,7 @@ const FieldDisplay = ({ label, value, file }: FieldProps) => {
           )}
           onClick={() => {
             if (file) {
-              window.open(file.filePath, "_blank");
+              window.open(file.url, "_blank");
             }
           }}
         >
@@ -40,7 +37,7 @@ const FieldDisplay = ({ label, value, file }: FieldProps) => {
             label as (typeof conferenceSchemas.dateFieldNames)[number]
           )
             ? new Date(value).toLocaleDateString()
-            : value || (file ? file.originalName : "N/A")) ?? "N/A"}
+            : value || (file ? file.fileName : "N/A")) ?? "N/A"}
         </div>
       </div>
     </div>
@@ -137,7 +134,7 @@ export const ViewApplication = ({
       <div>Enclosures</div>
       {conferenceSchemas.fileFieldNames.map((k) =>
         data.application[k] ? (
-          <FieldDisplay key={k} label={k} file={data.application[k].file} />
+          <FieldDisplay key={k} label={k} file={data.application[k]} />
         ) : null
       )}
       {!conferenceSchemas.fileFieldNames.filter((k) => data.application[k])
