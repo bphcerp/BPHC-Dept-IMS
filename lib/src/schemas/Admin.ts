@@ -42,6 +42,7 @@ export type EditRolesBody = z.infer<typeof editRolesBodySchema>;
 export const inviteMemberBodySchema = z.object({
     email: z.string().email(),
     type: z.enum(userTypes),
+    sendEmail: z.boolean().default(false),
 });
 export type InviteMemberBody = z.infer<typeof inviteMemberBodySchema>;
 

@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { adminSchemas } from "lib";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const InviteDialog = () => {
   const [open, setOpen] = useState(false);
@@ -40,6 +41,8 @@ const InviteDialog = () => {
     resolver: zodResolver(adminSchemas.inviteMemberBodySchema),
     defaultValues: {
       email: "",
+      type: "faculty",
+      sendEmail: false,
     },
   });
 
@@ -125,6 +128,24 @@ const InviteDialog = () => {
                     </Select>
                   </div>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="sendEmail"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Send email</FormLabel>
+                  </div>
                 </FormItem>
               )}
             />
