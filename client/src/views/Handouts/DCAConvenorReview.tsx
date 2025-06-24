@@ -80,7 +80,7 @@ const DCAConvenorReview: React.FC = () => {
     );
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-10">
+    <div className="container mx-auto px-6 py-10">
       <Button
         variant={"ghost"}
         onClick={goBack}
@@ -92,10 +92,24 @@ const DCAConvenorReview: React.FC = () => {
       <h1 className="mb-4 text-center text-2xl font-bold">Handout</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
-      </p>{" "}
-      <p className="mb-4 text-center text-muted-foreground">
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Code :</span> {data.courseCode}
-      </p>{" "}
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Mid Semester Weightage : </span>
+        {data.midSem}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Compre Weightage :</span> {data.compre}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Open Book :</span> {data.openBook}%
+      </p>
+      <p className="mb-4 text-center text-muted-foreground">
+        <span className="font-bold">No. of Other Evaluatives :</span>{" "}
+        {data.otherEvals}
+      </p>
       <div className="flex space-x-4">
         <iframe
           src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}

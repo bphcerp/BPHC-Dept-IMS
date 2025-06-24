@@ -33,6 +33,10 @@ export interface Handout {
   textBookPrescribed: boolean;
   lecturewisePlanLearningObjective: boolean;
   lecturewisePlanCourseTopics: boolean;
+  openBook: number;
+  midSem: number;
+  compre: number;
+  otherEvals: number;
   numberOfLP: boolean;
   evaluationScheme: boolean;
   handoutFilePath: {
@@ -170,7 +174,7 @@ const DCAMemberReviewForm: React.FC = () => {
     );
 
   return (
-    <div className="container mx-auto max-w-3xl px-2 py-10">
+    <div className="container mx-auto px-6 py-10">
       <div className="mb-4 flex justify-between">
         <Button
           variant={"ghost"}
@@ -195,16 +199,30 @@ const DCAMemberReviewForm: React.FC = () => {
       <h1 className="mb-4 text-center text-2xl font-bold">Handout Review</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
-      </p>{" "}
-      <p className="mb-4 text-center text-muted-foreground">
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Code :</span> {data.courseCode}
-      </p>{" "}
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Mid Semester Weightage : </span>
+        {data.midSem}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Compre Weightage :</span> {data.compre}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Open Book :</span> {data.openBook}%
+      </p>
+      <p className="mb-4 text-center text-muted-foreground">
+        <span className="font-bold">No. of Other Evaluatives :</span>{" "}
+        {data.otherEvals}
+      </p>
       <p className="mb-6 text-center text-muted-foreground">
         {data.lecturewisePlanCourseTopics == null
           ? "Review the handout and approve or reject each section."
           : "You have reviewed this handout"}
       </p>
-      <div className="flex space-x-4">
+      <div className="flex space-x-1">
         <iframe
           src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}
           className="my-2 h-[90vh] max-h-[550px] w-full self-center"

@@ -45,7 +45,7 @@ const FacultyHandout: React.FC = () => {
     navigate("/handout/faculty");
   };
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-10">
+    <div className="container mx-auto px-4 py-10">
       <Button
         variant={"ghost"}
         onClick={goBack}
@@ -57,10 +57,24 @@ const FacultyHandout: React.FC = () => {
       <h1 className="mb-4 text-center text-2xl font-bold">Handout</h1>
       <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Name :</span> {data.courseName}
-      </p>{" "}
-      <p className="mb-4 text-center text-muted-foreground">
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
         <span className="font-bold">Course Code :</span> {data.courseCode}
-      </p>{" "}
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Mid Semester Weightage : </span>
+        {data.midSem}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Compre Weightage :</span> {data.compre}%
+      </p>
+      <p className="mb-2 text-center text-muted-foreground">
+        <span className="font-bold">Open Book :</span> {data.openBook}%
+      </p>
+      <p className="mb-4 text-center text-muted-foreground">
+        <span className="font-bold">No. of Other Evaluatives :</span>{" "}
+        {data.otherEvals}
+      </p>
       <div className="flex space-x-4">
         {data.handoutFilePath != null ? (
           <iframe
@@ -68,9 +82,9 @@ const FacultyHandout: React.FC = () => {
             className="my-2 h-[90vh] max-h-[550px] w-full self-center"
           ></iframe>
         ) : (
-          <p className="grid h-full place-items-center font-bold text-muted-foreground">
+          <div className="grid h-full place-items-center font-bold text-muted-foreground">
             <span>Handout Yet To be Submitted</span>
-          </p>
+          </div>
         )}
 
         <div className="w-full scale-90 space-y-4">
