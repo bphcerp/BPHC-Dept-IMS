@@ -50,6 +50,7 @@ router.post(
                         reviewerEmail: handout.reviewerEmail,
                         category: handout.category,
                         previousSubmissionId: Number(parsed.id),
+                        deadline: handout.deadline,
                         submittedOn: new Date(),
                     });
                     if (env.PROD) {
