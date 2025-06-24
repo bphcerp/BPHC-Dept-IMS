@@ -110,3 +110,18 @@ export const deadlineBodySchema = z.object({
 });
 
 export type DeadlineBody = z.infer<typeof deadlineBodySchema>;
+
+export const handoutUploadBodySchema = z.object({
+    midSem: z.coerce.number().refine((val) => val >= 20 && val <= 35, {
+        message: "Midsem weightage should be between 20-35%",
+    }),
+    compre: z.coerce.number().refine((val) => val >= 30 && val <= 45, {
+        message: "Compre weightage should be between 30-45%",
+    }),
+    openBook: z.coerce.number().refine((val) => val >= 20, {
+        message: "Open book components should be >= 20%",
+    }),
+    otherEvals: z.coerce.number(),
+});
+
+export type handoutUploadBody = z.infer<typeof handoutUploadBodySchema>;

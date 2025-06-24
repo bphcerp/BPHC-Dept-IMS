@@ -11,7 +11,7 @@ import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { Input } from "../ui/input";
-
+import { Label } from "../ui/label";
 interface UploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,11 +30,19 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [uploading] = useState<boolean>(false);
   const queryClient = useQueryClient();
+  const [openBook, setOpenBook] = useState<string>("");
+  const [midSem, setMidSem] = useState<string>("");
+  const [compre, setCompre] = useState<string>("");
+  const [otherEvals, setOtherEvals] = useState<string>("");
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("handout", file);
+      formData.append("openBook", openBook);
+      formData.append("midSem", midSem);
+      formData.append("compre", compre);
+      formData.append("otherEvals", otherEvals);
       await api.post(`/handout/faculty/submit?id=${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -84,7 +92,6 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
       toast.error("Invalid file type. Only PDF type files are allowed.");
       return;
     }
-
     uploadMutation.mutate(file);
   };
 
@@ -99,7 +106,7 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
 
         <form
           onSubmit={handleSubmit}
-          className="flex w-full max-w-md flex-col space-y-6"
+          className="flex w-full max-w-md flex-col space-y-4"
         >
           <Input
             id="file-upload"
@@ -108,6 +115,46 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
             onChange={handleFileChange}
             className="mt-4 file:cursor-pointer file:rounded-md file:border file:border-black file:bg-primary file:text-white file:hover:bg-blue-800"
           />
+          <div className="flex items-center justify-center px-12">
+            <Label htmlFor="openBook" className="w-full">
+              Open Book {"(in %)"}
+            </Label>
+            <Input
+              id="openBook"
+              type="text"
+              onChange={(e) => setOpenBook(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center justify-center px-12">
+            <Label htmlFor="midSem" className="w-full">
+              Mid Semester {"(in %)"}
+            </Label>
+            <Input
+              id="midSem"
+              type="text"
+              onChange={(e) => setMidSem(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center justify-center px-12">
+            <Label htmlFor="compre" className="w-full">
+              Compre {"(in %)"}
+            </Label>
+            <Input
+              id="compre"
+              type="text"
+              onChange={(e) => setCompre(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center justify-center px-12">
+            <Label htmlFor="others" className="w-full">
+              Other Evaluation Components {"(in no.)"}
+            </Label>
+            <Input
+              id="others"
+              type="text"
+              onChange={(e) => setOtherEvals(e.target.value)}
+            />
+          </div>
           <Button type="submit" disabled={uploading} className="self-end">
             {uploading ? "Processing..." : "Submit"}
           </Button>
