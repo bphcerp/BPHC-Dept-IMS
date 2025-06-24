@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { useState } from "react";
+import { useState,useMemo} from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
 
 type CoAuthor = {
   authorId: string;
@@ -67,24 +68,29 @@ const AllPublications = () => {
   }
 
   // Group publications by type
-  const groupedPublications =
-    publicationsData?.publications?.reduce(
-      (acc, pub) => {
-        const type = pub.type || "Other";
-        if (!acc[type]) {
-          acc[type] = [];
-        }
-        acc[type].push(pub);
-        return acc;
-      },
-      {} as Record<string, Publication[]>
-    ) || {};
+  // Group publications by type and sort them
+  const groupedPublications = useMemo(() => {
+    const groups =
+      publicationsData?.publications?.reduce(
+        (acc, pub) => {
+          const type = pub.type || "Other";
+          if (!acc[type]) {
+            acc[type] = [];
+          }
+          acc[type].push(pub);
+          return acc;
+        },
+        {} as Record<string, Publication[]>
+      ) || {};
 
-  Object.keys(groupedPublications).forEach((type) => {
-    groupedPublications[type].sort((a, b) => Number(b.year) - Number(a.year));
-  });
+    Object.keys(groups).forEach((type) => {
+      groups[type].sort((a, b) => Number(b.year) - Number(a.year));
+    });
 
-  const sortedTypes = Object.keys(groupedPublications).sort();
+    return groups;
+  }, [publicationsData]);
+
+  const sortedTypes = useMemo(() => Object.keys(groupedPublications).sort(), [groupedPublications]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-start gap-6 p-8">
@@ -139,10 +145,7 @@ const AllPublications = () => {
                           key={pub.citationId}
                         >
                           <span className="font-medium">[{globalIndex}]</span>{" "}
-                          {pub.authorNames
-                            .replace(/,\s*\.\.\.\s*$/, "")
-                            .replace(/\.\.\.\s*$/, "")
-                            .trim()}
+                          {pub.authorNames.replace(/,?\s*\.\.\.$/, "").trim()}
                           {", "} &quot;{pub.title}
                           ,&quot; <em>{pub.journal}</em>
                           {pub.volume && `, vol. ${pub.volume}`}

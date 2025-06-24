@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { useState } from "react";
+import { useState,useMemo } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -137,32 +137,38 @@ const EditPublications = () => {
     });
   };
 
-  // Group publications by type
-  const groupedPublications = publicationsData?.publications
-    ? publicationsData.publications.reduce(
-        (groups, publication) => {
-          const type = publication.type || "Uncategorized";
-          if (!groups[type]) {
-            groups[type] = [];
-          }
-          groups[type].push(publication);
-          return groups;
-        },
-        {} as Record<string, Publication[]>
-      )
-    : {};
+  const sortedGroupedPublications = useMemo(() => {
+    if (!publicationsData?.publications) return {};
 
-  const sortedGroupedPublications = Object.keys(groupedPublications)
-    .sort()
-    .reduce(
-      (sorted, type) => {
-        sorted[type] = groupedPublications[type].sort(
-          (a, b) => Number(b.year) - Number(a.year)
-        );
-        return sorted;
+    // Group publications by type
+    const grouped = publicationsData.publications.reduce(
+      (groups, publication) => {
+        const type = publication.type || "Uncategorized";
+        if (!groups[type]) {
+          groups[type] = [];
+        }
+        groups[type].push(publication);
+        return groups;
       },
       {} as Record<string, Publication[]>
     );
+
+    // Sort groups and publications within each group
+    const sorted = Object.keys(grouped)
+      .sort()
+      .reduce(
+        (acc, type) => {
+          acc[type] = grouped[type].sort(
+            (a, b) => Number(b.year) - Number(a.year)
+          );
+          return acc;
+        },
+        {} as Record<string, Publication[]>
+      );
+
+    return sorted;
+  }, [publicationsData]);
+
 
   const renderPublicationsTable = (
     publications: Publication[],

@@ -386,8 +386,7 @@ const PublicationsView = () => {
                     <p className="mb-2 text-justify text-base">
                       [{index + 1}]{" "}
                       {pub.authorNames
-                        .replace(/,\s*\.\.\.\s*$/, "")
-                        .replace(/\.\.\.\s*$/, "")
+                        .replace(/,?\s*\.\.\.$/, "")
                         .trim()}
                       {", "} &quot;{pub.title}
                       ,&quot; <em>{pub.journal}</em>

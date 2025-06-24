@@ -36,8 +36,10 @@ router.post(
                 `• Citation ID: ${parsed.citationId}`,
                 `• Author ID: ${parsed.authorId}`,
                 `• Status: ${parsed.status}`,
-                `• Comments: ${parsed.comments}`,   
-            ].join('\n');
+                parsed.comments
+                    ? `• Comments: ${parsed.comments}`
+                    : `• Comments: N/A`,
+            ].join("\n");
             if (users.length > 0){
                 await createNotifications(
                     users.map((user) => ({
@@ -47,7 +49,7 @@ router.post(
                         userEmail: user.email,
                     }))
                 );
-            };
+            }
         }
 
         res.status(200).json({
