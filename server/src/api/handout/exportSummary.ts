@@ -2,6 +2,22 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
+import JSZip from "jszip";
+import ExcelJS from "exceljs";
+
+function generateExcel(
+    headers: string[],
+    data: Record<string, string | number | undefined>[]
+) {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Sheet1");
+    worksheet.addRow(headers);
+    for (const row of data) {
+        const rowData = headers.map((h) => row[h]);
+        worksheet.addRow(rowData);
+    }
+    return workbook;
+}
 
 const router = express.Router();
 
@@ -21,7 +37,7 @@ router.get(
             "Number of Lectures/Practical are adequate as per the Units of the Course",
             "Evaluation Scheme is as per academic regulations",
         ];
-        const hdHandouts = (
+        const hdHandoutsData = (
             await db.query.courseHandoutRequests.findMany({
                 where: (handout, { eq, and }) =>
                     and(
@@ -60,7 +76,7 @@ router.get(
             };
         });
 
-        const fdHandouts = (
+        const fdHandoutsData = (
             await db.query.courseHandoutRequests.findMany({
                 where: (handout, { eq, and }) =>
                     and(
@@ -99,12 +115,35 @@ router.get(
             };
         });
 
-        res.status(200).json({
-            success: true,
-            headers,
-            hdHandouts,
-            fdHandouts,
-        });
+        const sanitizeData = (
+            data: Record<string, string | number | null | undefined>[]
+        ): Record<string, string | number | undefined>[] =>
+            data.map((row) => {
+                const sanitized: Record<string, string | number | undefined> = {};
+                for (const key in row) {
+                    sanitized[key] = row[key] === null ? undefined : row[key];
+                }
+                return sanitized;
+            });
+
+        const hdWorkbook = generateExcel(headers, sanitizeData(hdHandoutsData));
+        const fdWorkbook = generateExcel(headers, sanitizeData(fdHandoutsData));
+
+        const hdBuffer = await hdWorkbook.xlsx.writeBuffer();
+        const fdBuffer = await fdWorkbook.xlsx.writeBuffer();
+
+        const zip = new JSZip();
+        zip.file("hd_handout_summary.xlsx", hdBuffer);
+        zip.file("fd_handout_summary.xlsx", fdBuffer);
+
+        const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+
+        res.setHeader("Content-Type", "application/zip");
+        res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=handout_summary.zip"
+        );
+        res.status(200).send(zipBuffer);
     })
 );
 
