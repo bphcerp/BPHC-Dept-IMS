@@ -9,11 +9,10 @@ import {
 } from "@/components/ui/table";
 import { FilterBar } from "@/components/handouts/filterBar";
 import { STATUS_COLORS } from "@/components/handouts/types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { generateExcel } from "@/lib/excel";
 
 interface HandoutSummary {
   id: string;
@@ -32,11 +31,12 @@ interface HandoutSummary {
   evaluationScheme: boolean;
 }
 
-interface ExcelResponse {
-  hdHandouts: Record<string, string>[];
-  fdHandouts: Record<string, string>[];
-  headers: string[];
-}
+// No longer need ExcelResponse as the server handles ZIP creation
+// interface ExcelResponse {
+//   hdHandouts: Record<string, string>[];
+//   fdHandouts: Record<string, string>[];
+//   headers: string[];
+// }
 
 const DCAConvenerSummary: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,45 +97,31 @@ const DCAConvenerSummary: React.FC = () => {
     setFilteredData(results);
   }, [handouts, searchQuery, activeCategoryFilters, activeStatusFilters]);
 
-  const { data: summary, refetch } = useQuery<ExcelResponse>({
-    queryKey: ["handout_export"],
-    queryFn: async () => {
-      const response = await api.get("/handout/dcaconvenor/exportSummary");
-      return response.data;
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.get("/handout/dcaconvenor/exportSummary", {
+        responseType: "blob",
+      });
+      return response.data as Blob;
     },
-    enabled: false,
+    onSuccess: (data) => {
+      const blob = new Blob([data], { type: "application/zip" });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "handout_summary.zip";
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export successful!");
+    },
+    onError: (error) => {
+      console.error("Export failed:", error);
+      toast.error("Export failed. Please try again.");
+    },
   });
 
-  const handleExportHD = async () => {
-    await refetch();
-    if (summary) {
-      const hd_workbook = generateExcel(summary.headers, summary.hdHandouts);
-      const hd_buffer = await hd_workbook.xlsx.writeBuffer();
-      const hd_blob = new Blob([hd_buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const hd_url = window.URL.createObjectURL(hd_blob);
-      const hd_anchor = document.createElement("a");
-      hd_anchor.href = hd_url;
-      hd_anchor.download = "hd_handout_summary.xlsx";
-      hd_anchor.click();
-    }
-  };
-
-  const handleExportFD = async () => {
-    await refetch();
-    if (summary) {
-      const fd_workbook = generateExcel(summary.headers, summary.fdHandouts);
-      const fd_buffer = await fd_workbook.xlsx.writeBuffer();
-      const fd_blob = new Blob([fd_buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const fd_url = window.URL.createObjectURL(fd_blob);
-      const fd_anchor = document.createElement("a");
-      fd_anchor.href = fd_url;
-      fd_anchor.download = "fd_handout_summary.xlsx";
-      fd_anchor.click();
-    }
+  const handleExportZip = () => {
+    exportMutation.mutate();
   };
 
   if (isLoading) {
@@ -167,20 +153,10 @@ const DCAConvenerSummary: React.FC = () => {
               <Button
                 variant="outline"
                 className="hover:bg-primary hover:text-white"
-                onClick={() => {
-                  void handleExportHD();
-                }}
+                onClick={handleExportZip}
+                disabled={exportMutation.isLoading}
               >
-                Export HD
-              </Button>
-              <Button
-                variant="outline"
-                className="hover:bg-primary hover:text-white"
-                onClick={() => {
-                  void handleExportFD();
-                }}
-              >
-                Export FD
+                {exportMutation.isLoading ? "Exporting..." : "Export All Handouts (ZIP)"}
               </Button>
             </div>
           </div>
