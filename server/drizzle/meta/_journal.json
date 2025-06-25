@@ -218,6 +218,13 @@
       "when": 1750511461752,
       "tag": "0030_pale_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1750826431367,
+      "tag": "0031_lowly_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }
