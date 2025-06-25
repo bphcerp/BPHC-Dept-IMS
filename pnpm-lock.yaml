@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   drizzle-orm@0.40.0:
-    hash: 3oqolxumisrbar4ooxdrjwtj4a
+    hash: edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f
     path: patches/drizzle-orm@0.40.0.patch
 
 importers:
@@ -301,7 +301,7 @@ importers:
         version: 16.4.7
       drizzle-orm:
         specifier: ^0.40.0
-        version: 0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
+        version: 0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
@@ -9372,7 +9372,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
+  drizzle-orm@0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
     optionalDependencies:
       '@types/pg': 8.11.11
       gel: 2.0.1
