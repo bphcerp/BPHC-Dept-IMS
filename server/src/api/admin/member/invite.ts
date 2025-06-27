@@ -61,8 +61,7 @@ router.post(
                     const htmlBody = DOMPurify.sanitize(marked(parsed.emailBody));
                     await sendEmail({
                         to: parsed.email,
-                        subject: "Member invitation",
-                        text: `Hello! You are invited to access the ${environment.DEPARTMENT_NAME} IMS portal. Website link: ${env.FRONTEND_URL}`,
+                        subject: `Introducing ${environment.DEPARTMENT_NAME} IMS – Streamlining Departmental Operations`,
                         html: htmlBody,
                     });
                 }
