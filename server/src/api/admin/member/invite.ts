@@ -8,6 +8,8 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
 import environment from "@/config/environment.ts";
 import { sendEmail } from "@/lib/common/email.ts";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 const router = express.Router();
 
@@ -56,10 +58,11 @@ router.post(
                     );
                 }
                 if (parsed.sendEmail && env.PROD) {
+                    const htmlBody = DOMPurify.sanitize(marked(parsed.emailBody));
                     await sendEmail({
                         to: parsed.email,
-                        subject: "Member invitation",
-                        text: `Hello! You are invited to access the ${environment.DEPARTMENT_NAME} IMS portal. Website link: ${env.FRONTEND_URL}`,
+                        subject: `Introducing ${environment.DEPARTMENT_NAME} IMS – Streamlining Departmental Operations`,
+                        html: htmlBody,
                     });
                 }
                 return res.status(200).json({ success: true });
