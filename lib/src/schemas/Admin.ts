@@ -43,6 +43,7 @@ export const inviteMemberBodySchema = z.object({
     email: z.string().email(),
     type: z.enum(userTypes),
     sendEmail: z.boolean().default(false),
+    emailBody: z.string().trim().min(1).max(1000),
 });
 export type InviteMemberBody = z.infer<typeof inviteMemberBodySchema>;
 
