@@ -108,6 +108,11 @@ export const allPermissions = {
     "inventory:stats-lab-category":
         "Member can view stats per laboratory per category",
     "inventory:stats-vendor-year": "Member can view stats per vendor per year",
+    // Project module permissions
+    "project:create": "Create a new project",
+    "project:view": "View list of projects",
+    "project:bulk-upload": "Bulk upload projects",
+    "project:view-details": "View project details",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -291,4 +296,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
     "/inventory/stats/important-dates": "inventory:read",
+
+    // Project
+    "/project/create": "project:create",
+    "/project/bulkUpload": "project:bulk-upload",
+    "/project/list": "project:view",
+    "/project": "project:view-details",
 } as const;
