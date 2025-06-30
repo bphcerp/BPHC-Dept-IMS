@@ -23,6 +23,7 @@ import * as XLSX from "xlsx";
 import { getLastItemNumber } from "../labs/getLastItemNumber.ts";
 import parser from "any-date-parser";
 import { PgTransaction } from "drizzle-orm/pg-core";
+import environment from "@/config/environment.ts";
 
 const router = Router();
 
@@ -206,13 +207,13 @@ async function mapToInventoryItemAndSave(
     };
 
     if (baseItem.quantity === 1) {
-        baseItem.equipmentID = `BITS/EEE/${selectedLab.code}/${itemCategory.code}/${lastItemNumber.toString().padStart(4, "0")}`;
+        baseItem.equipmentID = `BITS/${environment.DEPARTMENT_NAME}/${selectedLab.code}/${itemCategory.code}/${lastItemNumber.toString().padStart(4, "0")}`;
         const parsedItem = inventoryItemSchema
             .omit({ id: true, transferId: true })
             .parse(baseItem);
         await tx.insert(inventoryItems).values(parsedItem);
     } else {
-        const baseEquipmentID = `BITS/EEE/${selectedLab.code}/${itemCategory.code}/${lastItemNumber.toString().padStart(4, "0")}`;
+        const baseEquipmentID = `BITS/${environment.DEPARTMENT_NAME}/${selectedLab.code}/${itemCategory.code}/${lastItemNumber.toString().padStart(4, "0")}`;
         const items = Array.from({ length: baseItem.quantity! }, (_, i) => ({
             ...baseItem,
             equipmentID: `${baseEquipmentID}-${(i + 1).toString().padStart(2, "0")}`,

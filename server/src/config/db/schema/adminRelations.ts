@@ -93,6 +93,11 @@ export const facultyAdminRelations = relations(faculty, ({ one }) => ({
         references: [users.email],
         relationName: "faculty",
     }),
+    signatureFile: one(files, {
+        fields: [faculty.signatureFileId],
+        references: [files.id],
+        relationName: "facultySignatureFile",
+    }),
 }));
 
 export const phdAdminRelations = relations(phd, ({ one }) => ({

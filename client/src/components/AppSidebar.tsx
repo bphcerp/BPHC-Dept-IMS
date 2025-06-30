@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
-import { LOGIN_ENDPOINT } from "@/lib/constants";
+import { DEPARTMENT_NAME, LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { ArrowLeftIcon } from "lucide-react";
 
@@ -56,7 +56,7 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
           ) : (
             <ArrowLeftIcon className="h-12 w-12 p-2" />
           )}
-          <span className="text-lg font-bold">EEE IMS</span>
+          <span className="text-lg font-bold">{DEPARTMENT_NAME} IMS</span>
         </Link>
       </SidebarHeader>
       <SidebarContent>

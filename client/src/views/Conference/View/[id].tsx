@@ -19,6 +19,7 @@ import {
 import { useMemo, useState, useCallback } from "react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 
 const MemberReview = ({ id }: { id?: string }) => {
   const [action, setAction] = useState<boolean | null>(null);
@@ -89,10 +90,14 @@ const ConvenerReview = ({
   isDirect,
   reviews,
   id,
+  onGenerateForm,
+  isGeneratingForm,
 }: {
   isDirect?: boolean;
   reviews: conferenceSchemas.ViewApplicationResponse["reviews"];
   id?: string;
+  onGenerateForm: () => void;
+  isGeneratingForm: boolean;
 }) => {
   const [comments, setComments] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -105,11 +110,15 @@ const ConvenerReview = ({
         data
       );
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Review submitted successfully");
       void queryClient.refetchQueries({
         queryKey: ["conference", "applications", parseInt(id!)],
       });
+
+      if (variables.status && isDirect) {
+        onGenerateForm();
+      }
     },
   });
 
@@ -143,6 +152,7 @@ const ConvenerReview = ({
             status: true,
           })
         }
+        disabled={reviewConvenerMutation.isLoading || isGeneratingForm}
       >
         {isDirect ? "Accept" : "Send to HoD"}
       </Button>
@@ -180,7 +190,15 @@ const ConvenerReview = ({
   );
 };
 
-const HodReview = ({ id }: { id?: string }) => {
+const HodReview = ({
+  id,
+  onGenerateForm,
+  isGeneratingForm,
+}: {
+  id?: string;
+  onGenerateForm: () => void;
+  isGeneratingForm: boolean;
+}) => {
   const [comments, setComments] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -189,11 +207,15 @@ const HodReview = ({ id }: { id?: string }) => {
     mutationFn: async (data: conferenceSchemas.ReviewApplicationBody) => {
       return await api.post(`/conference/applications/reviewHod/${id}`, data);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Review submitted successfully");
       void queryClient.refetchQueries({
         queryKey: ["conference", "applications", parseInt(id!)],
       });
+
+      if (variables.status) {
+        onGenerateForm();
+      }
     },
   });
 
@@ -205,6 +227,7 @@ const HodReview = ({ id }: { id?: string }) => {
             status: true,
           })
         }
+        disabled={reviewHodMutation.isLoading || isGeneratingForm}
       >
         Accept
       </Button>
@@ -244,6 +267,7 @@ const HodReview = ({ id }: { id?: string }) => {
 const ConferenceViewApplicationView = () => {
   const { id } = useParams<{ id: string }>();
   const { checkAccess } = useAuth();
+  const queryClient = useQueryClient();
   const canReviewAsMember = checkAccess(
     "conference:application:review-application-member"
   );
@@ -270,6 +294,27 @@ const ConferenceViewApplicationView = () => {
 
   const isDirect = useMemo(() => data?.isDirect, [data]);
 
+  const generateFormMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("No application ID provided");
+      return await api.post(`/conference/applications/generateForm/${id}`);
+    },
+    onSuccess: () => {
+      void queryClient.refetchQueries({
+        queryKey: ["conference", "applications", parseInt(id!)],
+      });
+      toast.success("Approval form generated and mailed");
+    },
+    onError: (err) => {
+      if (isAxiosError(err))
+        toast.error("An error occurred while generating form");
+    },
+  });
+
+  const handleGenerateForm = () => {
+    generateFormMutation.mutate();
+  };
+
   return (
     <div className="relative flex min-h-screen w-full max-w-4xl flex-col gap-6 p-8">
       <BackButton />
@@ -290,10 +335,16 @@ const ConferenceViewApplicationView = () => {
               id={id}
               isDirect={isDirect}
               reviews={data.reviews}
+              onGenerateForm={handleGenerateForm}
+              isGeneratingForm={generateFormMutation.isLoading}
             />
           )}
           {canReviewAsHod && data.application.state === "HoD" && (
-            <HodReview id={id} />
+            <HodReview
+              id={id}
+              onGenerateForm={handleGenerateForm}
+              isGeneratingForm={generateFormMutation.isLoading}
+            />
           )}
         </>
       )}

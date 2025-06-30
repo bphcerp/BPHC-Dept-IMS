@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/Auth";
 import { useQuery } from "@tanstack/react-query";
 import { permissions } from "lib";
 import { InventoryItem, Vendor } from "node_modules/lib/src/types/inventory";
+import { DEPARTMENT_NAME } from "@/lib/constants";
 
 export const ItemsView = () => {
   // const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
@@ -318,7 +319,7 @@ export const ItemsView = () => {
                       });
                       const link = document.createElement("a");
                       link.href = URL.createObjectURL(blob);
-                      link.download = "EEE Department - Export Inventory.xlsx";
+                      link.download = `${DEPARTMENT_NAME} Department - Export Inventory.xlsx`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);

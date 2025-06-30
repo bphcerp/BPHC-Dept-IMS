@@ -48,6 +48,10 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
         .notNull()
         .defaultNow(),
     submittedOn: timestamp("submitted_on", { withTimezone: true }),
+    openBook: integer("open_book"),
+    midSem: integer("midsem"),
+    compre: integer("compre"),
+    otherEvals: integer("other_evals"),
     deadline: timestamp("deadline", { withTimezone: true }),
     comments: text("comments"),
     category: categoryEnum("category").notNull(),

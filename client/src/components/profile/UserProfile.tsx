@@ -1,13 +1,27 @@
 import type React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Upload, X, FileImage, Loader2, User, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/Auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import ReactCrop, { type Crop } from "react-image-crop";
+import imageCompression from "browser-image-compression";
+import "react-image-crop/dist/ReactCrop.css";
+
+const TARGET_HEIGHT = 60;
+const TARGET_WIDTH = 150;
+const MAX_FILE_SIZE = 8; // MB
 
 const validateFile = (file: File): boolean => {
   if (!file.type.startsWith("image/")) {
@@ -15,8 +29,8 @@ const validateFile = (file: File): boolean => {
     return false;
   }
 
-  if (file.size > 1 * 1024 * 1024) {
-    toast.error("Image must be less than 1MB");
+  if (file.size > MAX_FILE_SIZE * 1024 * 1024) {
+    toast.error(`Image must be less than ${MAX_FILE_SIZE}MB`);
     return false;
   }
 
@@ -28,7 +42,21 @@ const Profile = () => {
   const queryClient = useQueryClient();
   const [dragActive, setDragActive] = useState(false);
   const inputFileRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const userEmail = authState!.email;
+
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [crop, setCrop] = useState<Crop>({
+    unit: "px",
+    width: 150,
+    height: 60,
+    x: 0,
+    y: 0,
+  });
+  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["userSignature", userEmail],
@@ -43,7 +71,7 @@ const Profile = () => {
   const updateMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append("signature", file);
+      formData.append("signature", file, file.name);
       const res = await api.post<{ signature: string }>(
         "/profile/signature",
         formData,
@@ -80,9 +108,98 @@ const Profile = () => {
     },
   });
 
+  const cropImage = useCallback(
+    (image: HTMLImageElement, crop: Crop, fileName: string): Promise<File> => {
+      const canvas = document.createElement("canvas");
+      canvas.width = TARGET_WIDTH;
+      canvas.height = TARGET_HEIGHT;
+      const ctx = canvas.getContext("2d");
+
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+
+        ctx.drawImage(
+          image,
+          crop.x * scaleX,
+          crop.y * scaleY,
+          crop.width * scaleX,
+          crop.height * scaleY,
+          0,
+          0,
+          TARGET_WIDTH,
+          TARGET_HEIGHT
+        );
+      }
+
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("Canvas is empty"));
+            return;
+          }
+          resolve(new File([blob], fileName, { type: "image/webp" }));
+        }, "image/webp");
+      });
+    },
+    []
+  );
+
+  const processImage = useCallback(
+    async (file: File, crop: Crop) => {
+      if (!imgRef.current) return null;
+
+      try {
+        const croppedFile = await cropImage(imgRef.current, crop, file.name);
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: Math.max(TARGET_WIDTH, TARGET_HEIGHT),
+          alwaysKeepResolution: true,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(croppedFile, options);
+        return compressedFile;
+      } catch (error) {
+        console.error("Error processing image:", error);
+        toast.error("Failed to process image");
+        return null;
+      }
+    },
+    [cropImage]
+  );
+
   const uploadFile = (file: File) => {
     if (!validateFile(file)) return;
-    updateMutation.mutate(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setOriginalImage(reader.result as string);
+      setSelectedFile(file);
+      setShowCropDialog(true);
+      setCompletedCrop({
+        unit: "px",
+        width: TARGET_WIDTH,
+        height: TARGET_HEIGHT,
+        x: 0,
+        y: 0,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropAndUpload = async () => {
+    if (!selectedFile || !completedCrop) return;
+
+    const processedFile = await processImage(selectedFile, completedCrop);
+    if (processedFile) {
+      updateMutation.mutate(processedFile);
+      setShowCropDialog(false);
+      setOriginalImage(null);
+      setSelectedFile(null);
+    }
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -381,7 +498,6 @@ const Profile = () => {
               </div>
             </div>
           ) : (
-            /* Upload Area */
             <div
               className={cn(
                 "relative rounded-lg border-2 border-dashed p-8 text-center transition-colors",
@@ -412,7 +528,7 @@ const Profile = () => {
                     Drag and drop your signature image here, or click to browse
                   </p>
                   <p className="text-xs text-gray-500">
-                    Supports: PNG, JPG, JPEG (max 1MB)
+                    Supports: PNG, JPG, JPEG, WebP (max {MAX_FILE_SIZE}MB)
                   </p>
                 </div>
 
@@ -436,6 +552,77 @@ const Profile = () => {
           />
         </CardContent>
       </Card>
+
+      <Dialog
+        open={showCropDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTimeout(() => {
+              setOriginalImage(null);
+              setSelectedFile(null);
+              setCompletedCrop(null);
+              setCrop({
+                unit: "px",
+                width: TARGET_WIDTH,
+                height: TARGET_HEIGHT,
+                x: 0,
+                y: 0,
+              });
+              if (inputFileRef.current) {
+                inputFileRef.current.value = "";
+              }
+            }, 150);
+          }
+          setShowCropDialog(open);
+        }}
+      >
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Crop and Resize Signature (150x60 pixels)</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {originalImage && (
+              <div className="flex justify-center">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(c) => setCrop(c)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={TARGET_WIDTH / TARGET_HEIGHT}
+                >
+                  <img
+                    ref={imgRef}
+                    src={originalImage}
+                    alt="Crop preview"
+                    style={{ maxWidth: "100%", maxHeight: "400px" }}
+                  />
+                </ReactCrop>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCropDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleCropAndUpload()}
+              disabled={!completedCrop || updateMutation.isLoading}
+            >
+              {updateMutation.isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Crop & Upload"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <canvas ref={canvasRef} style={{ display: "none" }} />
     </div>
   );
 };

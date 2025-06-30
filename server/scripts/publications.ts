@@ -12,8 +12,10 @@ import {
 import { faculty } from "@/config/db/schema/admin.ts";
 import db from "@/config/db/index.ts";
 import { and, eq } from "drizzle-orm";
+import { createNotifications } from "@/lib/todos/index.ts";
+import environment from "@/config/environment.ts";
 
-const API_KEY = process.env.SERP_API_KEY!;
+const API_KEY = environment.SERP_API_KEY;
 const logs: {
     publication: typeof publicationsTable.$inferInsert;
     authorPublications: (typeof authorPublicationsTable.$inferInsert)[];
@@ -80,6 +82,7 @@ const getPublicationsFromAuthor = async (
         }
 
         let count = 1;
+        let newPublications = 0;
         const total = publications.length;
         for (const pub of publications) {
             if (ENABLE_LOG_CONSOLE)
@@ -124,6 +127,7 @@ const getPublicationsFromAuthor = async (
                 if (existingPub.length === 0) {
                     // Publication doesn't exist, insert it
                     await db.insert(publicationsTable).values(publication);
+                    newPublications++;
                     if (ENABLE_LOG_CONSOLE)
                         console.log(
                             `[${count} of ${total}] Inserted publication: ${publication.title}`
@@ -191,6 +195,25 @@ const getPublicationsFromAuthor = async (
                     );
             }
             count++;
+        }
+        if (newPublications > 0) {
+            const emailId = await db
+                .select({
+                    email: faculty.email,
+                })
+                .from(faculty)
+                .where(eq(faculty.authorId, author_id));
+
+            if (emailId[0]?.email) {
+                await createNotifications([
+                    {
+                        module: "Publications",
+                        title: `New publications added`,
+                        content: `${newPublications} new publications have been added to your profile.`,
+                        userEmail: emailId[0]?.email,
+                    },
+                ]);
+            }
         }
     } catch (error: any) {
         console.error("Error fetching data:", error.message);

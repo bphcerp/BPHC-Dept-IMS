@@ -13,6 +13,7 @@ import {
     multipleEntrySchema,
 } from "node_modules/lib/src/schemas/Inventory.ts";
 import { getLastItemNumber } from "../labs/getLastItemNumber.ts";
+import environment from "@/config/environment.ts";
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.post(
         const categoryCode = categoryCodeResult[0]?.code;
 
         const lastItemNumber = await getLastItemNumber(labId);
-        const baseEquipmentID = `BITS/EEE/${labCode}/${categoryCode}/${lastItemNumber.toString().padStart(4, "0")}`;
+        const baseEquipmentID = `BITS/${environment.DEPARTMENT_NAME}/${labCode}/${categoryCode}/${lastItemNumber.toString().padStart(4, "0")}`;
 
         const updatedItem = inventoryItemSchema
             .omit({ id: true, transferId: true })

@@ -9,6 +9,7 @@ import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { eq } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import env from "@/config/environment.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -49,6 +50,7 @@ router.post(
                         reviewerEmail: handout.reviewerEmail,
                         category: handout.category,
                         previousSubmissionId: Number(parsed.id),
+                        deadline: handout.deadline,
                         submittedOn: new Date(),
                     });
                     if (env.PROD) {
@@ -66,7 +68,7 @@ router.post(
                             from: env.BPHCERP_EMAIL,
                             to: handout.icEmail,
                             subject: "Handout Rejection",
-                            text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the EEE Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                            text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the ${environment.DEPARTMENT_NAME} IMS Portal for more details. Website link: ${env.FRONTEND_URL}`,
                         });
                     }
                 } catch (e) {

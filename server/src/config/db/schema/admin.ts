@@ -58,11 +58,11 @@ export const faculty = pgTable("faculty", {
     phone: text("phone"),
     authorId: text("author_id").unique(),
     signatureFileId: integer("signature_file_id").references(() => files.id, {
-    onDelete: "set null",
-  }),
+      onDelete: "set null",
+    }),
     profileFileId: integer("profile_file_id").references(() => files.id, {
-    onDelete: "set null",
-  }),
+      onDelete: "set null",
+    }),
 });
 
 export const phd = pgTable("phd", {

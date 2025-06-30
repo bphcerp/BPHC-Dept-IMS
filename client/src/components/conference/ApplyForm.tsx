@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/select";
 import { conferenceSchemas } from "lib";
 import { CalendarIcon, Trash2, XIcon } from "lucide-react";
-import { format, isEqual } from "date-fns";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { SubmitHandler, UseFormReturn, useFieldArray } from "react-hook-form";
-import { FileUploader } from "../ui/file-uploader";
+import { FileUploader } from "@/components/ui/file-uploader";
 import {
   FormField,
   FormItem,
@@ -30,19 +30,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
+import { useEffect } from "react";
+import { FundingSplitDialog, type FundingSplit } from "./FundingSplitDialog";
 
-export const schema = conferenceSchemas.upsertApplicationBodySchema.merge(
-  z.object(
-    Object.fromEntries(
-      conferenceSchemas.fileFieldNames.map((x) => [
-        x,
-        z.instanceof(File).or(z.string()).nullish(),
-      ])
-    ) as Record<
-      (typeof conferenceSchemas.fileFieldNames)[number],
-      z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodType<File>, z.ZodString]>>>
-    >
-  )
+const fileFieldsObject = Object.fromEntries(
+  conferenceSchemas.fileFieldNames.map((x) => [
+    x,
+    z.instanceof(File).or(z.string()).nullish(),
+  ])
+) as Record<
+  (typeof conferenceSchemas.fileFieldNames)[number],
+  z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodType<File>, z.ZodString]>>>
+>;
+
+export const schema = conferenceSchemas.upsertApplicationClientSchema.merge(
+  z.object({
+    ...fileFieldsObject,
+  })
 );
 
 export type Schema = z.infer<typeof schema>;
@@ -60,6 +64,13 @@ const purposeOptions = [
   "Others (Consumables or Justification)",
 ];
 
+const defaultReimbursementFields = [
+  "Travel",
+  "Registration Fee",
+  "Daily Allowance",
+  "Accommodation",
+];
+
 const ChangedIndicator = ({ isChanged }: { isChanged?: boolean }) => {
   return isChanged ? (
     <span className="ml-2 text-sm text-red-500">MODIFIED</span>
@@ -71,18 +82,21 @@ export const ApplyForm = ({
   isLoading,
   form,
   originalValues,
+  getChangedFields,
 }: {
   submitHandler: SubmitHandler<Schema>;
   isLoading: boolean;
   form: UseFormReturn<Schema>;
   originalValues?: Partial<Schema>;
+  getChangedFields?: (
+    formData: Schema,
+    originalValues: Partial<Schema>
+  ) => Partial<Schema>;
 }) => {
   const dateTo = form.watch("dateTo");
   const dateFrom = form.watch("dateFrom");
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "reimbursements",
-  });
+  const fundingSplit: FundingSplit[] = form.watch("fundingSplit") || [];
+
   const totalReimbursement =
     form
       .watch("reimbursements")
@@ -91,6 +105,84 @@ export const ApplyForm = ({
           acc + (item?.amount ? parseFloat(item.amount) || 0 : 0),
         0
       ) ?? 0;
+
+  useEffect(() => {
+    const reimbursements = form.getValues("reimbursements") || [];
+    let changed = false;
+    defaultReimbursementFields.forEach((label, idx) => {
+      if (!reimbursements[idx] || reimbursements[idx].key !== label) {
+        reimbursements[idx] = { key: label, amount: "" };
+        changed = true;
+      }
+    });
+    if (changed) {
+      form.setValue("reimbursements", reimbursements);
+    }
+    const currentFundingSplit: FundingSplit[] =
+      form.getValues("fundingSplit") || [];
+    if (totalReimbursement > 0 && currentFundingSplit.length === 0) {
+      form.setValue("fundingSplit", [
+        { source: "Personal Funds", amount: totalReimbursement.toFixed(2) },
+      ]);
+    } else if (totalReimbursement === 0) {
+      // Clear funding split when total becomes 0
+      form.setValue("fundingSplit", []);
+    } else if (totalReimbursement > 0 && currentFundingSplit.length > 0) {
+      // Update existing split to match new total for any positive amount
+      const totalAllocated = currentFundingSplit.reduce(
+        (sum, split) => sum + parseFloat(split.amount || "0"),
+        0
+      );
+      // Use a smaller tolerance for detecting changes
+      if (Math.abs(totalAllocated - totalReimbursement) > 0.001) {
+        if (totalAllocated === 0) {
+          // If current allocation is 0, distribute equally among sources
+          const amountPerSource =
+            totalReimbursement / currentFundingSplit.length;
+          const updatedSplit: FundingSplit[] = currentFundingSplit.map(
+            (split) => ({
+              ...split,
+              amount: amountPerSource.toFixed(2),
+            })
+          );
+          form.setValue("fundingSplit", updatedSplit);
+        } else {
+          // Proportionally adjust existing allocations
+          const ratio = totalReimbursement / totalAllocated;
+          const updatedSplit: FundingSplit[] = currentFundingSplit.map(
+            (split) => ({
+              ...split,
+              amount: (parseFloat(split.amount || "0") * ratio).toFixed(2),
+            })
+          );
+          form.setValue("fundingSplit", updatedSplit);
+        }
+      }
+    }
+  }, [form, totalReimbursement]);
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "reimbursements",
+  });
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      const initialReimbursements = defaultReimbursementFields.map((label) => ({
+        key: label,
+        amount: "",
+      }));
+      form.setValue("reimbursements", initialReimbursements);
+    }
+  }, [fields.length, form]);
+
+  const isFieldChanged = (fieldName: keyof Schema): boolean => {
+    if (!originalValues || !getChangedFields) return false;
+    const currentFormData = form.getValues();
+    const changedFields = getChangedFields(currentFormData, originalValues);
+    return fieldName in changedFields;
+  };
+
   return (
     <Form {...form}>
       <form
@@ -110,12 +202,7 @@ export const ApplyForm = ({
                   <FormItem>
                     <FormLabel className="font-semibold">
                       {conferenceSchemas.fieldsToFrontend[fieldName]}
-                      <ChangedIndicator
-                        isChanged={
-                          originalValues &&
-                          originalValues[fieldName] !== field.value
-                        }
-                      />
+                      <ChangedIndicator isChanged={isFieldChanged(fieldName)} />
                     </FormLabel>
                     {fieldName !== "modeOfEvent" && fieldName !== "purpose" ? (
                       <FormControl>
@@ -172,9 +259,7 @@ export const ApplyForm = ({
                   Date Range
                   <ChangedIndicator
                     isChanged={
-                      originalValues &&
-                      (!isEqual(originalValues.dateFrom ?? "", dateFrom) ||
-                        !isEqual(originalValues.dateTo ?? "", dateTo))
+                      isFieldChanged("dateFrom") || isFieldChanged("dateTo")
                     }
                   />
                 </FormLabel>
@@ -232,66 +317,74 @@ export const ApplyForm = ({
             Reimbursement expectations (Indicate Approximate Amounts for each):
             <br />
             (Final Approval will be by Accounts)
+            <ChangedIndicator isChanged={isFieldChanged("reimbursements")} />
           </p>
-          <div className="flex gap-4 p-4 pt-0">
+          <div className="flex items-center gap-4">
             <div className="flex flex-1 flex-col gap-4">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-4">
-                  {/* Field Name Input */}
-                  <FormField
-                    control={form.control}
-                    name={`reimbursements.${index}.key`}
-                    render={({ field }) => (
-                      <FormItem className="min-h-[96px] w-64">
-                        <FormLabel className="font-semibold">
-                          Field Name
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Travel" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {fields.map((field, index) => {
+                const isDefault = defaultReimbursementFields.some(
+                  (label, idx) => idx === index && field.key === label
+                );
+                return (
+                  <div key={field.id} className="flex items-start gap-4">
+                    {/* Field Name Input */}
+                    <FormField
+                      control={form.control}
+                      name={`reimbursements.${index}.key`}
+                      render={({ field: keyField }) => (
+                        <FormItem className="w-64">
+                          <FormControl>
+                            {isDefault ? (
+                              <Input value={field.key} readOnly />
+                            ) : (
+                              <Input placeholder="e.g., Other" {...keyField} />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Amount Input */}
-                  <FormField
-                    control={form.control}
-                    name={`reimbursements.${index}.amount`}
-                    render={({ field }) => (
-                      <FormItem className="min-h-[96px] w-48">
-                        <FormLabel className="font-semibold">
-                          Amount (₹)
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            inputMode="decimal"
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              field.onChange(value === "" ? undefined : value);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    {/* Amount Input */}
+                    <FormField
+                      control={form.control}
+                      name={`reimbursements.${index}.amount`}
+                      render={({ field: amountField }) => (
+                        <FormItem className="w-48">
+                          <FormControl>
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Amount in ₹"
+                              step="0.01"
+                              {...amountField}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                amountField.onChange(
+                                  value === "" ? undefined : value
+                                );
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  {/* Delete Button */}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="mt-6"
-                    onClick={() => remove(index)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
+                    {/* Delete Button (only for non-default fields) */}
+                    {!isDefault && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* Add Field Button */}
               <Button
@@ -303,7 +396,6 @@ export const ApplyForm = ({
                 + Add Field
               </Button>
 
-              {/* Root Error */}
               {form.formState.errors.reimbursements?.message && (
                 <p className="text-sm font-medium text-destructive">
                   {form.formState.errors.reimbursements.message}
@@ -311,8 +403,44 @@ export const ApplyForm = ({
               )}
             </div>
 
-            <div className="flex items-center justify-center text-lg font-medium">
-              Total Amount in ₹: {totalReimbursement.toFixed(2)}
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="text-lg font-medium">
+                Total Amount in ₹: {totalReimbursement.toFixed(2)}
+              </div>
+
+              {totalReimbursement > 0 && (
+                <>
+                  <FundingSplitDialog
+                    totalAmount={totalReimbursement}
+                    fundingSplit={fundingSplit}
+                    onFundingSplitChange={(split) =>
+                      form.setValue("fundingSplit", split)
+                    }
+                  />
+
+                  {fundingSplit.length > 0 && (
+                    <div className="mt-2 w-full min-w-[250px] space-y-2 rounded-lg border p-2">
+                      <div className="text-sm font-medium">
+                        Funding Breakdown:
+                        <ChangedIndicator
+                          isChanged={isFieldChanged("fundingSplit")}
+                        />
+                      </div>
+                      {fundingSplit.map((split, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between text-sm"
+                        >
+                          <span className="truncate">{split.source}:</span>
+                          <span>
+                            ₹{parseFloat(split.amount || "0").toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
           <Separator />
@@ -327,12 +455,7 @@ export const ApplyForm = ({
                   <FormItem>
                     <FormLabel className="font-semibold">
                       {conferenceSchemas.fieldsToFrontend[fieldName]}
-                      <ChangedIndicator
-                        isChanged={
-                          originalValues &&
-                          originalValues[fieldName] !== field.value
-                        }
-                      />
+                      <ChangedIndicator isChanged={isFieldChanged(fieldName)} />
                     </FormLabel>
                     <FormControl>
                       <>

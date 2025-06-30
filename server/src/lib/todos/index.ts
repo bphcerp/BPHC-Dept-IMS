@@ -57,8 +57,12 @@ export async function createNotifications(
         content?: string;
         link?: string;
         userEmail: string;
-    }[]
+    }[],
+    sendEmails = false
 ) {
     const newNotifs = await db.insert(notifications).values(values).returning();
+    if (sendEmails) {
+        // todo: send emails to users about the new notifications
+    }
     return newNotifs;
 }

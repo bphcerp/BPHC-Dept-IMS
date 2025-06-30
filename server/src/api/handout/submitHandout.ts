@@ -29,7 +29,10 @@ router.post(
                 new HttpError(HttpCode.BAD_REQUEST, "No File Uploaded")
             );
         }
+
         const { id } = handoutSchemas.submitHandoutQuerySchema.parse(req.query);
+        const { openBook, midSem, compre, otherEvals } =
+            handoutSchemas.handoutUploadBodySchema.parse(req.body);
 
         await db.transaction(async (tx) => {
             assert(req.user);
@@ -60,6 +63,10 @@ router.post(
                 .update(courseHandoutRequests)
                 .set({
                     handoutFilePath: insertedFileField[0].id,
+                    openBook,
+                    midSem,
+                    compre,
+                    otherEvals,
                     submittedOn: new Date(),
                     status: "review pending",
                 })

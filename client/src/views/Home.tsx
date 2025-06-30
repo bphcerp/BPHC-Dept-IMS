@@ -40,7 +40,6 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
           token: credentialResponse.credential,
         })
         .then((response) => {
-          console.log(response.data.token);
           setNewAuthToken(response.data.token);
         })
         .catch(() => {

@@ -3,10 +3,12 @@ import db from "@/config/db/index.ts";
 import { faculty, phd, staff, users } from "@/config/db/schema/admin.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import nodemailer from "nodemailer";
-import env from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
+import environment from "@/config/environment.ts";
+import { sendEmail } from "@/lib/common/email.ts";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 const router = express.Router();
 
@@ -54,29 +56,13 @@ router.post(
                         "User details already exist"
                     );
                 }
-                // Send invitation email
-                if (env.PROD) {
-                    try {
-                        const transporter = nodemailer.createTransport({
-                            service: "gmail",
-                            auth: {
-                                user: env.BPHCERP_EMAIL,
-                                pass: env.BPHCERP_PASSWORD,
-                            },
-                        });
-                        await transporter.sendMail({
-                            from: env.BPHCERP_EMAIL,
-                            to: parsed.email,
-                            subject: "Member invitation",
-                            text: `Hello! You are invited to access the EEE ERP portal. Website link: ${env.FRONTEND_URL}`,
-                        });
-                    } catch (e) {
-                        throw new HttpError(
-                            HttpCode.INTERNAL_SERVER_ERROR,
-                            "Member invitation failed: error sending invitation email",
-                            (e as Error)?.message
-                        );
-                    }
+                if (parsed.sendEmail) {
+                    const htmlBody = DOMPurify.sanitize(marked(parsed.emailBody));
+                    await sendEmail({
+                        to: parsed.email,
+                        subject: `Introducing ${environment.DEPARTMENT_NAME} IMS – Streamlining Departmental Operations`,
+                        html: htmlBody,
+                    });
                 }
                 return res.status(200).json({ success: true });
             });

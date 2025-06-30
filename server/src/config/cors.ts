@@ -3,7 +3,9 @@ import logger from "@/config/logger.ts";
 import type { CorsOptions } from "cors";
 import { HttpCode, HttpError } from "./errors.ts";
 
-const allowedOrigins: string[] = ["https://eee.ims.bits-hyderabad.ac.in"];
+const allowedOrigins: string[] = [];
+const allowedDomainPattern =
+    /^https:\/\/[a-zA-Z0-9-]+\.ims\.bits-hyderabad\.ac\.in$/;
 
 if (!PROD)
     allowedOrigins.push("http://localhost:5173", "http://localhost:9000");
@@ -16,7 +18,12 @@ const corsOptions: CorsOptions = {
                 "allow access from the specified origin."
         );
         if (!origin) return callback(null, true);
-        if (!allowedOrigins.includes(origin)) {
+
+        const isAllowedOrigin =
+            allowedOrigins.includes(origin) ||
+            allowedDomainPattern.test(origin);
+
+        if (!isAllowedOrigin) {
             logger.warn("CORS policy not allowed for origin: " + origin);
             return callback(err, false);
         }

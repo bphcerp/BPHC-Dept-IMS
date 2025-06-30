@@ -3,7 +3,7 @@ import {
     conferenceApprovalApplications,
     conferenceMemberReviews,
 } from "./conference.ts";
-import { fileFields } from "./form.ts";
+import { files } from "./form.ts";
 import { users } from "./admin.ts";
 
 export const conferenceApprovalApplicationRelations = relations(
@@ -14,29 +14,29 @@ export const conferenceApprovalApplicationRelations = relations(
             references: [users.email],
             relationName: "conferenceApprovalApplicationUser",
         }),
-        letterOfInvitation: one(fileFields, {
-            fields: [conferenceApprovalApplications.letterOfInvitation],
-            references: [fileFields.id],
+        letterOfInvitation: one(files, {
+            fields: [conferenceApprovalApplications.letterOfInvitationFileId],
+            references: [files.id],
             relationName: "conferenceApprovalLetterOfInvitation",
         }),
-        firstPageOfPaper: one(fileFields, {
-            fields: [conferenceApprovalApplications.firstPageOfPaper],
-            references: [fileFields.id],
+        firstPageOfPaper: one(files, {
+            fields: [conferenceApprovalApplications.firstPageOfPaperFileId],
+            references: [files.id],
             relationName: "conferenceApprovalFirstPageOfPaper",
         }),
-        reviewersComments: one(fileFields, {
-            fields: [conferenceApprovalApplications.reviewersComments],
-            references: [fileFields.id],
+        reviewersComments: one(files, {
+            fields: [conferenceApprovalApplications.reviewersCommentsFileId],
+            references: [files.id],
             relationName: "conferenceApprovalReviewersComments",
         }),
-        detailsOfEvent: one(fileFields, {
-            fields: [conferenceApprovalApplications.detailsOfEvent],
-            references: [fileFields.id],
+        detailsOfEvent: one(files, {
+            fields: [conferenceApprovalApplications.detailsOfEventFileId],
+            references: [files.id],
             relationName: "conferenceApprovalDetailsOfEvent",
         }),
-        otherDocuments: one(fileFields, {
-            fields: [conferenceApprovalApplications.otherDocuments],
-            references: [fileFields.id],
+        otherDocuments: one(files, {
+            fields: [conferenceApprovalApplications.otherDocumentsFileId],
+            references: [files.id],
             relationName: "conferenceApprovalOtherDocuments",
         }),
         reviews: many(conferenceMemberReviews, {

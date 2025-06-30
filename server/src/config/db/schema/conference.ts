@@ -9,7 +9,7 @@ import {
     boolean,
     jsonb,
 } from "drizzle-orm/pg-core";
-import { fileFields } from "./form.ts";
+import { files } from "./form.ts";
 import { conferenceSchemas } from "lib";
 import { users } from "./admin.ts";
 
@@ -86,48 +86,40 @@ export const conferenceApprovalApplications = pgTable(
         state: conferenceStateEnum("state")
             .notNull()
             .default(conferenceSchemas.states[1]),
+        approvalFormFileId: integer("approval_form_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
+        ),
         createdAt: timestamp("created_at", { withTimezone: true })
             .notNull()
             .defaultNow(),
-        purpose: text("purpose"),
-        contentTitle: text("content_title"),
-        eventName: text("event_name"),
-        venue: text("venue"),
-        dateFrom: timestamp("date_from", { withTimezone: true }),
-        dateTo: timestamp("date_to", { withTimezone: true }),
-        organizedBy: text("organized_by"),
-        modeOfEvent: text("mode_of_event"),
-        description: text("description"),
+        purpose: text("purpose").notNull(),
+        contentTitle: text("content_title").notNull(),
+        eventName: text("event_name").notNull(),
+        venue: text("venue").notNull(),
+        dateFrom: timestamp("date_from", { withTimezone: true }).notNull(),
+        dateTo: timestamp("date_to", { withTimezone: true }).notNull(),
+        organizedBy: text("organized_by").notNull(),
+        modeOfEvent: text("mode_of_event").notNull(),
+        description: text("description").notNull(),
         reimbursements: jsonb("reimbursements").notNull().default([]),
-        letterOfInvitation: integer("letter_of_invitation").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
+        fundingSplit: jsonb("funding_split").notNull().default([]),
+        letterOfInvitationFileId: integer(
+            "letter_of_invitation_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        firstPageOfPaperFileId: integer(
+            "first_page_of_paper_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        reviewersCommentsFileId: integer(
+            "reviewers_comments_file_id"
+        ).references(() => files.id, { onDelete: "set null" }),
+        detailsOfEventFileId: integer("details_of_event_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
         ),
-        firstPageOfPaper: integer("first_page_of_paper").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        reviewersComments: integer("reviewers_comments").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        detailsOfEvent: integer("details_of_event").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        otherDocuments: integer("other_documents").references(
-            () => fileFields.id,
-            {
-                onDelete: "set null",
-            }
+        otherDocumentsFileId: integer("other_documents_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
         ),
     }
 );
