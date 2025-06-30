@@ -17,6 +17,8 @@ import * as publicationsRelations from "./schema/publicationsRelations.ts";
 import * as todos from "./schema/todos.ts";
 import * as inventory from "./schema/inventory.ts";
 import * as inventoryRelations from "./schema/inventoryRelations.ts";
+import * as projectRelations from "./schema/projectRelations.ts";
+import * as project from "./schema/project.ts";
 
 import env from "../environment.ts";
 import pg from "pg";
@@ -52,6 +54,8 @@ const db = drizzle(pool, {
         ...todos,
         ...inventory,
         ...inventoryRelations,
+        ...project,
+        ...projectRelations
     },
 });
 
