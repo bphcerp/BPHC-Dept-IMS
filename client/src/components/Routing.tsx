@@ -19,6 +19,7 @@ import {
   BookOpen,
   LibraryBig,
   Warehouse,
+  File
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -66,6 +67,10 @@ import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
+import ProjectLayout from "@/layouts/Project";
+import AddProject from "@/views/Project/AddProject";
+import ViewProjects from "@/views/Project/ViewProjects";
+import ProjectDetails from "@/views/Project/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -93,6 +98,10 @@ const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
 
 const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("inventory:")
+);
+
+const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("project:")
 );
 
 const Routing = () => {
@@ -140,6 +149,12 @@ const Routing = () => {
       icon: <Warehouse />,
       url: "/inventory",
       requiredPermissions: inventoryModulePermissions,
+    },
+    {
+      title: "Project",
+      icon: <File />,
+      url: "/project",
+      requiredPermissions: projectModulePermissions,
     },
   ];
 
@@ -443,6 +458,25 @@ const Routing = () => {
             )}
           </Route>
         )}
+
+        {checkAccessAnyOne(projectModulePermissions) && (
+          <Route path="/project" element={<ProjectLayout />}>
+            <Route
+              index
+              element={<Navigate to="/project/add" replace={true} />}
+            />
+            {checkAccess(permissions["/project/create"]) && (
+              <Route path="add" element={<AddProject />} />
+            )}
+            {checkAccess(permissions["/project/list"]) && (
+              <Route path="view" element={<ViewProjects />} />
+            )}
+            {checkAccess(permissions["/project"]) && (
+              <Route path="view/:id" element={<ProjectDetails />} />
+            )}
+          </Route>
+        )}
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
