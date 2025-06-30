@@ -2,7 +2,6 @@ import { Router } from "express";
 import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import XLSX from "xlsx";
-import * as fs from "fs";
 import db from "@/config/db/index.ts";
 import {
   projects,
@@ -137,7 +136,7 @@ router.post(
       return;
     }
 
-    const workbook = XLSX.readFile(req.file.path);
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet, {
@@ -244,7 +243,6 @@ router.post(
         results.errors.push(`Row ${i + 2}: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
-    fs.unlinkSync(req.file.path);
     res.json({
       message: "Bulk upload completed",
       results

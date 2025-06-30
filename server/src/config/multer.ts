@@ -48,7 +48,7 @@ export const signatureUpload = multer({
 });
 
 export const excelUpload = multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: {
         fileSize: 1024 * 1024 * 5, // 5 MB
     },
