@@ -9,7 +9,7 @@ import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
 import inventoryRouter from "./inventory/index.ts";
 import profileRouter from "./profile/index.ts";
-
+import developersRouter from "./developers.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
@@ -27,6 +27,8 @@ router.get("/hello", (_req, res) => {
         message: "Hello!",
     });
 });
+
+router.use("/developers", developersRouter)
 
 router.get("/favicon.ico", (_req, res) => {
     const headers = new Headers({
