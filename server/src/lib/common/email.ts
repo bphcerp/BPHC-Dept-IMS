@@ -45,6 +45,11 @@ const emailQueue = new Queue(QUEUE_NAME, {
 const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
     QUEUE_NAME,
     async (job) => {
+        if (environment.NODE_ENV !== "production") {
+            logger.info(`EMAIL JOB: ${job.id} - Skipped in non-production environment`);
+            logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+            return;
+        }
         return await transporter.sendMail({
             from: environment.BPHCERP_EMAIL,
             ...job.data,

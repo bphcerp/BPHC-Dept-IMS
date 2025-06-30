@@ -3,7 +3,6 @@ import db from "@/config/db/index.ts";
 import { faculty, phd, staff, users } from "@/config/db/schema/admin.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import env from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
 import environment from "@/config/environment.ts";
@@ -57,7 +56,7 @@ router.post(
                         "User details already exist"
                     );
                 }
-                if (parsed.sendEmail && env.PROD) {
+                if (parsed.sendEmail) {
                     const htmlBody = DOMPurify.sanitize(marked(parsed.emailBody));
                     await sendEmail({
                         to: parsed.email,
