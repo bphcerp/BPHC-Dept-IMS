@@ -1,9 +1,10 @@
 import db from "@/config/db/index.ts";
-import type { allPermissions } from "lib";
+import type { adminSchemas, allPermissions } from "lib";
 import { getAccessMultiple } from "../auth/index.ts";
 import fs from "fs/promises";
 import logger from "@/config/logger.ts";
 import path from "path";
+import { faculty, phd, staff } from "@/config/db/schema/admin.ts";
 
 /**
  * Retrieves user details based on the provided email address.
@@ -55,6 +56,26 @@ export const getUserDetails = async (userEmail: string) => {
         roles: userRoles.map((role) => roles[role]),
     };
 };
+
+/**
+ * Returns the appropriate database table based on the user type.
+ * 
+ * @param type - The user type, must be one of the valid user types from adminSchemas
+ * @returns The corresponding database table (faculty, phd, or staff)
+ * 
+ */
+export const getUserTableByType = (
+    type: typeof adminSchemas.userTypes[number]
+) => {
+    switch (type) {
+        case "faculty":
+            return faculty;
+        case "phd":
+            return phd;
+        case "staff":
+            return staff;
+    }
+}
 
 /**
  * Retrieves all users who have a specific permission.
