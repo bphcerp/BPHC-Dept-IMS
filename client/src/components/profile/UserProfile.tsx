@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, FileImage } from "lucide-react";
 import { useAuth } from "@/hooks/Auth";
 import ProfileImageUploader from "@/components/shared/ProfileImageUploader";
-import SignatureUploader from "@/components/shared/SignatureUploader";
+import SignatureUploader from "@/components/profile/SignatureUploader";
 
 const Profile = () => {
   const { authState } = useAuth();
