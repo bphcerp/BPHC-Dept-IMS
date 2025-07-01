@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import logo from "/logo/bitspilanilogo.png";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
@@ -89,6 +89,11 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
         })}
       </SidebarContent>
       <SidebarFooter>
+        {!pathname.startsWith("/contributors") && (
+          <Link to="/contributors" className="text-center text-muted underline">
+            View Contributors
+          </Link>
+        )}
         {authState ? (
           <Button className="w-full" onClick={logOut}>
             LOGOUT
