@@ -19,7 +19,7 @@ import {
   BookOpen,
   LibraryBig,
   Warehouse,
-  File
+  File,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -67,6 +67,7 @@ import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
+import ContributorsPage from "@/views/Contributors";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ViewProjects from "@/views/Project/ViewProjects";
@@ -184,7 +185,7 @@ const Routing = () => {
             />
           }
         />
-
+        <Route path="/contributors" element={<ContributorsPage />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
         {authState?.userType === "faculty" && (

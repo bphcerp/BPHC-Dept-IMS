@@ -10,7 +10,7 @@ import publicationsRouter from "./publications/index.ts";
 import inventoryRouter from "./inventory/index.ts";
 import profileRouter from "./profile/index.ts";
 import projectRouter from "./project/index.ts";
-
+import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
@@ -28,6 +28,8 @@ router.get("/hello", (_req, res) => {
         message: "Hello!",
     });
 });
+
+router.use("/contributors", contributorsRouter);
 
 router.get("/favicon.ico", (_req, res) => {
     const headers = new Headers({
