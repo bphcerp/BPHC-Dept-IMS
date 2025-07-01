@@ -64,7 +64,6 @@ const ProfilePage = () => {
           <h1 className="text-2xl font-semibold">Contributors</h1>
         </div>
         <div className="flex-1 p-6">
-          {renderSection("Professors", professors)}
           {renderSection("Students", sortedStudents)}
         </div>
       </div>
