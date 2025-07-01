@@ -66,7 +66,7 @@ import AddInventoryItem from "@/views/Inventory/AddInventoryItem";
 import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
-import DevelopersPage from "@/views/Developers";
+import ContributorsPage from "@/views/Contributors";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -170,7 +170,7 @@ const Routing = () => {
             />
           }
         />
-        <Route path="/developers" element={<DevelopersPage />} />
+        <Route path="/contributors" element={<ContributorsPage />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
         {authState?.userType === "faculty" && (

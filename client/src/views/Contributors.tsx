@@ -31,7 +31,7 @@ const nameOverrides: Record<string, string> = {
 };
 
 const fetchContributors = async (): Promise<Contributor[]> => {
-  const res = await api.get("/developers");
+  const res = await api.get("/contributors");
   const data: unknown = res.data;
   if (Array.isArray(data)) {
     return data.filter(isContributor);
@@ -39,7 +39,7 @@ const fetchContributors = async (): Promise<Contributor[]> => {
   return [];
 };
 
-const DevelopersPage = () => {
+const ContributorsPage = () => {
   const {
     data: contributors = [],
     isLoading,
@@ -55,7 +55,7 @@ const DevelopersPage = () => {
       <div className="flex min-h-screen w-full flex-col">
         <div className="border-b bg-background p-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-semibold">Developers</h1>
+            <h1 className="text-2xl font-semibold">Contributors</h1>
           </div>
         </div>
         <div className="flex-1 p-6">
@@ -104,4 +104,4 @@ const DevelopersPage = () => {
   );
 };
 
-export default DevelopersPage;
+export default ContributorsPage;

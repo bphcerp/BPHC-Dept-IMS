@@ -89,6 +89,11 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
         })}
       </SidebarContent>
       <SidebarFooter>
+        {!pathname.startsWith("/contributors") && (
+          <Link to="/contributors" className="text-center text-muted underline">
+            View Contributors
+          </Link>
+        )}
         {authState ? (
           <Button className="w-full" onClick={logOut}>
             LOGOUT
