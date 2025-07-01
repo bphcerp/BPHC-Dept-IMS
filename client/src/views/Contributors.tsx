@@ -1,107 +1,75 @@
-// src/pages/ProfilePage.tsx (or wherever you keep your page components)
 import { AppSidebar } from "@/components/AppSidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios-instance";
+import peopleData from "@/data/contributors.json";
 
-type Contributor = {
-  id: number;
-  login: string;
-  avatar_url: string;
-  html_url: string;
-  contributions: number;
+type Person = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  url: string;
 };
 
-const isContributor = (obj: unknown): obj is Contributor => {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    typeof (obj as Record<string, unknown>).id === "number" &&
-    typeof (obj as Record<string, unknown>).login === "string" &&
-    typeof (obj as Record<string, unknown>).avatar_url === "string" &&
-    typeof (obj as Record<string, unknown>).html_url === "string" &&
-    typeof (obj as Record<string, unknown>).contributions === "number"
+type PeopleData = {
+  professors: Person[];
+  students: Person[];
+};
+
+const ProfilePage = () => {
+  const { professors, students } = peopleData as PeopleData;
+  const sortedStudents = [...students].sort((a, b) =>
+    a.id.localeCompare(b.id)
   );
-};
 
-// Optional: Map GitHub usernames to custom display names
-const nameOverrides: Record<string, string> = {
-  // "github_username": "Custom Name",
-};
-
-const fetchContributors = async (): Promise<Contributor[]> => {
-  const res = await api.get("/contributors");
-  const data: unknown = res.data;
-  if (Array.isArray(data)) {
-    return data.filter(isContributor);
-  }
-  return [];
-};
-
-const ContributorsPage = () => {
-  const {
-    data: contributors = [],
-    isLoading,
-    isError,
-  } = useQuery<Contributor[]>({
-    queryKey: ["githubContributors"],
-    queryFn: fetchContributors,
-  });
+  const renderSection = (title: string, people: Person[]) => (
+    <div className="mb-12">
+      <h2 className="mb-4 text-xl font-semibold">{title}</h2>
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+        {people.map((person) => (
+          <a
+            key={person.id}
+            href={person.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl transition-shadow hover:shadow-lg"
+          >
+            <Card className="flex h-full flex-col items-center justify-center py-8">
+              <CardContent className="flex flex-col items-center justify-center p-0">
+                <Avatar className="mb-4 h-28 w-28">
+                  <img
+                    src={person.imageUrl}
+                    alt={person.name}
+                    className="h-28 w-28 rounded-full object-cover object-center"
+                  />
+                </Avatar>
+                <div className="text-center text-lg font-medium text-foreground">
+                  {person.name}
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  {person.id}
+                </div>
+              </CardContent>
+            </Card>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <>
       <AppSidebar items={[]} />
       <div className="flex min-h-screen w-full flex-col">
         <div className="border-b bg-background p-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-semibold">Contributors</h1>
-          </div>
+          <h1 className="text-2xl font-semibold">Contributors</h1>
         </div>
         <div className="flex-1 p-6">
-          {isLoading && (
-            <div className="text-center text-muted-foreground">Loading...</div>
-          )}
-          {isError && (
-            <div className="text-center text-destructive">
-              Failed to load contributors.
-            </div>
-          )}
-          {!isLoading && !isError && (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
-              {contributors.map((contrib) => (
-                <a
-                  key={contrib.id}
-                  href={contrib.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl transition-shadow hover:shadow-lg"
-                >
-                  <Card className="flex h-full flex-col items-center justify-center py-8">
-                    <CardContent className="flex flex-col items-center justify-center p-0">
-                      <Avatar className="mb-4 h-28 w-28">
-                        <img
-                          src={contrib.avatar_url}
-                          alt={contrib.login}
-                          className="h-28 w-28 rounded-full"
-                        />
-                      </Avatar>
-                      <div className="text-center text-lg font-medium text-foreground">
-                        {nameOverrides[contrib.login] || contrib.login}
-                      </div>
-                      <div className="text-center text-sm text-muted-foreground">
-                        {contrib.contributions} contributions
-                      </div>
-                    </CardContent>
-                  </Card>
-                </a>
-              ))}
-            </div>
-          )}
+          {renderSection("Professors", professors)}
+          {renderSection("Students", sortedStudents)}
         </div>
       </div>
     </>
   );
 };
 
-export default ContributorsPage;
+export default ProfilePage;

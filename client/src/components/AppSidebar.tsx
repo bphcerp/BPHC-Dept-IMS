@@ -70,7 +70,9 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {filteredGroupItems.map((item) => (
+                  {filteredGroupItems
+                    .sort((a, b) => a.title.localeCompare(b.title))
+                    .map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
@@ -92,7 +94,7 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
       <SidebarFooter>
         {!pathname.startsWith("/contributors") && (
           <Link to="/contributors" className="flex items-center gap-1">
-            <Users className="h-8 w-8 p-2" />
+            <Users className="h-8 w-8 p-1" />
             <span>View Contributors</span>
           </Link>
         )}
