@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import logo from "/logo/bitspilanilogo.png";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/Auth";
 import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
