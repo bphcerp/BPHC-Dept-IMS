@@ -7,6 +7,7 @@ import searchRouter from "./search.ts";
 import deactivateRouter from "./deactivate.ts";
 import deleteRouter from "./delete.ts";
 import detailsRouter from "./details.ts";
+import profileImageRouter from "./profile-image.ts";
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.use("/search", searchRouter);
 router.use("/deactivate", deactivateRouter);
 router.use("/delete", deleteRouter);
 router.use("/details", detailsRouter);
+router.use("/profile-image", profileImageRouter);
 
 export default router;

@@ -28,6 +28,7 @@ export const getUserDetails = async (userEmail: string) => {
                     idNumber: true,
                     erpId: true,
                     name: true,
+                    profileFileId: true,
                     instituteEmail: true,
                     mobile: true,
                     personalEmail: true,
@@ -59,13 +60,13 @@ export const getUserDetails = async (userEmail: string) => {
 
 /**
  * Returns the appropriate database table based on the user type.
- * 
+ *
  * @param type - The user type, must be one of the valid user types from adminSchemas
  * @returns The corresponding database table (faculty, phd, or staff)
- * 
+ *
  */
 export const getUserTableByType = (
-    type: typeof adminSchemas.userTypes[number]
+    type: (typeof adminSchemas.userTypes)[number]
 ) => {
     switch (type) {
         case "faculty":
@@ -75,7 +76,7 @@ export const getUserTableByType = (
         case "staff":
             return staff;
     }
-}
+};
 
 /**
  * Retrieves all users who have a specific permission.

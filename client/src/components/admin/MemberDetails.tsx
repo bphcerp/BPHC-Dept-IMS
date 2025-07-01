@@ -18,7 +18,7 @@ import {
   CardTitle,
   CardFooter,
 } from "../ui/card";
-import { Plus, UserCircle2, X } from "lucide-react";
+import { Plus, UserCircle2, X, User } from "lucide-react";
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
 import { Button } from "../ui/button";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import DeleteUserDialog from "./DeleteUserDialog";
+import ProfileImageUploader from "@/components/shared/ProfileImageUploader";
 
 interface UserDetailsProps {
   data: adminSchemas.MemberDetailsResponse;
@@ -192,145 +193,166 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
   );
 
   return (
-    <Card className="mx-auto max-w-5xl">
-      <CardHeader className="flex items-center justify-between">
-        <CardTitle className="text-2xl font-bold">User Details</CardTitle>
-      </CardHeader>
+    <div className="space-y-6">
+      {/* Profile Image Section */}
+      <Card className="mx-auto max-w-5xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile Image
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Manage user&apos;s profile image
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ProfileImageUploader email={data.email} isAdmin={true} />
+        </CardContent>
+      </Card>
 
-      {isEditing ? (
-        <Form {...form}>
-          <form
-            onSubmit={(e) => {
-              void form.handleSubmit(onSubmit)(e);
-            }}
-          >
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.keys(data).map((key) => {
-                  const fieldName = key as (typeof editableFields)[number];
-                  if (!editableFields.includes(fieldName)) return null;
-                  return (
-                    <div key={fieldName} className="space-y-1">
-                      <FormField
-                        control={form.control}
-                        name={fieldName}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              {fieldName
-                                .replace(/([A-Z]+)/g, " $1")
-                                .toUpperCase()}
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value ?? ""}
-                                className="col-span-3"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button type="submit" disabled={editDataMutation.isLoading}>
-                Save
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setIsEditing(false)}
-                disabled={editDataMutation.isLoading}
-              >
-                Cancel
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      ) : (
-        <>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <UserCircle2 className="h-16 w-16 text-gray-400" />
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {data.name ?? "Invite pending"}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {data.type?.toUpperCase() || "N/A"}
-                </p>
-              </div>
-            </div>
+      {/* User Details Section */}
+      <Card className="mx-auto max-w-5xl">
+        <CardHeader className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-bold">User Details</CardTitle>
+        </CardHeader>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {Object.entries(data).map(
-                ([key, value]) =>
-                  key !== "name" &&
-                  key !== "type" && (
-                    <div key={key} className="space-y-1">
-                      <div className="flex gap-2 text-sm uppercase text-muted-foreground">
-                        {key.replace(/([A-Z]+)/g, " $1").toUpperCase()}
-                        {key === "roles" && !data.deactivated && (
-                          <AssignRoleComboBox
-                            existing={data.roles}
-                            callback={(role) => {
-                              editRoleMutation.mutate({
-                                email: data.email,
-                                add: role,
-                              });
-                            }}
-                          >
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-5 w-5 items-start"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </AssignRoleComboBox>
-                        )}
-                      </div>
-                      <div className="text-sm">
-                        {renderValue(
-                          key,
-                          value as string | number | boolean | string[] | null
-                        )}
-                      </div>
-                    </div>
-                  )
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="justify-between">
-            <div className="flex items-center gap-2">
-              {!data.deactivated && <DeactivateUserDialog email={data.email} />}
-              <DeleteUserDialog email={data.email} />
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditing(true);
-                form.reset(
-                  Object.fromEntries(
-                    Object.entries(data).map(([key, value]) => [
-                      key,
-                      value ?? "",
-                    ])
-                  )
-                );
+        {isEditing ? (
+          <Form {...form}>
+            <form
+              onSubmit={(e) => {
+                void form.handleSubmit(onSubmit)(e);
               }}
             >
-              Edit
-            </Button>
-          </CardFooter>
-        </>
-      )}
-    </Card>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {Object.keys(data).map((key) => {
+                    const fieldName = key as (typeof editableFields)[number];
+                    if (!editableFields.includes(fieldName)) return null;
+                    return (
+                      <div key={fieldName} className="space-y-1">
+                        <FormField
+                          control={form.control}
+                          name={fieldName}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {fieldName
+                                  .replace(/([A-Z]+)/g, " $1")
+                                  .toUpperCase()}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  className="col-span-3"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                <Button type="submit" disabled={editDataMutation.isLoading}>
+                  Save
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  disabled={editDataMutation.isLoading}
+                >
+                  Cancel
+                </Button>
+              </CardFooter>
+            </form>
+          </Form>
+        ) : (
+          <>
+            <CardContent className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <UserCircle2 className="h-16 w-16 text-gray-400" />
+                <div>
+                  <h2 className="text-xl font-semibold">
+                    {data.name ?? "Invite pending"}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {data.type?.toUpperCase() || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {Object.entries(data).map(
+                  ([key, value]) =>
+                    key !== "name" &&
+                    key !== "type" && (
+                      <div key={key} className="space-y-1">
+                        <div className="flex gap-2 text-sm uppercase text-muted-foreground">
+                          {key.replace(/([A-Z]+)/g, " $1").toUpperCase()}
+                          {key === "roles" && !data.deactivated && (
+                            <AssignRoleComboBox
+                              existing={data.roles}
+                              callback={(role) => {
+                                editRoleMutation.mutate({
+                                  email: data.email,
+                                  add: role,
+                                });
+                              }}
+                            >
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-5 w-5 items-start"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </AssignRoleComboBox>
+                          )}
+                        </div>
+                        <div className="text-sm">
+                          {renderValue(
+                            key,
+                            value as string | number | boolean | string[] | null
+                          )}
+                        </div>
+                      </div>
+                    )
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="justify-between">
+              <div className="flex items-center gap-2">
+                {!data.deactivated && (
+                  <DeactivateUserDialog email={data.email} />
+                )}
+                <DeleteUserDialog email={data.email} />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(true);
+                  form.reset(
+                    Object.fromEntries(
+                      Object.entries(data).map(([key, value]) => [
+                        key,
+                        value ?? "",
+                      ])
+                    )
+                  );
+                }}
+              >
+                Edit
+              </Button>
+            </CardFooter>
+          </>
+        )}
+      </Card>
+    </div>
   );
 };
 
