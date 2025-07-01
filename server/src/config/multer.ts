@@ -5,7 +5,6 @@ import sharp from "sharp";
 import path from "path";
 import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
-import logger from "./logger.ts";
 
 const storage = multer.diskStorage({
     destination: FILES_DIR,
@@ -29,7 +28,7 @@ export const pdfUpload = multer({
     },
 });
 
-export const signatureUpload = multer({
+export const imageUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: 1024 * 1024 * 1,
@@ -71,7 +70,7 @@ export const excelUpload = multer({
     },
 });
 
-export const validateAndSaveSignatureMiddleware = async (
+export const validateDimensionsAndSaveMiddleware = (width: number, height: number) => async (
     req: Request,
     _res: Response,
     next: NextFunction
@@ -79,17 +78,10 @@ export const validateAndSaveSignatureMiddleware = async (
     if (!req.file) {
         return next();
     }
-    const metadata = await sharp(req.file.buffer).metadata();
-    const widthValid = metadata.width === 150;
-    const heightValid = metadata.height === 60;
-    if (!widthValid || !heightValid)
-        logger.debug(
-            `Invalid image dimensions: ${metadata.width}x${metadata.height}. Expected 150x60.`
-        );
     const filename = crypto.randomBytes(16).toString("hex");
     const filePath = path.join(FILES_DIR, filename);
     const saved = await sharp(req.file.buffer)
-        .resize(150, 60, {
+        .resize(width, height, {
             fit: "fill",
             kernel: sharp.kernel.lanczos3,
         })

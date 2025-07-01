@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
-import { imageUpload } from "@/config/multer.ts";
+import { imageUpload, validateDimensionsAndSaveMiddleware } from "@/config/multer.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { modules } from "lib";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -48,6 +48,7 @@ router.post(
       next(err);
     })
   ),
+  asyncHandler(validateDimensionsAndSaveMiddleware(256, 256)),
   asyncHandler(async (req, res, next) => {
     if (!req.file) {
       return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));
