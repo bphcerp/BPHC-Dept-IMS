@@ -188,9 +188,7 @@ const Routing = () => {
         <Route path="/contributors" element={<ContributorsPage />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
-        {authState?.userType === "faculty" && (
-          <Route path="/profile" element={<ProfilePage />} />
-        )}
+        {authState && <Route path="/profile" element={<ProfilePage />} />}
 
         {checkAccessAnyOne(adminModulePermissions) && (
           <Route path="/admin" element={<AdminLayout />}>

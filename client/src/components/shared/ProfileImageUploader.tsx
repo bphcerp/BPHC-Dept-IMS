@@ -1,6 +1,4 @@
 import type React from "react";
-import { useState, useRef } from "react";
-import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,26 +10,13 @@ import {
 import { toast } from "sonner";
 import { X, Loader2, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import ReactCrop, { type Crop } from "react-image-crop";
-import imageCompression from "browser-image-compression";
+import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { useImageUploader } from "@/hooks/useImageUploader";
 
 const TARGET_HEIGHT = 256;
 const TARGET_WIDTH = 256;
-const MAX_FILE_SIZE = 1; // MB
-
-const validateFile = (file: File): boolean => {
-  if (file.size > MAX_FILE_SIZE * 1024 * 1024 * 4) {
-    toast.error(`File size should be less than ${MAX_FILE_SIZE * 4}MB`);
-    return false;
-  }
-  if (!file.type.startsWith("image/")) {
-    toast.error("Please select an image file");
-    return false;
-  }
-  return true;
-};
+const MAX_FILE_SIZE = 4; // MB
 
 interface ProfileImageUploaderProps {
   email: string;
@@ -44,180 +29,44 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
   isAdmin = false,
   disabled = false,
 }) => {
-  const queryClient = useQueryClient();
-  const [originalImage, setOriginalImage] = useState<string | null>(null);
-  const [crop, setCrop] = useState<Crop>({
-    unit: "%",
-    width: 50,
-    height: 50,
-    x: 25,
-    y: 25,
-  });
-  const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
-  const [showCropDialog, setShowCropDialog] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-
-  const imgRef = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const inputFileRef = useRef<HTMLInputElement>(null);
-
   const endpoint = isAdmin
     ? "/admin/member/profile-image"
     : "/profile/profile-image";
 
   const {
-    data: profileImage,
+    data,
     isLoading,
     isError,
-  } = useQuery({
+    dragActive,
+    showCropDialog,
+    originalImage,
+    crop,
+    completedCrop,
+    inputFileRef,
+    imgRef,
+    canvasRef,
+    updateMutation,
+    deleteMutation,
+    onFileChange,
+    handleDrag,
+    handleDrop,
+    handleCropAndUpload,
+    closeDialog,
+    setCrop,
+    setCompletedCrop,
+  } = useImageUploader({
+    userEmail: email,
+    endpoint,
     queryKey: ["userProfileImage", email],
-    queryFn: async () => {
-      const params = isAdmin ? { email } : {};
-      const res = await api.get<{ profileImage: string | null }>(endpoint, {
-        params,
-      });
-      return res.data.profileImage;
-    },
-    enabled: !!email,
+    targetWidth: TARGET_WIDTH,
+    targetHeight: TARGET_HEIGHT,
+    maxFileSize: MAX_FILE_SIZE,
+    formDataKey: "profileImage",
+    successMessage: "Profile image updated successfully",
+    deleteSuccessMessage: "Profile image removed successfully",
+    isAdmin,
+    adminQueryKeys: isAdmin ? [["member", email]] : [],
   });
-
-  const updateMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("profileImage", file);
-      if (isAdmin) {
-        formData.append("email", email);
-      }
-      const res = await api.post<{ profileImage: string }>(endpoint, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return res.data.profileImage;
-    },
-    onSuccess: () => {
-      toast.success("Profile image updated successfully");
-      void queryClient.invalidateQueries({
-        queryKey: ["userProfileImage", email],
-      });
-      if (isAdmin) {
-        void queryClient.invalidateQueries({ queryKey: ["member", email] });
-      }
-      setShowCropDialog(false);
-      setOriginalImage(null);
-    },
-    onError: () => {
-      toast.error("Failed to update profile image");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const data = isAdmin ? { email } : {};
-      await api.delete(endpoint, { data });
-    },
-    onSuccess: () => {
-      toast.success("Profile image removed successfully");
-      void queryClient.invalidateQueries({
-        queryKey: ["userProfileImage", email],
-      });
-      if (isAdmin) {
-        void queryClient.invalidateQueries({ queryKey: ["member", email] });
-      }
-    },
-    onError: () => {
-      toast.error("Failed to remove profile image");
-    },
-  });
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (validateFile(file)) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setOriginalImage(reader.result as string);
-        setShowCropDialog(true);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    if (disabled) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    if (disabled) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (validateFile(file)) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setOriginalImage(reader.result as string);
-          setShowCropDialog(true);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-  };
-
-  const handleCropAndUpload = async () => {
-    if (!completedCrop || !imgRef.current || !canvasRef.current) return;
-
-    const image = imgRef.current;
-    const canvas = canvasRef.current;
-    const cropData = completedCrop;
-
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    canvas.width = TARGET_WIDTH;
-    canvas.height = TARGET_HEIGHT;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.drawImage(
-      image,
-      cropData.x * scaleX,
-      cropData.y * scaleY,
-      cropData.width * scaleX,
-      cropData.height * scaleY,
-      0,
-      0,
-      TARGET_WIDTH,
-      TARGET_HEIGHT
-    );
-
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg")
-    );
-    if (!blob) return;
-
-    const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-
-    try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: MAX_FILE_SIZE,
-        maxWidthOrHeight: Math.max(TARGET_WIDTH, TARGET_HEIGHT),
-        useWebWorker: true,
-      });
-      updateMutation.mutate(compressedFile);
-    } catch (error) {
-      console.error("Image compression error:", error);
-      toast.error("Failed to compress image.");
-    }
-  };
 
   const ProfileImageSkeleton = () => (
     <div className="animate-pulse">
@@ -225,17 +74,18 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
     </div>
   );
 
-  if (isLoading) return <ProfileImageSkeleton />;
-  if (isError) return <div>Failed to load profile image</div>;
-
   return (
     <div className="space-y-6">
-      {profileImage ? (
+      {isLoading || updateMutation.isLoading ? (
+        <ProfileImageSkeleton />
+      ) : isError ? (
+        <div>Failed to load profile image</div>
+      ) : data ? (
         <div className="space-y-4">
           <div>
             <div className="inline-block rounded-full border-2 border-gray-200 bg-gray-50 p-2">
               <img
-                src={profileImage}
+                src={data}
                 alt="Profile"
                 className="h-24 w-24 rounded-full object-cover"
                 onError={() => {
@@ -244,6 +94,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
               />
             </div>
           </div>
+
           {!disabled && (
             <div className="flex gap-3">
               <Button
@@ -331,10 +182,10 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
         />
       )}
 
-      <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showCropDialog} onOpenChange={closeDialog}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Crop Profile Image)</DialogTitle>
+            <DialogTitle>Crop Profile Image</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -351,7 +202,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
                     ref={imgRef}
                     src={originalImage}
                     alt="Crop preview"
-                    style={{ maxHeight: "70vh" }}
+                    style={{ maxWidth: "100%", maxHeight: "400px" }}
                   />
                 </ReactCrop>
               </div>
@@ -359,7 +210,7 @@ const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCropDialog(false)}>
+            <Button variant="outline" onClick={() => closeDialog(false)}>
               Cancel
             </Button>
             <Button

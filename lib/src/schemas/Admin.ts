@@ -15,6 +15,10 @@ export const memberDetailsQuerySchema = z.object({
 });
 export type MemberDetailsQuery = z.infer<typeof memberDetailsQuerySchema>;
 
+export const editProfileImageBodySchema = z.object({
+    email: z.string().email(),
+});
+
 export const roleNameSchema = z
     .string()
     .trim()

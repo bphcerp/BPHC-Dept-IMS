@@ -34,11 +34,15 @@ export const imageUpload = multer({
         fileSize: 1024 * 1024 * 1,
     },
     fileFilter: (_req: Request, file, callback) => {
-        if (!["image/png", "image/webp"].includes(file.mimetype)) {
+        if (
+            !["image/png", "image/webp", "image/jpeg"].includes(file.mimetype)
+        ) {
             return callback(
                 new HttpError(
                     HttpCode.BAD_REQUEST,
-                    "Only PNG images are allowed"
+                    "Invalid mimetype (found: " +
+                        file.mimetype +
+                        " - expected: image/png or image/webp"
                 )
             );
         }

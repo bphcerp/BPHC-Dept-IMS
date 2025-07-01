@@ -1,4 +1,3 @@
-import type React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, FileImage } from "lucide-react";
 import { useAuth } from "@/hooks/Auth";
@@ -8,6 +7,7 @@ import SignatureUploader from "@/components/shared/SignatureUploader";
 const Profile = () => {
   const { authState } = useAuth();
   const userEmail = authState!.email;
+  const userType = authState!.userType;
 
   return (
     <div className="max-w-2xl space-y-4 p-2">
@@ -26,20 +26,22 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileImage className="h-5 w-5" />
-            Digital Signature
-          </CardTitle>
-          <p className="text-sm text-gray-600">
-            Upload your digital signature for document signing
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <SignatureUploader userEmail={userEmail} />
-        </CardContent>
-      </Card>
+      {userType === "faculty" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileImage className="h-5 w-5" />
+              Digital Signature
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Upload your digital signature for document signing
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <SignatureUploader userEmail={userEmail} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

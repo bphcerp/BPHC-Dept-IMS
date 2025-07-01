@@ -33,7 +33,7 @@ router.post(
     ...profileImageFileMiddleware,
     asyncHandler(async (req, res) => {
         assert(req.file);
-        const parsed = adminSchemas.memberDetailsQuerySchema.parse(req.query);
+        const parsed = adminSchemas.editProfileImageBodySchema.parse(req.body);
         const profileImageId = await updateProfileImage(parsed.email, req.file);
         res.json({
             success: true,
@@ -46,7 +46,7 @@ router.delete(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const parsed = adminSchemas.memberDetailsQuerySchema.parse(req.query);
+        const parsed = adminSchemas.editProfileImageBodySchema.parse(req.body);
         await deleteProfileImage(parsed.email);
         res.json({ success: true });
     })
