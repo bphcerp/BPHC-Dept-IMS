@@ -15,7 +15,7 @@ type PeopleData = {
   students: Person[];
 };
 
-const ProfilePage = () => {
+const ContributorsPage = () => {
   const { professors, students } = peopleData as PeopleData;
   const sortedStudents = [...students].sort((a, b) =>
     a.id.localeCompare(b.id)
@@ -71,4 +71,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default ContributorsPage;
