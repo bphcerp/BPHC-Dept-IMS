@@ -18,6 +18,7 @@ import api from "@/lib/axios-instance";
 import { DEPARTMENT_NAME, LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { ArrowLeftIcon } from "lucide-react";
+import { Users } from "lucide-react";
 
 export interface SidebarMenuItem {
   title: string;
@@ -90,8 +91,9 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
       </SidebarContent>
       <SidebarFooter>
         {!pathname.startsWith("/contributors") && (
-          <Link to="/contributors" className="text-center text-muted underline">
-            View Contributors
+          <Link to="/contributors" className="flex items-center gap-1">
+            <Users className="h-8 w-8 p-2" />
+            <span>View Contributors</span>
           </Link>
         )}
         {authState ? (
