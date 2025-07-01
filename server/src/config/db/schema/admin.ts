@@ -60,6 +60,9 @@ export const faculty = pgTable("faculty", {
     signatureFileId: integer("signature_file_id").references(() => files.id, {
         onDelete: "set null",
     }),
+    profileFileId: integer("profile_file_id").references(() => files.id, {
+        onDelete: "set null",
+    }),
 });
 
 export const phd = pgTable("phd", {
@@ -68,6 +71,10 @@ export const phd = pgTable("phd", {
         .references(() => users.email, { onDelete: "cascade" }),
     department: text("department"),
     phone: text("phone"),
+
+    profileFileId: integer("profile_file_id").references(() => files.id, {
+        onDelete: "set null",
+    }),
 
     idNumber: text("id_number"),
     erpId: text("erp_id"),
@@ -139,4 +146,8 @@ export const staff = pgTable("staff", {
     department: text("department"),
     phone: text("phone"),
     designation: text("designation"),
+
+    profileFileId: integer("profile_file_id").references(() => files.id, {
+        onDelete: "set null",
+    }),
 });

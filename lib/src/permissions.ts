@@ -83,20 +83,28 @@ export const allPermissions = {
     "phd:staff:notify-all-users": "",
 
     "handout:faculty:submit": "Submit handout for review",
-    "handout:dca-convenor:assignreviewer": "Assign reviewer to handout as DCA convenor",
+    "handout:dca-convenor:assignreviewer":
+        "Assign reviewer to handout as DCA convenor",
     "handout:faculty:get-all-handouts": "View all handouts as faculty member",
     "handout:dca:get-all-handouts": "View all handouts as DCA member",
     "handout:dca:review": "Review handouts as DCA member",
     "handout:get": "View handout details",
     "handout:dca-convenor:get-all": "View all handouts as DCA convenor",
-    "handout:dca-convenor:final-decision": "Make final decision on handout as DCA convenor",
-    "handout:dca-convenor:reminder": "Send reminder notifications as DCA convenor",
-    "handout:dca-convenor:get-all-dcamember": "View all DCA members as DCA convenor",
-    "handout:dca-convenor:update-reviewer": "Update handout reviewer as DCA convenor",
-    "handout:dca-convenor:update-ic": "Update in-charge details as DCA convenor",
-    "handout:dca-convenor:export-summary": "Export handout summary as DCA convenor",
-    "handout:dca-convenor:get-all-faculty": "View all faculty members as DCA convenor",
-    
+    "handout:dca-convenor:final-decision":
+        "Make final decision on handout as DCA convenor",
+    "handout:dca-convenor:reminder":
+        "Send reminder notifications as DCA convenor",
+    "handout:dca-convenor:get-all-dcamember":
+        "View all DCA members as DCA convenor",
+    "handout:dca-convenor:update-reviewer":
+        "Update handout reviewer as DCA convenor",
+    "handout:dca-convenor:update-ic":
+        "Update in-charge details as DCA convenor",
+    "handout:dca-convenor:export-summary":
+        "Export handout summary as DCA convenor",
+    "handout:dca-convenor:get-all-faculty":
+        "View all faculty members as DCA convenor",
+
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
 
@@ -108,6 +116,11 @@ export const allPermissions = {
     "inventory:stats-lab-category":
         "Member can view stats per laboratory per category",
     "inventory:stats-vendor-year": "Member can view stats per vendor per year",
+    // Project module permissions
+    "project:create": "Create a new project",
+    "project:view": "View list of projects",
+    "project:bulk-upload": "Bulk upload projects",
+    "project:view-details": "View project details",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -117,6 +130,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/admin/member/search": "admin:member:read",
     "/admin/member/details": "admin:member:read",
     "/admin/member/editdetails": "admin:member:update",
+    "/admin/member/profile-image": "admin:member:update",
     "/admin/member/editroles": "admin:member:update",
     "/admin/member/deactivate": "admin:member:update",
     "/admin/member/delete": "admin:member:delete",
@@ -291,4 +305,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
     "/inventory/stats/important-dates": "inventory:read",
+
+    // Project
+    "/project/create": "project:create",
+    "/project/bulkUpload": "project:bulk-upload",
+    "/project/list": "project:view",
+    "/project": "project:view-details",
 } as const;

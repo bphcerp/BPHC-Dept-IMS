@@ -225,6 +225,13 @@
       "when": 1750826431367,
       "tag": "0031_lowly_squadron_supreme",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1751348888708,
+      "tag": "0032_worried_gargoyle",
+      "breakpoints": true
     }
   ]
 }

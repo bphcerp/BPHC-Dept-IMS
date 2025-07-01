@@ -1,0 +1,113 @@
+import { Router } from "express";
+import db from "../../config/db/index.ts";
+import {
+  projects,
+  investigators,
+  fundingAgencies,
+  projectCoPIs,
+} from "../../config/db/schema/project.ts";
+import { eq } from "drizzle-orm";
+import { checkAccess } from "@/middleware/auth.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+
+const router = Router();
+
+router.post(
+  "/",
+  checkAccess("project:create"),
+  asyncHandler(async (req, res) => {
+    const {
+      title,
+      pi,
+      coPIs = [],
+      fundingAgency,
+      fundingAgencyNature,
+      sanctionedAmount,
+      capexAmount,
+      opexAmount,
+      manpowerAmount,
+      approvalDate,
+      startDate,
+      endDate,
+      hasExtension = false,
+      extensionDetails = null,
+    } = req.body;
+
+    if (!title || !pi || !fundingAgency || !fundingAgencyNature || !sanctionedAmount || !approvalDate || !startDate || !endDate) {
+      res.status(400).json({ error: "Missing required fields" });
+      return;
+    }
+
+    let [piRecord] = await db
+      .insert(investigators)
+      .values(pi)
+      .onConflictDoUpdate({
+        target: [investigators.email],
+        set: pi,
+      })
+      .returning();
+    if (!piRecord) {
+      [piRecord] = await db.select().from(investigators).where(eq(investigators.email, pi.email));
+    }
+
+    let [agencyRecord] = await db
+      .insert(fundingAgencies)
+      .values({ name: fundingAgency })
+      .onConflictDoNothing()
+      .returning();
+    if (!agencyRecord) {
+      [agencyRecord] = await db.select().from(fundingAgencies).where(eq(fundingAgencies.name, fundingAgency));
+    }
+
+    const coPIRecords: any[] = [];
+    for (const coPI of coPIs) {
+      let [coPIRecord] = await db
+        .insert(investigators)
+        .values(coPI)
+        .onConflictDoUpdate({
+          target: [investigators.email],
+          set: coPI,
+        })
+        .returning();
+      if (!coPIRecord) {
+        [coPIRecord] = await db.select().from(investigators).where(eq(investigators.email, coPI.email));
+      }
+      coPIRecords.push(coPIRecord);
+    }
+
+    const [project] = await db
+      .insert(projects)
+      .values({
+        title,
+        piId: piRecord.id,
+        fundingAgencyId: agencyRecord.id,
+        fundingAgencyNature,
+        sanctionedAmount,
+        capexAmount,
+        opexAmount,
+        manpowerAmount,
+        approvalDate,
+        startDate,
+        endDate,
+        hasExtension,
+        extensionDetails,
+      })
+      .returning();
+
+    for (const coPIRecord of coPIRecords) {
+      await db.insert(projectCoPIs).values({
+        projectId: project.id,
+        investigatorId: coPIRecord.id,
+      }).onConflictDoNothing();
+    }
+
+    res.status(201).json({
+      ...project,
+      pi: piRecord,
+      coPIs: coPIRecords,
+      fundingAgency: agencyRecord,
+    });
+  })
+);
+
+export default router; 

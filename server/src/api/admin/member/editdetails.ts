@@ -1,11 +1,11 @@
 import express from "express";
 import db from "@/config/db/index.ts";
-import { faculty, phd, staff, userType } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { adminSchemas } from "lib";
+import { getUserTableByType } from "@/lib/common/index.ts";
 
 const router = express.Router();
 
@@ -14,12 +14,7 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = adminSchemas.editDetailsBodySchema.parse(req.body);
-        const toUpdate =
-            parsed.type === userType.enumValues[0]
-                ? faculty
-                : parsed.type === userType.enumValues[1]
-                  ? phd
-                  : staff;
+        const toUpdate = getUserTableByType(parsed.type);
         try {
             const updated = await db
                 .update(toUpdate)

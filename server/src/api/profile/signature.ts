@@ -5,14 +5,15 @@ import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
 import {
-    signatureUpload,
-    validateAndSaveSignatureMiddleware,
+    imageUpload,
+    validateDimensionsAndSaveMiddleware,
 } from "@/config/multer.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { modules } from "lib";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import multer from "multer";
 import environment from "@/config/environment.ts";
+import assert from "assert";
 
 const router = express.Router();
 
@@ -48,17 +49,15 @@ router.get(
 router.post(
     "/",
     asyncHandler((req, res, next) =>
-        signatureUpload.single("signature")(req, res, (err) => {
+        imageUpload.single("signature")(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
             next(err);
         })
     ),
-    asyncHandler(validateAndSaveSignatureMiddleware),
+    asyncHandler(validateDimensionsAndSaveMiddleware(150, 60)),
     asyncHandler(async (req, res, next) => {
-        if (!req.file) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));
-        }
+        assert(req.file);
         const [insertedFile] = await db
             .insert(files)
             .values({

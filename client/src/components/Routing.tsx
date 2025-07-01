@@ -19,6 +19,7 @@ import {
   BookOpen,
   LibraryBig,
   Warehouse,
+  File,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -67,6 +68,10 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
+import ProjectLayout from "@/layouts/Project";
+import AddProject from "@/views/Project/AddProject";
+import ViewProjects from "@/views/Project/ViewProjects";
+import ProjectDetails from "@/views/Project/[id]";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -94,6 +99,10 @@ const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
 
 const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("inventory:")
+);
+
+const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("project:")
 );
 
 const Routing = () => {
@@ -142,6 +151,12 @@ const Routing = () => {
       url: "/inventory",
       requiredPermissions: inventoryModulePermissions,
     },
+    {
+      title: "Project",
+      icon: <File />,
+      url: "/project",
+      requiredPermissions: projectModulePermissions,
+    },
   ];
 
   return (
@@ -173,9 +188,7 @@ const Routing = () => {
         <Route path="/contributors" element={<ContributorsPage />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
-        {authState?.userType === "faculty" && (
-          <Route path="/profile" element={<ProfilePage />} />
-        )}
+        {authState && <Route path="/profile" element={<ProfilePage />} />}
 
         {checkAccessAnyOne(adminModulePermissions) && (
           <Route path="/admin" element={<AdminLayout />}>
@@ -441,6 +454,24 @@ const Routing = () => {
             <Route path="stats" element={<></>} />
             {checkAccess("inventory:write") && (
               <Route path="settings" element={<Settings />} />
+            )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(projectModulePermissions) && (
+          <Route path="/project" element={<ProjectLayout />}>
+            <Route
+              index
+              element={<Navigate to="/project/add" replace={true} />}
+            />
+            {checkAccess(permissions["/project/create"]) && (
+              <Route path="add" element={<AddProject />} />
+            )}
+            {checkAccess(permissions["/project/list"]) && (
+              <Route path="view" element={<ViewProjects />} />
+            )}
+            {checkAccess(permissions["/project"]) && (
+              <Route path="view/:id" element={<ProjectDetails />} />
             )}
           </Route>
         )}

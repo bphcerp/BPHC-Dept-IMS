@@ -9,6 +9,7 @@ import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
 import inventoryRouter from "./inventory/index.ts";
 import profileRouter from "./profile/index.ts";
+import projectRouter from "./project/index.ts";
 import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
@@ -28,7 +29,7 @@ router.get("/hello", (_req, res) => {
     });
 });
 
-router.use("/contributors", contributorsRouter)
+router.use("/contributors", contributorsRouter);
 
 router.get("/favicon.ico", (_req, res) => {
     const headers = new Headers({
@@ -57,5 +58,6 @@ router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);
 router.use("/profile", profileRouter);
+router.use("/project", projectRouter);
 
 export default router;

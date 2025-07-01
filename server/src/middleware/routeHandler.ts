@@ -32,6 +32,8 @@ export const asyncHandler = <
                         fromError(e).toString()
                     )
                 );
+            } else if (e instanceof HttpError) {
+                return next(e);
             }
             return next(
                 new HttpError(
