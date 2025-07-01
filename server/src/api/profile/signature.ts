@@ -13,6 +13,7 @@ import { modules } from "lib";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import multer from "multer";
 import environment from "@/config/environment.ts";
+import assert from "assert";
 
 const router = express.Router();
 
@@ -56,9 +57,7 @@ router.post(
     ),
     asyncHandler(validateDimensionsAndSaveMiddleware(150, 60)),
     asyncHandler(async (req, res, next) => {
-        if (!req.file) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));
-        }
+        assert(req.file);
         const [insertedFile] = await db
             .insert(files)
             .values({

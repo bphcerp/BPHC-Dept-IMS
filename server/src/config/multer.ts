@@ -56,7 +56,7 @@ export const excelUpload = multer({
             "application/vnd.ms-excel",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "text/csv",
-            "application/csv"
+            "application/csv",
         ];
         if (!allowedMimeTypes.includes(file.mimetype)) {
             return callback(
@@ -70,27 +70,25 @@ export const excelUpload = multer({
     },
 });
 
-export const validateDimensionsAndSaveMiddleware = (width: number, height: number) => async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-) => {
-    if (!req.file) {
-        return next();
-    }
-    const filename = crypto.randomBytes(16).toString("hex");
-    const filePath = path.join(FILES_DIR, filename);
-    const saved = await sharp(req.file.buffer)
-        .resize(width, height, {
-            fit: "fill",
-            kernel: sharp.kernel.lanczos3,
-        })
-        .png({ quality: 100 })
-        .toFile(filePath);
-    const extendedFile = req.file;
-    extendedFile.filename = filename;
-    extendedFile.path = filePath;
-    extendedFile.destination = FILES_DIR;
-    extendedFile.size = saved.size;
-    next();
-};
+export const validateDimensionsAndSaveMiddleware =
+    (width: number, height: number) =>
+    async (req: Request, _res: Response, next: NextFunction) => {
+        if (!req.file) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));
+        }
+        const filename = crypto.randomBytes(16).toString("hex");
+        const filePath = path.join(FILES_DIR, filename);
+        const saved = await sharp(req.file.buffer)
+            .resize(width, height, {
+                fit: "fill",
+                kernel: sharp.kernel.lanczos3,
+            })
+            .png({ quality: 100 })
+            .toFile(filePath);
+        const extendedFile = req.file;
+        extendedFile.filename = filename;
+        extendedFile.path = filePath;
+        extendedFile.destination = FILES_DIR;
+        extendedFile.size = saved.size;
+        next();
+    };
