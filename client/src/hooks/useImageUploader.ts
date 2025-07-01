@@ -64,16 +64,14 @@ export const useImageUploader = ({
   });
   const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey,
     queryFn: async () => {
       const params = isAdmin ? { email: userEmail } : {};
       const res = await api.get<{ [key: string]: string | null }>(endpoint, {
         params,
       });
-      return (
-        res.data[formDataKey] || res.data.signature || res.data.profileImage
-      );
+      return res.data[formDataKey];
     },
     enabled: !!userEmail,
   });
@@ -282,6 +280,7 @@ export const useImageUploader = ({
     data,
     isLoading,
     isError,
+    error,
 
     // State
     dragActive,
