@@ -11,12 +11,11 @@ type Person = {
 };
 
 type PeopleData = {
-  professors: Person[];
   students: Person[];
 };
 
 const ContributorsPage = () => {
-  const { professors, students } = peopleData as PeopleData;
+  const { students } = peopleData as PeopleData;
   const sortedStudents = [...students].sort((a, b) =>
     a.id.localeCompare(b.id)
   );
