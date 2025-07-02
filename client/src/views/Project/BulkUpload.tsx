@@ -102,7 +102,6 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
         startDate: "01-02-2024",
         endDate: "31-01-2027",
         hasExtension: false,
-        extensionDetails: "",
       },
       {
         title: "Sample Project with Extension",
@@ -122,7 +121,6 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
         startDate: "01-06-2023",
         endDate: "31-05-2026",
         hasExtension: true,
-        extensionDetails: "Project extended by 6 months due to COVID-19 delays. New end date: 30-11-2026",
       }
     ];
 
@@ -130,7 +128,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
       'title', 'piName', 'piEmail', 'piDepartment', 'piCampus', 'piAffiliation',
       'coPIs', 'fundingAgency', 'fundingAgencyNature', 'sanctionedAmount',
       'capexAmount', 'opexAmount', 'manpowerAmount', 'approvalDate',
-      'startDate', 'endDate', 'hasExtension', 'extensionDetails'
+      'startDate', 'endDate', 'hasExtension'
     ];
 
     const escapeCSV = (value: string | number | boolean) => {
@@ -240,24 +238,23 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
               <div className="space-y-2">
                 <h4 className="font-medium">Required Columns:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• title (required)</li>
-                  <li>• piName (required)</li>
-                  <li>• piEmail (required)</li>
+                  <li>• title (<span className="text-red-600">required</span>)</li>
+                  <li>• piName (<span className="text-red-600">required</span>)</li>
+                  <li>• piEmail (<span className="text-red-600">required</span>)</li>
                   <li>• piDepartment (optional)</li>
                   <li>• piCampus (optional)</li>
                   <li>• piAffiliation (optional)</li>
                   <li>• coPIs (optional, comma-separated emails)</li>
-                  <li>• fundingAgency (required)</li>
+                  <li>• fundingAgency (<span className="text-red-600">required</span>)</li>
                   <li>• fundingAgencyNature (public_sector or private_industry)</li>
-                  <li>• sanctionedAmount (required, number)</li>
+                  <li>• sanctionedAmount (<span className="text-red-600">required</span>, number)</li>
                   <li>• capexAmount (optional, number)</li>
                   <li>• opexAmount (optional, number)</li>
                   <li>• manpowerAmount (optional, number)</li>
-                  <li>• approvalDate (required, DD-MM-YYYY)</li>
-                  <li>• startDate (required, DD-MM-YYYY)</li>
-                  <li>• endDate (required, DD-MM-YYYY)</li>
+                  <li>• approvalDate (<span className="text-red-600">required</span>, DD-MM-YYYY)</li>
+                  <li>• startDate (<span className="text-red-600">required</span>, DD-MM-YYYY)</li>
+                  <li>• endDate (<span className="text-red-600">required</span>, DD-MM-YYYY)</li>
                   <li>• hasExtension (optional, true/false)</li>
-                  <li>• extensionDetails (optional)</li>
                 </ul>
               </div>
 

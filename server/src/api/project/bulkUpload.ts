@@ -32,7 +32,6 @@ interface ProjectRow {
   startDate: string;
   endDate: string;
   hasExtension?: boolean;
-  extensionDetails?: string;
 }
 
 const validateProjectRow = (row: any): ProjectRow | null => {
@@ -122,7 +121,6 @@ const validateProjectRow = (row: any): ProjectRow | null => {
     startDate: convertDateFormat(row.startDate.toString().trim()),
     endDate: convertDateFormat(row.endDate.toString().trim()),
     hasExtension: parseBoolean(row.hasExtension),
-    extensionDetails: row.extensionDetails?.toString().trim(),
   };
 };
 
@@ -208,7 +206,6 @@ router.post(
             startDate: validatedRow.startDate,
             endDate: validatedRow.endDate,
             hasExtension: validatedRow.hasExtension || false,
-            extensionDetails: validatedRow.extensionDetails || null,
           })
           .returning();
         if (validatedRow.coPIs) {

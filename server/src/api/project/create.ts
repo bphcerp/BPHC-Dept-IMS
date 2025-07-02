@@ -30,7 +30,6 @@ router.post(
       startDate,
       endDate,
       hasExtension = false,
-      extensionDetails = null,
     } = req.body;
 
     if (!title || !pi || !fundingAgency || !fundingAgencyNature || !sanctionedAmount || !approvalDate || !startDate || !endDate) {
@@ -90,7 +89,6 @@ router.post(
         startDate,
         endDate,
         hasExtension,
-        extensionDetails,
       })
       .returning();
 
