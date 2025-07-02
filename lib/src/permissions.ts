@@ -119,6 +119,8 @@ export const allPermissions = {
     // Project module permissions
     "project:create": "Create a new project",
     "project:view": "View list of projects",
+    "project:view-all": "View all projects (admin)",
+    "project:edit-all": "Edit all projects (admin)",
     "project:bulk-upload": "Bulk upload projects",
     "project:view-details": "View project details",
 } as const;
@@ -310,5 +312,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/project/create": "project:create",
     "/project/bulkUpload": "project:bulk-upload",
     "/project/list": "project:view",
+    "/project/list-all": "project:view-all",
+    "/project/edit-all": "project:edit-all",
     "/project": "project:view-details",
 } as const;
