@@ -32,7 +32,6 @@ router.get(
         startDate: projects.startDate,
         endDate: projects.endDate,
         hasExtension: projects.hasExtension,
-        extensionDetails: projects.extensionDetails,
         createdAt: projects.createdAt,
         updatedAt: projects.updatedAt,
         piName: investigators.name,
@@ -54,6 +53,36 @@ router.get(
       coPIs = await db.select().from(investigators).where(inArray(investigators.id, coPIIds));
     }
     res.json({ ...project, coPIs });
+  })
+);
+
+router.patch(
+  "/:id",
+  checkAccess("project:edit-all"),
+  asyncHandler(async (req, res, _next) => {
+    const { id } = req.params;
+    const updateData = req.body;
+    const allowedFields = [
+      "title", "fundingAgencyNature", "sanctionedAmount", "capexAmount", "opexAmount", "manpowerAmount", "approvalDate", "startDate", "endDate", "hasExtension"
+    ];
+    const update: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (updateData[key] !== undefined) update[key] = updateData[key];
+    }
+    if (Object.keys(update).length === 0) {
+      res.status(400).json({ error: "No valid fields to update" });
+      return;
+    }
+    const [project] = await db
+      .update(projects)
+      .set(update)
+      .where(eq(projects.id, id))
+      .returning();
+    if (!project) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
+    res.json({ success: true, project });
   })
 );
 

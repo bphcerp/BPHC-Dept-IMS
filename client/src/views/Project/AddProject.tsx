@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -23,6 +23,41 @@ import { projectSchemas} from "lib";
 
 type UploadMode = "single" | "bulk";
 
+function debounce<T extends unknown[]>(fn: (...args: T) => void, delay: number) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: T) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+type Faculty = {
+  name?: string;
+  email: string;
+  department?: string;
+  designation?: string;
+  room?: string;
+  phone?: string;
+};
+
+type FacultyResponse = {
+  success: boolean;
+  faculty?: Faculty;
+  error?: string;
+};
+
+function extractCampusFromEmail(email: string | undefined): string {
+  if (!email) return "";
+  if (email.includes("@hyderabad.bits-pilani.ac.in")) return "Hyderabad";
+  if (email.includes("@goa.bits-pilani.ac.in")) return "Goa";
+  if (email.includes("@pilani.bits-pilani.ac.in")) return "Pilani";
+  return "";
+}
+
+function getAffiliationFromCampus(campus: string) {
+  return campus ? `BITS ${campus} campus` : "";
+}
+
 export default function AddProject() {
   const { authState, checkAccess } = useAuth();
   const [uploadMode, setUploadMode] = useState<UploadMode>("single");
@@ -42,13 +77,14 @@ export default function AddProject() {
       startDate: "",
       endDate: "",
       hasExtension: false,
-      extensionDetails: "",
     },
   });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "coPIs",
   });
+  const [piLoading, setPiLoading] = useState(false);
+  const [coPiLoading, setCoPiLoading] = useState<number | null>(null);
 
   const onSubmit = async (data: projectSchemas.ProjectFormValues) => {
     try {
@@ -59,6 +95,100 @@ export default function AddProject() {
       toast.error((err as string) ?? "Error creating project");
     }
   };
+
+  const fetchPiDetails = async (email: string) => {
+    if (!email) return;
+    setPiLoading(true);
+    try {
+      const res = await api.get<FacultyResponse>("/project/faculty/by-email", { params: { email } });
+      const data = res.data;
+      if (data && data.success && data.faculty) {
+        form.setValue("pi.name", data.faculty.name || "");
+        form.setValue("pi.department", data.faculty.department || "");
+        const campus = extractCampusFromEmail(data.faculty.email) || data.faculty.room || "";
+        form.setValue("pi.campus", campus);
+        form.setValue("pi.affiliation", getAffiliationFromCampus(campus));
+      } else {
+        form.setValue("pi.name", "");
+        form.setValue("pi.department", "");
+        form.setValue("pi.campus", "");
+        form.setValue("pi.affiliation", "");
+      }
+    } catch {
+      form.setValue("pi.name", "");
+      form.setValue("pi.department", "");
+      form.setValue("pi.campus", "");
+      form.setValue("pi.affiliation", "");
+    }
+    setPiLoading(false);
+  };
+
+  const debouncedFetchPiDetails = useRef(debounce((email: string) => { void fetchPiDetails(email); }, 500)).current;
+
+  useEffect(() => {
+    const sub = form.watch((values, { name }) => {
+      if (name === "pi.email") {
+        if (values.pi && typeof values.pi.email === 'string') {
+          debouncedFetchPiDetails(values.pi.email);
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form, debouncedFetchPiDetails]);
+
+  const fetchCoPiDetails = useCallback(
+    async (email: string, idx: number) => {
+      if (!email) return;
+      setCoPiLoading(idx);
+      try {
+        const res = await api.get<FacultyResponse>("/project/faculty/by-email", { params: { email } });
+        const data = res.data;
+        if (data && data.success && data.faculty) {
+          form.setValue(`coPIs.${idx}.name`, data.faculty.name || "");
+          form.setValue(`coPIs.${idx}.department`, data.faculty.department || "");
+          const campus = extractCampusFromEmail(data.faculty.email) || data.faculty.room || "";
+          form.setValue(`coPIs.${idx}.campus`, campus);
+          form.setValue(`coPIs.${idx}.affiliation`, getAffiliationFromCampus(campus));
+        } else {
+          form.setValue(`coPIs.${idx}.name`, "");
+          form.setValue(`coPIs.${idx}.department`, "");
+          form.setValue(`coPIs.${idx}.campus`, "");
+          form.setValue(`coPIs.${idx}.affiliation`, "");
+        }
+      } catch {
+        form.setValue(`coPIs.${idx}.name`, "");
+        form.setValue(`coPIs.${idx}.department`, "");
+        form.setValue(`coPIs.${idx}.campus`, "");
+        form.setValue(`coPIs.${idx}.affiliation`, "");
+      }
+      setCoPiLoading(null);
+    },
+    [form]
+  );
+
+  const coPiDebouncers = useRef<{ [idx: number]: (email: string) => void }>({});
+  useEffect(() => {
+    fields.forEach((_field, idx) => {
+      if (!coPiDebouncers.current[idx]) {
+        coPiDebouncers.current[idx] = debounce((email: string) => { void fetchCoPiDetails(email, idx); }, 500);
+      }
+    });
+  }, [fields, fetchCoPiDetails]);
+
+  useEffect(() => {
+    const sub = form.watch((values, { name }) => {
+      if (name && name.startsWith("coPIs.")) {
+        const match = name.match(/^coPIs\.(\d+)\.email$/);
+        if (match) {
+          const idx = Number(match[1]);
+          if (values.coPIs && typeof values.coPIs[idx]?.email === 'string') {
+            coPiDebouncers.current[idx]?.(values.coPIs[idx].email);
+          }
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [form, fields]);
 
   if (!authState) return <Navigate to="/" replace />;
   if (!checkAccess("project:create")) return <Navigate to="/404" replace />;
@@ -115,7 +245,7 @@ export default function AddProject() {
                     <FormItem>
                       <FormLabel className="text-base font-medium">Project Title</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter project title" className="h-12 text-base" />
+                        <Input {...field} placeholder="Enter project title" className="h-10 text-base" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -135,12 +265,15 @@ export default function AddProject() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
-                    name="pi.name"
+                    name="pi.email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name *</FormLabel>
+                        <FormLabel>Email Address *</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Enter full name" />
+                          <div className="relative">
+                            <Input {...field} type="email" placeholder="Enter email address" />
+                            {piLoading && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -148,12 +281,12 @@ export default function AddProject() {
                   />
                   <FormField
                     control={form.control}
-                    name="pi.email"
+                    name="pi.name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address *</FormLabel>
+                        <FormLabel>Full Name *</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" placeholder="Enter email address" />
+                          <Input {...field} placeholder="Enter full name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -245,12 +378,15 @@ export default function AddProject() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50 rounded-lg border">
                           <FormField
                             control={form.control}
-                            name={`coPIs.${idx}.name` as const}
+                            name={`coPIs.${idx}.email` as const}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Full Name</FormLabel>
+                                <FormLabel>Email Address *</FormLabel>
                                 <FormControl>
-                                  <Input {...field} placeholder="Enter full name" />
+                                  <div className="relative">
+                                    <Input {...field} type="email" placeholder="Enter email address" />
+                                    {coPiLoading === idx && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -258,12 +394,12 @@ export default function AddProject() {
                           />
                           <FormField
                             control={form.control}
-                            name={`coPIs.${idx}.email` as const}
+                            name={`coPIs.${idx}.name` as const}
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Email Address *</FormLabel>
+                                <FormLabel>Full Name</FormLabel>
                                 <FormControl>
-                                  <Input {...field} type="email" placeholder="Enter email address" />
+                                  <Input {...field} placeholder="Enter full name" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -488,21 +624,7 @@ export default function AddProject() {
                       </FormItem>
                     )}
                   />
-                  {form.watch("hasExtension") && (
-                    <FormField
-                      control={form.control}
-                      name="extensionDetails"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Extension Details</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Provide details about the extension" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+
                 </div>
               </CardContent>
             </Card>
