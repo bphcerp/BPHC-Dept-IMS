@@ -9,7 +9,7 @@ COPY ./lib ./lib
 WORKDIR /usr/local/app/client
 
 COPY --chown=node:node client/tsconfig*.json ./
-COPY --chown=node:node client/public ./
+COPY --chown=node:node client/public ./public/
 COPY --chown=node:node client/postcss.config.js ./
 COPY --chown=node:node client/tailwind.config.js ./
 COPY --chown=node:node client/vite.config.ts ./

@@ -16,9 +16,7 @@ type PeopleData = {
 
 const ContributorsPage = () => {
   const { students } = peopleData as PeopleData;
-  const sortedStudents = [...students].sort((a, b) =>
-    a.id.localeCompare(b.id)
-  );
+  const sortedStudents = [...students].sort((a, b) => a.id.localeCompare(b.id));
 
   const renderSection = (title: string, people: Person[]) => (
     <div className="mb-12">
