@@ -132,7 +132,7 @@ export default function ProjectTable({
   };
   const handleSave = async (id: string) => {
     if (!onEditSave) return;
-    const changed: Partial<Project> = {};
+    const changed: Record<string, unknown> = {};
     (Object.keys(editValues) as (keyof Project)[]).forEach((key) => {
       const original = projects.find((p) => p.id === id);
       if (original && editValues[key] !== original[key]) {
@@ -144,7 +144,7 @@ export default function ProjectTable({
       setEditValues({});
       return;
     }
-    await onEditSave(id, changed);
+    await onEditSave(id, changed as Partial<Project>);
     setEditingId(null);
     setEditValues({});
   };
