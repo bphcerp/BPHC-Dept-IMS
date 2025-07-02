@@ -7,7 +7,7 @@ const router = Router();
 
 router.get(
   "/",
-  checkAccess("project:view"),
+  checkAccess("project:view-all"),
   asyncHandler(async (_req: Request, res: Response) => {
     const result = await db.query.projects.findMany({
       with: {

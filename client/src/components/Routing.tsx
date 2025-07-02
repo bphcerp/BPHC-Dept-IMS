@@ -70,8 +70,10 @@ import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
-import ViewProjects from "@/views/Project/ViewProjects";
 import ProjectDetails from "@/views/Project/[id]";
+import YourProjects from "@/views/Project/YourProjects";
+import AllProjects from "@/views/Project/AllProjects";
+import EditProjects from "@/views/Project/EditProjects";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -468,10 +470,16 @@ const Routing = () => {
               <Route path="add" element={<AddProject />} />
             )}
             {checkAccess(permissions["/project/list"]) && (
-              <Route path="view" element={<ViewProjects />} />
+              <Route path="view-your" element={<YourProjects />} />
+            )}
+            {checkAccess(permissions["/project/view-all"]) && (
+              <Route path="view-all" element={<AllProjects />} />
+            )}
+            {checkAccess(permissions["/project/edit-all"]) && (
+              <Route path="edit-all" element={<EditProjects />} />
             )}
             {checkAccess(permissions["/project"]) && (
-              <Route path="view/:id" element={<ProjectDetails />} />
+              <Route path="details/:id" element={<ProjectDetails />} />
             )}
           </Route>
         )}

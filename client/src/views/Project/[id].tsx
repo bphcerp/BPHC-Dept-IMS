@@ -40,7 +40,6 @@ interface Project {
   startDate: string;
   endDate: string;
   hasExtension: boolean;
-  extensionDetails?: string;
   coPIs?: CoPI[];
 }
 
@@ -108,7 +107,7 @@ export default function ProjectDetails() {
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
         <p className="text-red-500 mb-4">{error}</p>
-        <Button onClick={() => navigate("/project")} variant="outline">
+        <Button onClick={() => navigate("/project/view-your")} variant="outline">
           Back to Projects
         </Button>
       </div>
@@ -119,7 +118,7 @@ export default function ProjectDetails() {
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
         <p className="text-muted-foreground mb-4">Project not found</p>
-        <Button onClick={() => navigate("/project")} variant="outline">
+        <Button onClick={() => navigate("/project/view-your")} variant="outline">
           Back to Projects
         </Button>
       </div>
@@ -132,7 +131,13 @@ export default function ProjectDetails() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate("/project/view")}
+          onClick={() => {
+            if (window.history.length > 2) {
+              navigate(-1);
+            } else {
+              navigate("/project/view-your");
+            }
+          }}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -257,12 +262,7 @@ export default function ProjectDetails() {
           icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
         />
 
-        {project.hasExtension && project.extensionDetails && (
-          <FieldDisplay 
-            label="Extension Details" 
-            value={project.extensionDetails} 
-          />
-        )}
+
       </div>
     </div>
   );

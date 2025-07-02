@@ -30,7 +30,6 @@ export const projectSchema = z.object({
   startDate: z.string().min(1, "Start Date is required"),
   endDate: z.string().min(1, "End Date is required"),
   hasExtension: z.boolean().optional(),
-  extensionDetails: z.string().optional(),
 });
 
 export type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -50,7 +49,6 @@ export type Project = {
   startDate: string;
   endDate: string;
   hasExtension: boolean;
-  extensionDetails?: string;
   coPIs?: CoPI[];
 }
 

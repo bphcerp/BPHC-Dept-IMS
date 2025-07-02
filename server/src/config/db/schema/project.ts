@@ -50,7 +50,6 @@ export const projects = pgTable("projects", {
   startDate: date("start_date").notNull(),
   endDate: date("end_date").notNull(),
   hasExtension: boolean("has_extension").notNull().default(false),
-  extensionDetails: text("extension_details"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
