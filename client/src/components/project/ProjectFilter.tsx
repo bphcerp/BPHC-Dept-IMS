@@ -15,10 +15,12 @@ import {
 
 export type SortOrder = "desc" | "asc";
 export type AmountFilter = "all" | "high" | "medium" | "low";
+export type StatusFilter = "all" | "ongoing" | "completed";
 
 export interface ProjectFilterState {
   sortOrder: SortOrder;
   amountFilter: AmountFilter;
+  statusFilter: StatusFilter;
   yearRangeFilter: {
     min: number | null;
     max: number | null;
@@ -31,12 +33,13 @@ interface ProjectFilterProps {
 }
 
 export default function ProjectFilter({ filterState, onFilterChange }: ProjectFilterProps) {
-  const { sortOrder, amountFilter, yearRangeFilter } = filterState;
+  const { sortOrder, amountFilter, statusFilter, yearRangeFilter } = filterState;
 
   const getActiveFilterCount = () => {
     let count = 0;
     if (sortOrder !== "desc") count++;
     if (amountFilter !== "all") count++;
+    if (statusFilter !== "all") count++;
     if (yearRangeFilter.min !== null) count++;
     if (yearRangeFilter.max !== null) count++;
     return count;
@@ -56,6 +59,13 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
     });
   };
 
+  const handleStatusFilterChange = (value: StatusFilter) => {
+    onFilterChange({
+      ...filterState,
+      statusFilter: value,
+    });
+  };
+
   const handleYearRangeChange = (field: "min" | "max", value: number | null) => {
     onFilterChange({
       ...filterState,
@@ -70,6 +80,7 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
     onFilterChange({
       sortOrder: "desc",
       amountFilter: "all",
+      statusFilter: "all",
       yearRangeFilter: { min: null, max: null },
     });
   };
@@ -131,6 +142,28 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
             </DropdownMenuRadioItem>
             <DropdownMenuRadioItem value="low">
               &lt; ₹5L (Low)
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            Filter by Status
+          </DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={statusFilter}
+            onValueChange={(value) => handleStatusFilterChange(value as StatusFilter)}
+          >
+            <DropdownMenuRadioItem value="all">
+              All statuses
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="ongoing">
+              Ongoing
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="completed">
+              Completed
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>

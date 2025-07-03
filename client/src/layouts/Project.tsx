@@ -27,7 +27,7 @@ const ProjectLayout = () => {
                 title: "All Projects",
                 icon: <FileText />,
                 url: "/project/view-all",
-                requiredPermissions: [permissions["/project/view-all"]],
+                requiredPermissions: [permissions["/project/list-all"]],
               },
               {
                 title: "Edit Projects",
