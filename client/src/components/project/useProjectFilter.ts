@@ -6,6 +6,7 @@ export function useProjectFilter() {
   const [filterState, setFilterState] = useState<ProjectFilterState>({
     sortOrder: "desc",
     amountFilter: "all",
+    statusFilter: "all",
     yearRangeFilter: {
       min: null,
       max: null,
@@ -21,6 +22,27 @@ export function useProjectFilter() {
         if (filterState.amountFilter === "medium" && amount >= 500000 && amount < 1000000) return true;
         if (filterState.amountFilter === "low" && amount < 500000) return true;
         return false;
+      })
+      .filter((project) => {
+        if (filterState.statusFilter === "all") return true;
+        
+        const today = new Date();
+        const startDate = project.startDate ? new Date(project.startDate) : null;
+        const endDate = project.endDate ? new Date(project.endDate) : null;
+        
+        if (filterState.statusFilter === "ongoing") {
+          if (!startDate) return false;
+          if (startDate > today) return false;
+          if (endDate && endDate < today) return false;
+          return true;
+        }
+        
+        if (filterState.statusFilter === "completed") {
+          if (!endDate) return false;
+          return endDate < today;
+        }
+        
+        return true;
       })
       .filter((project) => {
         if (!project.startDate) return true;
