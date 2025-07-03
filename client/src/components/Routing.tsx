@@ -472,7 +472,7 @@ const Routing = () => {
             {checkAccess(permissions["/project/list"]) && (
               <Route path="view-your" element={<YourProjects />} />
             )}
-            {checkAccess(permissions["/project/view-all"]) && (
+            {checkAccess(permissions["/project/list-all"]) && (
               <Route path="view-all" element={<AllProjects />} />
             )}
             {checkAccess(permissions["/project/edit-all"]) && (
