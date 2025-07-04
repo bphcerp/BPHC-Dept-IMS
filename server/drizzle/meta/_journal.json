@@ -239,6 +239,13 @@
       "when": 1751562798658,
       "tag": "0033_flowery_mastermind",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1751646126757,
+      "tag": "0034_wandering_photon",
+      "breakpoints": true
     }
   ]
 }
