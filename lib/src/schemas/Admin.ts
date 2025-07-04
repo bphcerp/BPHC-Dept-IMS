@@ -102,9 +102,13 @@ const optionalString = z
 const optionalEmail = z
     .string()
     .trim()
-    .email()
     .nullish()
-    .transform((val) => (val?.length ? val : null));
+    .transform((val) => (val?.length ? val : null)).refine(
+        (val) => !val || z.string().email().safeParse(val).success,
+        {
+            message: "Invalid email",
+        }
+    );
 export const editDetailsBodySchema = z.intersection(
     z.object({
         email: z.string().email(),
@@ -129,6 +133,7 @@ export const editDetailsBodySchema = z.intersection(
             personalEmail: optionalEmail,
             notionalSupervisorEmail: optionalEmail,
             supervisorEmail: optionalEmail,
+            emergencyPhoneNumber: optionalString,
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
@@ -157,4 +162,5 @@ export interface MemberDetailsResponse {
     personalEmail?: string | null;
     notionalSupervisorEmail?: string | null;
     supervisorEmail?: string | null;
+    emergencyPhoneNumber?: string | null;
 }

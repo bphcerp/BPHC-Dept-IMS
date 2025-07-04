@@ -82,6 +82,7 @@ export const phd = pgTable("phd", {
     instituteEmail: text("institute_email"),
     mobile: text("mobile"),
     personalEmail: text("personal_email"),
+    emergencyPhoneNumber: text("emergency_phone_number"),
 
     notionalSupervisorEmail: text("notional_supervisor_email").references(
         () => users.email,

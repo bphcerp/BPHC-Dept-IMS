@@ -34,6 +34,7 @@ export const getUserDetails = async (userEmail: string) => {
                     personalEmail: true,
                     notionalSupervisorEmail: true,
                     supervisorEmail: true,
+                    emergencyPhoneNumber: true,
                 },
             },
             staff: true,
