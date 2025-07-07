@@ -68,7 +68,7 @@ COPY --chown=node:node ./server/drizzle.config.ts ./server/drizzle.config.ts
 
 WORKDIR /usr/local/app/server
 
-RUN node node_modules/puppeteer/install.mjs
+RUN ln -s /usr/bin/chromium /usr/bin/chromium-browser
 
 RUN pnpm tsc --build
 
