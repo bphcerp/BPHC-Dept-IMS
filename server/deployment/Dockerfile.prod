@@ -63,6 +63,7 @@ RUN pnpm install -r
 COPY --chown=node:node ./server/drizzle ./server/drizzle
 COPY --chown=node:node ./server/scripts ./server/scripts
 COPY --chown=node:node ./server/src ./server/src
+COPY --chown=node:node ./server/static ./server/static
 COPY --chown=node:node ./server/drizzle.config.ts ./server/drizzle.config.ts
 
 WORKDIR /usr/local/app/server
