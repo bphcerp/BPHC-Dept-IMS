@@ -63,15 +63,15 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex min-w-0 items-end gap-2">
+            <Link to="/" className="flex min-w-0 items-center gap-1">
               {!isCollapsed && pathname !== "/" && (
-                <ArrowLeftIcon className="h-8 w-8 shrink-0 p-1" />
+                <ArrowLeftIcon className="h-6 w-6 shrink-0" />
               )}
               {!isCollapsed && (
                 <img
                   src={logo}
                   alt="Logo"
-                  className="aspect-square h-8 w-8 shrink-0 object-contain"
+                  className="aspect-square h-16 w-16 shrink-0 object-contain"
                 />
               )}
               {!isCollapsed && (
