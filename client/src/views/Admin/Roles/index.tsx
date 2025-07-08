@@ -3,27 +3,12 @@ import RoleList, { type Role } from "@/components/admin/RoleList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import useDebounce from "@/hooks/useDebounce";
 import api from "@/lib/axios-instance";
 import { useQuery } from "@tanstack/react-query";
 import { Search, SortAsc, SortDesc } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
 
 const RolesView = () => {
   const [search, setSearch] = useState("");

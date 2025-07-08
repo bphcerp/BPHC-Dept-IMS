@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Edit, Trash, Users } from "lucide-react";
-import api from "@/lib/axios-instance.ts";
+import api from "@/lib/axios-instance";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
@@ -14,7 +14,7 @@ import {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog.tsx";
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

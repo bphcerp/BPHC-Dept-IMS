@@ -15,22 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
+import useDebounce from "@/hooks/useDebounce";
 
 const MembersView = () => {
   const [search, setSearch] = useState("");
@@ -71,10 +56,12 @@ const MembersView = () => {
         const searchLower = debouncedSearch.toLowerCase();
         filtered = filtered.filter(
           (member) =>
-            (member.name?.toLowerCase().includes(searchLower)) ||
+            member.name?.toLowerCase().includes(searchLower) ||
             member.email.toLowerCase().includes(searchLower) ||
             member.type.toLowerCase().includes(searchLower) ||
-            member.roles.some((role) => role.toLowerCase().includes(searchLower))
+            member.roles.some((role) =>
+              role.toLowerCase().includes(searchLower)
+            )
         );
       }
 
@@ -171,9 +158,7 @@ const MembersView = () => {
   };
 
   const hasActiveFilters =
-    typeFilter !== "all" ||
-    roleFilter !== "all" ||
-    search.length > 0;
+    typeFilter !== "all" || roleFilter !== "all" || search.length > 0;
 
   return (
     <div className="mx-auto flex max-w-7xl flex-1 flex-col gap-4 p-4">
@@ -296,7 +281,7 @@ const MembersView = () => {
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-lg text-muted-foreground">No members found</p>
           {hasActiveFilters && (
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Try adjusting your filters or search query
             </p>
           )}

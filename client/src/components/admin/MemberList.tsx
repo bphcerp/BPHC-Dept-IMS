@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
-import { Button, buttonVariants } from "../ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Pencil, Plus, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
