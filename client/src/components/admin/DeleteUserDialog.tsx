@@ -31,6 +31,7 @@ const DeleteUserDialog = ({ email }: { email: string }) => {
       toast.success("User deleted successfully");
       void queryClient.removeQueries(["member", email]);
       void queryClient.removeQueries(["members"]);
+      void queryClient.removeQueries(["roles"]);
       setOpen(false);
       navigate("/admin");
     },

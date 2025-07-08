@@ -20,7 +20,7 @@ import {
 } from "../ui/card";
 import { Plus, UserCircle2, X, User } from "lucide-react";
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";

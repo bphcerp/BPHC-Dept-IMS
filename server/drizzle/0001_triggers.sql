@@ -80,39 +80,52 @@ DECLARE
     added_role integer;
     removed_role integer;
 BEGIN
--- Get the old and new roles
+    -- Handle DELETE operation
+    IF TG_OP = 'DELETE' THEN
+        old_roles := COALESCE(OLD.roles, '{}');
+        -- Decrement member_count for each role the deleted user had
+        FOREACH removed_role IN ARRAY old_roles LOOP
+            UPDATE roles
+            SET member_count = GREATEST(member_count - 1, 0)  -- Ensure it doesn't go below 0
+            WHERE id = removed_role;
+        END LOOP;
+        RETURN OLD;
+    END IF;
+
+    -- Handle INSERT and UPDATE operations
     new_roles := COALESCE(NEW.roles, '{}');
     old_roles := COALESCE(OLD.roles, '{}');
-	-- Find the roles that are added
+    
+    -- Find the roles that are added
     added_roles := ARRAY(
         SELECT unnest(new_roles)
         EXCEPT
         SELECT unnest(old_roles)
     );
-	-- Find the roles that were removed
+    -- Find the roles that were removed
     removed_roles := ARRAY(
         SELECT unnest(old_roles)
         EXCEPT
         SELECT unnest(new_roles)
     );
-	-- Increment member_count for each newly added role
+    -- Increment member_count for each newly added role
     FOREACH added_role IN ARRAY added_roles LOOP
         UPDATE roles
         SET member_count = member_count + 1
         WHERE id = added_role;
     END LOOP;
-	-- Decrement member_count for each removed role
+    -- Decrement member_count for each removed role
     FOREACH removed_role IN ARRAY removed_roles LOOP
         UPDATE roles
         SET member_count = GREATEST(member_count - 1, 0)  -- Ensure it doesn't go below 0
         WHERE id = removed_role;
     END LOOP;
-	RETURN NEW;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 --> statement-breakpoint
 CREATE OR REPLACE TRIGGER trigger_update_role_member_count
-AFTER UPDATE OR INSERT ON users
+AFTER UPDATE OR INSERT OR DELETE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_role_member_count();
 --> statement-breakpoint
