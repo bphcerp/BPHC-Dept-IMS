@@ -130,14 +130,24 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
           )}
 
           {authState ? (
-            <SidebarMenuButton
-              onClick={logOut}
-              tooltip="Logout"
-              className="flex items-start gap-2"
-            >
-              <LogOut className="h-5 w-5 shrink-0" />
-              {!isCollapsed && <span>LOGOUT</span>}
-            </SidebarMenuButton>
+            <>
+              <SidebarMenuButton
+                onClick={logOut}
+                tooltip="Logout"
+                className="flex items-start gap-2 overflow-visible"
+              >
+                <LogOut className="h-5 w-5 shrink-0" />
+                {!isCollapsed && (
+                  <div className="relative w-full">
+                    LOGOUT
+                    <span className="absolute -left-6 top-4 w-[calc(100%+1.5rem)] truncate text-xs text-muted">
+                      {authState.email}
+                    </span>
+                  </div>
+                )}
+              </SidebarMenuButton>
+              {!isCollapsed && <div className="px-2 py-1"></div>}
+            </>
           ) : (
             !isCollapsed && <GoogleLogin onSuccess={onSuccess} />
           )}
