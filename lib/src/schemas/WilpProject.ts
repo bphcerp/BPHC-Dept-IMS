@@ -17,6 +17,8 @@ export const wilpProjectSchema = z.object({
     facultyEmail: z.string().email("Invalid faculty email").optional(),
     researchArea: z.string().min(1, "Research area is required"),
     dissertationTitle: z.string().min(1, "Dissertation title is required"),
+    reminder: z.date(),
+    deadline: z.date(),
 });
 
 export type WilpProjectFormValues = z.infer<typeof wilpProjectSchema>;
@@ -31,6 +33,8 @@ export type WilpProject = {
     facultyEmail?: string;
     researchArea: string;
     dissertationTitle: string;
+    reminder: Date;
+    deadline: Date;
     createdAt: Date;
     updatedAt: Date;
 };
