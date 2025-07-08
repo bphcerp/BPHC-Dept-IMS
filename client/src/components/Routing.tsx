@@ -164,7 +164,7 @@ const Routing = () => {
       requiredPermissions: projectModulePermissions,
     },
     {
-      title: "WILP",
+      title: "Wilp",
       icon: <BookOpen />,
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
