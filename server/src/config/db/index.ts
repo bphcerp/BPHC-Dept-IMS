@@ -22,6 +22,7 @@ import * as project from "./schema/project.ts";
 
 import env from "../environment.ts";
 import pg from "pg";
+import { wilpProject } from "./schema/wilpProject.ts";
 
 const { Pool } = pg;
 
@@ -55,7 +56,8 @@ const db = drizzle(pool, {
         ...inventory,
         ...inventoryRelations,
         ...project,
-        ...projectRelations
+        ...wilpProject,
+        ...projectRelations,
     },
 });
 
