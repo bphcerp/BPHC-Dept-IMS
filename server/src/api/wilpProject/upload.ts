@@ -2,6 +2,7 @@ import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { Router } from "express";
+import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
 import {
@@ -104,6 +105,19 @@ router.post(
                 continue;
             }
             try {
+                // Check if a project already exists for the student ID
+                let [existingProject] = await db
+                    .select()
+                    .from(wilpProject)
+                    .where(eq(wilpProject.studentId, parsedRow.studentId));
+                if (existingProject) {
+                    results.failed++;
+                    results.errors.push(
+                        `Row ${i + 2}: Project for student ID ${parsedRow.studentId} already exists`
+                    );
+                    continue;
+                }
+
                 let [newProject] = await db
                     .insert(wilpProject)
                     .values({
