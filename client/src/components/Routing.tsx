@@ -107,6 +107,10 @@ const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("project:")
 );
 
+const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("wilp:")
+);
+
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
 
@@ -158,6 +162,12 @@ const Routing = () => {
       icon: <File />,
       url: "/project",
       requiredPermissions: projectModulePermissions,
+    },
+    {
+      title: "WILP",
+      icon: <BookOpen />,
+      url: "/wilp",
+      requiredPermissions: wilpModulePermissions,
     },
   ];
 
