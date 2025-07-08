@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   drizzle-orm@0.40.0:
-    hash: edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f
+    hash: 3oqolxumisrbar4ooxdrjwtj4a
     path: patches/drizzle-orm@0.40.0.patch
 
 importers:
@@ -207,7 +207,7 @@ importers:
         version: 18.3.5(@types/react@18.3.18)
       '@vitejs/plugin-react-swc':
         specifier: ^3.5.0
-        version: 3.8.0(@swc/helpers@0.5.17)(vite@5.4.14(@types/node@22.13.10))
+        version: 3.8.0(@swc/helpers@0.5.17)(vite@5.4.14(@types/node@22.13.10)(terser@5.43.1))
       eslint:
         specifier: ^9.18.0
         version: 9.22.0(jiti@1.21.7)
@@ -244,6 +244,9 @@ importers:
       prettier-plugin-tailwindcss:
         specifier: ^0.6.6
         version: 0.6.11(prettier@3.3.3)
+      terser:
+        specifier: ^5.43.1
+        version: 5.43.1
       typescript:
         specifier: ^5.5.3
         version: 5.8.2
@@ -252,7 +255,7 @@ importers:
         version: 8.26.1(eslint@9.22.0(jiti@1.21.7))(typescript@5.8.2)
       vite:
         specifier: ^5.4.1
-        version: 5.4.14(@types/node@22.13.10)
+        version: 5.4.14(@types/node@22.13.10)(terser@5.43.1)
 
   lib:
     dependencies:
@@ -304,7 +307,7 @@ importers:
         version: 16.4.7
       drizzle-orm:
         specifier: ^0.40.0
-        version: 0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
+        version: 0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
@@ -1546,6 +1549,9 @@ packages:
   '@jridgewell/set-array@1.2.1':
     resolution: {integrity: sha512-R8gLRTZeyp03ymzP/6Lil/28tGeGEzhx1q2k703KGWRAI1VdvPIXdG70VJc2pAMw3NA6JKL5hhFu1sJX0Mnn/A==}
     engines: {node: '>=6.0.0'}
+
+  '@jridgewell/source-map@0.3.10':
+    resolution: {integrity: sha512-0pPkgz9dY+bijgistcTTJ5mR+ocqRXLuhXHYdzoMmmoJ2C9S46RCm2GMUbatPEUK9Yjy26IrAy8D/M00lLkv+Q==}
 
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
@@ -3293,6 +3299,9 @@ packages:
   commander@13.1.0:
     resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
     engines: {node: '>=18'}
+
+  commander@2.20.3:
+    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
@@ -6530,6 +6539,11 @@ packages:
   tar-stream@3.1.7:
     resolution: {integrity: sha512-qJj60CXt7IU1Ffyc3NJMjh6EkuCFej46zUqJ4J7pqYlThyd9bO0XBTmcOIhSzZJVWfsLks0+nle/j538YAW9RQ==}
 
+  terser@5.43.1:
+    resolution: {integrity: sha512-+6erLbBm0+LROX2sPXlUYx/ux5PyE9K/a92Wrt6oA+WDAoFTdpHE5tCYCI5PNzq2y8df4rA+QgHLJuR4jNymsg==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   test-exclude@6.0.0:
     resolution: {integrity: sha512-cAGWPIyOHU6zlmg88jwm7VRyXnMN7iV68OGAbYDk/Mh/xC/pzVPlQtY6ngoIH/5/tciuhGfvESU8GrHrcxD56w==}
     engines: {node: '>=8'}
@@ -7981,6 +7995,11 @@ snapshots:
 
   '@jridgewell/set-array@1.2.1': {}
 
+  '@jridgewell/source-map@0.3.10':
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.8
+      '@jridgewell/trace-mapping': 0.3.25
+
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
   '@jridgewell/trace-mapping@0.3.25':
@@ -9232,10 +9251,10 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vitejs/plugin-react-swc@3.8.0(@swc/helpers@0.5.17)(vite@5.4.14(@types/node@22.13.10))':
+  '@vitejs/plugin-react-swc@3.8.0(@swc/helpers@0.5.17)(vite@5.4.14(@types/node@22.13.10)(terser@5.43.1))':
     dependencies:
       '@swc/core': 1.11.9(@swc/helpers@0.5.17)
-      vite: 5.4.14(@types/node@22.13.10)
+      vite: 5.4.14(@types/node@22.13.10)(terser@5.43.1)
     transitivePeerDependencies:
       - '@swc/helpers'
 
@@ -9841,6 +9860,8 @@ snapshots:
 
   commander@13.1.0: {}
 
+  commander@2.20.3: {}
+
   commander@4.1.1: {}
 
   compress-commons@4.1.2:
@@ -10120,7 +10141,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
+  drizzle-orm@0.40.0(patch_hash=3oqolxumisrbar4ooxdrjwtj4a)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0):
     optionalDependencies:
       '@types/pg': 8.11.11
       gel: 2.0.1
@@ -13942,6 +13963,13 @@ snapshots:
       fast-fifo: 1.3.2
       streamx: 2.22.1
 
+  terser@5.43.1:
+    dependencies:
+      '@jridgewell/source-map': 0.3.10
+      acorn: 8.14.1
+      commander: 2.20.3
+      source-map-support: 0.5.21
+
   test-exclude@6.0.0:
     dependencies:
       '@istanbuljs/schema': 0.1.3
@@ -14284,7 +14312,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite@5.4.14(@types/node@22.13.10):
+  vite@5.4.14(@types/node@22.13.10)(terser@5.43.1):
     dependencies:
       esbuild: 0.21.5
       postcss: 8.5.3
@@ -14292,6 +14320,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.13.10
       fsevents: 2.3.3
+      terser: 5.43.1
 
   w3c-xmlserializer@5.0.0:
     dependencies:
