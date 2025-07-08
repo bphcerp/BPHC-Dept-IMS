@@ -100,6 +100,7 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
                           <SidebarMenuButton
                             asChild
                             isActive={pathname.includes(item.url)}
+                            className="items-start"
                           >
                             <Link to={item.url}>
                               {item.icon}
@@ -116,8 +117,12 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
         </SidebarContent>
         <SidebarFooter>
           {!pathname.startsWith("/contributors") && (
-            <SidebarMenuButton asChild tooltip="View Contributors">
-              <Link to="/contributors" className="flex items-center gap-2">
+            <SidebarMenuButton
+              asChild
+              tooltip="View Contributors"
+              className="flex items-start gap-2"
+            >
+              <Link to="/contributors">
                 <Users className="h-5 w-5 shrink-0" />
                 {!isCollapsed && <span>View Contributors</span>}
               </Link>
@@ -128,7 +133,7 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
             <SidebarMenuButton
               onClick={logOut}
               tooltip="Logout"
-              className="flex items-center gap-2"
+              className="flex items-start gap-2"
             >
               <LogOut className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span>LOGOUT</span>}
