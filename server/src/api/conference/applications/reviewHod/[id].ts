@@ -11,7 +11,7 @@ import {
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
-import { completeTodo } from "@/lib/todos/index.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -76,6 +76,21 @@ router.post(
                 module: modules[0],
                 completionEvent: `review ${id} hod`,
             });
+            if (!status)
+                await createTodos(
+                    [
+                        {
+                            module: modules[0],
+                            title: "Conference Application",
+                            createdBy: req.user!.email,
+                            completionEvent: `edit ${id}`,
+                            description: `Requested changes: conference application id ${id}`,
+                            assignedTo: application.userEmail,
+                            link: `/conference/submitted/${id}`,
+                        },
+                    ],
+                    tx
+                );
         });
         res.status(200).send();
     })

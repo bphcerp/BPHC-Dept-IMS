@@ -122,6 +122,21 @@ router.post(
                     })),
                     tx
                 );
+            } else if (!status) {
+                await createTodos(
+                    [
+                        {
+                            module: modules[0],
+                            title: "Conference Application",
+                            createdBy: req.user!.email,
+                            completionEvent: `edit ${id}`,
+                            description: `Requested changes: conference application id ${id}`,
+                            assignedTo: application.userEmail,
+                            link: `/conference/submitted/${id}`,
+                        },
+                    ],
+                    tx
+                );
             }
         });
         res.status(200).send();
