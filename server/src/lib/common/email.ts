@@ -45,7 +45,7 @@ const emailQueue = new Queue(QUEUE_NAME, {
 const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
     QUEUE_NAME,
     async (job) => {
-        if (environment.NODE_ENV !== "production") {
+        if (!environment.PROD) {
             logger.info(`EMAIL JOB: ${job.id} - Skipped in non-production environment`);
             logger.debug(`Email data: ${JSON.stringify(job.data)}`);
             return;
@@ -71,6 +71,7 @@ export async function sendEmail(emailData: Omit<SendMailOptions, "from">) {
 }
 
 export async function sendBulkEmails(emails: Omit<SendMailOptions, "from">[]) {
+    if (!emails.length) return [];
     const jobs = emails.map((emailData) => ({
         name: JOB_NAME,
         data: emailData,
