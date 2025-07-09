@@ -1,4 +1,4 @@
-import db from "@/config/db/index.ts";
+import db, { type Tx } from "@/config/db/index.ts";
 import type { adminSchemas, allPermissions } from "lib";
 import { getAccessMultiple } from "../auth/index.ts";
 import fs from "fs/promises";
@@ -18,8 +18,8 @@ import { faculty, phd, staff } from "@/config/db/schema/admin.ts";
  * @returns A promise that resolves to an object containing the user's details,
  *          or `null` if no user is found.
  */
-export const getUserDetails = async (userEmail: string) => {
-    const user = await db.query.users.findFirst({
+export const getUserDetails = async (userEmail: string, tx: typeof db | Tx = db) => {
+    const user = await tx.query.users.findFirst({
         where: (cols, { eq }) => eq(cols.email, userEmail),
         with: {
             faculty: true,
@@ -41,7 +41,7 @@ export const getUserDetails = async (userEmail: string) => {
         },
     });
     if (!user) return null;
-    const roles = (await db.query.roles.findMany()).reduce(
+    const roles = (await tx.query.roles.findMany()).reduce(
         (acc, role) => {
             acc[role.id] = role.roleName;
             return acc;
@@ -86,13 +86,15 @@ export const getUserTableByType = (
  * @returns A promise that resolves to an array of users who have the specified permission
  */
 export const getUsersWithPermission = async (
-    permission: keyof typeof allPermissions
+    permission: keyof typeof allPermissions,
+    tx: typeof db | Tx = db
 ) => {
-    const users = await db.query.users.findMany();
+    const users = await tx.query.users.findMany();
     const userPermissions = await getAccessMultiple(
         users.map((user) => {
             return user.roles;
-        })
+        }),
+        tx
     );
     return users.filter((_, i) => {
         return userPermissions[i].allowed.includes(permission);

@@ -55,8 +55,13 @@ const db = drizzle(pool, {
         ...inventory,
         ...inventoryRelations,
         ...project,
-        ...projectRelations
+        ...projectRelations,
     },
 });
 
+export function isTx(client: typeof db | Tx = db) {
+    return Symbol.for("drizzle:transaction") in client;
+}
+
+export type Tx = Parameters<Parameters<(typeof db)["transaction"]>[0]>[0];
 export default db;
