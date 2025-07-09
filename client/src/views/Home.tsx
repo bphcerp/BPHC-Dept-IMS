@@ -252,8 +252,8 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
             ) : null}
             {filteredTodos.length ? (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(15em,1fr))] gap-4">
-                {filteredTodos.map((todo) => (
-                  <div key={todo.id} className="w-full max-w-sm">
+                {filteredTodos.map((todo, index) => (
+                  <div key={index} className="w-full max-w-sm">
                     <TodoCard
                       module={todo.module}
                       title={todo.title}
