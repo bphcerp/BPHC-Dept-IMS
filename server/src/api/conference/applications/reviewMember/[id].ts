@@ -123,11 +123,14 @@ router.post(
                 action: `Member ${status ? "approved" : "rejected"}`,
                 comments,
             });
-            await completeTodo({
-                module: modules[0],
-                completionEvent: `review ${id} member`,
-                assignedTo: req.user!.email,
-            });
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `review ${id} member`,
+                    assignedTo: req.user!.email,
+                },
+                tx
+            );
         });
 
         res.status(200).send();

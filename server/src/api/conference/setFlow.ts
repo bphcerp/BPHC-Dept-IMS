@@ -128,7 +128,7 @@ router.post(
                     await completeTodo(
                         {
                             module: modules[0],
-                            completionEvent: convenerApplications.map(
+                            completionEvent: completedApplications.map(
                                 (app) => `review ${app.id} hod`
                             ),
                         },

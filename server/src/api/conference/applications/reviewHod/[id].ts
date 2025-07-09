@@ -72,10 +72,13 @@ router.post(
                 action: `HoD ${status ? "approved" : "rejected"}`,
                 comments,
             });
-            await completeTodo({
-                module: modules[0],
-                completionEvent: `review ${id} hod`,
-            });
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `review ${id} hod`,
+                },
+                tx
+            );
             if (!status)
                 await createTodos(
                     [
