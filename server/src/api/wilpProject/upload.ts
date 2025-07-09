@@ -1,7 +1,7 @@
 import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
@@ -60,7 +60,7 @@ router.post(
     "/",
     checkAccess("wilp:project:upload"),
     excelUpload.single("file"),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req: Request, res: Response) => {
         if (!req.file) {
             res.status(400).json({ error: "No file uploaded" });
             return;

@@ -19,10 +19,10 @@ import * as inventory from "./schema/inventory.ts";
 import * as inventoryRelations from "./schema/inventoryRelations.ts";
 import * as projectRelations from "./schema/projectRelations.ts";
 import * as project from "./schema/project.ts";
+import * as wilpProject from "./schema/wilpProject.ts";
 
 import env from "../environment.ts";
 import pg from "pg";
-import { wilpProject } from "./schema/wilpProject.ts";
 
 const { Pool } = pg;
 
