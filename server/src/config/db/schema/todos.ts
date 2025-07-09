@@ -6,6 +6,7 @@ import {
     text,
     boolean,
     index,
+    primaryKey,
 } from "drizzle-orm/pg-core";
 import { modulesEnum } from "./form.ts";
 import { users } from "./admin.ts";
@@ -13,7 +14,6 @@ import { users } from "./admin.ts";
 export const todos = pgTable(
     "todos",
     {
-        id: serial("id").primaryKey(),
         module: modulesEnum("module").notNull(),
         title: text("title").notNull(),
         description: text("description"),
@@ -31,7 +31,7 @@ export const todos = pgTable(
         completionEvent: text("completion_event").notNull(),
         metadata: jsonb("metadata"),
     },
-    (table) => [index("assigned_to_idx").on(table.assignedTo)]
+    (table) => [index("assigned_to_idx").on(table.assignedTo), primaryKey({ columns: [table.module, table.assignedTo, table.completionEvent] })]
 );
 
 export const notifications = pgTable(

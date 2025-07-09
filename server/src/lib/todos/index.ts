@@ -1,6 +1,6 @@
 import db from "@/config/db/index.ts";
 import { notifications, todos } from "@/config/db/schema/todos.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { modules } from "lib";
 
 /**
@@ -10,7 +10,18 @@ export async function createTodos(
     values: typeof todos.$inferInsert[]
 ) {
     if (!values.length) return [];
-    const newTodos = await db.insert(todos).values(values).returning();
+    const newTodos = await db.insert(todos).values(values).returning().onConflictDoUpdate({
+        target: [todos.module, todos.assignedTo, todos.completionEvent],
+        set: {
+            title: sql`EXCLUDED.title`,
+            description: sql`EXCLUDED.description`,
+            link: sql`EXCLUDED.link`,
+            createdBy: sql`EXCLUDED.createdBy`,
+            createdAt: sql`EXCLUDED.createdAt`,
+            deadline: sql`EXCLUDED.deadline`,
+            metadata: sql`EXCLUDED.metadata`,
+        },
+    });
     return newTodos;
 }
 
