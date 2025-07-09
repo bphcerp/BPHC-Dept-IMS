@@ -4,7 +4,7 @@ import env from "@/config/environment.ts";
 import { eq } from "drizzle-orm";
 import type { JwtPayload, Permissions, RoleAccessMap } from "@/types/auth.ts";
 import type { Transaction } from "@/types/custom.ts";
-import db,  {type Tx} from "@/config/db/index.ts";
+import db, { type Tx } from "@/config/db/index.ts";
 import { type adminSchemas, authUtils } from "lib";
 
 /**
