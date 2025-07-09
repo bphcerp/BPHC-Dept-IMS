@@ -8,7 +8,10 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq, inArray } from "drizzle-orm";
-import { conferenceSchemas } from "lib";
+import { conferenceSchemas, modules } from "lib";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
+import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { bulkGenerateAndMailForms } from "@/lib/conference/form.ts";
 
 const router = express.Router();
 
@@ -56,7 +59,7 @@ router.post(
                             memberApplications
                         )
                     );
-                await tx
+                const convenerApplications = await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
                     .where(
@@ -64,7 +67,38 @@ router.post(
                             conferenceApprovalApplications.id,
                             memberApplications
                         )
+                    )
+                    .returning();
+                if (convenerApplications.length) {
+                    await completeTodo(
+                        {
+                            module: modules[0],
+                            completionEvent: convenerApplications.map(
+                                (app) => `review ${app.id} member`
+                            ),
+                        },
+                        tx
                     );
+                    const todoAssignees = await getUsersWithPermission(
+                        "conference:application:review-application-convener",
+                        tx
+                    );
+                    const todos: Parameters<typeof createTodos>[0] = [];
+                    for (const assignee of todoAssignees) {
+                        for (const inserted of convenerApplications) {
+                            todos.push({
+                                module: modules[0],
+                                title: "Conference Application",
+                                createdBy: inserted.userEmail,
+                                completionEvent: `review ${inserted.id} convener`,
+                                description: `Review conference application id ${inserted.id} by ${inserted.userEmail}`,
+                                assignedTo: assignee.email,
+                                link: `/conference/view/${inserted.id}`,
+                            });
+                        }
+                    }
+                    await createTodos(todos, tx);
+                }
 
                 const hodApplications = tx
                     .select({
@@ -80,7 +114,7 @@ router.post(
                             hodApplications
                         )
                     );
-                await tx
+                const completedApplications = await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "Completed" })
                     .where(
@@ -88,7 +122,22 @@ router.post(
                             conferenceApprovalApplications.id,
                             hodApplications
                         )
+                    )
+                    .returning();
+                if (completedApplications.length) {
+                    await completeTodo(
+                        {
+                            module: modules[0],
+                            completionEvent: completedApplications.map(
+                                (app) => `review ${app.id} hod`
+                            ),
+                        },
+                        tx
                     );
+                    await bulkGenerateAndMailForms(
+                        completedApplications.map((app) => app.id)
+                    );
+                }
             }
             // If we are moving to normal flow, everything can stay as it is
 

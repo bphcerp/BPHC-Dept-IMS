@@ -14,6 +14,8 @@ import {
     conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "fs/promises";
+import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -150,6 +152,31 @@ router.post(
             for (const file of deleted) {
                 void unlink(file.filePath).catch(() => undefined);
             }
+
+            await completeTodo({
+                module: modules[0],
+                completionEvent: `edit ${id}`,
+            });
+
+            const todoAssignees = await getUsersWithPermission(
+                isDirect
+                    ? "conference:application:review-application-convener"
+                    : "conference:application:review-application-member",
+                tx
+            );
+
+            await createTodos(
+                todoAssignees.map((assignee) => ({
+                    module: modules[0],
+                    title: "Conference Application",
+                    createdBy: req.user!.email,
+                    completionEvent: `review ${id} ${isDirect ? "convener" : "member"}`,
+                    description: `Review conference application id ${id} by ${req.user!.email}`,
+                    assignedTo: assignee.email,
+                    link: `/conference/view/${id}`,
+                })),
+                tx
+            );
         });
 
         res.status(200).send();

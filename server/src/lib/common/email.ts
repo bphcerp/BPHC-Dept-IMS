@@ -1,18 +1,11 @@
 import environment from "@/config/environment.ts";
 import nodemailer, { type SendMailOptions } from "nodemailer";
-import { type ConnectionOptions, Queue, Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import logger from "@/config/logger.ts";
+import { redisConfig } from "@/config/redis.ts";
 
 const QUEUE_NAME = "emailQueue";
 const JOB_NAME = "sendEmail";
-
-const redisConfig: ConnectionOptions = {
-    host: environment.REDIS_HOST,
-    port: environment.REDIS_PORT,
-    password: environment.REDIS_PASSWORD,
-    maxRetriesPerRequest: null,
-    enableReadyCheck: true,
-};
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -46,7 +39,9 @@ const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
     QUEUE_NAME,
     async (job) => {
         if (!environment.PROD) {
-            logger.info(`EMAIL JOB: ${job.id} - Skipped in non-production environment`);
+            logger.info(
+                `EMAIL JOB: ${job.id} - Skipped in non-production environment`
+            );
             logger.debug(`Email data: ${JSON.stringify(job.data)}`);
             return;
         }

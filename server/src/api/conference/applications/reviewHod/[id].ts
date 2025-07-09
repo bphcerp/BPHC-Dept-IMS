@@ -1,7 +1,7 @@
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { conferenceSchemas } from "lib";
+import { conferenceSchemas, modules } from "lib";
 import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -71,6 +72,28 @@ router.post(
                 action: `HoD ${status ? "approved" : "rejected"}`,
                 comments,
             });
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `review ${id} hod`,
+                },
+                tx
+            );
+            if (!status)
+                await createTodos(
+                    [
+                        {
+                            module: modules[0],
+                            title: "Conference Application",
+                            createdBy: req.user!.email,
+                            completionEvent: `edit ${id}`,
+                            description: `Requested changes: conference application id ${id}`,
+                            assignedTo: application.userEmail,
+                            link: `/conference/submitted/${id}`,
+                        },
+                    ],
+                    tx
+                );
         });
         res.status(200).send();
     })
