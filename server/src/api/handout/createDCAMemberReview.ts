@@ -3,9 +3,10 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
 import { handoutSchemas } from "lib";
-import { assert } from "console";
+import assert from "assert";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { eq, and } from "drizzle-orm";
+import { completeTodo } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -41,6 +42,13 @@ router.post(
                 )
             )
             .returning();
+        if (result.length > 0) {
+            await completeTodo({
+                module: "Course Handout",
+                assignedTo: req.user.email,
+                completionEvent: `handout review ${result[0].courseCode} by ${result[0].reviewerEmail}`,
+            });
+        }
 
         res.status(200).json({
             success: true,

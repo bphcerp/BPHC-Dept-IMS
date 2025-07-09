@@ -7,17 +7,9 @@ import type { modules } from "lib";
  * Creates a new todo item in the database.
  */
 export async function createTodos(
-    values: {
-        module: (typeof modules)[number];
-        title: string;
-        description?: string;
-        link?: string;
-        assignedTo: string;
-        createdBy: string;
-        completionEvent: string;
-        metadata?: Record<string, unknown>;
-    }[]
+    values: typeof todos.$inferInsert[]
 ) {
+    if (!values.length) return [];
     const newTodos = await db.insert(todos).values(values).returning();
     return newTodos;
 }
@@ -51,15 +43,10 @@ export async function completeTodo({
  * Creates new notifications in the database.
  */
 export async function createNotifications(
-    values: {
-        module: (typeof modules)[number];
-        title: string;
-        content?: string;
-        link?: string;
-        userEmail: string;
-    }[],
+    values: typeof notifications.$inferInsert[],
     sendEmails = false
 ) {
+    if (!values.length) return [];
     const newNotifs = await db.insert(notifications).values(values).returning();
     if (sendEmails) {
         // todo: send emails to users about the new notifications
