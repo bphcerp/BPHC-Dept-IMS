@@ -1,5 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { v4 as uuidv4 } from "uuid";
+import { pgTable, text, timestamp, pgEnum, serial } from "drizzle-orm/pg-core";
 import { faculty } from "./admin.ts";
 
 export const degreeProgramEnum = pgEnum("degree_program", [
@@ -13,9 +12,7 @@ export const degreeProgramEnum = pgEnum("degree_program", [
 ]);
 
 export const wilpProject = pgTable("wilp_project", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
+    id: serial("id").primaryKey(),
     studentId: text("student_id").notNull(),
     discipline: text("discipline").notNull(),
     studentName: text("student_name").notNull(),

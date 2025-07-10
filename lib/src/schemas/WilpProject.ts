@@ -24,7 +24,7 @@ export const wilpProjectSchema = z.object({
 export type WilpProjectFormValues = z.infer<typeof wilpProjectSchema>;
 
 export type WilpProject = {
-    id: string;
+    id: number;
     studentId: string;
     discipline: string;
     studentName: string;
