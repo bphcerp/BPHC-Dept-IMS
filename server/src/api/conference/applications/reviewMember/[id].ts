@@ -1,7 +1,7 @@
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { authUtils, conferenceSchemas, permissions } from "lib";
+import { authUtils, conferenceSchemas, modules, permissions } from "lib";
 import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 import {
@@ -12,6 +12,7 @@ import {
 import { eq } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { checkAccess, dequerify } from "@/middleware/auth.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -81,7 +82,7 @@ router.post(
 
         await db.transaction(async (tx) => {
             if (allReviewers.difference(otherReviewers).size === 0) {
-                // If all DRC Members have reviewed the application, move state to DRC member
+                // If all DRC Members have reviewed the application, move state to DRC convener
                 await tx
                     .update(conferenceApprovalApplications)
                     .set({
@@ -90,6 +91,22 @@ router.post(
                         ],
                     })
                     .where(eq(conferenceApprovalApplications.id, id));
+                const todoAssignees = await getUsersWithPermission(
+                    "conference:application:review-application-convener",
+                    tx
+                );
+                await createTodos(
+                    todoAssignees.map((assignee) => ({
+                        module: modules[0],
+                        title: "Conference Application",
+                        createdBy: req.user!.email,
+                        completionEvent: `review ${id} convener`,
+                        description: `Review conference application id ${id} by ${application.userEmail}`,
+                        assignedTo: assignee.email,
+                        link: `/conference/view/${id}`,
+                    })),
+                    tx
+                );
             }
 
             await tx.insert(conferenceMemberReviews).values([
@@ -106,6 +123,14 @@ router.post(
                 action: `Member ${status ? "approved" : "rejected"}`,
                 comments,
             });
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `review ${id} member`,
+                    assignedTo: req.user!.email,
+                },
+                tx
+            );
         });
 
         res.status(200).send();

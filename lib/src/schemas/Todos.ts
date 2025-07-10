@@ -4,7 +4,6 @@ export type TodosResponseType = {
     name: string | null;
     roles: string[];
     todos: {
-        id: number;
         module: (typeof modules)[number];
         title: string;
         description: string | null;

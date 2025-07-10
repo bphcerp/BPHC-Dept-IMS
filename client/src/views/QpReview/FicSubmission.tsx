@@ -211,7 +211,7 @@ export const FacultyHandouts: React.FC = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="px-4 py-2 text-center">
-                    No handouts found
+                    No courses found
                   </TableCell>
                 </TableRow>
               )}
