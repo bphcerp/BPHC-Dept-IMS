@@ -6,6 +6,7 @@ import express from "express";
 import { eq } from "drizzle-orm";
 import { wilpProject } from "@/config/db/schema/wilpProject.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
+import { wilpProjectSchemas } from "lib";
 
 const router = express.Router();
 
@@ -13,12 +14,10 @@ router.get(
     "/",
     checkAccess("wilp:project:view-details"),
     asyncHandler(async (req: Request, res: Response) => {
-        const { id } = req.query;
-        console.log(id);
-        if (!id) {
-            res.status(400).json({ error: "Project ID is required" });
-            return;
-        }
+        const { id } =
+            wilpProjectSchemas.wilpProjectViewDetailsQuerySchema.parse(
+                req.query
+            );
 
         const data = await db
             .select({
@@ -43,7 +42,7 @@ router.get(
             })
             .from(wilpProject)
             .leftJoin(faculty, eq(wilpProject.facultyEmail, faculty.email))
-            .where(eq(wilpProject.id, id as string))
+            .where(eq(wilpProject.id, Number(id)))
             .limit(1);
         if (!data || !data.length) {
             res.status(404).json({ error: "Project not found" });

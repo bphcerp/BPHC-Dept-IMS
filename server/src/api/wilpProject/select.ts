@@ -4,32 +4,27 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { and, count, eq, isNull } from "drizzle-orm";
 import { Router } from "express";
+import { wilpProjectSchemas } from "lib";
 
 const router = Router();
 const selectRange: {
     min: number;
     max: number;
 } = {
-    min: 3,
-    max: 4,
+    min: 5,
+    max: 6,
 };
 
 router.patch(
     "/",
     checkAccess("wilp:project:select"),
     asyncHandler(async (req, res) => {
-        const { idList }: { idList: string[] } = req.body;
+        const { idList } = wilpProjectSchemas.wilpProjectSelectBodySchema.parse(
+            req.body
+        );
 
         if (!req.user?.email) {
             res.status(401).json({ error: "Unauthorized" });
-            return;
-        }
-        if (!idList || !Array.isArray(idList)) {
-            res.status(400).json({ error: "Invalid idList" });
-            return;
-        }
-        if (!idList.length) {
-            res.status(400).json({ error: "idList cannot be empty" });
             return;
         }
 
@@ -43,32 +38,32 @@ router.patch(
 
         // makes sure total selected projects are within the range
         // even if there are already selected projects
-        if (
-            selected[0].count + idList.length < selectRange.min ||
-            selected[0].count + idList.length > selectRange.max
-        ) {
-            const minSelect = selectRange.min - selected[0].count;
-            const maxSelect = selectRange.max - selected[0].count;
-            if (maxSelect <= 0) {
-                res.status(400).json({
-                    error: `Project selection limit exceeded. You can only select up to ${selectRange.max} projects.`,
-                });
-                return;
-            }
+        const newSelectedCount = selected[0].count + idList.length;
+        const minSelect = selectRange.min - selected[0].count;
+        const maxSelect = selectRange.max - selected[0].count;
+        if (newSelectedCount < selectRange.min) {
             res.status(400).json({
-                error: `Please provide ${minSelect}${
+                error: `Please select ${minSelect}${
                     minSelect !== maxSelect ? ` to ${maxSelect}` : ""
                 } projects.`,
             });
             return;
         }
+        if (newSelectedCount > selectRange.max) {
+            res.status(400).json({
+                error: `You have already selected ${selected[0].count} projects. You can select a maximum of ${selectRange.max} projects.`,
+            });
+            return;
+        }
 
         let result: {
+            message: string;
             total: number;
             successful: number;
             failed: number;
             errors: string[];
         } = {
+            message: "Project selection completed",
             total: idList.length,
             successful: 0,
             failed: 0,
@@ -84,7 +79,7 @@ router.patch(
                     })
                     .where(
                         and(
-                            eq(wilpProject.id, id),
+                            eq(wilpProject.id, Number(id)),
                             isNull(wilpProject.facultyEmail)
                         )
                     )
@@ -98,7 +93,7 @@ router.patch(
             } catch (error) {
                 result.failed++;
                 result.errors.push(
-                    `Error selecting ${id} project: ${error instanceof Error ? error.message : "Unknown error"}`
+                    `Error selecting project ${id}: ${error instanceof Error ? error.message : "Unknown error"}`
                 );
             }
         }

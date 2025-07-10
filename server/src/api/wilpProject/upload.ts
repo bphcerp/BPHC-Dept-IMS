@@ -9,6 +9,7 @@ import {
     degreeProgramEnum,
     wilpProject,
 } from "@/config/db/schema/wilpProject.ts";
+import { wilpProjectSchemas } from "lib";
 
 const router = Router();
 
@@ -61,16 +62,11 @@ router.post(
     checkAccess("wilp:project:upload"),
     excelUpload.single("file"),
     asyncHandler(async (req: Request, res: Response) => {
+        const { reminder, deadline } =
+            wilpProjectSchemas.wilpProjectUploadSchema.parse(req.body);
+
         if (!req.file) {
             res.status(400).json({ error: "No file uploaded" });
-            return;
-        }
-        if (!req.body.reminder) {
-            res.status(400).json({ error: "No reminder set for projects" });
-            return;
-        }
-        if (!req.body.deadline) {
-            res.status(400).json({ error: "No deadline set for projects" });
             return;
         }
 
@@ -124,8 +120,8 @@ router.post(
                         ...parsedRow,
                         degreeProgram:
                             parsedRow.degreeProgram as (typeof degreeProgramEnum.enumValues)[number],
-                        reminder: new Date(req.body.reminder),
-                        deadline: new Date(req.body.deadline),
+                        reminder: new Date(reminder),
+                        deadline: new Date(deadline),
                     })
                     .returning();
                 if (newProject) results.successful++;
