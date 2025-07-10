@@ -4,6 +4,7 @@ import viewAll from "./view-all.ts";
 import viewSelected from "./view-selected.ts";
 import viewDetails from "./view-details.ts";
 import select from "./select.ts";
+import deselect from "./deselect.ts";
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use("/view/all", viewAll);
 router.use("/view/selected", viewSelected);
 router.use("/view", viewDetails);
 router.use("/select", select)
+router.use("/deselect", deselect)
 
 export default router;
