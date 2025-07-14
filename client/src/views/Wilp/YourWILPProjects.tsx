@@ -4,7 +4,7 @@ import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
 import ProjectTable, { Project } from "@/components/project/ProjectTable";
 
-export default function YourProjects() {
+export default function YourWilpProjects() {
   const { authState, checkAccess } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);

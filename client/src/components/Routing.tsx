@@ -74,6 +74,9 @@ import ProjectDetails from "@/views/Project/[id]";
 import YourProjects from "@/views/Project/YourProjects";
 import AllProjects from "@/views/Project/AllProjects";
 import EditProjects from "@/views/Project/EditProjects";
+import WilpLayout from "@/layouts/Wilp";
+import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
+import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -164,7 +167,7 @@ const Routing = () => {
       requiredPermissions: projectModulePermissions,
     },
     {
-      title: "Wilp",
+      title: "WILP",
       icon: <BookOpen />,
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
@@ -491,6 +494,14 @@ const Routing = () => {
             {checkAccess(permissions["/project"]) && (
               <Route path="details/:id" element={<ProjectDetails />} />
             )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(wilpModulePermissions) && (
+          <Route path="/wilp" element={<WilpLayout />}>
+            <Route index element={<Navigate to="/wilp/view-all" replace={true} />} />
+            <Route path="view-all" element={<AllWilpProjects />} />
+            <Route path="view-your" element={<YourWILPProjects />} />
           </Route>
         )}
 
