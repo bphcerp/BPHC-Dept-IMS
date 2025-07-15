@@ -6,6 +6,8 @@ import {
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
+import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { createTodos } from "@/lib/todos/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
@@ -78,12 +80,35 @@ router.post(
                 });
             }
 
-            return await tx.insert(conferenceApprovalApplications).values({
-                userEmail: req.user!.email,
-                ...insertedFileIds,
-                ...body,
-                state: isDirect ? "DRC Convener" : "DRC Member",
-            });
+            const [inserted] = await tx
+                .insert(conferenceApprovalApplications)
+                .values({
+                    userEmail: req.user!.email,
+                    ...insertedFileIds,
+                    ...body,
+                    state: isDirect ? "DRC Convener" : "DRC Member",
+                })
+                .returning();
+
+            const todoAssignees = await getUsersWithPermission(
+                isDirect
+                    ? "conference:application:review-application-convener"
+                    : "conference:application:review-application-member",
+                tx
+            );
+
+            await createTodos(
+                todoAssignees.map((assignee) => ({
+                    module: modules[0],
+                    title: "Conference Application",
+                    createdBy: req.user!.email,
+                    completionEvent: `review ${inserted.id} ${isDirect ? "convener" : "member"}`,
+                    description: `Review conference application id ${inserted.id} by ${req.user!.email}`,
+                    assignedTo: assignee.email,
+                    link: `/conference/view/${inserted.id}`,
+                })),
+                tx
+            );
         });
 
         res.status(200).send();

@@ -1,4 +1,4 @@
-import { getApplicationWithFilePaths } from "./index.ts";
+import { getApplicationById, getApplicationWithFilePaths } from "./index.ts";
 import fs from "fs/promises";
 import path from "path";
 import {
@@ -6,13 +6,129 @@ import {
     getUserDetails,
     getUsersWithPermission,
 } from "../common/index.ts";
-import { STATIC_DIR } from "@/config/environment.ts";
+import environment, { STATIC_DIR, FILES_DIR } from "@/config/environment.ts";
 import { generateTemplateData } from "./templateGenerator.ts";
 import Mustache from "mustache";
 import db from "@/config/db/index.ts";
-import type { allPermissions } from "lib";
+import { modules, type allPermissions } from "lib";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import pdf from "html-pdf-node";
+import crypto from "crypto";
+import { files } from "@/config/db/schema/form.ts";
+import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
+import { eq } from "drizzle-orm";
+import { sendBulkEmails } from "../common/email.ts";
+import { Queue, Worker } from "bullmq";
+import { redisConfig } from "@/config/redis.ts";
+import logger from "@/config/logger.ts";
+
+const QUEUE_NAME = "conferenceFormQueue";
+
+const formQueue = new Queue(QUEUE_NAME, {
+    connection: redisConfig,
+    defaultJobOptions: {
+        attempts: 1,
+        removeOnComplete: {
+            age: 3600,
+            count: 1000,
+        },
+        removeOnFail: {
+            age: 24 * 3600,
+            count: 5000,
+        },
+    },
+    prefix: QUEUE_NAME,
+});
+
+const formWorker = new Worker<number>(
+    QUEUE_NAME,
+    async (job) => {
+        return await generateAndMailForm(job.data);
+    },
+    {
+        connection: redisConfig,
+        concurrency: 1,
+        prefix: QUEUE_NAME,
+    }
+);
+
+formWorker.on("failed", (job, err) => {
+    logger.error(`Conference form job failed: ${job?.id}`, err);
+});
+
+export const bulkGenerateAndMailForms = async (ids: number[]) => {
+    if (!ids.length) return [];
+    return await formQueue.addBulk(
+        ids.map((id) => ({
+            name: "generateAndMailConferenceForm",
+            data: id,
+        }))
+    );
+};
+
+export const generateAndMailForm = async (id: number) => {
+    const application = await getApplicationById(id);
+
+    if (!application)
+        throw new HttpError(HttpCode.NOT_FOUND, "Application not found");
+
+    if (application.approvalFormFileId)
+        throw new HttpError(
+            HttpCode.BAD_REQUEST,
+            "This approval form has already been generated"
+        );
+
+    if (application.state !== "Completed")
+        throw new HttpError(
+            HttpCode.BAD_REQUEST,
+            "This application is not in the accepted state"
+        );
+
+    const fileBuffer = await generateApplicationFormPdf(application.id);
+    const fileName = crypto.randomBytes(16).toString("hex");
+    const filePath = path.join(FILES_DIR, fileName);
+
+    const fileId = await db.transaction(async (tx) => {
+        const inserted = (
+            await tx
+                .insert(files)
+                .values({
+                    originalName: `conference-approval-form-${application.id}.pdf`,
+                    size: fileBuffer.length,
+                    mimetype: "application/pdf",
+                    module: modules[0],
+                    filePath,
+                })
+                .returning()
+        )[0];
+        await tx
+            .update(conferenceApprovalApplications)
+            .set({ approvalFormFileId: inserted.id })
+            .where(eq(conferenceApprovalApplications.id, application.id));
+        await fs.writeFile(filePath, fileBuffer);
+        return inserted.id;
+    });
+
+    const mailData = {
+        subject: `Conference Application ID ${application.id} - Approved`,
+        html: `<p>Conference application ID <strong>${application.id}</strong> has been approved.</p>
+                   <p><a href="${environment.SERVER_URL}/f/${fileId}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: 500;">View Application Form</a></p>`,
+    };
+
+    const emailsToSend = [
+        {
+            to: application.userEmail,
+            ...mailData,
+        },
+    ];
+    if (environment.DEPARTMENT_EMAIL)
+        emailsToSend.push({
+            to: environment.DEPARTMENT_EMAIL,
+            ...mailData,
+        });
+
+    await sendBulkEmails(emailsToSend);
+};
 
 export const generateApplicationFormPdf = async (
     id: number

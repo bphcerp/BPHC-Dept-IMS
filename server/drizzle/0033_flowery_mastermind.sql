@@ -1,5 +1,5 @@
 CREATE TABLE "wilp_project" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"student_id" text NOT NULL,
 	"discipline" text NOT NULL,
 	"student_name" text NOT NULL,

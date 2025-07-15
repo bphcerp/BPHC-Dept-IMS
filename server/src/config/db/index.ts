@@ -19,6 +19,7 @@ import * as inventory from "./schema/inventory.ts";
 import * as inventoryRelations from "./schema/inventoryRelations.ts";
 import * as projectRelations from "./schema/projectRelations.ts";
 import * as project from "./schema/project.ts";
+import * as wilpProject from "./schema/wilpProject.ts";
 
 import env from "../environment.ts";
 import pg from "pg";
@@ -55,8 +56,14 @@ const db = drizzle(pool, {
         ...inventory,
         ...inventoryRelations,
         ...project,
-        ...projectRelations
+        ...projectRelations,
+        ...wilpProject,
     },
 });
 
+export function isTx(client: typeof db | Tx = db) {
+    return Symbol.for("drizzle:transaction") in client;
+}
+
+export type Tx = Parameters<Parameters<(typeof db)["transaction"]>[0]>[0];
 export default db;

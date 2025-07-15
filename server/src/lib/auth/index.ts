@@ -4,7 +4,7 @@ import env from "@/config/environment.ts";
 import { eq } from "drizzle-orm";
 import type { JwtPayload, Permissions, RoleAccessMap } from "@/types/auth.ts";
 import type { Transaction } from "@/types/custom.ts";
-import db from "@/config/db/index.ts";
+import db, { type Tx } from "@/config/db/index.ts";
 import { type adminSchemas, authUtils } from "lib";
 
 /**
@@ -66,8 +66,8 @@ export const generateRefreshToken = async (
  * Get role access map from database and cache it in Redis.
  * @returns Role access map.
  */
-export async function getRoleAccessMap() {
-    const roleAccessMap = (await db.query.roles.findMany()).reduce(
+export async function getRoleAccessMap(tx: typeof db | Tx = db) {
+    const roleAccessMap = (await tx.query.roles.findMany()).reduce(
         (acc, role) => {
             acc[role.id] = {
                 allowed: role.allowed,
@@ -125,8 +125,9 @@ export async function getAccess(roles: number[]): Promise<Permissions> {
  * @throws Will throw an error if the role access map cannot be retrieved.
  */
 export async function getAccessMultiple(
-    roles: number[][]
+    roles: number[][],
+    tx: typeof db | Tx = db
 ): Promise<Permissions[]> {
-    const roleAccessMap = await getRoleAccessMap();
+    const roleAccessMap = await getRoleAccessMap(tx);
     return roles.map((role) => getAccessFromMap(role, roleAccessMap));
 }

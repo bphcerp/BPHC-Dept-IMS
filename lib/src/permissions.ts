@@ -125,13 +125,12 @@ export const allPermissions = {
     "project:view-details": "View project details",
 
     // WILP Project module permissions
-    "wilp:project:create": "Create a WILP project",
     "wilp:project:upload": "Upload multiple WILP projects by a convener",
     "wilp:project:view-all": "View all WILP projects",
     "wilp:project:view-selected": "View faculty's selected WILP projects",
     "wilp:project:view-details": "View a WILP project details",
     "wilp:project:select": "Select few WILP projects",
-    "wilp:project:remove": "Remove selected WILP projects",
+    "wilp:project:deselect": "Remove selected WILP projects",
     "wilp:project:mail":
         "Send mass mails asking faculty to select WILP projects",
 } as const;
@@ -333,7 +332,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/view/selected": "wilp:project:view-selected",
     "/wilpProject/view": "wilp:project:view-details",
     "/wilpProject/select": "wilp:project:select",
-    "/wilpProject/remove": "wilp:project:remove",
+    "/wilpProject/deselect": "wilp:project:deselect",
     "/wilpProject/mail": "wilp:project:mail",
-
 } as const;

@@ -28,11 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { toast } from "sonner";
 import { adminSchemas } from "lib";
 import { Checkbox } from "@/components/ui/checkbox";
-import MDEditor from "@uiw/react-md-editor";
 import {
   Dialog as UIDialog,
   DialogContent as UIDialogContent,
@@ -45,6 +44,7 @@ import {
   DEPARTMENT_NAME_FULL,
   FRONTEND_URL,
 } from "@/lib/constants";
+const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 
 const DEFAULT_EMAIL_BODY = `Dear Professor/Mr./Ms.,
 
@@ -236,15 +236,23 @@ const InviteDialog = () => {
                 name="emailBody"
                 render={({ field }) => (
                   <div className="relative h-full">
-                    <MDEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      height={400}
-                      preview="live"
-                      commandsFilter={(command) =>
-                        command.name !== "fullscreen" ? command : false
+                    <Suspense
+                      fallback={
+                        <div className="w-full text-center">
+                          Loading editor...
+                        </div>
                       }
-                    />
+                    >
+                      <MDEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        height={400}
+                        preview="live"
+                        commandsFilter={(command) =>
+                          command.name !== "fullscreen" ? command : false
+                        }
+                      />
+                    </Suspense>
                   </div>
                 )}
               />
