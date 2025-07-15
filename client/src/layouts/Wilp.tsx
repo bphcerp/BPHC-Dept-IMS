@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, FileSpreadsheet } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
@@ -15,7 +15,13 @@ const WilpLayout = () => {
                 title: "Add Project",
                 icon: <Plus />,
                 url: "/wilp/add",
-                requiredPermissions: [permissions["/wilp/project/create"]],
+                requiredPermissions: [permissions["/wilp/project/upload"]],
+              },
+              {
+                title: "Bulk Upload",
+                icon: <FileSpreadsheet />,
+                url: "/wilp/bulk-upload",
+                requiredPermissions: [permissions["/wilp/project/upload"]],
               },
               {
                 title: "Your Projects",

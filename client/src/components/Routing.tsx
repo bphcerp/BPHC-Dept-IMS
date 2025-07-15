@@ -77,6 +77,7 @@ import EditProjects from "@/views/Project/EditProjects";
 import WilpLayout from "@/layouts/Wilp";
 import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
 import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
+import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -502,6 +503,9 @@ const Routing = () => {
             <Route index element={<Navigate to="/wilp/view-all" replace={true} />} />
             <Route path="view-all" element={<AllWilpProjects />} />
             <Route path="view-your" element={<YourWILPProjects />} />
+            {checkAccess(permissions["/wilp/project/upload"]) && (
+              <Route path="bulk-upload" element={<BulkUploadWilp onBack={() => window.history.back()} />} />
+            )}
           </Route>
         )}
 
