@@ -209,8 +209,19 @@ router.post(
           })
           .returning();
         if (validatedRow.coPIs) {
-          const coPIEmails = validatedRow.coPIs.split(",").map((email: string) => email.trim());
-          for (const email of coPIEmails) {
+          const coPIsEmails = String(validatedRow.coPIs).split(',').map(e => e.trim()).filter(Boolean);
+          const coPINames = String(row['coPINames'] || '').split(',').map(n => n.trim());
+          const coPIs = coPIsEmails.map((email, idx) => {
+            let name = coPINames[idx] || undefined;
+            if (name && typeof name === 'string' && email && name.trim().toLowerCase() === email.split('@')[0].toLowerCase()) {
+              name = undefined;
+            }
+            return {
+              email,
+              name,
+            };
+          });
+          for (const { email, name } of coPIs) {
             if (email && email !== validatedRow.piEmail) {
               let [coPI] = await db
                 .select()
@@ -220,7 +231,7 @@ router.post(
                 [coPI] = await db
                   .insert(investigators)
                   .values({
-                    name: email.split("@")[0],
+                    name: name || email.split("@")[0],
                     email: email,
                   })
                   .returning();

@@ -36,7 +36,8 @@ export default function EditProjects() {
   if (!checkAccess("project:edit-all")) return <Navigate to="/404" replace />;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center gap-6 bg-background-faded p-8">
+    <div className="w-full h-screen overflow-y-auto bg-background-faded">
+      <div className="flex flex-col items-center gap-6 p-8">
       <div className="flex w-full items-center justify-between">
         <h2 className="text-3xl font-normal">Edit Projects</h2>
         <ProjectFilter 
@@ -51,6 +52,7 @@ export default function EditProjects() {
         editable
         onEditSave={handleEditSave}
       />
+      </div>
     </div>
   );
 } 
