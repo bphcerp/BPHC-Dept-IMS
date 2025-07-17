@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, pgEnum, serial } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    text,
+    timestamp,
+    pgEnum,
+    serial,
+    integer,
+} from "drizzle-orm/pg-core";
 import { faculty } from "./admin.ts";
 
 export const degreeProgramEnum = pgEnum("degree_program", [
@@ -27,6 +34,18 @@ export const wilpProject = pgTable("wilp_project", {
     reminder: timestamp("reminder", { withTimezone: true }).notNull(),
     deadline: timestamp("deadline", { withTimezone: true }).notNull(),
 
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+});
+
+export const wilpProjectsRange = pgTable("wilp_projects_range", {
+    id: serial("id").primaryKey(),
+    min: integer("min").notNull(),
+    max: integer("max").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),

@@ -56,6 +56,15 @@ export const wilpProjectSelectBodySchema = z.object({
 });
 export type WilpProjectSelectBody = z.infer<typeof wilpProjectSelectBodySchema>;
 
+export const wilpProjectSetRangeBodySchema = z.object({
+    min: z.number().int().min(0, "Minimum must be a non-negative integer"),
+    max: z.number().int().min(0, "Maximum must be a non-negative integer"),
+});
+
+export type WilpProjectSetRangeBody = z.infer<
+    typeof wilpProjectSetRangeBodySchema
+>;
+
 export type WilpProject = {
     id: number;
     studentId: string;

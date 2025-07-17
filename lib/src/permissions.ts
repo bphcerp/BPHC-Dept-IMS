@@ -330,6 +330,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     // WILP Project
     "/wilpProject/upload": "wilp:project:upload",
+    "/wilpProject/setRange": "wilp:project:upload",
     "/wilpProject/clear": "wilp:project:clear",
     "/wilpProject/download": "wilp:project:download",
     "/wilpProject/view/all": "wilp:project:view-all",
