@@ -126,7 +126,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
 
     const columns = [
       'title', 'piName', 'piEmail', 'piDepartment', 'piCampus', 'piAffiliation',
-      'coPIs', 'fundingAgency', 'fundingAgencyNature', 'sanctionedAmount',
+      'coPINames', 'coPIs', 'fundingAgency', 'fundingAgencyNature', 'sanctionedAmount',
       'capexAmount', 'opexAmount', 'manpowerAmount', 'approvalDate',
       'startDate', 'endDate', 'hasExtension'
     ];
@@ -142,7 +142,15 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
     const csvContent = [
       columns.join(','),
       ...templateData.map(row => 
-        columns.map(col => escapeCSV(row[col as keyof typeof row])).join(',')
+        columns.map(col => {
+          if (col === 'coPINames') {
+            return escapeCSV('Jane Smith, Bob Wilson');
+          }
+          if (col === 'coPIs') {
+            return escapeCSV('jane.smith@example.com, bob.wilson@example.com');
+          }
+          return escapeCSV(row[col as keyof typeof row] ?? '');
+        }).join(',')
       )
     ].join('\n');
 
@@ -244,6 +252,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
                   <li>• piDepartment (optional)</li>
                   <li>• piCampus (optional)</li>
                   <li>• piAffiliation (optional)</li>
+                  <li>• coPINames (optional, comma-separated, order matches coPIs)</li>
                   <li>• coPIs (optional, comma-separated emails)</li>
                   <li>• fundingAgency (<span className="text-red-600">required</span>)</li>
                   <li>• fundingAgencyNature (public_sector or private_industry)</li>

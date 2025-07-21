@@ -94,7 +94,7 @@ const conferenceModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("conference:"));
 
-const qpReviewModulePermissions: string[] = [];
+const qpReviewModulePermissions: string[] = ["qp:"];
 
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
