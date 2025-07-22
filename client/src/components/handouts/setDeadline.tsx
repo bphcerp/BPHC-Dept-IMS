@@ -46,7 +46,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 const deadlineBodySchema = z.object({
   time: z.date(),
-  emailBody: z.string().nonempty(),
+  emailBody: z.string().min(1),
 });
 
 type DeadlineBody = z.infer<typeof deadlineBodySchema>;

@@ -107,7 +107,7 @@ export type UpdateReviewerBody = z.infer<typeof updateReviewerBodySchema>;
 
 export const deadlineBodySchema = z.object({
     time: z.date(),
-    emailBody: z.string().nonempty(),
+    emailBody: z.string().min(1),
 });
 
 export type DeadlineBody = z.infer<typeof deadlineBodySchema>;
