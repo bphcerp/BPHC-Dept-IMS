@@ -4,12 +4,12 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 import express from "express";
 import { handoutSchemas } from "lib";
-import env from "@/config/environment.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import environment from "@/config/environment.ts";
 import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 import assert from "assert";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 const router = express.Router();
 
@@ -20,7 +20,10 @@ router.post(
         assert(req.user);
         const parsed = handoutSchemas.deadlineBodySchema.parse({
             time: new Date((req.body as { time: string }).time),
+            emailBody: req.body.emailBody,
         });
+        const htmlBody = DOMPurify.sanitize(marked(parsed.emailBody));
+
         const handouts = await db
             .update(courseHandoutRequests)
             .set({ deadline: parsed.time })
@@ -47,10 +50,11 @@ router.post(
                     content: `Upload handouts for the Course ${handout.courseName} (Course Code : ${handout.courseCode})`,
                     link: "/handout/faculty",
                 });
+
                 emails.push({
                     to: handout.icEmail,
                     subject: "Handout Submission Reminder",
-                    text: `You have to submit the handout file for ${handout.courseCode} by ${handout.deadline?.toLocaleString() ?? "(unspecified)"}. Please visit the ${environment.DEPARTMENT_NAME} IMS Erp Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                    html: htmlBody,
                 });
             }
         }
