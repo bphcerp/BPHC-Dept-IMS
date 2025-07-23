@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -36,6 +36,10 @@ const DCAConvenorReview: React.FC = () => {
       }
     },
   });
+
+  useMemo(() => {
+    setComments(data?.comments || "");
+  }, [data]);
 
   const reviewMutation = useMutation({
     mutationFn: async (data: handoutSchemas.FinalDecisionBody) => {
@@ -155,11 +159,18 @@ const DCAConvenorReview: React.FC = () => {
                   description="Check if the evaluation scheme is appropriate"
                   value={data.evaluationScheme}
                 />
+                <Review
+                  name="ncCriteria"
+                  label="NC Criteria"
+                  description="Check if the NC Criteria is provided"
+                  value={data.ncCriteria}
+                />
               </div>
               <Separator className="mb-2" />
               <Textarea
                 className="scale-105"
                 placeholder="Enter your comments"
+                value={comments}
                 onChange={(e) => setComments(e.target.value)}
               />
               <div className="flex w-full justify-center space-x-4">

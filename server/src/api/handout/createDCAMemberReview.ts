@@ -15,13 +15,11 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
-
         const parsed =
             handoutSchemas.createHandoutDCAMemberReviewBodySchema.parse(
                 req.body
             );
-        const { handoutId, ...updateFields } = parsed;
-
+        const { handoutId, comments, ...updateFields } = parsed;
         const result = await db
             .update(courseHandoutRequests)
             .set({
@@ -32,8 +30,10 @@ router.post(
                     lecturewisePlanCourseTopics: boolean;
                     numberOfLP: boolean;
                     evaluationScheme: boolean;
+                    ncCriteria: boolean;
                 }),
                 status: "reviewed",
+                comments,
             })
             .where(
                 and(
