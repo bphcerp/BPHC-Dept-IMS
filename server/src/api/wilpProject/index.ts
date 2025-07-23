@@ -8,6 +8,7 @@ import viewDetails from "./view-details.ts";
 import select from "./select.ts";
 import deselect from "./deselect.ts";
 import setRange from "./setRange.ts";
+import bulkMail from "./bulkMail.ts";
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use("/view", viewDetails);
 router.use("/select", select)
 router.use("/deselect", deselect)
 router.use("/setRange", setRange)
+router.use("/mail", bulkMail)
 
 export default router;

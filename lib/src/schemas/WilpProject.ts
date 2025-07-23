@@ -65,6 +65,14 @@ export type WilpProjectSetRangeBody = z.infer<
     typeof wilpProjectSetRangeBodySchema
 >;
 
+export const wilpProjectBulkMailSchema = z.object({
+    subject: z.string().min(1, "Subject is required"),
+    text: z.string().min(1, "Body is required"),
+    includeFaculty: z.boolean(),
+    additionalMailList: z.array(z.string()).optional(),
+});
+export type WilpProjectBulkMailBody = z.infer<typeof wilpProjectBulkMailSchema>;
+
 export type WilpProject = {
     id: number;
     studentId: string;
