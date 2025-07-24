@@ -14,12 +14,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export type SortOrder = "desc" | "asc";
-export type AmountFilter = "all" | "high" | "medium" | "low";
 export type StatusFilter = "all" | "ongoing" | "completed";
 
 export interface ProjectFilterState {
   sortOrder: SortOrder;
-  amountFilter: AmountFilter;
   statusFilter: StatusFilter;
   yearRangeFilter: {
     min: number | null;
@@ -33,12 +31,11 @@ interface ProjectFilterProps {
 }
 
 export default function ProjectFilter({ filterState, onFilterChange }: ProjectFilterProps) {
-  const { sortOrder, amountFilter, statusFilter, yearRangeFilter } = filterState;
+  const { sortOrder, statusFilter, yearRangeFilter } = filterState;
 
   const getActiveFilterCount = () => {
     let count = 0;
     if (sortOrder !== "desc") count++;
-    if (amountFilter !== "all") count++;
     if (statusFilter !== "all") count++;
     if (yearRangeFilter.min !== null) count++;
     if (yearRangeFilter.max !== null) count++;
@@ -52,13 +49,6 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
     });
   };
 
-  const handleAmountFilterChange = (value: AmountFilter) => {
-    onFilterChange({
-      ...filterState,
-      amountFilter: value,
-    });
-  };
-
   const handleStatusFilterChange = (value: StatusFilter) => {
     onFilterChange({
       ...filterState,
@@ -66,20 +56,9 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
     });
   };
 
-  const handleYearRangeChange = (field: "min" | "max", value: number | null) => {
-    onFilterChange({
-      ...filterState,
-      yearRangeFilter: {
-        ...yearRangeFilter,
-        [field]: value,
-      },
-    });
-  };
-
   const resetFilters = () => {
     onFilterChange({
       sortOrder: "desc",
-      amountFilter: "all",
       statusFilter: "all",
       yearRangeFilter: { min: null, max: null },
     });
@@ -125,31 +104,6 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
 
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            Filter by Amount
-          </DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={amountFilter}
-            onValueChange={(value) => handleAmountFilterChange(value as AmountFilter)}
-          >
-            <DropdownMenuRadioItem value="all">
-              All amounts
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="high">
-              ₹10L+ (High)
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="medium">
-              ₹5L - ₹10L (Medium)
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="low">
-              &lt; ₹5L (Low)
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             Filter by Status
           </DropdownMenuLabel>
           <DropdownMenuRadioGroup
@@ -166,48 +120,6 @@ export default function ProjectFilter({ filterState, onFilterChange }: ProjectFi
               Completed
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-            Filter by Start Year Range
-          </DropdownMenuLabel>
-          <div className="px-2 py-1.5">
-            <div className="mb-2 flex items-center gap-2">
-              <label htmlFor="min-year" className="text-xs">
-                From:
-              </label>
-              <input
-                id="min-year"
-                type="number"
-                placeholder="Min year"
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                value={yearRangeFilter.min || ""}
-                onChange={(e) => {
-                  const value = e.target.value ? Number(e.target.value) : null;
-                  handleYearRangeChange("min", value);
-                }}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="max-year" className="text-xs">
-                To:
-              </label>
-              <input
-                id="max-year"
-                type="number"
-                placeholder="Max year"
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                value={yearRangeFilter.max || ""}
-                onChange={(e) => {
-                  const value = e.target.value ? Number(e.target.value) : null;
-                  handleYearRangeChange("max", value);
-                }}
-              />
-            </div>
-          </div>
         </DropdownMenuGroup>
 
         {getActiveFilterCount() > 0 && (

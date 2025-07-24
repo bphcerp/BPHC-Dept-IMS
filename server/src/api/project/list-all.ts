@@ -13,6 +13,11 @@ router.get(
       with: {
         pi: true,
         fundingAgency: true,
+        coPIs: {
+          with: {
+            investigator: true,
+          },
+        },
       },
       columns: {
         id: true,
@@ -35,6 +40,13 @@ router.get(
       piName: project.pi?.name,
       piEmail: project.pi?.email,
       fundingAgencyName: project.fundingAgency?.name,
+      coPIs: project.coPIs?.map(copi => ({
+        name: copi.investigator?.name,
+        email: copi.investigator?.email,
+        department: copi.investigator?.department,
+        campus: copi.investigator?.campus,
+        affiliation: copi.investigator?.affiliation,
+      })) ?? [],
     }));
     res.json(flatResult);
   })

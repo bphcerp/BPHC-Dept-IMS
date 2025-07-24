@@ -32,20 +32,22 @@ export default function YourProjects() {
   if (!checkAccess("project:view")) return <Navigate to="/404" replace />;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col items-center gap-6 bg-background-faded p-8">
-      <div className="flex w-full items-center justify-between">
-        <h2 className="text-3xl font-normal">Your Projects</h2>
-        <ProjectFilter 
-          filterState={filterState}
-          onFilterChange={setFilterState}
+    <div className="w-full h-screen overflow-y-auto bg-background-faded">
+      <div className="flex flex-col items-center gap-6 p-8">
+        <div className="flex w-full items-center justify-between">
+          <h2 className="text-3xl font-normal">Your Projects</h2>
+          <ProjectFilter 
+            filterState={filterState}
+            onFilterChange={setFilterState}
+          />
+        </div>
+        <ProjectTable
+          projects={filteredProjects}
+          loading={loading}
+          error={error}
+          onRowClick={project => navigate(`/project/details/${project.id}`)}
         />
       </div>
-      <ProjectTable
-        projects={filteredProjects}
-        loading={loading}
-        error={error}
-        onRowClick={project => navigate(`/project/details/${project.id}`)}
-      />
     </div>
   );
 } 
