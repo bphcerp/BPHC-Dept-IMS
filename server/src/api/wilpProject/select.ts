@@ -1,19 +1,15 @@
 import db from "@/config/db/index.ts";
-import { wilpProject } from "@/config/db/schema/wilpProject.ts";
+import {
+    wilpProject,
+    wilpProjectsRange,
+} from "@/config/db/schema/wilpProject.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { and, count, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import { Router } from "express";
 import { wilpProjectSchemas } from "lib";
 
 const router = Router();
-const selectRange: {
-    min: number;
-    max: number;
-} = {
-    min: 5,
-    max: 6,
-};
 
 router.patch(
     "/",
@@ -22,6 +18,18 @@ router.patch(
         const { idList } = wilpProjectSchemas.wilpProjectSelectBodySchema.parse(
             req.body
         );
+
+        let selectRange = await db
+            .select()
+            .from(wilpProjectsRange)
+            .orderBy(desc(wilpProjectsRange.createdAt))
+            .limit(1);
+        if (selectRange.length === 0) {
+            res.status(500).json({
+                error: "No project selection range found. Please contact admin.",
+            });
+            return;
+        }
 
         if (!req.user?.email) {
             res.status(401).json({ error: "Unauthorized" });
@@ -39,9 +47,9 @@ router.patch(
         // makes sure total selected projects are within the range
         // even if there are already selected projects
         const newSelectedCount = selected[0].count + idList.length;
-        const minSelect = selectRange.min - selected[0].count;
-        const maxSelect = selectRange.max - selected[0].count;
-        if (newSelectedCount < selectRange.min) {
+        const minSelect = selectRange[0].min - selected[0].count;
+        const maxSelect = selectRange[0].max - selected[0].count;
+        if (newSelectedCount < selectRange[0].min) {
             res.status(400).json({
                 error: `Please select ${minSelect}${
                     minSelect !== maxSelect ? ` to ${maxSelect}` : ""
@@ -49,9 +57,9 @@ router.patch(
             });
             return;
         }
-        if (newSelectedCount > selectRange.max) {
+        if (newSelectedCount > selectRange[0].max) {
             res.status(400).json({
-                error: `You have already selected ${selected[0].count} projects. You can select a maximum of ${selectRange.max} projects.`,
+                error: `${selected[0].count} projects selected. Maximum allowed: ${selectRange[0].max}`,
             });
             return;
         }

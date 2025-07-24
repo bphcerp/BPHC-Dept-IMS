@@ -56,6 +56,23 @@ export const wilpProjectSelectBodySchema = z.object({
 });
 export type WilpProjectSelectBody = z.infer<typeof wilpProjectSelectBodySchema>;
 
+export const wilpProjectSetRangeBodySchema = z.object({
+    min: z.number().int().min(0, "Minimum must be a non-negative integer"),
+    max: z.number().int().min(0, "Maximum must be a non-negative integer"),
+});
+
+export type WilpProjectSetRangeBody = z.infer<
+    typeof wilpProjectSetRangeBodySchema
+>;
+
+export const wilpProjectBulkMailSchema = z.object({
+    subject: z.string().min(1, "Subject is required"),
+    text: z.string().min(1, "Body is required"),
+    includeFaculty: z.boolean(),
+    additionalMailList: z.array(z.string()).optional(),
+});
+export type WilpProjectBulkMailBody = z.infer<typeof wilpProjectBulkMailSchema>;
+
 export type WilpProject = {
     id: number;
     studentId: string;
