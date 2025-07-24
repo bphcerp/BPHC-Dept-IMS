@@ -169,7 +169,7 @@ const Routing = () => {
       requiredPermissions: projectModulePermissions,
     },
     {
-      title: "WILP",
+      title: "WILP Projects",
       icon: <BookOpen />,
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
@@ -502,8 +502,12 @@ const Routing = () => {
         {checkAccessAnyOne(wilpModulePermissions) && (
           <Route path="/wilp" element={<WilpLayout />}>
             <Route index element={<Navigate to="/wilp/view-all" replace={true} />} />
-            <Route path="view-all" element={<AllWilpProjects />} />
-            <Route path="view-your" element={<YourWILPProjects />} />
+            {checkAccess(permissions["/wilp/project/view-all"]) && (
+              <Route path="view-all" element={<AllWilpProjects />} />
+            )}
+            {checkAccess(permissions["/wilp/project/view-all"]) && (
+              <Route path="view-your" element={<YourWILPProjects />} />
+            )}
             {checkAccess(permissions["/wilp/project/upload"]) && (
               <Route path="bulk-upload" element={<BulkUploadWilp onBack={() => window.history.back()} />} />
             )}
