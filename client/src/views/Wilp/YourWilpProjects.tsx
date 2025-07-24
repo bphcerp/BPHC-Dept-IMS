@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
-import WilpTable, { WilpProject } from "@/components/Wilp/WilpTable";
+import { WilpProject } from "@/components/Wilp/WilpTable";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -35,8 +35,8 @@ export default function YourWilpProjects() {
       await api.patch("/wilpProject/deselect", { idList: [id] });
       toast.success("Project deselected successfully");
       fetchProjects();
-    } catch (err: any) {
-      const errorMsg = err?.response?.data?.error || "Deselect failed";
+    } catch (err) {
+      const errorMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || "Deselect failed";
       toast.error(errorMsg);
     } finally {
       setDeselecting(null);
@@ -45,6 +45,13 @@ export default function YourWilpProjects() {
 
   if (!authState) return <Navigate to="/" replace />;
   if (!checkAccess("wilp:project:view-selected")) return <Navigate to="/404" replace />;
+
+  if (loading) {
+    return <div className="flex-1 flex items-center justify-center">Loading...</div>;
+  }
+  if (error) {
+    return <div className="flex-1 flex items-center justify-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center gap-6 bg-background-faded p-8">
@@ -69,7 +76,7 @@ export default function YourWilpProjects() {
             </tr>
           ) : (
             projects.map((project, idx) => (
-              <tr key={project.id} className="border-t">
+              <tr key={project.id ?? idx} className="border-t">
                 <td className="px-4 py-2 cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/wilp/${project.id}`)}>{idx + 1}</td>
                 <td className="px-4 py-2 cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/wilp/${project.id}`)}>{project.studentId}</td>
                 <td className="px-4 py-2 cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/wilp/${project.id}`)}>{project.studentName}</td>
@@ -80,7 +87,7 @@ export default function YourWilpProjects() {
                     variant="destructive"
                     size="sm"
                     disabled={deselecting === project.id}
-                    onClick={e => { e.stopPropagation(); handleDeselect(project.id); }}
+                    onClick={e => { e.stopPropagation(); void handleDeselect(project.id); }}
                   >
                     {deselecting === project.id ? "Deselecting..." : "Deselect"}
                   </Button>
@@ -92,4 +99,4 @@ export default function YourWilpProjects() {
       </table>
     </div>
   );
-} 
+}

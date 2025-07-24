@@ -35,6 +35,9 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
   const [results, setResults] = useState<UploadResults | null>(null);
   const [reminder, setReminder] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [minProjects, setMinProjects] = useState(1);
+  const [maxProjects, setMaxProjects] = useState(2);
+  const [settingRange, setSettingRange] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -135,6 +138,34 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleSetRange = async () => {
+    if (minProjects > maxProjects) {
+      toast.error("Min Projects cannot be greater than Max Projects");
+      return;
+    }
+    setSettingRange(true);
+    try {
+      await api.post("/wilpProject/setRange", { min: minProjects, max: maxProjects });
+      toast.success(`Project selection range (${minProjects} - ${maxProjects}) set successfully.`);
+    } catch (err) {
+      console.error("Set range error:", err);
+      let errorMessage = "Failed to set project range";
+      if (err && typeof err === "object") {
+        const apiErr = err as ApiError & { message?: string; status?: number };
+        if (apiErr.response?.data?.error) {
+          errorMessage = apiErr.response.data.error;
+        } else if (apiErr.message) {
+          errorMessage = apiErr.message;
+        } else if (apiErr.status) {
+          errorMessage += ` (Status: ${apiErr.status})`;
+        }
+      }
+      toast.error(errorMessage);
+    } finally {
+      setSettingRange(false);
+    }
   };
 
   if (!authState) return <Navigate to="/" replace />;
@@ -288,7 +319,34 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
             </CardContent>
           </Card>
         )}
+        <div className="w-full max-w-4xl mt-8 p-6 bg-white rounded shadow flex flex-col md:flex-row items-center gap-4">
+          <Label htmlFor="min-projects" className="w-32">Min Projects</Label>
+          <Input
+            id="min-projects"
+            type="number"
+            min={1}
+            value={minProjects}
+            onChange={e => setMinProjects(Number(e.target.value))}
+            className="max-w-xs"
+          />
+          <Label htmlFor="max-projects" className="w-32">Max Projects</Label>
+          <Input
+            id="max-projects"
+            type="number"
+            min={minProjects}
+            value={maxProjects}
+            onChange={e => setMaxProjects(Number(e.target.value))}
+            className="max-w-xs"
+          />
+          <Button
+            onClick={() => void handleSetRange()}
+            disabled={settingRange}
+            className="ml-2"
+          >
+            {settingRange ? "Setting..." : "Set Range"}
+          </Button>
+        </div>
       </div>
     </div>
   );
-} 
+}
