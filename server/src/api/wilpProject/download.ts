@@ -40,10 +40,26 @@ router.get(
             "Faculty Email",
         ];
 
-        const worksheet =
-            data.length > 0
-                ? XLSX.utils.json_to_sheet(data)
-                : XLSX.utils.aoa_to_sheet([headers]);
+        var worksheet;
+        if (data.length > 0) {
+            // Ensure the worksheet has the correct headers
+            const sheetData = [
+                headers,
+                ...data.map((row) => [
+                    row.studentId,
+                    row.discipline,
+                    row.studentName,
+                    row.organization,
+                    row.researchArea,
+                    row.dissertationTitle,
+                    row.degreeProgram,
+                    row.facultyEmail,
+                ]),
+            ];
+            worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+        } else {
+            worksheet = XLSX.utils.aoa_to_sheet([headers]);
+        }
         XLSX.utils.book_append_sheet(workbook, worksheet, "WILP Projects");
 
         const buffer = XLSX.write(workbook, {
