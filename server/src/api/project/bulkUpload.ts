@@ -9,7 +9,7 @@ import {
   fundingAgencies,
   projectCoPIs,
 } from "@/config/db/schema/project.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 
 const router = Router();
@@ -190,6 +190,20 @@ router.post(
               name: validatedRow.fundingAgency,
             })
             .returning();
+        }
+        const duplicate = await db.select().from(projects).where(and(
+          eq(projects.title, validatedRow.title),
+          eq(projects.piId, pi.id),
+          eq(projects.fundingAgencyId, fundingAgency.id),
+          eq(projects.sanctionedAmount, validatedRow.sanctionedAmount.toString()),
+          eq(projects.approvalDate, validatedRow.approvalDate),
+          eq(projects.startDate, validatedRow.startDate),
+          eq(projects.endDate, validatedRow.endDate)
+        ));
+        if (duplicate.length > 0) {
+          results.failed++;
+          results.errors.push(`Row ${i + 2}: Duplicate project (already exists)`);
+          continue;
         }
         const [project] = await db
           .insert(projects)
