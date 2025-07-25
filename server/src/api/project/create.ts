@@ -6,7 +6,7 @@ import {
   fundingAgencies,
   projectCoPIs,
 } from "../../config/db/schema/project.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 
@@ -56,6 +56,24 @@ router.post(
       .returning();
     if (!agencyRecord) {
       [agencyRecord] = await db.select().from(fundingAgencies).where(eq(fundingAgencies.name, fundingAgency));
+    }
+    const normalizedAgencyName = fundingAgency.trim().toLowerCase();
+    const duplicate = await db
+      .select()
+      .from(projects)
+      .innerJoin(fundingAgencies, eq(projects.fundingAgencyId, fundingAgencies.id))
+      .where(and(
+        eq(projects.title, title),
+        eq(projects.piId, piRecord.id),
+        eq(fundingAgencies.name, normalizedAgencyName),
+        eq(projects.sanctionedAmount, sanctionedAmount),
+        eq(projects.approvalDate, approvalDate),
+        eq(projects.startDate, startDate),
+        eq(projects.endDate, endDate)
+      ));
+    if (duplicate.length > 0) {
+      res.status(409).json({ error: "Project already exists" });
+      return;
     }
 
     const coPIRecords: any[] = [];
