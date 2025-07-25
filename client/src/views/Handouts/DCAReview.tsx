@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import api from "@/lib/axios-instance";
 import { isAxiosError } from "axios";
 import { BASE_API_URL } from "@/lib/constants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface HandoutReviewFormValues {
   handoutId: string;
@@ -19,6 +20,8 @@ export interface HandoutReviewFormValues {
   lecturewisePlanCourseTopics: boolean;
   numberOfLP: boolean;
   evaluationScheme: boolean;
+  ncCriteria: boolean;
+  comments: string;
 }
 
 export interface Handout {
@@ -33,6 +36,7 @@ export interface Handout {
   textBookPrescribed: boolean;
   lecturewisePlanLearningObjective: boolean;
   lecturewisePlanCourseTopics: boolean;
+  ncCriteria: boolean;
   openBook: number;
   midSem: number;
   compre: number;
@@ -48,6 +52,7 @@ export interface Handout {
 const DCAMemberReviewForm: React.FC = () => {
   const { id: handoutId } = useParams();
   const queryClient = useQueryClient();
+  const [comments, setComments] = useState("");
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: [`handout-dca ${handoutId}`],
@@ -109,6 +114,8 @@ const DCAMemberReviewForm: React.FC = () => {
       lecturewisePlanCourseTopics: false,
       numberOfLP: false,
       evaluationScheme: false,
+      ncCriteria: false,
+      comments,
     },
   });
 
@@ -157,7 +164,9 @@ const DCAMemberReviewForm: React.FC = () => {
     );
     setValue("numberOfLP", data?.numberOfLP ?? false);
     setValue("evaluationScheme", data?.evaluationScheme ?? false);
-  }, [data, setValue]);
+    setValue("ncCriteria", data?.ncCriteria ?? false);
+    setValue("comments", comments);
+  }, [data, setValue, comments]);
 
   if (isLoading)
     return (
@@ -276,15 +285,26 @@ const DCAMemberReviewForm: React.FC = () => {
               control={control}
               disabled={data.evaluationScheme != null}
             />
+            <ReviewField
+              name="ncCriteria"
+              label="NC Criteria"
+              description="Check if the NC Criteria is provided"
+              control={control}
+              disabled={data.evaluationScheme != null}
+            />
             {data.comments ? (
               <div className="flex max-w-[28vw] flex-col text-muted-foreground">
-                <div className="mb-2 font-bold">DCA Convenor Comments :</div>
-                <div className="ml-4 overflow-hidden break-words">
+                <div className="mb-2 font-bold">DCA Comments :</div>
+                <div className="ml-4 overflow-hidden break-words text-center">
                   {data.comments}
                 </div>
               </div>
             ) : (
-              ""
+              <Textarea
+                className="scale-105"
+                placeholder="Enter your comments"
+                onChange={(e) => setComments(e.target.value)}
+              />
             )}
           </div>
           {data.status == "review pending" ? (

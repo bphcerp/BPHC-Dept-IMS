@@ -63,9 +63,9 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({
     },
     onError: (error) => {
       if (isAxiosError(error)) {
-        const { response, message } = error;
-        if (response?.status == 400) {
-          toast.error(message);
+        const { response } = error;
+        if (response?.data) {
+          toast.error(response?.data as string);
         }
       } else {
         toast.error("Error in uploading handout");

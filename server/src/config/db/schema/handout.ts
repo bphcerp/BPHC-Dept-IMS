@@ -35,6 +35,7 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
         "lecturewise_plan_learning_objective"
     ),
     lecturewisePlanCourseTopics: boolean("lecturewise_plan_course_topics"),
+    ncCriteria: boolean("nc_criteria"),
     numberOfLP: boolean("number_of_lp"),
     evaluationScheme: boolean("evaluation_scheme"),
     status: handoutStatusEnum("status").notNull().default("notsubmitted"),

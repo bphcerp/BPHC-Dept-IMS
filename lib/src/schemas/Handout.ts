@@ -29,6 +29,8 @@ export const createHandoutDCAMemberReviewBodySchema = z.object({
     lecturewisePlanCourseTopics: z.coerce.boolean(),
     numberOfLP: z.coerce.boolean(),
     evaluationScheme: z.coerce.boolean(),
+    ncCriteria: z.coerce.boolean(),
+    comments: z.string(),
 });
 
 export type CreateHandoutDCAMemberReviewBody = z.infer<
