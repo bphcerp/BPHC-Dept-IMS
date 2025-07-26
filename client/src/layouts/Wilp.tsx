@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet, Mail } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
@@ -29,6 +29,12 @@ const WilpLayout = () => {
                 url: "/wilp/view-all",
                 requiredPermissions: [permissions["/wilp/project/view-all"]],
               },
+              {
+                title: "Send Email",
+                icon: <Mail />,
+                url: "/wilp/send-mail",
+                requiredPermissions: [permissions["wilp:project:mail"]],
+              },
             ],
           },
         ]}
@@ -38,4 +44,4 @@ const WilpLayout = () => {
   );
 };
 
-export default WilpLayout; 
+export default WilpLayout;

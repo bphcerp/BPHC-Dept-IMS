@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
-
-// Define a type for the project for better type safety
 interface Project {
   studentId?: string;
   studentName?: string;
@@ -13,7 +11,6 @@ interface Project {
   researchArea?: string;
   dissertationTitle?: string;
   facultyEmail?: string;
-  // Add more fields as needed
 }
 
 export default function WilpProjectDetails() {

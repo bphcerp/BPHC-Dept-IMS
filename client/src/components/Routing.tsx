@@ -79,6 +79,7 @@ import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
 import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
 import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
+import SendMail from "@/views/Wilp/SendMail";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -510,6 +511,9 @@ const Routing = () => {
             )}
             {checkAccess(permissions["/wilp/project/upload"]) && (
               <Route path="bulk-upload" element={<BulkUploadWilp onBack={() => window.history.back()} />} />
+            )}
+            {checkAccess(permissions["/wilp/project/mail"]) && (
+              <Route path="send-mail" element={<SendMail />} />
             )}
             <Route path=":id" element={<WilpProjectDetails />} />
           </Route>
