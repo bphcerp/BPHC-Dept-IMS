@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Download, Upload, FileSpreadsheet, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface BulkUploadWilpProps {
@@ -30,6 +30,7 @@ interface ApiError {
 
 export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
   const { authState, checkAccess } = useAuth();
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState<UploadResults | null>(null);
@@ -75,6 +76,7 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
       if (fileInput) fileInput.value = "";
       if (responseData.results.successful > 0) {
         toast.success(`Successfully uploaded ${responseData.results.successful} WILP projects`);
+        navigate("/wilp/send-mail");
       }
       if (responseData.results.failed > 0) {
         toast.error(`${responseData.results.failed} WILP projects failed to upload`);
