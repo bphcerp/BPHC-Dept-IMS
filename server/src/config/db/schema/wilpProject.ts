@@ -1,5 +1,11 @@
-import { pgTable, uuid, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { v4 as uuidv4 } from "uuid";
+import {
+    pgTable,
+    text,
+    timestamp,
+    pgEnum,
+    serial,
+    integer,
+} from "drizzle-orm/pg-core";
 import { faculty } from "./admin.ts";
 
 export const degreeProgramEnum = pgEnum("degree_program", [
@@ -13,9 +19,7 @@ export const degreeProgramEnum = pgEnum("degree_program", [
 ]);
 
 export const wilpProject = pgTable("wilp_project", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
+    id: serial("id").primaryKey(),
     studentId: text("student_id").notNull(),
     discipline: text("discipline").notNull(),
     studentName: text("student_name").notNull(),
@@ -27,6 +31,21 @@ export const wilpProject = pgTable("wilp_project", {
     researchArea: text("research_area").notNull(),
     dissertationTitle: text("dissertation_title").notNull(),
 
+    reminder: timestamp("reminder", { withTimezone: true }).notNull(),
+    deadline: timestamp("deadline", { withTimezone: true }).notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+});
+
+export const wilpProjectsRange = pgTable("wilp_projects_range", {
+    id: serial("id").primaryKey(),
+    min: integer("min").notNull(),
+    max: integer("max").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
