@@ -74,6 +74,12 @@ import ProjectDetails from "@/views/Project/[id]";
 import YourProjects from "@/views/Project/YourProjects";
 import AllProjects from "@/views/Project/AllProjects";
 import EditProjects from "@/views/Project/EditProjects";
+import WilpLayout from "@/layouts/Wilp";
+import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
+import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
+import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
+import WilpProjectDetails from "@/views/Wilp/[id]";
+import SendMail from "@/views/Wilp/SendMail";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -89,7 +95,9 @@ const conferenceModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("conference:"));
 
-const qpReviewModulePermissions: string[] = ["qp:"];
+const qpReviewModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("qp:")
+);
 
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
@@ -105,6 +113,10 @@ const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
 
 const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("project:")
+);
+
+const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("wilp:")
 );
 
 const Routing = () => {
@@ -158,6 +170,12 @@ const Routing = () => {
       icon: <File />,
       url: "/project",
       requiredPermissions: projectModulePermissions,
+    },
+    {
+      title: "WILP Projects",
+      icon: <BookOpen />,
+      url: "/wilp",
+      requiredPermissions: wilpModulePermissions,
     },
   ];
 
@@ -481,6 +499,33 @@ const Routing = () => {
             {checkAccess(permissions["/project"]) && (
               <Route path="details/:id" element={<ProjectDetails />} />
             )}
+          </Route>
+        )}
+
+        {checkAccessAnyOne(wilpModulePermissions) && (
+          <Route path="/wilp" element={<WilpLayout />}>
+            <Route
+              index
+              element={<Navigate to="/wilp/view-all" replace={true} />}
+            />
+            {checkAccess(permissions["/wilpProject/view/all"]) && (
+              <Route path="view-all" element={<AllWilpProjects />} />
+            )}
+            {checkAccess(permissions["/wilpProject/view/all"]) && (
+              <Route path="view-your" element={<YourWILPProjects />} />
+            )}
+            {checkAccess(permissions["/wilpProject/upload"]) && (
+              <Route
+                path="bulk-upload"
+                element={
+                  <BulkUploadWilp onBack={() => window.history.back()} />
+                }
+              />
+            )}
+            {checkAccess(permissions["/wilpProject/mail"]) && (
+              <Route path="send-mail" element={<SendMail />} />
+            )}
+            <Route path=":id" element={<WilpProjectDetails />} />
           </Route>
         )}
 
