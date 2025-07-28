@@ -29,6 +29,8 @@ export const createHandoutDCAMemberReviewBodySchema = z.object({
     lecturewisePlanCourseTopics: z.coerce.boolean(),
     numberOfLP: z.coerce.boolean(),
     evaluationScheme: z.coerce.boolean(),
+    ncCriteria: z.coerce.boolean(),
+    comments: z.string(),
 });
 
 export type CreateHandoutDCAMemberReviewBody = z.infer<
@@ -107,6 +109,7 @@ export type UpdateReviewerBody = z.infer<typeof updateReviewerBodySchema>;
 
 export const deadlineBodySchema = z.object({
     time: z.date(),
+    emailBody: z.string().min(1),
 });
 
 export type DeadlineBody = z.infer<typeof deadlineBodySchema>;

@@ -130,9 +130,7 @@ const FacultyHandout: React.FC = () => {
 
                 {data.comments ? (
                   <div className="flex max-w-[28vw] flex-col text-muted-foreground">
-                    <div className="mb-2 font-bold">
-                      DCA Convenor Comments :
-                    </div>
+                    <div className="mb-2 font-bold">DCA Comments :</div>
                     <div className="ml-4 overflow-hidden break-words text-center">
                       {data.comments}
                     </div>

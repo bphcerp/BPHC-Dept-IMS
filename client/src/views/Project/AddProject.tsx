@@ -92,7 +92,12 @@ export default function AddProject() {
       toast.success("Project created successfully!");
       form.reset();
     } catch (err) {
-      toast.error((err as string) ?? "Error creating project");
+      const error = err as { response?: { status?: number; data?: { error?: string } } };
+      if (error?.response?.status === 409 && error?.response?.data?.error === "Project already exists") {
+        toast.error("Project already exists. Please check your data.");
+      } else {
+        toast.error(error?.response?.data?.error ?? "Error creating project");
+      }
     }
   };
 
