@@ -76,7 +76,6 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
       if (fileInput) fileInput.value = "";
       if (responseData.results.successful > 0) {
         toast.success(`Successfully uploaded ${responseData.results.successful} WILP projects`);
-        navigate("/wilp/send-mail");
       }
       if (responseData.results.failed > 0) {
         toast.error(`${responseData.results.failed} WILP projects failed to upload`);
