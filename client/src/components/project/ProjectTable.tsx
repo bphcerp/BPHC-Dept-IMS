@@ -598,7 +598,7 @@ export default function ProjectTable({
                 <TableRow
                   key={row.id}
                   className={(onRowClick ? "cursor-pointer " : "") + "py-4"}
-                  onClick={onRowClick && editingId !== row.original.id ? (() => { onRowClick(row.original); }) : undefined}
+                  onClick={onRowClick && editingId !== row.original.id ? handleRowClick(row.original) : undefined}
                 >
                   {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id} className="px-4 py-4 truncate overflow-hidden whitespace-nowrap">
