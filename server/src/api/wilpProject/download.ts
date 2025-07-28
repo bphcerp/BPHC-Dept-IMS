@@ -4,8 +4,9 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { wilpProject } from "@/config/db/schema/wilpProject.ts";
-import { isNull } from "drizzle-orm";
 import XLSX from "xlsx";
+import { faculty } from "@/config/db/schema/admin.ts";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -23,9 +24,10 @@ router.get(
                 dissertationTitle: wilpProject.dissertationTitle,
                 degreeProgram: wilpProject.degreeProgram,
                 facultyEmail: wilpProject.facultyEmail,
+                facultyName: faculty.name,
             })
             .from(wilpProject)
-            .where(isNull(wilpProject.facultyEmail))
+            .leftJoin(faculty, eq(wilpProject.facultyEmail, faculty.email))
             .orderBy(wilpProject.studentId);
 
         const workbook = XLSX.utils.book_new();
@@ -38,6 +40,7 @@ router.get(
             "Dissertation Title",
             "Degree Program",
             "Faculty Email",
+            "Faculty Name",
         ];
 
         var worksheet;
@@ -54,6 +57,7 @@ router.get(
                     row.dissertationTitle,
                     row.degreeProgram,
                     row.facultyEmail,
+                    row.facultyName,
                 ]),
             ];
             worksheet = XLSX.utils.aoa_to_sheet(sheetData);
