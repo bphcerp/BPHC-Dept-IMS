@@ -504,17 +504,25 @@ const Routing = () => {
 
         {checkAccessAnyOne(wilpModulePermissions) && (
           <Route path="/wilp" element={<WilpLayout />}>
-            <Route index element={<Navigate to="/wilp/view-all" replace={true} />} />
-            {checkAccess(permissions["/wilp/project/view-all"]) && (
+            <Route
+              index
+              element={<Navigate to="/wilp/view-all" replace={true} />}
+            />
+            {checkAccess(permissions["/wilpProject/view/all"]) && (
               <Route path="view-all" element={<AllWilpProjects />} />
             )}
-            {checkAccess(permissions["/wilp/project/view-all"]) && (
+            {checkAccess(permissions["/wilpProject/view/all"]) && (
               <Route path="view-your" element={<YourWILPProjects />} />
             )}
-            {checkAccess(permissions["/wilp/project/upload"]) && (
-              <Route path="bulk-upload" element={<BulkUploadWilp onBack={() => window.history.back()} />} />
+            {checkAccess(permissions["/wilpProject/upload"]) && (
+              <Route
+                path="bulk-upload"
+                element={
+                  <BulkUploadWilp onBack={() => window.history.back()} />
+                }
+              />
             )}
-            {checkAccess(permissions["/wilp/project/mail"]) && (
+            {checkAccess(permissions["/wilpProject/mail"]) && (
               <Route path="send-mail" element={<SendMail />} />
             )}
             <Route path=":id" element={<WilpProjectDetails />} />
