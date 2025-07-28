@@ -69,7 +69,7 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
         },
       });
       const responseData = response.data as { results: UploadResults };
-      setResults(responseData.results);
+      setResults(responseData.results) ;
       setFile(null);
       const fileInput = document.getElementById("file-upload-wilp") as HTMLInputElement;
       if (fileInput) fileInput.value = "";

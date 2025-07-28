@@ -122,24 +122,39 @@ export default function SendMail() {
         </Button>
       </div>
       <Dialog open={editorOpen} onOpenChange={setEditorOpen} modal>
-        <DialogContent className="w-screen h-screen p-0">
+        <DialogContent
+          className="w-[900px] max-w-none h-[80vh] bg-white p-8 flex flex-col justify-start"
+          style={{ background: "#fff", borderRadius: 16 }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Mail Body</DialogTitle>
             <DialogDescription>Compose and preview your mail in markdown.</DialogDescription>
           </DialogHeader>
-          <div className="py-2 h-[calc(100vh-160px)]">
+          <div className="flex-1 flex flex-col gap-4">
             <Suspense fallback={<div className="w-full text-center">Loading editor...</div>}>
-              <MDEditor
-                value={mailBody}
-                onChange={v => setMailBody(v ?? "")}
-                height={window.innerHeight ? window.innerHeight - 220 : 400}
-                preview="live"
-                commandsFilter={(command) => command.name !== "fullscreen" ? command : false}
-                style={{ minHeight: 300, height: '100%' }}
-              />
+              <div className="bg-white rounded-md shadow border p-2 flex-1">
+                <MDEditor
+                  value={mailBody}
+                  onChange={v => setMailBody(v ?? "")}
+                  height={400}
+                  preview="live"
+                  commandsFilter={command => command.name !== "fullscreen" ? command : false}
+                  style={{
+                    background: "#fff",
+                    color: "#222",
+                    minHeight: 300,
+                    height: "100%",
+                    borderRadius: 8,
+                  }}
+                  previewOptions={{
+                    className: "bg-white",
+                    style: { background: "#fff", color: "#222", borderRadius: 8 }
+                  }}
+                />
+              </div>
             </Suspense>
           </div>
-          <Button className="mt-2" onClick={() => setEditorOpen(false)}>
+          <Button className="mt-4 self-end" onClick={() => setEditorOpen(false)}>
             Done
           </Button>
         </DialogContent>
