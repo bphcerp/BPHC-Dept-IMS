@@ -10,6 +10,7 @@ import publicationsRouter from "./publications/index.ts";
 import inventoryRouter from "./inventory/index.ts";
 import profileRouter from "./profile/index.ts";
 import projectRouter from "./project/index.ts";
+import patentRouter from "./patent/index.ts";
 import wilpProjectRouter from "./wilpProject/index.ts";
 import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
@@ -60,6 +61,7 @@ router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);
 router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
+router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
 
 export default router;

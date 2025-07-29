@@ -124,6 +124,14 @@ export const allPermissions = {
     "project:bulk-upload": "Bulk upload projects",
     "project:view-details": "View project details",
 
+    // Patent module permissions
+    "patent:create": "Create a new patent",
+    "patent:view": "View list of patents",
+    "patent:view-all": "View all patents (admin)",
+    "patent:edit-all": "Edit all patents (admin)",
+    "patent:bulk-upload": "Bulk upload patents",
+    "patent:view-details": "View patent details",
+
     // WILP Project module permissions
     "wilp:project:upload": "Upload multiple WILP projects",
     "wilp:project:clear": "Clear all WILP projects",
@@ -327,6 +335,14 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/project/list-all": "project:view-all",
     "/project/edit-all": "project:edit-all",
     "/project": "project:view-details",
+
+    // Patent
+    "/patent/create": "patent:create",
+    "/patent/bulkUpload": "patent:bulk-upload",
+    "/patent/list": "patent:view",
+    "/patent/list-all": "patent:view-all",
+    "/patent/edit-all": "patent:edit-all",
+    "/patent": "patent:view-details",
 
     // WILP Project
     "/wilpProject/upload": "wilp:project:upload",

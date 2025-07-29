@@ -8,6 +8,7 @@ import * as publicationsSchemas from "./schemas/Publications.ts";
 import * as todosSchemas from "./schemas/Todos.ts";
 import * as inventorySchemas from "./schemas/Inventory.ts";
 import * as projectSchemas from "./schemas/Project.ts";
+import * as patentSchemas from "./schemas/Patent.ts";
 import * as wilpProjectSchemas from "./schemas/WilpProject.ts";
 import { modules } from "./schemas/Form.ts";
 import * as authTypes from "./types/auth.ts";
@@ -24,6 +25,7 @@ export {
     todosSchemas,
     inventorySchemas,
     projectSchemas,
+    patentSchemas,
     wilpProjectSchemas,
     modules,
     phdSchemas,

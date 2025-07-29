@@ -74,6 +74,13 @@ import ProjectDetails from "@/views/Project/[id]";
 import YourProjects from "@/views/Project/YourProjects";
 import AllProjects from "@/views/Project/AllProjects";
 import EditProjects from "@/views/Project/EditProjects";
+import PatentLayout from "@/layouts/Patent";
+import AddPatent from "@/views/Patent/AddPatent";
+import PatentDetails from "@/views/Patent/[id]";
+import YourPatents from "@/views/Patent/YourPatents";
+import AllPatents from "@/views/Patent/AllPatents";
+import EditPatents from "@/views/Patent/EditPatents";
+
 import WilpLayout from "@/layouts/Wilp";
 import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
 import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
@@ -115,6 +122,9 @@ const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("project:")
 );
 
+const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("patent:")
+);
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
@@ -170,6 +180,12 @@ const Routing = () => {
       icon: <File />,
       url: "/project",
       requiredPermissions: projectModulePermissions,
+    },
+    {
+      title: "Patent",
+      icon: <File />,
+      url: "/patent",
+      requiredPermissions: patentModulePermissions,
     },
     {
       title: "WILP Projects",
@@ -502,6 +518,29 @@ const Routing = () => {
           </Route>
         )}
 
+        {checkAccessAnyOne(patentModulePermissions) && (
+          <Route path="/patent" element={<PatentLayout />}>
+            <Route
+              index
+              element={<Navigate to="/patent/add" replace={true} />}
+            />
+            {checkAccess(permissions["/patent/create"]) && (
+              <Route path="add" element={<AddPatent />} />
+            )}
+            {checkAccess(permissions["/patent/list"]) && (
+              <Route path="view-your" element={<YourPatents />} />
+            )}
+            {checkAccess(permissions["/patent/list-all"]) && (
+              <Route path="view-all" element={<AllPatents />} />
+            )}
+            {checkAccess(permissions["/patent/edit-all"]) && (
+              <Route path="edit-all" element={<EditPatents />} />
+            )}
+            {checkAccess(permissions["/patent"]) && (
+              <Route path="details/:id" element={<PatentDetails />} />
+            )}
+          </Route>
+        )}
         {checkAccessAnyOne(wilpModulePermissions) && (
           <Route path="/wilp" element={<WilpLayout />}>
             <Route
