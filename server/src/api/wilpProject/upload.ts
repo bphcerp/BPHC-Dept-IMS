@@ -70,6 +70,13 @@ router.post(
             return;
         }
 
+        if (new Date(reminder) > new Date(deadline)) {
+            res.status(400).json({
+                error: "Reminder date must be before the deadline date",
+            });
+            return;
+        }
+
         const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];

@@ -12,6 +12,7 @@ router.get(
     const userEmail = req.user?.email;
     if (!userEmail) {
       res.status(401).json({ error: "User email not found in request" });
+      return;
     }
 
     const result = await db.query.projects.findMany({

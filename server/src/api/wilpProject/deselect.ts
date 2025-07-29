@@ -10,7 +10,7 @@ const router = Router();
 
 router.patch(
     "/",
-    checkAccess("wilp:project:select"),
+    checkAccess("wilp:project:deselect"),
     asyncHandler(async (req, res) => {
         const { idList } = wilpProjectSchemas.wilpProjectSelectBodySchema.parse(
             req.body
