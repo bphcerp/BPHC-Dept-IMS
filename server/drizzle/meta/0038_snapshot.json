@@ -1,6 +1,6 @@
 {
-  "id": "4fb49c7d-102c-45df-9ba8-e20952a7329f",
-  "prevId": "2a597250-6de6-4a1e-8f31-50d3a49d79ea",
+  "id": "12470208-a8ed-475f-91c6-5ce20b4f85c5",
+  "prevId": "4fb49c7d-102c-45df-9ba8-e20952a7329f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2687,6 +2687,243 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.patent_inventors": {
+      "name": "patent_inventors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "patent_id": {
+          "name": "patent_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campus": {
+          "name": "campus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "affiliation": {
+          "name": "affiliation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "patent_inventors_patent_id_patents_id_fk": {
+          "name": "patent_inventors_patent_id_patents_id_fk",
+          "tableFrom": "patent_inventors",
+          "tableTo": "patents",
+          "columnsFrom": [
+            "patent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.patents": {
+      "name": "patents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "application_number": {
+          "name": "application_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inventors_name": {
+          "name": "inventors_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "inventors": {
+          "name": "inventors",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "campus": {
+          "name": "campus",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filing_date": {
+          "name": "filing_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_publication_date": {
+          "name": "application_publication_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "granted_date": {
+          "name": "granted_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filing_fy": {
+          "name": "filing_fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filing_ay": {
+          "name": "filing_ay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_ay": {
+          "name": "published_ay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_fy": {
+          "name": "published_fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "granted_fy": {
+          "name": "granted_fy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "granted_ay": {
+          "name": "granted_ay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "granted_cy": {
+          "name": "granted_cy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "patent_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "granted_patent_certificate_link": {
+          "name": "granted_patent_certificate_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "application_publication_link": {
+          "name": "application_publication_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "form_01_link": {
+          "name": "form_01_link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.phd_courses": {
       "name": "phd_courses",
       "schema": "",
@@ -4070,6 +4307,17 @@
         "Working",
         "Not Working",
         "Under Repair"
+      ]
+    },
+    "public.patent_status": {
+      "name": "patent_status",
+      "schema": "public",
+      "values": [
+        "Pending",
+        "Filed",
+        "Granted",
+        "Abandoned",
+        "Rejected"
       ]
     },
     "public.funding_agency_nature": {
