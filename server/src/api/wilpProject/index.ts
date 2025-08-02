@@ -9,6 +9,7 @@ import select from "./select.ts";
 import deselect from "./deselect.ts";
 import setRange from "./setRange.ts";
 import bulkMail from "./bulkMail.ts";
+import stats from "./stats.ts";
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use("/select", select)
 router.use("/deselect", deselect)
 router.use("/setRange", setRange)
 router.use("/mail", bulkMail)
+router.use("/stats", stats)
 
 export default router;
