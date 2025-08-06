@@ -5,10 +5,7 @@ import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
-import {
-    degreeProgramEnum,
-    wilpProject,
-} from "@/config/db/schema/wilpProject.ts";
+import { wilpProject } from "@/config/db/schema/wilpProject.ts";
 import { wilpProjectSchemas } from "lib";
 
 const router = Router();
@@ -41,17 +38,12 @@ function parseRow(row: any): WilpProjectRow | null {
     )
         return null;
 
-    let degreeProgram: string = row["Degree Program"];
-    if (!degreeProgramEnum.enumValues.includes(degreeProgram as any)) {
-        return null;
-    }
-
     return {
         studentId: row["student ID Number"].toString().trim(),
         discipline: row["discipline"].toString().trim(),
         studentName: row["student name"].toString().trim(),
         organization: row["Employing Organization"].toString().trim(),
-        degreeProgram: degreeProgram,
+        degreeProgram: row["Degree Program"].toString().trim(),
         researchArea: row["Research Area"].toString().trim(),
         dissertationTitle: row["Dissertation Title"].toString().trim(),
     };
@@ -125,8 +117,6 @@ router.post(
                     .insert(wilpProject)
                     .values({
                         ...parsedRow,
-                        degreeProgram:
-                            parsedRow.degreeProgram as (typeof degreeProgramEnum.enumValues)[number],
                         reminder: new Date(reminder),
                         deadline: new Date(deadline),
                     })
