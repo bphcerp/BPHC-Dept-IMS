@@ -47,7 +47,7 @@ router.patch(
         const parsed = categorySchema.partial().parse(req.body);
         const updatedCategory = await db
             .update(inventoryCategories)
-            .set(parsed)
+            .set({ ...parsed, updatedAt: new Date() })
             .where(
                 and(
                     eq(inventoryCategories.id, req.params.id),
