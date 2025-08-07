@@ -4,6 +4,11 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import JSZip from "jszip";
 import ExcelJS from "exceljs";
+import fs from "fs/promises";
+import path from "path";
+import environment from "@/config/environment.ts";
+import { getAccess } from "@/lib/auth/index.ts";
+import { userType } from "@/config/db/schema/admin.ts";
 
 function generateExcel(
     headers: string[],
@@ -16,6 +21,7 @@ function generateExcel(
         const rowData = headers.map((h) => row[h]);
         worksheet.addRow(rowData);
     }
+    
     return workbook;
 }
 
@@ -125,6 +131,11 @@ router.get(
                 }
                 return sanitized;
             });
+        
+        
+
+        console.log("HD:", hdHandoutsData.length);
+        console.log("FD:", fdHandoutsData.length);
 
         const hdWorkbook = generateExcel(headers, sanitizeData(hdHandoutsData));
         const fdWorkbook = generateExcel(headers, sanitizeData(fdHandoutsData));
@@ -135,6 +146,90 @@ router.get(
         const zip = new JSZip();
         zip.file("hd_handout_summary.xlsx", hdBuffer);
         zip.file("fd_handout_summary.xlsx", fdBuffer);
+
+        const fdHandoutsPDF = await db.query.courseHandoutRequests.findMany({
+            where: (handout, { eq, and }) =>
+                and(eq(handout.status, "approved"), eq(handout.category, "FD")),
+            with: {
+                ic: { with: { faculty: true } }
+               
+            },
+        });
+
+        for (const handout of fdHandoutsPDF) {
+            const filePath = handout.handoutFilePath;
+            
+            if (filePath) {
+                try {
+                    const accessToken = environment.ACCESS_TOKEN_SECRET;
+                    const fileUrl = environment.SERVER_URL + "/f/" + filePath;
+        
+                    const response = await fetch(fileUrl, {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+                    }
+        
+                    const pdfBuffer = Buffer.from(await response.arrayBuffer());
+        
+                    const fileNameSafe = `${handout.courseCode}_${handout.courseName}`
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "_")
+                        .toLowerCase();
+        
+                    zip.file(`fd_handouts/${fileNameSafe}.pdf`, pdfBuffer);
+                } catch (err) {
+                    console.error(`Failed to download or zip file: ${filePath}`, err);
+                }
+            }
+        }
+
+        const hdHandoutsPDF = await db.query.courseHandoutRequests.findMany({
+            where: (handout, { eq, and }) =>
+                and(eq(handout.status, "approved"), eq(handout.category, "HD")),
+            with: {
+                ic: { with: { faculty: true } }
+               
+            },
+        });
+
+        for (const handout of hdHandoutsPDF) {
+            const filePath = handout.handoutFilePath;
+            
+            if (filePath) {
+                try {
+                    const accessToken = environment.ACCESS_TOKEN_SECRET;
+                    const fileUrl = environment.SERVER_URL + "/f/" + filePath;
+        
+                    const response = await fetch(fileUrl, {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+                    }
+        
+                    const pdfBuffer = Buffer.from(await response.arrayBuffer());
+        
+                    const fileNameSafe = `${handout.courseCode}_${handout.courseName}`
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "_")
+                        .toLowerCase();
+        
+                    zip.file(`hd_handouts/${fileNameSafe}.pdf`, pdfBuffer);
+                } catch (err) {
+                    console.error(`Failed to download or zip file: ${filePath}`, err);
+                }
+            }
+        }
+        
+        
 
         const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
