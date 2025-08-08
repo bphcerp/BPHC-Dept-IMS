@@ -23,6 +23,12 @@ const PublicationsLayout = () => {
                 requiredPermissions: [permissions["/publications/all"]],
               },
               {
+                title: "View All Publications as Table",
+                icon: <Search />,
+                url: "/publications/pub-table",
+                requiredPermissions: [permissions["/publications/all"]],
+              },
+              {
                 title: "Edit All Publications",
                 icon: <Pencil />,
                 url: "/publications/edit-publications",
