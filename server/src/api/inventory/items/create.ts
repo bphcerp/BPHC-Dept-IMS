@@ -22,11 +22,8 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res) => {
         const parsed = inventoryItemSchema
-            .omit({ id: true, transferId: true, serialNumber: true })
-            .parse({
-                ...req.body,
-                poAmount: (req.body.poAmount as number).toString(),
-            });
+            .omit({ id: true, transferId: true, serialNumber: true, poAmount: true })
+            .parse(req.body);
 
         // Compute equipment ID again (the one client sent might be wrong/ incase of >1 quantity )
 
@@ -53,12 +50,12 @@ router.post(
 
         const updatedItem = inventoryItemSchema
             .omit({ id: true, transferId: true })
-            .parse({ ...parsed, serialNumber: lastItemNumber + 1 });
+            .parse({ ...parsed, poAmount: req.body.poAmount, serialNumber: lastItemNumber + 1 });
 
         if (quantity > 1) {
             const items = multipleEntrySchema.parse(
                 Array.from({ length: quantity }, (_, i) => ({
-                    ...parsed,
+                    ...parsed, poAmount: req.body.poAmount,
                     equipmentID: `${baseEquipmentID}-${(i + 1).toString().padStart(2, "0")}`,
                     serialNumber: lastItemNumber,
                 }))

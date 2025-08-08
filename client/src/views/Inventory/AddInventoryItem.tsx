@@ -31,6 +31,7 @@ const AddInventoryItem = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [lastItemNumber, setLastItemNumber] = useState<number>();
+  const [isSuccess, setIsSuccess] = useState(false)
 
   const location = useLocation();
   const editMode = !!(location.state?.toBeEditedItem ?? false);
@@ -110,12 +111,16 @@ const AddInventoryItem = () => {
             `/inventory/items/update/${location.state!.toBeEditedItem.id}`,
             editedItem
           )
-          .then(() => toast.success("Edit successful"))
+          .then(() => {
+            toast.success("Edit successful")
+            setIsSuccess(true)
+            navigate("/inventory/items");
+          })
           .catch((err) =>
             toast.error(
               ((err as AxiosError).response?.data as any).message ??
-                (err as AxiosError).response?.data ??
-                "Error editing item"
+              (err as AxiosError).response?.data ??
+              "Error editing item"
             )
           );
       } else {
@@ -131,6 +136,8 @@ const AddInventoryItem = () => {
             toast.success(
               `Item${data.quantity > 1 ? "s" : ""} added successfully!`
             );
+            setIsSuccess(true);
+            navigate("/inventory/items");
           } else {
             toast.error(`Failed to add item${data.quantity > 1 ? "s" : ""}.`);
           }
@@ -139,7 +146,6 @@ const AddInventoryItem = () => {
           toast.error("An error occurred while adding the item.");
         }
       }
-      navigate("/inventory/items");
     },
   });
 
@@ -296,7 +302,7 @@ const AddInventoryItem = () => {
               state.values.quantity,
               lastItemNumber,
               state.fieldMetaBase.labId?.isDirty ||
-                state.fieldMetaBase.itemCategoryId?.isDirty,
+              state.fieldMetaBase.itemCategoryId?.isDirty,
             ]}
             children={([
               labId,
@@ -382,6 +388,7 @@ const AddInventoryItem = () => {
                 <Input
                   type="number"
                   min={1}
+                  disabled={editMode}
                   value={field.state.value}
                   onChange={(e) => field.handleChange(parseInt(e.target.value))}
                   onBlur={field.handleBlur}
@@ -420,9 +427,9 @@ const AddInventoryItem = () => {
                   onValueChange={(value) =>
                     field.handleChange(
                       (value === "NA" ? null : value) as
-                        | "Working"
-                        | "Not Working"
-                        | null
+                      | "Working"
+                      | "Not Working"
+                      | null
                     )
                   }
                 >
@@ -856,14 +863,12 @@ const AddInventoryItem = () => {
         <div className="col-span-3 flex justify-end">
           <Subscribe
             selector={(state) => [
-              state.canSubmit,
               state.isSubmitting,
-              state.isSubmitted,
             ]}
           >
-            {([canSubmit, isSubmitting, isSubmitted]) => (
+            {([isSubmitting]) => (
               <Button
-                disabled={!canSubmit || isSubmitting || isSubmitted}
+                disabled={isSuccess}
                 form="inventory-form"
               >
                 {isSubmitting
