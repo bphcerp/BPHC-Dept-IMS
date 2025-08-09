@@ -7,14 +7,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
-    name: Pull main and host the newest code for staging
-    runs-on: self-hosted
+  eee:
+    runs-on: eee-ims
     steps:
       - name: clone repo and update
         run: |
           cd /home/ubuntu
-          cd bphcerp/ERP
+          cd bphcerp/staging
+          git pull
+          docker compose --profile prod up --build -d
+          docker compose exec server-prod pnpm db:migrate
+          docker compose exec server-prod pnpm db:seed
+  mech:
+    runs-on: mech-ims
+    steps:
+      - name: clone repo and update
+        run: |
+          cd /home/ubuntu
+          cd mechims
           git pull
           docker compose --profile prod up --build -d
           docker compose exec server-prod pnpm db:migrate
