@@ -211,6 +211,7 @@ export function DataTable<T>({
         <div className="flex items-center space-x-2">
           {additionalButtons}
           {exportFunction ? (
+            <div className="flex items-center space-x-2">
             <Button
               onClick={() => {
                 // Export function just returns the ids of the rows and visible columns, data fetching and excel
@@ -230,8 +231,30 @@ export function DataTable<T>({
                 exportFunction(itemIds, columnsVisible);
               }}
             >
-              Export Data
+              Export All
             </Button>
+            <Button
+              onClick={() => {
+                // Export function just returns the ids of the rows and visible columns, data fetching and excel
+                // generation is handled by the backend
+
+                const itemIds = table
+                  .getSelectedRowModel()
+                  .rows.map((row) => (row.original as any).citationId);
+                const columnsVisible = table
+                  .getVisibleFlatColumns()
+                  .map((column) =>
+                    column.id.includes("_")
+                      ? column.id.split("_")[0]
+                      : column.id
+                  )
+                  .filter((columnId) => columnId !== "S.No");
+                exportFunction(itemIds, columnsVisible);
+              }}
+            >
+              Export Selected
+            </Button>
+            </div>
           ) : (
             <></>
           )}
