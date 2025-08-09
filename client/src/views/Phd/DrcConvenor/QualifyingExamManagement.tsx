@@ -1,68 +1,61 @@
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ApplicationsPanel from "@/components/phd/ApplicationsPanel";
-import GenerateFormsPanel from "@/components/phd/GenerateFormsPanel";
-import ExaminerManagementPanel from "@/components/phd/ExaminerManagementPanel";
-import ResultsPanel from "@/components/phd/ResultsPanel";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { NewApplicationsPanel } from "@/components/phd/NewApplicationsPanel";
+import { NewExaminerManagementPanel } from "@/components/phd/NewExaminerManagementPanel";
+import { NewResultsPanel } from "@/components/phd/NewResultsPanel";
+import { GenerateFormsPanel } from "@/components/phd/GenerateFormsPanel";
 
 const QualifyingExamManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("applications");
-  const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
+  const [selectedExamEventId, setSelectedExamEventId] = useState<number | null>(null);
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-7xl">
-        <CardContent className="p-6">
-          <h1 className="mb-6 text-2xl font-bold">
-            PhD Qualifying Exam Management
-          </h1>
-
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
+    <div className="space-y-6 p-4 md:p-8">
+      <div>
+        <h1 className="text-2xl font-bold">Qualifying Exam Management</h1>
+        <p className="text-muted-foreground">
+          Manage the complete qualifying exam workflow from applications to
+          results
+        </p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Workflow Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="applications" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="applications">
-                1. Student Applications
-              </TabsTrigger>
-              <TabsTrigger value="forms">2. Generate Forms</TabsTrigger>
-              <TabsTrigger value="examiners">
-                3. Examiner Management
-              </TabsTrigger>
-              <TabsTrigger value="results">4. Exam Results</TabsTrigger>
+              <TabsTrigger value="applications">Applications</TabsTrigger>
+              <TabsTrigger value="forms">Generate Forms</TabsTrigger>
+              <TabsTrigger value="examiners">Manage Examiners</TabsTrigger>
+              <TabsTrigger value="results">Results</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="applications" className="mt-6">
-              <ApplicationsPanel
-                selectedSemester={selectedSemester}
-                onSelectSemester={setSelectedSemester}
-                onNext={() => setActiveTab("forms")}
+            <TabsContent value="applications" className="space-y-4 pt-4">
+              <NewApplicationsPanel
+                selectedExamEventId={selectedExamEventId}
+                onSelectExamEvent={setSelectedExamEventId}
               />
             </TabsContent>
-
-            <TabsContent value="forms" className="mt-6">
-              <GenerateFormsPanel
-                selectedSemester={selectedSemester}
-                onNext={() => setActiveTab("examiners")}
-                onBack={() => setActiveTab("applications")}
+            <TabsContent value="forms" className="space-y-4 pt-4">
+              <GenerateFormsPanel selectedExamEventId={selectedExamEventId} />
+            </TabsContent>
+            <TabsContent value="examiners" className="space-y-4 pt-4">
+              <NewExaminerManagementPanel
+                selectedExamEventId={selectedExamEventId}
               />
             </TabsContent>
-
-            <TabsContent value="examiners" className="mt-6">
-              <ExaminerManagementPanel
-                selectedSemester={selectedSemester}
-                onNext={() => setActiveTab("results")}
-                onBack={() => setActiveTab("forms")}
-              />
-            </TabsContent>
-
-            <TabsContent value="results" className="mt-6">
-              <ResultsPanel
-                selectedSemester={selectedSemester}
-                onBack={() => setActiveTab("examiners")}
-              />
+            <TabsContent value="results" className="space-y-4 pt-4">
+              <NewResultsPanel selectedExamEventId={selectedExamEventId} />
             </TabsContent>
           </Tabs>
         </CardContent>

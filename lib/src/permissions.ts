@@ -23,64 +23,32 @@ export const allPermissions = {
     "conference:application:set-flow":
         "Set conference application approval flow",
 
-    "phd:drc-member:generate-coursework-form": "",
-    "phd:drc-member:get-phd-to-generate-qualifying-exam-form": "",
-    "phd:drc-member:update-passing-dates-of-phd": "",
-    "phd:drc-member:get-phd-data-of-who-filled-application-form": "",
-    "phd:drc-member:get-suggested-dac-member": "",
-    "phd:drc-member:update-final-dac": "",
-    "phd:drc-member:suggest-two-best-dac-member": "",
-    "phd:drc-member:update-qualifying-exam-results-of-all-students": "",
-    "phd:drc-member:get-phd-exam-status": "",
-    "phd:drc-member:get-qualification-dates": "",
-    "phd:drc-member:get-dates-of-qe-exam": "",
-    "phd:drc-member:update-examiner": "",
-    "phd:drc-member:notify-supervisor": "",
-    "phd:drc-member:get-subarea-and-examiner": "",
-    "phd:drc-member:get-supervisor-with-student": "",
-    "phd:drc-member:get-qe-time-table": "",
-    "phd:drc-member:get-phs-qe-appliaction-forms-as-zip": "",
+    "phd:staff:manage-semesters": "Staff can create and update academic semesters",
+  "phd:staff:manage-events": "Staff can create and manage all exam events",
+  "phd:staff:manage-sub-areas": "Staff can create and manage QE sub-areas",
 
-    "phd:notifs:send": "",
+  "phd:student:view-dashboard": "Student can view their PhD dashboard, profile, and statuses",
+  "phd:student:apply-for-qe": "Student can apply for a qualifying exam and view their applications",
+  "phd:student:submit-proposal": "Student can submit their thesis proposal",
 
-    "phd:notional-supervisor:get-phd": "",
-    "phd:notional-supervisor:update-course-details": "",
-    "phd:notional-supervisor:update-course-grade": "",
-    "phd:notional-supervisor:get-phd-course-details": "",
-    "phd:notional-supervisor:add-course": "",
-    "phd:notional-supervisor:delete-course-details": "",
+  "phd:supervisor:view-students": "Supervisor can view their supervised students",
+  "phd:supervisor:suggest-dac": "Supervisor can suggest DAC members for their student",
+  "phd:supervisor:review-proposal": "Supervisor can review and act on a proposal",
+  "phd:supervisor:suggest-examiners": "Supervisor can suggest QE examiners",
 
-    "phd:student:check-exam-status": "",
-    "phd:student:get-proposal-deadline": "",
-    "phd:student:get-qualifying-exam-deadline": "",
-    "phd:student:upload-qe-application-form": "",
-    "phd:student:upload-proposal-document": "",
-    "phd:student:get-qualifying-exam-status": "",
-    "phd:student:get-qualifying-exam-passing-date": "",
-    "phd:student:get-proposal-status": "",
-    "phd:student:get-qe-application": "",
-    "phd:student:get-grade-status": "",
-    "phd:student:get-sub-area": "",
-    "phd:student:get-profile-details": "",
+  "phd:co-supervisor:view-students": "Co-Supervisor can view their co-supervised students",
 
-    "phd:co-supervisor:get-co-supervised-students": "",
-    "phd:supervisor:get-supervised-students": "",
-    "phd:supervisor:suggest-dac-members": "",
-    "phd:supervisor:review-proposal-document": "",
-    "phd:supervisor:update-suggested-supervisor": "",
-    "phd:supervisor:get-subareas": "",
-    "phd:supervisor:get-students": "",
+  "phd:drc:view-applications": "DRC can view all applications for an exam event",
+  "phd:drc:download-applications": "DRC can download all application documents as a ZIP",
+  "phd:drc:manage-applications": "DRC can update the status of an application (e.g., reject)",
+  "phd:drc:manage-suggestions": "DRC can request and monitor examiner suggestions from supervisors",
+  "phd:drc:assign-examiners": "DRC can view suggestions, assign final examiners, and generate timetables",
+  "phd:drc:manage-results": "DRC can input and finalize exam results",
+  "phd:drc:update-qualification-dates": "DRC can update PhD qualification dates",
+  "phd:drc:assign-dac": "DRC can view suggestions and assign final DAC members to students",
+  "phd:drc:generate-forms": "DRC can generate official PhD forms (coursework, intimation)",
 
-    "phd:staff:get-all-semester": "",
-    "phd:staff:update-semester-dates": "",
-    "phd:staff:update-proposal-deadline": "",
-    "phd:staff:get-all-qualifying-exam-for-the-semester": "",
-    "phd:staff:get-current-semester": "",
-    "phd:staff:update-qualifying-exam-deadline": "",
-    "phd:staff:delete-sub-area": "",
-    "phd:staff:get-sub-area": "",
-    "phd:staff:update-sub-area": "",
-    "phd:staff:notify-all-users": "",
+  "phd:notional-supervisor:manage-courses": "Notional Supervisor can manage coursework and grades",
 
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
@@ -181,97 +149,61 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/conference/getFlow": "conference:application:get-flow",
     "/conference/setFlow": "conference:application:set-flow",
 
-    // PhD
+    // --- Staff Routes ---
+  "/phd/staff/semesters": "phd:staff:manage-semesters",
+  "/phd/staff/exam-events": "phd:staff:manage-events",
+  "/phd/staff/sub-areas": "phd:staff:manage-sub-areas",
 
-    "/phd/drcMember/generateCourseworkForm":
-        "phd:drc-member:generate-coursework-form",
-    "/phd/drcMember/getPhdToGenerateQualifyingExamForm":
-        "phd:drc-member:get-phd-to-generate-qualifying-exam-form",
-    "/phd/drcMember/updatePassingDatesOfPhd":
-        "phd:drc-member:update-passing-dates-of-phd",
-    "/phd/drcMember/getPhdDataOfWhoFilledApplicationForm":
-        "phd:drc-member:get-phd-data-of-who-filled-application-form",
-    "/phd/drcMember/getSuggestedDacMember":
-        "phd:drc-member:get-suggested-dac-member",
-    "/phd/drcMember/updateFinalDac": "phd:drc-member:update-final-dac",
-    "/phd/drcMember/suggestTwoBestDacMember":
-        "phd:drc-member:suggest-two-best-dac-member",
-    "/phd/drcMember/updateQualifyingExamResultsOfAllStudents":
-        "phd:drc-member:update-qualifying-exam-results-of-all-students",
-    "/phd/drcMember/getPhdExamStatus": "phd:drc-member:get-phd-exam-status",
-    "/phd/drcMember/getQualificationDates":
-        "phd:drc-member:get-qualification-dates",
-    "/phd/drcMember/getDatesOfQeExam": "phd:drc-member:get-dates-of-qe-exam",
-    "/phd/drcMember/updateExaminer": "phd:drc-member:update-examiner",
-    "/phd/drcMember/notifySupervisor": "phd:drc-member:notify-supervisor",
-    "/phd/drcMember/getSubAreasAndExaminer":
-        "phd:drc-member:get-subarea-and-examiner",
-    "/phd/drcMember/getSupervisorsWithStudents":
-        "phd:drc-member:get-supervisor-with-student",
-    "/phd/drcMember/getQeTimeTable": "phd:drc-member:get-qe-time-table",
-    "/phd/drcMember/getPhdApplicationFormsAsZip":
-        "phd:drc-member:get-phs-qe-appliaction-forms-as-zip",
+  // --- Student Routes ---
+  "/phd/student/active-qualifying-exam": "phd:student:view-dashboard",
+  "/phd/student/applications": "phd:student:apply-for-qe",
+  "/phd/student/uploadProposalDocuments": "phd:student:submit-proposal",
+  "/phd/student/getProfileDetails": "phd:student:view-dashboard",
+  "/phd/student/getQualifyingExamStatus": "phd:student:view-dashboard",
+  "/phd/student/getProposalDeadline": "phd:student:view-dashboard",
+  "/phd/student/getGradeStatus": "phd:student:view-dashboard",
+  "/phd/student/getQualifyingExamPassingDate": "phd:student:view-dashboard",
+  "/phd/student/getProposalStatus": "phd:student:view-dashboard",
+  "/phd/student/getSubAreas": "phd:student:apply-for-qe",
 
-    "/phd/notifs/send": "phd:notifs:send",
+  // --- Supervisor Routes ---
+  "/phd/supervisor/getSupervisedStudents": "phd:supervisor:view-students",
+  "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac",
+  "/phd/supervisor/reviewProposalDocument": "phd:supervisor:review-proposal",
+  "/phd/supervisor/suggestions": "phd:supervisor:suggest-examiners",
+  "/phd/supervisor/pending-suggestions": "phd:supervisor:suggest-examiners",
+  "/phd/supervisor/getStudents": "phd:supervisor:view-students",
+  "/phd/supervisor/getSubAreas": "phd:supervisor:suggest-examiners",
 
-    "/phd/notionalSupervisor/getPhd": "phd:notional-supervisor:get-phd",
-    "/phd/notionalSupervisor/updateCourseDetails":
-        "phd:notional-supervisor:update-course-details",
-    "/phd/notionalSupervisor/updateCourseGrade":
-        "phd:notional-supervisor:update-course-grade",
-    "/phd/notionalSupervisor/getPhdCourseDetails":
-        "phd:notional-supervisor:get-phd-course-details",
-    "/phd/notionalSupervisor/addCourse": "phd:notional-supervisor:add-course",
-    "/phd/notionalSupervisor/deleteCourseDetails":
-        "phd:notional-supervisor:delete-course-details",
+  // --- Co-Supervisor Routes ---
+  "/phd/coSupervisor/getCoSupervisedStudents": "phd:co-supervisor:view-students",
 
-    "/phd/student/checkExamStatus": "phd:student:check-exam-status",
-    "/phd/student/getProposalDeadline": "phd:student:get-proposal-deadline",
-    "/phd/student/getQualifyingExamDeadLine":
-        "phd:student:get-qualifying-exam-deadline",
-    "/phd/student/uploadQeApplicationForm":
-        "phd:student:upload-qe-application-form",
-    "/phd/student/uploadProposalDocuments":
-        "phd:student:upload-proposal-document",
-    "/phd/student/getQualifyingExamStatus":
-        "phd:student:get-qualifying-exam-status",
-    "/phd/student/getQualifyingExamPassingDate":
-        "phd:student:get-qualifying-exam-passing-date",
-    "/phd/student/getProposalStatus": "phd:student:get-proposal-status",
-    "/phd/student/getNoOfQeApplication": "phd:student:get-qe-application",
-    "/phd/student/getGradeStatus": "phd:student:get-grade-status",
-    "/phd/student/getSubAreas": "phd:student:get-sub-area",
-    "/phd/student/getProfileDetails": "phd:student:get-profile-details",
+  // --- DRC Member Routes ---
+  "/phd/drcMember/exam-events/applications": "phd:drc:view-applications",
+  "/phd/drcMember/exam-events/applications/zip": "phd:drc:download-applications",
+  "/phd/drcMember/applications/status": "phd:drc:manage-applications",
+  "/phd/drcMember/exam-events/suggestion-status": "phd:drc:manage-suggestions",
+  "/phd/drcMember/exam-events/request-suggestions": "phd:drc:manage-suggestions",
+  "/phd/drcMember/suggestion-requests/remind": "phd:drc:manage-suggestions",
+  "/phd/drcMember/exam-events/suggestions": "phd:drc:assign-examiners",
+  "/phd/drcMember/exam-events/schedule": "phd:drc:assign-examiners",
+  "/phd/drcMember/applications/results": "phd:drc:manage-results",
+  "/phd/drcMember/getSuggestedDacMember": "phd:drc:assign-dac",
+  "/phd/drcMember/suggestTwoBestDacMember": "phd:drc:assign-dac",
+  "/phd/drcMember/updateFinalDac": "phd:drc:assign-dac",
+  "/phd/drcMember/updatePassingDatesOfPhd": "phd:drc:update-qualification-dates",
+  "/phd/drcMember/generateCourseworkForm": "phd:drc:generate-forms",
+  "/phd/drcMember/exam-events/intimation-data": "phd:drc:generate-forms",
+  "/phd/drcMember/exam-events/supervisors": "phd:drc:view-applications",
+  "/phd/drcMember/notifySupervisor": "phd:drc:manage-suggestions",
 
-    //Co-Supervisor
-    "/phd/coSupervisor/getCoSupervisedStudents":
-        "phd:co-supervisor:get-co-supervised-students",
-
-    //Supervisor
-    "/phd/supervisor/getSupervisedStudents":
-        "phd:supervisor:get-supervised-students",
-    "/phd/supervisor/suggestDacMembers": "phd:supervisor:suggest-dac-members",
-    "/phd/supervisor/reviewProposalDocument":
-        "phd:supervisor:review-proposal-document",
-    "/phd/supervisor/updateSuggestedExaminer":
-        "phd:supervisor:update-suggested-supervisor",
-    "/phd/supervisor/getSubAreas": "phd:supervisor:get-subareas",
-    "/phd/supervisor/getStudents": "phd:supervisor:get-students",
-
-    //staff
-    "/phd/staff/updateSemesterDates": "phd:staff:update-semester-dates",
-    "/phd/staff/getAllSem": "phd:staff:get-all-semester",
-
-    "/phd/staff/updateProposalDeadline": "phd:staff:update-proposal-deadline",
-    "/phd/staff/getAllQualifyingExamForTheSem":
-        "phd:staff:get-all-qualifying-exam-for-the-semester",
-    "/phd/staff/getCurrentSemester": "phd:staff:get-current-semester",
-    "/phd/staff/updateQualifyingExamDeadline":
-        "phd:staff:update-qualifying-exam-deadline",
-    "/phd/staff/deleteSubArea": "phd:staff:delete-sub-area",
-    "/phd/staff/getSubAreas": "phd:staff:get-sub-area",
-    "/phd/staff/updateSubAreas": "phd:staff:update-sub-area",
-    "/phd/staff/notifyAllUsers": "phd:staff:notify-all-users",
+  // --- Notional Supervisor Routes ---
+  "/phd/notionalSupervisor/getPhd": "phd:notional-supervisor:manage-courses",
+  "/phd/notionalSupervisor/updateCourseDetails": "phd:notional-supervisor:manage-courses",
+  "/phd/notionalSupervisor/updateCourseGrade": "phd:notional-supervisor:manage-courses",
+  "/phd/notionalSupervisor/getPhdCourseDetails": "phd:notional-supervisor:manage-courses",
+  "/phd/notionalSupervisor/addCourse": "phd:notional-supervisor:manage-courses",
+  "/phd/notionalSupervisor/deleteCourseDetails": "phd:notional-supervisor:manage-courses",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",

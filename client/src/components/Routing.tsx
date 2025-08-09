@@ -37,7 +37,7 @@ import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
 import Profile from "@/views/Phd/Student/Profile";
 import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
 import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
-import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
+import ManageExamEvents from "@/views/Phd/Staff/ManageExamEvents"; // Modified
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -48,7 +48,7 @@ import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
-import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
+import SuggestExaminerPage  from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
@@ -80,7 +80,6 @@ import PatentDetails from "@/views/Patent/[id]";
 import YourPatents from "@/views/Patent/YourPatents";
 import AllPatents from "@/views/Patent/AllPatents";
 import EditPatents from "@/views/Patent/EditPatents";
-
 import WilpLayout from "@/layouts/Wilp";
 import AllWilpProjects from "@/views/Wilp/AllWilpProjects";
 import YourWILPProjects from "@/views/Wilp/YourWilpProjects";
@@ -348,80 +347,66 @@ const Routing = () => {
 
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
-            {checkAccess(
-              permissions["/phd/notionalSupervisor/updateCourseDetails"]
-            ) && (
+            {/* Notional Supervisor Routes */}
+            {checkAccess(permissions["/phd/notionalSupervisor/getPhd"]) && (
               <Route path="notional-supervisor" element={<Outlet />}>
                 <Route path="update-grade" element={<UpdateGrade />} />
-                <Route path="suggest-examiner" element={<SuggestExaminer />} />
+                <Route path="suggest-examiner" element={<SuggestExaminerPage />} />
               </Route>
             )}
-            {checkAccess(
-              permissions["/phd/drcMember/generateCourseworkForm"]
-            ) && (
-              <Route path="drc-convenor" element={<Outlet />}>
+
+            {/* DRC Convenor Routes */}
+            <Route path="drc-convenor" element={<Outlet />}>
+              {checkAccess(permissions["/phd/drcMember/generateCourseworkForm"]) && (
                 <Route path="coursework-form" element={<CourseworkForm />} />
-                <Route
-                  path="assign-dac-members"
-                  element={<AssignDacMembers />}
-                ></Route>
+              )}
+              {checkAccess(permissions["/phd/drcMember/getSuggestedDacMember"]) && (
+                <Route path="assign-dac-members" element={<AssignDacMembers />} />
+              )}
+              {checkAccess(permissions["/phd/drcMember/exam-events/applications"]) && (
                 <Route
                   path="qualifying-exam-management"
                   element={<QualifyingExamManagement />}
-                ></Route>
-                Handout
-              </Route>
-            )}
-            {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
-              <Route path="phd-student" element={<Outlet />}>
-                <Route path="form-deadline" element={<FormDeadline />} />
-                <Route path="my-profile" element={<Profile />} />
+                />
+              )}
+            </Route>
 
-                <Route
-                  path="proposal-submission"
-                  element={<ProposalSubmission />}
-                />
-              </Route>
-            )}
-            {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-              <Route path="staff" element={<Outlet />}>
-                <Route
-                  path="update-semester-dates"
-                  element={<UpdateSemesterDates />}
-                />
-                <Route
-                  path="update-deadlines"
-                  element={<UpdateDeadlinesPage />}
-                />
-                <Route
-                  path="update-subareas"
-                  element={<UpdateSubAreasPage />}
-                />
-              </Route>
-            )}
-            {checkAccess(
-              permissions[
-                "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-              <Route path="phd-co-supervisor" element={<Outlet />}>
-                <Route
-                  path="co-supervised-students"
-                  element={<CoSupervisedStudents />}
-                />
-              </Route>
-            )}
-            {checkAccess(
-              permissions[
-                "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-              <Route path="phd-supervisor" element={<Outlet />}>
-                <Route
-                  path="supervised-students"
-                  element={<SupervisedStudents />}
-                />
-              </Route>
+            {/* PhD Student Routes */}
+            <Route path="student" element={<Outlet />}>
+              {checkAccess(permissions["/phd/student/getProfileDetails"]) && (
+                <Route path="my-profile" element={<Profile />} />
+              )}
+               {checkAccess(permissions["/phd/student/active-qualifying-exam"]) && (
+                <Route path="form-deadline" element={<FormDeadline />} />
+              )}
+              {checkAccess(permissions["/phd/student/uploadProposalDocuments"]) && (
+                <Route path="proposal-submission" element={<ProposalSubmission />} />
+              )}
+            </Route>
+
+            {/* Staff Routes */}
+            <Route path="staff" element={<Outlet />}>
+              {checkAccess(permissions["/phd/staff/semesters"]) && (
+                <Route path="update-semester-dates" element={<UpdateSemesterDates />} />
+              )}
+              {checkAccess(permissions["/phd/staff/exam-events"]) && (
+                <Route path="manage-exam-events" element={<ManageExamEvents />} />
+              )}
+              {checkAccess(permissions["/phd/staff/sub-areas"]) && (
+                <Route path="update-subareas" element={<UpdateSubAreasPage />} />
+              )}
+            </Route>
+
+            {/* Supervisor & Co-Supervisor Routes */}
+            {checkAccess(permissions["/phd/supervisor/getSupervisedStudents"]) && (
+              <>
+                <Route path="co-supervisor" element={<Outlet />}>
+                  <Route path="co-supervised-students" element={<CoSupervisedStudents />} />
+                </Route>
+                <Route path="supervisor" element={<Outlet />}>
+                  <Route path="supervised-students" element={<SupervisedStudents />} />
+                </Route>
+              </>
             )}
           </Route>
         )}

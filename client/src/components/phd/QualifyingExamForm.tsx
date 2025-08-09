@@ -1,351 +1,196 @@
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+// client/src/components/phd/QualifyingExamForm.tsx
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileUploader } from "@/components/ui/file-uploader";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { isAxiosError } from "axios";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 
-// Updated interface to match actual data
-interface PhdSubArea {
+const formSchema = z.object({
+  qualifyingArea1: z.string().min(1, "First qualifying area is required"),
+  qualifyingArea2: z.string().min(1, "Second qualifying area is required"),
+  applicationForm: z.instanceof(File, { message: "Application form is required" }),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+interface SubArea {
   id: number;
   subarea: string;
 }
 
-interface Exam {
+interface ExamEvent {
   id: number;
-  examName: string;
-  deadline: string;
-  examStartDate: string;
-  examEndDate: string;
-  vivaDate?: string;
-  semesterYear?: string;
-  semesterNumber?: number;
+  name: string;
+  registrationDeadline: string;
 }
 
-interface SubAreasResponse {
-  success: boolean;
-  subAreas: PhdSubArea[];
+interface QualifyingExamFormProps {
+  examEvent: ExamEvent;
 }
 
-interface ExamFormProps {
-  exam: Exam;
-}
-
-export default function ExamForm({ exam }: ExamFormProps) {
-  const queryClient = useQueryClient();
-  const [qualifyingArea1, setQualifyingArea1] = useState("");
-  const [qualifyingArea2, setQualifyingArea2] = useState("");
+export const QualifyingExamForm: React.FC<QualifyingExamFormProps> = ({ examEvent }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [fileName, setFileName] = useState<string>("");
+  const queryClient = useQueryClient();
 
-  // Checkboxes for form sections
-  const [generalInfoChecked, setGeneralInfoChecked] = useState(false);
-  const [academicInfoChecked, setAcademicInfoChecked] = useState(false);
-  const [anticipatedPlanChecked, setAnticipatedPlanChecked] = useState(false);
-  const [qualifyingExamDetailsChecked, setQualifyingExamDetailsChecked] =
-    useState(false);
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      qualifyingArea1: "",
+      qualifyingArea2: "",
+    },
+  });
 
   // Fetch sub-areas
-  const {
-    data: subAreasData,
-    isLoading: isSubAreasLoading,
-    error: subAreasError,
-  } = useQuery<SubAreasResponse, Error>({
+  const { data: subAreas } = useQuery<SubArea[]>({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
-      try {
-        const response = await api.get<SubAreasResponse>(
-          "/phd/student/getSubAreas"
-        );
-        return response.data;
-      } catch (error) {
-        console.error("Error fetching sub-areas:", error);
-        throw error;
-      }
+      const response = await api.get("/phd/student/getSubAreas");
+      return response.data.subAreas;
     },
-    refetchOnWindowFocus: false,
   });
 
   const submitMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await api.post<{
-        success: boolean;
-        message: string;
-      }>("/phd/student/uploadQeApplicationForm", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+    mutationFn: async (data: FormData) => {
+      const formData = new FormData();
+      formData.append("examEventId", examEvent.id.toString());
+      formData.append("qualifyingArea1", data.qualifyingArea1);
+      formData.append("qualifyingArea2", data.qualifyingArea2);
+      formData.append("applicationForm", data.applicationForm);
+
+      await api.post("/phd/student/applications", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      return response.data;
     },
     onSuccess: () => {
-      toast.success("Qualifying exam application submitted successfully");
-      setQualifyingArea1("");
-      setQualifyingArea2("");
+      toast.success("Application submitted successfully");
+      form.reset();
       setFile(null);
-      setFileName("");
-      // Reset checkboxes
-      setGeneralInfoChecked(false);
-      setAcademicInfoChecked(false);
-      setAnticipatedPlanChecked(false);
-      setQualifyingExamDetailsChecked(false);
-
-      // Refresh the application data
-      queryClient.invalidateQueries({
-        queryKey: ["get-qe-application-number"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["get-qualifying-exam-status"],
-      });
+      queryClient.invalidateQueries(["active-qualifying-exam"]);
+      queryClient.invalidateQueries(["student-applications"]);
     },
-    onError: (error) => {
-      toast.error(
-        isAxiosError(error)
-          ? error.response?.data?.message || "Submission failed"
-          : "Submission failed"
-      );
-      console.error("Submission error:", error);
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit application");
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Check if all required fields and checkboxes are filled
-    if (
-      !file ||
-      !qualifyingArea1 ||
-      !qualifyingArea2 ||
-      qualifyingArea1 === qualifyingArea2 || // Ensure areas are different
-      !generalInfoChecked ||
-      !academicInfoChecked ||
-      !anticipatedPlanChecked ||
-      !qualifyingExamDetailsChecked
-    ) {
-      toast.error(
-        qualifyingArea1 === qualifyingArea2
-          ? "Please select two different research sub-areas"
-          : "All fields and checkboxes are required"
-      );
+  const onSubmit = (data: FormData) => {
+    if (!file) {
+      toast.error("Please upload an application form");
       return;
     }
-
-    const formData = new FormData();
-    formData.append("qualificationForm", file);
-    formData.append("qualifyingArea1", qualifyingArea1);
-    formData.append("qualifyingArea2", qualifyingArea2);
-    formData.append("examId", exam.id.toString());
-    formData.append("examStartDate", exam.examStartDate);
-    formData.append("examEndDate", exam.examEndDate);
-
-    submitMutation.mutate(formData);
+    
+    submitMutation.mutate({
+      ...data,
+      applicationForm: file,
+    });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
-    setFileName(selectedFile?.name || "");
+  const handleFileChange = (files: File[]) => {
+    const selectedFile = files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      form.setValue("applicationForm", selectedFile);
+    }
   };
-
-  // Render loading or error states
-  if (isSubAreasLoading) {
-    return <div>Loading sub-areas...</div>;
-  }
-
-  if (subAreasError) {
-    return (
-      <div>
-        Error loading sub-areas:
-        {subAreasError instanceof Error
-          ? subAreasError.message
-          : "Unknown error"}
-      </div>
-    );
-  }
-
-  // Additional debugging for empty sub-areas
-  if (!subAreasData || subAreasData.subAreas.length === 0) {
-    return <div>No research sub-areas available</div>;
-  }
 
   return (
-    <Card className="mx-auto max-w-2xl">
-      <CardContent className="space-y-4 pt-6">
-        <h2 className="text-2xl font-bold">Qualifying Exam Application</h2>
+    <Card>
+      <CardHeader>
+        <CardTitle>Submit Qualifying Exam Application</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="qualifyingArea1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Qualifying Area</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select first qualifying area" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {subAreas?.map((area) => (
+                        <SelectItem key={area.id} value={area.subarea}>
+                          {area.subarea}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <div className="mb-4 text-sm text-gray-500">
-          <p>
-            Exam Period: {new Date(exam.examStartDate).toLocaleDateString()} to{" "}
-            {new Date(exam.examEndDate).toLocaleDateString()}
-          </p>
-          <p>
-            Registration Deadline:{" "}
-            {new Date(exam.deadline).toLocaleDateString()}
-          </p>
-        </div>
+            <FormField
+              control={form.control}
+              name="qualifyingArea2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Second Qualifying Area</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select second qualifying area" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {subAreas?.filter((area) => area.subarea !== form.watch("qualifyingArea1"))
+                        .map((area) => (
+                          <SelectItem key={area.id} value={area.subarea}>
+                            {area.subarea}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-3">
-            <Label htmlFor="qualifyingArea1">Research Sub-Area 1 *</Label>
-            <Select
-              value={qualifyingArea1}
-              onValueChange={setQualifyingArea1}
-              disabled={isSubAreasLoading}
+            <FormField
+              control={form.control}
+              name="applicationForm"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Application Form (PDF)</FormLabel>
+                  <FormControl>
+                    <FileUploader
+                      value={file ? [file] : []}
+                      onValueChange={handleFileChange}
+                      accept={{ "application/pdf": [".pdf"] }}
+                      // maxFiles={1}
+                      maxSize={10 * 1024 * 1024} // 10MB
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              disabled={submitMutation.isLoading}
+              className="w-full"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select research sub-area" />
-              </SelectTrigger>
-              <SelectContent>
-                {subAreasData.subAreas.map((subArea) => (
-                  <SelectItem key={subArea.id} value={subArea.subarea}>
-                    {subArea.subarea}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="qualifyingArea2">Research Sub-Area 2 *</Label>
-            <Select
-              value={qualifyingArea2}
-              onValueChange={setQualifyingArea2}
-              disabled={isSubAreasLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select research sub-area" />
-              </SelectTrigger>
-              <SelectContent>
-                {subAreasData.subAreas
-                  .filter((subArea) => subArea.subarea !== qualifyingArea1)
-                  .map((subArea) => (
-                    <SelectItem key={subArea.id} value={subArea.subarea}>
-                      {subArea.subarea}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-3">
-            <Label htmlFor="qualificationForm">
-              Qualifying Application Form (PDF) *
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="qualificationForm"
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                required
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() =>
-                  document.getElementById("qualificationForm")?.click()
-                }
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {fileName || "Choose PDF file"}
-              </Button>
-            </div>
-            {fileName && (
-              <p className="truncate text-sm text-muted-foreground">
-                Selected file: {fileName}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="generalInfo"
-                className="form-checkbox h-4 w-4"
-                checked={generalInfoChecked}
-                onChange={(e) => setGeneralInfoChecked(e.target.checked)}
-                required
-              />
-              <Label htmlFor="generalInfo" className="text-sm font-medium">
-                I have filled the General Information *
-              </Label>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="academicInfo"
-                className="form-checkbox h-4 w-4"
-                checked={academicInfoChecked}
-                onChange={(e) => setAcademicInfoChecked(e.target.checked)}
-                required
-              />
-              <Label htmlFor="academicInfo" className="text-sm font-medium">
-                I have filled the Academic Information *
-              </Label>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="anticipatedPlan"
-                className="form-checkbox h-4 w-4"
-                checked={anticipatedPlanChecked}
-                onChange={(e) => setAnticipatedPlanChecked(e.target.checked)}
-                required
-              />
-              <Label htmlFor="anticipatedPlan" className="text-sm font-medium">
-                I have filled the Anticipated Plan for PhD *
-              </Label>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="qualifyingExamDetails"
-                className="form-checkbox h-4 w-4"
-                checked={qualifyingExamDetailsChecked}
-                onChange={(e) =>
-                  setQualifyingExamDetailsChecked(e.target.checked)
-                }
-                required
-              />
-              <Label
-                htmlFor="qualifyingExamDetails"
-                className="text-sm font-medium"
-              >
-                I have filled Details about PhD Qualifying Examination *
-              </Label>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={submitMutation.isLoading}
-          >
-            {submitMutation.isLoading ? "Submitting..." : "Submit Application"}
-          </Button>
-        </form>
+              {submitMutation.isLoading ? "Submitting..." : "Submit Application"}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );
-}
+};
