@@ -1,5 +1,12 @@
 import z from "zod";
 
+export const phdExamApplicationStatuses = [
+    "applied",
+    "accepted",
+    "rejected",
+    "withdrawn",
+] as const;
+
 export const updateExamStatusSchema = z.array(
     z.object({
         email: z.string().email(),

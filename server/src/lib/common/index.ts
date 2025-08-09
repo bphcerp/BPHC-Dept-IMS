@@ -18,25 +18,15 @@ import { faculty, phd, staff } from "@/config/db/schema/admin.ts";
  * @returns A promise that resolves to an object containing the user's details,
  *          or `null` if no user is found.
  */
-export const getUserDetails = async (userEmail: string, tx: typeof db | Tx = db) => {
+export const getUserDetails = async (
+    userEmail: string,
+    tx: typeof db | Tx = db
+) => {
     const user = await tx.query.users.findFirst({
         where: (cols, { eq }) => eq(cols.email, userEmail),
         with: {
             faculty: true,
-            phd: {
-                columns: {
-                    idNumber: true,
-                    erpId: true,
-                    name: true,
-                    profileFileId: true,
-                    instituteEmail: true,
-                    mobile: true,
-                    personalEmail: true,
-                    notionalSupervisorEmail: true,
-                    supervisorEmail: true,
-                    emergencyPhoneNumber: true,
-                },
-            },
+            phd: true,
             staff: true,
         },
     });
