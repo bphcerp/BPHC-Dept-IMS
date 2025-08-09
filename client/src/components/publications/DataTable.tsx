@@ -82,42 +82,6 @@ export function DataTable<T>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
-  const isWithinRange = (row: Row<T>, columnId: string, value: any) => {
-    const date = new Date(row.getValue(columnId));
-    const [startDateString, endDateString] = value;
-    const [start, end] = [
-      startDateString ? new Date(startDateString) : undefined,
-      endDateString ? new Date(endDateString) : undefined,
-    ];
-
-    // value => two date input values
-    //If one filter defined and date is null filter it
-    if ((start || end) && !date) return false;
-    if (start && !end) {
-      return date.getTime() >= start.getTime();
-    } else if (!start && end) {
-      return date.getTime() <= end.getTime();
-    } else if (start && end) {
-      return (
-        date.getTime() >= start.getTime() && date.getTime() <= end.getTime()
-      );
-    } else return true;
-  };
-
-  const isWithinRangeNumber = (row: Row<T>, columnId: string, value: any) => {
-    const cellValue = Number(row.getValue(columnId));
-    const [start, end] = value;
-
-    if ((start || end) && !cellValue) return false;
-    if (start && !end) {
-      return cellValue >= start;
-    } else if (!start && end) {
-      return cellValue <= end;
-    } else if (start && end) {
-      return cellValue >= start && cellValue <= end;
-    } else return true;
-  };
-
   const multiFilterFn = (row: Row<T>, columnId: string, filterValue: any) => {
     if (!filterValue || filterValue.length === 0) return true;
     return filterValue.includes(row.getValue(columnId));
@@ -127,15 +91,6 @@ export function DataTable<T>({
     data,
     columns: columns.map((columnDef) => ({
       ...columnDef,
-      ...(columnDef.meta
-        ? columnDef.meta.filterType === "date-range"
-          ? { filterFn: isWithinRange }
-          : columnDef.meta.filterType === "multiselect"
-            ? { filterFn: multiFilterFn }
-            : columnDef.meta.filterType === "number-range"
-              ? { filterFn: isWithinRangeNumber }
-              : {}
-        : {}),
     })),
     initialState,
     enableColumnPinning: true,
@@ -228,98 +183,6 @@ export function DataTable<T>({
             value={column.getFilterValue() as string}
             onChange={(event) => column.setFilterValue(event.target.value)}
           />
-        );
-      case "number-range":
-        return (
-          <div className="flex w-64 space-x-2">
-            <Input
-              type="number"
-              value={(column.getFilterValue() as [number, number])?.[0] ?? ""}
-              onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
-                  number,
-                  number,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([undefined, prevFilterValue[1]]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [, max] = prevFilterValue;
-                  column.setFilterValue([event.target.value, max]);
-                } else {
-                  column.setFilterValue([event.target.value, undefined]);
-                }
-              }}
-              placeholder="Min"
-            />
-            <Input
-              type="number"
-              value={(column.getFilterValue() as [number, number])?.[1] ?? ""}
-              onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
-                  number,
-                  number,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([prevFilterValue[0], undefined]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [min] = prevFilterValue;
-                  column.setFilterValue([min, event.target.value]);
-                } else {
-                  column.setFilterValue([undefined, event.target.value]);
-                }
-              }}
-              placeholder="Max"
-            />
-          </div>
-        );
-      case "date-range":
-        return (
-          <div className="flex space-x-2">
-            <Input
-              type="date"
-              value={(column.getFilterValue() as [string, string])?.[0] ?? ""}
-              onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
-                  string,
-                  string,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([undefined, prevFilterValue[1]]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [, max] = prevFilterValue;
-                  column.setFilterValue([event.target.value, max]);
-                } else {
-                  column.setFilterValue([event.target.value, undefined]);
-                }
-              }}
-            />
-            <Input
-              type="date"
-              value={(column.getFilterValue() as [string, string])?.[1] ?? ""}
-              onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
-                  string,
-                  string,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([prevFilterValue[0], undefined]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [min] = prevFilterValue;
-                  column.setFilterValue([min, event.target.value]);
-                } else {
-                  column.setFilterValue([undefined, event.target.value]);
-                }
-              }}
-            />
-          </div>
         );
       default:
         return null;
@@ -527,26 +390,6 @@ export function DataTable<T>({
                     ))}
                   </TableRow>
                 ))}
-                {columns.some((column) => column.meta?.calculateSum) ? (
-                  <TableRow>
-                    <TableCell className="z-2 sticky left-0 w-[20px]">
-                      {/* Empty cell for the checkbox column */}
-                    </TableCell>
-                    {table.getVisibleLeafColumns().map((column) => (
-                      <TableCell key={column.id} className="font-bold">
-                        {column.columnDef.meta?.calculateSum ? (
-                          column.columnDef.meta.calculateSum(
-                            table.getRowModel().rows.map((row) => row.original)
-                          )
-                        ) : (
-                          <></>
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ) : (
-                  <></>
-                )}
               </TableBody>
             ) : (
               <div>

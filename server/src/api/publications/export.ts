@@ -25,30 +25,22 @@ router.post(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const {
-            citIDS,
+            citIDs,
             columnsVisible,
-        }: { citIDS: string[]; columnsVisible: string[] } = req.body;
+        }: { citIDs: string[]; columnsVisible: string[] } = req.body;
 
-        if (!citIDS?.length || !columnsVisible?.length) {
+        if (!citIDs?.length || !columnsVisible?.length) {
             res.status(400).json({
                 error: "pubIDs and columnsVisible are required arrays.",
             });
             return;
         }
 
-        columnsVisible.splice(4, 0, "quantity");
-        const allColumns = getTableColumns(publicationsTable);
-
-        const columns = Object.fromEntries(
-            Object.entries(allColumns).filter(([key, _value]) =>
-                columnsVisible.includes(key)
-            )
-        ) as typeof allColumns;
 
         const items = await db
             .select()
             .from(publicationsTable)
-            .where(inArray(publicationsTable.citationId, citIDS))
+            .where(inArray(publicationsTable.citationId, citIDs))
 
         if (!items.length) {
             return next(
