@@ -4,11 +4,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import JSZip from "jszip";
 import ExcelJS from "exceljs";
-import fs from "fs/promises";
-import path from "path";
 import environment from "@/config/environment.ts";
-import { getAccess } from "@/lib/auth/index.ts";
-import { userType } from "@/config/db/schema/admin.ts";
 
 function generateExcel(
     headers: string[],
@@ -133,9 +129,6 @@ router.get(
             });
         
         
-
-        console.log("HD:", hdHandoutsData.length);
-        console.log("FD:", fdHandoutsData.length);
 
         const hdWorkbook = generateExcel(headers, sanitizeData(hdHandoutsData));
         const fdWorkbook = generateExcel(headers, sanitizeData(fdHandoutsData));
