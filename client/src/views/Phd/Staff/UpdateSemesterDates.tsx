@@ -22,6 +22,7 @@ interface Semester {
   startDate: string;
   endDate: string;
   createdAt: string;
+  qualifyingExams: number;
 }
 
 const UpdateSemesterDates: React.FC = () => {
@@ -40,7 +41,6 @@ const UpdateSemesterDates: React.FC = () => {
     queryKey: ["phd-semesters"],
     queryFn: async () => {
       const response = await api.get<{
-        success: boolean;
         semesters: Semester[];
       }>("/phd/staff/getAllSem");
       return response.data;
@@ -50,11 +50,7 @@ const UpdateSemesterDates: React.FC = () => {
   // Create/update semester mutation
   const semesterMutation = useMutation({
     mutationFn: async (formData: typeof semesterForm) => {
-      const response = await api.post<{ semester: Semester }>(
-        "/phd/staff/updateSemesterDates",
-        formData
-      );
-      return response.data;
+      await api.post("/phd/staff/updateSem", formData);
     },
     onSuccess: () => {
       toast.success("Semester saved successfully");
@@ -68,6 +64,20 @@ const UpdateSemesterDates: React.FC = () => {
     },
     onError: () => {
       toast.error("Failed to save semester");
+    },
+  });
+
+  // Delete semester mutation
+  const deleteSemesterMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/phd/staff/deleteSem/${id}`);
+    },
+    onSuccess: () => {
+      toast.success("Semester deleted successfully");
+      void queryClient.invalidateQueries({ queryKey: ["phd-semesters"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete semester");
     },
   });
 
@@ -89,7 +99,7 @@ const UpdateSemesterDates: React.FC = () => {
         {/* Create/Update Semester */}
         <Card>
           <CardHeader>
-            <CardTitle>Create Semester</CardTitle>
+            <CardTitle>Create/Update Semester</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSemesterSubmit} className="space-y-4">
@@ -191,6 +201,8 @@ const UpdateSemesterDates: React.FC = () => {
                       <th className="border px-4 py-2 text-left">Semester</th>
                       <th className="border px-4 py-2 text-left">Start Date</th>
                       <th className="border px-4 py-2 text-left">End Date</th>
+                      <th className="border px-4 py-2 text-left">Qualifying Exams</th>
+                      <th className="border px-4 py-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -211,6 +223,23 @@ const UpdateSemesterDates: React.FC = () => {
                             "en-US",
                             { month: "short", day: "numeric", year: "numeric" }
                           )}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          {semester.qualifyingExams}
+                        </td>
+                        <td className="border px-4 py-2 text-center">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteSemesterMutation.mutate(semester.id)}
+                            disabled={deleteSemesterMutation.isLoading}
+                          >
+                            {deleteSemesterMutation.isLoading ? (
+                              <LoadingSpinner className="h-4 w-4" />
+                            ) : (
+                              "Delete"
+                            )}
+                          </Button>
                         </td>
                       </tr>
                     ))}

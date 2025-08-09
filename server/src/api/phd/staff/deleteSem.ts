@@ -2,20 +2,17 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { phdSubAreas } from "@/config/db/schema/phd.ts";
+import { phdSemesters } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
-import { phdSchemas } from "lib";
 
 const router = express.Router();
 
 router.delete(
-    "/",
+    "/:id",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const subArea = phdSchemas.updateSubAreasSchema.parse(req.body);
-        await db
-            .delete(phdSubAreas)
-            .where(eq(phdSubAreas.subArea, subArea.subArea));
+        const id = Number.parseInt(req.params.id);
+        await db.delete(phdSemesters).where(eq(phdSemesters.id, id));
         res.status(200).send();
     })
 );

@@ -42,27 +42,37 @@ export type UpdateProposalDeadlineBody = z.infer<
     typeof updateProposalDeadlineSchema
 >;
 
-export const updateQualifyingExamSchema = z.object({
-    semesterId: z.number().int().positive(),
-    examName: z.string().min(1),
-    examStartDate: z.string().datetime(),
-    examEndDate: z.string().datetime(),
-    deadline: z.string().datetime(),
-    viva: z.string().datetime(),
-});
+export const updateQualifyingExamSchema = z
+    .object({
+        semesterId: z.number().int().positive(),
+        examName: z.string().min(1),
+        examStartDate: z.string().datetime(),
+        examEndDate: z.string().datetime(),
+        submissionDeadline: z.string().datetime(),
+        vivaDate: z.string().datetime(),
+    })
+    .refine(
+        (data) => {
+            const startDate = new Date(data.examStartDate);
+            const endDate = new Date(data.examEndDate);
+            const submissionDeadline = new Date(data.submissionDeadline);
+            const vivaDate = new Date(data.vivaDate);
+
+            return (
+                startDate < endDate &&
+                submissionDeadline < startDate &&
+                endDate < vivaDate
+            );
+        },
+        { message: "Invalid dates" }
+    );
 
 export type UpdateQualifyingExamBody = z.infer<
     typeof updateQualifyingExamSchema
 >;
 
 export const updateSubAreasSchema = z.object({
-    subAreas: z
-        .array(
-            z.object({
-                subarea: z.string().min(1),
-            })
-        )
-        .nonempty(),
+    subArea: z.string().min(1),
 });
 
 export type UpdateSubAreasBody = z.infer<typeof updateSubAreasSchema>;
@@ -106,17 +116,31 @@ export const updateFinalDacSchema = z.object({
 });
 export type UpdateFinalDacBody = z.infer<typeof updateFinalDacSchema>;
 
-export const uploadApplicationSchema = z.object({
-    fileUrl: z.string().min(1),
-    formName: z.string().min(1),
-    applicationType: z.string().min(1),
+export const qualifyingExamApplicationSchema = z.object({
+    examId: z.coerce.number().int().positive(),
     qualifyingArea1: z.string().min(1),
     qualifyingArea2: z.string().min(1),
-    examStartDate: z.string(),
-    examEndDate: z.string(),
 });
 
-export type uploadApplicationBody = z.infer<typeof uploadApplicationSchema>;
+export type QualifyingExamApplicationBody = z.infer<
+    typeof qualifyingExamApplicationSchema
+>;
+
+export const fileFieldNames = [
+    "qualifyingArea1Syllabus",
+    "qualifyingArea2Syllabus",
+    "tenthReport",
+    "twelfthReport",
+    "undergradReport",
+    "mastersReport",
+] as const;
+
+export const multerFileFields: Readonly<{ name: string; maxCount: number }[]> =
+    (fileFieldNames as Readonly<string[]>).map((x) => {
+        return { name: x, maxCount: 1 };
+    });
+
+export type FileField = (typeof fileFieldNames)[number];
 
 export const uploadProposalSchema = z.object({
     fileUrl1: z.string(),

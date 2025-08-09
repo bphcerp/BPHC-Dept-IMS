@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import EmailTemplateEditor from "./EmailTemplateEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTheme } from "@/hooks/use-theme";
+
+const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 
 interface Semester {
   id: number;
@@ -23,27 +25,29 @@ interface QualifyingExam {
   id: number;
   semesterId: number;
   examName: string;
-  deadline: string;
-  examStartDate?: string;
-  examEndDate?: string;
+  submissionDeadline: string;
+  examStartDate: string;
+  examEndDate: string;
   vivaDate?: string;
   createdAt: string;
-  semesterYear?: string;
-  semesterNumber?: string;
 }
 
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
+  const editorTheme = useTheme();
+  
   const [examForm, setExamForm] = useState({
     examName: "Regular Qualifying Exam",
-    deadline: "",
+    submissionDeadline: "",
     examStartDate: "",
     examEndDate: "",
-    viva: "",
+    vivaDate: "",
   });
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [createdExamDates, setCreatedExamDates] = useState<{
-    deadline: string;
+    submissionDeadline: string;
     examStartDate: string;
     examEndDate: string;
     vivaDate: string;
@@ -53,29 +57,25 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       queryKey: ["current-phd-semester"],
       queryFn: async () => {
         const response = await api.get<{
-          success: boolean;
           semester: Semester;
-          isActive: string;
-        }>("/phd/staff/getCurrentSemester");
+        }>("/phd/staff/getLatestSem");
         return response.data;
       },
     });
 
   const currentSemesterId = currentSemesterData?.semester?.id;
-  const isActiveSemester = currentSemesterData?.isActive;
 
   const { data: examsData, isLoading: isLoadingExams } = useQuery({
     queryKey: ["phd-qualifying-exams", currentSemesterId],
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{
-        success: boolean;
         exams: QualifyingExam[];
-      }>(`/phd/staff/getAllQualifyingExamForTheSem/${currentSemesterId}`);
+      }>(`/phd/staff/qualifyingExams/${currentSemesterId}`);
       const regularQualifyingExams = response.data.exams.filter(
         (exam) => exam.examName === "Regular Qualifying Exam"
       );
-      return { success: response.data.success, exams: regularQualifyingExams };
+      return { exams: regularQualifyingExams };
     },
     enabled: !!currentSemesterId,
   });
@@ -83,7 +83,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   const examMutation = useMutation({
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
       const response = await api.post<{ exam: QualifyingExam }>(
-        "/phd/staff/updateQualifyingExamDeadline",
+        "/phd/staff/updateQualifyingExam",
         formData
       );
       return response.data;
@@ -93,11 +93,36 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
       // Store the created exam data for email notification
       setCreatedExamDates({
-        deadline: data.exam.deadline,
-        examStartDate: data.exam.examStartDate || "",
-        examEndDate: data.exam.examEndDate || "",
+        submissionDeadline: data.exam.submissionDeadline,
+        examStartDate: data.exam.examStartDate,
+        examEndDate: data.exam.examEndDate,
         vivaDate: data.exam.vivaDate || "",
       });
+
+      // Set up default email template
+      setEmailSubject("New Regular Qualifying Exam Deadline Announced");
+      
+      const deadlineDate = new Date(data.exam.submissionDeadline).toLocaleString();
+      const examStartDate = new Date(data.exam.examStartDate).toLocaleString();
+      const examEndDate = new Date(data.exam.examEndDate).toLocaleString();
+      const vivaDate = data.exam.vivaDate ? new Date(data.exam.vivaDate).toLocaleString() : "N/A";
+      
+      const defaultEmailBody = `# New PhD Qualifying Exam Deadline Announced
+
+We are pleased to announce that a new **Regular Qualifying Exam** deadline has been set.
+
+## Exam Details:
+- **Registration Deadline:** ${deadlineDate}
+- **Exam Start:** ${examStartDate}
+- **Exam End:** ${examEndDate}
+- **Viva Date:** ${vivaDate}
+
+Please make sure to submit your application before the registration deadline.
+
+Best regards,  
+PhD Department`;
+
+      setEmailBody(defaultEmailBody);
 
       // Show option to send notification
       setShowEmailDialog(true);
@@ -108,10 +133,10 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
       setExamForm({
         examName: "Regular Qualifying Exam",
-        deadline: "",
+        submissionDeadline: "",
         examStartDate: "",
         examEndDate: "",
-        viva: "",
+        vivaDate: "",
       });
     },
     onError: (error) => {
@@ -124,6 +149,32 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     },
   });
 
+  // Email notification mutation
+  const emailMutation = useMutation({
+    mutationFn: async (emailData: {
+      subject: string;
+      body: string;
+    }) => {
+      await api.post("/phd/staff/notifyAllUsers", emailData);
+    },
+    onSuccess: () => {
+      toast.success("Email notification sent to all users");
+      setShowEmailDialog(false);
+    },
+    onError: () => {
+      toast.error("Failed to send email notification");
+    },
+  });
+
+  const handleSendEmail = () => {
+    if (!createdExamDates) return;
+    
+    emailMutation.mutate({
+      subject: emailSubject,
+      body: emailBody,
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentSemesterId) {
@@ -131,19 +182,19 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       return;
     }
     if (
-      !examForm.deadline ||
+      !examForm.submissionDeadline ||
       !examForm.examStartDate ||
       !examForm.examEndDate ||
-      !examForm.viva
+      !examForm.vivaDate
     ) {
       toast.error("Please provide all dates");
       return;
     }
 
-    const deadlineDate = new Date(examForm.deadline);
+    const deadlineDate = new Date(examForm.submissionDeadline);
     const startDate = new Date(examForm.examStartDate);
     const endDate = new Date(examForm.examEndDate);
-    const vivaDate = new Date(examForm.viva);
+    const vivaDate = new Date(examForm.vivaDate);
 
     if (deadlineDate >= startDate) {
       toast.error("Registration deadline must be before exam start date");
@@ -159,18 +210,18 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     }
 
     const formattedData = {
-      ...examForm,
-      deadline: deadlineDate.toISOString(),
+      examName: examForm.examName,
+      submissionDeadline: deadlineDate.toISOString(),
       examStartDate: startDate.toISOString(),
       examEndDate: endDate.toISOString(),
-      viva: vivaDate.toISOString(),
+      vivaDate: vivaDate.toISOString(),
       semesterId: currentSemesterId,
     };
 
     examMutation.mutate(formattedData);
   };
 
-  const formatDate = (dateString: any) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
       weekday: "short",
       month: "short",
@@ -204,13 +255,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     Current Academic Semester
                   </h2>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      isActiveSemester
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
+                    className={`rounded-full px-3 py-1 text-xs font-medium`}
                   >
-                    {isActiveSemester ? "Active" : "Recent"}
+                    Latest
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -237,13 +284,13 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     <div className="font-bold">Regular Qualifying Exam</div>
                   </div>
                   <div>
-                    <Label htmlFor="deadline">Registration Deadline</Label>
+                    <Label htmlFor="submissionDeadline">Registration Deadline</Label>
                     <Input
-                      id="deadline"
+                      id="submissionDeadline"
                       type="datetime-local"
-                      value={examForm.deadline}
+                      value={examForm.submissionDeadline}
                       onChange={(e) =>
-                        setExamForm({ ...examForm, deadline: e.target.value })
+                        setExamForm({ ...examForm, submissionDeadline: e.target.value })
                       }
                       required
                     />
@@ -279,20 +326,20 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="viva">Viva Date</Label>
+                    <Label htmlFor="vivaDate">Viva Date</Label>
                     <Input
-                      id="viva"
+                      id="vivaDate"
                       type="datetime-local"
-                      value={examForm.viva}
+                      value={examForm.vivaDate}
                       onChange={(e) =>
-                        setExamForm({ ...examForm, viva: e.target.value })
+                        setExamForm({ ...examForm, vivaDate: e.target.value })
                       }
                       required
                     />
                   </div>
                   <Button
                     type="submit"
-                    disabled={examMutation.isLoading || !isActiveSemester}
+                    disabled={examMutation.isLoading}
                     className="w-full bg-blue-600 text-white hover:bg-blue-700"
                   >
                     {examMutation.isLoading ? (
@@ -301,12 +348,6 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                       "Update Exam Deadline"
                     )}
                   </Button>
-                  {!isActiveSemester && (
-                    <p className="text-sm text-amber-600">
-                      Warning: You are setting deadlines for a semester that is
-                      not currently active.
-                    </p>
-                  )}
                 </form>
               </div>
             </div>
@@ -344,23 +385,19 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                   </thead>
                   <tbody>
                     {examsData.exams.map((exam) => {
-                      const deadlineDate = new Date(exam.deadline);
+                      const deadlineDate = new Date(exam.submissionDeadline);
                       const isActive = deadlineDate > new Date();
                       return (
                         <tr key={exam.id}>
                           <td className="border px-4 py-2">{exam.examName}</td>
                           <td className="border px-4 py-2">
-                            {formatDate(exam.deadline)}
+                            {formatDate(exam.submissionDeadline)}
                           </td>
                           <td className="border px-4 py-2">
-                            {exam.examStartDate
-                              ? formatDate(exam.examStartDate)
-                              : "N/A"}
+                            {formatDate(exam.examStartDate)}
                           </td>
                           <td className="border px-4 py-2">
-                            {exam.examEndDate
-                              ? formatDate(exam.examEndDate)
-                              : "N/A"}
+                            {formatDate(exam.examEndDate)}
                           </td>
                           <td className="border px-4 py-2">
                             {exam.vivaDate ? formatDate(exam.vivaDate) : "N/A"}
@@ -391,14 +428,66 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         </div>
       </div>
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="max-w-3xl">
-          {createdExamDates && (
-            <EmailTemplateEditor
-              examType="Regular Qualifying Exam"
-              dates={createdExamDates}
-              onClose={() => setShowEmailDialog(false)}
-            />
-          )}
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Send Email Notification</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="emailSubject">Subject</Label>
+              <Input
+                id="emailSubject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Email subject"
+              />
+            </div>
+            <div>
+              <Label>Email Body</Label>
+              <div className="py-2" data-color-mode={editorTheme}>
+                <Suspense
+                  fallback={
+                    <div className="w-full text-center py-8">
+                      Loading editor...
+                    </div>
+                  }
+                >
+                  <MDEditor
+                    value={emailBody}
+                    onChange={(value) => setEmailBody(value || "")}
+                    height={400}
+                    preview="live"
+                    commandsFilter={(command) =>
+                      command.name !== "fullscreen" ? command : false
+                    }
+                  />
+                </Suspense>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowEmailDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendEmail}
+                disabled={emailMutation.isLoading || !emailSubject.trim() || !emailBody.trim()}
+              >
+                {emailMutation.isLoading ? (
+                  <LoadingSpinner className="h-4 w-4 mr-2" />
+                ) : null}
+                Send Email
+              </Button>
+            </div>
+          </div>
+          <style>
+            {`
+              .wmde-markdown ul { list-style-type: disc; margin-left: 1.5rem; }
+              .wmde-markdown ol { list-style-type: decimal; margin-left: 1.5rem; }
+            `}
+          </style>
         </DialogContent>
       </Dialog>
     </>

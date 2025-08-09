@@ -7,44 +7,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-interface SubArea {
-  id: number;
-  subarea: string;
-}
-
 const UpdateSubAreas: React.FC = () => {
   const queryClient = useQueryClient();
-  const [subAreas, setSubAreas] = useState<string[]>([""]);
+  const [newSubArea, setNewSubArea] = useState("");
 
   const { data: subAreasData, isLoading } = useQuery({
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
-      const response = await api.get<{ success: boolean; subAreas: SubArea[] }>(
+      const response = await api.get<{ subAreas: string[] }>(
         "/phd/staff/getSubAreas"
       );
       return response.data;
     },
   });
 
-  const updateSubAreasMutation = useMutation({
-    mutationFn: async (newSubAreas: string[]) => {
-      await api.post("/phd/staff/updateSubAreas", {
-        subAreas: newSubAreas.map((subarea) => ({ subarea })),
+  const insertSubAreaMutation = useMutation({
+    mutationFn: async (subArea: string) => {
+      await api.post("/phd/staff/insertSubArea", {
+        subArea,
       });
     },
     onSuccess: () => {
-      toast.success("Sub-areas added successfully");
+      toast.success("Sub-area added successfully");
+      setNewSubArea("");
       void queryClient.invalidateQueries({ queryKey: ["phd-sub-areas"] });
-      setSubAreas([""]);
     },
     onError: () => {
-      toast.error("Failed to add sub-areas");
+      toast.error("Failed to add sub-area");
     },
   });
 
   const deleteSubAreaMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await api.delete(`/phd/staff/deleteSubArea/${id}`);
+    mutationFn: async (subArea: string) => {
+      await api.delete(`/phd/staff/deleteSubArea`, { data: { subArea } });
     },
     onSuccess: () => {
       toast.success("Sub-area deleted successfully");
@@ -55,53 +50,44 @@ const UpdateSubAreas: React.FC = () => {
     },
   });
 
+  const handleAddSubArea = () => {
+    if (newSubArea.trim()) {
+      insertSubAreaMutation.mutate(newSubArea.trim());
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12">
       <h1 className="mb-8 text-center text-3xl font-bold">Manage Sub-Areas</h1>
       <div className="mx-auto max-w-4xl space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>Add Sub-Areas</CardTitle>
+            <CardTitle>Add Sub-Area</CardTitle>
           </CardHeader>
           <CardContent>
-            {subAreas.map((subarea, index) => (
-              <div key={index} className="mb-2 flex gap-4">
-                <Input
-                  type="text"
-                  value={subarea}
-                  onChange={(e) => {
-                    const newSubAreas = [...subAreas];
-                    newSubAreas[index] = e.target.value;
-                    setSubAreas(newSubAreas);
-                  }}
-                />
-                <Button
-                  variant="destructive"
-                  onClick={() =>
-                    setSubAreas(subAreas.filter((_, i) => i !== index))
+            <div className="flex gap-4">
+              <Input
+                type="text"
+                value={newSubArea}
+                onChange={(e) => setNewSubArea(e.target.value)}
+                placeholder="Enter sub-area name"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    handleAddSubArea();
                   }
-                  disabled={subAreas.length === 1}
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
-            <Button onClick={() => setSubAreas([...subAreas, ""])}>
-              Add More
-            </Button>
-            <Button
-              className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
-              onClick={() =>
-                updateSubAreasMutation.mutate(subAreas.filter(Boolean))
-              }
-              disabled={updateSubAreasMutation.isLoading}
-            >
-              {updateSubAreasMutation.isLoading ? (
-                <LoadingSpinner className="h-5 w-5" />
-              ) : (
-                "Save Sub-Areas"
-              )}
-            </Button>
+                }}
+              />
+              <Button
+                onClick={handleAddSubArea}
+                disabled={insertSubAreaMutation.isLoading || !newSubArea.trim()}
+              >
+                {insertSubAreaMutation.isLoading ? (
+                  <LoadingSpinner className="h-5 w-5" />
+                ) : (
+                  "Add Sub-Area"
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -124,13 +110,13 @@ const UpdateSubAreas: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {subAreasData.subAreas.map(({ id, subarea }) => (
-                      <tr key={id}>
-                        <td className="border px-4 py-2">{subarea}</td>
+                    {subAreasData.subAreas.map((subArea, index) => (
+                      <tr key={index}>
+                        <td className="border px-4 py-2">{subArea}</td>
                         <td className="border px-4 py-2 text-center">
                           <Button
                             variant="destructive"
-                            onClick={() => deleteSubAreaMutation.mutate(id)}
+                            onClick={() => deleteSubAreaMutation.mutate(subArea)}
                             disabled={deleteSubAreaMutation.isLoading}
                           >
                             {deleteSubAreaMutation.isLoading ? (
