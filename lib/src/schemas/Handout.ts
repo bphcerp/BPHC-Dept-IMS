@@ -4,7 +4,7 @@ export const handoutStatuses = [
     "review pending",
     "reviewed",
     "approved",
-    "rejected",
+    "revision requested",
     "notsubmitted",
 ] as const;
 

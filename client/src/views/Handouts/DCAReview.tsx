@@ -93,12 +93,15 @@ const DCAMemberReviewForm: React.FC = () => {
     if (!allHandouts) return;
 
     const pendingHandouts = allHandouts.filter(
-      (handout) =>
-        handout.status === "review pending" && handout.id !== handoutId
+      (handout) => handout.status === "review pending"
     );
 
-    if (pendingHandouts.length > 0) {
-      navigate(`/handout/dca/review/${pendingHandouts[0].id}`);
+    const ind = pendingHandouts.findIndex((handout) => handout.id == handoutId);
+
+    if (pendingHandouts.length > 1) {
+      navigate(
+        `/handout/dca/review/${pendingHandouts[(ind + 1) % pendingHandouts.length].id}`
+      );
       toast.success("Navigated to next pending handout");
     } else {
       navigate("/handout/dca");
