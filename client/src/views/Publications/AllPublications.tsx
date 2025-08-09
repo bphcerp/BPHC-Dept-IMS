@@ -47,7 +47,6 @@ const AllPublications = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [view, setView] = useState<PubView>(PubView.Publication);
   const { checkAccess } = useAuth();
-  const [selectedItems, setSelectedItems] = useState<Publication[]>([]);
 
   const {
     data: publicationsData,
@@ -271,7 +270,6 @@ const AllPublications = () => {
                       }
                     columns={columns}
                     mainSearchColumn="title"
-                    setSelected={setSelectedItems}
                   />
                 )
               );
