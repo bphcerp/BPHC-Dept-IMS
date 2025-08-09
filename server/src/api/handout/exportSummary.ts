@@ -21,6 +21,10 @@ function generateExcel(
     return workbook;
 }
 
+function downloadPDF(category: string){
+    
+}
+
 const router = express.Router();
 
 router.get(
@@ -140,28 +144,26 @@ router.get(
         zip.file("hd_handout_summary.xlsx", hdBuffer);
         zip.file("fd_handout_summary.xlsx", fdBuffer);
 
-        const fdHandoutsPDF = await db.query.courseHandoutRequests.findMany({
-            where: (handout, { eq, and }) =>
-                and(eq(handout.status, "approved"), eq(handout.category, "FD")),
-            with: {
-                ic: { with: { faculty: true } }
-               
-            },
-        });
-
-        for (const handout of fdHandoutsPDF) {
-            const filePath = handout.handoutFilePath;
-            
-            if (filePath) {
-                try {
-                    const accessToken = environment.ACCESS_TOKEN_SECRET;
-                    const fileUrl = environment.SERVER_URL + "/f/" + filePath;
+        async function addHandoutsToZip(
+            category: "FD" | "HD",
+            folderName: string,
+            zip: JSZip
+        ) {
+            const handouts = await db.query.courseHandoutRequests.findMany({
+                where: (handout, { eq, and }) =>
+                    and(eq(handout.status, "approved"), eq(handout.category, category)),
+                with: {
+                    ic: { with: { faculty: true } }
+                },
+            });
         
-                    const response = await fetch(fileUrl, {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    });
+            for (const handout of handouts) {
+                const filePath = handout.handoutFilePath;
+                if (!filePath) continue;
+        
+                try {
+                    const fileUrl = `${environment.SERVER_URL}/f/${filePath}`;
+                    const response = await fetch(fileUrl);
         
                     if (!response.ok) {
                         throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
@@ -174,53 +176,16 @@ router.get(
                         .replace(/\s+/g, "_")
                         .toLowerCase();
         
-                    zip.file(`fd_handouts/${fileNameSafe}.pdf`, pdfBuffer);
+                    zip.file(`${folderName}/${fileNameSafe}.pdf`, pdfBuffer);
                 } catch (err) {
                     console.error(`Failed to download or zip file: ${filePath}`, err);
                 }
             }
         }
 
-        const hdHandoutsPDF = await db.query.courseHandoutRequests.findMany({
-            where: (handout, { eq, and }) =>
-                and(eq(handout.status, "approved"), eq(handout.category, "HD")),
-            with: {
-                ic: { with: { faculty: true } }
-               
-            },
-        });
+        await addHandoutsToZip("FD", "fd_handouts", zip);
+        await addHandoutsToZip("HD", "hd_handouts", zip);
 
-        for (const handout of hdHandoutsPDF) {
-            const filePath = handout.handoutFilePath;
-            
-            if (filePath) {
-                try {
-                    const accessToken = environment.ACCESS_TOKEN_SECRET;
-                    const fileUrl = environment.SERVER_URL + "/f/" + filePath;
-        
-                    const response = await fetch(fileUrl, {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                        },
-                    });
-        
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
-                    }
-        
-                    const pdfBuffer = Buffer.from(await response.arrayBuffer());
-        
-                    const fileNameSafe = `${handout.courseCode}_${handout.courseName}`
-                        .replace(/[^\w\s-]/g, "")
-                        .replace(/\s+/g, "_")
-                        .toLowerCase();
-        
-                    zip.file(`hd_handouts/${fileNameSafe}.pdf`, pdfBuffer);
-                } catch (err) {
-                    console.error(`Failed to download or zip file: ${filePath}`, err);
-                }
-            }
-        }
         
         
 

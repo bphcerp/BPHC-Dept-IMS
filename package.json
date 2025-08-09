@@ -3,5 +3,9 @@
 		"patchedDependencies": {
 			"drizzle-orm@0.40.0": "patches/drizzle-orm@0.40.0.patch"
 		}
+	},
+	"dependencies": {
+		"ioredis": "^5.7.0",
+		"vite": "^7.0.6"
 	}
 }
