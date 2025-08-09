@@ -106,6 +106,11 @@ export const phdAdminRelations = relations(phd, ({ one }) => ({
         references: [users.email],
         relationName: "phd",
     }),
+    supervisor: one(users, {
+        fields: [phd.supervisorEmail],
+        references: [users.email],
+        relationName: "supervisorRelation",
+    }),
 }));
 
 export const staffAdminRelations = relations(staff, ({ one }) => ({

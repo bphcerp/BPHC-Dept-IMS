@@ -1,31 +1,36 @@
+// server/src/api/phd/student/index.ts
 import express from "express";
 import { authMiddleware } from "@/middleware/auth.ts";
-import checkExamStatus from "./checkExamStatus.ts";
-import getQualifyingExamDeadLine from "./getQualifyingExamDeadLine.ts";
-import getProposalDeadline from "./getProposalDeadline.ts";
+
+// Legacy APIs (updated/functional)
 import getQualifyingExamStatus from "./getQualifyingExamStatus.ts";
-import uploadQeApplicationForm from "./uploadQeApplicationForm.ts";
+import getProposalDeadline from "./getProposalDeadline.ts";
 import uploadProposalDocuments from "./uploadProposalDocuments.ts";
 import getQualifyingExamPassingDate from "./getQualifyingExamPassingDate.ts";
 import getProposalStatus from "./getProposalStatus.ts";
 import getGradeStatus from "./getGradeStatus.ts";
-import getNoOfQeApplication from "./getNoOfQeApplication.ts";
 import getSubAreas from "./getSubAreas.ts";
 import getProfileDetails from "./getProfileDetails.ts";
+
+// New refactored APIs
+import activeQualifyingExamRouter from "./active-qualifying-exam.ts";
+import applicationsRouter from "./applications.ts";
+
 const router = express.Router();
 
-router.use("/checkExamStatus", checkExamStatus);
-router.use("/getQualifyingExamDeadLine", getQualifyingExamDeadLine);
+// Legacy APIs (keeping functional ones)
 router.use("/getQualifyingExamStatus", getQualifyingExamStatus);
 router.use("/getProposalDeadline", getProposalDeadline);
-router.use("/uploadQeApplicationForm", uploadQeApplicationForm);
 router.use("/uploadProposalDocuments", uploadProposalDocuments);
 router.use("/getQualifyingExamPassingDate", getQualifyingExamPassingDate);
 router.use("/getProposalStatus", getProposalStatus);
 router.use("/getGradeStatus", getGradeStatus);
-router.use("/getNoOfQeApplication", getNoOfQeApplication);
 router.use("/getSubAreas", getSubAreas);
 router.use("/getProfileDetails", getProfileDetails);
+
+// New refactored APIs
+router.use("/active-qualifying-exam", activeQualifyingExamRouter);
+router.use("/applications", applicationsRouter);
 
 router.use(authMiddleware);
 
