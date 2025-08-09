@@ -274,6 +274,13 @@
       "when": 1753783435031,
       "tag": "0038_chunky_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1754731744465,
+      "tag": "0039_conscious_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

@@ -43,7 +43,6 @@ export const ItemsView = () => {
     {
       accessorFn: () => "S.No",
       header: "S.No",
-      cell: ({ row }) => row.index + 1,
     },
     {
       accessorKey: "equipmentID",

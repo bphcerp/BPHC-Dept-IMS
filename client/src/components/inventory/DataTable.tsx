@@ -123,6 +123,17 @@ export function DataTable<T>({
     return filterValue.includes(row.getValue(columnId));
   };
 
+  const getLSPageSizeKey = () => `${location.href.split('/').at(-1)}-table-page-size`
+
+  //save selected pageSize to localStorage
+  const setPageSize = (pageSize: number) => {
+    table.setPageSize(pageSize)
+    localStorage.setItem(getLSPageSizeKey(), pageSize.toString())
+  }
+
+  const getPageSize = () => parseInt(localStorage.getItem(getLSPageSizeKey()) ?? '5')
+
+
   const table = useReactTable({
     data,
     columns: columns.map((columnDef) => ({
@@ -137,7 +148,13 @@ export function DataTable<T>({
               : {}
         : {}),
     })),
-    initialState,
+    initialState: {
+      ...initialState,
+      pagination: {
+        ...initialState?.pagination,
+        pageSize: initialState?.pagination?.pageSize ?? getPageSize()
+      }
+    },
     enableColumnPinning: true,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -457,9 +474,9 @@ export function DataTable<T>({
                             {header.isPlaceholder
                               ? null
                               : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                             {header.column.getIsSorted() === "asc" ? (
                               <ArrowUp />
                             ) : header.column.getIsSorted() === "desc" ? (
@@ -471,7 +488,7 @@ export function DataTable<T>({
                               header.column.columnDef.header
                                 ?.toString()
                                 .toLowerCase() !==
-                                mainSearchColumn.toString().toLowerCase()) &&
+                              mainSearchColumn.toString().toLowerCase()) &&
                               renderFilter(header.column)}
                           </div>
                         </div>
@@ -483,7 +500,7 @@ export function DataTable<T>({
             </TableHeader>
             {table.getVisibleLeafColumns().length ? (
               <TableBody>
-                {table.getRowModel().rows.map((row) => (
+                {table.getRowModel().rows.map((row, idx) => (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
@@ -501,17 +518,17 @@ export function DataTable<T>({
                         key={cell.id}
                         title={
                           cell.getValue() &&
-                          (cell.getValue() as any).toString().length > 20
+                            (cell.getValue() as any).toString().length > 20
                             ? (cell.getValue() as any).toString()
                             : undefined
                         }
                       >
-                        {typeof columns.find(
+                        {cell.column.id === 'S.No' ? idx + 1 : typeof columns.find(
                           (column) =>
                             column.header === cell.column.columnDef.header
                         )?.cell === "function" ||
-                        (cell.getValue() &&
-                          typeof cell.getValue() !== "string") ? (
+                          (cell.getValue() &&
+                            typeof cell.getValue() !== "string") ? (
                           flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
@@ -581,7 +598,7 @@ export function DataTable<T>({
                 <DropdownMenuCheckboxItem
                   key={pageSize}
                   checked={table.getState().pagination.pageSize === pageSize}
-                  onCheckedChange={() => table.setPageSize(pageSize)}
+                  onCheckedChange={() => setPageSize(pageSize)}
                 >
                   {pageSize}
                 </DropdownMenuCheckboxItem>
