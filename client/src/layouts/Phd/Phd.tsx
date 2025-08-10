@@ -95,8 +95,8 @@ const NotionalSupervisorLayout = () => {
         {
           title: "Qualifying Exam Management",
           icon: <ClipboardCheck />,
-          url: "/phd/phd-student/form-deadline",
-          requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
+          url: "/phd/phd-student/qualifying-exams",
+          requiredPermissions: [permissions["/phd/student/getQualifyingExamStatus"]],
         },
 
         {
@@ -104,7 +104,7 @@ const NotionalSupervisorLayout = () => {
           icon: <FileText />,
           url: "/phd/phd-student/proposal-submission",
           requiredPermissions: [permissions["/phd/student/checkExamStatus"]],
-        },
+        }
       ],
     },
     {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import UpdateQualifyingExamDeadline from "../../../components/phd/UpdateQualifyingExamDeadline";
-import UpdateProposalDeadline from "../../../components/phd/UpdateProposalDeadline";
+// import UpdateProposalDeadline from "../../../components/phd/UpdateProposalDeadline";
 
 interface Deadline {
   value: string;
@@ -26,11 +26,11 @@ export default function UpdateDeadlinesPage() {
       label: "Qualifying Exam Deadline",
       component: <UpdateQualifyingExamDeadline />,
     },
-    {
-      value: "thesis proposal deadline",
-      label: "Thesis Proposal Deadline",
-      component: <UpdateProposalDeadline />,
-    },
+    // {
+    //   value: "thesis proposal deadline",
+    //   label: "Thesis Proposal Deadline",
+    //   component: <UpdateProposalDeadline />,
+    // },
   ];
 
   // Handle navigation when an option is clicked

@@ -13,13 +13,13 @@ import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
 import { allPermissions, permissions } from "lib";
 import {
+  BookOpen,
   Computer,
   FileText,
   GraduationCap,
-  BookOpen,
   LibraryBig,
   Warehouse,
-  File,
+  File
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -28,16 +28,11 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
-import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
-import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
-import FormDeadline from "@/views/Phd/Student/FormDeadline";
-import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
-import Profile from "@/views/Phd/Student/Profile";
-import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
-import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
+import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
+import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
+import QualifyingExamManagement from "@/views/Phd/QualifyingExamManagement";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -46,9 +41,7 @@ import DCAMemberReviewForm from "@/views/Handouts/DCAReview";
 import DCAConvenorHandouts from "@/views/Handouts/DCAConvenorHandouts";
 import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
-import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
-import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
@@ -59,7 +52,6 @@ import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import AllPublications from "@/views/Publications/AllPublications";
 import EditPublications from "@/views/Publications/EditPublications";
-import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
 import { ItemsView } from "@/views/Inventory/ItemsView";
@@ -348,41 +340,6 @@ const Routing = () => {
 
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
-            {checkAccess(
-              permissions["/phd/notionalSupervisor/updateCourseDetails"]
-            ) && (
-              <Route path="notional-supervisor" element={<Outlet />}>
-                <Route path="update-grade" element={<UpdateGrade />} />
-                <Route path="suggest-examiner" element={<SuggestExaminer />} />
-              </Route>
-            )}
-            {checkAccess(
-              permissions["/phd/drcMember/generateCourseworkForm"]
-            ) && (
-              <Route path="drc-convenor" element={<Outlet />}>
-                <Route path="coursework-form" element={<CourseworkForm />} />
-                <Route
-                  path="assign-dac-members"
-                  element={<AssignDacMembers />}
-                ></Route>
-                <Route
-                  path="qualifying-exam-management"
-                  element={<QualifyingExamManagement />}
-                ></Route>
-                Handout
-              </Route>
-            )}
-            {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
-              <Route path="phd-student" element={<Outlet />}>
-                <Route path="form-deadline" element={<FormDeadline />} />
-                <Route path="my-profile" element={<Profile />} />
-
-                <Route
-                  path="proposal-submission"
-                  element={<ProposalSubmission />}
-                />
-              </Route>
-            )}
             {checkAccess(permissions["/phd/staff/getAllSem"]) && (
               <Route path="staff" element={<Outlet />}>
                 <Route
@@ -399,28 +356,14 @@ const Routing = () => {
                 />
               </Route>
             )}
-            {checkAccess(
-              permissions[
-                "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-              <Route path="phd-co-supervisor" element={<Outlet />}>
-                <Route
-                  path="co-supervised-students"
-                  element={<CoSupervisedStudents />}
-                />
+            {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
+              <Route path="phd-student" element={<Outlet />}>
+                <Route path="qualifying-exams" element={<QualifyingExams />} />
               </Route>
             )}
-            {checkAccess(
-              permissions[
-                "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-              <Route path="phd-supervisor" element={<Outlet />}>
-                <Route
-                  path="supervised-students"
-                  element={<SupervisedStudents />}
-                />
+            {checkAccess(permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]) && (
+              <Route path="drc-convenor" element={<Outlet />}>
+                <Route path="qualifying-exam-management" element={<QualifyingExamManagement />} />
               </Route>
             )}
           </Route>

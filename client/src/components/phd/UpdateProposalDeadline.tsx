@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import EmailTemplateEditor from "./EmailTemplateEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Semester {
   id: number;
@@ -38,7 +37,6 @@ const UpdateProposalDeadline: React.FC = () => {
     deadline: "",
   });
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [createdDeadline, setCreatedDeadline] = useState<string | null>(null);
   // Query for current semester
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
     useQuery({
@@ -108,11 +106,8 @@ const UpdateProposalDeadline: React.FC = () => {
       );
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Thesis proposal deadline updated successfully");
-
-      // Store the created deadline for email notification
-      setCreatedDeadline(data.proposal.deadline);
 
       // Show option to send notification
       setShowEmailDialog(true);
@@ -351,13 +346,13 @@ const UpdateProposalDeadline: React.FC = () => {
       </div>
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="max-w-3xl">
-          {createdDeadline && (
-            <EmailTemplateEditor
-              examType="Thesis Proposal"
-              dates={{ deadline: createdDeadline }}
-              onClose={() => setShowEmailDialog(false)}
-            />
-          )}
+          <DialogHeader>
+            <DialogTitle>Email Notification</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-center">
+            <p className="mb-4">Email notification functionality has been temporarily disabled.</p>
+            <Button onClick={() => setShowEmailDialog(false)}>Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

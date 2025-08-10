@@ -9,9 +9,14 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res) => {
-        const subAreas = await db.query.phdSubAreas.findMany();
+        const semester = await db.query.phdSemesters.findFirst({
+            orderBy: (phdSemesters, { desc }) => [
+                desc(phdSemesters.year),
+                desc(phdSemesters.semesterNumber),
+            ],
+        });
         res.status(200).json({
-            subAreas: subAreas.map((area) => area.subArea),
+            semester,
         });
     })
 );
