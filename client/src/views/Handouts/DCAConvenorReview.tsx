@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import Review from "@/components/handouts/review";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
 import { handoutSchemas } from "lib";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { isAxiosError } from "axios";
 import { Handout } from "./DCAReview";
 import { BASE_API_URL } from "@/lib/constants";
@@ -18,7 +18,7 @@ const DCAConvenorReview: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [comments, setComments] = useState("");
-
+  const [disabled, setDisabled] = useState(false);
   const goBack = () => {
     navigate("/handout/dcaconvenor");
   };
@@ -47,7 +47,6 @@ const DCAConvenorReview: React.FC = () => {
     },
     onSuccess: async () => {
       toast.success("Review added successfully");
-      navigate("/handout/dcaconvenor");
       await queryClient.invalidateQueries({
         queryKey: [
           "handouts-dca",
@@ -59,6 +58,7 @@ const DCAConvenorReview: React.FC = () => {
       });
     },
     onError: (error) => {
+      setDisabled(false);
       if (isAxiosError(error)) {
         console.log("Error adding review:", error.response?.data);
       }
@@ -66,8 +66,45 @@ const DCAConvenorReview: React.FC = () => {
     },
   });
   function handleSubmit(status: handoutSchemas.HandoutStatus) {
+    setDisabled(true);
     reviewMutation.mutate({ id: id!, status, comments });
   }
+
+  const { data: allHandouts } = useQuery({
+    queryKey: ["handouts-dca-member"],
+    queryFn: async () => {
+      try {
+        const response = await api.get<{
+          handouts: Handout[];
+          success: boolean;
+        }>("/handout/dca/get");
+        return response.data.handouts;
+      } catch (error) {
+        toast.error("Failed to fetch handouts");
+        throw error;
+      }
+    },
+  });
+
+  const goToNextPendingHandout = useCallback(() => {
+    if (!allHandouts) return;
+
+    const pendingHandouts = allHandouts.filter(
+      (handout) => handout.status === "reviewed"
+    );
+
+    const ind = pendingHandouts.findIndex((handout) => handout.id == id);
+
+    if (pendingHandouts.length > 1) {
+      navigate(
+        `/handout/dcaconvenor/review/${pendingHandouts[(ind + 1) % pendingHandouts.length].id}`
+      );
+      toast.success("Navigated to next pending handout");
+    } else {
+      navigate("/handout/dcaconvenor");
+      toast.info("No more pending handouts to review");
+    }
+  }, [allHandouts, id, navigate]);
 
   if (isLoading)
     return (
@@ -173,12 +210,33 @@ const DCAConvenorReview: React.FC = () => {
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
               />
-              <div className="flex w-full justify-center space-x-4">
-                <Button onClick={() => handleSubmit("approved")}>
-                  Approve
-                </Button>
-                <Button onClick={() => handleSubmit("rejected")}>Reject</Button>
-              </div>
+              {data.status === "review pending" ? (
+                <div className="flex w-full justify-center space-x-4">
+                  <Button
+                    onClick={() => handleSubmit("approved")}
+                    disabled={disabled}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => handleSubmit("revision requested")}
+                    disabled={disabled}
+                  >
+                    Request Revision
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={goToNextPendingHandout}
+                    className="flex items-center"
+                  >
+                    Next Pending Handout
+                    <ChevronRight className="ml-1" size={16} />
+                  </Button>
+                </div>
+              )}
             </>
           ) : (
             <p className="grid h-full place-items-center font-bold text-muted-foreground">
