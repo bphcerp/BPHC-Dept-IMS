@@ -41,7 +41,7 @@ router.post(
                     new HttpError(HttpCode.NOT_FOUND, "Handout Not Found")
                 );
             }
-            if (parsed.status === "rejected") {
+            if (parsed.status === "revision requested") {
                 try {
                     await db.insert(courseHandoutRequests).values({
                         courseCode: handout.courseCode,
@@ -67,8 +67,8 @@ router.post(
                         await transporter.sendMail({
                             from: env.BPHCERP_EMAIL,
                             to: handout.icEmail,
-                            subject: "Handout Rejection",
-                            text: `Your handout verification request for course code ${handout?.courseCode} has been rejected by ${req.user?.email}. Please visit the ${environment.DEPARTMENT_NAME} IMS Portal for more details. Website link: ${env.FRONTEND_URL}`,
+                            subject: "Handout Revison Request",
+                            text: `Your handout verification request for course code ${handout?.courseCode} has been requested for revision by ${req.user?.email}. Please visit the ${environment.DEPARTMENT_NAME} IMS Portal for more details. Website link: ${env.FRONTEND_URL}`,
                         });
                     }
                 } catch (e) {

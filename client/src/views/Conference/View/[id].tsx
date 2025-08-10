@@ -133,7 +133,7 @@ const ConvenerReview = ({
             <li key={index} className="pl-2 text-sm">
               <p>
                 <strong>Status:</strong>{" "}
-                {review.status ? "Accepted" : "Rejected"}
+                {review.status ? "Accepted" : "Revision Requested"}
               </p>
               <p>
                 <strong>Comments:</strong> {review.comments || "No comments"}
