@@ -80,17 +80,31 @@ export function DataTable<T>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [rowSelection, setRowSelection] = useState({});  
 
-  const multiFilterFn = (row: Row<T>, columnId: string, filterValue: any) => {
-    if (!filterValue || filterValue.length === 0) return true;
-    return filterValue.includes(row.getValue(columnId));
-  };
-
+  const isWithinRangeNumber = (row: Row<T>, columnId: string, value: any) => {
+      const cellValue = Number(row.getValue(columnId));
+      const [start, end] = value;
+  
+      if ((start || end) && !cellValue) return false;
+      if (start && !end) {
+        return cellValue >= start;
+      } else if (!start && end) {
+        return cellValue <= end;
+      } else if (start && end) {
+        return cellValue >= start && cellValue <= end;
+      } else return true;
+    };
+    
   const table = useReactTable({
     data,
     columns: columns.map((columnDef) => ({
       ...columnDef,
+      ...(columnDef.meta
+        ? columnDef.meta.filterType === "number-range"
+          ? { filterFn: isWithinRangeNumber }
+          : {}
+        : {}),
     })),
     initialState,
     enableColumnPinning: true,
@@ -121,60 +135,8 @@ export function DataTable<T>({
 
   const renderFilter = (column: Column<T>) => {
     const filterType = column.columnDef.meta?.filterType;
-    const uniqueValues = Array.from(column.getFacetedUniqueValues().keys());
 
     switch (filterType) {
-      case "dropdown":
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {uniqueValues.map((value) => (
-                <DropdownMenuCheckboxItem
-                  key={value as string}
-                  checked={column.getFilterValue() === value}
-                  onCheckedChange={(checked) =>
-                    column.setFilterValue(checked ? value : null)
-                  }
-                >
-                  {(value as string) ?? "Not Provided"}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      case "multiselect":
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {uniqueValues.map((value) => (
-                <DropdownMenuCheckboxItem
-                  key={value as string}
-                  onSelect={(e) => e.preventDefault()}
-                  checked={(
-                    (column.getFilterValue() as string[]) ?? []
-                  ).includes(value as string)}
-                  onCheckedChange={(checked) => {
-                    const currentValue =
-                      (column.getFilterValue() as string[]) ?? [];
-                    column.setFilterValue(
-                      !checked
-                        ? currentValue.filter((v) => v !== value)
-                        : [...currentValue, value as string]
-                    );
-                  }}
-                >
-                  {(value as string) ?? "Not Provided"}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
       case "search":
         return (
           <Input
@@ -184,6 +146,53 @@ export function DataTable<T>({
             onChange={(event) => column.setFilterValue(event.target.value)}
           />
         );
+      case "number-range":
+              return (
+                <div className="flex w-64 space-x-2">
+                  <Input
+                    type="number"
+                    value={(column.getFilterValue() as [number, number])?.[0] ?? ""}
+                    onChange={(event) => {
+                      const prevFilterValue = column.getFilterValue() as [
+                        number,
+                        number,
+                      ];
+                      if (!event.target.value) {
+                        column.setFilterValue([undefined, prevFilterValue[1]]);
+                        return;
+                      }
+                      if (prevFilterValue) {
+                        const [, max] = prevFilterValue;
+                        column.setFilterValue([event.target.value, max]);
+                      } else {
+                        column.setFilterValue([event.target.value, undefined]);
+                      }
+                    }}
+                    placeholder="Min"
+                  />
+                  <Input
+                    type="number"
+                    value={(column.getFilterValue() as [number, number])?.[1] ?? ""}
+                    onChange={(event) => {
+                      const prevFilterValue = column.getFilterValue() as [
+                        number,
+                        number,
+                      ];
+                      if (!event.target.value) {
+                        column.setFilterValue([prevFilterValue[0], undefined]);
+                        return;
+                      }
+                      if (prevFilterValue) {
+                        const [min] = prevFilterValue;
+                        column.setFilterValue([min, event.target.value]);
+                      } else {
+                        column.setFilterValue([undefined, event.target.value]);
+                      }
+                    }}
+                    placeholder="Max"
+                  />
+                </div>
+              );
       default:
         return null;
     }

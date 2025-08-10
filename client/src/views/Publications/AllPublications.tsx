@@ -118,11 +118,14 @@ const AllPublications = () => {
     },
     {
       accessorKey: "type",
-      header: "Pub-Type",
+      header: "Pub-Type"
     },
     {
       accessorKey: "journal",
       header: "Journal",
+      meta : {
+        filterType: "search"
+      }
     },
     {
       accessorKey: "volume",
@@ -135,6 +138,9 @@ const AllPublications = () => {
     {
       accessorKey: "year",
       header: "Year",
+      meta : {
+        filterType: "number-range"
+      }
     },
     {
       accessorKey: "link",
@@ -156,6 +162,9 @@ const AllPublications = () => {
     {
       accessorKey: "authorNames",
       header: "Author Names",
+      meta : {
+        filterType: "search"
+      }
     }
   ];
 
