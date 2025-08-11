@@ -4,6 +4,9 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import JSZip from "jszip";
 import ExcelJS from "exceljs";
+import { promises as fs } from "fs";
+
+
 
 function generateExcel(
     headers: string[],
@@ -128,13 +131,65 @@ router.get(
 
         const hdWorkbook = generateExcel(headers, sanitizeData(hdHandoutsData));
         const fdWorkbook = generateExcel(headers, sanitizeData(fdHandoutsData));
-
+        
         const hdBuffer = await hdWorkbook.xlsx.writeBuffer();
         const fdBuffer = await fdWorkbook.xlsx.writeBuffer();
 
         const zip = new JSZip();
+
+      
+
+
+        async function addHandoutsToZip(
+            category: "FD" | "HD",
+            folderName: string,
+            zip: JSZip
+        ) {
+            const handouts = await db.query.courseHandoutRequests.findMany({
+                where: (handout, { eq, and }) =>
+                    and(eq(handout.status, "approved"), eq(handout.category, category)),
+                with: {
+                    ic: { with: { faculty: true } }
+                },
+            });
+        
+            for (const handout of handouts) {
+                const filePath = handout.handoutFilePath;
+                if (!filePath) continue;
+        
+                try {
+                    const pdfLocation = await db.query.files.findFirst({
+                        where: (file, { eq }) => eq(file.id, filePath)
+                    });
+                    if (!pdfLocation) {
+                        console.warn(`No file record found for ID: ${filePath}`);
+                        continue;
+                    }
+        
+                    
+                    const pdfBuffer = await fs.readFile(pdfLocation.filePath);
+        
+                    
+
+        
+                    const fileNameSafe = `${handout.courseCode}_${handout.courseName}`
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "_")
+                        .toLowerCase();
+        
+                    zip.file(`${folderName}/${fileNameSafe}.pdf`, pdfBuffer);
+                } catch (err) {
+                    console.error(`Failed to download or zip file: ${filePath}`, err);
+                }
+            }
+        }
+        
+        
         zip.file("hd_handout_summary.xlsx", hdBuffer);
         zip.file("fd_handout_summary.xlsx", fdBuffer);
+
+        await addHandoutsToZip("FD", "fd_handouts", zip);
+        await addHandoutsToZip("HD", "hd_handouts", zip);
 
         const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
