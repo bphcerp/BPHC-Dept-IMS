@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { fileFields, files } from "@/config/db/schema/form.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
