@@ -7,9 +7,9 @@ import {
     boolean,
     pgEnum,
 } from "drizzle-orm/pg-core";
-import { fileFields } from "./form.ts";
 import { users } from "./admin.ts";
 import { handoutSchemas } from "lib";
+import { files } from "./form.ts";
 
 export const handoutStatusEnum = pgEnum(
     "handout_status_enum",
@@ -39,12 +39,9 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     numberOfLP: boolean("number_of_lp"),
     evaluationScheme: boolean("evaluation_scheme"),
     status: handoutStatusEnum("status").notNull().default("notsubmitted"),
-    handoutFilePath: integer("handout_file_path").references(
-        () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
-    ),
+    handoutFilePath: integer("handout_file_path").references(() => files.id, {
+        onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
