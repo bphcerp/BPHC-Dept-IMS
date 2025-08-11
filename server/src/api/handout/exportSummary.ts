@@ -5,8 +5,7 @@ import express from "express";
 import JSZip from "jszip";
 import ExcelJS from "exceljs";
 import { promises as fs } from "fs";
-
-
+import logger from "@/config/logger.ts";
 
 function generateExcel(
     headers: string[],
@@ -40,89 +39,57 @@ router.get(
             "Number of Lectures/Practical are adequate as per the Units of the Course",
             "Evaluation Scheme is as per academic regulations",
         ];
-        const hdHandoutsData = (
-            await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and }) =>
-                    and(
-                        eq(handout.status, "approved"),
-                        eq(handout.category, "HD")
-                    ),
-                with: {
-                    ic: {
-                        with: {
-                            faculty: true,
-                        },
+
+        const allHandouts = await db.query.courseHandoutRequests.findMany({
+            where: (handout, { eq }) => eq(handout.status, "approved"),
+            with: {
+                ic: {
+                    with: {
+                        faculty: true,
                     },
                 },
-            })
-        ).map((handout, i) => {
-            return {
-                [headers[0]]: i + 1,
-                [headers[1]]: handout.courseCode,
-                [headers[2]]: handout.courseName,
-                [headers[3]]: handout.ic?.faculty?.name,
-                [headers[4]]:
-                    handout.scopeAndObjective == true ? "\u2713" : "\u00D7",
-                [headers[5]]:
-                    handout.textBookPrescribed == true ? "\u2713" : "\u00D7",
-                [headers[6]]:
-                    handout.lecturewisePlanLearningObjective == true
-                        ? "\u2713"
-                        : "\u00D7",
-                [headers[7]]:
-                    handout.lecturewisePlanCourseTopics == true
-                        ? "\u2713"
-                        : "\u00D7",
-                [headers[8]]: handout.numberOfLP == true ? "\u2713" : "\u00D7",
-                [headers[9]]:
-                    handout.evaluationScheme == true ? "\u2713" : "\u00D7",
-            };
+            },
         });
 
-        const fdHandoutsData = (
-            await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and }) =>
-                    and(
-                        eq(handout.status, "approved"),
-                        eq(handout.category, "FD")
-                    ),
-                with: {
-                    ic: {
-                        with: {
-                            faculty: true,
-                        },
-                    },
-                },
-            })
-        ).map((handout, i) => {
-            return {
-                [headers[0]]: i + 1,
-                [headers[1]]: handout.courseCode,
-                [headers[2]]: handout.courseName,
-                [headers[3]]: handout.ic?.faculty?.name,
-                [headers[4]]:
-                    handout.scopeAndObjective == true ? "\u2713" : "\u00D7",
-                [headers[5]]:
-                    handout.textBookPrescribed == true ? "\u2713" : "\u00D7",
-                [headers[6]]:
-                    handout.lecturewisePlanLearningObjective == true
-                        ? "\u2713"
-                        : "\u00D7",
-                [headers[7]]:
-                    handout.lecturewisePlanCourseTopics == true
-                        ? "\u2713"
-                        : "\u00D7",
-                [headers[8]]: handout.numberOfLP == true ? "\u2713" : "\u00D7",
-                [headers[9]]:
-                    handout.evaluationScheme == true ? "\u2713" : "\u00D7",
-            };
+        const transformHandoutData = (
+            handout: (typeof allHandouts)[number],
+            index: number
+        ) => ({
+            [headers[0]]: index + 1,
+            [headers[1]]: handout.courseCode,
+            [headers[2]]: handout.courseName,
+            [headers[3]]: handout.ic?.faculty?.name,
+            [headers[4]]:
+                handout.scopeAndObjective == true ? "\u2713" : "\u00D7",
+            [headers[5]]:
+                handout.textBookPrescribed == true ? "\u2713" : "\u00D7",
+            [headers[6]]:
+                handout.lecturewisePlanLearningObjective == true
+                    ? "\u2713"
+                    : "\u00D7",
+            [headers[7]]:
+                handout.lecturewisePlanCourseTopics == true
+                    ? "\u2713"
+                    : "\u00D7",
+            [headers[8]]: handout.numberOfLP == true ? "\u2713" : "\u00D7",
+            [headers[9]]:
+                handout.evaluationScheme == true ? "\u2713" : "\u00D7",
         });
+
+        const hdHandoutsData = allHandouts
+            .filter((handout) => handout.category === "HD")
+            .map(transformHandoutData);
+
+        const fdHandoutsData = allHandouts
+            .filter((handout) => handout.category === "FD")
+            .map(transformHandoutData);
 
         const sanitizeData = (
             data: Record<string, string | number | null | undefined>[]
         ): Record<string, string | number | undefined>[] =>
             data.map((row) => {
-                const sanitized: Record<string, string | number | undefined> = {};
+                const sanitized: Record<string, string | number | undefined> =
+                    {};
                 for (const key in row) {
                     sanitized[key] = row[key] === null ? undefined : row[key];
                 }
@@ -131,65 +98,48 @@ router.get(
 
         const hdWorkbook = generateExcel(headers, sanitizeData(hdHandoutsData));
         const fdWorkbook = generateExcel(headers, sanitizeData(fdHandoutsData));
-        
+
         const hdBuffer = await hdWorkbook.xlsx.writeBuffer();
         const fdBuffer = await fdWorkbook.xlsx.writeBuffer();
 
         const zip = new JSZip();
-
-      
-
-
-        async function addHandoutsToZip(
-            category: "FD" | "HD",
-            folderName: string,
-            zip: JSZip
-        ) {
-            const handouts = await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq, and }) =>
-                    and(eq(handout.status, "approved"), eq(handout.category, category)),
-                with: {
-                    ic: { with: { faculty: true } }
-                },
-            });
-        
-            for (const handout of handouts) {
-                const filePath = handout.handoutFilePath;
-                if (!filePath) continue;
-        
-                try {
-                    const pdfLocation = await db.query.files.findFirst({
-                        where: (file, { eq }) => eq(file.id, filePath)
-                    });
-                    if (!pdfLocation) {
-                        console.warn(`No file record found for ID: ${filePath}`);
-                        continue;
-                    }
-        
-                    
-                    const pdfBuffer = await fs.readFile(pdfLocation.filePath);
-        
-                    
-
-        
-                    const fileNameSafe = `${handout.courseCode}_${handout.courseName}`
-                        .replace(/[^\w\s-]/g, "")
-                        .replace(/\s+/g, "_")
-                        .toLowerCase();
-        
-                    zip.file(`${folderName}/${fileNameSafe}.pdf`, pdfBuffer);
-                } catch (err) {
-                    console.error(`Failed to download or zip file: ${filePath}`, err);
-                }
-            }
-        }
-        
-        
         zip.file("hd_handout_summary.xlsx", hdBuffer);
         zip.file("fd_handout_summary.xlsx", fdBuffer);
 
-        await addHandoutsToZip("FD", "fd_handouts", zip);
-        await addHandoutsToZip("HD", "hd_handouts", zip);
+        const handouts = await db.query.courseHandoutRequests.findMany({
+            columns: {
+                handoutFilePath: false,
+            },
+            where: (handout, { eq }) => eq(handout.status, "approved"),
+            with: {
+                handoutFilePath: {
+                    columns: {
+                        filePath: true,
+                    },
+                },
+            },
+        });
+
+        for (const handout of handouts) {
+            const filePath = handout.handoutFilePath?.filePath;
+            if (!filePath) continue;
+            try {
+                const pdfBuffer = await fs.readFile(filePath);
+                const fileNameSafe =
+                    `${handout.courseCode}_${handout.courseName}`
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "_")
+                        .toLowerCase();
+                zip.file(
+                    `${handout.category.toLowerCase()}_handouts/${fileNameSafe}.pdf`,
+                    pdfBuffer
+                );
+            } catch (err) {
+                logger.error(
+                    `Failed to download or zip handout file: ${filePath}\n${(err as Error)?.stack}`
+                );
+            }
+        }
 
         const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
