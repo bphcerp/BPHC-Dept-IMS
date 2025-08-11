@@ -13,7 +13,7 @@ jobs:
       - name: Deploy to production
         run: |
           cd /home/ubuntu
-          cd bphcerp/Erp
+          cd bphcerp/ERP
           git pull
           docker compose --profile prod up --build -d
           docker compose exec server-prod pnpm db:migrate
