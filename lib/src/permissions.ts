@@ -107,6 +107,7 @@ export const allPermissions = {
 
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
+    "publications:export": "Export Publications",
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
@@ -292,13 +293,15 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/handout/dcaconvenor/getAllFaculty":
         "handout:dca-convenor:get-all-faculty",
+
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
     "/publications/all": "publications:all",
     "/publications/updateStatus": "publications:view",
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
-
+    "/publications/export": "publications:export",
+    
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",
