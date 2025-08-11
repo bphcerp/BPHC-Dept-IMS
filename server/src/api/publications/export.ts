@@ -3,7 +3,8 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { Router } from "express";
-import { eq, getTableColumns, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
+import { publicationsSchemas } from "lib";
 import environment from "@/config/environment.ts";
 import ExcelJS from "exceljs";
 import { publicationsTable } from "@/config/db/schema/publications.ts";
@@ -27,15 +28,7 @@ router.post(
         const {
             citIDs,
             columnsVisible,
-        }: { citIDs: string[]; columnsVisible: string[] } = req.body;
-
-        if (!citIDs?.length || !columnsVisible?.length) {
-            res.status(400).json({
-                error: "pubIDs and columnsVisible are required arrays.",
-            });
-            return;
-        }
-
+        } = publicationsSchemas.exportPublicationSchema.parse(req.body);
 
         const items = await db
             .select()
