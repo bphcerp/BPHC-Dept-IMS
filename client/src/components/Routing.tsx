@@ -89,6 +89,7 @@ import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
 import AllocationLayout from "@/layouts/Allocation";
+import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -564,9 +565,21 @@ const Routing = () => {
               index
               element={<Navigate to={checkAccess("allocation:write") ? "/allocation/ongoing" : "/allocation/personal"} replace={true} />}
             />
-            <Route path="ongoing" element={<div />} />
+            {
+              checkAccess("allocation:write") && (
+                <>
+                  <Route path="ongoing" element={<AllocationOverview />} />
+                  <Route path="responses" element={<div />} />
+                </>
+              )
+            }
+
+            {checkAccess("allocation:data:archive") && <Route path="archive" element={<div />} />}
+
+            {checkAccess("allocation:form:view") && <Route path="submit" element={<div />} />}
+
             <Route path="personal" element={<div />} />
-            <Route path="history" element={<div />} />
+
           </Route>
         )}
 

@@ -153,10 +153,12 @@ export const allPermissions = {
     "allocation:view": "View current semester's allocation data",
 
     "allocation:form:write": "Create or Modify a new form for allocation data retrieval",
+    "allocation:form:publish": "Publish a form for allocation data retrieval",
+    "allocation:form:close": "Close a form for allocation data retrieval",
     "allocation:form:view": "View allocation data retrieval form",
 
     "allocation:data:export": "Export allocation data",
-    "allocation:data:history": "View data of all semesters upto date"
+    "allocation:data:archive": "View data of all semesters upto date"
 
 } as const;
 

@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { ClockArrowDownIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
+import { ClockArrowDownIcon, MessageSquareReplyIcon, SendIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
@@ -7,25 +7,42 @@ const AllocationLayout = () => {
     <>
       <AppSidebar
         items={[
+          // This section should be visible to all users with allocation write permissions
           {
-            title: "Course Allocation",
+            title: 'Admin Control',
             items: [
               {
-                title: "Ongoing Allocation",
+                title: "Overview",
                 icon: <ClockArrowDownIcon />,
                 url: "/allocation/ongoing",
                 requiredPermissions: ["allocation:write"]
               },
               {
+                title: "Responses",
+                icon: <MessageSquareReplyIcon />,
+                url: "/allocation/responses",
+                requiredPermissions: ["allocation:write"]
+              },
+              {
                 title: "Archive",
                 icon: <SquareStackIcon />,
-                url: "/allocation/history",
+                url: "/allocation/archive",
                 requiredPermissions: ["allocation:data:history"],
-              },
+              }
+            ]
+          },
+          {
+            title: "Course Allocation",
+            items: [
               {
                 title: "Your Allocations",
                 icon: <UserRoundIcon />,
                 url: "/allocation/personal",
+              },
+              {
+                title: "Submit Your Preferences",
+                icon: <SendIcon />,
+                url: "/allocation/submit",
               },
             ],
           },
