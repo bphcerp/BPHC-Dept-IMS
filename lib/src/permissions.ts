@@ -144,6 +144,20 @@ export const allPermissions = {
     "wilp:project:deselect": "Remove selected WILP projects",
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
+
+    // Course Load Allocation module permissions
+    "allocation:settings:start": "Start a new course load allocation",
+    "allocation:settings:end": "End the current course load allocation",
+
+    "allocation:write": "Create or Modify a new allocation",
+    "allocation:view": "View current semester's allocation data",
+
+    "allocation:form:write": "Create or Modify a new form for allocation data retrieval",
+    "allocation:form:view": "View allocation data retrieval form",
+
+    "allocation:data:export": "Export allocation data",
+    "allocation:data:history": "View data of all semesters upto date"
+
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -301,7 +315,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
-    
+
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",
