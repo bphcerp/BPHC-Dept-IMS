@@ -4,9 +4,7 @@ import updateSem from "./updateSem.ts";
 import deleteSem from "./deleteSem.ts";
 import qualifyingExams from "./qualifyingExams.ts";
 import getLatestSem from "./getLatestSem.ts";
-// import updateProposalDeadline from "./updateProposalDeadline.ts";
 import updateQualifyingExam from "./updateQualifyingExam.ts";
-import getSubAreas from "./getSubAreas.ts";
 import insertSubArea from "./insertSubArea.ts";
 import deleteSubArea from "./deleteSubArea.ts";
 import notifyAllUsers from "./notifyAllUsers.ts";
@@ -21,9 +19,6 @@ router.use("/getLatestSem", getLatestSem);
 router.use("/qualifyingExams", qualifyingExams);
 router.use("/updateQualifyingExam", updateQualifyingExam);
 
-// router.use("/updateProposalDeadline", updateProposalDeadline);
-
-router.use("/getSubAreas", getSubAreas);
 router.use("/insertSubArea", insertSubArea);
 router.use("/deleteSubArea", deleteSubArea);
 

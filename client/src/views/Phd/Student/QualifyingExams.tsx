@@ -5,8 +5,13 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import QualifyingExamApplication from "@/components/phd/QualifyingExamApplication";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import QualifyingExamApplication from "@/components/phd/StudentQualifyingExam/QualifyingExamApplication";
 import { toast } from "sonner";
 
 interface QualifyingExam {
@@ -45,7 +50,11 @@ const QualifyingExams = () => {
   const [selectedExam, setSelectedExam] = useState<QualifyingExam | null>(null);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
 
-  const { data: examsData, isLoading: isLoadingExams, refetch: refetchExams } = useQuery({
+  const {
+    data: examsData,
+    isLoading: isLoadingExams,
+    refetch: refetchExams,
+  } = useQuery({
     queryKey: ["phd-student-qualifying-exams"],
     queryFn: async () => {
       const response = await api.get<{
@@ -56,7 +65,11 @@ const QualifyingExams = () => {
     },
   });
 
-  const { data: applicationsData, isLoading: isLoadingApplications, refetch: refetchApplications } = useQuery({
+  const {
+    data: applicationsData,
+    isLoading: isLoadingApplications,
+    refetch: refetchApplications,
+  } = useQuery({
     queryKey: ["phd-student-application-status"],
     queryFn: async () => {
       const response = await api.get<{
@@ -100,7 +113,7 @@ const QualifyingExams = () => {
     const existingApplication = applicationsData?.applications?.find(
       (app) => app.examId === exam.id
     );
-    
+
     if (existingApplication) {
       toast.error("You have already submitted an application for this exam");
       return;
@@ -128,8 +141,10 @@ const QualifyingExams = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12">
-      <h1 className="mb-8 text-center text-3xl font-bold">PhD Qualifying Exams</h1>
-      
+      <h1 className="mb-8 text-center text-3xl font-bold">
+        PhD Qualifying Exams
+      </h1>
+
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Available Exams */}
         <Card>
@@ -140,11 +155,12 @@ const QualifyingExams = () => {
             {examsData?.exams?.length ? (
               <div className="space-y-4">
                 {examsData.exams.map((exam) => {
-                  const isDeadlinePassed = new Date(exam.submissionDeadline) < new Date();
+                  const isDeadlinePassed =
+                    new Date(exam.submissionDeadline) < new Date();
                   const hasApplied = applicationsData?.applications?.some(
                     (app) => app.examId === exam.id
                   );
-                  
+
                   return (
                     <div
                       key={exam.id}
@@ -152,13 +168,18 @@ const QualifyingExams = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold">{exam.examName}</h3>
+                          <h3 className="text-lg font-semibold">
+                            {exam.examName}
+                          </h3>
                           <p className="text-sm text-gray-600">
-                            {exam.semester.year} - Semester {exam.semester.semesterNumber}
+                            {exam.semester.year} - Semester{" "}
+                            {exam.semester.semesterNumber}
                           </p>
                           <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
                             <div>
-                              <span className="font-medium">Registration Deadline:</span>{" "}
+                              <span className="font-medium">
+                                Registration Deadline:
+                              </span>{" "}
                               {formatDate(exam.submissionDeadline)}
                             </div>
                             <div>
@@ -235,17 +256,22 @@ const QualifyingExams = () => {
                   <tbody>
                     {applicationsData.applications.map((application) => (
                       <tr key={application.id}>
-                        <td className="border px-4 py-2">{application.examName}</td>
                         <td className="border px-4 py-2">
-                          {application.semester.year} - Semester {application.semester.semesterNumber}
+                          {application.examName}
+                        </td>
+                        <td className="border px-4 py-2">
+                          {application.semester.year} - Semester{" "}
+                          {application.semester.semesterNumber}
                         </td>
                         <td className="border px-4 py-2">
                           <div className="space-y-1">
                             <div className="text-sm">
-                              <span className="font-medium">Area 1:</span> {application.qualifyingArea1}
+                              <span className="font-medium">Area 1:</span>{" "}
+                              {application.qualifyingArea1}
                             </div>
                             <div className="text-sm">
-                              <span className="font-medium">Area 2:</span> {application.qualifyingArea2}
+                              <span className="font-medium">Area 2:</span>{" "}
+                              {application.qualifyingArea2}
                             </div>
                           </div>
                         </td>
@@ -275,12 +301,13 @@ const QualifyingExams = () => {
       </div>
 
       {/* Application Dialog */}
-      <Dialog open={showApplicationDialog} onOpenChange={setShowApplicationDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <Dialog
+        open={showApplicationDialog}
+        onOpenChange={setShowApplicationDialog}
+      >
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Apply for {selectedExam?.examName}
-            </DialogTitle>
+            <DialogTitle>Apply for {selectedExam?.examName}</DialogTitle>
           </DialogHeader>
           {selectedExam && (
             <QualifyingExamApplication

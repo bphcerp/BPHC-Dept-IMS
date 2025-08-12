@@ -23,11 +23,14 @@ export const allPermissions = {
     "conference:application:set-flow":
         "Set conference application approval flow",
 
+    // PhD
+
     "phd:staff:manage-semesters": "Manage PhD semesters",
     "phd:staff:manage-qe": "Manage PhD qualifying exams",
-    "phd:student:apply-qe": "Apply for PhD qualifying exams",
-    "phd:student:view-qe": "View PhD qualifying exams",
     "phd:staff:manage-subareas": "Manage PhD subareas",
+
+    "phd:student:qe": "PhD scholar qualifying exams",
+
     "phd:drc:qe": "DRC Member operations on qualifying exams",
 
     "handout:faculty:submit": "Submit handout for review",
@@ -138,19 +141,20 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd/staff/qualifyingExams": "phd:staff:manage-qe",
     "/phd/staff/updateQualifyingExam": "phd:staff:manage-qe",
-    "/phd/student/getQualifyingExams": "phd:student:view-qe",
-    "/phd/student/uploadQeApplicationForm": "phd:student:apply-qe",
-    "/phd/student/getQualifyingExamStatus": "phd:student:view-qe",
-    "/phd/student/getSubAreas": "phd:student:apply-qe",
     "/phd/staff/notifyAllUsers": "phd:staff:manage-qe",
 
-    "/phd/staff/getSubAreas": "phd:staff:manage-subareas",
     "/phd/staff/insertSubArea": "phd:staff:manage-subareas",
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
+
+    "/phd/student/getQualifyingExams": "phd:student:qe",
+    "/phd/student/uploadQeApplicationForm": "phd:student:qe",
+    "/phd/student/getQualifyingExamStatus": "phd:student:qe",
 
     "/phd/drcMember/getAvailableExams": "phd:drc:qe",
     "/phd/drcMember/updateApplicationStatus": "phd:drc:qe",
     "/phd/drcMember/getQualifyingExamApplications": "phd:drc:qe",
+    "/phd/drcMember/getVerifiedApplications": "phd:drc:qe",
+    "/phd/drcMember/generateForms": "phd:drc:qe",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
@@ -179,7 +183,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
-    
+
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",

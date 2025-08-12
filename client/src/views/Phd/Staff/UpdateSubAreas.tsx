@@ -15,7 +15,7 @@ const UpdateSubAreas: React.FC = () => {
     queryKey: ["phd-sub-areas"],
     queryFn: async () => {
       const response = await api.get<{ subAreas: string[] }>(
-        "/phd/staff/getSubAreas"
+        "/phd/getSubAreas"
       );
       return response.data;
     },

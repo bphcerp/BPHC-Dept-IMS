@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import UpdateQualifyingExamDeadline from "../../../components/phd/UpdateQualifyingExamDeadline";
+import UpdateQualifyingExamDeadline from "../../../components/phd/StaffQualifyingExamDeadline";
 // import UpdateProposalDeadline from "../../../components/phd/UpdateProposalDeadline";
 
 interface Deadline {

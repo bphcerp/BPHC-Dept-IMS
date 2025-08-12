@@ -10,7 +10,7 @@ import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
-import PhdLayout from "@/layouts/Phd/Phd";
+import PhdLayout from "@/layouts/Phd";
 import { allPermissions, permissions } from "lib";
 import {
   BookOpen,
@@ -19,7 +19,7 @@ import {
   GraduationCap,
   LibraryBig,
   Warehouse,
-  File
+  File,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -32,7 +32,7 @@ import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
-import QualifyingExamManagement from "@/views/Phd/QualifyingExamManagement";
+import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -340,30 +340,37 @@ const Routing = () => {
 
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
-            {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-              <Route path="staff" element={<Outlet />}>
+            <Route path="staff" element={<Outlet />}>
+              {checkAccess(permissions["/phd/staff/getAllSem"]) && (
                 <Route
                   path="update-semester-dates"
                   element={<UpdateSemesterDates />}
                 />
+              )}
+              {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
                 <Route
                   path="update-deadlines"
                   element={<UpdateDeadlinesPage />}
                 />
+              )}
+              {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
                 <Route
                   path="update-subareas"
                   element={<UpdateSubAreasPage />}
                 />
-              </Route>
-            )}
+              )}
+            </Route>
             {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
               <Route path="phd-student" element={<Outlet />}>
                 <Route path="qualifying-exams" element={<QualifyingExams />} />
               </Route>
             )}
-            {checkAccess(permissions["/phd/drcMember/getPhdDataOfWhoFilledApplicationForm"]) && (
+            {checkAccess(permissions["/phd/drcMember/getAvailableExams"]) && (
               <Route path="drc-convenor" element={<Outlet />}>
-                <Route path="qualifying-exam-management" element={<QualifyingExamManagement />} />
+                <Route
+                  path="qualifying-exam-management"
+                  element={<QualifyingExamManagement />}
+                />
               </Route>
             )}
           </Route>

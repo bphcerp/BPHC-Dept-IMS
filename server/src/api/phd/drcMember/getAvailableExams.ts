@@ -2,7 +2,6 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { phdSemesters } from "@/config/db/schema/phd.ts";
 
 const router = express.Router();
 
@@ -27,11 +26,6 @@ export default router.get(
                 submissionDeadline: true,
                 vivaDate: true,
             },
-            orderBy: (table, { desc }) => [
-                desc(phdSemesters.year),
-                desc(phdSemesters.semesterNumber),
-                desc(table.createdAt),
-            ],
         });
 
         res.status(200).json({
