@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, production]
+
+jobs:
+  lint-and-compile:
+    name: Lint and Type Check
+    runs-on: eee-ims
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build server (TypeScript compilation)
+        run: pnpm --filter server tsc --build
+
+      - name: Build client (TypeScript + Vite)
+        run: pnpm --filter client run build

@@ -44,7 +44,7 @@ export interface Handout {
   numberOfLP: boolean;
   evaluationScheme: boolean;
   handoutFilePath: {
-    fileId: string;
+    id: string;
   };
   comments: string;
 }
@@ -236,7 +236,7 @@ const DCAMemberReviewForm: React.FC = () => {
       </p>
       <div className="flex space-x-1">
         <iframe
-          src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}
+          src={`${BASE_API_URL}f/${data.handoutFilePath.id}`}
           className="my-2 h-[90vh] max-h-[550px] w-full self-center"
         ></iframe>
         <form

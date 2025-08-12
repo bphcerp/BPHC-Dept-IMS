@@ -153,7 +153,7 @@ const DCAConvenorReview: React.FC = () => {
       </p>
       <div className="flex space-x-4">
         <iframe
-          src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}
+          src={`${BASE_API_URL}f/${data.handoutFilePath.id}`}
           className="my-2 h-[90vh] max-h-[550px] w-full self-center"
         ></iframe>
         <div className="w-full scale-90 space-y-4">

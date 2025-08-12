@@ -43,6 +43,11 @@ export const publicationQuerySchema = z.object({
     authorId: z.string(),
 });
 
+export const exportPublicationSchema = z.object({
+    citIDs: z.array(z.string()).nonempty("At least one row must be selected."),
+    columnsVisible: z.array(z.string()).nonempty("At least one column must be visible.")
+});
+
 export const publicationResponseSchema = z.object({
     publications: z.array(PublicationWithCoAuthorsSchema),
 });
