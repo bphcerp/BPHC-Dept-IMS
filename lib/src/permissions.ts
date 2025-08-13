@@ -149,8 +149,12 @@ export const allPermissions = {
     "allocation:settings:start": "Start a new course load allocation",
     "allocation:settings:end": "End the current course load allocation",
 
-    "allocation:write": "Create or Modify a new allocation",
-    "allocation:view": "View current semester's allocation data",
+    "allocation:courses:write": "Create or Modify a new course",
+    "allocation:courses:bulk-add": "Create or Modify a new course",
+    "allocation:courses:view": "View all existing courses",
+
+    "allocation:write": "Have read and write access to the allocation module",
+    "allocation:view": "Have readonly access to the allocation module",
 
     "allocation:form:write": "Create or Modify a new form for allocation data retrieval",
     "allocation:form:publish": "Publish a form for allocation data retrieval",

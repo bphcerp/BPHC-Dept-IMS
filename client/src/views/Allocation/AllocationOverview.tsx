@@ -1,40 +1,39 @@
+// TODO: Fetch data from the server, remove hardcoded values, and implement the logic for the buttons
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/Auth";
 import { AlertCircleIcon } from "lucide-react";
 
 export const AllocationOverview = () => {
-
-  const { checkAccess } = useAuth();
 
   return (
     <div className="courseAllocationOverviewRootContainer p-4 flex flex-col space-y-8">
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-primary">Course Load Allocation Overview</h1>
         <div className="flex space-x-2">
-          {<Button>New Semester</Button> /* TODO: check if an allocation is already in progress */}
-          <Button variant='secondary'>Send Reminder</Button> { /* TODO: check if there are pending responses*/}
+          {<Button><a href="ongoing/new">New Semester</a></Button> /* TODO: check if an allocation is already in progress, this button should not show if thats the case */}
+          <Button variant='secondary'>Send Reminder</Button> { /* TODO: check if there are pending responses, this button should not show if all responses have been received or the allocation deadline has been reached*/}
         </div>
       </header>
+      {/* TODO: check for allocation in progress here */}
       {true ? <><section className="allocationStatsPanel">
         <h2 className="text-xl font-semibold mb-2 text-primary">Stats</h2>
-        <div className="grid grid-cols-3 gap-8">
-          <div className="border border-primary rounded-xl h-36 flex flex-col justify-center items-center">
-            <span className="block text-base text-muted-foreground mb-2">Time Remaining</span>
-            <span className="block text-4xl font-extrabold tracking-wide">02:15:00</span>
+        <div className="grid grid-cols-3 gap-8 h-36">
+          <div className="border border-primary rounded-xl flex flex-col justify-center items-center space-y-2">
+            <span>Time Remaining</span>
+            <span className="text-4xl font-extrabold">02:15:00</span>
           </div>
-          <div className="border border-primary rounded-xl h-36 flex flex-col justify-center items-center">
-            <span className="block text-base text-muted-foreground mb-2">Responses</span>
-            <span className="block text-4xl font-extrabold tracking-wide text-green-600">12</span>
+          <div className="border border-primary rounded-xl flex flex-col justify-center items-center space-y-2">
+            <span>Responses</span>
+            <span className="text-4xl font-extrabold text-green-600">12</span>
           </div>
-          <div className="border border-primary rounded-xl h-36 flex flex-col justify-center items-center">
-            <span className="block text-base text-muted-foreground mb-2">Pending</span>
-            <span className="block text-4xl font-extrabold tracking-wide text-red-600">5</span>
+          <div className="border border-primary rounded-xl flex flex-col justify-center items-center space-y-2">
+            <span>Pending</span>
+            <span className="text-4xl font-extrabold text-red-600">5</span>
           </div>
         </div>
       </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-2 text-primary">Semester Details</h2>
+          <h2 className="text-xl font-semibold mb-2 text-primary">Current Semester Details</h2>
           <h2 className="text-sm mb-2 text-primary italic">At the time of the allocation</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-base font-medium text-muted-foreground">
             <div>

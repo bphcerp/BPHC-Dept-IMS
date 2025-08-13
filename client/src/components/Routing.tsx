@@ -90,6 +90,7 @@ import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
 import AllocationLayout from "@/layouts/Allocation";
 import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
+import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -559,6 +560,8 @@ const Routing = () => {
           </Route>
         )}
 
+
+        {/* TODO: use the permissions array (permissions based on the api routes the page is going to be using) instead of harcoded permissions */}
         {checkAccessAnyOne(courseLoadAllocationModulePermissions) && (
           <Route path="/allocation" element={<AllocationLayout />}>
             <Route
@@ -569,14 +572,19 @@ const Routing = () => {
               checkAccess("allocation:write") && (
                 <>
                   <Route path="ongoing" element={<AllocationOverview />} />
+                  <Route path="ongoing/new" element={<RegisterNewSemester />} />
                   <Route path="responses" element={<div />} />
                 </>
               )
             }
 
-            {checkAccess("allocation:data:archive") && <Route path="archive" element={<div />} />}
+            {checkAccessAnyOne(["allocation:courses:write", "allocation:write"]) && (
+              <Route path="courses" element={<div />} />
+            )}
 
-            {checkAccess("allocation:form:view") && <Route path="submit" element={<div />} />}
+            {checkAccessAnyOne(["allocation:data:archive", "allocation:write"]) && <Route path="archive" element={<div />} />}
+
+            {checkAccessAnyOne(["allocation:form:view", "allocation:write"]) && <Route path="submit" element={<div />} />}
 
             <Route path="personal" element={<div />} />
 
