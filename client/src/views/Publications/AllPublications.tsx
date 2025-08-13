@@ -24,6 +24,7 @@ type Publication = {
   journal: string;
   volume: string | null;
   issue: string | null;
+  month: string,
   year: string;
   link: string;
   citations: string;
@@ -115,6 +116,9 @@ const AllPublications = () => {
       accessorKey: "title",
       header: "Title",
       cell: (info) => <div>{info.getValue() as string}</div>,
+      meta : {
+        filterType: "search"
+      }
     },
     {
       accessorKey: "type",
@@ -134,6 +138,13 @@ const AllPublications = () => {
     {
       accessorKey: "issue",
       header: "Issue",
+    },
+    {
+      accessorKey: "month",
+      header: "Month",
+      meta : {
+        filterType: "multiselect"
+      }
     },
     {
       accessorKey: "year",
@@ -162,9 +173,6 @@ const AllPublications = () => {
     {
       accessorKey: "authorNames",
       header: "Author Names",
-      meta : {
-        filterType: "search"
-      }
     }
   ];
 
@@ -235,7 +243,7 @@ const AllPublications = () => {
                           {", "} &quot;{pub.title}
                           ,&quot; <em>{pub.journal}</em>
                           {pub.volume && `, vol. ${pub.volume}`}
-                          {pub.issue && `, no. ${pub.issue}`}, {pub.year}.
+                          {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : '' }{pub.year}.
                         </p>
                       );
                     })}
@@ -278,7 +286,7 @@ const AllPublications = () => {
                           : undefined
                       }
                     columns={columns}
-                    mainSearchColumn="title"
+                    mainSearchColumn="authorNames"
                   />
                 )
               );

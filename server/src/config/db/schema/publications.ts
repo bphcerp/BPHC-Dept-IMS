@@ -1,4 +1,20 @@
-import { pgTable, primaryKey, text, boolean } from "drizzle-orm/pg-core";
+import { pgTable, primaryKey, text, boolean, pgEnum } from "drizzle-orm/pg-core";
+
+
+export const monthEnum = pgEnum("month", [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]) 
 
 export const publicationsTable = pgTable("publications", {
     title: text("title").notNull(),
@@ -6,6 +22,7 @@ export const publicationsTable = pgTable("publications", {
     journal: text("journal"),
     volume: text("volume"),
     issue: text("issue"),
+    month: monthEnum("month"),
     year: text("year"),
     link: text("link"),
     citations: text("citations"),

@@ -27,6 +27,7 @@ router.patch(
                 title: parsed.title,
                 type: parsed.type,
                 journal: parsed.journal,
+                month: parsed.month,
                 year: parsed.year,
                 volume: parsed.volume,
                 issue: parsed.issue,
