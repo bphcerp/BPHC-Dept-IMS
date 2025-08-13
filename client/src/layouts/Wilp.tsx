@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { FileText, FileSpreadsheet, Mail } from "lucide-react";
+import { FileText, FileSpreadsheet, Mail, ChartArea } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
@@ -34,6 +34,12 @@ const WilpLayout = () => {
                 icon: <Mail />,
                 url: "/wilp/send-mail",
                 requiredPermissions: [permissions["/wilpProject/mail"]],
+              },
+              {
+                title: "View Stats",
+                icon: <ChartArea />,
+                url: "/wilp/view-stats",
+                requiredPermissions: [permissions["/wilpProject/stats"]],
               },
             ],
           },

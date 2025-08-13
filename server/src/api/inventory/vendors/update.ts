@@ -19,7 +19,7 @@ router.patch(
         const parsed = vendorSchema.partial().parse(req.body);
         const updatedVendor = await db
             .update(vendors)
-            .set(parsed)
+            .set({ ...parsed, updatedAt: new Date() })
             .where(eq(vendors.id, req.params.id))
             .returning();
 

@@ -263,7 +263,7 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
                   <li>• discipline (<span className="text-red-600">required</span>)</li>
                   <li>• student name (<span className="text-red-600">required</span>)</li>
                   <li>• Employing Organization (<span className="text-red-600">required</span>)</li>
-                  <li>• Degree Program (<span className="text-red-600">required</span>, must match allowed values)</li>
+                  <li>• Degree Program (<span className="text-red-600">required</span>)</li>
                   <li>• Research Area (<span className="text-red-600">required</span>)</li>
                   <li>• Dissertation Title (<span className="text-red-600">required</span>)</li>
                 </ul>

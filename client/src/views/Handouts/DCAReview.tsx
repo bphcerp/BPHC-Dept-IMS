@@ -44,7 +44,7 @@ export interface Handout {
   numberOfLP: boolean;
   evaluationScheme: boolean;
   handoutFilePath: {
-    fileId: string;
+    id: string;
   };
   comments: string;
 }
@@ -93,12 +93,15 @@ const DCAMemberReviewForm: React.FC = () => {
     if (!allHandouts) return;
 
     const pendingHandouts = allHandouts.filter(
-      (handout) =>
-        handout.status === "review pending" && handout.id !== handoutId
+      (handout) => handout.status === "review pending"
     );
 
-    if (pendingHandouts.length > 0) {
-      navigate(`/handout/dca/review/${pendingHandouts[0].id}`);
+    const ind = pendingHandouts.findIndex((handout) => handout.id == handoutId);
+
+    if (pendingHandouts.length > 1) {
+      navigate(
+        `/handout/dca/review/${pendingHandouts[(ind + 1) % pendingHandouts.length].id}`
+      );
       toast.success("Navigated to next pending handout");
     } else {
       navigate("/handout/dca");
@@ -233,7 +236,7 @@ const DCAMemberReviewForm: React.FC = () => {
       </p>
       <div className="flex space-x-1">
         <iframe
-          src={`${BASE_API_URL}f/${data.handoutFilePath.fileId}`}
+          src={`${BASE_API_URL}f/${data.handoutFilePath.id}`}
           className="my-2 h-[90vh] max-h-[550px] w-full self-center"
         ></iframe>
         <form

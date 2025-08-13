@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { fileFields, files } from "@/config/db/schema/form.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
@@ -54,20 +54,10 @@ router.post(
                 })
                 .returning();
 
-            const insertedFileField = await tx
-                .insert(fileFields)
-                .values({
-                    module: modules[1],
-                    userEmail: req.user.email,
-                    fileId: insertedFile[0].id,
-                    fieldName: "handout",
-                })
-                .returning();
-
             const handouts = await tx
                 .update(courseHandoutRequests)
                 .set({
-                    handoutFilePath: insertedFileField[0].id,
+                    handoutFilePath: insertedFile[0].id,
                     openBook,
                     midSem,
                     compre,

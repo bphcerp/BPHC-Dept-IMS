@@ -1,6 +1,6 @@
 {
-  "id": "fdf9bcb1-103d-49c0-ac20-0cfde7121e70",
-  "prevId": "12470208-a8ed-475f-91c6-5ce20b4f85c5",
+  "id": "45fbd7fa-a191-4882-9053-4e5e94eb6fb0",
+  "prevId": "d46acc9b-e548-4b77-8b13-2daa55481c09",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2098,10 +2098,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "course_handout_requests_handout_file_path_file_fields_id_fk": {
-          "name": "course_handout_requests_handout_file_path_file_fields_id_fk",
+        "course_handout_requests_handout_file_path_files_id_fk": {
+          "name": "course_handout_requests_handout_file_path_files_id_fk",
           "tableFrom": "course_handout_requests",
-          "tableTo": "file_fields",
+          "tableTo": "files",
           "columnsFrom": [
             "handout_file_path"
           ],
@@ -4279,7 +4279,7 @@
         "review pending",
         "reviewed",
         "approved",
-        "rejected",
+        "revision requested",
         "notsubmitted"
       ]
     },

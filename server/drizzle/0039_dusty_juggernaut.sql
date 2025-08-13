@@ -1,2 +1,0 @@
-CREATE TYPE "public"."month" AS ENUM('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');--> statement-breakpoint
-ALTER TABLE "publications" ADD COLUMN "month" "month";

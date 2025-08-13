@@ -13,7 +13,7 @@ export interface Handout {
 export const handoutStatuses = [
   "review pending",
   "approved",
-  "rejected",
+  "revision requested",
   "reviewed",
   "notsubmitted",
 ];
@@ -21,7 +21,7 @@ export const handoutStatuses = [
 export const STATUS_COLORS: Record<string, string> = {
   "review pending": "text-yellow-600",
   approved: "text-green-600",
-  rejected: "text-red-600",
+  "revision requested": "text-red-600",
   reviewed: "text-blue-600",
   notsubmitted: "text-gray-600",
 };

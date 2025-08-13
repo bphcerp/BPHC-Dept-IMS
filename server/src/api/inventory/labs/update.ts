@@ -28,7 +28,7 @@ router.patch(
         const parsed = laboratorySchema.partial().parse(req.body);
         const updatedLab = await db
             .update(laboratories)
-            .set(parsed)
+            .set({ ...parsed, updatedAt: new Date() })
             .where(eq(laboratories.id, req.params.id))
             .returning();
         res.status(200).json(updatedLab);
