@@ -3,7 +3,7 @@ import api from "@/lib/axios-instance";
 import { useState,useMemo } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { Select, SelectValue, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Table,
