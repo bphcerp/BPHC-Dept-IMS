@@ -5,6 +5,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -35,7 +36,7 @@ interface QualifyingExam {
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
   const editorTheme = useTheme();
-  
+
   const [examForm, setExamForm] = useState({
     examName: "Regular Qualifying Exam",
     submissionDeadline: "",
@@ -101,12 +102,12 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
       // Set up default email template
       setEmailSubject("New Regular Qualifying Exam Deadline Announced");
-      
+
       const deadlineDate = new Date(data.exam.submissionDeadline).toLocaleString();
       const examStartDate = new Date(data.exam.examStartDate).toLocaleString();
       const examEndDate = new Date(data.exam.examEndDate).toLocaleString();
       const vivaDate = data.exam.vivaDate ? new Date(data.exam.vivaDate).toLocaleString() : "N/A";
-      
+
       const defaultEmailBody = `# New PhD Qualifying Exam Deadline Announced
 
 We are pleased to announce that a new **Regular Qualifying Exam** deadline has been set.
@@ -168,7 +169,7 @@ PhD Department`;
 
   const handleSendEmail = () => {
     if (!createdExamDates) return;
-    
+
     emailMutation.mutate({
       subject: emailSubject,
       body: emailBody,
@@ -233,154 +234,163 @@ PhD Department`;
     });
   };
 
+  if (isLoadingCurrentSemester) {
+    return (
+      <div className="flex justify-center py-8">
+        <LoadingSpinner className="h-8 w-8" />
+      </div>
+    );
+  }
+
+  if (!currentSemesterData?.semester) {
+    return (
+      <Card>
+        <CardContent className="p-12">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Semester Configuration</h3>
+            <p className="text-gray-500">No semester configuration found. Please contact the system administrator.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
-      <div className="flex min-h-screen w-full flex-col items-center bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-xl">
-          <div className="border-b border-gray-200 bg-gray-100 px-6 py-4">
-            <h1 className="text-center text-3xl font-bold text-gray-800">
-              Qualifying Exam Deadline Management
-            </h1>
-          </div>
-          {isLoadingCurrentSemester ? (
-            <div className="flex h-64 items-center justify-center">
-              <LoadingSpinner className="h-12 w-12" />
-            </div>
-          ) : currentSemesterData?.semester ? (
-            <div className="grid gap-6 p-6 md:grid-cols-2">
-              {}
-              <div className="space-y-4 rounded-lg bg-gray-50 p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">
-                    Current Academic Semester
-                  </h2>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium`}
-                  >
-                    Latest
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">
-                    {currentSemesterData.semester.year}-Semester{" "}
-                    {currentSemesterData.semester.semesterNumber}
-                  </p>
-                  <div className="text-sm text-gray-500">
-                    <div>
-                      Start:{" "}
-                      {formatDate(currentSemesterData.semester.startDate)}
-                    </div>
-                    <div>
-                      End: {formatDate(currentSemesterData.semester.endDate)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {}
+      <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Current Academic Semester</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
               <div>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label>Exam Name:</Label>
-                    <div className="font-bold">Regular Qualifying Exam</div>
-                  </div>
-                  <div>
-                    <Label htmlFor="submissionDeadline">Registration Deadline</Label>
-                    <Input
-                      id="submissionDeadline"
-                      type="datetime-local"
-                      value={examForm.submissionDeadline}
-                      onChange={(e) =>
-                        setExamForm({ ...examForm, submissionDeadline: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="examStartDate">Exam Start Date</Label>
-                    <Input
-                      id="examStartDate"
-                      type="datetime-local"
-                      value={examForm.examStartDate}
-                      onChange={(e) =>
-                        setExamForm({
-                          ...examForm,
-                          examStartDate: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="examEndDate">Exam End Date</Label>
-                    <Input
-                      id="examEndDate"
-                      type="datetime-local"
-                      value={examForm.examEndDate}
-                      onChange={(e) =>
-                        setExamForm({
-                          ...examForm,
-                          examEndDate: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="vivaDate">Viva Date</Label>
-                    <Input
-                      id="vivaDate"
-                      type="datetime-local"
-                      value={examForm.vivaDate}
-                      onChange={(e) =>
-                        setExamForm({ ...examForm, vivaDate: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={examMutation.isLoading}
-                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    {examMutation.isLoading ? (
-                      <LoadingSpinner className="h-5 w-5" />
-                    ) : (
-                      "Update Exam Deadline"
-                    )}
-                  </Button>
-                </form>
+                <h3 className="text-lg font-medium">
+                  {currentSemesterData.semester.year}-Semester{" "}
+                  {currentSemesterData.semester.semesterNumber}
+                </h3>
+                <div className="text-sm text-gray-600 mt-1">
+                  <div>Start: {formatDate(currentSemesterData.semester.startDate)}</div>
+                  <div>End: {formatDate(currentSemesterData.semester.endDate)}</div>
+                </div>
               </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Latest
+              </span>
             </div>
-          ) : (
-            <div className="p-8 text-center">
-              <p className="text-red-500">
-                No semester configuration found. Please contact the system
-                administrator.
-              </p>
-            </div>
-          )}
-          {}
-          <div className="border-t border-gray-200 bg-gray-50 p-6">
-            <h3 className="mb-4 text-lg font-medium">
-              Current Qualifying Exam Deadlines
-            </h3>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Update Exam Deadline</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <Label className="text-sm font-medium">Exam Name</Label>
+                <div className="font-medium text-gray-900 mt-1">Regular Qualifying Exam</div>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-3">
+                  <Label htmlFor="submissionDeadline" className="text-sm font-medium">Registration Deadline</Label>
+                  <Input
+                    id="submissionDeadline"
+                    type="datetime-local"
+                    value={examForm.submissionDeadline}
+                    onChange={(e) =>
+                      setExamForm({ ...examForm, submissionDeadline: e.target.value })
+                    }
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="examStartDate" className="text-sm font-medium">Exam Start Date</Label>
+                  <Input
+                    id="examStartDate"
+                    type="datetime-local"
+                    value={examForm.examStartDate}
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        examStartDate: e.target.value,
+                      })
+                    }
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="examEndDate" className="text-sm font-medium">Exam End Date</Label>
+                  <Input
+                    id="examEndDate"
+                    type="datetime-local"
+                    value={examForm.examEndDate}
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        examEndDate: e.target.value,
+                      })
+                    }
+                    required
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="vivaDate" className="text-sm font-medium">Viva Date</Label>
+                  <Input
+                    id="vivaDate"
+                    type="datetime-local"
+                    value={examForm.vivaDate}
+                    onChange={(e) =>
+                      setExamForm({ ...examForm, vivaDate: e.target.value })
+                    }
+                    required
+                    className="h-10"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                disabled={examMutation.isLoading}
+                className="bg-blue-600 text-white hover:bg-blue-700 h-10 px-6"
+              >
+                {examMutation.isLoading ? (
+                  <LoadingSpinner className="h-4 w-4" />
+                ) : (
+                  "Update Exam Deadline"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Current Qualifying Exam Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
             {isLoadingExams ? (
-              <div className="flex justify-center py-4">
-                <LoadingSpinner className="h-6 w-6" />
+              <div className="flex justify-center py-8">
+                <LoadingSpinner className="h-8 w-8" />
               </div>
             ) : examsData?.exams && examsData.exams.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border px-4 py-2 text-left">Exam Name</th>
-                      <th className="border px-4 py-2 text-left">
-                        Registration Deadline
-                      </th>
-                      <th className="border px-4 py-2 text-left">Exam Start</th>
-                      <th className="border px-4 py-2 text-left">Exam End</th>
-                      <th className="border px-4 py-2 text-left">Viva Date</th>
-                      <th className="border px-4 py-2 text-left">Status</th>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Exam Name</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Registration Deadline</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Exam Start</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Exam End</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Viva Date</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -388,27 +398,26 @@ PhD Department`;
                       const deadlineDate = new Date(exam.submissionDeadline);
                       const isActive = deadlineDate > new Date();
                       return (
-                        <tr key={exam.id}>
-                          <td className="border px-4 py-2">{exam.examName}</td>
-                          <td className="border px-4 py-2">
+                        <tr key={exam.id} className="border-b hover:bg-gray-50">
+                          <td className="px-4 py-3 text-gray-900">{exam.examName}</td>
+                          <td className="px-4 py-3 text-gray-900">
                             {formatDate(exam.submissionDeadline)}
                           </td>
-                          <td className="border px-4 py-2">
+                          <td className="px-4 py-3 text-gray-900">
                             {formatDate(exam.examStartDate)}
                           </td>
-                          <td className="border px-4 py-2">
+                          <td className="px-4 py-3 text-gray-900">
                             {formatDate(exam.examEndDate)}
                           </td>
-                          <td className="border px-4 py-2">
+                          <td className="px-4 py-3 text-gray-900">
                             {exam.vivaDate ? formatDate(exam.vivaDate) : "N/A"}
                           </td>
-                          <td className="border px-4 py-2">
+                          <td className="px-4 py-3">
                             <span
-                              className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                isActive
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActive
                                   ? "bg-green-100 text-green-800"
                                   : "bg-red-100 text-red-800"
-                              }`}
+                                }`}
                             >
                               {isActive ? "Active" : "Expired"}
                             </span>
@@ -420,13 +429,20 @@ PhD Department`;
                 </table>
               </div>
             ) : (
-              <p className="py-4 text-center text-gray-500">
-                No Regular Qualifying Exam deadlines set for this semester.
-              </p>
+              <div className="text-center py-8">
+                <div className="text-gray-500 mb-4">
+                  <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Deadlines Set</h3>
+                <p className="text-gray-500">No Regular Qualifying Exam deadlines set for this semester.</p>
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

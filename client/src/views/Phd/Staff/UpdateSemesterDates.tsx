@@ -93,19 +93,22 @@ const UpdateSemesterDates: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-center text-3xl font-bold">PhD Semester</h1>
-
       <div className="mx-auto max-w-6xl space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">PhD Semester Management</h1>
+          <p className="mt-2 text-gray-600">Create and manage academic semesters</p>
+        </div>
+
         {/* Create/Update Semester */}
         <Card>
           <CardHeader>
-            <CardTitle>Create/Update Semester</CardTitle>
+            <CardTitle className="text-xl font-semibold">Create/Update Semester</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSemesterSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <Label htmlFor="year">Academic Year</Label>
+            <form onSubmit={handleSemesterSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div className="space-y-3">
+                  <Label htmlFor="year" className="text-sm font-medium">Academic Year</Label>
                   <Input
                     id="year"
                     type="text"
@@ -114,10 +117,11 @@ const UpdateSemesterDates: React.FC = () => {
                       setSemesterForm({ ...semesterForm, year: e.target.value })
                     }
                     required
+                    className="h-10"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="semesterNumber">Semester Number</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="semesterNumber" className="text-sm font-medium">Semester Number</Label>
                   <Select
                     value={semesterForm.semesterNumber.toString()}
                     onValueChange={(value) =>
@@ -127,7 +131,7 @@ const UpdateSemesterDates: React.FC = () => {
                       })
                     }
                   >
-                    <SelectTrigger id="semesterNumber">
+                    <SelectTrigger id="semesterNumber" className="h-10">
                       <SelectValue placeholder="Select semester" />
                     </SelectTrigger>
                     <SelectContent>
@@ -136,8 +140,8 @@ const UpdateSemesterDates: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="startDate" className="text-sm font-medium">Start Date</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -149,10 +153,11 @@ const UpdateSemesterDates: React.FC = () => {
                       })
                     }
                     required
+                    className="h-10"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="endDate" className="text-sm font-medium">End Date</Label>
                   <Input
                     id="endDate"
                     type="date"
@@ -164,16 +169,17 @@ const UpdateSemesterDates: React.FC = () => {
                       })
                     }
                     required
+                    className="h-10"
                   />
                 </div>
               </div>
               <Button
                 type="submit"
                 disabled={semesterMutation.isLoading}
-                className="bg-blue-600 text-white hover:bg-blue-700"
+                className="bg-blue-600 text-white hover:bg-blue-700 h-10 px-6"
               >
                 {semesterMutation.isLoading ? (
-                  <LoadingSpinner className="h-5 w-5" />
+                  <LoadingSpinner className="h-4 w-4" />
                 ) : (
                   "Save Semester"
                 )}
@@ -185,54 +191,57 @@ const UpdateSemesterDates: React.FC = () => {
         {/* View Semesters */}
         <Card>
           <CardHeader>
-            <CardTitle>Academic Semesters</CardTitle>
+            <CardTitle className="text-xl font-semibold">Academic Semesters</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoadingSemesters ? (
-              <div className="flex justify-center py-4">
+              <div className="flex justify-center py-8">
                 <LoadingSpinner className="h-8 w-8" />
               </div>
             ) : semestersData?.semesters?.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border px-4 py-2 text-left">Year</th>
-                      <th className="border px-4 py-2 text-left">Semester</th>
-                      <th className="border px-4 py-2 text-left">Start Date</th>
-                      <th className="border px-4 py-2 text-left">End Date</th>
-                      <th className="border px-4 py-2 text-left">Qualifying Exams</th>
-                      <th className="border px-4 py-2">Actions</th>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Year</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Semester</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Start Date</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">End Date</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Qualifying Exams</th>
+                      <th className="px-4 py-3 text-center font-medium text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {semestersData.semesters.map((semester) => (
-                      <tr key={semester.id}>
-                        <td className="border px-4 py-2">{semester.year}</td>
-                        <td className="border px-4 py-2">
+                      <tr key={semester.id} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3">{semester.year}</td>
+                        <td className="px-4 py-3">
                           Semester {semester.semesterNumber}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3">
                           {new Date(semester.startDate).toLocaleDateString(
                             "en-US",
                             { month: "short", day: "numeric", year: "numeric" }
                           )}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3">
                           {new Date(semester.endDate).toLocaleDateString(
                             "en-US",
                             { month: "short", day: "numeric", year: "numeric" }
                           )}
                         </td>
-                        <td className="border px-4 py-2 text-center">
-                          {semester.qualifyingExams}
+                        <td className="px-4 py-3 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {semester.qualifyingExams}
+                          </span>
                         </td>
-                        <td className="border px-4 py-2 text-center">
+                        <td className="px-4 py-3 text-center">
                           <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => deleteSemesterMutation.mutate(semester.id)}
                             disabled={deleteSemesterMutation.isLoading}
+                            className="h-8 px-3"
                           >
                             {deleteSemesterMutation.isLoading ? (
                               <LoadingSpinner className="h-4 w-4" />
@@ -247,9 +256,15 @@ const UpdateSemesterDates: React.FC = () => {
                 </table>
               </div>
             ) : (
-              <p className="py-4 text-center">
-                No semesters found. Create one above.
-              </p>
+              <div className="text-center py-8">
+                <div className="text-gray-500 mb-4">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Semesters Found</h3>
+                <p className="text-gray-500">Create your first semester above.</p>
+              </div>
             )}
           </CardContent>
         </Card>

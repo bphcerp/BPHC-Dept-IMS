@@ -133,23 +133,26 @@ const QualifyingExams = () => {
 
   if (isLoadingExams || isLoadingApplications) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <LoadingSpinner className="h-8 w-8" />
+      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex h-64 items-center justify-center">
+          <LoadingSpinner className="h-8 w-8" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-100 px-4 py-12">
-      <h1 className="mb-8 text-center text-3xl font-bold">
-        PhD Qualifying Exams
-      </h1>
-
+    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">PhD Qualifying Exams</h1>
+          <p className="mt-2 text-gray-600">Apply for qualifying exams and track your applications</p>
+        </div>
+
         {/* Available Exams */}
         <Card>
           <CardHeader>
-            <CardTitle>Available Qualifying Exams</CardTitle>
+            <CardTitle className="text-xl font-semibold">Available Qualifying Exams</CardTitle>
           </CardHeader>
           <CardContent>
             {examsData?.exams?.length ? (
@@ -164,51 +167,55 @@ const QualifyingExams = () => {
                   return (
                     <div
                       key={exam.id}
-                      className="rounded-lg border bg-white p-4 shadow-sm"
+                      className="rounded-lg border bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-center justify-between">
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-semibold">
-                            {exam.examName}
-                          </h3>
+                        <div className="space-y-3 flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-semibold">
+                              {exam.examName}
+                            </h3>
+                            {hasApplied && (
+                              <Badge className="bg-green-100 text-green-800">
+                                Applied
+                              </Badge>
+                            )}
+                            {isDeadlinePassed && (
+                              <Badge className="bg-red-100 text-red-800">
+                                Deadline Passed
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">
                             {exam.semester.year} - Semester{" "}
                             {exam.semester.semesterNumber}
                           </p>
-                          <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
                             <div>
-                              <span className="font-medium">
+                              <span className="font-medium text-gray-700">
                                 Registration Deadline:
                               </span>{" "}
-                              {formatDate(exam.submissionDeadline)}
+                              <span className={isDeadlinePassed ? "text-red-600" : "text-gray-600"}>
+                                {formatDate(exam.submissionDeadline)}
+                              </span>
                             </div>
                             <div>
-                              <span className="font-medium">Exam Start:</span>{" "}
-                              {formatDate(exam.examStartDate)}
+                              <span className="font-medium text-gray-700">Exam Start:</span>{" "}
+                              <span className="text-gray-600">{formatDate(exam.examStartDate)}</span>
                             </div>
                             <div>
-                              <span className="font-medium">Exam End:</span>{" "}
-                              {formatDate(exam.examEndDate)}
+                              <span className="font-medium text-gray-700">Exam End:</span>{" "}
+                              <span className="text-gray-600">{formatDate(exam.examEndDate)}</span>
                             </div>
                             {exam.vivaDate && (
                               <div>
-                                <span className="font-medium">Viva Date:</span>{" "}
-                                {formatDate(exam.vivaDate)}
+                                <span className="font-medium text-gray-700">Viva Date:</span>{" "}
+                                <span className="text-gray-600">{formatDate(exam.vivaDate)}</span>
                               </div>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col items-end space-y-2">
-                          {hasApplied && (
-                            <Badge className="bg-green-100 text-green-800">
-                              Applied
-                            </Badge>
-                          )}
-                          {isDeadlinePassed && (
-                            <Badge className="bg-red-100 text-red-800">
-                              Deadline Passed
-                            </Badge>
-                          )}
+                        <div className="ml-6">
                           <Button
                             onClick={() => handleApplyClick(exam)}
                             disabled={isDeadlinePassed || hasApplied}
@@ -227,9 +234,15 @@ const QualifyingExams = () => {
                 })}
               </div>
             ) : (
-              <p className="py-4 text-center text-gray-500">
-                No qualifying exams available at this time.
-              </p>
+              <div className="text-center py-8">
+                <div className="text-gray-500 mb-4">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Exams Available</h3>
+                <p className="text-gray-500">No qualifying exams are available at this time.</p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -237,53 +250,53 @@ const QualifyingExams = () => {
         {/* Application Status */}
         <Card>
           <CardHeader>
-            <CardTitle>Your Applications</CardTitle>
+            <CardTitle className="text-xl font-semibold">Your Applications</CardTitle>
           </CardHeader>
           <CardContent>
             {applicationsData?.applications?.length ? (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border px-4 py-2 text-left">Exam</th>
-                      <th className="border px-4 py-2 text-left">Semester</th>
-                      <th className="border px-4 py-2 text-left">Areas</th>
-                      <th className="border px-4 py-2 text-left">Status</th>
-                      <th className="border px-4 py-2 text-left">Applied On</th>
-                      <th className="border px-4 py-2 text-left">Comments</th>
+                    <tr className="bg-gray-50 border-b">
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Exam</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Semester</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Areas</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Status</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Applied On</th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">Comments</th>
                     </tr>
                   </thead>
                   <tbody>
                     {applicationsData.applications.map((application) => (
-                      <tr key={application.id}>
-                        <td className="border px-4 py-2">
+                      <tr key={application.id} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3">
                           {application.examName}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3">
                           {application.semester.year} - Semester{" "}
                           {application.semester.semesterNumber}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3">
                           <div className="space-y-1">
                             <div className="text-sm">
-                              <span className="font-medium">Area 1:</span>{" "}
-                              {application.qualifyingArea1}
+                              <span className="font-medium text-gray-700">Area 1:</span>{" "}
+                              <span className="text-gray-600">{application.qualifyingArea1}</span>
                             </div>
                             <div className="text-sm">
-                              <span className="font-medium">Area 2:</span>{" "}
-                              {application.qualifyingArea2}
+                              <span className="font-medium text-gray-700">Area 2:</span>{" "}
+                              <span className="text-gray-600">{application.qualifyingArea2}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3">
                           <Badge className={getStatusColor(application.status)}>
                             {application.status.replace("_", " ").toUpperCase()}
                           </Badge>
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {formatDate(application.createdAt)}
                         </td>
-                        <td className="border px-4 py-2">
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {application.comments || "-"}
                         </td>
                       </tr>
@@ -292,9 +305,15 @@ const QualifyingExams = () => {
                 </table>
               </div>
             ) : (
-              <p className="py-4 text-center text-gray-500">
-                You haven&apos;t submitted any applications yet.
-              </p>
+              <div className="text-center py-8">
+                <div className="text-gray-500 mb-4">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Applications Yet</h3>
+                <p className="text-gray-500">You haven&apos;t submitted any applications yet.</p>
+              </div>
             )}
           </CardContent>
         </Card>
