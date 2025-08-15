@@ -1,21 +1,24 @@
 import { z } from "zod";
 
-const monthEnum = z.enum(
-    [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
-)
+
+export const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const
+
+export type month = (typeof months)[number]
+
+const monthEnum = z.enum(months);
 
 export const PublicationSchema = z.object({
     citationId: z.string(),

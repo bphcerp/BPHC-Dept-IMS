@@ -22,36 +22,9 @@ type CoAuthor = {
   authorId: string;
   authorName: string;
 };
+type month = publicationsSchemas.month;
+const months = publicationsSchemas.months;
 
-enum month {
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-}
-
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-]
 
 type Publication = {
   title: string;
