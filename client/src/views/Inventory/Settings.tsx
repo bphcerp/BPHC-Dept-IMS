@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnDef } from "@tanstack/react-table";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
-import { TableFilterType, DataTable } from "@/components/shared/datatable/DataTable";
+import { TableFilterType, DataTable } from "@/components/inventory/DataTable";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import AddInventoryCategoryDialog from "@/components/inventory/AddInventoryCategoryDialog";

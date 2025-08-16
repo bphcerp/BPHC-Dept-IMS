@@ -1,5 +1,5 @@
 import { Button } from "../ui/button";
-import { DataTable } from "../shared/datatable/DataTable";
+import { DataTable } from "./DataTable";
 
 interface VendorStatsCategoriesProps {
   data: any[];
