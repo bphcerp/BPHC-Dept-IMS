@@ -11,6 +11,7 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
+import CourseLoadPage from "@/views/CourseLoad";
 import { allPermissions, permissions } from "lib";
 import {
   Computer,
@@ -579,7 +580,7 @@ const Routing = () => {
             }
 
             {checkAccessAnyOne(["allocation:courses:write", "allocation:write"]) && (
-              <Route path="courses" element={<div />} />
+              <Route path="courses" element={<CourseLoadPage />} />
             )}
 
             {checkAccessAnyOne(["allocation:data:archive", "allocation:write"]) && <Route path="archive" element={<div />} />}
