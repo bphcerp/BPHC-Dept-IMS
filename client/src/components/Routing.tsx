@@ -11,7 +11,7 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd/Phd";
-import CourseLoadPage from "@/views/CourseLoad";
+import CourseLoadPage from "@/views/Allocation/CourseLoadPage";
 import { allPermissions, permissions } from "lib";
 import {
   Computer,

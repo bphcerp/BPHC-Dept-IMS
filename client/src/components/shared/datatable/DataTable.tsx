@@ -38,7 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReactNode, useEffect, useState } from "react";
-import OverflowHandler from "./OverflowHandler";
+import OverflowHandler from "../../inventory/OverflowHandler";
 
 interface DataTableProps<T> {
   data: T[];

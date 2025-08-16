@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/axios-instance";
 import { Laboratory } from "node_modules/lib/src/types/inventory";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/datatable/DataTable";
 import { useQuery } from "@tanstack/react-query";
 
 export interface StatData {
