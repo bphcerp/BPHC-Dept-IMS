@@ -1,20 +1,7 @@
 import { pgTable, primaryKey, text, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { publicationsSchemas } from "lib"
 
-
-export const monthEnum = pgEnum("month", [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]) 
+export const monthEnum = pgEnum("month", publicationsSchemas.months); 
 
 export const publicationsTable = pgTable("publications", {
     title: text("title").notNull(),
