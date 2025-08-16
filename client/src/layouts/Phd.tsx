@@ -18,7 +18,7 @@ const NotionalSupervisorLayout = () => {
         {
           title: "Examiner Management",
           icon: <UserCheck />,
-          url: "/phd/notional-supervisor/suggest-examiner",
+          url: "/phd/supervisor/examiner-suggestions",
           requiredPermissions: [
             permissions["/phd/notionalSupervisor/updateSuggestedExaminer"],
           ],

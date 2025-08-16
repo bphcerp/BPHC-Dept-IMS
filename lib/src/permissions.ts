@@ -24,7 +24,7 @@ export const allPermissions = {
         "Set conference application approval flow",
 
     // PhD
-
+    "phd:notifications:send": "Send system-wide notifications",
     "phd:staff:manage-semesters": "Manage PhD semesters",
     "phd:staff:manage-qe": "Manage PhD qualifying exams",
     "phd:staff:manage-subareas": "Manage PhD subareas",
@@ -32,7 +32,7 @@ export const allPermissions = {
     "phd:student:qe": "PhD scholar qualifying exams",
 
     "phd:drc:qe": "DRC Member operations on qualifying exams",
-
+    "phd:supervisor:suggest-examiners": "Suggest examiners for qualifying exams",
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -134,7 +134,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
-
+    "/sendNotification": "phd:notifications:send",
     "/phd/staff/getAllSem": "phd:staff:manage-semesters",
     "/phd/staff/updateSem": "phd:staff:manage-semesters",
     "/phd/staff/getLatestSem": "phd:staff:manage-semesters",
@@ -155,7 +155,16 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/getQualifyingExamApplications": "phd:drc:qe",
     "/phd/drcMember/getVerifiedApplications": "phd:drc:qe",
     "/phd/drcMember/generateForms": "phd:drc:qe",
+    "/phd/drcMember/notifySupervisor": "phd:drc:qe",
+    "/phd/drcMember/assignExaminers": "phd:drc:qe",
+    "/phd/drcMember/notifyExaminers": "phd:drc:qe",
+    "/phd/drcMember/getExaminerSuggestions": "phd:drc:qe",
+    "/phd/drcMember/setQualificationDate": "phd:drc:qe",
+    "/phd/drcMember/submitResult": "phd:drc:qe",
 
+    "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
+    "/phd/supervisor/getApplicationsForSuggestion": "phd:supervisor:suggest-examiners",
+    "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",

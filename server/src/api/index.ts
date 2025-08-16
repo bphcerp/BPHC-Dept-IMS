@@ -16,6 +16,7 @@ import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
+import sendNotificationRoute from "./sendNotification.ts";
 
 const favicon = Buffer.from(
     "AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA",
@@ -59,6 +60,7 @@ router.use("/inventory", inventoryRouter);
 router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);
+router.use("/sendNotification", sendNotificationRoute);
 router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
