@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,6 +52,16 @@ const QualifyingExamManagement: React.FC = () => {
     },
   });
 
+  const { data: latestSemester } = useQuery({
+    queryKey: ["latestSemester"],
+    queryFn: async () => {
+      const response = await api.get<{ semester: Semester }>(
+        "/phd/staff/getLatestSem",
+      );
+      return response.data.semester;
+    },
+  });
+
   const { data: exams = [], isLoading: isLoadingExams } = useQuery({
     queryKey: ["exams", selectedSemester],
     queryFn: async () => {
@@ -63,6 +73,18 @@ const QualifyingExamManagement: React.FC = () => {
     },
     enabled: !!selectedSemester,
   });
+
+  useEffect(() => {
+    if (latestSemester && !selectedSemester) {
+      setSelectedSemester(latestSemester.id);
+    }
+  }, [latestSemester, selectedSemester]);
+
+  useEffect(() => {
+    if (exams.length > 0 && selectedSemester && !selectedExamId) {
+      setSelectedExamId(exams[0].id);
+    }
+  }, [exams, selectedSemester, selectedExamId]);
 
   const handleSemesterChange = (semesterId: string) => {
     const id = parseInt(semesterId);
