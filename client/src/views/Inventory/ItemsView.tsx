@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { TableFilterType, DataTable } from "@/components/inventory/DataTable";
+import { TableFilterType, DataTable } from "@/components/shared/datatable/DataTable";
 import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import { TransferConfirmationDialog } from "@/components/inventory/TransferConfirmationDialog";
 import VendorDetailsDialog from "@/components/inventory/VendorDetailsDialog";
