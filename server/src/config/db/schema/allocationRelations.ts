@@ -7,7 +7,7 @@ import { users } from "./admin.ts";
 
 export const coursePreferenceRelations = relations(coursePreferences, ({ one }) => ({
     instructor: one(users, {
-        fields: [coursePreferences.instructorId], //fk
+        fields: [coursePreferences.courseCode], //fk
         references: [users.email] //pk
     }),
     semester: one(semester, {
@@ -15,18 +15,18 @@ export const coursePreferenceRelations = relations(coursePreferences, ({ one }) 
         references: [semester.id]
     }),
     course: one(course, {
-        fields: [coursePreferences.courseId],
+        fields: [coursePreferences.courseCode],
         references: [course.code]
     }),
 }));
 
 export const allocationRelations = relations(allocation, ({ one }) => ({
     course: one(course, {
-        fields: [allocation.courseId], //fk
+        fields: [allocation.courseCode], //fk
         references: [course.code] //pk
     }),
     instructor: one(users, {
-        fields: [allocation.instructorId],
+        fields: [allocation.instructorEmail],
         references: [users.email]
     }),
     semester: one(semester, {
