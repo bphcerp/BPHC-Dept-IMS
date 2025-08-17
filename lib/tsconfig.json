@@ -1,11 +1,12 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "lib": ["ESNext"],
+        "lib": [
+            "ESNext"
+        ],
         "module": "NodeNext",
         "skipLibCheck": true,
         "composite": true,
-
         "esModuleInterop": true,
         "moduleResolution": "nodenext",
         "allowImportingTsExtensions": true,
@@ -15,7 +16,6 @@
         "verbatimModuleSyntax": false,
         "noEmit": true,
         "resolveJsonModule": true,
-
         /* Linting */
         "strict": true,
         "forceConsistentCasingInFileNames": true,
@@ -23,13 +23,22 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
-
         "baseUrl": ".",
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": [
+                "./src/*"
+            ],
+            "@server/*": [
+                "../server/src/*"
+            ],
         }
     },
     "ts-node": {
         "esm": true
     }
+    ,
+    "include": [
+        "src",
+        "../server"
+    ]
 }

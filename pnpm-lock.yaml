@@ -262,6 +262,9 @@ importers:
       '@types/multer':
         specifier: ^1.4.12
         version: 1.4.12
+      drizzle-zod:
+        specifier: ^0.8.3
+        version: 0.8.3(drizzle-orm@0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0))(zod@3.24.2)
       zod:
         specifier: ^3.24.1
         version: 3.24.2
@@ -3712,6 +3715,12 @@ packages:
         optional: true
       sqlite3:
         optional: true
+
+  drizzle-zod@0.8.3:
+    resolution: {integrity: sha512-66yVOuvGhKJnTdiqj1/Xaaz9/qzOdRJADpDa68enqS6g3t0kpNkwNYjUuaeXgZfO/UWuIM9HIhSlJ6C5ZraMww==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      zod: ^3.25.0 || ^4.0.0
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -10146,6 +10155,11 @@ snapshots:
       '@types/pg': 8.11.11
       gel: 2.0.1
       pg: 8.14.0
+
+  drizzle-zod@0.8.3(drizzle-orm@0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0))(zod@3.24.2):
+    dependencies:
+      drizzle-orm: 0.40.0(patch_hash=edd43163dd5c64df5277ffaac6983de411547a9b805592c562ac93f7b14b1b5f)(@types/pg@8.11.11)(gel@2.0.1)(pg@8.14.0)
+      zod: 3.24.2
 
   dunder-proto@1.0.1:
     dependencies:
