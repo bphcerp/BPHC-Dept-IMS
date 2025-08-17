@@ -38,7 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReactNode, useEffect, useState } from "react";
-import OverflowHandler from "../inventory/OverflowHandler";
+import OverflowHandler from "../shared/datatable/OverflowHandler";
 
 interface DataTableProps<T> {
   data: T[];
@@ -95,6 +95,11 @@ export function DataTable<T>({
         return cellValue >= start && cellValue <= end;
       } else return true;
     };
+
+  const multiFilterFn = (row: Row<T>, columnId: string, filterValue: any) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    };
     
   const table = useReactTable({
     data,
@@ -103,7 +108,9 @@ export function DataTable<T>({
       ...(columnDef.meta
         ? columnDef.meta.filterType === "number-range"
           ? { filterFn: isWithinRangeNumber }
-          : {}
+          : columnDef.meta.filterType === "multiselect"
+            ? { filterFn: multiFilterFn }
+            : {}
         : {}),
     })),
     initialState,
@@ -135,6 +142,7 @@ export function DataTable<T>({
 
   const renderFilter = (column: Column<T>) => {
     const filterType = column.columnDef.meta?.filterType;
+    const uniqueValues = Array.from(column.getFacetedUniqueValues().keys());
 
     switch (filterType) {
       case "search":
@@ -146,6 +154,36 @@ export function DataTable<T>({
             onChange={(event) => column.setFilterValue(event.target.value)}
           />
         );
+      case "multiselect":
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">Filter</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {uniqueValues.map((value) => (
+                      <DropdownMenuCheckboxItem
+                        key={value as string}
+                        onSelect={(e) => e.preventDefault()}
+                        checked={(
+                          (column.getFilterValue() as string[]) ?? []
+                        ).includes(value as string)}
+                        onCheckedChange={(checked) => {
+                          const currentValue =
+                            (column.getFilterValue() as string[]) ?? [];
+                          column.setFilterValue(
+                            !checked
+                              ? currentValue.filter((v) => v !== value)
+                              : [...currentValue, value as string]
+                          );
+                        }}
+                      >
+                        {(value as string) ?? "Not Provided"}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
       case "number-range":
               return (
                 <div className="flex w-64 space-x-2">

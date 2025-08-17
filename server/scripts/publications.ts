@@ -95,6 +95,7 @@ const getPublicationsFromAuthor = async (
                 journal: pubDetails.journal ?? null,
                 volume: pubDetails.volume ?? null,
                 issue: pubDetails.issue ?? null,
+                month: pub.month,
                 year: pub.year ?? null,
                 link: pub.link,
                 citations: pub.cited_by?.value
