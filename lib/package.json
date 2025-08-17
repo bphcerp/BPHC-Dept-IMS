@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@types/multer": "^1.4.12",
-    "drizzle-zod": "^0.8.3",
     "zod": "^3.24.1"
   }
 }
