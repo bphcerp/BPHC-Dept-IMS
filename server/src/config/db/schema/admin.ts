@@ -66,45 +66,45 @@ export const faculty = pgTable("faculty", {
 });
 
 export const phd = pgTable("phd", {
-  email: text("email")
-    .primaryKey()
-    .references(() => users.email, { onDelete: "cascade" }),
-  department: text("department"),
-  phone: text("phone"),
-  profileFileId: integer("profile_file_id").references(() => files.id, {
-    onDelete: "set null",
-  }),
-  idNumber: text("id_number"),
-  erpId: text("erp_id"),
-  name: text("name"),
-  instituteEmail: text("institute_email"),
-  mobile: text("mobile"),
-  personalEmail: text("personal_email"),
-  emergencyPhoneNumber: text("emergency_phone_number"),
-  notionalSupervisorEmail: text("notional_supervisor_email").references(
-    () => users.email,
-    { onDelete: "cascade" }
-  ),
-  supervisorEmail: text("supervisor_email").references(() => users.email, {
-    onDelete: "cascade",
-  }),
-  coSupervisorEmail: text("co_supervisor_email").references(
-    () => users.email,
-    { onDelete: "cascade" }
-  ),
-  coSupervisorEmail2: text("co_supervisor_email_2").references(
-    () => users.email,
-    { onDelete: "cascade" }
-  ),
-  dac1Email: text("dac_1_email").references(() => users.email, {
-    onDelete: "cascade",
-  }),
-  dac2Email: text("dac_2_email").references(() => users.email, {
-    onDelete: "cascade",
-  }),
-  qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
-  hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
-  qualificationDate: timestamp("qualification_date", { withTimezone: true }),
+    email: text("email")
+        .primaryKey()
+        .references(() => users.email, { onDelete: "cascade" }),
+    department: text("department"),
+    phone: text("phone"),
+    profileFileId: integer("profile_file_id").references(() => files.id, {
+        onDelete: "set null",
+    }),
+    idNumber: text("id_number"),
+    erpId: text("erp_id"),
+    name: text("name"),
+    instituteEmail: text("institute_email"),
+    mobile: text("mobile"),
+    personalEmail: text("personal_email"),
+    emergencyPhoneNumber: text("emergency_phone_number"),
+    notionalSupervisorEmail: text("notional_supervisor_email").references(
+        () => users.email,
+        { onDelete: "cascade" }
+    ),
+    supervisorEmail: text("supervisor_email").references(() => users.email, {
+        onDelete: "cascade",
+    }),
+    coSupervisorEmail: text("co_supervisor_email").references(
+        () => users.email,
+        { onDelete: "cascade" }
+    ),
+    coSupervisorEmail2: text("co_supervisor_email_2").references(
+        () => users.email,
+        { onDelete: "cascade" }
+    ),
+    dac1Email: text("dac_1_email").references(() => users.email, {
+        onDelete: "cascade",
+    }),
+    dac2Email: text("dac_2_email").references(() => users.email, {
+        onDelete: "cascade",
+    }),
+    qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
+    hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
+    qualificationDate: timestamp("qualification_date", { withTimezone: true }),
 });
 
 export const staff = pgTable("staff", {

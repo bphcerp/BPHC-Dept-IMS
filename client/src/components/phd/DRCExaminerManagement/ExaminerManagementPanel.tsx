@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,16 +32,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Send, UserPlus, CheckCircle, Clock } from "lucide-react";
 import NotificationDialog from "./NotificationDialog";
-
-type VerifiedApplication = {
-  id: number;
-  student: { name: string | null; email: string; supervisor: string | null };
-  qualifyingArea1: string;
-  qualifyingArea2: string;
-  examinerSuggestionCount: number;
-  examinerAssignmentCount: number;
-  examinerAssignments: { examinerEmail: string; qualifyingArea: string }[];
-};
+import { phdSchemas } from "lib";
 
 interface ExaminerManagementPanelProps {
   selectedExamId: number;
@@ -52,9 +43,8 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
   selectedExamId,
   onBack,
 }) => {
-  const queryClient = useQueryClient();
   const [selectedApplication, setSelectedApplication] =
-    useState<VerifiedApplication | null>(null);
+    useState<phdSchemas.VerifiedApplication | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [notificationData, setNotificationData] = useState<{
@@ -72,10 +62,10 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
     data: applications = [],
     isLoading,
     refetch,
-  } = useQuery<VerifiedApplication[]>({
+  } = useQuery({
     queryKey: ["verified-applications-examiners", selectedExamId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<phdSchemas.VerifiedApplication[]>(
         `/phd/drcMember/getVerifiedApplications/${selectedExamId}`
       );
       return response.data;
@@ -103,7 +93,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
     setIsNotifyDialogOpen(true);
   };
 
-  const handleNotifyExaminers = async () => {
+  const handleNotifyExaminers = () => {
     const assignedExaminers = applications.flatMap((app) =>
       app.examinerAssignments
         ? app.examinerAssignments.map((a) => a.examinerEmail)
@@ -271,7 +261,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
 };
 
 interface AssignExaminerDialogProps {
-  application: VerifiedApplication;
+  application: phdSchemas.VerifiedApplication;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -283,12 +273,10 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { data: suggestions, isLoading: isLoadingSuggestions } = useQuery<
-    Record<string, string[]>
-  >({
+  const { data: suggestions, isLoading: isLoadingSuggestions } = useQuery({
     queryKey: ["examiner-suggestions", application.id],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<Record<string, string[]>>(
         `/phd/drcMember/getExaminerSuggestions/${application.id}`
       );
       return response.data;
@@ -309,10 +297,8 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
       toast.success("Examiners assigned successfully.");
       onSuccess();
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to assign examiners."
-      );
+    onError: () => {
+      toast.error("Failed to assign examiners.");
     },
   });
 
@@ -336,11 +322,11 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            Assign Examiners for{application.student.name}
+            Assign Examiners for {application.student.name}
           </DialogTitle>
           <DialogDescription>
-            Select one examiner for each qualifying area from the supervisor's
-            suggestions.
+            Select one examiner for each qualifying area from the
+            supervisor&apos;s suggestions.
           </DialogDescription>
         </DialogHeader>
         {isLoadingSuggestions ? (

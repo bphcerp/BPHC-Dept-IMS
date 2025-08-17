@@ -2,7 +2,14 @@ import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +22,7 @@ const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 
 interface NotificationDialogProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (val: boolean) => void;
   initialData: {
     recipients: string[];
     subject: string;
@@ -50,10 +57,10 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
       api.post("/sendNotification", payload),
     onSuccess: () => {
       toast.success("Notifications sent successfully!");
-      onClose();
+      onClose(false);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to send notifications.");
+    onError: () => {
+      toast.error("Failed to send notifications.");
     },
   });
 
@@ -77,14 +84,15 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>Send Notification</DialogTitle>
           <DialogDescription>
-            Sending to {initialData.recipients.length} recipient(s). Edit the message and choose the delivery channels.
+            Sending to {initialData.recipients.length} recipient(s). Edit the
+            message and choose the delivery channels.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow overflow-y-auto pr-2 space-y-4">
+        <div className="flex-grow space-y-4 pr-2">
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
             <Input
@@ -96,38 +104,69 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
           <div className="space-y-2">
             <Label>Body (Markdown supported)</Label>
             <div data-color-mode={editorTheme}>
-                <Suspense fallback={<div className="w-full text-center py-8">Loading editor...</div>}>
-                    <MDEditor
-                        value={body}
-                        onChange={(value) => setBody(value || "")}
-                        height={300}
-                        preview="live"
-                    />
-                </Suspense>
+              <Suspense
+                fallback={
+                  <div className="w-full py-8 text-center">
+                    Loading editor...
+                  </div>
+                }
+              >
+                <MDEditor
+                  value={body}
+                  onChange={(value) => setBody(value || "")}
+                  height={300}
+                  preview="live"
+                />
+              </Suspense>
             </div>
           </div>
         </div>
-        <DialogFooter className="mt-4 pt-4 border-t">
-            <div className="flex items-center space-x-4 mr-auto">
-                <Label>Channels:</Label>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="email-channel" checked={channels.email} onCheckedChange={(checked) => setChannels(c => ({ ...c, email: !!checked }))} />
-                    <Label htmlFor="email-channel">Email</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="notification-channel" checked={channels.notification} onCheckedChange={(checked) => setChannels(c => ({ ...c, notification: !!checked }))} />
-                    <Label htmlFor="notification-channel">Notification</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="todo-channel" checked={channels.todo} onCheckedChange={(checked) => setChannels(c => ({ ...c, todo: !!checked }))} />
-                    <Label htmlFor="todo-channel">To-do</Label>
-                </div>
+        <DialogFooter className="mt-4 border-t pt-4">
+          <div className="mr-auto flex items-center space-x-4">
+            <Label>Channels:</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="email-channel"
+                checked={channels.email}
+                onCheckedChange={(checked) =>
+                  setChannels((c) => ({ ...c, email: !!checked }))
+                }
+              />
+              <Label htmlFor="email-channel">Email</Label>
             </div>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSend} disabled={sendNotificationMutation.isLoading}>
-                {sendNotificationMutation.isLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}
-                Send
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="notification-channel"
+                checked={channels.notification}
+                onCheckedChange={(checked) =>
+                  setChannels((c) => ({ ...c, notification: !!checked }))
+                }
+              />
+              <Label htmlFor="notification-channel">Notification</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="todo-channel"
+                checked={channels.todo}
+                onCheckedChange={(checked) =>
+                  setChannels((c) => ({ ...c, todo: !!checked }))
+                }
+              />
+              <Label htmlFor="todo-channel">To-do</Label>
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => onClose(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSend}
+            disabled={sendNotificationMutation.isLoading}
+          >
+            {sendNotificationMutation.isLoading && (
+              <LoadingSpinner className="mr-2 h-4 w-4" />
+            )}
+            Send
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

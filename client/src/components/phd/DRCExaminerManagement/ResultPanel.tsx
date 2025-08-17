@@ -26,13 +26,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { phdSchemas } from "lib";
 
-type ApplicationResult = {
-  id: number;
-  student: { name: string | null; email: string };
-  result: "pass" | "fail" | null;
-  qualificationDate: string | null;
-};
-
 interface ResultsPanelProps {
   selectedExamId: number;
   onBack?: () => void;
@@ -45,22 +38,20 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const queryClient = useQueryClient();
   const [qualDate, setQualDate] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<
-    ApplicationResult["student"] | null
+    phdSchemas.VerifiedApplication["student"] | null
   >(null);
 
   const {
     data: applications = [],
     isLoading,
     refetch,
-  } = useQuery<ApplicationResult[]>({
+  } = useQuery({
     queryKey: ["applications-for-results", selectedExamId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<phdSchemas.VerifiedApplication[]>(
         `/phd/drcMember/getVerifiedApplications/${selectedExamId}`
       );
-      return response.data.filter(
-        (app: any) => app.examinerAssignmentCount >= 2
-      );
+      return response.data.filter((app) => app.examinerAssignmentCount >= 2);
     },
     enabled: !!selectedExamId,
   });
@@ -77,8 +68,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       }
       void refetch();
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to submit result");
+    onError: () => {
+      toast.error("Failed to submit result");
     },
   });
 
@@ -92,10 +83,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       void refetch();
       void queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to set qualification date"
-      );
+    onError: () => {
+      toast.error("Failed to set qualification date");
     },
   });
 
