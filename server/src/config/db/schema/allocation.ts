@@ -104,9 +104,9 @@ export const semester = pgTable("semester", {
     noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
     noOfDisciplineCoursesPerInstructor: integer("no_of_discipline_courses_per_instructor"),
     
-    hodAtStartOfSem: text("hod_at_start"),
-    dcaAtStartOfSem: text("dca_at_start"),
-    dcaMembersAtStartOfSem: text("dca_members"),
+    hodAtStartOfSem: text("hod_at_start").references(() => users.email),
+    dcaAtStartOfSem: text("dca_at_start").references(() => users.email),
+    dcaMembersAtStartOfSem: text("dca_members").references(() => users.email),
 
     allocationStatus: allocationStatus("allocation_status"),
 

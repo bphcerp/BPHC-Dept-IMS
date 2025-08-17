@@ -34,3 +34,18 @@ export const allocationRelations = relations(allocation, ({ one }) => ({
         references: [semester.id]
     }),
 }));
+
+export const semesterRelations = relations(semester, ({ one }) => ({
+    convener: one(users, {
+        fields: [semester.dcaAtStartOfSem], 
+        references: [users.email] 
+    }),
+    members: one(users, {
+        fields: [semester.dcaMembersAtStartOfSem], 
+        references: [users.email] 
+    }),
+    hod: one(users, {
+        fields: [semester.hodAtStartOfSem], 
+        references: [users.email] 
+    }),
+}));
