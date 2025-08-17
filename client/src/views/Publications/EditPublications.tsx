@@ -3,6 +3,7 @@ import api from "@/lib/axios-instance";
 import { useState,useMemo } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Table,
@@ -15,11 +16,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Edit2, Save, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { publicationsSchemas } from "lib";
 
 type CoAuthor = {
   authorId: string;
   authorName: string;
 };
+type month = publicationsSchemas.month;
+const months = publicationsSchemas.months;
+
 
 type Publication = {
   title: string;
@@ -27,6 +32,7 @@ type Publication = {
   journal: string;
   volume: string | null;
   issue: string | null;
+  month: month,
   year: string;
   link: string;
   citations: string;
@@ -36,22 +42,7 @@ type Publication = {
   comments?: string | null;
 };
 
-import { z } from "zod";
-
-const PublicationSchema = z.object({
-  citationId: z.string(),
-  title: z.string(),
-  type: z.string().nullable(),
-  status: z.boolean().nullable(),
-  journal: z.string().nullable(),
-  volume: z.string().nullable(),
-  issue: z.string().nullable(),
-  year: z.string().nullable(),
-  link: z.string().nullable(),
-  citations: z.string().nullable(),
-  authorNames: z.string().nullable(),
-  comments: z.string().nullable(),
-});
+const PublicationSchema = publicationsSchemas.PublicationSchema;
 
 type PublicationResponse = {
   publications: Publication[];
@@ -191,6 +182,7 @@ const EditPublications = () => {
                 <TableHead>Journal</TableHead>
                 <TableHead>Volume</TableHead>
                 <TableHead>Issue</TableHead>
+                <TableHead>Month</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Comments</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -307,6 +299,30 @@ const EditPublications = () => {
                         />
                       ) : (
                         publication.issue || "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Select onValueChange={(nv) => {
+                              handleChange(
+                                publication.citationId,
+                                "month",
+                                nv
+                              )
+                            }}>
+                          <SelectTrigger>{editingPublication.month || "Select Month"}</SelectTrigger>
+                          <SelectContent className="border-gray border-2 rounded-xl bg-white">
+                            {
+                              months.map((month) => {
+                                return <SelectItem className="" value = {month}>{month}</SelectItem>
+                              })
+                            }
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="font-semibold">
+                          {publication.month}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
