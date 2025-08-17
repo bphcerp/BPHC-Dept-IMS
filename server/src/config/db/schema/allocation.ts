@@ -11,7 +11,7 @@ import { users } from "./admin.ts";
 
 export const sectionTypeEnum = pgEnum(
     "section_type_enum",
-    ["L", "T", "P"]
+    ["Lecture", "Tutorial", "Practical"]
 );
 
 export const oddEven = pgEnum(
@@ -26,7 +26,7 @@ export const allocationStatus = pgEnum(
 
 
 export const allocation = pgTable("allocation", {
-    instructorId: text("instructor_id")
+    instructorEmail: text("instructor_email")
         .notNull()
         .references(() => users.email), 
 
@@ -34,7 +34,7 @@ export const allocation = pgTable("allocation", {
         .notNull()
         .references(() => semester.id),
 
-    courseId: text("course_id")
+    courseCode: text("course_code")
         .notNull()
         .references(() => course.code),
 
@@ -67,7 +67,7 @@ export const course = pgTable("course", {
 export const coursePreferences = pgTable("course_preferences", {
     id: serial("id").primaryKey(),
 
-    instructorId: text("instructor_id")
+    instructorEmail: text("instructor_email")
         .notNull()
         .references(() => users.email),
 
@@ -75,7 +75,7 @@ export const coursePreferences = pgTable("course_preferences", {
         .notNull()
         .references(() => semester.id),
 
-    courseId: text("course_id")
+    courseCode: text("course_code")
         .notNull()
         .references(() => course.code), 
 
@@ -103,7 +103,7 @@ export const semester = pgTable("semester", {
 
     noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
     noOfDisciplineCoursesPerInstructor: integer("no_of_discipline_courses_per_instructor"),
-
+    
     hodAtStartOfSem: text("hod_at_start"),
     dcaAtStartOfSem: text("dca_at_start"),
     dcaMembersAtStartOfSem: text("dca_members"),
