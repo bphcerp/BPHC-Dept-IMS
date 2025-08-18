@@ -7,8 +7,8 @@ import { users } from "./admin.ts";
 
 export const coursePreferenceRelations = relations(coursePreferences, ({ one }) => ({
     instructor: one(users, {
-        fields: [coursePreferences.courseCode], //fk
-        references: [users.email] //pk
+        fields: [coursePreferences.courseCode],
+        references: [users.email]
     }),
     semester: one(semester, {
         fields: [coursePreferences.semesterId],
@@ -22,8 +22,8 @@ export const coursePreferenceRelations = relations(coursePreferences, ({ one }) 
 
 export const allocationRelations = relations(allocation, ({ one }) => ({
     course: one(course, {
-        fields: [allocation.courseCode], //fk
-        references: [course.code] //pk
+        fields: [allocation.courseCode],
+        references: [course.code]
     }),
     instructor: one(users, {
         fields: [allocation.instructorEmail],
@@ -36,16 +36,12 @@ export const allocationRelations = relations(allocation, ({ one }) => ({
 }));
 
 export const semesterRelations = relations(semester, ({ one }) => ({
-    convener: one(users, {
-        fields: [semester.dcaAtStartOfSem], 
+    dcaConvenerAtStartOfSem: one(users, {
+        fields: [semester.dcaConvenerAtStartOfSemEmail], 
         references: [users.email] 
     }),
-    members: one(users, {
-        fields: [semester.dcaMembersAtStartOfSem], 
-        references: [users.email] 
-    }),
-    hod: one(users, {
-        fields: [semester.hodAtStartOfSem], 
+    hodAtStartOfSem: one(users, {
+        fields: [semester.hodAtStartOfSemEmail], 
         references: [users.email] 
     }),
 }));

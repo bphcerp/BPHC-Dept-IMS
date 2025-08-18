@@ -2,12 +2,13 @@ import {
     pgTable,
     integer,
     text,
-    serial,
     boolean,
     timestamp,
-    pgEnum
+    pgEnum,
+    uuid
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
+import { v4 as uuidv4 } from "uuid";
 
 export const sectionTypeEnum = pgEnum(
     "section_type_enum",
@@ -25,12 +26,12 @@ export const allocationStatus = pgEnum(
 );
 
 
-export const allocation = pgTable("allocation", {
+export const allocation = pgTable("allocation_allocation_result", {
     instructorEmail: text("instructor_email")
         .notNull()
-        .references(() => users.email), 
+        .references(() => users.email),
 
-    semesterId: integer("semester_id")
+    semesterId: uuid("semester_id")
         .notNull()
         .references(() => semester.id),
 
@@ -40,18 +41,24 @@ export const allocation = pgTable("allocation", {
 
     sectionType: sectionTypeEnum("section_type").notNull(),
 
-    noOfSections: integer("no_of_sections").notNull()
+    noOfSections: integer("no_of_sections").notNull(),
+    allocatedOn: timestamp("allocated_on", { withTimezone: true })
+        .notNull()
+        .defaultNow(),
+    updatedOn: timestamp("updated_on", { withTimezone: true })
+        .notNull()
+        .defaultNow()
 });
 
-export const course = pgTable("course", {
-    code: text("code").primaryKey(), 
+export const course = pgTable("allocation_course", {
+    code: text("code").primaryKey(),
     name: text("name").notNull(),
 
     lectureSecCount: integer("lecture_sec_count").notNull(),
     tutSecCount: integer("tut_sec_count").notNull(),
     practicalSecCount: integer("practical_sec_count").notNull(),
 
-    units: integer("units"), 
+    units: integer("units"),
     hasLongPracticalSec: boolean("has_long_practical_sec").notNull(),
 
     isCDC: boolean("is_cdc").notNull(),
@@ -61,23 +68,24 @@ export const course = pgTable("course", {
         .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
         .notNull()
+        .defaultNow()
 });
 
 
-export const coursePreferences = pgTable("course_preferences", {
-    id: serial("id").primaryKey(),
+export const coursePreferences = pgTable("allocation_course_preferences", {
+    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
 
     instructorEmail: text("instructor_email")
         .notNull()
         .references(() => users.email),
 
-    semesterId: integer("semester_id")
+    semesterId: uuid("semester_id")
         .notNull()
         .references(() => semester.id),
 
     courseCode: text("course_code")
         .notNull()
-        .references(() => course.code), 
+        .references(() => course.code),
 
     sectionType: sectionTypeEnum("section_type").notNull(),
 
@@ -89,11 +97,11 @@ export const coursePreferences = pgTable("course_preferences", {
 
     updatedAt: timestamp("updated_at", { withTimezone: true })
         .notNull()
+        .defaultNow()
 });
 
-export const semester = pgTable("semester", {
-    id: serial("id").primaryKey(),
-
+export const semester = pgTable("allocation_semester", {
+    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
     year: integer("year").notNull(),
     oddEven: oddEven("odd_even").notNull(),
 
@@ -103,11 +111,9 @@ export const semester = pgTable("semester", {
 
     noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
     noOfDisciplineCoursesPerInstructor: integer("no_of_discipline_courses_per_instructor"),
-    
-    hodAtStartOfSem: text("hod_at_start").references(() => users.email),
-    dcaAtStartOfSem: text("dca_at_start").references(() => users.email),
-    dcaMembersAtStartOfSem: text("dca_members").references(() => users.email),
 
+    hodAtStartOfSemEmail: text("hod_at_start").references(() => users.email),
+    dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(() => users.email),
     allocationStatus: allocationStatus("allocation_status"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -116,6 +122,7 @@ export const semester = pgTable("semester", {
 
     updatedAt: timestamp("updated_at", { withTimezone: true })
         .notNull()
+        .defaultNow()
 });
 
 
