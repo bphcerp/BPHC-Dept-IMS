@@ -27,6 +27,7 @@ export const allocationStatus = pgEnum(
 
 
 export const allocation = pgTable("allocation_allocation_result", {
+    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
     instructorEmail: text("instructor_email")
         .notNull()
         .references(() => users.email),
