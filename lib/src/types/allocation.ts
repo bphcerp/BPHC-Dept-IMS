@@ -11,6 +11,7 @@ import { MemberDetailsResponse } from "@/schemas/Admin.ts";
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
 export type Allocation = NewAllocation & {
+    id: string;
     allocatedOn: Date;
     updatedOn: Date;
     course: Course
@@ -28,6 +29,7 @@ export type Course = NewCourse & {
 export type NewCoursePreferences = z.infer<typeof coursePreferencesSchema>;
 export type UpdateCoursePreferences = Partial<NewCoursePreferences>;
 export type CoursePreferences = NewCoursePreferences & {
+    id: string;
     createdAt: Date;
     updatedAt: Date;
     course: Course;
@@ -38,6 +40,7 @@ export type CoursePreferences = NewCoursePreferences & {
 export type NewSemester = z.infer<typeof semesterSchema>;
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
+    id: string;
     createdAt: Date;
     updatedAt: Date;
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;

@@ -10,6 +10,7 @@ export const allocationStatusEnum = z.enum(["notStarted", "ongoing", "completed"
 // ------------------------------------------------------
 
 export const allocationSchema = z.object({
+	// id: z.string().uuid().optional(),
 	instructorEmail: z.string().email(),
 	semesterId: z.string().uuid(),
 	courseCode: z.string(),
@@ -38,7 +39,7 @@ export const courseSchema = z.object({
 );
 
 export const coursePreferencesSchema = z.object({
-	id: z.string().uuid().optional(),
+	// id: z.string().uuid().optional(),
 	instructorEmail: z.string().email(),
 	semesterId: z.string().uuid(),
 	courseCode: z.string(),
@@ -49,7 +50,7 @@ export const coursePreferencesSchema = z.object({
 });
 
 export const semesterSchema = z.object({
-	id: z.string().uuid().optional(),
+	// id: z.string().uuid().optional(),
 	year: z.number().int(),
 	oddEven: oddEvenEnum,
 	startDate: z.string().datetime(),
