@@ -14,8 +14,8 @@ const deleteCoursePreferencesSchema = z.object({
 });
 
 router.delete(
-    "/",
-    checkAccess(),
+    "/delete",
+    checkAccess("allocation:course:delete"),
     asyncHandler(async (req, res, next) => {
         const parsed = deleteCoursePreferencesSchema.parse(req.body);
 

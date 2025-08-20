@@ -22,8 +22,8 @@ const updateCourseSchema = z.object({
 });
 
 router.put(
-  "/",
-  checkAccess(),
+  "/update",
+  checkAccess("allocation:course:update"),
   asyncHandler(async (req, res, next) => {
     const parsed = updateCourseSchema.parse(req.body);
 

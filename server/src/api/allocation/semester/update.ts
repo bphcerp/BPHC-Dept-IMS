@@ -13,17 +13,17 @@ const updateSemesterSchema = z.object({
   id: z.string().uuid(),
   year: z.number().int(),
   oddEven: z.enum(["odd", "even"]),
-  //startDate: z.string().datetime(),
-  //endDate: z.string().datetime(),
-  //allocationDeadline: z.string().datetime().optional(),
+  startDate: z.date(),
+  endDate: z.date(),
+  allocationDeadline: z.date(),
   noOfElectivesPerInstructor: z.number().int(),
   noOfDisciplineCoursesPerInstructor: z.number().int(),
   allocationSchema: z.enum(["notStarted", "ongoing", "completed", "suspended"]),
 });
 
 router.put(
-  "/",
-  checkAccess(),
+  "/update",
+  checkAccess("allocation:semester:update"),
   asyncHandler(async (req, res, next) => {
     const parsed = updateSemesterSchema.parse(req.body);
 
@@ -45,12 +45,12 @@ router.put(
       );
     }
 
-    // Update in DB directly with ISO strings
     const updated = await db
       .update(semester)
       .set({
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        
       })
       .where(eq(semester.id, id))
       .returning();

@@ -14,8 +14,8 @@ const deleteSemesterSchema = z.object({
 });
 
 router.delete(
-    "/",
-    checkAccess(),
+    "/delete",
+    checkAccess("allocation:semester:delete"),
     asyncHandler(async (req, res, next) => {
         const parsed = deleteSemesterSchema.parse(req.body);
 

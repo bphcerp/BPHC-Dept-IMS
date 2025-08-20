@@ -20,8 +20,8 @@ const updateAllocationSchema = z.object({
 });
 
 router.put(
-  "/",
-  checkAccess(),
+  "/update",
+  checkAccess("allocation:allocation:update"),
   asyncHandler(async (req, res, next) => {
     const parsed = updateAllocationSchema.parse(req.body);
 
