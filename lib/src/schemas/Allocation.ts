@@ -39,18 +39,18 @@ export const courseSchema = z.object({
 );
 
 export const coursePreferencesSchema = z.object({
-	// id: z.string().uuid().optional(),
+	id: z.string().uuid().optional(),
 	instructorEmail: z.string().email(),
 	semesterId: z.string().uuid(),
 	courseCode: z.string(),
 	sectionType: sectionTypeEnum,
 	preferences: z.number().int().min(1),
-	// createdAt: z.string().datetime().optional(),
-	// updatedAt: z.string().datetime().optional()
+	//createdAt: z.string().datetime().optional(),
+	//updatedAt: z.string().datetime().optional()
 });
 
 export const semesterSchema = z.object({
-	// id: z.string().uuid().optional(),
+	id: z.string().uuid().optional(),
 	year: z.number().int(),
 	oddEven: oddEvenEnum,
 	startDate: z.string().datetime(),
@@ -62,5 +62,5 @@ export const semesterSchema = z.object({
 	// dcaConvenerAtStartOfSemEmail: z.string().email().optional(),
 	allocationSchema: allocationStatusEnum,
 	// createdAt: z.string().datetime().optional(),
-	// updatedAt: z.string().datetime().optional()
+	//updatedAt: z.string().datetime().optional()
 });
