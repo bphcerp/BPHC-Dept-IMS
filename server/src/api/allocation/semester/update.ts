@@ -22,8 +22,8 @@ const updateSemesterSchema = z.object({
 });
 
 router.put(
-  "/update",
-  checkAccess("allocation:semester:update"),
+  "/",
+  checkAccess("allocation:semester:write"),
   asyncHandler(async (req, res, next) => {
     const parsed = updateSemesterSchema.parse(req.body);
 
@@ -55,7 +55,7 @@ router.put(
       .where(eq(semester.id, id))
       .returning();
 
-    res.status(200).json({ success: true, data: updated[0] });
+    res.status(200).json(updated);
   })
 );
 

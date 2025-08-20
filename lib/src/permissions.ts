@@ -156,7 +156,7 @@ export const allPermissions = {
     "allocation:write": "Have read and write access to the allocation module",
     "allocation:view": "Have readonly access to the allocation module",
 
-    "allocation:form:write": "Create or Modify a new form for allocation data retrieval",
+    "allocation:preference:write": "Create or Modify a new form for allocation data retrieval",
     "allocation:form:publish": "Publish a form for allocation data retrieval",
     "allocation:form:close": "Close a form for allocation data retrieval",
     "allocation:form:view": "View allocation data retrieval form",
@@ -164,17 +164,10 @@ export const allPermissions = {
     "allocation:data:export": "Export allocation data",
     "allocation:data:archive": "View data of all semesters upto date",
 
-    "allocation:allocation:delete": "Delete an entry in the allocation table",
-    "allocation:allocation:update": "Update an entry in the allocation table",
+    "allocation:semester:read": "read the semester table",
+    "allocation:semester:write": "write to semester table",
 
-    "allocation:course:delete": "Delete an entry in the course table",
-    "allocation:course:update": "Update an entry in the course table",
-
-    "allocation:course-preferences:delete": "Delete an entry in the course preferences table",
-    "allocation:course-preferences:update": "Update an entry in the course preferences table",
-
-    "allocation:semester:delete": "Delete an entry in the semesters table",
-    "allocation:semester:update": "Update an entry in the semesters table",
+    
 
 
 } as const;
@@ -394,12 +387,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/stats": "wilp:project:stats",
 
     // Course Load Allocation 
-    "/allocation/allocation/delete": "allocation:allocation:delete",
-    "/allocation/allocation/update": "allocation:allocation:update",
-    "/allocation/course/delete": "allocation:course:delete",
-    "/allocation/course/update": "allocation:course:update",
-    "/allocation/coursePreferences/delete": "allocation:course-preferences:delete",
-    "/allocation/coursePreferences/update": "allocation:course-preferences:update",
-    "/allocation/semester/delete": "allocation:semester:delete",
-    "/allocation/semester/update": "allocation:semester:update",
+    "/allocation/allocation/delete": "allocation:write",
+    "/allocation/allocation/update": "allocation:write",
+    "/allocation/course/delete": "allocation:courses:write",
+    "/allocation/course/update": "allocation:courses:write",
+    "/allocation/coursePreferences/delete": "allocation:preference:write",
+    "/allocation/coursePreferences/update": "allocation:preference:write",
+    "/allocation/semester/delete": "allocation:semester:write",
+    "/allocation/semester/update": "allocation:semester:write",
 } as const;

@@ -21,8 +21,8 @@ const updateCoursePreferenceSchema = z.object({
 });
 
 router.put(
-  "/update",
-  checkAccess("allocation:course-preferences:update"),
+  "/",
+  checkAccess("allocation:preference:write"),
   asyncHandler(async (req, res, next) => {
     const parsed = updateCoursePreferenceSchema.parse(req.body);
 
@@ -53,7 +53,7 @@ router.put(
       .where(eq(coursePreferences.id, id))
       .returning();
 
-    res.status(200).json({ success: true, data: updated[0] });
+    res.status(200).json(updated);
   })
 );
 
