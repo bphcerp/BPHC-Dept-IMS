@@ -18,6 +18,15 @@ export const allocationSchema = z.object({
 	noOfSections: z.number().int().min(1),
 });
 
+export const updateAllocationSchema = 
+allocationSchema.partial().extend({
+	id: z.string().uuid()
+});
+
+export const deleteAllocationSchema = z.object({
+    id: z.string().uuid() 
+});
+
 export const courseSchema = z.object({
 	code: z.string(),
 	name: z.string(),
@@ -38,6 +47,11 @@ export const courseSchema = z.object({
 	}
 );
 
+export const deleteCourseSchema = z.object({
+    code: z.string()
+});
+
+
 export const coursePreferencesSchema = z.object({
 	id: z.string().uuid().optional(),
 	instructorEmail: z.string().email(),
@@ -52,6 +66,12 @@ export const coursePreferencesSchema = z.object({
 export const updateCoursePreferencesSchema = coursePreferencesSchema.partial().extend({
 	id: z.string().uuid()
 })
+
+export const deleteCoursePreferenceSchema = z.object({
+    id: z.string().uuid() 
+});
+
+
 
 export const semesterSchema = z.object({
 	id: z.string().uuid().optional(),
@@ -71,4 +91,8 @@ export const semesterSchema = z.object({
 
 export const updateSemesterSchema = semesterSchema.partial().extend({
 	id: z.string().uuid()
-})
+});
+
+export const deleteSemesterSchema = z.object({
+    id: z.string().uuid() 
+});

@@ -6,18 +6,18 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { deleteCourseSchema } from "node_modules/lib/src/schemas/Allocation.ts";
+
 
 const router = express.Router();
 
-const deleteCoursePreferencesSchema = z.object({
-    code: z.string()
-});
+
 
 router.delete(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        const parsed = deleteCoursePreferencesSchema.parse(req.body);
+        const parsed = deleteCourseSchema.parse(req.body);
 
         const allocationExists = await db.query.course.findFirst({
             where: (alloc, { eq }) => eq(alloc.code, parsed.code),

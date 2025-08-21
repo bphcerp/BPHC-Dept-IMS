@@ -6,18 +6,11 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
+import {updateAllocationSchema} from "node_modules/lib/src/schemas/Allocation.ts";
 
 const router = express.Router();
 
-const updateAllocationSchema = z.object({
-  id: z.string().uuid(), 
-  instructorEmail: z.string().email().optional(),
-  semesterId: z.string().uuid().optional(),
-  courseCode: z.string().optional(),
-  sectionType: z.enum(["Lecture", "Tutorial", "Practical"]).optional(),
-  noOfSections: z.number().int().optional(),
-  
-});
+
 
 router.put(
   "/",
