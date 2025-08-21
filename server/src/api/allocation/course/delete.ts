@@ -4,14 +4,10 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { deleteCourseSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
-
 const router = express.Router();
-
-
 
 router.delete(
     "/",
