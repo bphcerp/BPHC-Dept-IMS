@@ -4,27 +4,16 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { updateCoursePreferencesSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
 const router = express.Router();
 
-
-const updateCoursePreferenceSchema = z.object({
-    id: z.string().uuid(),
-	instructorEmail: z.string().email(),
-	semesterId: z.string().uuid(),
-	courseCode: z.string(),
-	sectionType: z.enum(["Lecture", "Tutorial", "Practical"]),
-	preferences: z.number().int().min(1),
-	
-});
-
 router.put(
   "/",
-  checkAccess("allocation:preference:write"),
+  checkAccess(),
   asyncHandler(async (req, res, next) => {
-    const parsed = updateCoursePreferenceSchema.parse(req.body);
+    const parsed = updateCoursePreferencesSchema.parse(req.body);
 
     const coursePreferenceExists = await db.query.coursePreferences.findFirst({
       where: (c, { eq }) => eq(c.id, parsed.id),

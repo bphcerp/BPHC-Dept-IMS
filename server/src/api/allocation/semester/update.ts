@@ -4,26 +4,14 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { z } from "zod";
 import { eq } from "drizzle-orm";
+import { updateSemesterSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
 const router = express.Router();
 
-const updateSemesterSchema = z.object({
-  id: z.string().uuid(),
-  year: z.number().int(),
-  oddEven: z.enum(["odd", "even"]),
-  startDate: z.date(),
-  endDate: z.date(),
-  allocationDeadline: z.date(),
-  noOfElectivesPerInstructor: z.number().int(),
-  noOfDisciplineCoursesPerInstructor: z.number().int(),
-  allocationSchema: z.enum(["notStarted", "ongoing", "completed", "suspended"]),
-});
-
 router.put(
   "/",
-  checkAccess("allocation:semester:write"),
+  checkAccess(),
   asyncHandler(async (req, res, next) => {
     const parsed = updateSemesterSchema.parse(req.body);
 

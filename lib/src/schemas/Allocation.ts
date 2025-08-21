@@ -26,8 +26,8 @@ export const courseSchema = z.object({
 	practicalSecCount: z.number().int().min(0),
 	units: z.number().int().min(1),
 	isCDC: z.boolean(),
-	// createdAt: z.string().datetime().optional(),
-	// updatedAt: z.string().datetime().optional()
+	// createdAt: z.date().optional(),
+	// updatedAt: z.date().optional()
 }).refine(
 	(data) =>
 		(data.lectureSecCount ?? 0) > 0 ||
@@ -45,22 +45,30 @@ export const coursePreferencesSchema = z.object({
 	courseCode: z.string(),
 	sectionType: sectionTypeEnum,
 	preferences: z.number().int().min(1),
-	//createdAt: z.string().datetime().optional(),
-	//updatedAt: z.string().datetime().optional()
+	//createdAt: z.date().optional(),
+	//updatedAt: z.date().optional()
 });
+
+export const updateCoursePreferencesSchema = coursePreferencesSchema.partial().extend({
+	id: z.string().uuid()
+})
 
 export const semesterSchema = z.object({
 	id: z.string().uuid().optional(),
 	year: z.number().int(),
 	oddEven: oddEvenEnum,
-	startDate: z.string().datetime(),
-	endDate: z.string().datetime(),
-	allocationDeadline: z.string().datetime().optional(),
+	startDate: z.date(),
+	endDate: z.date(),
+	allocationDeadline: z.date().optional(),
 	noOfElectivesPerInstructor: z.number().int(),
 	noOfDisciplineCoursesPerInstructor: z.number().int(),
 	// hodAtStartOfSemEmail: z.string().email().optional(),
 	// dcaConvenerAtStartOfSemEmail: z.string().email().optional(),
 	allocationSchema: allocationStatusEnum,
-	// createdAt: z.string().datetime().optional(),
-	//updatedAt: z.string().datetime().optional()
+	// createdAt: z.date().optional(),
+	//updatedAt: z.date().optional()
 });
+
+export const updateSemesterSchema = semesterSchema.partial().extend({
+	id: z.string().uuid()
+})
