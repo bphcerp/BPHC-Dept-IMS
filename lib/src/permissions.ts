@@ -159,6 +159,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/assignExaminers": "phd:drc:qe",
     "/phd/drcMember/notifyExaminers": "phd:drc:qe",
     "/phd/drcMember/getExaminerSuggestions": "phd:drc:qe",
+    "/phd/drcMember/updateExaminerCount": "phd:drc:qe",
     "/phd/drcMember/setQualificationDate": "phd:drc:qe",
     "/phd/drcMember/submitResult": "phd:drc:qe",
 

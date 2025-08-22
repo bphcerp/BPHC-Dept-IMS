@@ -37,6 +37,7 @@ export default router.get(
           studentEmail: app.student.email,
           qualifyingArea1: app.qualifyingArea1,
           qualifyingArea2: app.qualifyingArea2,
+          examinerCount: app.examinerCount,
           hasSuggestions: app.examinerSuggestions.length > 0,
         };
       })

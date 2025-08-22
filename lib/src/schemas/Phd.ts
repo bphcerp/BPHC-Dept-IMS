@@ -64,6 +64,12 @@ export const suggestExaminersSchema = z.object({
 });
 export type SuggestExaminersBody = z.infer<typeof suggestExaminersSchema>;
 
+export const updateExaminerCountSchema = z.object({
+    applicationId: z.number().int().positive(),
+    examinerCount: z.number().int().min(2).max(4),
+});
+export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
+
 export const assignExaminersSchema = z.object({
     applicationId: z.number().int().positive(),
     examinerArea1: z.string().email(),
@@ -365,6 +371,7 @@ export interface VerifiedApplication {
     };
     qualifyingArea1: string;
     qualifyingArea2: string;
+    examinerCount: number;
     examinerSuggestionCount: number;
     examinerAssignmentCount: number;
     examinerAssignments: { examinerEmail: string; qualifyingArea: string }[];

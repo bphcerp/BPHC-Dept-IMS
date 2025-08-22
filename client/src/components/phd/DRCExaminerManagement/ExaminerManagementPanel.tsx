@@ -33,6 +33,7 @@ import {
 import { ArrowLeft, Send, UserPlus, CheckCircle, Clock } from "lucide-react";
 import NotificationDialog from "./NotificationDialog";
 import { phdSchemas } from "lib";
+import { isAxiosError } from "axios";
 
 interface ExaminerManagementPanelProps {
   selectedExamId: number;
@@ -46,6 +47,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
   const [selectedApplication, setSelectedApplication] =
     useState<phdSchemas.VerifiedApplication | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isUpdateExaminerCountDialogOpen, setIsUpdateExaminerCountDialogOpen] = useState(false);
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [notificationData, setNotificationData] = useState<{
     recipients: string[];
@@ -146,6 +148,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
                 <TableHead>Supervisor</TableHead>
                 <TableHead>Area 1</TableHead>
                 <TableHead>Area 2</TableHead>
+                <TableHead>Examiner Count</TableHead>
                 <TableHead>Suggestion Status</TableHead>
                 <TableHead>Assignment Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -163,6 +166,23 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
                   <TableCell>{app.student.supervisor}</TableCell>
                   <TableCell>{app.qualifyingArea1}</TableCell>
                   <TableCell>{app.qualifyingArea2}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{app.examinerCount}</span>
+                      {app.examinerAssignmentCount === 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedApplication(app);
+                            setIsUpdateExaminerCountDialogOpen(true);
+                          }}
+                        >
+                          Update
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -251,6 +271,17 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           }}
         />
       )}
+      {selectedApplication && (
+        <UpdateExaminerCountDialog
+          application={selectedApplication}
+          isOpen={isUpdateExaminerCountDialogOpen}
+          onClose={() => setIsUpdateExaminerCountDialogOpen(false)}
+          onSuccess={() => {
+            setIsUpdateExaminerCountDialogOpen(false);
+            void refetch();
+          }}
+        />
+      )}
       <NotificationDialog
         isOpen={isNotifyDialogOpen}
         onClose={() => setIsNotifyDialogOpen(false)}
@@ -325,8 +356,7 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
             Assign Examiners for {application.student.name}
           </DialogTitle>
           <DialogDescription>
-            Select one examiner for each qualifying area from the
-            supervisor&apos;s suggestions.
+            Select one examiner for each qualifying area from the supervisor&apos;s suggestions.
           </DialogDescription>
         </DialogHeader>
         {isLoadingSuggestions ? (
@@ -384,6 +414,94 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
             disabled={assignMutation.isLoading || isLoadingSuggestions}
           >
             {assignMutation.isLoading ? <LoadingSpinner /> : "Assign Examiners"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface UpdateExaminerCountDialogProps {
+  application: phdSchemas.VerifiedApplication;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
+  application,
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
+  const [examinerCount, setExaminerCount] = useState<number>(
+    Number.isFinite(application.examinerCount)
+      ? application.examinerCount as number
+      : 2
+  );
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { applicationId: number; examinerCount: number }) =>
+      api.post("/phd/drcMember/updateExaminerCount", data),
+    onSuccess: () => {
+      toast.success("Examiner count updated successfully.");
+      onSuccess();
+    },
+    onError: (error) => {
+          if (isAxiosError(error)) {
+            toast.error(`Failed to update examiner count:, ${error.response?.data}`);
+          }
+          toast.error("Failed to update examiner count.");
+        },
+  });
+
+  const handleSubmit = () => {
+    updateMutation.mutate({
+      applicationId: application.id,
+      examinerCount,
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>
+            Update Examiner Count for {application.student.name}
+          </DialogTitle>
+          <DialogDescription>
+            Set the number of examiners to be assigned for this application.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="examiner-count" className="col-span-1 text-right">
+              Count
+            </Label>
+            <Select
+              value={examinerCount.toString()}
+              onValueChange={(value) => setExaminerCount(parseInt(value))}
+            >
+              <SelectTrigger className="col-span-3">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={updateMutation.isLoading}
+          >
+            {updateMutation.isLoading ? <LoadingSpinner /> : "Update Count"}
           </Button>
         </DialogFooter>
       </DialogContent>

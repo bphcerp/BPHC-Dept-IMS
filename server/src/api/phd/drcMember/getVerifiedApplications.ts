@@ -49,6 +49,7 @@ export default router.get(
                 comments: app.comments,
                 qualifyingArea1: app.qualifyingArea1,
                 qualifyingArea2: app.qualifyingArea2,
+                examinerCount: app.examinerCount,
                 createdAt: app.createdAt.toISOString(),
                 updatedAt: app.updatedAt.toISOString(),
                 student: {

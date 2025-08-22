@@ -15,6 +15,7 @@ import { Check, ChevronsUpDown, UserPlus, X, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { isAxiosError } from "axios";
 
 interface ApplicationForSuggestion {
   id: number;
@@ -22,6 +23,7 @@ interface ApplicationForSuggestion {
   studentEmail: string;
   qualifyingArea1: string;
   qualifyingArea2: string;
+  examinerCount: number;
   hasSuggestions: boolean;
 }
 
@@ -39,7 +41,7 @@ const ExaminerSuggestions: React.FC = () => {
     queryKey: ["supervisor-applications-for-suggestion"],
     queryFn: async () => {
       const response = await api.get("/phd/supervisor/getApplicationsForSuggestion");
-      return response.data;
+      return response.data as ApplicationForSuggestion[];
     },
   });
 
@@ -89,10 +91,12 @@ const ExaminerSuggestions: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" onClick={() => { setSelectedApplication(app); setIsSuggestionDialogOpen(true); }}>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        {app.hasSuggestions ? "Update Suggestions" : "Suggest Examiners"}
-                      </Button>
+                      {!app.hasSuggestions && (
+                        <Button size="sm" onClick={() => { setSelectedApplication(app); setIsSuggestionDialogOpen(true); }}>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Suggest Examiners
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 )) : (
@@ -130,7 +134,10 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({ application, isOpen
 
   const { data: facultyList = [], isLoading: isLoadingFaculty } = useQuery<FacultyMember[]>({
     queryKey: ["faculty-list"],
-    queryFn: async () => (await api.get("/phd/supervisor/getFacultyList")).data,
+    queryFn: async () => {
+      const response = await api.get<FacultyMember[]>("/phd/supervisor/getFacultyList");
+      return response.data;
+    },
   });
 
   const mutation = useMutation({
@@ -140,7 +147,12 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({ application, isOpen
       toast.success("Suggestions submitted successfully.");
       onSuccess();
     },
-    onError: (error: any) => toast.error(error.response?.data?.message || "Submission failed."),
+    onError: (error) => {
+              if (isAxiosError(error)) {
+                toast.error(`Submission failed:, ${error.response?.data}`);
+              }
+              toast.error("Submission failed.");
+            },
   });
 
   const handleSubmit = () => {
@@ -156,11 +168,11 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({ application, isOpen
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Suggest Examiners for {application.studentName}</DialogTitle>
-          <DialogDescription>Select between 1 and 4 examiners for each qualifying area from the list or add an external examiner by email.</DialogDescription>
+          <DialogDescription>Select between 1 and {application.examinerCount} examiners for each qualifying area from the list or add an external examiner by email.</DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-          <ExaminerSelector title={`Area 1: ${application.qualifyingArea1}`} selected={suggestions1} setSelected={setSuggestions1} facultyList={facultyList} isLoading={isLoadingFaculty} />
-          <ExaminerSelector title={`Area 2: ${application.qualifyingArea2}`} selected={suggestions2} setSelected={setSuggestions2} facultyList={facultyList} isLoading={isLoadingFaculty} />
+          <ExaminerSelector title={`Area 1: ${application.qualifyingArea1}`} selected={suggestions1} setSelected={setSuggestions1} facultyList={facultyList} isLoading={isLoadingFaculty} maxCount={application.examinerCount} />
+          <ExaminerSelector title={`Area 2: ${application.qualifyingArea2}`} selected={suggestions2} setSelected={setSuggestions2} facultyList={facultyList} isLoading={isLoadingFaculty} maxCount={application.examinerCount} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -180,17 +192,18 @@ interface ExaminerSelectorProps {
   setSelected: React.Dispatch<React.SetStateAction<string[]>>;
   facultyList: FacultyMember[];
   isLoading: boolean;
+  maxCount?: number;
 }
 
-const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({ title, selected, setSelected, facultyList, isLoading }) => {
+const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({ title, selected, setSelected, facultyList, isLoading, maxCount = 4 }) => {
   const [open, setOpen] = useState(false);
   const [externalEmail, setExternalEmail] = useState("");
 
   const handleSelect = (email: string) => {
-    if (selected.length < 4 && !selected.includes(email)) {
+    if (selected.length < maxCount && !selected.includes(email)) {
       setSelected([...selected, email]);
-    } else if (selected.length >= 4) {
-        toast.error("You cannot suggest more than 4 examiners.");
+    } else if (selected.length >= maxCount) {
+      toast.error(`You cannot suggest more than ${maxCount} examiners.`);
     }
     setOpen(false);
   };
@@ -198,14 +211,14 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({ title, selected, se
   const handleRemove = (email: string) => {
     setSelected(selected.filter(s => s !== email));
   };
-  
+
   const handleAddExternal = () => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(externalEmail)) {
       toast.error("Please enter a valid email address.");
       return;
     }
-    if (selected.length >= 4) {
-      toast.error("You cannot suggest more than 4 examiners.");
+    if (selected.length >= maxCount) {
+      toast.error(`You cannot suggest more than ${maxCount} examiners.`);
       return;
     }
     if (selected.includes(externalEmail) || facultyList.some(f => f.email === externalEmail)) {
@@ -219,10 +232,10 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({ title, selected, se
 
   return (
     <div className="space-y-4">
-      <Label className="font-semibold">{title} ({selected.length} / 4 selected)</Label>
+      <Label className="font-semibold">{title} ({selected.length} / {maxCount} selected)</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between" disabled={selected.length >= 4 || isLoading}>
+          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between" disabled={selected.length >= maxCount || isLoading}>
             {isLoading ? "Loading..." : "Select from Faculty List..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -231,38 +244,38 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({ title, selected, se
           <Command>
             <CommandInput placeholder="Search faculty..." />
             <CommandList>
-                <CommandEmpty>No faculty found.</CommandEmpty>
-                <CommandGroup>
+              <CommandEmpty>No faculty found.</CommandEmpty>
+              <CommandGroup>
                 {facultyList.filter(f => !selected.includes(f.email)).map((faculty) => (
-                    <CommandItem key={faculty.email} onSelect={() => handleSelect(faculty.email)}>
-                      <Check className={cn("mr-2 h-4 w-4", selected.includes(faculty.email) ? "opacity-100" : "opacity-0")} />
-                      {faculty.name} ({faculty.email})
-                    </CommandItem>
+                  <CommandItem key={faculty.email} onSelect={() => handleSelect(faculty.email)}>
+                    <Check className={cn("mr-2 h-4 w-4", selected.includes(faculty.email) ? "opacity-100" : "opacity-0")} />
+                    {faculty.name} ({faculty.email})
+                  </CommandItem>
                 ))}
-                </CommandGroup>
+              </CommandGroup>
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
-      
+
       <div className="relative">
-          <Separator />
-          <div className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">OR</div>
+        <Separator />
+        <div className="absolute left-1/2 -translate-x-1/2 -top-2.5 bg-background px-2 text-xs text-muted-foreground">OR</div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="external-email">Add External Examiner</Label>
         <div className="flex gap-2">
-            <Input 
-                id="external-email"
-                placeholder="examiner@email.com"
-                value={externalEmail}
-                onChange={(e) => setExternalEmail(e.target.value)}
-                disabled={selected.length >= 4}
-            />
-            <Button type="button" variant="secondary" onClick={handleAddExternal} disabled={selected.length >= 4 || !externalEmail.trim()}>
-                <PlusCircle className="h-4 w-4" />
-            </Button>
+          <Input
+            id="external-email"
+            placeholder="examiner@email.com"
+            value={externalEmail}
+            onChange={(e) => setExternalEmail(e.target.value)}
+            disabled={selected.length >= maxCount}
+          />
+          <Button type="button" variant="secondary" onClick={handleAddExternal} disabled={selected.length >= maxCount || !externalEmail.trim()}>
+            <PlusCircle className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

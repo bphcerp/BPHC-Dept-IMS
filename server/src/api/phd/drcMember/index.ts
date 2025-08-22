@@ -10,6 +10,7 @@ import assignExaminers from "./assignExaminers.ts";
 import notifyExaminers from "./notifyExaminers.ts";
 import submitResult from "./submitResult.ts";
 import setQualificationDate from "./setQualificationDate.ts";
+import updateExaminerCount from "./updateExaminerCount.ts";
 
 const router = express.Router();
 
@@ -24,4 +25,5 @@ router.use("/assignExaminers", assignExaminers);
 router.use("/notifyExaminers", notifyExaminers);
 router.use("/submitResult", submitResult);
 router.use("/setQualificationDate", setQualificationDate);
+router.use("/updateExaminerCount", updateExaminerCount);
 export default router;
