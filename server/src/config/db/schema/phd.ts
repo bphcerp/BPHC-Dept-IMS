@@ -6,6 +6,7 @@ import {
     integer,
     unique,
     pgEnum,
+    boolean,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { phd } from "./admin.ts";
@@ -188,10 +189,8 @@ export const phdExaminerAssignments = pgTable(
             .notNull()
             .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
         examinerEmail: text("examiner_email").notNull(),
-        createdAt: timestamp("created_at", { withTimezone: true })
-            .defaultNow()
-            .notNull(),
         notifiedAt: timestamp("notified_at", { withTimezone: true }),
+        qpSubmitted: boolean("qp_submitted").default(false).notNull(),
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );

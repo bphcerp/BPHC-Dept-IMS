@@ -8,7 +8,8 @@ import {
     phdExamApplications,
 } from "@/config/db/schema/phd.ts";
 import { eq, and, desc } from "drizzle-orm";
-import { phdSchemas } from "lib";
+import { modules, phdSchemas } from "lib";
+import { todoExists } from "@/lib/todos/index.ts";
 const router = express.Router();
 export default router.get(
     "/:examId",
@@ -37,16 +38,24 @@ export default router.get(
                 ),
                 with: {
                     student: true,
-                    examinerSuggestions: { columns: { id: true } },
+                    examinerSuggestions: true,
                     examinerAssignments: true,
                 },
                 orderBy: desc(phdExamApplications.createdAt),
             });
-        const transformedApplications: Array<phdSchemas.VerifiedApplication> =
+
+        const supervisorTodosExist = await todoExists(
             verifiedApplications.map((app) => ({
+                module: modules[4],
+                completionEvent: `supervisor-suggest-for-${app.id}-exam-${app.examId}`,
+                assignedTo: app.student.supervisorEmail ?? "",
+            }))
+        );
+
+        const transformedApplications: Array<phdSchemas.VerifiedApplication> =
+            verifiedApplications.map((app, index) => ({
                 id: app.id,
-                status: app.status,
-                comments: app.comments,
+                examId: app.examId,
                 qualifyingArea1: app.qualifyingArea1,
                 qualifyingArea2: app.qualifyingArea2,
                 examinerCount: app.examinerCount,
@@ -62,16 +71,39 @@ export default router.get(
                     coSupervisor1: app.student.coSupervisorEmail,
                     coSupervisor2: app.student.coSupervisorEmail2,
                 },
-                examinerSuggestionCount: app.examinerSuggestions.length,
-                examinerAssignmentCount: app.examinerAssignments.length,
-                examinerAssignments: app.examinerAssignments.map((a) => ({
-                    examinerEmail: a.examinerEmail,
-                    qualifyingArea: a.qualifyingArea,
-                })),
+                examinerAssignments: app.examinerAssignments.reduce(
+                    (acc, assignment) => {
+                        acc[assignment.qualifyingArea] = {
+                            examinerEmail: assignment.examinerEmail,
+                            notifiedAt: assignment.notifiedAt
+                                ? assignment.notifiedAt.toISOString()
+                                : null,
+                            qpSubmitted: assignment.qpSubmitted,
+                        };
+                        return acc;
+                    },
+                    {} as Record<
+                        string,
+                        {
+                            examinerEmail: string;
+                            notifiedAt: string | null;
+                            qpSubmitted: boolean;
+                        }
+                    >
+                ),
+                examinerSuggestions: app.examinerSuggestions.reduce(
+                    (acc, suggestion) => {
+                        acc[suggestion.qualifyingArea] =
+                            suggestion.suggestedExaminers;
+                        return acc;
+                    },
+                    {} as Record<string, string[]>
+                ),
                 result: app.result,
                 qualificationDate: app.student.qualificationDate
                     ? app.student.qualificationDate.toISOString()
                     : null,
+                supervisorTodoExists: supervisorTodosExist[index],
             }));
         res.json(transformedApplications);
     })

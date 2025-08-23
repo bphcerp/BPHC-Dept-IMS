@@ -134,6 +134,11 @@ export const ApplicationDetailsDialog: React.FC<
                     <span className="text-sm">{application.student.email}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium">Phone:</span>
+                    <span className="text-sm">{application.student.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">ERP ID:</span>
                     <span className="font-mono text-sm">
                       {application.student.erpId}

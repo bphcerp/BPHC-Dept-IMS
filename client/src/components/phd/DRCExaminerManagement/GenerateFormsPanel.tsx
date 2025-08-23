@@ -45,7 +45,7 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
-  const { data: verifiedApplications = [], isLoading } = useQuery({
+  const { data: verifiedApps = [], isLoading } = useQuery({
     queryKey: ["verified-applications", selectedExamId],
     queryFn: async () => {
       const response = await api.get<VerifiedApplication[]>(
@@ -55,10 +55,6 @@ const GenerateFormsPanel: React.FC<GenerateFormsPanelProps> = ({
     },
     enabled: !!selectedExamId,
   });
-
-  const verifiedApps = verifiedApplications.filter(
-    (app) => app.status === "verified"
-  );
 
   const downloadFormsMutation = useMutation({
     mutationFn: async (applicationIds: number[]) => {

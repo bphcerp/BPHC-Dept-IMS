@@ -42,6 +42,7 @@ export default router.get(
         });
         const transformedApplications = applications.map((app) => ({
             id: app.id,
+            examId: app.examId,
             status: app.status,
             comments: app.comments,
             qualifyingArea1: app.qualifyingArea1,
@@ -78,8 +79,6 @@ export default router.get(
                     ? `${environment.SERVER_URL}/f/${app.mastersReportFileId}`
                     : null,
             },
-            examinerSuggestionCount: app.examinerSuggestions.length,
-            examinerAssignmentCount: app.examinerAssignments.length,
         }));
         const response: phdSchemas.QualifyingExamApplicationsResponse = {
             exam: {

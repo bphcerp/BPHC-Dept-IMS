@@ -32,6 +32,22 @@ export const notificationPayloadSchema = z.object({
 });
 export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
 
+export const singleNotificationPayloadSchema = z.object({
+    subject: z.string().min(1, "Subject is required for emails."),
+    body: z.string().min(1, "Body cannot be empty."),
+    recipient: z.string().email("Valid email is required."),
+});
+export type SingleNotificationPayload = z.infer<
+    typeof singleNotificationPayloadSchema
+>;
+
+export const notifyExaminerPayloadSchema = z.object({
+    subject: z.string().min(1, "Subject is required for emails."),
+    body: z.string().min(1, "Body cannot be empty."),
+    area: z.string().min(1, "Area is required."),
+});
+export type NotifyExaminerPayload = z.infer<typeof notifyExaminerPayloadSchema>;
+
 export const submitResultSchema = z.object({
     applicationId: z.number().int().positive(),
     result: resultStatusEnum,
@@ -51,18 +67,21 @@ export const updateApplicationStatusDRCSchema = z.object({
     comments: optionalString,
 });
 
-export const suggestExaminersSchema = z.object({
-    applicationId: z.number().int().positive(),
-    suggestionsArea1: z
-        .array(z.string().email())
-        .min(1, "Must suggest at least 1 examiner")
-        .max(4, "Cannot suggest more than 4 examiners"),
-    suggestionsArea2: z
-        .array(z.string().email())
-        .min(1, "Must suggest at least 1 examiner")
-        .max(4, "Cannot suggest more than 4 examiners"),
-});
-export type SuggestExaminersBody = z.infer<typeof suggestExaminersSchema>;
+export const createSuggestExaminersSchema = (examinerCount: number) =>
+    z.object({
+        suggestionsArea1: z
+            .array(z.string().email())
+            .length(
+                examinerCount,
+                `Must suggest exactly ${examinerCount} examiners`
+            ),
+        suggestionsArea2: z
+            .array(z.string().email())
+            .length(
+                examinerCount,
+                `Must suggest exactly ${examinerCount} examiners`
+            ),
+    });
 
 export const updateExaminerCountSchema = z.object({
     applicationId: z.number().int().positive(),
@@ -303,8 +322,30 @@ export type UpdateExamDeadlineBody = z.infer<
     typeof updateExamDeadlineBodySchema
 >;
 
+export const requestExaminerSuggestionsBodySchema = z.object({
+    applicationId: z.number().int().positive(),
+    subject: z.string().min(1, "Subject is required for emails."),
+    body: z.string().min(1, "Body cannot be empty."),
+});
+
+export type requestExaminerSuggestionsBody = z.infer<
+    typeof requestExaminerSuggestionsBodySchema
+>;
+
+export interface PhdStudent {
+    email: string;
+    name: string | null;
+    erpId: string | null;
+    phone: string | null;
+    supervisor: string | null;
+    idNumber: string | null;
+    coSupervisor1: string | null;
+    coSupervisor2: string | null;
+}
+
 export interface QualifyingExamApplication {
     id: number;
+    examId: number;
     status: (typeof phdExamApplicationStatuses)[number];
     comments: string | null;
     qualifyingArea1: string;
@@ -329,8 +370,38 @@ export interface QualifyingExamApplication {
         undergradReport: string | null;
         mastersReport: string | null;
     };
-    examinerSuggestionCount: number;
-    examinerAssignmentCount: number;
+}
+
+export interface VerifiedApplication {
+    id: number;
+    examId: number;
+    qualifyingArea1: string;
+    qualifyingArea2: string;
+    createdAt: string;
+    updatedAt: string;
+    student: {
+        email: string;
+        name: string | null;
+        erpId: string | null;
+        phone: string | null;
+        supervisor: string | null;
+        idNumber: string | null;
+        coSupervisor1: string | null;
+        coSupervisor2: string | null;
+    };
+    examinerSuggestions: Record<string, string[]>;
+    examinerCount: number;
+    examinerAssignments: Record<
+        string,
+        {
+            examinerEmail: string;
+            notifiedAt: string | null;
+            qpSubmitted: boolean;
+        }
+    >;
+    result: "pass" | "fail" | null;
+    qualificationDate: string | null;
+    supervisorTodoExists: boolean;
 }
 
 export interface QualifyingExamApplicationsResponse {
@@ -355,26 +426,4 @@ export interface QualifyingExamApplicationsResponse {
         };
     };
     applications: Array<QualifyingExamApplication>;
-}
-
-export interface VerifiedApplication {
-    id: number;
-    student: {
-        email: string;
-        name: string | null;
-        erpId: string | null;
-        phone: string | null;
-        supervisor: string | null;
-        idNumber: string | null;
-        coSupervisor1: string | null;
-        coSupervisor2: string | null;
-    };
-    qualifyingArea1: string;
-    qualifyingArea2: string;
-    examinerCount: number;
-    examinerSuggestionCount: number;
-    examinerAssignmentCount: number;
-    examinerAssignments: { examinerEmail: string; qualifyingArea: string }[];
-    result: "pass" | "fail" | null;
-    qualificationDate: string | null;
 }

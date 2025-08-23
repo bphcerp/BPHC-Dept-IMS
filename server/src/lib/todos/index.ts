@@ -1,6 +1,6 @@
 import db, { type Tx } from "@/config/db/index.ts";
 import { notifications, todos } from "@/config/db/schema/todos.ts";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { eq, and, sql, inArray, or } from "drizzle-orm";
 import type { modules } from "lib";
 
 /**
@@ -58,6 +58,51 @@ export async function completeTodo(
         );
 
     return result.rowCount;
+}
+
+/**
+ * Checks if todo tasks already exist in the database.
+ */
+export async function todoExists(
+    values: {
+        module: (typeof modules)[number];
+        completionEvent: string;
+        assignedTo: string;
+    }[],
+    tx: typeof db | Tx = db
+): Promise<boolean[]> {
+    if (!values.length) return [];
+
+    // Query all existing todos that match any of the input combinations
+    const existingTodos = await tx.query.todos.findMany({
+        where: or(
+            ...values.map(({ module, completionEvent, assignedTo }) =>
+                and(
+                    eq(todos.module, module),
+                    eq(todos.completionEvent, completionEvent),
+                    eq(todos.assignedTo, assignedTo)
+                )
+            )
+        ),
+        columns: {
+            module: true,
+            completionEvent: true,
+            assignedTo: true,
+        },
+    });
+
+    // Create a Set for O(1) lookup of existing combinations
+    const existingSet = new Set(
+        existingTodos.map(
+            ({ module, completionEvent, assignedTo }) =>
+                `${module}:${completionEvent}:${assignedTo}`
+        )
+    );
+
+    // Map input values to boolean results
+    return values.map(({ module, completionEvent, assignedTo }) =>
+        existingSet.has(`${module}:${completionEvent}:${assignedTo}`)
+    );
 }
 
 /**

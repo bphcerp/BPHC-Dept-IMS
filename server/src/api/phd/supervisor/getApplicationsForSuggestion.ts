@@ -2,47 +2,45 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { phdExamApplications } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
 import assert from "assert";
+import { phdSchemas } from "lib";
 
 const router = express.Router();
 
 export default router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res) => {
-    assert(req.user, "User must be defined");
-    const supervisorEmail = req.user.email;
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        assert(req.user);
+        const supervisorEmail = req.user.email;
 
-    // 1. Fetch all 'verified' applications and eager-load their related student and suggestions.
-    const applications = await db.query.phdExamApplications.findMany({
-      where: eq(phdExamApplications.status, "verified"),
-      with: {
-        student: true, // Eagerly load the related student record
-        examinerSuggestions: { columns: { id: true } },
-      },
-    });
+        const applications = await db.query.phdExamApplications.findMany({
+            where: (cols, { eq }) =>
+                eq(cols.status, phdSchemas.phdExamApplicationStatuses["1"]),
+            with: {
+                student: true,
+                examinerSuggestions: true,
+            },
+        });
 
-    // 2. Filter these applications in code to keep only those supervised by the current user.
-    const supervisedApplications = applications
-      .filter(app => app.student?.supervisorEmail === supervisorEmail)
-      .map(app => {
-        // We can safely assume app.student is not null here due to the filter
-        if (!app.student) return null;
+        const pendingApplications = applications
+            .filter(
+                (app) =>
+                    app.student?.supervisorEmail === supervisorEmail &&
+                    app.examinerSuggestions.length === 0
+            )
+            .map((app) => {
+                return {
+                    id: app.id,
+                    studentName: app.student.name,
+                    studentEmail: app.student.email,
+                    qualifyingArea1: app.qualifyingArea1,
+                    qualifyingArea2: app.qualifyingArea2,
+                    examinerCount: app.examinerCount,
+                    hasSuggestions: app.examinerSuggestions.length > 0,
+                };
+            });
 
-        return {
-          id: app.id,
-          studentName: app.student.name,
-          studentEmail: app.student.email,
-          qualifyingArea1: app.qualifyingArea1,
-          qualifyingArea2: app.qualifyingArea2,
-          examinerCount: app.examinerCount,
-          hasSuggestions: app.examinerSuggestions.length > 0,
-        };
-      })
-      .filter(Boolean); // Remove any null entries if they somehow get through
-
-    res.status(200).json(supervisedApplications);
-  }),
+        res.status(200).json(pendingApplications);
+    })
 );

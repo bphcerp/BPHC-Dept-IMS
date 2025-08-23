@@ -32,7 +32,8 @@ export const allPermissions = {
     "phd:student:qe": "PhD scholar qualifying exams",
 
     "phd:drc:qe": "DRC Member operations on qualifying exams",
-    "phd:supervisor:suggest-examiners": "Suggest examiners for qualifying exams",
+    "phd:supervisor:suggest-examiners":
+        "Suggest examiners for qualifying exams",
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -134,7 +135,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
-    "/sendNotification": "phd:notifications:send",
+
     "/phd/staff/getAllSem": "phd:staff:manage-semesters",
     "/phd/staff/updateSem": "phd:staff:manage-semesters",
     "/phd/staff/getLatestSem": "phd:staff:manage-semesters",
@@ -155,16 +156,18 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/getQualifyingExamApplications": "phd:drc:qe",
     "/phd/drcMember/getVerifiedApplications": "phd:drc:qe",
     "/phd/drcMember/generateForms": "phd:drc:qe",
-    "/phd/drcMember/notifySupervisor": "phd:drc:qe",
+    "/phd/drcMember/requestExaminerSuggestions": "phd:drc:qe",
     "/phd/drcMember/assignExaminers": "phd:drc:qe",
     "/phd/drcMember/notifyExaminers": "phd:drc:qe",
-    "/phd/drcMember/getExaminerSuggestions": "phd:drc:qe",
     "/phd/drcMember/updateExaminerCount": "phd:drc:qe",
     "/phd/drcMember/setQualificationDate": "phd:drc:qe",
     "/phd/drcMember/submitResult": "phd:drc:qe",
+    "/phd/drcMember/updateQpSubmissionStatus": "phd:drc:qe",
+    "/phd/drcMember/notifyExaminer": "phd:drc:qe",
 
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
-    "/phd/supervisor/getApplicationsForSuggestion": "phd:supervisor:suggest-examiners",
+    "/phd/supervisor/getApplicationsForSuggestion":
+        "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",

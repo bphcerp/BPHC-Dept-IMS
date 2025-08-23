@@ -1,0 +1,1 @@
+ALTER TABLE "phd_exam_applications" ADD COLUMN "examiner_count" integer DEFAULT 2 NOT NULL;
