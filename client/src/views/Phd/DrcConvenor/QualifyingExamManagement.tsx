@@ -16,7 +16,7 @@ import api from "@/lib/axios-instance";
 import ApplicationStatusPanel from "@/components/phd/DRCExaminerManagement/ApplicationStatusPanel";
 import GenerateFormsPanel from "@/components/phd/DRCExaminerManagement/GenerateFormsPanel";
 import ExaminerManagementPanel from "@/components/phd/DRCExaminerManagement/ExaminerManagementPanel";
-import ResultsPanel from "@/components/phd/DRCExaminerManagement/ResultPanel"; 
+import ResultsPanel from "@/components/phd/DRCExaminerManagement/ResultPanel";
 interface Semester {
   id: number;
   year: string;
@@ -27,6 +27,7 @@ interface Semester {
 }
 interface QualifyingExam {
   id: number;
+  examinerCount: number;
   semesterId: number;
   examName: string;
   examStartDate: string;
@@ -46,7 +47,7 @@ const QualifyingExamManagement: React.FC = () => {
     queryKey: ["semesters"],
     queryFn: async () => {
       const response = await api.get<{ semesters: Semester[] }>(
-        "/phd/staff/getAllSem",
+        "/phd/staff/getAllSem"
       );
       return response.data.semesters;
     },
@@ -56,7 +57,7 @@ const QualifyingExamManagement: React.FC = () => {
     queryKey: ["latestSemester"],
     queryFn: async () => {
       const response = await api.get<{ semester: Semester }>(
-        "/phd/staff/getLatestSem",
+        "/phd/staff/getLatestSem"
       );
       return response.data.semester;
     },
@@ -67,7 +68,7 @@ const QualifyingExamManagement: React.FC = () => {
     queryFn: async () => {
       if (!selectedSemester) return [];
       const response = await api.get<{ exams: QualifyingExam[] }>(
-        `/phd/staff/qualifyingExams/${selectedSemester}`,
+        `/phd/staff/qualifyingExams/${selectedSemester}`
       );
       return response.data.exams;
     },
@@ -96,13 +97,13 @@ const QualifyingExamManagement: React.FC = () => {
     setSelectedExamId(Number.parseInt(examId));
   };
 
-  const selectedExam = exams.find(exam => exam.id === selectedExamId);
+  const selectedExam = exams.find((exam) => exam.id === selectedExamId);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -110,29 +111,49 @@ const QualifyingExamManagement: React.FC = () => {
     <div className="min-h-screen w-full bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">PhD Qualifying Exam Management</h1>
-          <p className="mt-3 text-lg text-gray-600">Manage qualifying exam applications and processes</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            PhD Qualifying Exam Management
+          </h1>
+          <p className="mt-3 text-lg text-gray-600">
+            Manage qualifying exam applications and processes
+          </p>
         </div>
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 bg-white shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold text-gray-900">Exam Selection</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-900">
+              Exam Selection
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-3">
-                <Label htmlFor="semester-select" className="text-sm font-medium text-gray-700">Select Semester</Label>
+                <Label
+                  htmlFor="semester-select"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Select Semester
+                </Label>
                 {isLoadingSemesters ? (
-                  <div className="flex items-center justify-center h-11 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex h-11 items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
                     <LoadingSpinner className="h-4 w-4 text-gray-600" />
                   </div>
                 ) : (
-                  <Select value={selectedSemester?.toString() || ""} onValueChange={handleSemesterChange}>
-                    <SelectTrigger id="semester-select" className="h-11 border-gray-200 focus:border-gray-400 focus:ring-gray-400">
+                  <Select
+                    value={selectedSemester?.toString() || ""}
+                    onValueChange={handleSemesterChange}
+                  >
+                    <SelectTrigger
+                      id="semester-select"
+                      className="h-11 border-gray-200 focus:border-gray-400 focus:ring-gray-400"
+                    >
                       <SelectValue placeholder="Choose semester..." />
                     </SelectTrigger>
                     <SelectContent>
                       {semesters?.map((semester) => (
-                        <SelectItem key={semester.id} value={semester.id.toString()}>
+                        <SelectItem
+                          key={semester.id}
+                          value={semester.id.toString()}
+                        >
                           {semester.year} - Semester {semester.semesterNumber}
                         </SelectItem>
                       ))}
@@ -141,19 +162,39 @@ const QualifyingExamManagement: React.FC = () => {
                 )}
               </div>
               <div className="space-y-3">
-                <Label htmlFor="exam-select" className="text-sm font-medium text-gray-700">Select Qualifying Exam</Label>
+                <Label
+                  htmlFor="exam-select"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Select Qualifying Exam
+                </Label>
                 {selectedSemester && isLoadingExams ? (
-                  <div className="flex items-center justify-center h-11 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex h-11 items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
                     <LoadingSpinner className="h-4 w-4 text-gray-600" />
                   </div>
                 ) : (
-                  <Select value={selectedExamId?.toString() || ""} onValueChange={handleExamChange} disabled={!selectedSemester}>
-                    <SelectTrigger id="exam-select" className={`h-11 border-gray-200 focus:border-gray-400 focus:ring-gray-400 ${!selectedSemester ? 'bg-gray-50 text-gray-400' : ''}`}>
-                      <SelectValue placeholder={selectedSemester ? "Choose exam..." : "Select semester first"} />
+                  <Select
+                    value={selectedExamId?.toString() || ""}
+                    onValueChange={handleExamChange}
+                    disabled={!selectedSemester}
+                  >
+                    <SelectTrigger
+                      id="exam-select"
+                      className={`h-11 border-gray-200 focus:border-gray-400 focus:ring-gray-400 ${!selectedSemester ? "bg-gray-50 text-gray-400" : ""}`}
+                    >
+                      <SelectValue
+                        placeholder={
+                          selectedSemester
+                            ? "Choose exam..."
+                            : "Select semester first"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {exams.map((exam) => (
-                        <SelectItem key={exam.id} value={exam.id.toString()}>{exam.examName}</SelectItem>
+                        <SelectItem key={exam.id} value={exam.id.toString()}>
+                          {exam.examName}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -161,103 +202,184 @@ const QualifyingExamManagement: React.FC = () => {
               </div>
             </div>
             {selectedExam && (
-              <div className="mt-6 p-5 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 text-lg mb-3">{selectedExam.examName}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Start Date</div>
-                        <div className="text-sm font-medium text-gray-900">{formatDate(selectedExam.examStartDate)}</div>
+                    <h3 className="mb-3 text-lg font-semibold text-gray-900">
+                      {selectedExam.examName}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                          Start Date
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDate(selectedExam.examStartDate)}
+                        </div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">End Date</div>
-                        <div className="text-sm font-medium text-gray-900">{formatDate(selectedExam.examEndDate)}</div>
+                      <div className="rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                          End Date
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDate(selectedExam.examEndDate)}
+                        </div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Submission Deadline</div>
-                        <div className="text-sm font-medium text-gray-900">{formatDate(selectedExam.submissionDeadline)}</div>
+                      <div className="rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                          Submission Deadline
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDate(selectedExam.submissionDeadline)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-gray-200">Active</Badge>
+                  <Badge
+                    variant="secondary"
+                    className="border-gray-200 bg-gray-100 text-gray-700"
+                  >
+                    Active
+                  </Badge>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
         {selectedExamId ? (
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 bg-white shadow-sm">
             <CardContent className="p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-1 rounded-lg">
-                  <TabsTrigger value="applications" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm rounded-md transition-all duration-200">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-4 rounded-lg bg-gray-100 p-1">
+                  <TabsTrigger
+                    value="applications"
+                    className="rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
                     <span className="font-medium">Applications</span>
                   </TabsTrigger>
-                  <TabsTrigger value="forms" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm rounded-md transition-all duration-200">
+                  <TabsTrigger
+                    value="forms"
+                    className="rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
                     <span className="font-medium">Generate Forms</span>
                   </TabsTrigger>
-                  <TabsTrigger value="examiners" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm rounded-md transition-all duration-200">
+                  <TabsTrigger
+                    value="examiners"
+                    className="rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
                     <span className="font-medium">Examiners</span>
                   </TabsTrigger>
-                  <TabsTrigger value="results" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm rounded-md transition-all duration-200">
+                  <TabsTrigger
+                    value="results"
+                    className="rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+                  >
                     <span className="font-medium">Results</span>
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="applications" className="mt-6">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Step 1: Review Student Applications</h3>
-                    <p className="text-gray-600 text-sm">Review and manage qualifying exam applications from students.</p>
+                  <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      Step 1: Review Student Applications
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Review and manage qualifying exam applications from
+                      students.
+                    </p>
                   </div>
-                  <ApplicationStatusPanel selectedExamId={selectedExamId} onNext={() => setActiveTab("forms")} />
+                  <ApplicationStatusPanel
+                    selectedExamId={selectedExamId}
+                    onNext={() => setActiveTab("forms")}
+                  />
                 </TabsContent>
                 <TabsContent value="forms" className="mt-6">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Step 2: Generate Required Forms</h3>
-                    <p className="text-gray-600 text-sm">Generate necessary forms and documents for the qualifying exam process.</p>
+                  <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      Step 2: Generate Required Forms
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Generate necessary forms and documents for the qualifying
+                      exam process.
+                    </p>
                   </div>
-                  <GenerateFormsPanel selectedExamId={selectedExamId} onNext={() => setActiveTab("examiners")} onBack={() => setActiveTab("applications")} />
+                  <GenerateFormsPanel
+                    selectedExamId={selectedExamId}
+                    onNext={() => setActiveTab("examiners")}
+                    onBack={() => setActiveTab("applications")}
+                  />
                 </TabsContent>
                 <TabsContent value="examiners" className="mt-6">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Step 3: Manage Examiners</h3>
-                    <p className="text-gray-600 text-sm">Notify supervisors, and assign examiners for the qualifying exam.</p>
+                  <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      Step 3: Manage Examiners
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Notify supervisors, and assign examiners for the
+                      qualifying exam.
+                    </p>
                   </div>
-                  <ExaminerManagementPanel selectedExamId={selectedExamId} onBack={() => setActiveTab("forms")} />
+                  <ExaminerManagementPanel
+                    selectedExamId={selectedExamId}
+                    examinerCount={selectedExam?.examinerCount || 2}
+                    onBack={() => setActiveTab("forms")}
+                  />
                 </TabsContent>
                 <TabsContent value="results" className="mt-6">
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Step 4: Exam Results</h3>
-                    <p className="text-gray-600 text-sm">View and manage qualifying exam results and outcomes.</p>
+                  <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                      Step 4: Exam Results
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      View and manage qualifying exam results and outcomes.
+                    </p>
                   </div>
-                  <ResultsPanel selectedExamId={selectedExamId} onBack={() => setActiveTab("examiners")} />
+                  <ResultsPanel
+                    selectedExamId={selectedExamId}
+                    onBack={() => setActiveTab("examiners")}
+                  />
                 </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border-0 bg-white shadow-sm">
             <CardContent className="p-12">
               <div className="text-center">
-                <div className="text-gray-400 mb-6">
-                  <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <div className="mb-6 text-gray-400">
+                  <svg
+                    className="mx-auto h-16 w-16"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">No Exam Selected</h3>
-                <p className="text-gray-600 max-w-md mx-auto">
-                  Please select a semester and qualifying exam from the dropdowns above to begin managing the exam process.
+                <h3 className="mb-3 text-xl font-semibold text-gray-900">
+                  No Exam Selected
+                </h3>
+                <p className="mx-auto max-w-md text-gray-600">
+                  Please select a semester and qualifying exam from the
+                  dropdowns above to begin managing the exam process.
                 </p>
                 <div className="mt-6 flex justify-center">
                   <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <div className="h-2 w-2 rounded-full bg-gray-400"></div>
                     <span>Step 1: Select Semester</span>
-                    <div className="w-8 h-px bg-gray-300"></div>
-                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                    <div className="h-px w-8 bg-gray-300"></div>
+                    <div className="h-2 w-2 rounded-full bg-gray-300"></div>
                     <span>Step 2: Select Exam</span>
-                    <div className="w-8 h-px bg-gray-300"></div>
-                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                    <div className="h-px w-8 bg-gray-300"></div>
+                    <div className="h-2 w-2 rounded-full bg-gray-300"></div>
                     <span>Step 3: Manage Process</span>
                   </div>
                 </div>

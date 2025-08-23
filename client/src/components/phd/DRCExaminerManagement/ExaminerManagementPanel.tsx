@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,11 +39,13 @@ import RequestSuggestionsDialog from "./RequestSuggestionsDialog";
 
 interface ExaminerManagementPanelProps {
   selectedExamId: number;
+  examinerCount: number;
   onBack?: () => void;
 }
 
 const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
   selectedExamId,
+  examinerCount,
   onBack,
 }) => {
   const [selectedApplication, setSelectedApplication] =
@@ -57,6 +59,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
     useState(false);
   const [selectedAreaForNotification, setSelectedAreaForNotification] =
     useState<string>("");
+  const queryClient = useQueryClient();
 
   const {
     data: applications = [],
@@ -127,6 +130,41 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           </div>
         </CardHeader>
         <CardContent>
+          {/* Global Examiner Count Configuration */}
+          {applications.length > 0 && (
+            <div className="mb-6 space-y-4">
+              <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-4">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <div className="text-sm font-medium">
+                      Examiner Suggestions Required per Area
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Number of examiner suggestions supervisors should provide
+                      for each qualifying area
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-muted-foreground">
+                      Count:
+                    </span>
+                    <span className="font-medium">{examinerCount ?? 2}</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedApplication(applications[0]);
+                    setIsUpdateExaminerCountDialogOpen(true);
+                  }}
+                >
+                  Edit Count
+                </Button>
+              </div>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -328,12 +366,13 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
       )}
       {selectedApplication && (
         <UpdateExaminerCountDialog
-          application={selectedApplication}
+          examId={selectedExamId}
+          examinerCount={examinerCount}
           isOpen={isUpdateExaminerCountDialogOpen}
           onClose={() => setIsUpdateExaminerCountDialogOpen(false)}
           onSuccess={() => {
             setIsUpdateExaminerCountDialogOpen(false);
-            void refetch();
+            void queryClient.invalidateQueries({ queryKey: ["exams"] });
           }}
         />
       )}
@@ -476,24 +515,24 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
 };
 
 interface UpdateExaminerCountDialogProps {
-  application: phdSchemas.VerifiedApplication;
+  examinerCount: number;
+  examId: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
-  application,
+  examinerCount,
+  examId,
   isOpen,
   onClose,
   onSuccess,
 }) => {
-  const [examinerCount, setExaminerCount] = useState(
-    Number.isFinite(application.examinerCount) ? application.examinerCount : 2
-  );
+  const [examinerCountState, setExaminerCount] = useState(examinerCount);
 
   const updateMutation = useMutation({
-    mutationFn: (data: { applicationId: number; examinerCount: number }) =>
+    mutationFn: (data: { examId: number; examinerCount: number }) =>
       api.post("/phd/drcMember/updateExaminerCount", data),
     onSuccess: () => {
       toast.success("Examiner count updated successfully.");
@@ -511,8 +550,8 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
 
   const handleSubmit = () => {
     updateMutation.mutate({
-      applicationId: application.id,
-      examinerCount,
+      examId,
+      examinerCount: examinerCountState,
     });
   };
 
@@ -520,11 +559,10 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>
-            Update Examiner Count for {application.student.name}
-          </DialogTitle>
+          <DialogTitle>Update Global Examiner Count</DialogTitle>
           <DialogDescription>
-            Set the number of examiners to be assigned for this application.
+            Set the number of examiner suggestions required from supervisors for
+            each qualifying area. This applies to all applications.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -533,7 +571,7 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
               Count
             </Label>
             <Select
-              value={examinerCount.toString()}
+              value={examinerCountState.toString()}
               onValueChange={(value) => setExaminerCount(parseInt(value))}
             >
               <SelectTrigger className="col-span-3">

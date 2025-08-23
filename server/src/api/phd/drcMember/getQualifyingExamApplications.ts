@@ -83,6 +83,7 @@ export default router.get(
         const response: phdSchemas.QualifyingExamApplicationsResponse = {
             exam: {
                 id: examDetails.id,
+                examinerCount: examDetails.examinerCount,
                 semesterId: examDetails.semesterId,
                 examName: examDetails.examName,
                 examStartDate: examDetails.examStartDate.toISOString(),

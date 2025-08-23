@@ -28,6 +28,7 @@ export default router.post(
                 student: {
                     columns: { supervisorEmail: true },
                 },
+                exam: true,
             },
         });
 
@@ -43,7 +44,7 @@ export default router.post(
         }
 
         const suggestExaminersSchema = phdSchemas.createSuggestExaminersSchema(
-            application.examinerCount
+            application.exam.examinerCount
         );
 
         const { suggestionsArea1, suggestionsArea2 } =

@@ -78,6 +78,7 @@ export const phdQualifyingExams = pgTable(
             withTimezone: true,
         }).notNull(),
         vivaDate: timestamp("viva_date", { withTimezone: true }),
+        examinerCount: integer("examiner_count").notNull().default(2),
         createdAt: timestamp("created_at", { withTimezone: true })
             .defaultNow()
             .notNull(),
@@ -139,7 +140,6 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     ),
     result: phdExamResultStatus("result"),
     attemptNumber: integer("attempt_number").notNull().default(1),
-    examinerCount: integer("examiner_count").notNull().default(2),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),

@@ -84,7 +84,7 @@ export const createSuggestExaminersSchema = (examinerCount: number) =>
     });
 
 export const updateExaminerCountSchema = z.object({
-    applicationId: z.number().int().positive(),
+    examId: z.number().int().positive(),
     examinerCount: z.number().int().min(2).max(4),
 });
 export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
@@ -390,7 +390,6 @@ export interface VerifiedApplication {
         coSupervisor2: string | null;
     };
     examinerSuggestions: Record<string, string[]>;
-    examinerCount: number;
     examinerAssignments: Record<
         string,
         {
@@ -407,6 +406,7 @@ export interface VerifiedApplication {
 export interface QualifyingExamApplicationsResponse {
     exam: {
         id: number;
+        examinerCount: number;
         semesterId: number;
         examName: string;
         examStartDate: string;

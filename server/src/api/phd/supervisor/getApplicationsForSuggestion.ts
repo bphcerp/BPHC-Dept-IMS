@@ -20,6 +20,7 @@ export default router.get(
             with: {
                 student: true,
                 examinerSuggestions: true,
+                exam: true,
             },
         });
 
@@ -36,7 +37,7 @@ export default router.get(
                     studentEmail: app.student.email,
                     qualifyingArea1: app.qualifyingArea1,
                     qualifyingArea2: app.qualifyingArea2,
-                    examinerCount: app.examinerCount,
+                    examinerCount: app.exam.examinerCount,
                     hasSuggestions: app.examinerSuggestions.length > 0,
                 };
             });
