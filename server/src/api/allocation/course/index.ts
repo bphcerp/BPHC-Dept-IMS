@@ -1,10 +1,16 @@
 import { Router } from "express";
-import updateCategory from "./update.ts";
-import deleteCategory from "./delete.ts";
+import createCourse from "./create.ts";
+import getCourses from "./get.ts";
+import getCourseByCode from "./getCourseByCode.ts";
+import updateCourse from "./update.ts";
+import deleteCourse from "./delete.ts";
 
 const router = Router();
 
-router.use("/update", updateCategory);
-router.use("/delete", deleteCategory);
+router.use("/create", createCourse);
+router.use("/get", getCourses);
+router.use("/getCourseByCode", getCourseByCode);
+router.use("/update", updateCourse);
+router.use("/delete", deleteCourse);
 
 export default router;

@@ -12,21 +12,10 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const { isCDC } = req.query;
-        
-        let whereCondition;
-        
-        if (isCDC !== undefined) {
-            const parsedIsCDC = isCDC === 'true';
-            whereCondition = eq(course.isCDC, parsedIsCDC);
-        }
+        const { isCDC } = req.query
         
         const result = await db.query.course.findMany({
-            where: whereCondition,
-            with: {
-                allocations: true,
-                coursePreferences: true,
-            },
+            where: isCDC === 'true' ? eq(course.isCDC, true) : undefined
         });
         
         res.status(200).json(result);

@@ -15,13 +15,12 @@ router.post(
         const parsed = courseSchema.parse(req.body);
         const newCourse = await db
             .insert(course)
-            .values(parsed as any)
+            .values(parsed)
             .onConflictDoNothing()
             .returning();
 
-        if (newCourse.length === 0) {
-            return next(new HttpError(HttpCode.CONFLICT, "Course already exists"));
-        }
+        if (newCourse.length === 0) return next(new HttpError(HttpCode.CONFLICT, "Course already exists"))
+            
         res.json({ success: true, data: newCourse[0] });
     })
 );

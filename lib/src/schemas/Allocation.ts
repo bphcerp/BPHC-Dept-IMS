@@ -33,6 +33,7 @@ export const courseSchema = z.object({
 	lectureSecCount: z.number().int().min(0),
 	tutSecCount: z.number().int().min(0),
 	practicalSecCount: z.number().int().min(0),
+	hasLongPracticalSec: z.boolean().optional(),
 	units: z.number().int().min(1),
 	isCDC: z.boolean(),
 	// createdAt: z.date().optional(),

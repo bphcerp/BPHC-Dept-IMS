@@ -15,16 +15,7 @@ router.get(
         const { code } = req.params;
         
         const result = await db.query.course.findFirst({
-            where: eq(course.code, code),
-            with: {
-                allocations: {
-                    with: {
-                        semester: true,
-                        instructor: true,
-                    },
-                },
-                coursePreferences: true,
-            },
+            where: eq(course.code, code)
         });
         
         if (!result) {

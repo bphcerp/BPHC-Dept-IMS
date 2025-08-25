@@ -44,10 +44,8 @@ export const allocation = pgTable("allocation_allocation_result", {
 
     noOfSections: integer("no_of_sections").notNull(),
     allocatedOn: timestamp("allocated_on", { withTimezone: true })
-        .notNull()
         .defaultNow(),
     updatedOn: timestamp("updated_on", { withTimezone: true })
-        .notNull()
         .defaultNow()
 });
 
@@ -60,15 +58,13 @@ export const course = pgTable("allocation_course", {
     practicalSecCount: integer("practical_sec_count").notNull(),
 
     units: integer("units"),
-    hasLongPracticalSec: boolean("has_long_practical_sec").notNull(),
+    hasLongPracticalSec: boolean("has_long_practical_sec").default(false),
 
     isCDC: boolean("is_cdc").notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true })
-        .notNull()
         .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
-        .notNull()
         .defaultNow()
 });
 
@@ -93,11 +89,9 @@ export const coursePreferences = pgTable("allocation_course_preferences", {
     preference: integer("preference").notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true })
-        .notNull()
         .defaultNow(),
 
     updatedAt: timestamp("updated_at", { withTimezone: true })
-        .notNull()
         .defaultNow()
 });
 
@@ -118,11 +112,9 @@ export const semester = pgTable("allocation_semester", {
     allocationStatus: allocationStatus("allocation_status"),
 
     createdAt: timestamp("created_at", { withTimezone: true })
-        .notNull()
         .defaultNow(),
 
     updatedAt: timestamp("updated_at", { withTimezone: true })
-        .notNull()
         .defaultNow()
 });
 
