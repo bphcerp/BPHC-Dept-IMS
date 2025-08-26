@@ -47,6 +47,7 @@ type Publication = {
   journal: string;
   volume: string | null;
   issue: string | null;
+  month: string,
   year: string;
   link: string;
   status: boolean | null;
@@ -202,6 +203,7 @@ const PublicationsView = () => {
       Journal: pub.journal,
       Volume: pub.volume ?? "",
       Issue: pub.issue ?? "",
+      Month: pub.month ?? "-",
       Year: pub.year,
       Link: pub.link,
       Status: pub.status ? "Approved" : "Rejected",
@@ -391,7 +393,7 @@ const PublicationsView = () => {
                       {", "} &quot;{pub.title}
                       ,&quot; <em>{pub.journal}</em>
                       {pub.volume && `, vol. ${pub.volume}`}
-                      {pub.issue && `, no. ${pub.issue}`}, {pub.year}.
+                      {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : '' }{pub.year}.
                     </p>
                     <div className="row mt-2 flex gap-2">
                       {pub.status === null ? (

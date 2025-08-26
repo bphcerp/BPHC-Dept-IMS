@@ -1,5 +1,25 @@
 import { z } from "zod";
 
+
+export const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const
+
+export type month = (typeof months)[number]
+
+const monthEnum = z.enum(months);
+
 export const PublicationSchema = z.object({
     citationId: z.string(),
     title: z.string(),
@@ -8,6 +28,7 @@ export const PublicationSchema = z.object({
     journal: z.string().nullable(),
     volume: z.string().nullable(),
     issue: z.string().nullable(),
+    month: monthEnum.nullable(),
     year: z.string().nullable(),
     link: z.string().nullable(),
     citations: z.string().nullable(),

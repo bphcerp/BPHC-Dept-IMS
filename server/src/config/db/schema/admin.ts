@@ -26,7 +26,27 @@ export const roles = pgTable("roles", {
 });
 
 export const users = pgTable("users", {
+    id: serial("id").unique(),
     email: text("email").primaryKey(),
+    name: text("name"),
+    phone: text("phone"),
+    description: text("description"),
+    profileImage: text("profile_image"),
+    designation: text("designation"),
+    department: text("department"),
+    education: text("education")
+        .array()
+        .default(sql`'{}'::text[]`),
+    researchInterests: text("research_interests")
+        .array()
+        .default(sql`'{}'::text[]`),
+    linkedin: text("linkedin"),
+    orchidID: text("orchid_id"),
+    scopusID: text("scopus_id"),
+    googleScholar: text("google_scholar"),
+    additionalLinks: text("additional_links")
+        .array()
+        .default(sql`'{}'::text[]`),
     roles: integer("roles")
         .array()
         .notNull()

@@ -3,7 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { StatData } from "./LabStatsPerYear";
 import api from "@/lib/axios-instance";
 import { Laboratory, Category } from "node_modules/lib/src/types/inventory";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/datatable/DataTable";
 import { useQuery } from "@tanstack/react-query";
 
 interface LabStatsPerCategory {
