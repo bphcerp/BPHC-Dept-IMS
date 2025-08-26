@@ -203,8 +203,8 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
     const template = await fs.readFile(templatePath, "utf-8");
 
     const data = generateTemplateData({
-        ...applicationData,
         ...userData,
+        ...applicationData,
         drcReviews,
         logoBase64,
         drcConvenerSignatureBase64,
