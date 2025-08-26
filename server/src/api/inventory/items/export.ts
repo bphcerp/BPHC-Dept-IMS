@@ -66,6 +66,7 @@ router.post(
                     itemCategory: {
                         id: inventoryCategories.id,
                         name: inventoryCategories.name,
+                        code: inventoryCategories.code,
                     },
                     vendor: {
                         id: vendors.id,
@@ -104,16 +105,26 @@ router.post(
 
         const workbook = new ExcelJS.Workbook();
 
+        columnsVisible.splice(0, 0, "Sl.No.");
+
         if (columnsVisible.includes("vendor")) {
             // Remove vendor and all vendor's fields
             columnsVisible.splice(
                 columnsVisible.indexOf("vendor"),
                 1,
-                "Vendor Id",
-                "Vendor Name",
-                "Vendor POC Name",
-                "Vendor Phone Number",
-                "Vendor Email"
+                "VendorId",
+                "VendorName",
+                "VendorPOCName",
+                "VendorPhoneNumber",
+                "VendorEmail"
+            );
+        }
+
+        if (columnsVisible.includes("itemCategory")) {
+            columnsVisible.splice(
+                columnsVisible.indexOf("itemCategory"),
+                0,
+                "CategoryCode"
             );
         }
 
@@ -137,30 +148,34 @@ router.post(
             });
             items
                 .filter((item) => item.lab!.id === lab.id)
-                .forEach((item) => {
+                .forEach((item, idx) => {
                     let rowData = columnsVisible.map((col) => {
                         const cellValue = item[col as keyof typeof item];
+                        if (col === "Sl.No.")
+                            return idx + 1; // Serial number
                         if (col === "lab")
                             return (cellValue as typeof item.lab)!.name;
                         else if (col === "itemCategory")
                             return (cellValue as typeof item.itemCategory)!
                                 .name;
-                        else if (col === "Vendor Id")
+                        else if (col === "CategoryCode")
+                            return item.itemCategory!.code;
+                        else if (col === "VendorId")
                             return (
                                 item.vendor?.vendorId ?? "Vendor Not Specified"
                             );
-                        else if (col === "Vendor Name")
+                        else if (col === "VendorName")
                             return item.vendor?.name ?? "Vendor Not Specified";
-                        else if (col === "Vendor POC Name")
+                        else if (col === "VendorPOCName")
                             return (
                                 item.vendor?.pocName ?? "Vendor Not Specified"
                             );
-                        else if (col === "Vendor Phone Number")
+                        else if (col === "VendorPhoneNumber")
                             return (
                                 item.vendor?.phoneNumber ??
                                 "Vendor Not Specified"
                             );
-                        else if (col === "Vendor Email")
+                        else if (col === "VendorEmail")
                             return item.vendor?.email ?? "Vendor Not Specified";
                         else if (col === "equipmentID" && item["quantity"] > 1)
                             return `${(cellValue as string).split("-")[0]}-01-${(item["quantity"] as number).toString().padStart(2, "0")}`;
