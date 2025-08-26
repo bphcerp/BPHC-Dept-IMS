@@ -147,8 +147,6 @@ async function mapToInventoryItemAndSave(
 
     data = sanitizeFlatArray(data);
 
-    console.log(data[columnIndexMap["po amount"]])
-
     const baseItem: Partial<RawInventoryItem> = {
         itemCategoryId: itemCategory.id,
         serialNumber: lastItemNumber,
@@ -162,16 +160,10 @@ async function mapToInventoryItemAndSave(
         yearOfLease: Number(data[columnIndexMap["year of lease"]])
             ? Number(data[columnIndexMap["year of lease"]])
             : null,
-        poAmount: !isNaN(
-            Number(data[columnIndexMap["po amount"]])
-        )
-            ? typeof data[columnIndexMap["po amount"]] ===
-              "string"
+        poAmount: !isNaN(Number(data[columnIndexMap["po amount"]]))
+            ? typeof data[columnIndexMap["po amount"]] === "string"
                 ? parseFloat(
-                      data[columnIndexMap["po amount"]].replace(
-                          /,/g,
-                          ""
-                      )
+                      data[columnIndexMap["po amount"]].replace(/,/g, "")
                   )
                 : (data[columnIndexMap["po amount"]] ?? 0)
             : 0, // Convert to number, removing commas
@@ -195,19 +187,16 @@ async function mapToInventoryItemAndSave(
             parseDate(data[columnIndexMap["warranty details"] + 1]) ?? null, // Assuming "to" is the next column (Warranty Details is a merged column)
         amcFrom: parseDate(data[columnIndexMap["amc details"]]) ?? null,
         amcTo: parseDate(data[columnIndexMap["amc details"] + 1]) ?? null, // Assuming "to" is the next column (AMC Details is a merged column)
-        currentLocation:
-            selectedLab.location ?? undefined,
+        currentLocation: selectedLab.location ?? undefined,
         softcopyOfPO: data[columnIndexMap["softcopy of p o"]] ?? null,
         softcopyOfInvoice: data[columnIndexMap["softcopy of invoice"]] ?? null,
         softcopyOfNFA: data[columnIndexMap["softcopy of n f a"]] ?? null,
         softcopyOfAMC: data[columnIndexMap["softcopy of a m c"]] ?? null,
         status: data[columnIndexMap["status"]] === "working" ? "Working" : null,
-        equipmentPhoto:
-            data[columnIndexMap["equipment photo"]] ??
-            null,
+        equipmentPhoto: data[columnIndexMap["equipment photo"]] ?? null,
         remarks: data[columnIndexMap["remarks"]] || null,
     };
-    
+
     if (baseItem.quantity === 1) {
         baseItem.equipmentID = `BITS/${environment.DEPARTMENT_NAME}/${selectedLab.code}/${itemCategory.code}/${lastItemNumber.toString().padStart(4, "0")}`;
         const parsedItem = inventoryItemSchema
@@ -279,7 +268,7 @@ const getAndSaveDataFromSheet = async (
         where: eq(laboratories.id, selectedLabId),
     });
 
-    console.log(jsonData)
+    console.log(jsonData);
 
     await db.transaction(async (tx) => {
         for (const item of filteredData) {
