@@ -8,6 +8,7 @@ import updateQualifyingExam from "./updateQualifyingExam.ts";
 import insertSubArea from "./insertSubArea.ts";
 import deleteSubArea from "./deleteSubArea.ts";
 import notifyAllUsers from "./notifyAllUsers.ts";
+import emailTemplatesRouter from "./emailTemplates/index.ts";
 
 const router = express.Router();
 
@@ -23,5 +24,6 @@ router.use("/insertSubArea", insertSubArea);
 router.use("/deleteSubArea", deleteSubArea);
 
 router.use("/notifyAllUsers", notifyAllUsers);
+router.use("/emailTemplates", emailTemplatesRouter);
 
 export default router;

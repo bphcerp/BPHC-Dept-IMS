@@ -21,7 +21,7 @@ router.post(
     assert(req.user, "User must be defined");
     const{subject, body, channels, recipients, link}= phdSchemas.notificationPayloadSchema.parse(req.body);
 
-    if(recipients.length === 0){
+    if( !recipients || recipients.length === 0 ){
       throw new HttpError(HttpCode.BAD_REQUEST, "No recipients provided.");
     }
     if(!channels.email && !channels.notification && !channels.todo){

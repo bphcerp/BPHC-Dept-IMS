@@ -8,7 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
-import NotificationDialog from "./DRCExaminerManagement/NotificationDialog"; // Import the generic dialog
+import NotificationDialog from "./DRCExaminerManagement/NotificationDialog";
+
+// Helper function to replace placeholders, defined locally in this file.
+const simpleTemplate = (
+  template: string,
+  view: Record<string, unknown>,
+): string => {
+  if (!template) return "";
+  // Replaces all {{key}} occurrences with the corresponding value from the view object
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+    const value = view[key.trim()];
+    return value !== undefined ? String(value) : match;
+  });
+};
 
 interface Semester {
   id: number;
@@ -18,6 +31,7 @@ interface Semester {
   endDate: string;
   createdAt: string;
 }
+
 interface QualifyingExam {
   id: number;
   semesterId: number;
@@ -27,6 +41,12 @@ interface QualifyingExam {
   examEndDate: string;
   vivaDate?: string;
   createdAt: string;
+}
+
+interface EmailTemplate {
+  name: string;
+  subject: string;
+  body: string;
 }
 
 const UpdateQualifyingExamDeadline: React.FC = () => {
@@ -41,9 +61,17 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
   const [notificationData, setNotificationData] = useState({
-    recipients: [],
+    recipients: [], // Kept empty for broadcast
     subject: "",
     body: "",
+  });
+
+  const { data: emailTemplates = [] } = useQuery<EmailTemplate[]>({
+    queryKey: ["email-templates"],
+    queryFn: async () => {
+      const response = await api.get("/phd/staff/emailTemplates");
+      return response.data;
+    },
   });
 
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
@@ -51,11 +79,12 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       queryKey: ["current-phd-semester"],
       queryFn: async () => {
         const response = await api.get<{ semester: Semester }>(
-          "/phd/staff/getLatestSem"
+          "/phd/staff/getLatestSem",
         );
         return response.data;
       },
     });
+
   const currentSemesterId = currentSemesterData?.semester?.id;
 
   const { data: examsData, isLoading: isLoadingExams } = useQuery({
@@ -63,10 +92,10 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ exams: QualifyingExam[] }>(
-        `/phd/staff/qualifyingExams/${currentSemesterId}`
+        `/phd/staff/qualifyingExams/${currentSemesterId}`,
       );
       const regularQualifyingExams = response.data.exams.filter(
-        (exam) => exam.examName === "Regular Qualifying Exam"
+        (exam) => exam.examName === "Regular Qualifying Exam",
       );
       return { exams: regularQualifyingExams };
     },
@@ -77,27 +106,43 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
       const response = await api.post<{ exam: QualifyingExam }>(
         "/phd/staff/updateQualifyingExam",
-        formData
+        formData,
       );
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success("Qualifying exam deadline updated successfully");
-      const deadlineDate = new Date(
-        data.exam.submissionDeadline
-      ).toLocaleString();
-      const examStartDate = new Date(data.exam.examStartDate).toLocaleString();
-      const examEndDate = new Date(data.exam.examEndDate).toLocaleString();
-      const vivaDate = data.exam.vivaDate
-        ? new Date(data.exam.vivaDate).toLocaleString()
-        : "N/A";
+      toast.success("Qualifying exam deadline updated successfully!");
 
-      setNotificationData({
-        recipients: [],
-        subject: "New Regular Qualifying Exam Deadline Announced",
-        body: `We are pleased to announce that a new **Regular Qualifying Exam** deadline has been set.\n\n- **Registration Deadline:** ${deadlineDate}\n- **Exam Start:** ${examStartDate}\n- **Exam End:** ${examEndDate}\n- **Viva Date:** ${vivaDate}\n\nPlease make sure to submit your application before the registration deadline.\n\nBest regards,\nPhD Department`,
-      });
-      setShowNotifyDialog(true);
+      const template = emailTemplates.find(
+        (t) => t.name === "new_exam_announcement",
+      );
+
+      if (template && currentSemesterData?.semester) {
+        const view = {
+          examName: data.exam.examName,
+          semesterYear: currentSemesterData.semester.year,
+          semesterNumber: currentSemesterData.semester.semesterNumber,
+          submissionDeadline: new Date(
+            data.exam.submissionDeadline,
+          ).toLocaleString(),
+          examStartDate: new Date(data.exam.examStartDate).toLocaleString(),
+          examEndDate: new Date(data.exam.examEndDate).toLocaleString(),
+          vivaDate: data.exam.vivaDate
+            ? new Date(data.exam.vivaDate).toLocaleString()
+            : "N/A",
+        };
+
+        setNotificationData({
+          recipients: [],
+          subject: simpleTemplate(template.subject, view),
+          body: simpleTemplate(template.body, view),
+        });
+        setShowNotifyDialog(true);
+      } else {
+        toast.warning(
+          "Notification template not found. Please notify users manually.",
+        );
+      }
 
       void queryClient.invalidateQueries({
         queryKey: ["phd-qualifying-exams", currentSemesterId],
@@ -115,7 +160,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       toast.error(
         isAxiosError(error)
           ? (error.response?.data as string) || errorMessage
-          : errorMessage
+          : errorMessage,
       );
     },
   });
@@ -151,6 +196,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       toast.error("Viva date must be after exam end date");
       return;
     }
+
     const formattedData = {
       examName: examForm.examName,
       submissionDeadline: deadlineDate.toISOString(),
@@ -218,7 +264,6 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   return (
     <>
       <div className="space-y-8">
-        {/* Cards for current semester and update form */}
         <Card>
           <CardHeader>
             <CardTitle className="text-xl font-semibold">
@@ -229,7 +274,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">
-                  {currentSemesterData.semester.year} - Semester{" "}
+                  {currentSemesterData.semester.year}- Semester{" "}
                   {currentSemesterData.semester.semesterNumber}
                 </h3>
                 <div className="mt-1 text-sm text-gray-600">
@@ -390,7 +435,10 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                       const deadlineDate = new Date(exam.submissionDeadline);
                       const isActive = deadlineDate > new Date();
                       return (
-                        <tr key={exam.id} className="border-b hover:bg-gray-50">
+                        <tr
+                          key={exam.id}
+                          className="border-b hover:bg-gray-50"
+                        >
                           <td className="px-4 py-3 text-gray-900">
                             {exam.examName}
                           </td>
@@ -408,7 +456,11 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
                             >
                               {isActive ? "Active" : "Expired"}
                             </span>
@@ -451,6 +503,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
         isOpen={showNotifyDialog}
         onClose={() => setShowNotifyDialog(false)}
         initialData={notificationData}
+        isBroadcast={true}
       />
     </>
   );

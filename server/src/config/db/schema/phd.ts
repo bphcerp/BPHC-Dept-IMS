@@ -13,6 +13,18 @@ import { phd } from "./admin.ts";
 import { phdSchemas } from "lib";
 import { files } from "./form.ts";
 
+export const phdEmailTemplates = pgTable("phd_email_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // e.g., 'request_examiner_suggestions'
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  description: text("description"), // For staff to understand the template's purpose
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 export const phdExamApplicationStatus = pgEnum(
     "phd_exam_application_status",
     phdSchemas.phdExamApplicationStatuses

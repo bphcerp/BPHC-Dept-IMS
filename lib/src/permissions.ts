@@ -28,6 +28,7 @@ export const allPermissions = {
     "phd:staff:manage-semesters": "Manage PhD semesters",
     "phd:staff:manage-qe": "Manage PhD qualifying exams",
     "phd:staff:manage-subareas": "Manage PhD subareas",
+    "phd:staff:manage-email-templates": "Manage PhD email notification templates",
 
     "phd:student:qe": "PhD scholar qualifying exams",
 
@@ -135,7 +136,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/conference/setFlow": "conference:application:set-flow",
 
     // PhD
-
+    "/sendNotification": "phd:notifications:send",
     "/phd/staff/getAllSem": "phd:staff:manage-semesters",
     "/phd/staff/updateSem": "phd:staff:manage-semesters",
     "/phd/staff/getLatestSem": "phd:staff:manage-semesters",
@@ -146,6 +147,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd/staff/insertSubArea": "phd:staff:manage-subareas",
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
+
+    "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",

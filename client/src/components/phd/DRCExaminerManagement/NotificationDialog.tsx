@@ -24,17 +24,19 @@ interface NotificationDialogProps {
   isOpen: boolean;
   onClose: (val: boolean) => void;
   initialData: {
-    recipients: string[];
+    recipients?: string[];
     subject: string;
     body: string;
     link?: string;
   };
+  isBroadcast?: boolean;
 }
 
 const NotificationDialog: React.FC<NotificationDialogProps> = ({
   isOpen,
   onClose,
   initialData,
+  isBroadcast = false,
 }) => {
   const editorTheme = useTheme();
   const [subject, setSubject] = useState("");
@@ -53,8 +55,22 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
   }, [isOpen, initialData]);
 
   const sendNotificationMutation = useMutation({
-    mutationFn: (payload: phdSchemas.NotificationPayload) =>
-      api.post("/sendNotification", payload),
+    // CORRECTED: This logic now chooses the correct API endpoint.
+    mutationFn: (payload: {
+      subject: string;
+      body: string;
+      recipients?: string[];
+      channels: phdSchemas.NotificationChannels;
+      link?: string;
+    }) => {
+      const endpoint = isBroadcast
+        ? "/phd/staff/notifyAllUsers"
+        : "/phd/staff/notifyDeadline";
+      const data = isBroadcast
+        ? { subject: payload.subject, body: payload.body } // Broadcast payload
+        : payload; // Targeted payload
+      return api.post(endpoint, data);
+    },
     onSuccess: () => {
       toast.success("Notifications sent successfully!");
       onClose(false);
@@ -73,6 +89,12 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
       toast.error("Please select at least one channel.");
       return;
     }
+    // CORRECTED: This check ensures recipients exist for non-broadcast messages.
+    if (!isBroadcast && (!initialData.recipients || initialData.recipients.length === 0)) {
+      toast.error("There are no recipients to send this notification to.");
+      return;
+    }
+
     sendNotificationMutation.mutate({
       recipients: initialData.recipients,
       subject,
@@ -88,8 +110,10 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Send Notification</DialogTitle>
           <DialogDescription>
-            Sending to {initialData.recipients.length} recipient(s). Edit the
-            message and choose the delivery channels.
+            {isBroadcast
+              ? "This notification will be sent to all users."
+              : `Sending to ${initialData.recipients?.length ?? 0} recipient(s).`}{" "}
+            Edit the message and choose the delivery channels.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow space-y-4 pr-2">

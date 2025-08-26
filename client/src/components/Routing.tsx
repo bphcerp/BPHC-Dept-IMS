@@ -31,6 +31,7 @@ import {
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
+import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
@@ -313,6 +314,12 @@ const Routing = () => {
               )}
               {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
                 <Route path="update-subareas" element={<UpdateSubAreasPage />} />
+              )}
+              {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
+                <Route
+                  path="manage-email-templates"
+                  element={<ManageEmailTemplates />}
+                />
               )}
             </Route>
             {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (

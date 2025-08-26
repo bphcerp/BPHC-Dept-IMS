@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   Calendar,
   Clock,
+  Mail
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -74,6 +75,12 @@ const NotionalSupervisorLayout = () => {
             permissions["/phd/staff/updateSubAreas"],
             permissions["/phd/staff/deleteSubArea"],
           ],
+        },
+        {
+          title: "Email Templates",
+          icon: <Mail />,
+          url: "/phd/staff/manage-email-templates",
+          requiredPermissions: [permissions["/phd/staff/emailTemplates"]],
         },
       ],
     },

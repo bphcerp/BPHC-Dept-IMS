@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import {
@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,24 @@ import { useTheme } from "@/hooks/use-theme";
 import { phdSchemas } from "lib";
 
 const MDEditor = lazy(() => import("@uiw/react-md-editor"));
+
+// Local helper to avoid lib changes
+const simpleTemplate = (
+  template: string,
+  view: Record<string, unknown>,
+): string => {
+  if (!template) return "";
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+    const value = view[key.trim()];
+    return value !== undefined ? String(value) : match;
+  });
+};
+
+interface EmailTemplate {
+  name: string;
+  subject: string;
+  body: string;
+}
 
 interface RequestSuggestionsDialogProps {
   isOpen: boolean;
@@ -32,29 +51,40 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
   const editorTheme = useTheme();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const areExaminersSuggested = useMemo(
-    () => !!Object.keys(application.examinerSuggestions).length,
-    [application.examinerSuggestions]
-  );
-  const supervisorTodosExists = application.supervisorTodoExists;
   const queryClient = useQueryClient();
 
+  const areExaminersSuggested = useMemo(
+    () => !!Object.keys(application.examinerSuggestions).length,
+    [application.examinerSuggestions],
+  );
+  const isReminder = !areExaminersSuggested && application.supervisorTodoExists;
+
+  const { data: templates = [] } = useQuery<EmailTemplate[]>({
+    queryKey: ["email-templates"],
+    queryFn: async () => {
+      const response = await api.get("/phd/staff/emailTemplates");
+      return response.data;
+    },
+  });
+
   useEffect(() => {
-    setSubject(
-      !areExaminersSuggested
-        ? supervisorTodosExists
-          ? "Reminder for suggesting examiners"
-          : "Request Examiner Suggestions"
-        : "Re-request Examiner Suggestions"
-    );
-    setBody(
-      !areExaminersSuggested
-        ? supervisorTodosExists
-          ? "Reminder:"
-          : "Please suggest examiners for this application."
-        : "Please provide an update on the suggested examiners."
-    );
-  }, [areExaminersSuggested, supervisorTodosExists]);
+    if (isOpen && templates.length > 0) {
+      const templateName = isReminder
+        ? "reminder_examiner_suggestions"
+        : "request_examiner_suggestions";
+      const template = templates.find((t) => t.name === templateName);
+
+      if (template) {
+        const view = {
+          supervisorName: "Supervisor",
+          studentName: application.student.name,
+          // Add other placeholders if needed
+        };
+        setSubject(simpleTemplate(template.subject, view));
+        setBody(simpleTemplate(template.body, view));
+      }
+    }
+  }, [isOpen, templates, isReminder, application]);
 
   const sendNotificationMutation = useMutation({
     mutationFn: (payload: phdSchemas.requestExaminerSuggestionsBody) =>
@@ -72,21 +102,15 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
   });
 
   const handleSend = () => {
-    const data = {
+    if (!subject.trim() || !body.trim()) {
+      toast.error("Subject and body cannot be empty.");
+      return;
+    }
+    sendNotificationMutation.mutate({
       subject,
       body,
       applicationId: application.id,
-    };
-    const parseResult =
-      phdSchemas.requestExaminerSuggestionsBodySchema.safeParse(data);
-    if (!parseResult.success) {
-      toast.error(
-        "Please check the following fields: " +
-          parseResult.error.errors.map((e) => e.message).join(", ")
-      );
-      return;
-    }
-    sendNotificationMutation.mutate(data);
+    });
   };
 
   return (
@@ -94,8 +118,12 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>Request Examiner Suggestions</DialogTitle>
+          <DialogDescription>
+            The content is pre-filled from a template. You can edit it before
+            sending.
+          </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow space-y-4 pr-2">
+        <div className="flex-grow space-y-4 overflow-y-auto pr-2">
           <div className="space-y-2">
             <Label htmlFor="subject">Subject</Label>
             <Input
