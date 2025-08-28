@@ -1,5 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense, useMemo } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, lazy, Suspense, useMemo } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import {
@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useTheme } from "@/hooks/use-theme";
 import { phdSchemas } from "lib";
-import { FRONTEND_URL } from "@/lib/constants";
 import Mustache from "mustache";
 
 const MDEditor = lazy(() => import("@uiw/react-md-editor"));
@@ -26,28 +25,22 @@ interface EmailTemplate {
   body: string;
 }
 
-interface RequestSuggestionsDialogProps {
-  isOpen: boolean;
-  setIsOpen: (val: boolean) => void;
-  application: phdSchemas.VerifiedApplication;
-  toSuggest: number;
-}
-
-const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
+const NotifyExaminerDialog = ({
   isOpen,
   setIsOpen,
   application,
-  toSuggest,
+  area,
+  onSuccess,
+}: {
+  isOpen: boolean;
+  setIsOpen: (val: boolean) => void;
+  application: phdSchemas.VerifiedApplication;
+  area: string;
+  onSuccess: () => void;
 }) => {
   const editorTheme = useTheme();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const areExaminersSuggested = useMemo(
-    () => !!Object.keys(application.examinerSuggestions).length,
-    [application.examinerSuggestions]
-  );
-  const queryClient = useQueryClient();
-  const isReminder = !areExaminersSuggested && application.supervisorTodoExists;
 
   const { data: templates = [] } = useQuery({
     queryKey: ["email-templates"],
@@ -59,9 +52,24 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
     },
   });
 
+  const examinerEmail = application.examinerAssignments[area]?.examinerEmail;
+  const isReminder = !!application.examinerAssignments[area]?.notifiedAt;
+
+  const notifyMutation = useMutation({
+    mutationFn: (data: phdSchemas.NotifyExaminerPayload) =>
+      api.post(`/phd/drcMember/notifyExaminer/${application.id}`, data),
+    onSuccess: () => {
+      toast.success(`Notification sent to ${examinerEmail}`);
+      onSuccess();
+    },
+    onError: () => {
+      toast.error(`Failed to send notification`);
+    },
+  });
+
   const templateName = isReminder
-    ? "reminder_examiner_suggestions"
-    : "request_examiner_suggestions";
+    ? "reminder_examiner_qp"
+    : "notify_examiner_assignment";
   const template = useMemo(
     () =>
       templates && templates.length
@@ -74,66 +82,45 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
     if (!template) {
       setSubject(
         isReminder
-          ? "Reminder for suggesting examiners"
-          : "Request Examiner Suggestions"
+          ? `Reminder: Question Paper Submission for ${area}`
+          : `Question Paper Submission Required for ${area}`
       );
       setBody(
         isReminder
-          ? "Reminder to suggest examiners for this application."
-          : "Please suggest examiners for this application."
+          ? `This is a reminder that your question paper for the qualifying area "${area}" is still pending submission.\n\nPlease submit it at your earliest convenience.\n\nBest regards,\nDRC Committee`
+          : `You have been assigned as an examiner for the qualifying area "${area}" for student ${application.student.name}.\n\nPlease prepare and submit your question paper.\n\nBest regards,\nDRC Committee`
       );
     } else {
       const view = {
-        supervisorName: "Supervisor",
+        examinerName: "Faculty Member",
         studentName: application.student.name,
-        examinerCount: toSuggest,
-        qualifyingArea1: application.qualifyingArea1,
-        qualifyingArea2: application.qualifyingArea2,
-        link: FRONTEND_URL + "/phd/supervisor/examiner-suggestions",
+        qualifyingArea: area,
       };
       setSubject(Mustache.render(template.subject, view));
       setBody(Mustache.render(template.body, view));
     }
-  }, [isReminder, template, application, toSuggest]);
+  }, [isReminder, template, application, area]);
 
-  const sendNotificationMutation = useMutation({
-    mutationFn: (payload: phdSchemas.requestExaminerSuggestionsBody) =>
-      api.post("/phd/drcMember/requestExaminerSuggestions", payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ["verified-applications", application.examId],
-      });
-      toast.success("Supervisor notified");
-      setIsOpen(false);
-    },
-    onError: () => {
-      toast.error("Failed to request suggestions");
-    },
-  });
-
-  const handleSend = () => {
-    const data = {
-      subject,
-      body,
-      applicationId: application.id,
-    };
-    const parseResult =
-      phdSchemas.requestExaminerSuggestionsBodySchema.safeParse(data);
-    if (!parseResult.success) {
-      toast.error(
-        "Please check the following fields: " +
-          parseResult.error.errors.map((e) => e.message).join(", ")
-      );
+  const handleSubmit = () => {
+    if (!subject.trim() || !body.trim()) {
+      toast.error("Please fill in both subject and body.");
       return;
     }
-    sendNotificationMutation.mutate(data);
+
+    notifyMutation.mutate({
+      subject,
+      body,
+      area,
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col">
         <DialogHeader>
-          <DialogTitle>Request Examiner Suggestions</DialogTitle>
+          <DialogTitle>
+            {isReminder ? "Send Reminder to Examiner" : "Notify Examiner"}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex-grow space-y-4 pr-2">
           <div className="space-y-2">
@@ -168,11 +155,8 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSend}
-            disabled={sendNotificationMutation.isLoading}
-          >
-            {sendNotificationMutation.isLoading && (
+          <Button onClick={handleSubmit} disabled={notifyMutation.isLoading}>
+            {notifyMutation.isLoading && (
               <LoadingSpinner className="mr-2 h-4 w-4" />
             )}
             Send
@@ -183,4 +167,4 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
   );
 };
 
-export default RequestSuggestionsDialog;
+export default NotifyExaminerDialog;

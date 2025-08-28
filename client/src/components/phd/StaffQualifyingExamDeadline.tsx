@@ -9,19 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import NotificationDialog from "./DRCExaminerManagement/NotificationDialog";
-
-// Helper function to replace placeholders, defined locally in this file.
-const simpleTemplate = (
-  template: string,
-  view: Record<string, unknown>,
-): string => {
-  if (!template) return "";
-  // Replaces all {{key}} occurrences with the corresponding value from the view object
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-    const value = view[key.trim()];
-    return value !== undefined ? String(value) : match;
-  });
-};
+import Mustache from "mustache";
 
 interface Semester {
   id: number;
@@ -66,10 +54,12 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     body: "",
   });
 
-  const { data: emailTemplates = [] } = useQuery<EmailTemplate[]>({
+  const { data: emailTemplates = [] } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
-      const response = await api.get("/phd/staff/emailTemplates");
+      const response = await api.get<EmailTemplate[]>(
+        "/phd/staff/emailTemplates"
+      );
       return response.data;
     },
   });
@@ -79,7 +69,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       queryKey: ["current-phd-semester"],
       queryFn: async () => {
         const response = await api.get<{ semester: Semester }>(
-          "/phd/staff/getLatestSem",
+          "/phd/staff/getLatestSem"
         );
         return response.data;
       },
@@ -92,10 +82,10 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     queryFn: async () => {
       if (!currentSemesterId) return { success: true, exams: [] };
       const response = await api.get<{ exams: QualifyingExam[] }>(
-        `/phd/staff/qualifyingExams/${currentSemesterId}`,
+        `/phd/staff/qualifyingExams/${currentSemesterId}`
       );
       const regularQualifyingExams = response.data.exams.filter(
-        (exam) => exam.examName === "Regular Qualifying Exam",
+        (exam) => exam.examName === "Regular Qualifying Exam"
       );
       return { exams: regularQualifyingExams };
     },
@@ -106,7 +96,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     mutationFn: async (formData: typeof examForm & { semesterId: number }) => {
       const response = await api.post<{ exam: QualifyingExam }>(
         "/phd/staff/updateQualifyingExam",
-        formData,
+        formData
       );
       return response.data;
     },
@@ -114,7 +104,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       toast.success("Qualifying exam deadline updated successfully!");
 
       const template = emailTemplates.find(
-        (t) => t.name === "new_exam_announcement",
+        (t) => t.name === "new_exam_announcement"
       );
 
       if (template && currentSemesterData?.semester) {
@@ -123,7 +113,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
           semesterYear: currentSemesterData.semester.year,
           semesterNumber: currentSemesterData.semester.semesterNumber,
           submissionDeadline: new Date(
-            data.exam.submissionDeadline,
+            data.exam.submissionDeadline
           ).toLocaleString(),
           examStartDate: new Date(data.exam.examStartDate).toLocaleString(),
           examEndDate: new Date(data.exam.examEndDate).toLocaleString(),
@@ -134,13 +124,13 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
 
         setNotificationData({
           recipients: [],
-          subject: simpleTemplate(template.subject, view),
-          body: simpleTemplate(template.body, view),
+          subject: Mustache.render(template.subject, view),
+          body: Mustache.render(template.body, view),
         });
         setShowNotifyDialog(true);
       } else {
         toast.warning(
-          "Notification template not found. Please notify users manually.",
+          "Notification template not found. Please notify users manually."
         );
       }
 
@@ -160,7 +150,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
       toast.error(
         isAxiosError(error)
           ? (error.response?.data as string) || errorMessage
-          : errorMessage,
+          : errorMessage
       );
     },
   });
@@ -435,10 +425,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                       const deadlineDate = new Date(exam.submissionDeadline);
                       const isActive = deadlineDate > new Date();
                       return (
-                        <tr
-                          key={exam.id}
-                          className="border-b hover:bg-gray-50"
-                        >
+                        <tr key={exam.id} className="border-b hover:bg-gray-50">
                           <td className="px-4 py-3 text-gray-900">
                             {exam.examName}
                           </td>

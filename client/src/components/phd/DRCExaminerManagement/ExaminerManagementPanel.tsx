@@ -30,12 +30,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, UserPlus, BellRing } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 import { phdSchemas } from "lib";
 import { isAxiosError } from "axios";
 import RequestSuggestionsDialog from "./RequestSuggestionsDialog";
-import { Badge } from "@/components/ui/badge";
+import NotifyExaminerDialog from "./NotifyExaminerDialog";
 
 interface ExaminerManagementPanelProps {
   selectedExamId: number;
@@ -59,7 +58,6 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
     useState(false);
   const [selectedAreaForNotification, setSelectedAreaForNotification] =
     useState<string>("");
-
   const queryClient = useQueryClient();
 
   const {
@@ -70,7 +68,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
     queryKey: ["verified-applications", selectedExamId],
     queryFn: async () => {
       const response = await api.get<phdSchemas.VerifiedApplication[]>(
-        `/phd/drcMember/getVerifiedApplications/${selectedExamId}`,
+        `/phd/drcMember/getVerifiedApplications/${selectedExamId}`
       );
       return response.data;
     },
@@ -99,7 +97,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
   const handleQpStatusChange = (
     applicationId: number,
     qualifyingArea: string,
-    qpSubmitted: boolean,
+    qpSubmitted: boolean
   ) => {
     updateQpStatusMutation.mutate({
       applicationId,
@@ -131,7 +129,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          {}
+          {/* Global Examiner Count Configuration */}
           {applications.length > 0 && (
             <div className="mb-6 space-y-4">
               <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-4">
@@ -165,23 +163,37 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
               </div>
             </div>
           )}
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Student</TableHead>
                 <TableHead>Supervisor</TableHead>
-                <TableHead>Suggestion Status</TableHead> {/* NEW */}
-                <TableHead>Area 1</TableHead>
-                <TableHead>Area 2</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {applications.length > 0 &&
+                Object.keys(applications[0].examinerAssignments).length > 0 ? (
+                  <>
+                    <TableHead>Area 1 Examiner</TableHead>
+                    <TableHead>Area 2 Examiner</TableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead>Area 1</TableHead>
+                    <TableHead>Area 2</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {applications.map((app) => {
-                const areExaminersSuggested =
-                  !!Object.keys(app.examinerSuggestions).length;
+                const areExaminersSuggested = !!Object.keys(
+                  app.examinerSuggestions
+                ).length;
                 const supervisorTodosExists = app.supervisorTodoExists;
-                
+                const areExaminersAssigned = !!Object.keys(
+                  app.examinerAssignments
+                ).length;
+
                 return (
                   <TableRow key={app.id}>
                     <TableCell>
@@ -191,47 +203,141 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
                       </div>
                     </TableCell>
                     <TableCell>{app.student.supervisor}</TableCell>
-                    {/* NEW: Status cell */}
-                    <TableCell>
-                      {areExaminersSuggested ? (
-                        <Badge variant="default" className="bg-green-600">Submitted</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{app.qualifyingArea1}</TableCell>
-                    <TableCell>{app.qualifyingArea2}</TableCell>
-                    <TableCell className="space-x-2 text-right">
-                      {/* This button logic remains the same, but now it opens the editable dialog */}
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedApplication(app);
-                          handleRequestExaminerSuggestions();
-                        }}
-                        type="button"
-                        variant={areExaminersSuggested ? "outline" : "default"}
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        {!areExaminersSuggested
-                          ? supervisorTodosExists
-                            ? "Send reminder to Supervisor"
-                            : "Request suggestions from Supervisor"
-                          : "Re-request suggestions"}
-                      </Button>
-                      {areExaminersSuggested && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelectedApplication(app);
-                            setIsAssignDialogOpen(true);
-                          }}
-                        >
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Assign Examiners
-                        </Button>
-                      )}
-                    </TableCell>
+
+                    {areExaminersAssigned ? (
+                      <>
+                        {/* Area 1 Examiner Column */}
+                        <TableCell>
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium">
+                              {app.qualifyingArea1}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {
+                                app.examinerAssignments[app.qualifyingArea1]
+                                  ?.examinerEmail
+                              }
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={
+                                  app.examinerAssignments[app.qualifyingArea1]
+                                    ?.qpSubmitted || false
+                                }
+                                onCheckedChange={(checked) =>
+                                  handleQpStatusChange(
+                                    app.id,
+                                    app.qualifyingArea1,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              <span className="text-xs">QP Submitted</span>
+                            </div>
+                            {!app.examinerAssignments[app.qualifyingArea1]
+                              ?.qpSubmitted && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedApplication(app);
+                                  handleNotifyExaminer(app.qualifyingArea1);
+                                }}
+                              >
+                                {app.examinerAssignments[app.qualifyingArea1]
+                                  ?.notifiedAt
+                                  ? "Send Reminder"
+                                  : "Send Mail"}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Area 2 Examiner Column */}
+                        <TableCell>
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium">
+                              {app.qualifyingArea2}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {
+                                app.examinerAssignments[app.qualifyingArea2]
+                                  ?.examinerEmail
+                              }
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={
+                                  app.examinerAssignments[app.qualifyingArea2]
+                                    ?.qpSubmitted || false
+                                }
+                                onCheckedChange={(checked) =>
+                                  handleQpStatusChange(
+                                    app.id,
+                                    app.qualifyingArea2,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                              <span className="text-xs">QP Submitted</span>
+                            </div>
+                            {!app.examinerAssignments[app.qualifyingArea2]
+                              ?.qpSubmitted && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedApplication(app);
+                                  handleNotifyExaminer(app.qualifyingArea2);
+                                }}
+                              >
+                                {app.examinerAssignments[app.qualifyingArea2]
+                                  ?.notifiedAt
+                                  ? "Send Reminder"
+                                  : "Send Mail"}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>{app.qualifyingArea1}</TableCell>
+                        <TableCell>{app.qualifyingArea2}</TableCell>
+                        <TableCell className="space-x-2 text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedApplication(app);
+                              handleRequestExaminerSuggestions();
+                            }}
+                            type="button"
+                            variant={
+                              areExaminersSuggested ? "outline" : "default"
+                            }
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            {!areExaminersSuggested
+                              ? supervisorTodosExists
+                                ? "Send reminder to Supervisor"
+                                : "Request suggestions from Supervisor"
+                              : "Re-request suggestions"}
+                          </Button>
+                          {areExaminersSuggested && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setSelectedApplication(app);
+                                setIsAssignDialogOpen(true);
+                              }}
+                            >
+                              <UserPlus className="mr-2 h-4 w-4" /> Assign
+                              Examiners
+                            </Button>
+                          )}
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 );
               })}
@@ -239,16 +345,13 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           </Table>
         </CardContent>
       </Card>
-
       <div className="flex justify-start">
         {onBack && (
           <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Forms
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Forms
           </Button>
         )}
       </div>
-
       {selectedApplication && (
         <AssignExaminerDialog
           application={selectedApplication}
@@ -277,6 +380,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           isOpen={isRequestSuggestionsDialogOpen}
           setIsOpen={setIsRequestSuggestionsDialogOpen}
           application={selectedApplication}
+          toSuggest={examinerCount}
         />
       )}
       {selectedApplication && (
@@ -284,7 +388,7 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
           application={selectedApplication}
           area={selectedAreaForNotification}
           isOpen={isNotifyExaminerDialogOpen}
-          onClose={() => setIsNotifyExaminerDialogOpen(false)}
+          setIsOpen={setIsNotifyExaminerDialogOpen}
           onSuccess={() => {
             setIsNotifyExaminerDialogOpen(false);
             void refetch();
@@ -301,6 +405,7 @@ interface AssignExaminerDialogProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
 const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
   application,
   isOpen,
@@ -341,6 +446,7 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
     application.examinerSuggestions[application.qualifyingArea1] || [];
   const suggestionsForArea2 =
     application.examinerSuggestions[application.qualifyingArea2] || [];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
@@ -407,6 +513,7 @@ const AssignExaminerDialog: React.FC<AssignExaminerDialogProps> = ({
     </Dialog>
   );
 };
+
 interface UpdateExaminerCountDialogProps {
   examinerCount: number;
   examId: number;
@@ -414,6 +521,7 @@ interface UpdateExaminerCountDialogProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
 const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
   examinerCount,
   examId,
@@ -422,6 +530,7 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
   onSuccess,
 }) => {
   const [examinerCountState, setExaminerCount] = useState(examinerCount);
+
   const updateMutation = useMutation({
     mutationFn: (data: { examId: number; examinerCount: number }) =>
       api.post("/phd/drcMember/updateExaminerCount", data),
@@ -432,15 +541,20 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
     onError: (error) => {
       if (isAxiosError(error)) {
         toast.error(
-          `Failed to update examiner count:, ${error.response?.data}`,
+          `Failed to update examiner count:, ${error.response?.data}`
         );
       }
       toast.error("Failed to update examiner count.");
     },
   });
+
   const handleSubmit = () => {
-    updateMutation.mutate({ examId, examinerCount: examinerCountState });
+    updateMutation.mutate({
+      examId,
+      examinerCount: examinerCountState,
+    });
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
@@ -477,81 +591,6 @@ const UpdateExaminerCountDialog: React.FC<UpdateExaminerCountDialogProps> = ({
           </Button>
           <Button onClick={handleSubmit} disabled={updateMutation.isLoading}>
             {updateMutation.isLoading ? <LoadingSpinner /> : "Update Count"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-
-interface NotifyExaminerDialogProps {
-  application: phdSchemas.VerifiedApplication;
-  area: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-const NotifyExaminerDialog: React.FC<NotifyExaminerDialogProps> = ({
-  application,
-  area,
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
-  const examinerEmail = application.examinerAssignments[area]?.examinerEmail;
-  const isReminder = !!application.examinerAssignments[area]?.notifiedAt;
-
-  const notifyMutation = useMutation({
-    mutationFn: (data: { area: string; isReminder: boolean }) =>
-      api.post(`/phd/drcMember/notifyExaminer/${application.id}`, data),
-    onSuccess: () => {
-      toast.success(`Notification sent to ${examinerEmail}`);
-      onSuccess();
-    },
-    onError: (error) => {
-      if (isAxiosError(error)) {
-        toast.error(`Failed to send notification: ${error.response?.data}`);
-      } else {
-        toast.error("Failed to send notification.");
-      }
-    },
-  });
-
-  const handleSubmit = () => {
-    notifyMutation.mutate({ area, isReminder });
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isReminder ? "Send Reminder" : "Notify Examiner"}
-          </DialogTitle>
-          <DialogDescription>
-            Send a {isReminder ? "reminder" : "notification"} to{" "}
-            <strong>{examinerEmail}</strong> about question paper submission for{" "}
-            <strong>{area}</strong>.
-          </DialogDescription>
-        </DialogHeader>
-        <Alert>
-          <BellRing className="h-4 w-4" />
-          <AlertTitle>Confirm Action</AlertTitle>
-          <AlertDescription>
-            The email content will be generated from a pre-defined template. Do
-            you want to proceed?
-          </AlertDescription>
-        </Alert>
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={notifyMutation.isLoading}>
-            {notifyMutation.isLoading ? (
-              <LoadingSpinner />
-            ) : "Confirm & Send"}
           </Button>
         </DialogFooter>
       </DialogContent>

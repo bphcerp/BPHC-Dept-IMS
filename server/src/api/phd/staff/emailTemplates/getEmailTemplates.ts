@@ -7,12 +7,11 @@ const router = express.Router();
 
 // GET all email templates
 router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (_req, res) => {
-    const templates = await db.query.phdEmailTemplates.findMany();
-    res.status(200).json(templates);
-  }),
+    "/",
+    asyncHandler(async (_req, res) => {
+        const templates = await db.query.phdEmailTemplates.findMany();
+        res.status(200).json(templates);
+    })
 );
 
 export default router;

@@ -51,7 +51,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       const response = await api.get<phdSchemas.VerifiedApplication[]>(
         `/phd/drcMember/getVerifiedApplications/${selectedExamId}`
       );
-      return response.data.filter((app) => app.examinerAssignmentCount >= 2);
+      return response.data.filter(
+        (app) => Object.entries(app.examinerAssignments).length >= 2
+      );
     },
     enabled: !!selectedExamId,
   });
