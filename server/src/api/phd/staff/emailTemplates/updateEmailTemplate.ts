@@ -11,30 +11,31 @@ const router = express.Router();
 
 // UPDATE an email template
 router.put(
-  "/:name",
-  checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    const { name } = req.params;
-    const { subject, body } = phdSchemas.updateEmailTemplateSchema.parse(
-      req.body,
-    );
+    "/:name",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const { name } = req.params;
+        const { subject, body } = phdSchemas.updateEmailTemplateSchema.parse(
+            req.body
+        );
 
-    const result = await db
-      .update(phdEmailTemplates)
-      .set({ subject, body, updatedAt: new Date() })
-      .where(eq(phdEmailTemplates.name, name))
-      .returning();
+        const result = await db
+            .update(phdEmailTemplates)
+            .set({ subject, body, updatedAt: new Date() })
+            .where(eq(phdEmailTemplates.name, name))
+            .returning();
 
-    if (result.length === 0) {
-      return next(
-        new HttpError(HttpCode.NOT_FOUND, "Template not found"),
-      );
-    }
+        if (result.length === 0) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Template not found")
+            );
+        }
 
-    res
-      .status(200)
-      .json({ success: true, message: "Template updated successfully" });
-  }),
+        res.status(200).json({
+            success: true,
+            message: "Template updated successfully",
+        });
+    })
 );
 
 export default router;

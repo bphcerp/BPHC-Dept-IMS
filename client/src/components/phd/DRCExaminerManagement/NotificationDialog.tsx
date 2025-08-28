@@ -90,7 +90,10 @@ const NotificationDialog: React.FC<NotificationDialogProps> = ({
       return;
     }
     // CORRECTED: This check ensures recipients exist for non-broadcast messages.
-    if (!isBroadcast && (!initialData.recipients || initialData.recipients.length === 0)) {
+    if (
+      !isBroadcast &&
+      (!initialData.recipients || initialData.recipients.length === 0)
+    ) {
       toast.error("There are no recipients to send this notification to.");
       return;
     }

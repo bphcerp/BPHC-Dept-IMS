@@ -10,27 +10,30 @@ import { completeTodo } from "@/lib/todos/index.ts";
 const router = express.Router();
 
 export default router.post(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res) => {
-    const { studentEmail, qualificationDate } =
-      phdSchemas.setQualificationDateSchema.parse(req.body);
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        const { studentEmail, qualificationDate } =
+            phdSchemas.setQualificationDateSchema.parse(req.body);
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(phd)
-        .set({ qualificationDate: new Date(qualificationDate) })
-        .where(eq(phd.email, studentEmail));
+        await db.transaction(async (tx) => {
+            await tx
+                .update(phd)
+                .set({ qualificationDate: new Date(qualificationDate) })
+                .where(eq(phd.email, studentEmail));
 
-      await completeTodo(
-        {
-          module: "PhD Qe Application",
-          completionEvent: `set_qual_date_${studentEmail}`,
-        },
-        tx,
-      );
-    });
+            await completeTodo(
+                {
+                    module: "PhD Qe Application",
+                    completionEvent: `set_qual_date_${studentEmail}`,
+                },
+                tx
+            );
+        });
 
-    res.status(200).json({ success: true, message: "Qualification date set successfully." });
-  }),
+        res.status(200).json({
+            success: true,
+            message: "Qualification date set successfully.",
+        });
+    })
 );

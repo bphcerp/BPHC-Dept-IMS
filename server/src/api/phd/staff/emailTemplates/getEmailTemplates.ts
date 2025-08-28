@@ -1,6 +1,5 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 
 const router = express.Router();

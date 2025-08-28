@@ -13,68 +13,71 @@ import assert from "assert";
 const router = express.Router();
 
 export default router.post(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res) => {
-    assert(req.user, "User is not defined.");
-    const { applicationId, result } = phdSchemas.submitResultSchema.parse(
-      req.body,
-    );
-
-    const application = await db.query.phdExamApplications.findFirst({
-      where: eq(phdExamApplications.id, applicationId),
-    });
-
-    if (!application) {
-      throw new HttpError(HttpCode.NOT_FOUND, "Application not found.");
-    }
-
-    if (application.result) {
-      throw new HttpError(
-        HttpCode.BAD_REQUEST,
-        "Result has already been submitted for this application.",
-      );
-    }
-
-    await db.transaction(async (tx) => {
-      // Update application result
-      await tx
-        .update(phdExamApplications)
-        .set({ result })
-        .where(eq(phdExamApplications.id, applicationId));
-
-      if (result === "pass") {
-        // Update student's main profile
-        await tx
-          .update(phd)
-          .set({ hasPassedQe: true })
-          .where(eq(phd.email, application.studentEmail));
-
-        // Create a To-do for the DRC member to set the qualification date
-        await createTodos(
-          [
-            {
-              assignedTo: req.user!.email,
-              createdBy: req.user!.email,
-              title: `Set Qualification Date for ${application.studentEmail}`,
-              description: `The student ${application.studentEmail} has passed their qualifying exam. Please set their official qualification date.`,
-              module: "PhD Qe Application",
-              completionEvent: `set_qual_date_${application.studentEmail}`,
-            },
-          ],
-          tx,
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
+        assert(req.user, "User is not defined.");
+        const { applicationId, result } = phdSchemas.submitResultSchema.parse(
+            req.body
         );
-      } else {
-        // Increment attempt count on fail
-        await tx
-          .update(phd)
-          .set({
-            qeAttemptCount: sql`${phd.qeAttemptCount} + 1`,
-          })
-          .where(eq(phd.email, application.studentEmail));
-      }
-    });
 
-    res.status(200).json({ success: true, message: "Result submitted successfully." });
-  }),
+        const application = await db.query.phdExamApplications.findFirst({
+            where: eq(phdExamApplications.id, applicationId),
+        });
+
+        if (!application) {
+            throw new HttpError(HttpCode.NOT_FOUND, "Application not found.");
+        }
+
+        if (application.result) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "Result has already been submitted for this application."
+            );
+        }
+
+        await db.transaction(async (tx) => {
+            // Update application result
+            await tx
+                .update(phdExamApplications)
+                .set({ result })
+                .where(eq(phdExamApplications.id, applicationId));
+
+            if (result === "pass") {
+                // Update student's main profile
+                await tx
+                    .update(phd)
+                    .set({ hasPassedQe: true })
+                    .where(eq(phd.email, application.studentEmail));
+
+                // Create a To-do for the DRC member to set the qualification date
+                await createTodos(
+                    [
+                        {
+                            assignedTo: req.user!.email,
+                            createdBy: req.user!.email,
+                            title: `Set Qualification Date for ${application.studentEmail}`,
+                            description: `The student ${application.studentEmail} has passed their qualifying exam. Please set their official qualification date.`,
+                            module: "PhD Qe Application",
+                            completionEvent: `set_qual_date_${application.studentEmail}`,
+                        },
+                    ],
+                    tx
+                );
+            } else {
+                // Increment attempt count on fail
+                await tx
+                    .update(phd)
+                    .set({
+                        qeAttemptCount: sql`${phd.qeAttemptCount} + 1`,
+                    })
+                    .where(eq(phd.email, application.studentEmail));
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Result submitted successfully.",
+        });
+    })
 );
