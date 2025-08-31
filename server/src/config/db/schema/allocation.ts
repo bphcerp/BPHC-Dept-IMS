@@ -69,32 +69,6 @@ export const course = pgTable("allocation_course", {
 });
 
 
-export const coursePreferences = pgTable("allocation_course_preferences", {
-    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
-
-    instructorEmail: text("instructor_email")
-        .notNull()
-        .references(() => users.email),
-
-    semesterId: uuid("semester_id")
-        .notNull()
-        .references(() => semester.id),
-
-    courseCode: text("course_code")
-        .notNull()
-        .references(() => course.code),
-
-    sectionType: sectionTypeEnum("section_type").notNull(),
-
-    preference: integer("preference").notNull(),
-
-    createdAt: timestamp("created_at", { withTimezone: true })
-        .defaultNow(),
-
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-        .defaultNow()
-});
-
 export const semester = pgTable("allocation_semester", {
     id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
     year: integer("year").notNull(),

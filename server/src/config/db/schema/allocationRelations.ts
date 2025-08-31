@@ -5,20 +5,7 @@ import { semester } from "./allocation.ts";
 import { coursePreferences } from "./allocation.ts";
 import { users } from "./admin.ts";
 
-export const coursePreferenceRelations = relations(coursePreferences, ({ one }) => ({
-    instructor: one(users, {
-        fields: [coursePreferences.courseCode],
-        references: [users.email]
-    }),
-    semester: one(semester, {
-        fields: [coursePreferences.semesterId],
-        references: [semester.id]
-    }),
-    course: one(course, {
-        fields: [coursePreferences.courseCode],
-        references: [course.code]
-    }),
-}));
+
 
 export const allocationRelations = relations(allocation, ({ one }) => ({
     course: one(course, {

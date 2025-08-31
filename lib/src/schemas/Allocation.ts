@@ -52,28 +52,6 @@ export const deleteCourseSchema = z.object({
     code: z.string()
 });
 
-
-export const coursePreferencesSchema = z.object({
-	id: z.string().uuid().optional(),
-	instructorEmail: z.string().email(),
-	semesterId: z.string().uuid(),
-	courseCode: z.string(),
-	sectionType: sectionTypeEnum,
-	preferences: z.number().int().min(1),
-	//createdAt: z.date().optional(),
-	//updatedAt: z.date().optional()
-});
-
-export const updateCoursePreferencesSchema = coursePreferencesSchema.partial().extend({
-	id: z.string().uuid()
-})
-
-export const deleteCoursePreferenceSchema = z.object({
-    id: z.string().uuid() 
-});
-
-
-
 export const semesterSchema = z.object({
 	id: z.string().uuid().optional(),
 	year: z.number().int(),
