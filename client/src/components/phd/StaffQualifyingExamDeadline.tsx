@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
-import NotificationDialog from "./DRCExaminerManagement/NotificationDialog";
-import Mustache from "mustache";
+import NotifyDeadlineDialog, {
+  ViewData,
+} from "./DRCExaminerManagement/NotifyDeadlineDialog";
 
 interface Semester {
   id: number;
@@ -31,12 +32,6 @@ interface QualifyingExam {
   createdAt: string;
 }
 
-interface EmailTemplate {
-  name: string;
-  subject: string;
-  body: string;
-}
-
 const UpdateQualifyingExamDeadline: React.FC = () => {
   const queryClient = useQueryClient();
   const [examForm, setExamForm] = useState({
@@ -48,21 +43,7 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
   });
 
   const [showNotifyDialog, setShowNotifyDialog] = useState(false);
-  const [notificationData, setNotificationData] = useState({
-    recipients: [], // Kept empty for broadcast
-    subject: "",
-    body: "",
-  });
-
-  const { data: emailTemplates = [] } = useQuery({
-    queryKey: ["email-templates"],
-    queryFn: async () => {
-      const response = await api.get<EmailTemplate[]>(
-        "/phd/staff/emailTemplates"
-      );
-      return response.data;
-    },
-  });
+  const [viewData, setViewData] = useState<ViewData | null>(null);
 
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
     useQuery({
@@ -102,37 +83,21 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
     },
     onSuccess: (data) => {
       toast.success("Qualifying exam deadline updated successfully!");
-
-      const template = emailTemplates.find(
-        (t) => t.name === "new_exam_announcement"
-      );
-
-      if (template && currentSemesterData?.semester) {
-        const view = {
-          examName: data.exam.examName,
-          semesterYear: currentSemesterData.semester.year,
-          semesterNumber: currentSemesterData.semester.semesterNumber,
-          submissionDeadline: new Date(
-            data.exam.submissionDeadline
-          ).toLocaleString(),
-          examStartDate: new Date(data.exam.examStartDate).toLocaleString(),
-          examEndDate: new Date(data.exam.examEndDate).toLocaleString(),
-          vivaDate: data.exam.vivaDate
-            ? new Date(data.exam.vivaDate).toLocaleString()
-            : "N/A",
-        };
-
-        setNotificationData({
-          recipients: [],
-          subject: Mustache.render(template.subject, view),
-          body: Mustache.render(template.body, view),
-        });
-        setShowNotifyDialog(true);
-      } else {
-        toast.warning(
-          "Notification template not found. Please notify users manually."
-        );
-      }
+      setViewData({
+        examName: data.exam.examName,
+        semesterYear: currentSemesterData?.semester.year ?? "",
+        semesterNumber:
+          currentSemesterData?.semester.semesterNumber.toString() ?? "",
+        submissionDeadline: new Date(
+          data.exam.submissionDeadline
+        ).toLocaleString(),
+        examStartDate: new Date(data.exam.examStartDate).toLocaleString(),
+        examEndDate: new Date(data.exam.examEndDate).toLocaleString(),
+        vivaDate: data.exam.vivaDate
+          ? new Date(data.exam.vivaDate).toLocaleString()
+          : "N/A",
+      });
+      setShowNotifyDialog(true);
 
       void queryClient.invalidateQueries({
         queryKey: ["phd-qualifying-exams", currentSemesterId],
@@ -486,11 +451,10 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      <NotificationDialog
+      <NotifyDeadlineDialog
         isOpen={showNotifyDialog}
-        onClose={() => setShowNotifyDialog(false)}
-        initialData={notificationData}
-        isBroadcast={true}
+        setIsOpen={setShowNotifyDialog}
+        view={viewData}
       />
     </>
   );

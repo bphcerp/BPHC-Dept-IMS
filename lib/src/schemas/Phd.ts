@@ -14,21 +14,11 @@ export const phdExamApplicationStatuses = [
 
 export const resultStatusEnum = z.enum(["pass", "fail"]);
 
-export const notificationChannelsSchema = z.object({
-    email: z.boolean().default(false),
-    notification: z.boolean().default(false),
-    todo: z.boolean().default(false),
-});
-export type NotificationChannels = z.infer<typeof notificationChannelsSchema>;
-
-export const notificationPayloadSchema = z.object({
+export const notifyDeadlinePayloadSchema = z.object({
     subject: z.string().min(1, "Subject is required for emails."),
     body: z.string().min(1, "Body cannot be empty."),
-    channels: notificationChannelsSchema,
-    recipients: z.array(z.string().email()).optional(),
-    link: z.string().optional(),
 });
-export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
+export type NotifyDeadlinePayload = z.infer<typeof notifyDeadlinePayloadSchema>;
 
 export const singleNotificationPayloadSchema = z.object({
     subject: z.string().min(1, "Subject is required for emails."),
