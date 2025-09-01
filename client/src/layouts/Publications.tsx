@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { Search } from "lucide-react";
+import { Search, Upload } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 import { Pencil } from "lucide-react";
@@ -21,6 +21,12 @@ const PublicationsLayout = () => {
                 icon: <Search />,
                 url: "/publications/all-publications",
                 requiredPermissions: [permissions["/publications/all"]],
+              },
+              {
+                title: "Upload Researgence Data",
+                icon: <Upload />,
+                url: "/publications/upload-researgence",
+                requiredPermissions: [permissions["/publications/upload"]],
               },
               {
                 title: "Edit All Publications",

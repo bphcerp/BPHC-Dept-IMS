@@ -59,6 +59,7 @@ import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import AllPublications from "@/views/Publications/AllPublications";
 import EditPublications from "@/views/Publications/EditPublications";
+import UploadReseargence from "@/views/Publications/UploadReseargence";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
@@ -437,6 +438,9 @@ const Routing = () => {
             <Route path="your-publications" element={<YourPublications />} />
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="all-publications" element={<AllPublications />} />
+            )}
+            {checkAccess(permissions["/publications/upload"]) && (
+              <Route path="upload-researgence" element={<UploadReseargence />} />
             )}
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="edit-publications" element={<EditPublications />} />
