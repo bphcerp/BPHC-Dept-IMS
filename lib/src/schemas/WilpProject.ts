@@ -9,27 +9,9 @@ export const wilpProjectSchema = z.object({
     facultyEmail: z.string().email("Invalid faculty email").optional(),
     researchArea: z.string().min(1, "Research area is required"),
     dissertationTitle: z.string().min(1, "Dissertation title is required"),
-    reminder: z.date(),
-    deadline: z.date(),
 });
 
 export type WilpProjectFormValues = z.infer<typeof wilpProjectSchema>;
-
-export const wilpProjectUploadSchema = z.object({
-    reminder: z
-        .string()
-        .refine((date) => !isNaN(Date.parse(date)), {
-            message: "Reminder must be a valid ISO date string",
-        })
-        .transform((date) => new Date(date)),
-    deadline: z
-        .string()
-        .refine((date) => !isNaN(Date.parse(date)), {
-            message: "Deadline must be a valid ISO date string",
-        })
-        .transform((date) => new Date(date)),
-});
-export type wilpProjectUploadBody = z.infer<typeof wilpProjectUploadSchema>;
 
 export const wilpProjectViewDetailsQuerySchema = z.object({
     id: z
@@ -75,8 +57,6 @@ export type WilpProject = {
     facultyEmail?: string;
     researchArea: string;
     dissertationTitle: string;
-    reminder: Date;
-    deadline: Date;
     createdAt: Date;
     updatedAt: Date;
 };

@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
 import { wilpProject } from "@/config/db/schema/wilpProject.ts";
-import { wilpProjectSchemas } from "lib";
 
 const router = Router();
 
@@ -18,8 +17,6 @@ interface WilpProjectRow {
     degreeProgram: string;
     researchArea: string;
     dissertationTitle: string;
-    reminder?: Date;
-    deadline?: Date;
 }
 
 function parseRow(row: any): WilpProjectRow | null {
@@ -54,18 +51,8 @@ router.post(
     checkAccess("wilp:project:upload"),
     excelUpload.single("file"),
     asyncHandler(async (req: Request, res: Response) => {
-        const { reminder, deadline } =
-            wilpProjectSchemas.wilpProjectUploadSchema.parse(req.body);
-
         if (!req.file) {
             res.status(400).json({ error: "No file uploaded" });
-            return;
-        }
-
-        if (new Date(reminder) > new Date(deadline)) {
-            res.status(400).json({
-                error: "Reminder date must be before the deadline date",
-            });
             return;
         }
 
@@ -115,11 +102,7 @@ router.post(
 
                 let [newProject] = await db
                     .insert(wilpProject)
-                    .values({
-                        ...parsedRow,
-                        reminder: new Date(reminder),
-                        deadline: new Date(deadline),
-                    })
+                    .values(parsedRow)
                     .returning();
                 if (newProject) results.successful++;
             } catch (error) {
