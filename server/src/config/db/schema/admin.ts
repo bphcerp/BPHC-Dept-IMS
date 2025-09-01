@@ -40,6 +40,9 @@ export const users = pgTable("users", {
     researchInterests: text("research_interests")
         .array()
         .default(sql`'{}'::text[]`),
+    courses: text("courses")
+        .array()
+        .default(sql`'{}'::text[]`),
     linkedin: text("linkedin"),
     orchidID: text("orchid_id"),
     scopusID: text("scopus_id"),

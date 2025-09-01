@@ -203,7 +203,8 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
     const template = await fs.readFile(templatePath, "utf-8");
 
     const data = generateTemplateData({
-        ...userData,
+        ...userData, // user data has to be spread first as both userData and applicationData 
+                     // have description field and we want the one from applicationData to override userData 
         ...applicationData,
         drcReviews,
         logoBase64,
