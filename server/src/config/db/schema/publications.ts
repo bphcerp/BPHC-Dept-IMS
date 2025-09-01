@@ -19,11 +19,11 @@ export const publicationsTable = pgTable("publications", {
 
 export const researgencePublications = pgTable("researgence", {
   pubId: integer("pub_id").primaryKey(),
-  authors: text("authors"),
+  authors: text("authors").notNull(),
   homeAuthors: text("home_authors"),
   homeAuthorDepartment: text("home_author_department"),
   homeAuthorInstitute: text("home_author_institute"),
-  publicationTitle: text("publication_title"),
+  publicationTitle: text("publication_title").notNull(),
   scs: integer("scs"),
   wos: integer("wos"),
   sci: text("sci"),
@@ -31,7 +31,7 @@ export const researgencePublications = pgTable("researgence", {
   level: text("level"),
   articleType: text("article_type"),
   year: integer("year"),
-  month: text("month"),
+  month: monthEnum("month"),
   homeAuthorLocation: text("home_author_location"),
   volNo: text("vol_no"),
   issNo: text("iss_no"),

@@ -3,15 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, Upload, FileSpreadsheet, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Upload, FileSpreadsheet } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-
-interface BulkUploadWilpProps {
-  onBack: () => void;
-}
 
 interface UploadResults {
   successful: number;
