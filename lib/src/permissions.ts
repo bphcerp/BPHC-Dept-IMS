@@ -389,10 +389,15 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Course Load Allocation 
     "/allocation/allocation/delete": "allocation:write",
     "/allocation/allocation/update": "allocation:write",
+
+    "/allocation/course/create": "allocation:courses:write",
     "/allocation/course/delete": "allocation:courses:write",
     "/allocation/course/update": "allocation:courses:write",
+
     "/allocation/coursePreferences/delete": "allocation:preference:write",
     "/allocation/coursePreferences/update": "allocation:preference:write",
+
+    "/allocation/semester/create": "allocation:semester:write",
     "/allocation/semester/delete": "allocation:semester:write",
     "/allocation/semester/update": "allocation:semester:write",
 } as const;

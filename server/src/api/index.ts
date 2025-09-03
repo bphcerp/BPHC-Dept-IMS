@@ -1,4 +1,5 @@
 import express from "express";
+
 import authRouter from "./auth/index.ts";
 import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
@@ -12,6 +13,8 @@ import profileRouter from "./profile/index.ts";
 import projectRouter from "./project/index.ts";
 import patentRouter from "./patent/index.ts";
 import wilpProjectRouter from "./wilpProject/index.ts";
+import allocationRouter from "./allocation/index.ts";
+
 import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
@@ -55,6 +58,7 @@ router.use("/conference", conferenceRouter);
 router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
 router.use("/inventory", inventoryRouter);
+router.use("/allocation", allocationRouter);
 
 router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);

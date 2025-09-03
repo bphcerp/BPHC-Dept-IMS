@@ -1,6 +1,5 @@
 import db from "@/config/db/index.ts";
 import { course } from "@/config/db/schema/allocation.ts"; 
-import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 import { Router } from "express";
@@ -10,7 +9,6 @@ const router = Router();
 
 router.get(
     "/",
-    checkAccess(),
     asyncHandler(async (req, res) => {
         const { isCDC } = req.query
         
