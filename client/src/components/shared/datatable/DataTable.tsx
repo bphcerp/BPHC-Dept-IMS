@@ -43,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
@@ -56,6 +56,7 @@ interface DataTableProps<T> {
   additionalButtons?: ReactNode;
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isHeaderTableFixed?: boolean;
+  tableElementRefProp?: MutableRefObject<HTMLTableElement | null>
 }
 
 export type TableFilterType =
@@ -83,17 +84,21 @@ export function DataTable<T>({
   exportFunction,
   additionalButtons,
   isHeaderTableFixed,
+  tableElementRefProp
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tableElementRef = useRef<HTMLTableElement | null>(null);
+  const tableElementRef = tableElementRefProp ?? useRef<HTMLTableElement | null>(null);
   const containerElementRef = useRef<HTMLTableElement | null>(null);
-  const [availableWindowWidth, setAvailableWindowWidth] = useState<number | undefined>()
+  const [availableWindowWidth, setAvailableWindowWidth] = useState<
+    number | undefined
+  >();
 
   useEffect(() => {
-    const handleResize = () => setAvailableWindowWidth(containerElementRef.current?.offsetWidth);
+    const handleResize = () =>
+      setAvailableWindowWidth(containerElementRef.current?.offsetWidth);
 
     window.addEventListener("resize", handleResize);
 
@@ -101,8 +106,9 @@ export function DataTable<T>({
   }, []);
 
   useEffect(() => {
-    if (containerElementRef.current) setAvailableWindowWidth(containerElementRef.current.offsetWidth)
-  },[containerElementRef.current])
+    if (containerElementRef.current)
+      setAvailableWindowWidth(containerElementRef.current.offsetWidth);
+  }, [containerElementRef.current]);
 
   const initialColumnFilters = useMemo(() => {
     const filters: ColumnFiltersState = [];
@@ -452,62 +458,69 @@ export function DataTable<T>({
         className={`sticky top-0 z-20 h-16 bg-background`}
         style={{ width: tableElementRef.current?.offsetWidth }}
       >
-        <div className="sticky left-2 z-30 flex h-full w-fit items-center space-x-2">
-          <ActionItemsMenu
-            items={[
-              {
-                label: "Clear All Filters",
-                icon: RotateCcwIcon,
-                onClick: resetFiltersAndSorting,
-              },
-              ...(exportFunction
-                ? [
-                    {
-                      label: "Export Current View",
-                      icon: FileDownIcon,
-                      onClick: handleExport,
-                    },
-                  ]
-                : []),
-            ]}
-          />
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Select Columns <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div
-                  className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
-                >
-                  {table
-                    .getAllColumns()
-                    .filter(
-                      (column) => column.getCanHide() && !column.getIsPinned()
-                    )
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          //To stop the dropdown from closing on click (onSelect)
-                          onSelect={(e) => e.preventDefault()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.columnDef.header?.toString()}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div
+          className="sticky left-2 z-30 flex h-full items-center justify-between space-x-2"
+          style={{ width: availableWindowWidth }}
+        >
+          <div className="flex justify-center space-x-2">
+            <ActionItemsMenu
+              items={[
+                {
+                  label: "Clear All Filters",
+                  icon: RotateCcwIcon,
+                  onClick: resetFiltersAndSorting,
+                },
+                ...(exportFunction
+                  ? [
+                      {
+                        label: "Export Current View",
+                        icon: FileDownIcon,
+                        onClick: handleExport,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="ml-auto">
+                    Select Columns <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <div
+                    className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
+                  >
+                    {table
+                      .getAllColumns()
+                      .filter(
+                        (column) => column.getCanHide() && !column.getIsPinned()
+                      )
+                      .map((column) => {
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            //To stop the dropdown from closing on click (onSelect)
+                            onSelect={(e) => e.preventDefault()}
+                            onCheckedChange={(value) =>
+                              column.toggleVisibility(!!value)
+                            }
+                          >
+                            {column.columnDef.header?.toString()}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          {additionalButtons}
+          <div className="flex justify-center space-x-2">
+            {additionalButtons}
+          </div>
         </div>
       </div>
       {data.length ? (
@@ -656,7 +669,10 @@ export function DataTable<T>({
       )}
 
       <div style={{ width: tableElementRef.current?.offsetWidth }}>
-        <div className="flex items-center justify-between space-x-2 py-4 sticky left-2 z-20" style={{ width: availableWindowWidth }}>
+        <div
+          className="sticky left-2 z-20 flex items-center justify-between space-x-2 py-4"
+          style={{ width: availableWindowWidth }}
+        >
           <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.

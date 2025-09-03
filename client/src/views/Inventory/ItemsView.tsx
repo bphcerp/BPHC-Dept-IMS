@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { TableFilterType, DataTable } from "@/components/shared/datatable/DataTable";
+import {
+  TableFilterType,
+  DataTable,
+} from "@/components/shared/datatable/DataTable";
 import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import { TransferConfirmationDialog } from "@/components/inventory/TransferConfirmationDialog";
 import VendorDetailsDialog from "@/components/inventory/VendorDetailsDialog";
@@ -23,6 +26,7 @@ export const ItemsView = () => {
   const [isVendorDialogOpen, setVendorDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
   const [isTransferDialogOpen, setTransferDialogOpen] = useState(false);
+  const tableElementRef = useRef<HTMLTableElement | null>(null);
 
   const { checkAccess } = useAuth();
 
@@ -282,8 +286,10 @@ export const ItemsView = () => {
   };
 
   return (
-    <div className="inventory p-2">
-      <h1 className="text-3xl font-bold text-primary">Inventory</h1>
+    <div className="inventory w-full p-2">
+      <div className="text-3xl font-bold text-primary" style={{ width: tableElementRef.current?.offsetWidth }}>
+        <span className="sticky left-2 z-10">Inventory</span>
+      </div>
       {isFetching ? (
         <div className="my-2 flex h-full w-full flex-col space-y-2">
           <Skeleton className="h-8 w-full" />
@@ -335,6 +341,7 @@ export const ItemsView = () => {
           columns={columns}
           setSelected={setSelectedItems}
           isHeaderTableFixed={true}
+          tableElementRefProp={tableElementRef}
           additionalButtons={
             <>
               {selectedItems.length ? (
@@ -348,7 +355,10 @@ export const ItemsView = () => {
                 <></>
               )}
               {selectedItems.length === 1 && (
-                <DeleteConfirmationDialog onConfirm={handleDelete} selectedItem={selectedItems[0]} />
+                <DeleteConfirmationDialog
+                  onConfirm={handleDelete}
+                  selectedItem={selectedItems[0]}
+                />
               )}
               {checkAccess("inventory:write") ? (
                 selectedItems.length === 1 ? (
