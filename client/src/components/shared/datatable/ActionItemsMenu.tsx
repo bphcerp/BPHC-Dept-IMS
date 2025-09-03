@@ -25,8 +25,9 @@ export const ActionItemsMenu: React.FC<ActionItemsMenuProps> = ({ items }) => {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="outline">
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          Options
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48">

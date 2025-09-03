@@ -55,7 +55,7 @@ interface DataTableProps<T> {
   setSelected?: (selected: T[]) => void;
   additionalButtons?: ReactNode;
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
-  isHeaderTableFixed?: boolean;
+  isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>
 }
 
@@ -83,7 +83,7 @@ export function DataTable<T>({
   setSelected,
   exportFunction,
   additionalButtons,
-  isHeaderTableFixed,
+  isTableHeaderFixed,
   tableElementRefProp
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -455,12 +455,12 @@ export function DataTable<T>({
       ref={containerElementRef}
     >
       <div
-        className={`sticky top-0 z-20 h-16 bg-background`}
-        style={{ width: tableElementRef.current?.offsetWidth }}
+        className={isTableHeaderFixed ? `sticky top-0 z-20 h-16 bg-background` : undefined}
+        style={isTableHeaderFixed ? { width: tableElementRef.current?.offsetWidth } : undefined}
       >
         <div
-          className="sticky left-2 z-30 flex h-full items-center justify-between space-x-2"
-          style={{ width: availableWindowWidth }}
+          className={isTableHeaderFixed ? "sticky left-2 z-30 flex h-full items-center justify-between space-x-2" : "flex h-full items-center justify-between space-x-2"}
+          style={isTableHeaderFixed ? { width: availableWindowWidth } : undefined}
         >
           <div className="flex justify-center space-x-2">
             <ActionItemsMenu
@@ -524,19 +524,19 @@ export function DataTable<T>({
         </div>
       </div>
       {data.length ? (
-        <Table noWrapper ref={tableElementRef}>
+        <Table noWrapper={isTableHeaderFixed} ref={tableElementRef}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
                 className={
-                  isHeaderTableFixed
+                  isTableHeaderFixed
                     ? "sticky top-16 z-20 bg-background shadow-md hover:bg-background"
                     : undefined
                 }
               >
                 {/* Sticky first column (checkbox for select all) */}
-                <TableHead className="sticky left-0 z-30 bg-gray-200">
+                <TableHead className={isTableHeaderFixed ? "sticky left-0 z-30 bg-gray-200" : undefined}>
                   <Checkbox
                     checked={
                       table.getIsAllPageRowsSelected() ||
@@ -556,11 +556,7 @@ export function DataTable<T>({
                     colSpan={header.colSpan}
                     id={header.column.id}
                     onClick={header.column.getToggleSortingHandler()}
-                    className={`${
-                      header.column.getCanSort()
-                        ? "cursor-pointer select-none"
-                        : ""
-                    }`}
+                    className={`${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
                   >
                     <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
                       <div className="flex space-x-2">
@@ -594,7 +590,7 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (row checkbox) */}
                 <TableCell
-                  className={`sticky left-0 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}`}
+                  className={isTableHeaderFixed ? `sticky left-0 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}` : undefined}
                 >
                   <Checkbox
                     checked={row.getIsSelected()}
@@ -646,7 +642,7 @@ export function DataTable<T>({
             {/* Sum row (sticky first column) */}
             {columns.some((column) => column.meta?.calculateSum) && (
               <TableRow>
-                <TableCell className="sticky left-0 z-10 opacity-100">
+                <TableCell className={isTableHeaderFixed ? "sticky left-0 z-10 opacity-100" : undefined}>
                   {/* empty cell for checkbox column */}
                 </TableCell>
                 {table.getVisibleLeafColumns().map((column) => (
@@ -668,10 +664,10 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div style={{ width: tableElementRef.current?.offsetWidth }}>
+      <div style={isTableHeaderFixed ? { width: tableElementRef.current?.offsetWidth } : undefined}>
         <div
-          className="sticky left-2 z-20 flex items-center justify-between space-x-2 py-4"
-          style={{ width: availableWindowWidth }}
+          className={isTableHeaderFixed ? "sticky left-2 z-20 flex items-center justify-between space-x-2 py-4" : "flex items-center justify-between space-x-2 py-4"}
+          style={isTableHeaderFixed ? { width: availableWindowWidth } : undefined}
         >
           <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}

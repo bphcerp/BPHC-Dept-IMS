@@ -340,7 +340,7 @@ export const ItemsView = () => {
           }
           columns={columns}
           setSelected={setSelectedItems}
-          isHeaderTableFixed={true}
+          isTableHeaderFixed={true}
           tableElementRefProp={tableElementRef}
           additionalButtons={
             <>
