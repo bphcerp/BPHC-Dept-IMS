@@ -318,7 +318,7 @@ export const ItemsView = () => {
                       });
                       const link = document.createElement("a");
                       link.href = URL.createObjectURL(blob);
-                      link.download = `${DEPARTMENT_NAME} Department - Export Inventory.xlsx`;
+                      link.download = `${DEPARTMENT_NAME} Department_Export Inventory_${new Date().toLocaleDateString("en-IN")}.xlsx`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
@@ -333,8 +333,8 @@ export const ItemsView = () => {
               : undefined
           }
           columns={columns}
-          mainSearchColumn="itemName"
           setSelected={setSelectedItems}
+          isHeaderTableFixed={true}
           additionalButtons={
             <>
               {selectedItems.length ? (

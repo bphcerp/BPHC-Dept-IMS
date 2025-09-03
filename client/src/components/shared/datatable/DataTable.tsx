@@ -18,7 +18,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FileDownIcon, RotateCcwIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,16 +39,17 @@ import {
 } from "@/components/ui/table";
 import { ReactNode, useEffect, useState } from "react";
 import OverflowHandler from "./OverflowHandler";
+import { ActionItemsMenu } from "./ActionItemsMenu";
 
 interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   // If mainSearchColumn is set, the meta filter options if set are ignored as there is a global filter already present.
-  mainSearchColumn?: keyof T;
   initialState?: InitialTableState;
   setSelected?: (selected: T[]) => void;
   additionalButtons?: ReactNode;
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
+  isHeaderTableFixed?: boolean;
 }
 
 export type TableFilterType =
@@ -71,11 +72,11 @@ declare module "@tanstack/react-table" {
 export function DataTable<T>({
   data,
   columns,
-  mainSearchColumn,
   initialState,
   setSelected,
   exportFunction,
   additionalButtons,
+  isHeaderTableFixed,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -123,16 +124,17 @@ export function DataTable<T>({
     return filterValue.includes(row.getValue(columnId));
   };
 
-  const getLSPageSizeKey = () => `${location.href.split('/').at(-1)}-table-page-size`
+  const getLSPageSizeKey = () =>
+    `${location.href.split("/").at(-1)}-table-page-size`;
 
   //save selected pageSize to localStorage
   const setPageSize = (pageSize: number) => {
-    table.setPageSize(pageSize)
-    localStorage.setItem(getLSPageSizeKey(), pageSize.toString())
-  }
+    table.setPageSize(pageSize);
+    localStorage.setItem(getLSPageSizeKey(), pageSize.toString());
+  };
 
-  const getPageSize = () => parseInt(localStorage.getItem(getLSPageSizeKey()) ?? '5')
-
+  const getPageSize = () =>
+    parseInt(localStorage.getItem(getLSPageSizeKey()) ?? "5");
 
   const table = useReactTable({
     data,
@@ -152,8 +154,8 @@ export function DataTable<T>({
       ...initialState,
       pagination: {
         ...initialState?.pagination,
-        pageSize: initialState?.pagination?.pageSize ?? getPageSize()
-      }
+        pageSize: initialState?.pagination?.pageSize ?? getPageSize(),
+      },
     },
     enableColumnPinning: true,
     onSortingChange: setSorting,
@@ -343,237 +345,223 @@ export function DataTable<T>({
     }
   };
 
-  return (
-    <div>
-      <div className="flex items-center justify-between py-4">
-        {mainSearchColumn && (
-          <Input
-            placeholder={`Filter ${table.getColumn(mainSearchColumn as string)?.columnDef.header?.toString()}...`}
-            value={
-              (table
-                .getColumn(mainSearchColumn as string)
-                ?.getFilterValue() as string) ?? ""
-            }
-            onChange={(event) =>
-              table
-                .getColumn(mainSearchColumn as string)
-                ?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        )}
-        <div className="flex items-center space-x-2">
-          {additionalButtons}
-          {exportFunction ? (
-            <Button
-              onClick={() => {
-                // Export function just returns the ids of the rows and visible columns, data fetching and excel
-                // generation is handled by the backend
+  const resetFiltersAndSorting = () => {
+    // table.reset() doesn't work
+    table.resetColumnFilters();
+    table.resetColumnVisibility();
+    table.resetGlobalFilter();
+    table.resetRowSelection();
+    table.resetSorting()
+  };
 
-                const itemIds = table
-                  .getPrePaginationRowModel()
-                  .rows.map((row) => (row.original as any).id);
-                const columnsVisible = table
-                  .getVisibleFlatColumns()
-                  .map((column) =>
-                    column.id.includes("_")
-                      ? column.id.split("_")[0]
-                      : column.id
+  const handleExport = () => {
+    // Export function just returns the ids of the rows and visible columns, data fetching and excel
+    // generation is handled by the backend
+
+    const itemIds = table
+      .getPrePaginationRowModel()
+      .rows.map((row) => (row.original as any).id);
+    const columnsVisible = table
+      .getVisibleFlatColumns()
+      .map((column) =>
+        column.id.includes("_") ? column.id.split("_")[0] : column.id
+      )
+      .filter((columnId) => columnId !== "S.No");
+    exportFunction!(itemIds, columnsVisible);
+  };
+
+  return (
+    <div className="datatable mt-4 flex flex-col space-y-4">
+      <div className="flex items-center space-x-2">
+        <ActionItemsMenu
+          items={[
+            {
+              label: "Clear All Filters",
+              icon: RotateCcwIcon,
+              onClick: resetFiltersAndSorting,
+            },
+            ...( exportFunction ? [{
+              label: "Export Current View",
+              icon: FileDownIcon,
+              onClick: handleExport,
+            }] : []),
+          ]}
+        />
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Select Columns <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <div
+                className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
+              >
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) => column.getCanHide() && !column.getIsPinned()
                   )
-                  .filter((columnId) => columnId !== "S.No");
-                exportFunction(itemIds, columnsVisible);
-              }}
-            >
-              Export Data
-            </Button>
-          ) : (
-            <></>
-          )}
-          <Button
-            onClick={() => {
-              // table.reset() doesn't work
-              table.resetColumnFilters();
-              table.resetColumnVisibility();
-              table.resetGlobalFilter();
-              table.resetRowSelection();
-            }}
-          >
-            Reset
-          </Button>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  Columns <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div
-                  className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
-                >
-                  {table
-                    .getAllColumns()
-                    .filter(
-                      (column) => column.getCanHide() && !column.getIsPinned()
-                    )
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize"
-                          checked={column.getIsVisible()}
-                          //To stop the dropdown from closing on click (onSelect)
-                          onSelect={(e) => e.preventDefault()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
-                        >
-                          {column.columnDef.header?.toString()}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-      {data.length ? (
-        <div className="relative overflow-x-auto rounded-md border p-2">
-          <Table className="table-auto">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  <TableHead>
-                    <Checkbox
-                      checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                      }
-                      onCheckedChange={(value) =>
-                        table.toggleAllPageRowsSelected(!!value)
-                      }
-                      aria-label="Select all"
-                    />
-                  </TableHead>
-                  {headerGroup.headers.map((header) => {
+                  .map((column) => {
                     return (
-                      <TableHead
-                        {...{
-                          className: header.column.getCanSort()
-                            ? "cursor-pointer select-none"
-                            : "",
-                          onClick: header.column.getToggleSortingHandler(),
-                        }}
-                        id={header.column.id}
-                        colSpan={header.colSpan}
-                        key={header.id}
-                      >
-                        <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
-                          <div className="flex space-x-2">
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            {header.column.getIsSorted() === "asc" ? (
-                              <ArrowUp />
-                            ) : header.column.getIsSorted() === "desc" ? (
-                              <ArrowDown />
-                            ) : null}
-                          </div>
-                          <div onClick={(e) => e.stopPropagation()}>
-                            {(!mainSearchColumn ||
-                              header.column.columnDef.header
-                                ?.toString()
-                                .toLowerCase() !==
-                              mainSearchColumn.toString().toLowerCase()) &&
-                              renderFilter(header.column)}
-                          </div>
-                        </div>
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            {table.getVisibleLeafColumns().length ? (
-              <TableBody>
-                {table.getRowModel().rows.map((row, idx) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    <TableCell>
-                      <Checkbox
-                        checked={row.getIsSelected()}
-                        onCheckedChange={(value) => row.toggleSelected(!!value)}
-                        aria-label="Select row"
-                      />
-                    </TableCell>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        className={`${cell.column.id === "S.No" ? "min-w-2" : (cell.column.columnDef.meta?.tailwindWidthString ?? "")} ${cell.column.columnDef.meta && ["date-range", "number-range"].includes(cell.column.columnDef.meta.filterType ?? "") ? "text-center" : ""}`}
-                        key={cell.id}
-                        title={
-                          cell.getValue() &&
-                            (cell.getValue() as any).toString().length > 20
-                            ? (cell.getValue() as any).toString()
-                            : undefined
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        //To stop the dropdown from closing on click (onSelect)
+                        onSelect={(e) => e.preventDefault()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
                         }
                       >
-                        {cell.column.id === 'S.No' ? idx + 1 : typeof columns.find(
-                          (column) =>
-                            column.header === cell.column.columnDef.header
-                        )?.cell === "function" ||
-                          (cell.getValue() &&
-                            typeof cell.getValue() !== "string") ? (
-                          flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )
-                        ) : cell.getValue() ? (
-                          <OverflowHandler text={cell.getValue() as string} />
-                        ) : (
-                          <div className="w-full p-0.5 text-start">
-                            Not Provided
-                          </div>
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-                {columns.some((column) => column.meta?.calculateSum) ? (
-                  <TableRow>
-                    <TableCell className="z-2 sticky left-0 w-[20px]">
-                      {/* Empty cell for the checkbox column */}
-                    </TableCell>
-                    {table.getVisibleLeafColumns().map((column) => (
-                      <TableCell key={column.id} className="font-bold">
-                        {column.columnDef.meta?.calculateSum ? (
-                          column.columnDef.meta.calculateSum(
-                            table.getRowModel().rows.map((row) => row.original)
-                          )
-                        ) : (
-                          <></>
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ) : (
-                  <></>
-                )}
-              </TableBody>
-            ) : (
-              <div>
-                <div className="flex flex-col items-center justify-center">
-                  <p className="text-lg text-gray-500">No columns to show</p>
-                </div>
+                        {column.columnDef.header?.toString()}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
               </div>
-            )}
-          </Table>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+        {additionalButtons}
+      </div>
+      {data.length ? (
+        <Table noWrapper>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow
+                key={headerGroup.id}
+                className={
+                  isHeaderTableFixed
+                    ? "sticky top-0 z-20 bg-background shadow-md hover:bg-background"
+                    : undefined
+                }
+              >
+                {/* Sticky first column (checkbox for select all) */}
+                <TableHead className="sticky left-0 z-30 bg-gray-200">
+                  <Checkbox
+                    checked={
+                      table.getIsAllPageRowsSelected() ||
+                      (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) =>
+                      table.toggleAllPageRowsSelected(!!value)
+                    }
+                    aria-label="Select all"
+                  />
+                </TableHead>
+
+                {/* Other headers */}
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    id={header.column.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className={`${
+                      header.column.getCanSort()
+                        ? "cursor-pointer select-none"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
+                      <div className="flex space-x-2">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {header.column.getIsSorted() === "asc" ? (
+                          <ArrowUp />
+                        ) : header.column.getIsSorted() === "desc" ? (
+                          <ArrowDown />
+                        ) : null}
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {renderFilter(header.column)}
+                      </div>
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+
+          <TableBody>
+            {table.getRowModel().rows.map((row, idx) => (
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
+                {/* Sticky first column (row checkbox) */}
+                <TableCell
+                  className={`sticky left-0 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}`}
+                >
+                  <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                  />
+                </TableCell>
+
+                {/* Other cells */}
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className={`${cell.column.id === "S.No" ? "min-w-2" : (cell.column.columnDef.meta?.tailwindWidthString ?? "")} ${
+                      cell.column.columnDef.meta &&
+                      ["date-range", "number-range"].includes(
+                        cell.column.columnDef.meta.filterType ?? ""
+                      )
+                        ? "text-center"
+                        : ""
+                    }`}
+                    title={
+                      cell.getValue() &&
+                      (cell.getValue() as any).toString().length > 20
+                        ? (cell.getValue() as any).toString()
+                        : undefined
+                    }
+                  >
+                    {cell.column.id === "S.No" ? (
+                      idx + 1
+                    ) : typeof columns.find(
+                        (column) =>
+                          column.header === cell.column.columnDef.header
+                      )?.cell === "function" ||
+                      (cell.getValue() &&
+                        typeof cell.getValue() !== "string") ? (
+                      flexRender(cell.column.columnDef.cell, cell.getContext())
+                    ) : cell.getValue() ? (
+                      <OverflowHandler text={cell.getValue() as string} />
+                    ) : (
+                      <div className="w-full p-0.5 text-start">
+                        Not Provided
+                      </div>
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+
+            {/* Sum row (sticky first column) */}
+            {columns.some((column) => column.meta?.calculateSum) && (
+              <TableRow>
+                <TableCell className="sticky left-0 z-10 opacity-100">
+                  {/* empty cell for checkbox column */}
+                </TableCell>
+                {table.getVisibleLeafColumns().map((column) => (
+                  <TableCell key={column.id} className="font-bold">
+                    {column.columnDef.meta?.calculateSum?.(
+                      table.getRowModel().rows.map((row) => row.original)
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       ) : (
         <div>
           <div className="border-1 flex h-40 flex-col items-center justify-center rounded-md border-primary">
@@ -581,6 +569,7 @@ export function DataTable<T>({
           </div>
         </div>
       )}
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
