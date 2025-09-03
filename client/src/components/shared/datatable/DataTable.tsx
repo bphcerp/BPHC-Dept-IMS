@@ -18,7 +18,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronDown, FileDownIcon, RotateCcwIcon } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  FileDownIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,9 +43,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
+import { useSearchParams } from "react-router-dom";
 
 interface DataTableProps<T> {
   data: T[];
@@ -77,10 +84,31 @@ export function DataTable<T>({
   additionalButtons,
   isHeaderTableFixed,
 }: DataTableProps<T>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialColumnFilters = useMemo(() => {
+    const filters: ColumnFiltersState = [];
+    searchParams.forEach((value, key) => {
+      if (key.startsWith("filter_")) {
+        filters.push({
+          id: key.replace("filter_", ""),
+          value,
+        });
+      }
+    });
+    return filters;
+  }, [searchParams]);
+
+  const initialSorting = useMemo(() => {
+    const sortParam = searchParams.get("sort");
+    if (!sortParam) return [];
+    // e.g. ?sort=age.desc
+    const [id, desc] = sortParam.split(".");
+    return [{ id, desc: desc === "desc" }] as SortingState;
+  }, [searchParams]);
 
   const isWithinRange = (row: Row<T>, columnId: string, value: any) => {
     const date = new Date(row.getValue(columnId));
@@ -124,7 +152,7 @@ export function DataTable<T>({
   };
 
   const getLSPageSizeKey = () =>
-    `${location.href.split("/").at(-1)}-table-page-size`;
+    `${location.pathname}-table-page-size`;
 
   //save selected pageSize to localStorage
   const setPageSize = (pageSize: number) => {
@@ -157,8 +185,6 @@ export function DataTable<T>({
       },
     },
     enableColumnPinning: true,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -167,9 +193,42 @@ export function DataTable<T>({
     onRowSelectionChange: setRowSelection,
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    onColumnFiltersChange: (updater) => {
+      let newFilters =
+        typeof updater === "function"
+          ? updater(table.getState().columnFilters)
+          : updater;
+
+      // update search params
+      const params = new URLSearchParams(searchParams);
+      // remove old filters
+      [...params.keys()]
+        .filter((k) => k.startsWith("filter_"))
+        .forEach((k) => params.delete(k));
+      // add new ones
+      newFilters.forEach((f) => {
+        params.set(`filter_${f.id}`, f.value as string);
+      });
+      setSearchParams(params);
+    },
+    onSortingChange: (updater) => {
+      console.log("test");
+      let newSorting =
+        typeof updater === "function"
+          ? updater(table.getState().sorting)
+          : updater;
+      const params = new URLSearchParams(searchParams);
+      if (newSorting.length > 0) {
+        const s = newSorting[0];
+        params.set("sort", `${s.id}.${s.desc ? "desc" : "asc"}`);
+      } else {
+        params.delete("sort");
+      }
+      setSearchParams(params);
+    },
     state: {
-      sorting,
-      columnFilters,
+      sorting: initialSorting,
+      columnFilters: initialColumnFilters,
       columnVisibility,
       rowSelection,
     },
@@ -350,7 +409,7 @@ export function DataTable<T>({
     table.resetColumnVisibility();
     table.resetGlobalFilter();
     table.resetRowSelection();
-    table.resetSorting()
+    table.resetSorting();
   };
 
   const handleExport = () => {
@@ -379,11 +438,15 @@ export function DataTable<T>({
               icon: RotateCcwIcon,
               onClick: resetFiltersAndSorting,
             },
-            ...( exportFunction ? [{
-              label: "Export Current View",
-              icon: FileDownIcon,
-              onClick: handleExport,
-            }] : []),
+            ...(exportFunction
+              ? [
+                  {
+                    label: "Export Current View",
+                    icon: FileDownIcon,
+                    onClick: handleExport,
+                  },
+                ]
+              : []),
           ]}
         />
         <div>
@@ -524,7 +587,7 @@ export function DataTable<T>({
                     }
                   >
                     {cell.column.id === "S.No" ? (
-                      idx + 1
+                      cell.row.index + 1
                     ) : typeof columns.find(
                         (column) =>
                           column.header === cell.column.columnDef.header
