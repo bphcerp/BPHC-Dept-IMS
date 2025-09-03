@@ -43,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
@@ -88,6 +88,21 @@ export function DataTable<T>({
   const [rowSelection, setRowSelection] = useState({});
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const tableElementRef = useRef<HTMLTableElement | null>(null);
+  const containerElementRef = useRef<HTMLTableElement | null>(null);
+  const [availableWindowWidth, setAvailableWindowWidth] = useState<number | undefined>()
+
+  useEffect(() => {
+    const handleResize = () => setAvailableWindowWidth(containerElementRef.current?.offsetWidth);
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (containerElementRef.current) setAvailableWindowWidth(containerElementRef.current.offsetWidth)
+  },[containerElementRef.current])
 
   const initialColumnFilters = useMemo(() => {
     const filters: ColumnFiltersState = [];
@@ -151,8 +166,7 @@ export function DataTable<T>({
     return filterValue.includes(row.getValue(columnId));
   };
 
-  const getLSPageSizeKey = () =>
-    `${location.pathname}-table-page-size`;
+  const getLSPageSizeKey = () => `${location.pathname}-table-page-size`;
 
   //save selected pageSize to localStorage
   const setPageSize = (pageSize: number) => {
@@ -410,6 +424,7 @@ export function DataTable<T>({
     table.resetGlobalFilter();
     table.resetRowSelection();
     table.resetSorting();
+    table.resetRowSelection();
   };
 
   const handleExport = () => {
@@ -429,73 +444,81 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="datatable mt-4 flex flex-col space-y-4">
-      <div className="flex items-center space-x-2">
-        <ActionItemsMenu
-          items={[
-            {
-              label: "Clear All Filters",
-              icon: RotateCcwIcon,
-              onClick: resetFiltersAndSorting,
-            },
-            ...(exportFunction
-              ? [
-                  {
-                    label: "Export Current View",
-                    icon: FileDownIcon,
-                    onClick: handleExport,
-                  },
-                ]
-              : []),
-          ]}
-        />
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Select Columns <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <div
-                className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
-              >
-                {table
-                  .getAllColumns()
-                  .filter(
-                    (column) => column.getCanHide() && !column.getIsPinned()
-                  )
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        //To stop the dropdown from closing on click (onSelect)
-                        onSelect={(e) => e.preventDefault()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
-                      >
-                        {column.columnDef.header?.toString()}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <div
+      className="datatable mt-4 flex flex-col space-y-4"
+      ref={containerElementRef}
+    >
+      <div
+        className={`sticky top-0 z-20 h-16 bg-background`}
+        style={{ width: tableElementRef.current?.offsetWidth }}
+      >
+        <div className="sticky left-2 z-30 flex h-full w-fit items-center space-x-2">
+          <ActionItemsMenu
+            items={[
+              {
+                label: "Clear All Filters",
+                icon: RotateCcwIcon,
+                onClick: resetFiltersAndSorting,
+              },
+              ...(exportFunction
+                ? [
+                    {
+                      label: "Export Current View",
+                      icon: FileDownIcon,
+                      onClick: handleExport,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+          <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Select Columns <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div
+                  className={`${table.getAllColumns().length >= 6 && "grid grid-cols-3"} max-h-56 overflow-y-auto`}
+                >
+                  {table
+                    .getAllColumns()
+                    .filter(
+                      (column) => column.getCanHide() && !column.getIsPinned()
+                    )
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize"
+                          checked={column.getIsVisible()}
+                          //To stop the dropdown from closing on click (onSelect)
+                          onSelect={(e) => e.preventDefault()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.columnDef.header?.toString()}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {additionalButtons}
         </div>
-        {additionalButtons}
       </div>
       {data.length ? (
-        <Table noWrapper>
+        <Table noWrapper ref={tableElementRef}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
                 className={
                   isHeaderTableFixed
-                    ? "sticky top-0 z-20 bg-background shadow-md hover:bg-background"
+                    ? "sticky top-16 z-20 bg-background shadow-md hover:bg-background"
                     : undefined
                 }
               >
@@ -632,46 +655,48 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Rows per page <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {[5, 10, 20, 50, 100].map((pageSize) => (
-                <DropdownMenuCheckboxItem
-                  key={pageSize}
-                  checked={table.getState().pagination.pageSize === pageSize}
-                  onCheckedChange={() => setPageSize(pageSize)}
-                >
-                  {pageSize}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+      <div style={{ width: tableElementRef.current?.offsetWidth }}>
+        <div className="flex items-center justify-between space-x-2 py-4 sticky left-2 z-20" style={{ width: availableWindowWidth }}>
+          <div className="text-sm text-muted-foreground">
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          <div className="space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Rows per page <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {[5, 10, 20, 50, 100].map((pageSize) => (
+                  <DropdownMenuCheckboxItem
+                    key={pageSize}
+                    checked={table.getState().pagination.pageSize === pageSize}
+                    onCheckedChange={() => setPageSize(pageSize)}
+                  >
+                    {pageSize}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </div>
     </div>
