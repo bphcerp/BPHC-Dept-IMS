@@ -348,7 +348,7 @@ export const ItemsView = () => {
                 <></>
               )}
               {selectedItems.length === 1 && (
-                <DeleteConfirmationDialog onConfirm={handleDelete} />
+                <DeleteConfirmationDialog onConfirm={handleDelete} selectedItem={selectedItems[0]} />
               )}
               {checkAccess("inventory:write") ? (
                 selectedItems.length === 1 ? (

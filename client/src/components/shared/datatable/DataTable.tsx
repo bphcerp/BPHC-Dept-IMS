@@ -598,7 +598,7 @@ export function DataTable<T>({
                     ) : cell.getValue() ? (
                       <OverflowHandler text={cell.getValue() as string} />
                     ) : (
-                      <div className="w-full p-0.5 text-start">
+                      <div className="w-full p-0.5 text-start text-secondary">
                         Not Provided
                       </div>
                     )}
