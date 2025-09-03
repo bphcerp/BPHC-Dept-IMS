@@ -68,7 +68,7 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
     {
       accessorKey: "lab.name",
       header: "Lab Name",
-      meta: { tailwindWidthString: "min-w-32" },
+      meta: { tailwindWidthString: "min-w-32", filterType: 'search' },
     },
     ...(years.map((year) => ({
       accessorKey: year.toString(),
@@ -106,7 +106,6 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"lab_name" as keyof LabStatsPerYear}
     />
   ) : null;
 };

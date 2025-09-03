@@ -44,7 +44,6 @@ import { ActionItemsMenu } from "./ActionItemsMenu";
 interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
-  // If mainSearchColumn is set, the meta filter options if set are ignored as there is a global filter already present.
   initialState?: InitialTableState;
   setSelected?: (selected: T[]) => void;
   additionalButtons?: ReactNode;

@@ -49,7 +49,7 @@ const labColumns: ColumnDef<Laboratory>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { tailwindWidthString: "min-w-28" },
+    meta: { tailwindWidthString: "min-w-28", filterType: 'search' },
   },
   {
     accessorKey: "code",
@@ -83,7 +83,7 @@ const categoryColumns: ColumnDef<Category>[] = [
     cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(),
     enableColumnFilter: false,
   },
-  { accessorKey: "name", header: "Name" },
+  { accessorKey: "name", header: "Name", meta: { filterType: 'search' } },
   {
     accessorKey: "code",
     header: "Code",
@@ -117,7 +117,7 @@ const vendorColumns: ColumnDef<Vendor>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { tailwindWidthString: "min-w-52" },
+    meta: { tailwindWidthString: "min-w-52", filterType: 'search' },
   },
   { accessorKey: "address", header: "Address" },
   { accessorKey: "pocName", header: "POC Name" },
@@ -409,28 +409,24 @@ const Settings = () => {
               <DataTable<Laboratory>
                 data={data as Laboratory[]}
                 columns={labColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               />
             ) : selectedOption === "Vendors" ? (
               <DataTable<Vendor>
                 data={data as Vendor[]}
                 columns={vendorColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             ) : selectedOption === "VendorCategory" ? (
               <DataTable<Category>
                 data={data as Category[]}
                 columns={categoryColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             ) : (
               <DataTable<Category>
                 data={data as Category[]}
                 columns={categoryColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             )
