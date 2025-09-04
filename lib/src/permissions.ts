@@ -185,6 +185,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/getFacultyList": "phd:faculty:proposal",
+
+    "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
+    "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
+    "/phd/proposal/coSupervisor/approve": "phd:faculty:proposal",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",

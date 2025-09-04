@@ -16,14 +16,14 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    asyncHandler((req, res) =>
+    asyncHandler((req, res, next) =>
         pdfUpload.fields(phdSchemas.phdProposalMulterFileFields)(
             req,
             res,
             (err) => {
                 if (err instanceof multer.MulterError)
                     throw new HttpError(HttpCode.BAD_REQUEST, err.message);
-                throw err;
+                next(err);
             }
         )
     ),
@@ -47,6 +47,7 @@ router.post(
         if (!req.files || !req.files.abstractFile || !req.files.proposalFile) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid files");
         }
+        let submittedProposalId: number = -1;
         await db.transaction(async (tx) => {
             const insertedFileIds: { [key: string]: number } = {};
             if (
@@ -103,12 +104,13 @@ router.post(
                             createdBy: req.user!.email,
                             title: "New PhD Proposal Submission",
                             description: `A PhD proposal by ${student.name ?? "Student"} is pending review.`,
-                            link: `/phd/proposal/supervisor/viewProposal?id=${proposal.id}`,
+                            link: `/phd/supervisor/proposal/${proposal.id}`,
                             completionEvent: `proposal:supervisor-review:${proposal.id}`,
                         },
                     ],
                     tx
                 );
+                submittedProposalId = proposal.id;
             } catch (e) {
                 if ((e as { code: string })?.code === "23505")
                     throw new HttpError(
@@ -118,7 +120,7 @@ router.post(
                 throw e;
             }
         });
-        res.status(200).send();
+        res.status(200).send({ submittedProposalId });
     })
 );
 

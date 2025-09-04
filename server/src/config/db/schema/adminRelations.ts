@@ -15,7 +15,12 @@ import {
 } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
 import { conferenceApprovalApplications } from "./conference.ts";
-import { phdExamApplications, phdProposals } from "./phd.ts";
+import {
+    phdExamApplications,
+    phdProposalCoSupervisors,
+    phdProposalDacMembers,
+    phdProposals,
+} from "./phd.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -102,10 +107,10 @@ export const facultyAdminRelations = relations(faculty, ({ one, many }) => ({
     supervisingProposals: many(phdProposals, {
         relationName: "supervisorProposals",
     }),
-    coSupervisingProposals: many(phdProposals, {
+    coSupervisingProposals: many(phdProposalCoSupervisors, {
         relationName: "coSupervisorProposals",
     }),
-    dacMemberProposals: many(phdProposals, {
+    dacMemberProposals: many(phdProposalDacMembers, {
         relationName: "dacMemberProposals",
     }),
 }));

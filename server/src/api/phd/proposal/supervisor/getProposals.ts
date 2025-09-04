@@ -16,6 +16,14 @@ router.get(
                 status: true,
                 updatedAt: true,
             },
+            with: {
+                student: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
             where: (cols, { and, eq }) =>
                 and(
                     eq(cols.supervisorEmail, req.user!.email),

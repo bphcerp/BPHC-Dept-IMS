@@ -35,6 +35,11 @@ import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
+import Proposal from "@/views/Phd/Student/Proposal";
+import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
+import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
+import CoSupervisorProposal from "@/views/Phd/CoSupervisor/Proposal";
+import CoSupervisorViewProposal from "@/views/Phd/CoSupervisor/ViewProposal";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -88,31 +93,31 @@ const adminModulePermissions = [
   permissions["/admin/role"],
 ];
 const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("phd:"),
+  (permission) => permission.startsWith("phd:")
 );
-const conferenceModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("conference:"),
-);
+const conferenceModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("conference:"));
 const qpReviewModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("qp:"),
+  (permission) => permission.startsWith("qp:")
 );
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("handout:"),
+  (permission) => permission.startsWith("handout:")
 );
 const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("publications:"),
+  (permission) => permission.startsWith("publications:")
 );
 const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("inventory:"),
+  (permission) => permission.startsWith("inventory:")
 );
 const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("project:"),
+  (permission) => permission.startsWith("project:")
 );
 const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("patent:"),
+  (permission) => permission.startsWith("patent:")
 );
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("wilp:"),
+  (permission) => permission.startsWith("wilp:")
 );
 
 const Routing = () => {
@@ -191,7 +196,11 @@ const Routing = () => {
         <Route
           path="/"
           element={
-            <Home sidebarItems={authState ? [{ title: "Modules", items: modules }] : []} />
+            <Home
+              sidebarItems={
+                authState ? [{ title: "Modules", items: modules }] : []
+              }
+            />
           }
         />
         <Route path="/contributors" element={<ContributorsPage />} />
@@ -199,7 +208,10 @@ const Routing = () => {
         {authState && <Route path="/profile" element={<ProfilePage />} />}
         {checkAccessAnyOne(adminModulePermissions) && (
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/members" replace={true} />} />
+            <Route
+              index
+              element={<Navigate to="/admin/members" replace={true} />}
+            />
             {checkAccess(permissions["/admin/member/details"]) && (
               <>
                 <Route path="members" element={<MembersView />} />
@@ -278,19 +290,29 @@ const Routing = () => {
             )}
             {checkAccess(permissions["/handout/dcaconvenor/get"]) &&
               checkAccess(permissions["/handout/dca/assignReviewer"]) &&
-              checkAccess(permissions["/handout/dcaconvenor/getAllDCAMember"]) && (
+              checkAccess(
+                permissions["/handout/dcaconvenor/getAllDCAMember"]
+              ) && (
                 <>
-                  {checkAccess(permissions["/handout/dcaconvenor/updateReviewer"]) &&
-                    checkAccess(permissions["/handout/dcaconvenor/updateIC"]) && (
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/updateReviewer"]
+                  ) &&
+                    checkAccess(
+                      permissions["/handout/dcaconvenor/updateIC"]
+                    ) && (
                       <Route
                         path="dcaconvenor"
                         element={<DCAConvenorHandouts />}
                       />
                     )}
-                  {checkAccess(permissions["/handout/dcaconvenor/exportSummary"]) && (
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/exportSummary"]
+                  ) && (
                     <Route path="summary" element={<DCAConvenerSummary />} />
                   )}
-                  {checkAccess(permissions["/handout/dcaconvenor/finalDecision"]) && (
+                  {checkAccess(
+                    permissions["/handout/dcaconvenor/finalDecision"]
+                  ) && (
                     <Route
                       path="dcaconvenor/review/:id"
                       element={<DCAConvenorReview />}
@@ -310,10 +332,16 @@ const Routing = () => {
                 />
               )}
               {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                <Route path="update-deadlines" element={<UpdateDeadlinesPage />} />
+                <Route
+                  path="update-deadlines"
+                  element={<UpdateDeadlinesPage />}
+                />
               )}
               {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                <Route path="update-subareas" element={<UpdateSubAreasPage />} />
+                <Route
+                  path="update-subareas"
+                  element={<UpdateSubAreasPage />}
+                />
               )}
               {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
                 <Route
@@ -324,6 +352,7 @@ const Routing = () => {
             </Route>
             {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
               <Route path="phd-student" element={<Outlet />}>
+                <Route path="proposals" element={<Proposal />} />
                 <Route path="qualifying-exams" element={<QualifyingExams />} />
               </Route>
             )}
@@ -336,9 +365,28 @@ const Routing = () => {
               </Route>
             )}
             {checkAccess(permissions["/phd/supervisor/suggestExaminers"]) && (
-                <Route path="supervisor" element={<Outlet/>}>
-                    <Route path="examiner-suggestions" element={<ExaminerSuggestions />} />
-                </Route>
+              <Route path="supervisor" element={<Outlet />}>
+                <Route path="proposals" element={<SupervisorProposal />} />
+                <Route
+                  path="proposal/:id"
+                  element={<SupervisorViewProposal />}
+                />
+                <Route
+                  path="examiner-suggestions"
+                  element={<ExaminerSuggestions />}
+                />
+              </Route>
+            )}
+            {checkAccess(
+              permissions["/phd/proposal/coSupervisor/getProposals"]
+            ) && (
+              <Route path="coSupervisor" element={<Outlet />}>
+                <Route path="proposals" element={<CoSupervisorProposal />} />
+                <Route
+                  path="proposal/:id"
+                  element={<CoSupervisorViewProposal />}
+                />
+              </Route>
             )}
           </Route>
         )}
@@ -346,7 +394,9 @@ const Routing = () => {
           <Route path="/publications" element={<PublicationsLayout />}>
             <Route
               index
-              element={<Navigate to="/publications/your-publications" replace={true} />}
+              element={
+                <Navigate to="/publications/your-publications" replace={true} />
+              }
             />
             <Route path="your-publications" element={<YourPublications />} />
             {checkAccess(permissions["/publications/all"]) && (
@@ -359,12 +409,15 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(inventoryModulePermissions) && (
           <Route path="/inventory" element={<InventoryLayout />}>
-            <Route index element={<Navigate to="/inventory/items" replace={true} />} />
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
             <Route path="items" element={<ItemsView />} />
             {checkAccessAnyOne(
               Object.keys(permissions).filter((perm) =>
-                perm.startsWith("inventory:stats"),
-              ),
+                perm.startsWith("inventory:stats")
+              )
             ) && <Route path="stats" element={<Stats />} />}
             {checkAccess("inventory:write") && (
               <>
@@ -380,12 +433,15 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(inventoryModulePermissions) && (
           <Route path="/inventory" element={<InventoryLayout />}>
-            <Route index element={<Navigate to="/inventory/items" replace={true} />} />
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
             <Route path="items" element={<ItemsView />} />
             {checkAccessAnyOne(
               Object.keys(permissions).filter((perm) =>
-                perm.startsWith("inventory:stats"),
-              ),
+                perm.startsWith("inventory:stats")
+              )
             ) && <Route path="stats" element={<Stats />} />}
             {checkAccess("inventory:write") && (
               <>
@@ -401,7 +457,10 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(projectModulePermissions) && (
           <Route path="/project" element={<ProjectLayout />}>
-            <Route index element={<Navigate to="/project/add" replace={true} />} />
+            <Route
+              index
+              element={<Navigate to="/project/add" replace={true} />}
+            />
             {checkAccess(permissions["/project/create"]) && (
               <Route path="add" element={<AddProject />} />
             )}
@@ -421,7 +480,10 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(patentModulePermissions) && (
           <Route path="/patent" element={<PatentLayout />}>
-            <Route index element={<Navigate to="/patent/add" replace={true} />} />
+            <Route
+              index
+              element={<Navigate to="/patent/add" replace={true} />}
+            />
             {checkAccess(permissions["/patent/create"]) && (
               <Route path="add" element={<AddPatent />} />
             )}
@@ -454,7 +516,9 @@ const Routing = () => {
             {checkAccess(permissions["/wilpProject/upload"]) && (
               <Route
                 path="bulk-upload"
-                element={<BulkUploadWilp onBack={() => window.history.back()} />}
+                element={
+                  <BulkUploadWilp onBack={() => window.history.back()} />
+                }
               />
             )}
             {checkAccess(permissions["/wilpProject/mail"]) && (

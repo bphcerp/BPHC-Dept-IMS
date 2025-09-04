@@ -6,7 +6,8 @@ import {
   FileSpreadsheet,
   Calendar,
   Clock,
-  Mail
+  Mail,
+  FileText,
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -17,11 +18,32 @@ const NotionalSupervisorLayout = () => {
       title: "Supervisor",
       items: [
         {
+          title: "Proposal Management",
+          icon: <FileText />,
+          url: "/phd/supervisor/proposals",
+          requiredPermissions: [
+            permissions["/phd/proposal/supervisor/getProposals"],
+          ],
+        },
+        {
           title: "Examiner Management",
           icon: <UserCheck />,
           url: "/phd/supervisor/examiner-suggestions",
           requiredPermissions: [
             permissions["/phd/notionalSupervisor/updateSuggestedExaminer"],
+          ],
+        },
+      ],
+    },
+    {
+      title: "Co-Supervisor",
+      items: [
+        {
+          title: "Proposal Management",
+          icon: <FileText />,
+          url: "/phd/coSupervisor/proposals",
+          requiredPermissions: [
+            permissions["/phd/proposal/coSupervisor/getProposals"],
           ],
         },
       ],
@@ -42,6 +64,14 @@ const NotionalSupervisorLayout = () => {
     {
       title: "PhD Scholar",
       items: [
+        {
+          title: "Proposal Management",
+          icon: <FileText />,
+          url: "/phd/phd-student/proposals",
+          requiredPermissions: [
+            permissions["/phd/proposal/student/getProposals"],
+          ],
+        },
         {
           title: "Qualifying Exam Management",
           icon: <ClipboardCheck />,
