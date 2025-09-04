@@ -56,8 +56,6 @@ export default router.get(
                 phone: app.student.phone,
                 supervisor: app.student.supervisorEmail,
                 idNumber: app.student.idNumber,
-                coSupervisor1: app.student.coSupervisorEmail,
-                coSupervisor2: app.student.coSupervisorEmail2,
             },
             files: {
                 qualifyingArea1Syllabus: app.qualifyingArea1SyllabusFileId

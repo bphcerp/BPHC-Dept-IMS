@@ -24,7 +24,7 @@ export const allPermissions = {
         "Set conference application approval flow",
 
     // PhD
-    "phd:notifications:send": "Send system-wide notifications",
+
     "phd:staff:manage-semesters": "Manage PhD semesters",
     "phd:staff:manage-qe": "Manage PhD qualifying exams",
     "phd:staff:manage-subareas": "Manage PhD subareas",
@@ -36,6 +36,11 @@ export const allPermissions = {
     "phd:drc:qe": "DRC Member operations on qualifying exams",
     "phd:supervisor:suggest-examiners":
         "Suggest examiners for qualifying exams",
+
+    "phd:student:proposal": "PhD scholar proposal operations",
+    "phd:drc:proposal": "DRC Convener operations on proposals",
+    "phd:faculty:proposal": "Faculty operations on proposals",
+
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -172,6 +177,15 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
+
+    "/phd/proposal/student/getProposals": "phd:student:proposal",
+    "/phd/proposal/student/submitProposal": "phd:student:proposal",
+
+    "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
+
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",

@@ -83,24 +83,10 @@ export const phd = pgTable("phd", {
     emergencyPhoneNumber: text("emergency_phone_number"),
     notionalSupervisorEmail: text("notional_supervisor_email").references(
         () => users.email,
-        { onDelete: "cascade" }
+        { onDelete: "set null" }
     ),
     supervisorEmail: text("supervisor_email").references(() => users.email, {
-        onDelete: "cascade",
-    }),
-    coSupervisorEmail: text("co_supervisor_email").references(
-        () => users.email,
-        { onDelete: "cascade" }
-    ),
-    coSupervisorEmail2: text("co_supervisor_email_2").references(
-        () => users.email,
-        { onDelete: "cascade" }
-    ),
-    dac1Email: text("dac_1_email").references(() => users.email, {
-        onDelete: "cascade",
-    }),
-    dac2Email: text("dac_2_email").references(() => users.email, {
-        onDelete: "cascade",
+        onDelete: "set null",
     }),
     qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
     hasPassedQe: boolean("has_passed_qe").default(false).notNull(),

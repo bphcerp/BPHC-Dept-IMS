@@ -67,8 +67,6 @@ export default router.get(
                     phone: app.student.phone,
                     supervisor: app.student.supervisorEmail,
                     idNumber: app.student.idNumber,
-                    coSupervisor1: app.student.coSupervisorEmail,
-                    coSupervisor2: app.student.coSupervisorEmail2,
                 },
                 examinerAssignments: app.examinerAssignments.reduce(
                     (acc, assignment) => {

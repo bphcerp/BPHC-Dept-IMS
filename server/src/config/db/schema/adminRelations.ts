@@ -15,6 +15,7 @@ import {
 } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
 import { conferenceApprovalApplications } from "./conference.ts";
+import { phdExamApplications, phdProposals } from "./phd.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -87,7 +88,7 @@ export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
     }),
 }));
 
-export const facultyAdminRelations = relations(faculty, ({ one }) => ({
+export const facultyAdminRelations = relations(faculty, ({ one, many }) => ({
     user: one(users, {
         fields: [faculty.email],
         references: [users.email],
@@ -98,13 +99,28 @@ export const facultyAdminRelations = relations(faculty, ({ one }) => ({
         references: [files.id],
         relationName: "facultySignatureFile",
     }),
+    supervisingProposals: many(phdProposals, {
+        relationName: "supervisorProposals",
+    }),
+    coSupervisingProposals: many(phdProposals, {
+        relationName: "coSupervisorProposals",
+    }),
+    dacMemberProposals: many(phdProposals, {
+        relationName: "dacMemberProposals",
+    }),
 }));
 
-export const phdAdminRelations = relations(phd, ({ one }) => ({
+export const phdAdminRelations = relations(phd, ({ one, many }) => ({
     user: one(users, {
         fields: [phd.email],
         references: [users.email],
         relationName: "phd",
+    }),
+    qeApplications: many(phdExamApplications, {
+        relationName: "phdQualifyingExamApplications",
+    }),
+    proposals: many(phdProposals, {
+        relationName: "studentProposals",
     }),
 }));
 

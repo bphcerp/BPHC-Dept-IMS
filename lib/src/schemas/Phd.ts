@@ -12,6 +12,18 @@ export const phdExamApplicationStatuses = [
     "resubmit",
 ] as const;
 
+export const phdProposalStatuses = [
+    "deleted",
+    "supervisor_review",
+    "cosupervisor_review",
+    "drc_send_to_dac",
+    "dac_review",
+    "completed",
+] as const;
+
+export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
+    ["completed", "deleted"] as const;
+
 export const resultStatusEnum = z.enum(["pass", "fail"]);
 
 export const notifyDeadlinePayloadSchema = z.object({
@@ -329,6 +341,50 @@ export const updateEmailTemplateSchema = z.object({
 });
 export type UpdateEmailTemplateBody = z.infer<typeof updateEmailTemplateSchema>;
 
+export const phdProposalSubmissionSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+});
+
+export const phdProposalFileFieldNames = [
+    "abstractFile",
+    "proposalFile",
+] as const;
+
+export const phdProposalMulterFileFields: Readonly<
+    { name: string; maxCount: number }[]
+> = (phdProposalFileFieldNames as Readonly<string[]>).map((x) => {
+    return { name: x, maxCount: 1 };
+});
+
+export const updateProposalStatusSchema = z.object({
+    status: z.enum(phdProposalStatuses),
+    comments: z.string().optional(),
+});
+
+export const editCoSupervisorsBodySchema = z
+    .object({
+        add: z.string().trim().nonempty().email().optional(),
+        remove: z.string().trim().nonempty().email().optional(),
+    })
+    .refine(
+        (data) => !!data.add !== !!data.remove,
+        "Specify either add or remove"
+    );
+export type EditCoSupervisorsBody = z.infer<typeof editCoSupervisorsBodySchema>;
+
+export const editDacMembersBodySchema = editCoSupervisorsBodySchema;
+export type EditDacMembersBody = z.infer<typeof editDacMembersBodySchema>;
+
+export const coSupervisorApprovalSchema = z.object({
+    approvalStatus: z.boolean(),
+    comments: z.string().optional(),
+});
+
+export const dacEvaluationSchema = z.object({
+    status: z.enum(["completed", "discarded"]),
+    comments: z.string().optional(),
+});
+
 export interface PhdStudent {
     email: string;
     name: string | null;
@@ -356,8 +412,6 @@ export interface QualifyingExamApplication {
         phone: string | null;
         supervisor: string | null;
         idNumber: string | null;
-        coSupervisor1: string | null;
-        coSupervisor2: string | null;
     };
     files: {
         qualifyingArea1Syllabus: string | null;
@@ -383,8 +437,6 @@ export interface VerifiedApplication {
         phone: string | null;
         supervisor: string | null;
         idNumber: string | null;
-        coSupervisor1: string | null;
-        coSupervisor2: string | null;
     };
     examinerSuggestions: Record<string, string[]>;
     examinerAssignments: Record<
