@@ -130,7 +130,7 @@ router.post(
                             studentFolder.file(`${field.name}.pdf`, fileBuffer);
                         } catch (error) {
                             console.warn(
-                                `Could not read file ${field.file.filePath}for application ${app.id}. Skipping.`
+                                `Could not read file ${field.file.filePath} for application ${app.id}. Skipping.`
                             );
                         }
                     }
