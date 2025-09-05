@@ -1,6 +1,6 @@
 {
-  "id": "44b858ef-1198-40de-ba27-cda42aa6c1b7",
-  "prevId": "400e40b7-4bbd-46c6-9e68-d1d1fa5a0655",
+  "id": "f69b20f4-a821-4248-a041-1bb01ff31fe3",
+  "prevId": "88c5e328-a9a4-42f0-ad48-c8ba26fc5219",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -239,30 +239,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "co_supervisor_email": {
-          "name": "co_supervisor_email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "co_supervisor_email_2": {
-          "name": "co_supervisor_email_2",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dac_1_email": {
-          "name": "dac_1_email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dac_2_email": {
-          "name": "dac_2_email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "qe_attempt_count": {
           "name": "qe_attempt_count",
           "type": "integer",
@@ -322,7 +298,7 @@
           "columnsTo": [
             "email"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "phd_supervisor_email_users_email_fk": {
@@ -335,59 +311,7 @@
           "columnsTo": [
             "email"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "phd_co_supervisor_email_users_email_fk": {
-          "name": "phd_co_supervisor_email_users_email_fk",
-          "tableFrom": "phd",
-          "tableTo": "users",
-          "columnsFrom": [
-            "co_supervisor_email"
-          ],
-          "columnsTo": [
-            "email"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "phd_co_supervisor_email_2_users_email_fk": {
-          "name": "phd_co_supervisor_email_2_users_email_fk",
-          "tableFrom": "phd",
-          "tableTo": "users",
-          "columnsFrom": [
-            "co_supervisor_email_2"
-          ],
-          "columnsTo": [
-            "email"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "phd_dac_1_email_users_email_fk": {
-          "name": "phd_dac_1_email_users_email_fk",
-          "tableFrom": "phd",
-          "tableTo": "users",
-          "columnsFrom": [
-            "dac_1_email"
-          ],
-          "columnsTo": [
-            "email"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "phd_dac_2_email_users_email_fk": {
-          "name": "phd_dac_2_email_users_email_fk",
-          "tableFrom": "phd",
-          "tableTo": "users",
-          "columnsFrom": [
-            "dac_2_email"
-          ],
-          "columnsTo": [
-            "email"
-          ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -582,11 +506,105 @@
       "name": "users",
       "schema": "",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
         "email": {
           "name": "email",
           "type": "text",
           "primaryKey": true,
           "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile_image": {
+          "name": "profile_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "designation": {
+          "name": "designation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "department": {
+          "name": "department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "education": {
+          "name": "education",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        },
+        "research_interests": {
+          "name": "research_interests",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        },
+        "courses": {
+          "name": "courses",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        },
+        "linkedin": {
+          "name": "linkedin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orchid_id": {
+          "name": "orchid_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scopus_id": {
+          "name": "scopus_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "google_scholar": {
+          "name": "google_scholar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "additional_links": {
+          "name": "additional_links",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
         },
         "roles": {
           "name": "roles",
@@ -613,7 +631,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "users_id_unique": {
+          "name": "users_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2923,6 +2949,64 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.phd_email_templates": {
+      "name": "phd_email_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "phd_email_templates_name_unique": {
+          "name": "phd_email_templates_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.phd_exam_applications": {
       "name": "phd_exam_applications",
       "schema": "",
@@ -3020,13 +3104,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 1
-        },
-        "examiner_count": {
-          "name": "examiner_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 2
         },
         "created_at": {
           "name": "created_at",
@@ -3356,6 +3433,358 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.phd_proposal_co_supervisors": {
+      "name": "phd_proposal_co_supervisors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "co_supervisor_email": {
+          "name": "co_supervisor_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "approval_status": {
+          "name": "approval_status",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "phd_proposal_co_supervisors_proposal_id_index": {
+          "name": "phd_proposal_co_supervisors_proposal_id_index",
+          "columns": [
+            {
+              "expression": "proposal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "phd_proposal_co_supervisors_proposal_id_phd_proposals_id_fk": {
+          "name": "phd_proposal_co_supervisors_proposal_id_phd_proposals_id_fk",
+          "tableFrom": "phd_proposal_co_supervisors",
+          "tableTo": "phd_proposals",
+          "columnsFrom": [
+            "proposal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "phd_proposal_co_supervisors_co_supervisor_email_faculty_email_fk": {
+          "name": "phd_proposal_co_supervisors_co_supervisor_email_faculty_email_fk",
+          "tableFrom": "phd_proposal_co_supervisors",
+          "tableTo": "faculty",
+          "columnsFrom": [
+            "co_supervisor_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "phd_proposal_co_supervisors_proposal_id_co_supervisor_email_unique": {
+          "name": "phd_proposal_co_supervisors_proposal_id_co_supervisor_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "proposal_id",
+            "co_supervisor_email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.phd_proposal_dac_members": {
+      "name": "phd_proposal_dac_members",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "proposal_id": {
+          "name": "proposal_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dac_member_email": {
+          "name": "dac_member_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "phd_proposal_dac_members_proposal_id_index": {
+          "name": "phd_proposal_dac_members_proposal_id_index",
+          "columns": [
+            {
+              "expression": "proposal_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "phd_proposal_dac_members_proposal_id_phd_proposals_id_fk": {
+          "name": "phd_proposal_dac_members_proposal_id_phd_proposals_id_fk",
+          "tableFrom": "phd_proposal_dac_members",
+          "tableTo": "phd_proposals",
+          "columnsFrom": [
+            "proposal_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "phd_proposal_dac_members_dac_member_email_faculty_email_fk": {
+          "name": "phd_proposal_dac_members_dac_member_email_faculty_email_fk",
+          "tableFrom": "phd_proposal_dac_members",
+          "tableTo": "faculty",
+          "columnsFrom": [
+            "dac_member_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "phd_proposal_dac_members_proposal_id_dac_member_email_unique": {
+          "name": "phd_proposal_dac_members_proposal_id_dac_member_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "proposal_id",
+            "dac_member_email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.phd_proposals": {
+      "name": "phd_proposals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "student_email": {
+          "name": "student_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supervisor_email": {
+          "name": "supervisor_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "abstract_file_id": {
+          "name": "abstract_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposal_file_id": {
+          "name": "proposal_file_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "phd_proposal_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'supervisor_review'"
+        },
+        "comments": {
+          "name": "comments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "CASE WHEN status IN ('completed', 'deleted') THEN NULL ELSE true END",
+            "type": "stored"
+          }
+        }
+      },
+      "indexes": {
+        "phd_proposals_student_email_index": {
+          "name": "phd_proposals_student_email_index",
+          "columns": [
+            {
+              "expression": "student_email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "phd_proposals_supervisor_email_index": {
+          "name": "phd_proposals_supervisor_email_index",
+          "columns": [
+            {
+              "expression": "supervisor_email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "phd_proposals_student_email_phd_email_fk": {
+          "name": "phd_proposals_student_email_phd_email_fk",
+          "tableFrom": "phd_proposals",
+          "tableTo": "phd",
+          "columnsFrom": [
+            "student_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "phd_proposals_supervisor_email_faculty_email_fk": {
+          "name": "phd_proposals_supervisor_email_faculty_email_fk",
+          "tableFrom": "phd_proposals",
+          "tableTo": "faculty",
+          "columnsFrom": [
+            "supervisor_email"
+          ],
+          "columnsTo": [
+            "email"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "phd_proposals_abstract_file_id_files_id_fk": {
+          "name": "phd_proposals_abstract_file_id_files_id_fk",
+          "tableFrom": "phd_proposals",
+          "tableTo": "files",
+          "columnsFrom": [
+            "abstract_file_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "phd_proposals_proposal_file_id_files_id_fk": {
+          "name": "phd_proposals_proposal_file_id_files_id_fk",
+          "tableFrom": "phd_proposals",
+          "tableTo": "files",
+          "columnsFrom": [
+            "proposal_file_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "phd_proposals_student_email_active_unique": {
+          "name": "phd_proposals_student_email_active_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "student_email",
+            "active"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.phd_qualifying_exams": {
       "name": "phd_qualifying_exams",
       "schema": "",
@@ -3401,6 +3830,13 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "examiner_count": {
+          "name": "examiner_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2
         },
         "created_at": {
           "name": "created_at",
@@ -4433,18 +4869,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "reminder": {
-          "name": "reminder",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "deadline": {
-          "name": "deadline",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -4645,6 +5069,18 @@
       "values": [
         "pass",
         "fail"
+      ]
+    },
+    "public.phd_proposal_status": {
+      "name": "phd_proposal_status",
+      "schema": "public",
+      "values": [
+        "deleted",
+        "supervisor_review",
+        "cosupervisor_review",
+        "drc_send_to_dac",
+        "dac_review",
+        "completed"
       ]
     },
     "public.funding_agency_nature": {

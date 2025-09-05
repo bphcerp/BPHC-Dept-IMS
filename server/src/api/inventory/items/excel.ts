@@ -98,7 +98,7 @@ const parseDate = (date: any | Date) => {
         return dateToPGDateString(new Date(date.toString()));
 
     // For those edge cases where there are dots or slashes instead of dashes
-    const parsedDate = parser.fromAny(date.toString());
+    const parsedDate = parser.fromAny(date.toString(), "en-IN");
     return parsedDate.invalid ? null : dateToPGDateString(parsedDate);
 };
 
@@ -151,7 +151,7 @@ async function mapToInventoryItemAndSave(
         itemCategoryId: itemCategory.id,
         serialNumber: lastItemNumber,
         itemName: data[columnIndexMap["item name"]],
-        specifications: data[columnIndexMap["specification(s)"]],
+        specifications: data[columnIndexMap["specifications"]],
         quantity: Number(data[columnIndexMap["quantity"]]),
         noOfLicenses: Number(data[columnIndexMap["no of licenses"]])
             ? Number(data[columnIndexMap["no of licenses"]])
@@ -160,18 +160,12 @@ async function mapToInventoryItemAndSave(
         yearOfLease: Number(data[columnIndexMap["year of lease"]])
             ? Number(data[columnIndexMap["year of lease"]])
             : null,
-        poAmount: !isNaN(
-            Number(data[columnIndexMap["item amount in po (inr)"]])
-        )
-            ? typeof data[columnIndexMap["item amount in po (inr)"]] ===
-              "string"
+        poAmount: !isNaN(Number(data[columnIndexMap["po amount"]]))
+            ? typeof data[columnIndexMap["po amount"]] === "string"
                 ? parseFloat(
-                      data[columnIndexMap["item amount in po (inr)"]].replace(
-                          /,/g,
-                          ""
-                      )
+                      data[columnIndexMap["po amount"]].replace(/,/g, "")
                   )
-                : (data[columnIndexMap["item amount in po (inr)"]] ?? 0)
+                : (data[columnIndexMap["po amount"]] ?? 0)
             : 0, // Convert to number, removing commas
         poNumber: data[columnIndexMap["po number"]]?.toString() ?? null,
         poDate: parseDate(data[columnIndexMap["po date"]]),
@@ -193,16 +187,13 @@ async function mapToInventoryItemAndSave(
             parseDate(data[columnIndexMap["warranty details"] + 1]) ?? null, // Assuming "to" is the next column (Warranty Details is a merged column)
         amcFrom: parseDate(data[columnIndexMap["amc details"]]) ?? null,
         amcTo: parseDate(data[columnIndexMap["amc details"] + 1]) ?? null, // Assuming "to" is the next column (AMC Details is a merged column)
-        currentLocation:
-            data[columnIndexMap["current location of the item"]] ?? null,
-        softcopyOfPO: data[columnIndexMap["softcopy of po"]] ?? null,
+        currentLocation: selectedLab.location ?? undefined,
+        softcopyOfPO: data[columnIndexMap["softcopy of p o"]] ?? null,
         softcopyOfInvoice: data[columnIndexMap["softcopy of invoice"]] ?? null,
-        softcopyOfNFA: data[columnIndexMap["softcopy of nfa"]] ?? null,
-        softcopyOfAMC: data[columnIndexMap["softcopy of amc"]] ?? null,
+        softcopyOfNFA: data[columnIndexMap["softcopy of n f a"]] ?? null,
+        softcopyOfAMC: data[columnIndexMap["softcopy of a m c"]] ?? null,
         status: data[columnIndexMap["status"]] === "working" ? "Working" : null,
-        equipmentPhoto:
-            data[columnIndexMap["equipment photo (for cost above 10 lakhs)"]] ??
-            null,
+        equipmentPhoto: data[columnIndexMap["equipment photo"]] ?? null,
         remarks: data[columnIndexMap["remarks"]] || null,
     };
 
@@ -276,6 +267,8 @@ const getAndSaveDataFromSheet = async (
         },
         where: eq(laboratories.id, selectedLabId),
     });
+
+    console.log(jsonData);
 
     await db.transaction(async (tx) => {
         for (const item of filteredData) {
