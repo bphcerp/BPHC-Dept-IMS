@@ -294,3 +294,23 @@ export const phdProposalDacMembers = pgTable(
         index().on(table.proposalId),
     ]
 );
+
+export const phdExamTimetableSlots = pgTable(
+    "phd_exam_timetable_slots",
+    {
+        id: serial("id").primaryKey(),
+        examId: integer("exam_id")
+            .notNull()
+            .references(() => phdQualifyingExams.id, { onDelete: "cascade" }),
+        studentEmail: text("student_email")
+            .notNull()
+            .references(() => phd.email, { onDelete: "cascade" }),
+        qualifyingArea: text("qualifying_area").notNull(),
+        examinerEmail: text("examiner_email").notNull(),
+        slotNumber: integer("slot_number").notNull().default(0),
+    },
+    (table) => [
+        unique().on(table.examId, table.studentEmail, table.qualifyingArea),
+        index().on(table.examId),
+    ]
+);

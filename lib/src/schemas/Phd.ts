@@ -476,3 +476,32 @@ export interface QualifyingExamApplicationsResponse {
     };
     applications: Array<QualifyingExamApplication>;
 }
+
+const timetableSlotItemSchema = z.object({
+  id: z.number(),
+  examId: z.number(),
+  studentEmail: z.string(),
+  qualifyingArea: z.string(),
+  examinerEmail: z.string(),
+  slotNumber: z.number(),
+  student: z.object({ name: z.string().nullable() }),
+});
+export type TimetableSlotItem = z.infer<typeof timetableSlotItemSchema>;
+
+const timetableUpdateSlotItemSchema = timetableSlotItemSchema.omit({id: true, student: true});
+
+export const timetableSchema = z.object({
+  slot1: z.array(timetableSlotItemSchema),
+  slot2: z.array(timetableSlotItemSchema),
+  unscheduled: z.array(timetableSlotItemSchema),
+});
+export type Timetable = z.infer<typeof timetableSchema>;
+
+export const updateTimetableSchema = z.object({
+    timetable: z.object({
+        slot1: z.array(timetableUpdateSlotItemSchema),
+        slot2: z.array(timetableUpdateSlotItemSchema),
+        unscheduled: z.array(timetableUpdateSlotItemSchema),
+    })
+});
+export type UpdateTimetableBody = z.infer<typeof updateTimetableSchema>;

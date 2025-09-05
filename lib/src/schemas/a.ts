@@ -8,7 +8,6 @@ export const allPermissions = {
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
-
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
     "conference:application:view-pending": "View pending applications",
@@ -22,25 +21,19 @@ export const allPermissions = {
         "Get conference application approval flow",
     "conference:application:set-flow":
         "Set conference application approval flow",
-
-    // PhD
-
     "phd:staff:manage-semesters": "Manage PhD semesters",
     "phd:staff:manage-qe": "Manage PhD qualifying exams",
     "phd:staff:manage-subareas": "Manage PhD subareas",
     "phd:staff:manage-email-templates":
         "Manage PhD email notification templates",
-
     "phd:student:qe": "PhD scholar qualifying exams",
-
     "phd:drc:qe": "DRC Member operations on qualifying exams",
+    "phd:drc:qe-timetable": "Manage PhD qualifying exam timetables",
     "phd:supervisor:suggest-examiners":
         "Suggest examiners for qualifying exams",
-    "phd:drc:qe-timetable": "Manage PhD qualifying exam timetables",
     "phd:student:proposal": "PhD scholar proposal operations",
     "phd:drc:proposal": "DRC Convener operations on proposals",
     "phd:faculty:proposal": "Faculty operations on proposals",
-
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -63,11 +56,9 @@ export const allPermissions = {
         "Export handout summary as DCA convenor",
     "handout:dca-convenor:get-all-faculty":
         "View all faculty members as DCA convenor",
-
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
     "publications:export": "Export Publications",
-
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
         "Non-Admin users can view the data of the inventory module",
@@ -76,23 +67,18 @@ export const allPermissions = {
     "inventory:stats-lab-category":
         "Member can view stats per laboratory per category",
     "inventory:stats-vendor-year": "Member can view stats per vendor per year",
-    // Project module permissions
     "project:create": "Create a new project",
     "project:view": "View list of projects",
-    "project:view-all": "View all projects (admin)",
-    "project:edit-all": "Edit all projects (admin)",
+    "project:view-all": "View all projects(admin)",
+    "project:edit-all": "Edit all projects(admin)",
     "project:bulk-upload": "Bulk upload projects",
     "project:view-details": "View project details",
-
-    // Patent module permissions
     "patent:create": "Create a new patent",
     "patent:view": "View list of patents",
-    "patent:view-all": "View all patents (admin)",
-    "patent:edit-all": "Edit all patents (admin)",
+    "patent:view-all": "View all patents(admin)",
+    "patent:edit-all": "Edit all patents(admin)",
     "patent:bulk-upload": "Bulk upload patents",
     "patent:view-details": "View patent details",
-
-    // WILP Project module permissions
     "wilp:project:upload": "Upload multiple WILP projects",
     "wilp:project:clear": "Clear all WILP projects",
     "wilp:project:download": "Download all WILP projects data",
@@ -104,10 +90,7 @@ export const allPermissions = {
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
 } as const;
-
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
-    // Admin
-
     "/admin/member/invite": "admin:member:create",
     "/admin/member/search": "admin:member:read",
     "/admin/member/details": "admin:member:read",
@@ -116,17 +99,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/admin/member/editroles": "admin:member:update",
     "/admin/member/deactivate": "admin:member:update",
     "/admin/member/delete": "admin:member:delete",
-
     "/admin/role/create": "admin:role:create",
     "/admin/role": "admin:role:read",
     "/admin/role/edit": "admin:role:update",
     "/admin/role/rename": "admin:role:update",
     "/admin/role/delete": "admin:role:delete",
-
     "/admin/permission/all": "admin:role:read",
-
-    // Conference
-
     "/conference/createApplication": "conference:application:create",
     "/conference/editApplication": "conference:application:submitted",
     "/conference/applications/pending": "conference:application:view-pending",
@@ -140,25 +118,18 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
         "conference:application:review-application-hod",
     "/conference/getFlow": "conference:application:get-flow",
     "/conference/setFlow": "conference:application:set-flow",
-
-    // PhD
     "/phd/staff/getAllSem": "phd:staff:manage-semesters",
     "/phd/staff/updateSem": "phd:staff:manage-semesters",
     "/phd/staff/getLatestSem": "phd:staff:manage-semesters",
-
     "/phd/staff/qualifyingExams": "phd:staff:manage-qe",
     "/phd/staff/updateQualifyingExam": "phd:staff:manage-qe",
     "/phd/staff/notifyDeadline": "phd:staff:manage-qe",
-
     "/phd/staff/insertSubArea": "phd:staff:manage-subareas",
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
-
     "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
-
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
-
     "/phd/drcMember/getAvailableExams": "phd:drc:qe",
     "/phd/drcMember/updateApplicationStatus": "phd:drc:qe",
     "/phd/drcMember/getQualifyingExamApplications": "phd:drc:qe",
@@ -172,31 +143,24 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/submitResult": "phd:drc:qe",
     "/phd/drcMember/updateQpSubmissionStatus": "phd:drc:qe",
     "/phd/drcMember/notifyExaminer": "phd:drc:qe",
-
     "/phd/drcMember/timetable": "phd:drc:qe-timetable",
     "/phd/drcMember/optimizeTimetable": "phd:drc:qe-timetable",
     "/phd/drcMember/generateTimetablePdf": "phd:drc:qe-timetable",
-
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
-
     "/phd/proposal/student/getProposals": "phd:student:proposal",
     "/phd/proposal/student/submitProposal": "phd:student:proposal",
-
     "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
     "/phd/proposal/supervisor/getFacultyList": "phd:faculty:proposal",
-
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/approve": "phd:faculty:proposal",
-
-    //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
     "/handout/faculty/get": "handout:faculty:get-all-handouts",
@@ -212,10 +176,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
         "handout:dca-convenor:update-reviewer",
     "/handout/dcaconvenor/updateIC": "handout:dca-convenor:update-ic",
     "/handout/dcaconvenor/exportSummary": "handout:dca-convenor:export-summary",
-
     "/handout/dcaconvenor/getAllFaculty":
         "handout:dca-convenor:get-all-faculty",
-
     "/publications/id": "publications:view",
     "/publications/user": "publications:view",
     "/publications/all": "publications:all",
@@ -223,53 +185,41 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
-
-    // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",
     "/inventory/labs/create": "inventory:write",
     "/inventory/labs/update": "inventory:write",
     "/inventory/labs/delete": "inventory:write",
-
     "/inventory/vendors/get": "inventory:read",
     "/inventory/vendors/create": "inventory:write",
     "/inventory/vendors/update": "inventory:write",
     "/inventory/vendors/delete": "inventory:write",
-
     "/inventory/categories/get": "inventory:read",
     "/inventory/categories/create": "inventory:write",
     "/inventory/categories/update": "inventory:write",
     "/inventory/categories/delete": "inventory:write",
-
     "/inventory/items/get": "inventory:read",
     "/inventory/items/export": "inventory:export",
     "/inventory/items/create": "inventory:write",
     "/inventory/items/excel": "inventory:write",
     "/inventory/items/update": "inventory:write",
     "/inventory/items/delete": "inventory:write",
-
     "/inventory/stats/lab-year": "inventory:stats-lab-year",
     "/inventory/stats/lab-category": "inventory:stats-lab-category",
     "/inventory/stats/vendor-year": "inventory:stats-vendor-year",
     "/inventory/stats/important-dates": "inventory:read",
-
-    // Project
     "/project/create": "project:create",
     "/project/bulkUpload": "project:bulk-upload",
     "/project/list": "project:view",
     "/project/list-all": "project:view-all",
     "/project/edit-all": "project:edit-all",
     "/project": "project:view-details",
-
-    // Patent
     "/patent/create": "patent:create",
     "/patent/bulkUpload": "patent:bulk-upload",
     "/patent/list": "patent:view",
     "/patent/list-all": "patent:view-all",
     "/patent/edit-all": "patent:edit-all",
     "/patent": "patent:view-details",
-
-    // WILP Project
     "/wilpProject/upload": "wilp:project:upload",
     "/wilpProject/setRange": "wilp:project:upload",
     "/wilpProject/clear": "wilp:project:clear",

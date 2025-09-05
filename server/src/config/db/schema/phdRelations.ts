@@ -9,6 +9,7 @@ import {
     phdProposals,
     phdProposalCoSupervisors,
     phdProposalDacMembers,
+    phdExamTimetableSlots
 } from "./phd.ts";
 import { faculty, phd } from "./admin.ts";
 import { files } from "./form.ts";
@@ -167,6 +168,22 @@ export const phdProposalDacMembersRelations = relations(
             fields: [phdProposalDacMembers.dacMemberEmail],
             references: [faculty.email],
             relationName: "dacMemberProposals",
+        }),
+    })
+);
+
+export const phdExamTimetableSlotsRelations = relations(
+    phdExamTimetableSlots,
+    ({ one }) => ({
+        exam: one(phdQualifyingExams, {
+            fields: [phdExamTimetableSlots.examId],
+            references: [phdQualifyingExams.id],
+            relationName: "examTimetableSlots",
+        }),
+        student: one(phd, {
+            fields: [phdExamTimetableSlots.studentEmail],
+            references: [phd.email],
+            relationName: "studentTimetableSlots",
         }),
     })
 );
