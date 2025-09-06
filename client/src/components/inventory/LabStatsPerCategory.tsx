@@ -78,7 +78,7 @@ const LabStatsPerCategory: FunctionComponent<LabStatsPerCategoryProps> = ({
     {
       accessorKey: "lab.name",
       header: "Lab Name",
-      meta: { tailwindWidthString: "min-w-32" },
+      meta: { tailwindWidthString: "min-w-32", filterType: 'search' },
     },
     ...(categories.map((category) => ({
       accessorKey: category.id,
@@ -117,7 +117,6 @@ const LabStatsPerCategory: FunctionComponent<LabStatsPerCategoryProps> = ({
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"lab_name" as keyof LabStatsPerCategory}
       initialState={{
         columnPinning: { left: ["lab_name"] },
       }}

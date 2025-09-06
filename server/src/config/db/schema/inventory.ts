@@ -102,6 +102,8 @@ export const vendors = pgTable("inventory_vendors", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv4()),
+    // NOTE!! The "vendorId" here is not the vendorId used as a Foreign Key in the other tables, this is just a unique integer id from the institute for the vendor
+    // The vendorId used as a Foreign Key in other tables is the "id" field here
     vendorId: integer("vendor_id").notNull(),
     name: text("name").notNull(),
     address: text("address"),
