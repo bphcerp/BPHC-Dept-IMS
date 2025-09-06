@@ -21,13 +21,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { courseSchema } from "../../../../lib/src/schemas/Allocation";
 import { NewCourse } from "../../../../lib/src/types/allocation";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import api from "@/lib/axios-instance";
 
 interface AddCourseFormProps {
   children: React.ReactNode;
-  onCourseAdded: (newCourse: NewCourse) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCourseAdded: () => void;
 }
 
-const AddCourseForm = ({ children, onCourseAdded }: AddCourseFormProps) => {
+const AddCourseForm = ({
+  children,
+  open,
+  onOpenChange,
+  onCourseAdded,
+}: AddCourseFormProps) => {
   const form = useForm<NewCourse>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -36,22 +46,38 @@ const AddCourseForm = ({ children, onCourseAdded }: AddCourseFormProps) => {
     },
   });
 
-  const onSubmit = async (values: NewCourse) => {
-    console.log("New Course Values: ", values);
+  const { mutate: addCourse, isLoading} = useMutation({
+    mutationFn: (newCourse: NewCourse) =>
+      api.post("/allocation/course/create", newCourse),
+    onSuccess: (data) => {
+      if (data?.data?.success) {
+        toast.success("Course added successfully!");
+        onCourseAdded();
+        form.reset();
+      } else {
+        toast.error(data?.data?.message || "An unexpected error occurred.");
+      }
+    },
+    onError: (error) => {
+      console.error("Error adding course:", error);
+      toast.error("An error occurred while adding the course.");
+    },
+  });
+
+  const onSubmit = (values: NewCourse) => {
     const newCourse: NewCourse = {
       ...values,
       name: values.name.trim(),
       code: values.code.trim().toUpperCase(),
     };
-
-    onCourseAdded(newCourse);
-    form.reset();
+    console.log("Submitting new course:", newCourse);
+    addCourse(newCourse);
   };
 
   const hasPracticalSection = form.watch("practicalSecCount") > 0;
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -223,7 +249,9 @@ const AddCourseForm = ({ children, onCourseAdded }: AddCourseFormProps) => {
                 )}
               </div>
             </div>
-            <Button type="submit"> Add Course </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Adding..." : "Add Course"}
+            </Button>
           </form>
         </Form>
       </DialogContent>
@@ -231,3 +259,4 @@ const AddCourseForm = ({ children, onCourseAdded }: AddCourseFormProps) => {
   );
 };
 export { AddCourseForm };
+

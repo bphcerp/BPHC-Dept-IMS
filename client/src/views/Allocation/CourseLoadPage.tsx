@@ -4,6 +4,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { AddCourseForm } from "@/components/allocation/AddCourseForm"
+import { toast } from "sonner"
+import api from "@/lib/axios-instance"
 
 const columns: ColumnDef<Course>[] = [
   {
@@ -59,34 +61,34 @@ const columns: ColumnDef<Course>[] = [
 
 const CourseLoadPage = () => {
   const[courses, setCourses] = useState<Course[]>([]);
+  const[isLoading, setIsLoading] = useState(true);
+  const[isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+
+  const fetchCourses = async () => {
+      try {
+        const response = await api.get("/allocation/course/get");
+        setCourses(response.data);
+      } catch (error) {
+        toast.error("Error in fetching courses!");
+        console.error("Error in fetching courses: ", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      const mockCourses: Course[] = [
-        {
-          code: "CS F211",
-          name: "Data Structures and Algorithms",
-          lectureSecCount: 1,
-          tutSecCount: 2,
-          practicalSecCount: 2,
-          units: 4,
-          isCDC: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }
-      ];
-      setCourses(mockCourses);
-    };
     fetchCourses();
   }, []);
-
-  const handleCourseAdded = (newCourse: Course) => {
-    setCourses((prevCourses) => [...prevCourses, newCourse]);
+  
+  const handleCourseAdded = () => {
+    fetchCourses();
+    setIsAddCourseOpen(false);
   };
 
   const addCourseButton = (
-    <AddCourseForm onCourseAdded={handleCourseAdded}>
-      <Button> Add Course </Button>
+    <AddCourseForm open={isAddCourseOpen} onOpenChange={setIsAddCourseOpen} onCourseAdded={handleCourseAdded}>
+      <Button onClick={() => setIsAddCourseOpen(true)}> Add Course </Button>
     </AddCourseForm>
   );
 
@@ -104,5 +106,4 @@ const CourseLoadPage = () => {
 };
 
 export default CourseLoadPage;
-
 
