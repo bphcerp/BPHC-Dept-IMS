@@ -287,7 +287,10 @@ export const ItemsView = () => {
 
   return (
     <div className="inventory w-full p-2">
-      <div className="text-3xl font-bold text-primary" style={{ width: tableElementRef.current?.offsetWidth }}>
+      <div
+        className="text-3xl font-bold text-primary"
+        style={{ width: tableElementRef.current?.offsetWidth }}
+      >
         <span className="sticky left-2 z-10">Inventory</span>
       </div>
       {isFetching ? (
@@ -340,6 +343,16 @@ export const ItemsView = () => {
           }
           columns={columns}
           setSelected={setSelectedItems}
+          initialState={{
+            columnPinning: {
+              left: [
+                "S.No",
+                "equipmentID",
+                "itemName",
+                "itemCategory",
+              ],
+            },
+          }}
           isTableHeaderFixed={true}
           tableElementRefProp={tableElementRef}
           additionalButtons={

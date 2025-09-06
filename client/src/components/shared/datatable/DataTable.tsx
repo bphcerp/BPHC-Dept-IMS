@@ -43,10 +43,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CSSProperties,
+  MutableRefObject,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
+
+
+const HEADER_COLOR = "#E8E8F0"
+const ROW_COLOR_ODD = "#F7F7FB"
+const ROW_COLOR_EVEN = "white"
 
 interface DataTableProps<T> {
   data: T[];
@@ -56,7 +69,7 @@ interface DataTableProps<T> {
   additionalButtons?: ReactNode;
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isTableHeaderFixed?: boolean;
-  tableElementRefProp?: MutableRefObject<HTMLTableElement | null>
+  tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
 }
 
 export type TableFilterType =
@@ -84,17 +97,34 @@ export function DataTable<T>({
   exportFunction,
   additionalButtons,
   isTableHeaderFixed,
-  tableElementRefProp
+  tableElementRefProp,
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const tableElementRef = tableElementRefProp ?? useRef<HTMLTableElement | null>(null);
+  const tableElementRef =
+    tableElementRefProp ?? useRef<HTMLTableElement | null>(null);
   const containerElementRef = useRef<HTMLTableElement | null>(null);
   const [availableWindowWidth, setAvailableWindowWidth] = useState<
     number | undefined
   >();
+
+  const [cellLeftMap, setCellLeftMap] = useState<{ [key: string]: number }>({});
+
+  useEffect(() => {
+    if (data.length)
+      table
+        .getAllColumns()
+        .filter((column) => column.getIsPinned())
+        .map((pinnedColumn) =>
+          setCellLeftMap((prev) => ({
+            ...prev,
+            [pinnedColumn.id]: document.getElementById(pinnedColumn.id)!
+              .offsetLeft,
+          }))
+        );
+  }, []);
 
   useEffect(() => {
     const handleResize = () =>
@@ -122,6 +152,23 @@ export function DataTable<T>({
     });
     return filters;
   }, [searchParams]);
+
+  const getCommonPinningStyles = (column: Column<T>): CSSProperties => {
+    const isPinned = column.getIsPinned();
+    const isLastLeftPinnedColumn =
+      isPinned === "left" && column.getIsLastColumn("left");
+
+    return {
+      boxShadow: isLastLeftPinnedColumn
+        ? "-4px 0 4px -4px gray inset"
+        : undefined,
+      left: isPinned === "left" ? cellLeftMap[column.id] : undefined,
+      opacity: isPinned ? 0.95 : 1,
+      position: isPinned ? "sticky" : "relative",
+      width: column.getSize(),
+      zIndex: isPinned ? 1 : 0,
+    };
+  };
 
   const initialSorting = useMemo(() => {
     const sortParam = searchParams.get("sort");
@@ -455,12 +502,26 @@ export function DataTable<T>({
       ref={containerElementRef}
     >
       <div
-        className={isTableHeaderFixed ? `sticky top-0 z-20 h-16 bg-background` : undefined}
-        style={isTableHeaderFixed ? { width: tableElementRef.current?.offsetWidth } : undefined}
+        className={
+          isTableHeaderFixed
+            ? `sticky top-0 z-20 h-16 bg-background`
+            : undefined
+        }
+        style={
+          isTableHeaderFixed
+            ? { width: tableElementRef.current?.offsetWidth }
+            : undefined
+        }
       >
         <div
-          className={isTableHeaderFixed ? "sticky left-2 z-30 flex h-full items-center justify-between space-x-2" : "flex h-full items-center justify-between space-x-2"}
-          style={isTableHeaderFixed ? { width: availableWindowWidth } : undefined}
+          className={
+            isTableHeaderFixed
+              ? "sticky left-2 z-30 flex h-full items-center justify-between space-x-2"
+              : "flex h-full items-center justify-between space-x-2"
+          }
+          style={
+            isTableHeaderFixed ? { width: availableWindowWidth } : undefined
+          }
         >
           <div className="flex justify-center space-x-2">
             <ActionItemsMenu
@@ -536,7 +597,9 @@ export function DataTable<T>({
                 }
               >
                 {/* Sticky first column (checkbox for select all) */}
-                <TableHead className={isTableHeaderFixed ? "sticky left-0 z-30 bg-gray-200" : undefined}>
+                <TableHead
+                  className="sticky left-0 w-2 z-30 bg-gray-200"
+                >
                   <Checkbox
                     checked={
                       table.getIsAllPageRowsSelected() ||
@@ -557,6 +620,7 @@ export function DataTable<T>({
                     id={header.column.id}
                     onClick={header.column.getToggleSortingHandler()}
                     className={`${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    style={{ ...getCommonPinningStyles(header.column), backgroundColor: HEADER_COLOR }}
                   >
                     <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
                       <div className="flex space-x-2">
@@ -590,7 +654,7 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (row checkbox) */}
                 <TableCell
-                  className={isTableHeaderFixed ? `sticky left-0 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}` : undefined}
+                  className={`sticky left-0 w-2 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}`}
                 >
                   <Checkbox
                     checked={row.getIsSelected()}
@@ -611,6 +675,7 @@ export function DataTable<T>({
                         ? "text-center"
                         : ""
                     }`}
+                    style={{ ...getCommonPinningStyles(cell.column), backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_ODD}}
                     title={
                       cell.getValue() &&
                       (cell.getValue() as any).toString().length > 20
@@ -642,11 +707,15 @@ export function DataTable<T>({
             {/* Sum row (sticky first column) */}
             {columns.some((column) => column.meta?.calculateSum) && (
               <TableRow>
-                <TableCell className={isTableHeaderFixed ? "sticky left-0 z-10 opacity-100" : undefined}>
+                <TableCell
+                  className="sticky w-2 left-0 z-10 opacity-100 bg-white"
+                >
                   {/* empty cell for checkbox column */}
                 </TableCell>
                 {table.getVisibleLeafColumns().map((column) => (
-                  <TableCell key={column.id} className="font-bold">
+                  <TableCell key={column.id} className="font-bold"
+                    style={{ ...getCommonPinningStyles(column), backgroundColor: ROW_COLOR_EVEN }}
+                  >
                     {column.columnDef.meta?.calculateSum?.(
                       table.getRowModel().rows.map((row) => row.original)
                     )}
@@ -664,10 +733,22 @@ export function DataTable<T>({
         </div>
       )}
 
-      <div style={isTableHeaderFixed ? { width: tableElementRef.current?.offsetWidth } : undefined}>
+      <div
+        style={
+          isTableHeaderFixed
+            ? { width: tableElementRef.current?.offsetWidth }
+            : undefined
+        }
+      >
         <div
-          className={isTableHeaderFixed ? "sticky left-2 z-20 flex items-center justify-between space-x-2 py-4" : "flex items-center justify-between space-x-2 py-4"}
-          style={isTableHeaderFixed ? { width: availableWindowWidth } : undefined}
+          className={
+            isTableHeaderFixed
+              ? "sticky left-2 z-20 flex items-center justify-between space-x-2 py-4"
+              : "flex items-center justify-between space-x-2 py-4"
+          }
+          style={
+            isTableHeaderFixed ? { width: availableWindowWidth } : undefined
+          }
         >
           <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}

@@ -106,6 +106,9 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
     <DataTable
       data={tableData}
       columns={columns}
+      initialState={{
+        columnPinning: { left: ["lab_name"] },
+      }}
     />
   ) : null;
 };
