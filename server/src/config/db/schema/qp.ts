@@ -19,6 +19,8 @@ export const qpStatusEnum = pgEnum(
 
 export const categoryEnum = pgEnum("category_enum", qpSchemas.categories);
 
+export const requestTypeEnum = pgEnum("type_enum", qpSchemas.requestTypes);
+
 export const qpReviewRequests = pgTable("qp_review_requests", {
     id: serial("id").primaryKey(),
     icEmail: text("ic_email").references(() => users.email, {
@@ -30,30 +32,18 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
     previousSubmissionId: integer("previous_submission_id"),
-    midSemFilePath: integer("mid_sem_file_path").references(
-        () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
-    ),
-    midSemSolFilePath: integer("mid_sem_sol_file_path").references(
-        () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
-    ),
-    compreFilePath: integer("compre_file_path").references(
-        () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
-    ),
-    compreSolFilePath: integer("compre_sol_file_path").references(
-        () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
-    ),
+    midSemQpFilePath: integer("qp_file_path").references(() => fileFields.id, {
+        onDelete: "set null",
+    }),
+    midSemSolFilePath: integer("sol_file_path").references(() => fileFields.id, {
+        onDelete: "set null",
+    }),
+    compreQpFilePath: integer("qp_file_path").references(() => fileFields.id, {
+        onDelete: "set null",
+    }),
+    compreSolFilePath: integer("sol_file_path").references(() => fileFields.id, {
+        onDelete: "set null",
+    }),
     review: jsonb("review"),
     ficDeadline: timestamp("fic_deadline", { withTimezone: true }),
     reviewDeadline: timestamp("review_deadline", { withTimezone: true }),
@@ -63,4 +53,6 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
         .notNull()
         .defaultNow(),
     category: categoryEnum("category").notNull(),
+    submittedOn: timestamp("submitted_on", { withTimezone: true }),
+    requestType: requestTypeEnum("request_type").notNull(),
 });

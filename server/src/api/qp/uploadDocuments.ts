@@ -15,7 +15,7 @@ const router = express.Router();
 
 const uploadDocumentsSchema = z.object({
   id: z.string().min(1),
-  field: z.enum(["midSemFile", "midSemSolFile", "compreFile", "compreSolFile"])
+  field: z.enum(["midSemQpFile", "midSemSolFile", "compreQpFile", "compreSolFile"])
 });
 
 router.post(
@@ -36,9 +36,9 @@ router.post(
     const { id, field } = uploadDocumentsSchema.parse(req.query);
 
     const fieldMap = {
-      midSemFile: "midSemFilePath",
-      midSemSolFile: "midSemSolFilePath",
-      compreFile: "compreFilePath",
+      midSemQpFile: "midSemQpFilePath",
+      midSemSolFile: "midSemSolFilePath", 
+      compreQpFile: "compreQpFilePath",
       compreSolFile: "compreSolFilePath"
     };
 
@@ -52,8 +52,8 @@ router.post(
           originalName: req.file!.originalname,
           mimetype: req.file!.mimetype,
           size: req.file!.size,
-          fieldName: field,  
-          module: modules[5], 
+          fieldName: field,
+          module: modules[5],
         })
         .returning();
 
@@ -71,7 +71,8 @@ router.post(
         [fieldMap[field]]: insertedFileField[0].id
       };
 
-      if (field === "compreSolFile") {
+      // Check if this is a solution file upload to determine completion
+      if (field === "midSemSolFile" || field === "compreSolFile") {
         updateData.documentsUploaded = true;
         updateData.status = "review pending";
         updateData.submittedOn = new Date();

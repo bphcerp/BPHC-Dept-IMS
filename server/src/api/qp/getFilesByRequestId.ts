@@ -9,7 +9,7 @@ import environment from "@/config/environment.ts";
 const router = express.Router();
 
 router.get(
-    "/",
+    "/:requestId",
     asyncHandler(async (req, res:any) => {
         const parsed = qpSchemas.requestIdSchema.parse({
             requestId: Number(req.params.requestId),
@@ -17,14 +17,14 @@ router.get(
 
         const requestId = parsed.requestId;
 
-        // Query the QP review request with related file IDs
+        // Query the QP review request with related file IDs for all file types
         const request = await db.query.qpReviewRequests.findFirst({
             where: eq(qpReviewRequests.id, requestId),
             columns: {
                 id: true,
-                midSemFilePath: true,
+                midSemQpFilePath: true,
                 midSemSolFilePath: true,
-                compreFilePath: true,
+                compreQpFilePath: true,
                 compreSolFilePath: true,
             },
         });
@@ -37,9 +37,9 @@ router.get(
         }
 
         const fileIds = {
-            midSem: request.midSemFilePath ?? null,
+            midSemQp: request.midSemQpFilePath ?? null,
             midSemSol: request.midSemSolFilePath ?? null,
-            compre: request.compreFilePath ?? null,
+            compreQp: request.compreQpFilePath ?? null,
             compreSol: request.compreSolFilePath ?? null,
         };
 
@@ -51,7 +51,7 @@ router.get(
             return res.status(200).json({
                 success: true,
                 message: "No files found",
-                data: [],
+                data: {},
             });
         }
 

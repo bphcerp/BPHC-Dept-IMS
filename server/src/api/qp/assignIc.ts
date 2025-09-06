@@ -22,6 +22,7 @@ router.post(
         }
 
         await db.insert(qpReviewRequests).values({
+            requestType: parsed.requestType,
             icEmail: parsed.icEmail,
             courseCode: parsed.courseCode,
             courseName: parsed.courseName,

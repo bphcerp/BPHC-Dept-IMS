@@ -13,10 +13,13 @@ export type QpStatus = (typeof qpReviewStatuses)[number];
 
 export const categories = ["HD", "FD"] as const;
 
+export const requestTypes = ["Mid Sem", "Comprehensive", "Both"] as const;
+
 export const assignICBodySchema = z.object({
     courseName: z.string().nonempty(),
     courseCode: z.string().nonempty(),
     icEmail: z.string().email(),
+    requestType: z.enum(requestTypes),
     category: z.enum(categories),
 });
 
