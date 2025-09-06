@@ -268,8 +268,6 @@ const getAndSaveDataFromSheet = async (
         where: eq(laboratories.id, selectedLabId),
     });
 
-    console.log(jsonData);
-
     await db.transaction(async (tx) => {
         for (const item of filteredData) {
             if (!item[sheetInfo.columnIndexMap["item name"]]) continue; // Skip empty rows
