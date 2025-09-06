@@ -10,7 +10,6 @@ import AddInventoryCategoryDialog from "@/components/inventory/AddInventoryCateg
 import AddLabDialog from "@/components/inventory/AddLabDialog";
 import AddVendorCategoryDialog from "@/components/inventory/AddVendorCategoryDialog";
 import AddVendorDialog from "@/components/inventory/AddVendorDialog";
-import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import {
   Select,
   SelectContent,
@@ -27,6 +26,7 @@ import {
   NewVendorRequest,
   NewCategoryRequest,
 } from "node_modules/lib/src/types/inventory";
+import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 
 const labColumns: ColumnDef<Laboratory>[] = [
   {

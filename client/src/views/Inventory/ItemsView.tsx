@@ -8,7 +8,6 @@ import {
   TableFilterType,
   DataTable,
 } from "@/components/shared/datatable/DataTable";
-import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import { TransferConfirmationDialog } from "@/components/inventory/TransferConfirmationDialog";
 import VendorDetailsDialog from "@/components/inventory/VendorDetailsDialog";
 import api from "@/lib/axios-instance";
@@ -18,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { permissions } from "lib";
 import { InventoryItem, Vendor } from "node_modules/lib/src/types/inventory";
 import { DEPARTMENT_NAME } from "@/lib/constants";
+import DeleteItemConfirmationDialog from "@/components/inventory/DeleteItemConfirmationDialog";
 
 export const ItemsView = () => {
   // const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
@@ -368,7 +368,7 @@ export const ItemsView = () => {
                 <></>
               )}
               {selectedItems.length === 1 && (
-                <DeleteConfirmationDialog
+                <DeleteItemConfirmationDialog
                   onConfirm={handleDelete}
                   selectedItem={selectedItems[0]}
                 />
