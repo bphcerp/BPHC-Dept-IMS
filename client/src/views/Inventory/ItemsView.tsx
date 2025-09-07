@@ -292,6 +292,7 @@ export const ItemsView = () => {
       ) : (
         <DataTable<InventoryItem>
           data={inventoryData}
+          idColumn="id"
           exportFunction={
             checkAccess(permissions["/inventory/items/export"])
               ? (itemIds, columnsVisible) => {

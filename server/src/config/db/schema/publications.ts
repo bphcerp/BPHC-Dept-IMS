@@ -1,7 +1,7 @@
 import { pgTable, primaryKey, text, boolean, pgEnum, integer, numeric, index } from "drizzle-orm/pg-core";
 import { publicationsSchemas } from "lib"
 
-export const monthEnum = pgEnum("month", publicationsSchemas.months); 
+export const monthEnum = pgEnum("monthEnum", publicationsSchemas.months); 
 
 export const publicationsTable = pgTable("publications", {
     title: text("title").notNull(),
@@ -10,11 +10,11 @@ export const publicationsTable = pgTable("publications", {
     volume: text("volume"),
     issue: text("issue"),
     month: monthEnum("month"),
-    year: text("year"),
+    year: text("year").notNull(),
     link: text("link"),
     citations: text("citations"),
     citationId: text("citation_id").primaryKey(),
-    authorNames: text("author_names"),
+    authorNames: text("author_names").notNull(),
 });
 
 export const researgencePublications = pgTable("researgence", {
@@ -29,8 +29,8 @@ export const researgencePublications = pgTable("researgence", {
   sci: text("sci"),
   sourcePublication: text("source_publication"),
   level: text("level"),
-  articleType: text("article_type"),
-  year: integer("year"),
+  type: text("article_type"),
+  year: integer("year").notNull(),
   month: monthEnum("month"),
   homeAuthorLocation: text("home_author_location"),
   volNo: text("vol_no"),
