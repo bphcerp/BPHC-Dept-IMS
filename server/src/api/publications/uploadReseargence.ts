@@ -5,45 +5,14 @@ import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
-import { researgencePublications } from "@/config/db/schema/publications.ts";
+import { publicationsTable, researgencePublications } from "@/config/db/schema/publications.ts";
 import { publicationsSchemas } from "lib";
 
 const router = Router();
 
-interface Publication {
-  pubId: number;
-  authors: string;
-  homeAuthors: string | undefined;
-  homeAuthorDepartment: string | undefined;
-  homeAuthorInstitute: string | undefined;
-  publicationTitle: string;
-  scs: number | undefined;
-  wos: number | undefined;
-  sci: string | undefined;
-  sourcePublication: string;
-  level: string;
-  articleType: string;
-  year: number;
-  month: (typeof publicationsSchemas.months)[number] | undefined;
-  homeAuthorLocation: string;
-  volNo: string;
-  issNo: string;
-  bPage: string;
-  ePage: string;
-  snip: string | undefined;
-  sjr: string | undefined;
-  impactFactor: string | undefined;
-  citeScore: string | undefined;
-  qRankScs: string | undefined;
-  qRankWos: string | undefined;
-  pIssn: string | undefined;
-  eIssn: string | undefined;
-  pIsbn: string | undefined;
-  eIsbn: string | undefined;
-  link: string | undefined;
-}
+type ReseargencePublication = publicationsSchemas.ReseargencePublication;
 
-function parseRow(row: any): Publication | null {
+function parseRow(row: any): ReseargencePublication | null {
     if (!row || Object.keys(row).length === 0) {
         return null;
     }
@@ -60,34 +29,34 @@ function parseRow(row: any): Publication | null {
     return {
         pubId: parseInt(row["PUB ID"].trim()),
         authors: row["AUTHORS"].trim(),
-        homeAuthors: row["HOME AUTHORS"]?.trim() || undefined,
-        homeAuthorDepartment: row["HOME AUTHOR DEPARTMENT"]?.trim() || undefined,
-        homeAuthorInstitute: row["HOME AUTHOR INSTITUTE"]?.trim() || undefined,
+        homeAuthors: row["HOME AUTHORS"]?.trim() || null,
+        homeAuthorDepartment: row["HOME AUTHOR DEPARTMENT"]?.trim() || null,
+        homeAuthorInstitute: row["HOME AUTHOR INSTITUTE"]?.trim() || null,
         publicationTitle: row["PUBLICATION TITLE"].trim(),
-        scs: parseInt(row["SCS"]?.trim()) || undefined,
-        wos: parseInt(row["WOS"]?.trim()) || undefined,
-        sci: row["SCI"]?.trim() || undefined,
-        sourcePublication: row["SOURCE PUBLICATION"].trim(),
-        level: row["LEVEL"]?.trim() || undefined,
-        articleType: row["ARTICLE TYPE"].trim(),
+        scs: parseInt(row["SCS"]?.trim()) || null,
+        wos: parseInt(row["WOS"]?.trim()) || null,
+        sci: row["SCI"]?.trim() || null,
+        sourcePublication: row["SOURCE PUBLICATION"].trim() || null,
+        level: row["LEVEL"]?.trim() || null,
+        type: row["ARTICLE TYPE"].trim() || null,
         year: parseInt(row["YEAR"].trim()),
-        month: row["MONTH"] ? (publicationsSchemas.months[parseInt(row["MONTH"])]) : undefined,
-        homeAuthorLocation: row["HOME AUTHOR LOCATION"]?.trim() || undefined,
-        volNo: row["VOL NO"]?.trim() || undefined,
-        issNo: row["ISS NO"]?.trim() || undefined,
-        bPage: row["B PAGE"]?.trim() || undefined,
-        ePage: row["E PAGE"]?.trim() || undefined,
-        snip: row["SNIP"]?.trim() || undefined,
-        sjr: row["SJR"]?.trim() || undefined,
-        impactFactor: row["IF"]?.trim() || undefined,
-        citeScore: row["SNIP"]?.trim() || undefined,
-        qRankScs: row["Q RANK(SCS)"]?.trim() || undefined,
-        qRankWos: row["Q RANK(WOS)"]?.trim() || undefined,
-        pIssn: row["P ISSN"]?.trim() || undefined,
-        eIssn: row["E ISSN"]?.trim() || undefined,
-        pIsbn: row["P ISBN"]?.trim() || undefined,
-        eIsbn: row["E ISBN"]?.trim() || undefined,
-        link: row["LINK"]?.trim() || undefined,
+        month: row["MONTH"] ? (publicationsSchemas.months[parseInt(row["MONTH"])]) : null,
+        homeAuthorLocation: row["HOME AUTHOR LOCATION"]?.trim() || null,
+        volNo: row["VOL NO"]?.trim() || null,
+        issNo: row["ISS NO"]?.trim() || null,
+        bPage: row["B PAGE"]?.trim() || null,
+        ePage: row["E PAGE"]?.trim() || null,
+        snip: row["SNIP"]?.trim() || null,
+        sjr: row["SJR"]?.trim() || null,
+        impactFactor: row["IF"]?.trim() || null,
+        citeScore: row["SNIP"]?.trim() || null,
+        qRankScs: row["Q RANK(SCS)"]?.trim() || null,
+        qRankWos: row["Q RANK(WOS)"]?.trim() || null,
+        pIssn: row["P ISSN"]?.trim() || null,
+        eIssn: row["E ISSN"]?.trim() || null,
+        pIsbn: row["P ISBN"]?.trim() || null,
+        eIsbn: row["E ISBN"]?.trim() || null,
+        link: row["LINK"]?.trim() || null,
     };
 }
 
@@ -117,6 +86,7 @@ router.post(
 
         const results = {
             total: data.length,
+            matched: 0,
             successful: 0,
             failed: 0,
             errors: [] as string[],
@@ -133,11 +103,11 @@ router.post(
                 continue;
             }
             try {
-                let [existingProject] = await db
+                let [existingPub] = await db
                     .select()
                     .from(researgencePublications)
                     .where(eq(researgencePublications.publicationTitle, parsedRow.publicationTitle));
-                if (existingProject) {
+                if (existingPub) {
                     results.failed++;
                     results.errors.push(
                         `Row ${i + 2}: Project for student ID ${parsedRow.publicationTitle} already exists`
@@ -145,11 +115,32 @@ router.post(
                     continue;
                 }
 
-                let [newProject] = await db
+                let [matchedPub] = await db
+                    .select()
+                    .from(publicationsTable)
+                    .where(eq(publicationsTable.title, parsedRow.publicationTitle))
+
+                if(matchedPub) {
+                    results.matched++;
+
+                    await db.update(publicationsTable)
+                    .set({
+                        type: parsedRow.type,
+                        journal: parsedRow.sourcePublication,
+                        volume: parsedRow.volNo,
+                        issue: parsedRow.issNo,
+                        month: parsedRow.month,
+                        year: parsedRow.year.toString(),
+                        link: parsedRow.link,
+                        authorNames: parsedRow.authors,
+                    }).where(eq(publicationsTable.citationId, matchedPub.citationId))
+                }
+
+                let [newEntry] = await db
                     .insert(researgencePublications)
                     .values(parsedRow)
                     .returning();
-                if (newProject) results.successful++;
+                if (newEntry) results.successful++;
             } catch (error) {
                 results.failed++;
                 results.errors.push(

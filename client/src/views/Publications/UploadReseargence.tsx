@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 interface UploadResults {
   successful: number;
+  matched: number,
   failed: number;
   total: number;
   errors: string[];
@@ -54,10 +55,13 @@ export default function UploadReseargence() {
       const fileInput = document.getElementById("file-upload-researgence") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
       if (responseData.results.successful > 0) {
-        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence data.`);
+        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence Publications.`);
+      }
+      if (responseData.results.matched > 0) {
+        toast.success(`Successfully matched and updated ${responseData.results.matched} Publications`);
       }
       if (responseData.results.failed > 0) {
-        toast.error(`${responseData.results.failed} Researgence data failed to upload.`);
+        toast.error(`${responseData.results.failed} Researgence Publications failed to upload.`);
       }
     } catch (err) {
       const error = err as ApiError;
