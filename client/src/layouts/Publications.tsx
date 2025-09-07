@@ -3,9 +3,11 @@ import { Search, Upload } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 import { Pencil } from "lucide-react";
+
 const PublicationsLayout = () => {
   return (
-    <>
+    <div className="flex h-screen w-screen">
+      {/* Sidebar */}
       <AppSidebar
         items={[
           {
@@ -38,8 +40,12 @@ const PublicationsLayout = () => {
           },
         ]}
       />
-      <Outlet />
-    </>
+
+      {/* Main content area (fills rest of viewport) */}
+      <div className="flex-1 h-screen overflow-y-auto overflow-x-hidden">
+        <Outlet />
+      </div>
+    </div>
   );
 };
 

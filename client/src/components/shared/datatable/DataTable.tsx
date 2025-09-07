@@ -40,7 +40,7 @@ import {
 import { ReactNode, useEffect, useState } from "react";
 import OverflowHandler from "./OverflowHandler";
 
-interface DataTableProps<T> {
+type BaseTableProps<T> =  {
   data: T[];
   columns: ColumnDef<T>[];
   // If mainSearchColumn is set, the meta filter options if set are ignored as there is a global filter already present.
@@ -48,8 +48,19 @@ interface DataTableProps<T> {
   initialState?: InitialTableState;
   setSelected?: (selected: T[]) => void;
   additionalButtons?: ReactNode;
-  exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
 }
+
+type AltTableProps1<T> = {
+  exportFunction?: ((itemIds: (T[keyof T])[], columnsVisible: string[]) => void);
+  idColumn: keyof T;
+}
+
+type AltTableProps2 = {
+  exportFunction?: never;
+  idColumn?: never
+}
+
+type DataTableProps<T> = BaseTableProps<T> & (AltTableProps1<T> | AltTableProps2  )
 
 export type TableFilterType =
   | "dropdown"
@@ -76,6 +87,7 @@ export function DataTable<T>({
   setSelected,
   exportFunction,
   additionalButtons,
+  idColumn
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -365,6 +377,7 @@ export function DataTable<T>({
         <div className="flex items-center space-x-2">
           {additionalButtons}
           {exportFunction ? (
+            <>
             <Button
               onClick={() => {
                 // Export function just returns the ids of the rows and visible columns, data fetching and excel
@@ -372,7 +385,7 @@ export function DataTable<T>({
 
                 const itemIds = table
                   .getPrePaginationRowModel()
-                  .rows.map((row) => (row.original as any).id);
+                  .rows.map((row) => row.original[idColumn]);
                 const columnsVisible = table
                   .getVisibleFlatColumns()
                   .map((column) =>
@@ -386,6 +399,28 @@ export function DataTable<T>({
             >
               Export Data
             </Button>
+            <Button
+              onClick={() => {
+                // Export function just returns the ids of the rows and visible columns, data fetching and excel
+                // generation is handled by the backend
+
+                const itemIds = table
+                  .getSelectedRowModel()
+                  .rows.map((row) => row.original[idColumn]);
+                const columnsVisible = table
+                  .getVisibleFlatColumns()
+                  .map((column) =>
+                    column.id.includes("_")
+                      ? column.id.split("_")[0]
+                      : column.id
+                  )
+                  .filter((columnId) => columnId !== "S.No");
+                exportFunction(itemIds, columnsVisible);
+              }}
+            >
+              Export Selected
+            </Button>
+            </>
           ) : (
             <></>
           )}
@@ -536,7 +571,7 @@ export function DataTable<T>({
                         ) : cell.getValue() ? (
                           <OverflowHandler text={cell.getValue() as string} />
                         ) : (
-                          <div className="w-full p-0.5 text-start">
+                          <div className="w-full p-0.5 text-center">
                             Not Provided
                           </div>
                         )}
