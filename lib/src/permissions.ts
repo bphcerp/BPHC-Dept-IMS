@@ -167,6 +167,9 @@ export const allPermissions = {
     "allocation:semester:read": "read the semester table",
     "allocation:semester:write": "write to semester table",
 
+    "allocation:builder:createTemplate": "create a form template",
+    "allocation:builder:createForm": "create a form instance of the template",
+
     
 
 
@@ -400,4 +403,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/create": "allocation:semester:write",
     "/allocation/semester/delete": "allocation:semester:write",
     "/allocation/semester/update": "allocation:semester:write",
+
+    "/allocation/formBuilder/templateBuilder": "allocation:builder:createTemplate",
+    "/allocation/formBuilder/formBuilder": "allocation:builder:createForm"
+
 } as const;

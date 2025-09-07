@@ -2,7 +2,6 @@ import { relations } from "drizzle-orm";
 import { allocation } from "./allocation.ts";
 import { course } from "./allocation.ts";
 import { semester } from "./allocation.ts";
-import { coursePreferences } from "./allocation.ts";
 import { users } from "./admin.ts";
 
 

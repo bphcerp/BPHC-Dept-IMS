@@ -15,7 +15,7 @@ router.delete(
     asyncHandler(async (req, res, next) => {
         const parsed = deleteSemesterSchema.parse(req.body);
 
-        const allocationExists = await db.query.coursePreferences.findFirst({
+        const allocationExists = await db.query.semester.findFirst({
             where: (alloc, { eq }) => eq(alloc.id, parsed.id),
         });
 
