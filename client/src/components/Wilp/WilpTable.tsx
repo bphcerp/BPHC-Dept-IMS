@@ -10,8 +10,6 @@ export interface WilpProject {
   degreeProgram: string;
   researchArea: string;
   dissertationTitle: string;
-  reminder: string | Date;
-  deadline: string | Date;
 }
 
 interface WilpTableProps {

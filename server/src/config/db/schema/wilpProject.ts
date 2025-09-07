@@ -20,9 +20,6 @@ export const wilpProject = pgTable("wilp_project", {
     researchArea: text("research_area").notNull(),
     dissertationTitle: text("dissertation_title").notNull(),
 
-    reminder: timestamp("reminder", { withTimezone: true }).notNull(),
-    deadline: timestamp("deadline", { withTimezone: true }).notNull(),
-
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),

@@ -9,6 +9,7 @@ export const editProfileBody = z.object({
     department: z.string().optional(),
     education: z.string().array().optional(),
     researchInterests: z.string().array().optional(),
+    courses: z.string().array().optional(),
     linkedin: z.string().optional(),
     orchidID: z.string().optional(),
     scopusID: z.string().optional(),

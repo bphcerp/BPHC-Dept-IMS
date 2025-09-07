@@ -40,6 +40,9 @@ export const users = pgTable("users", {
     researchInterests: text("research_interests")
         .array()
         .default(sql`'{}'::text[]`),
+    courses: text("courses")
+        .array()
+        .default(sql`'{}'::text[]`),
     linkedin: text("linkedin"),
     orchidID: text("orchid_id"),
     scopusID: text("scopus_id"),
@@ -91,11 +94,9 @@ export const phd = pgTable("phd", {
         .references(() => users.email, { onDelete: "cascade" }),
     department: text("department"),
     phone: text("phone"),
-
     profileFileId: integer("profile_file_id").references(() => files.id, {
         onDelete: "set null",
     }),
-
     idNumber: text("id_number"),
     erpId: text("erp_id"),
     name: text("name"),
@@ -103,60 +104,16 @@ export const phd = pgTable("phd", {
     mobile: text("mobile"),
     personalEmail: text("personal_email"),
     emergencyPhoneNumber: text("emergency_phone_number"),
-
     notionalSupervisorEmail: text("notional_supervisor_email").references(
         () => users.email,
-        { onDelete: "cascade" }
+        { onDelete: "set null" }
     ),
     supervisorEmail: text("supervisor_email").references(() => users.email, {
-        onDelete: "cascade",
+        onDelete: "set null",
     }),
-    coSupervisorEmail: text("co_supervisor_email").references(
-        () => users.email,
-        { onDelete: "cascade" }
-    ),
-    coSupervisorEmail2: text("co_supervisor_email_2").references(
-        () => users.email,
-        { onDelete: "cascade" }
-    ),
-    dac1Email: text("dac_1_email").references(() => users.email, {
-        onDelete: "cascade",
-    }),
-    dac2Email: text("dac_2_email").references(() => users.email, {
-        onDelete: "cascade",
-    }),
-
-    natureOfPhD: text("nature_of_phd"),
-    qualifyingExam1: boolean("qualifying_exam_1"),
-    qualifyingExam2: boolean("qualifying_exam_2"),
-
-    qualifyingExam1StartDate: timestamp("qualifying_exam_1_start_date").default(
-        sql`NULL`
-    ),
-    qualifyingExam1EndDate: timestamp("qualifying_exam_1_end_date").default(
-        sql`NULL`
-    ),
-    qualifyingExam2StartDate: timestamp("qualifying_exam_2_start_date").default(
-        sql`NULL`
-    ),
-    qualifyingExam2EndDate: timestamp("qualifying_exam_2_end_date").default(
-        sql`NULL`
-    ),
-
-    qualifyingArea1: text("qualifying_area_1").default(sql`NULL`),
-    qualifyingArea2: text("qualifying_area_2").default(sql`NULL`),
-    numberOfQeApplication: integer("number_of_qe_application").default(0),
-    qualificationDate: timestamp("qualification_date", {
-        withTimezone: true,
-        mode: "date",
-    }).default(sql`NULL`),
-    suggestedDacMembers: text("suggested_dac_members")
-        .array()
-        .default(sql`'{}'::text[]`),
-    qualifyingAreasUpdatedAt: timestamp("qualifying_areas_updated_at", {
-        withTimezone: true,
-        mode: "date",
-    }).default(sql`NULL`),
+    qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
+    hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
+    qualificationDate: timestamp("qualification_date", { withTimezone: true }),
 });
 
 export const staff = pgTable("staff", {

@@ -1,5 +1,5 @@
 {
-  "id": "88e585a1-6d2d-4737-a8dd-bb6c9743cd9e",
+  "id": "88c5e328-a9a4-42f0-ad48-c8ba26fc5219",
   "prevId": "f2fc2f74-2479-4ea9-93cb-fe8b0ec4279a",
   "version": "7",
   "dialect": "postgresql",
@@ -707,6 +707,13 @@
         },
         "research_interests": {
           "name": "research_interests",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'::text[]"
+        },
+        "courses": {
+          "name": "courses",
           "type": "text[]",
           "primaryKey": false,
           "notNull": false,
@@ -3731,215 +3738,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.researgence": {
-      "name": "researgence",
-      "schema": "",
-      "columns": {
-        "pub_id": {
-          "name": "pub_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "authors": {
-          "name": "authors",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_authors": {
-          "name": "home_authors",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_author_department": {
-          "name": "home_author_department",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_author_institute": {
-          "name": "home_author_institute",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "publication_title": {
-          "name": "publication_title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "scs": {
-          "name": "scs",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "wos": {
-          "name": "wos",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sci": {
-          "name": "sci",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source_publication": {
-          "name": "source_publication",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "level": {
-          "name": "level",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "article_type": {
-          "name": "article_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "year": {
-          "name": "year",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "month": {
-          "name": "month",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_author_location": {
-          "name": "home_author_location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "vol_no": {
-          "name": "vol_no",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "iss_no": {
-          "name": "iss_no",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "b_page": {
-          "name": "b_page",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "e_page": {
-          "name": "e_page",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "snip": {
-          "name": "snip",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sjr": {
-          "name": "sjr",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "if": {
-          "name": "if",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cite_score": {
-          "name": "cite_score",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "q_rank_scs": {
-          "name": "q_rank_scs",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "q_rank_wos": {
-          "name": "q_rank_wos",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "p_issn": {
-          "name": "p_issn",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "e_issn": {
-          "name": "e_issn",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "p_isbn": {
-          "name": "p_isbn",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "e_isbn": {
-          "name": "e_isbn",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "link": {
-          "name": "link",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "title_idx": {
-          "name": "title_idx",
-          "columns": [
-            {
-              "expression": "publication_title",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.qp_review_requests": {
       "name": "qp_review_requests",
       "schema": "",
@@ -4430,18 +4228,6 @@
         "dissertation_title": {
           "name": "dissertation_title",
           "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reminder": {
-          "name": "reminder",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "deadline": {
-          "name": "deadline",
-          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         },

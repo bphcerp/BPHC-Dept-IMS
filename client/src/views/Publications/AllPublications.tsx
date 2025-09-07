@@ -428,7 +428,6 @@ const AllPublications = () => {
               <DataTable<publicationsSchemas.ReseargencePublication>
                 data={publicationsData.validated}
                 columns={resColumns}
-                mainSearchColumn="authors"
               />
               </Collapsible>
               <Collapsible title={
@@ -471,7 +470,6 @@ const AllPublications = () => {
                     } : undefined
                 }
                 columns={pubColumns}
-                mainSearchColumn="authorNames"
               />
               </Collapsible>
             </div>

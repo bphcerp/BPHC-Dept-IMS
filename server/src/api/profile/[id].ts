@@ -6,6 +6,7 @@ import db from "@/config/db/index.ts";
 import { users } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
 import { optionalAuth } from "@/middleware/optionalAuth.ts";
+import { investigators, projects } from "@/config/db/schema/project.ts";
 
 const router = express.Router();
 
@@ -24,12 +25,23 @@ router.get(
             .select()
             .from(users)
             .where(eq(users.id, parsedID));
-        if (data.length === 0) {
+
+        const userEmail = data[0]?.email;
+        if (data.length === 0 || !userEmail) {
             res.status(404).json({ message: "Profile not found" });
             return;
         }
 
-        var parsedData = data[0];
+        const projectsData = await db
+            .select({
+                project: projects,
+            })
+            .from(projects)
+            .rightJoin(investigators, eq(investigators.id, projects.piId))
+            .where(eq(investigators.email, userEmail));
+        const parsedProjectsData = projectsData.map((item) => item.project);
+
+        var parsedData = { ...data[0], projects: parsedProjectsData };
         if (!req.user) parsedData.phone = null;
         else if (
             parsedData.email !== req.user.email &&
