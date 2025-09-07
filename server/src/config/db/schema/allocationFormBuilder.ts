@@ -20,7 +20,6 @@ export const allocationFormTemplateFieldType = pgEnum(
         "CHECKBOX",
         "RADIO",
         "DROPDOWN",
-        "RATING",
         "PREFERENCE",
     ]
 );

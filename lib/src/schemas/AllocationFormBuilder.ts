@@ -9,7 +9,6 @@ export const allocationFormTemplateFieldTypeEnum = z.enum([
   "CHECKBOX", 
   "RADIO", 
   "DROPDOWN", 
-  "RATING", 
   "PREFERENCE"
 ]);
 
