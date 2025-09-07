@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
   "/:examId",
-  checkAccess("phd:drc:qe"),
+  checkAccess(),
   asyncHandler(async (req, res, next) => {
     const examId = parseInt(req.params.examId);
     if (isNaN(examId)) {
@@ -32,102 +32,101 @@ router.post(
     if (validApps.length === 0) {
       await db.delete(phdExamTimetableSlots).where(eq(phdExamTimetableSlots.examId, examId));
       res.status(200).json({ message: "No applications with assigned examiners to schedule." });
-    }
-    
-    // --- Scheduling Algorithm using Graph 2-Coloring ---
+    } else {
+      // --- Scheduling Algorithm using Graph 2-Coloring ---
+      const studentToGroups = new Map<string, string[]>();
+      const groupToStudents = new Map<string, string[]>();
+      const allGroups = new Set<string>();
 
-    const studentToGroups = new Map<string, string[]>();
-    const groupToStudents = new Map<string, string[]>();
-    const allGroups = new Set<string>();
+      for (const app of validApps) {
+        const group1Key = `${app.examinerAssignments[0].qualifyingArea}#${app.examinerAssignments[0].examinerEmail}`;
+        const group2Key = `${app.examinerAssignments[1].qualifyingArea}#${app.examinerAssignments[1].examinerEmail}`;
+        
+        allGroups.add(group1Key);
+        allGroups.add(group2Key);
 
-    for (const app of validApps) {
-      const group1Key = `${app.examinerAssignments[0].qualifyingArea}#${app.examinerAssignments[0].examinerEmail}`;
-      const group2Key = `${app.examinerAssignments[1].qualifyingArea}#${app.examinerAssignments[1].examinerEmail}`;
-      
-      allGroups.add(group1Key);
-      allGroups.add(group2Key);
+        if (!groupToStudents.has(group1Key)) groupToStudents.set(group1Key, []);
+        groupToStudents.get(group1Key)!.push(app.studentEmail);
 
-      if (!groupToStudents.has(group1Key)) groupToStudents.set(group1Key, []);
-      groupToStudents.get(group1Key)!.push(app.studentEmail);
-
-      if (!groupToStudents.has(group2Key)) groupToStudents.set(group2Key, []);
-      groupToStudents.get(group2Key)!.push(app.studentEmail);
-      
-      studentToGroups.set(app.studentEmail, [group1Key, group2Key]);
-    }
-
-    const adj = new Map<string, Set<string>>();
-    allGroups.forEach(g => adj.set(g, new Set()));
-
-    for (const [, groups] of studentToGroups) {
-      if (groups.length === 2 && groups[0] !== groups[1]) {
-        adj.get(groups[0])!.add(groups[1]);
-        adj.get(groups[1])!.add(groups[0]);
+        if (!groupToStudents.has(group2Key)) groupToStudents.set(group2Key, []);
+        groupToStudents.get(group2Key)!.push(app.studentEmail);
+        
+        studentToGroups.set(app.studentEmail, [group1Key, group2Key]);
       }
-    }
 
-    const colors = new Map<string, number>(); // 1: slot 1, 2: slot 2
-    let isBipartite = true;
+      const adj = new Map<string, Set<string>>();
+      allGroups.forEach(g => adj.set(g, new Set()));
 
-    for (const group of allGroups) {
-      if (!isBipartite) break;
-      if (!colors.has(group)) {
-        const q = [group];
-        colors.set(group, 1);
-        let head = 0;
-        while(head < q.length) {
-          const u = q[head++];
-          for (const v of adj.get(u)!) {
-            if (!colors.has(v)) {
-              colors.set(v, 3 - colors.get(u)!);
-              q.push(v);
-            } else if (colors.get(u) === colors.get(v)) {
-              isBipartite = false;
-              break;
-            }
-          }
-          if(!isBipartite) break;
+      for (const [, groups] of studentToGroups) {
+        if (groups.length === 2 && groups[0] !== groups[1]) {
+          adj.get(groups[0])!.add(groups[1]);
+          adj.get(groups[1])!.add(groups[0]);
         }
       }
-    }
 
-    const timetableSlots: (typeof phdExamTimetableSlots.$inferInsert)[] = [];
-    
-    if (!isBipartite) {
-        // If graph is not bipartite, all students are unscheduled
-        validApps.forEach(app => {
-            app.examinerAssignments.forEach(asgn => {
-                timetableSlots.push({
-                    examId,
-                    studentEmail: app.studentEmail,
-                    qualifyingArea: asgn.qualifyingArea,
-                    examinerEmail: asgn.examinerEmail,
-                    slotNumber: 0
-                });
-            });
-        });
-    } else {
-        validApps.forEach(app => {
-            const [group1Key, group2Key] = studentToGroups.get(app.studentEmail)!;
-            const slot1 = colors.get(group1Key);
-            const slot2 = colors.get(group2Key);
+      const colors = new Map<string, number>(); // 1: slot 1, 2: slot 2
+      let isBipartite = true;
 
-            const [area1, examiner1] = group1Key.split('#');
-            timetableSlots.push({examId, studentEmail: app.studentEmail, qualifyingArea: area1, examinerEmail: examiner1, slotNumber: slot1});
-            
-            const [area2, examiner2] = group2Key.split('#');
-            timetableSlots.push({examId, studentEmail: app.studentEmail, qualifyingArea: area2, examinerEmail: examiner2, slotNumber: slot2});
-        });
-    }
-
-    await db.transaction(async (tx) => {
-      await tx.delete(phdExamTimetableSlots).where(eq(phdExamTimetableSlots.examId, examId));
-      if (timetableSlots.length > 0) {
-        await tx.insert(phdExamTimetableSlots).values(timetableSlots);
+      for (const group of allGroups) {
+        if (!isBipartite) break;
+        if (!colors.has(group)) {
+          const q = [group];
+          colors.set(group, 1);
+          let head = 0;
+          while(head < q.length) {
+            const u = q[head++];
+            for (const v of adj.get(u)!) {
+              if (!colors.has(v)) {
+                colors.set(v, 3 - colors.get(u)!);
+                q.push(v);
+              } else if (colors.get(u) === colors.get(v)) {
+                isBipartite = false;
+                break;
+              }
+            }
+            if(!isBipartite) break;
+          }
+        }
+        if(!isBipartite) break;
       }
-    });
 
-    res.status(200).json({ success: true, message: "Timetable optimized successfully." });
+      const timetableSlots: (typeof phdExamTimetableSlots.$inferInsert)[] = [];
+      
+      if (!isBipartite) {
+          validApps.forEach(app => {
+              app.examinerAssignments.forEach(asgn => {
+                  timetableSlots.push({
+                      examId,
+                      studentEmail: app.studentEmail,
+                      qualifyingArea: asgn.qualifyingArea,
+                      examinerEmail: asgn.examinerEmail,
+                      slotNumber: 0
+                  });
+              });
+          });
+      } else {
+          validApps.forEach(app => {
+              const [group1Key, group2Key] = studentToGroups.get(app.studentEmail)!;
+              const slot1 = colors.get(group1Key);
+              const slot2 = colors.get(group2Key);
+
+              const [area1, examiner1] = group1Key.split('#');
+              timetableSlots.push({examId, studentEmail: app.studentEmail, qualifyingArea: area1, examinerEmail: examiner1, slotNumber: slot1});
+              
+              const [area2, examiner2] = group2Key.split('#');
+              timetableSlots.push({examId, studentEmail: app.studentEmail, qualifyingArea: area2, examinerEmail: examiner2, slotNumber: slot2});
+          });
+      }
+
+      await db.transaction(async (tx) => {
+        await tx.delete(phdExamTimetableSlots).where(eq(phdExamTimetableSlots.examId, examId));
+        if (timetableSlots.length > 0) {
+          await tx.insert(phdExamTimetableSlots).values(timetableSlots);
+        }
+      });
+
+      res.status(200).json({ success: true, message: "Timetable optimized successfully." });
+    }
   }),
 );
 

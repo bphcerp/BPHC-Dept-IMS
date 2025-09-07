@@ -1,0 +1,89 @@
+import db from "@/config/db/index.ts";
+import {
+  phdProposals,
+  phdProposalDacMembers,
+  phdProposalDacReviews,
+} from "@/config/db/schema/phd.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import { checkAccess } from "@/middleware/auth.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { and, eq, sql } from "drizzle-orm";
+import express from "express";
+import { phdSchemas, modules } from "lib";
+import { completeTodo } from "@/lib/todos/index.ts";
+
+const router = express.Router();
+
+router.post(
+  "/:id",
+  checkAccess(),
+  asyncHandler(async (req, res) => {
+    const proposalId = parseInt(req.params.id);
+    if (isNaN(proposalId))
+      throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+
+    const { approved, comments } = phdSchemas.submitDacReviewSchema.parse(
+      req.body
+    );
+    const dacMemberEmail = req.user!.email;
+
+    await db.transaction(async (tx) => {
+      const proposal = await tx.query.phdProposals.findFirst({
+        where: eq(phdProposals.id, proposalId),
+        with: { dacMembers: true },
+      });
+
+      if (!proposal)
+        throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
+      if (proposal.status !== "dac_review")
+        throw new HttpError(
+          HttpCode.BAD_REQUEST,
+          "Proposal is not in DAC review stage"
+        );
+
+      const isDacMember = proposal.dacMembers.some(
+        (m) => m.dacMemberEmail === dacMemberEmail
+      );
+      if (!isDacMember)
+        throw new HttpError(
+          HttpCode.FORBIDDEN,
+          "You are not assigned to review this proposal."
+        );
+
+      await tx
+        .insert(phdProposalDacReviews)
+        .values({
+          proposalId,
+          dacMemberEmail,
+          approved,
+          comments,
+        })
+        .onConflictDoNothing();
+
+      await completeTodo(
+        {
+          module: modules[3],
+          completionEvent: `proposal:dac-review:${proposalId}:${dacMemberEmail}`,
+        },
+        tx
+      );
+
+      const allReviews = await tx.query.phdProposalDacReviews.findMany({
+        where: eq(phdProposalDacReviews.proposalId, proposalId),
+      });
+
+      if (allReviews.length === proposal.dacMembers.length) {
+        const allApproved = allReviews.every((review) => review.approved);
+        const newStatus = allApproved ? "completed" : "dac_rejected";
+        await tx
+          .update(phdProposals)
+          .set({ status: newStatus })
+          .where(eq(phdProposals.id, proposalId));
+      }
+    });
+
+    res.status(200).json({ success: true, message: "Review submitted." });
+  })
+);
+
+export default router;
