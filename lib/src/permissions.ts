@@ -8,6 +8,7 @@ export const allPermissions = {
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
+    "admin:tester": "Allows user to enter testing mode",
 
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
