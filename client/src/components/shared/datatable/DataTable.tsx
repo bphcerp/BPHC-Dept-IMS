@@ -61,7 +61,7 @@ const HEADER_COLOR = "#E8E8F0"
 const ROW_COLOR_ODD = "#F7F7FB"
 const ROW_COLOR_EVEN = "white"
 
-interface DataTableProps<T> {
+type BaseTableProps<T> =  {
   data: T[];
   columns: ColumnDef<T>[];
   initialState?: InitialTableState;
@@ -71,6 +71,18 @@ interface DataTableProps<T> {
   isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
 }
+
+type AltTableProps1<T> = {
+  exportFunction?: ((itemIds: (T[keyof T])[], columnsVisible: string[]) => void);
+  idColumn: keyof T;
+}
+
+type AltTableProps2 = {
+  exportFunction?: never;
+  idColumn?: never
+}
+
+type DataTableProps<T> = BaseTableProps<T> & (AltTableProps1<T> | AltTableProps2  )
 
 export type TableFilterType =
   | "dropdown"
@@ -94,6 +106,7 @@ export function DataTable<T>({
   columns,
   initialState,
   setSelected,
+  idColumn,
   exportFunction,
   additionalButtons,
   isTableHeaderFixed,
@@ -480,13 +493,13 @@ export function DataTable<T>({
     table.resetRowSelection();
   };
 
-  const handleExport = () => {
+  const handleExport = (selected: boolean) => {
     // Export function just returns the ids of the rows and visible columns, data fetching and excel
     // generation is handled by the backend
+    if(!idColumn) return;
 
-    const itemIds = table
-      .getPrePaginationRowModel()
-      .rows.map((row) => (row.original as any).id);
+    const rowModel = selected ? table.getSelectedRowModel() : table.getPrePaginationRowModel();
+    const itemIds = rowModel.rows.map((row) => row.original[idColumn]);
     const columnsVisible = table
       .getVisibleFlatColumns()
       .map((column) =>
@@ -494,6 +507,7 @@ export function DataTable<T>({
       )
       .filter((columnId) => columnId !== "S.No");
     exportFunction!(itemIds, columnsVisible);
+    
   };
 
   return (
@@ -536,7 +550,12 @@ export function DataTable<T>({
                       {
                         label: "Export Current View",
                         icon: FileDownIcon,
-                        onClick: handleExport,
+                        onClick: () => handleExport(false),
+                      },
+                      {
+                        label: "Export Selected from View",
+                        icon: FileDownIcon,
+                        onClick: () => handleExport(true),
                       },
                     ]
                   : []),
@@ -695,7 +714,7 @@ export function DataTable<T>({
                     ) : cell.getValue() ? (
                       <OverflowHandler text={cell.getValue() as string} />
                     ) : (
-                      <div className="w-full p-0.5 text-start text-secondary">
+                      <div className="w-full p-0.5 text-center text-secondary">
                         Not Provided
                       </div>
                     )}

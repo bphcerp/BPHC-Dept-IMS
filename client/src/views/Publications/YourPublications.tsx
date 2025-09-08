@@ -6,7 +6,7 @@ import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useMutation } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-
+import { publicationsSchemas } from "lib";
 import { Check, X, Filter, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -36,31 +36,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-type CoAuthor = {
-  authorId: string;
-  authorName: string;
-};
-
-type Publication = {
-  title: string;
-  type: string;
-  journal: string;
-  volume: string | null;
-  issue: string | null;
-  month: string,
-  year: string;
-  link: string;
-  status: boolean | null;
-  citations: string;
-  citationId: string;
-  authorNames: string;
-  coAuthors: CoAuthor[];
-};
-
-type PublicationResponse = {
-  publications: Publication[];
-};
-
 type SortOrder = "desc" | "asc";
 type StatusFilter = "all" | "approved" | "rejected";
 
@@ -68,7 +43,7 @@ const PublicationsView = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [approveComment, setApproveComment] = useState<string>("");
   const [rejectComment, setRejectComment] = useState<string>("");
-  const [publications, setPublications] = useState<Publication[]>([]);
+  const [publications, setPublications] = useState<publicationsSchemas.PublicationWithMeta[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [yearRangeFilter, setYearRangeFilter] = useState<{
@@ -104,13 +79,13 @@ const PublicationsView = () => {
     queryKey: ["publications", authorId],
     queryFn: async () => {
       if (!authorId) throw new Error("No authorId");
-      const response = await api.get<PublicationResponse>(
+      const response = await api.get<publicationsSchemas.PublicationWithMetaResponse>(
         "/publications/user",
         {
           params: { authorId },
         }
       );
-      setPublications(response.data.publications);
+      setPublications(response.data);
       return response.data;
     },
     enabled: !!authorId,

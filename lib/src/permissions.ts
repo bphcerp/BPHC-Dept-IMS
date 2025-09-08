@@ -68,6 +68,7 @@ export const allPermissions = {
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
     "publications:export": "Export Publications",
+    "publications:upload" : "Upload Researgence Data",
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
@@ -232,7 +233,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
-
+    "/publications/upload": "publications:upload",
+    
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",
