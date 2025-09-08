@@ -29,7 +29,7 @@ router.get(
 
             nonValidated: (await db.select()
                 .from(publicationsTable)
-                .rightJoin(
+                .leftJoin(
                     researgencePublications,
                     eq(
                         researgencePublications.publicationTitle,

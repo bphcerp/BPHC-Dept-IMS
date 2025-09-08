@@ -40,7 +40,7 @@ function parseRow(row: any): ReseargencePublication | null {
         level: row["LEVEL"]?.trim() || null,
         type: row["ARTICLE TYPE"].trim() || null,
         year: parseInt(row["YEAR"].trim()),
-        month: row["MONTH"] ? (publicationsSchemas.months[parseInt(row["MONTH"])]) : null,
+        month: row["MONTH"] ? (publicationsSchemas.months[parseInt(row["MONTH"]) - 1]) : null,
         homeAuthorLocation: row["HOME AUTHOR LOCATION"]?.trim() || null,
         volNo: row["VOL NO"]?.trim() || null,
         issNo: row["ISS NO"]?.trim() || null,
@@ -49,7 +49,7 @@ function parseRow(row: any): ReseargencePublication | null {
         snip: row["SNIP"]?.trim() || null,
         sjr: row["SJR"]?.trim() || null,
         impactFactor: row["IF"]?.trim() || null,
-        citeScore: row["SNIP"]?.trim() || null,
+        citeScore: row["CITE SCORE"]?.trim() || null,
         qRankScs: row["Q RANK(SCS)"]?.trim() || null,
         qRankWos: row["Q RANK(WOS)"]?.trim() || null,
         pIssn: row["P ISSN"]?.trim() || null,
@@ -110,7 +110,7 @@ router.post(
                 if (existingPub) {
                     results.failed++;
                     results.errors.push(
-                        `Row ${i + 2}: Project for student ID ${parsedRow.publicationTitle} already exists`
+                        `Row ${i + 2}: Publication with title ${parsedRow.publicationTitle} already exists`
                     );
                     continue;
                 }

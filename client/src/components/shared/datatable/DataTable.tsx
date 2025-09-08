@@ -498,7 +498,7 @@ export function DataTable<T>({
     // generation is handled by the backend
     if(!idColumn) return;
 
-    const rowModel = selected ? table.getPrePaginationRowModel() : table.getSelectedRowModel();
+    const rowModel = selected ? table.getSelectedRowModel() : table.getPrePaginationRowModel();
     const itemIds = rowModel.rows.map((row) => row.original[idColumn]);
     const columnsVisible = table
       .getVisibleFlatColumns()

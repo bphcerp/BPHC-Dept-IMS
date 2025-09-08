@@ -63,8 +63,7 @@ export const ReseargencePublicationSchema = z.object({
     eIssn: z.string().nullable(),
     pIsbn: z.string().nullable(),
     eIsbn: z.string().nullable(),
-    // For links, adding .url() provides stronger validation
-    link: z.string().url().nullable(),
+    link: z.union([z.string().url(), z.null()]),
 });
 
 export const CoAuthorSchema = z.object({
