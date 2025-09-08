@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,12 +13,11 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useEffect, useRef } from "react";
+import { useEffect} from "react";
 import { useNavigate } from "react-router-dom";
-import { Navigate } from "react-router-dom";
 import logo from "/logo/bitspilanilogo.png";
 import { DEPARTMENT_NAME } from "@/lib/constants";
-import { Computer, FileText, GraduationCap, BookOpen, LibraryBig, Warehouse, File, ArrowLeftIcon, Users, LogOut, BookMarked } from "lucide-react";
+import { Computer, FileText, GraduationCap, BookOpen, LibraryBig, Warehouse, File, ArrowLeftIcon, Users, BookMarked } from "lucide-react";
 
 const modules = [
   {
@@ -44,7 +43,6 @@ const WikiPage = () => {
   const { state } = useSidebar ? useSidebar() : { state: "expanded" };
   const isCollapsed = state === "collapsed";
   const navigate = useNavigate();
-  const lastCheckedDoc = useRef<string | null>(null);
 
   useEffect(() => {
     if (!selectedDoc) {
