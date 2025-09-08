@@ -138,7 +138,6 @@ const StudentProposal: React.FC = () => {
 
   const { proposals = [], canApply = false } = data || {};
 
-  // ... (error and loading states remain the same)
   if (isLoading) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -174,11 +173,49 @@ const StudentProposal: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle>Submit PhD Proposal</DialogTitle>
                 </DialogHeader>
-                {/* Form Content */}
-                <div className="space-y-4">
-                  {/* ... form inputs ... */}
-                  <Button onClick={() => handleFormSubmit(false)}>
-                    Submit
+                <div>
+                  <Label htmlFor="title">Proposal Title</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Enter proposal title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="abstract">Abstract File (PDF)</Label>
+                  <Input
+                    id="abstract"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) =>
+                      setAbstractFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="proposal">Proposal File (PDF)</Label>
+                  <Input
+                    id="proposal"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) =>
+                      setProposalFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsNewProposalDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => handleFormSubmit(false)}
+                    disabled={submitMutation.isLoading}
+                  >
+                    {submitMutation.isLoading ? "Submitting..." : "Submit"}
                   </Button>
                 </div>
               </DialogContent>

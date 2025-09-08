@@ -8,49 +8,51 @@ import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-export default router.get(
-  "/:examId",
-  checkAccess("phd:drc:qe"),
-  asyncHandler(async (req, res, next) => {
-    const examId = parseInt(req.params.examId);
-    if (isNaN(examId)) {
-      return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid Exam ID"));
-    }
-
-    const slots = await db.query.phdExamTimetableSlots.findMany({
-      where: eq(phdExamTimetableSlots.examId, examId),
-      with: {
-        student: {
-          columns: {
-            name: true,
-          },
-        },
-      },
-    });
-
-    const timetable = {
-      slot1: slots.filter((s) => s.slotNumber === 1),
-      slot2: slots.filter((s) => s.slotNumber === 2),
-      unscheduled: slots.filter((s) => s.slotNumber === 0),
-    };
-
-    const examinerDuties = slots.reduce(
-      (acc, slot) => {
-        if (slot.slotNumber > 0) {
-          if (!acc[slot.examinerEmail]) {
-            acc[slot.examinerEmail] = new Set();
-          }
-          acc[slot.examinerEmail].add(slot.slotNumber);
+router.get(
+    "/:examId",
+    checkAccess("phd:drc:qe"),
+    asyncHandler(async (req, res, next) => {
+        const examId = parseInt(req.params.examId);
+        if (isNaN(examId)) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid Exam ID"));
         }
-        return acc;
-      },
-      {} as Record<string, Set<number>>,
-    );
 
-    const examinersWithDoubleDuty = Object.entries(examinerDuties)
-      .filter(([, dutySlots]) => dutySlots.size > 1)
-      .map(([examinerEmail]) => examinerEmail);
+        const slots = await db.query.phdExamTimetableSlots.findMany({
+            where: eq(phdExamTimetableSlots.examId, examId),
+            with: {
+                student: {
+                    columns: {
+                        name: true,
+                    },
+                },
+            },
+        });
 
-    res.status(200).json({ timetable, examinersWithDoubleDuty });
-  }),
+        const timetable = {
+            slot1: slots.filter((s) => s.slotNumber === 1),
+            slot2: slots.filter((s) => s.slotNumber === 2),
+            unscheduled: slots.filter((s) => s.slotNumber === 0),
+        };
+
+        const examinerDuties = slots.reduce(
+            (acc, slot) => {
+                if (slot.slotNumber > 0) {
+                    if (!acc[slot.examinerEmail]) {
+                        acc[slot.examinerEmail] = new Set();
+                    }
+                    acc[slot.examinerEmail].add(slot.slotNumber);
+                }
+                return acc;
+            },
+            {} as Record<string, Set<number>>
+        );
+
+        const examinersWithDoubleDuty = Object.entries(examinerDuties)
+            .filter(([, dutySlots]) => dutySlots.size > 1)
+            .map(([examinerEmail]) => examinerEmail);
+
+        res.status(200).json({ timetable, examinersWithDoubleDuty });
+    })
 );
+
+export default router;
