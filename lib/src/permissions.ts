@@ -36,10 +36,11 @@ export const allPermissions = {
     "phd:drc:qe": "DRC Member operations on qualifying exams",
     "phd:supervisor:suggest-examiners":
         "Suggest examiners for qualifying exams",
-
+    "phd:drc:qe-timetable": "Manage PhD qualifying exam timetables",
     "phd:student:proposal": "PhD scholar proposal operations",
     "phd:drc:proposal": "DRC Convener operations on proposals",
     "phd:faculty:proposal": "Faculty operations on proposals",
+    "phd:dac:proposal": "DAC Member operations on proposals",
 
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
@@ -173,12 +174,24 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/updateQpSubmissionStatus": "phd:drc:qe",
     "/phd/drcMember/notifyExaminer": "phd:drc:qe",
 
+    "/phd/drcMember/timetable": "phd:drc:qe-timetable",
+    "/phd/drcMember/optimizeTimetable": "phd:drc:qe-timetable",
+    "/phd/drcMember/generateTimetablePdf": "phd:drc:qe-timetable",
+
+    "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/finalizeDac": "phd:drc:proposal",
+    "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
+    "/phd/proposal/dacMember/viewProposal": "phd:dac:proposal",
+    "/phd/proposal/dacMember/submitReview": "phd:dac:proposal",
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
 
     "/phd/proposal/student/getProposals": "phd:student:proposal",
+    "/phd/proposal/student/resubmit": "phd:student:proposal",
     "/phd/proposal/student/submitProposal": "phd:student:proposal",
 
     "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",

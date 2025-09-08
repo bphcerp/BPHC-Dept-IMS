@@ -5,6 +5,8 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { eq } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -16,14 +18,53 @@ router.post(
         if (isNaN(proposalId) || proposalId < 0)
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
 
-        await db
-            .update(phdProposals)
-            .set({
-                status: "dac_review",
-            })
-            .where(eq(phdProposals.id, proposalId));
+        await db.transaction(async (tx) => {
+            const proposal = await tx.query.phdProposals.findFirst({
+                where: eq(phdProposals.id, proposalId),
+                with: { dacMembers: true, student: true },
+            });
 
-        res.status(200).send();
+            if (!proposal)
+                throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
+            if (proposal.status !== "drc_review")
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Proposal not ready to be sent to DAC"
+                );
+
+            await tx
+                .update(phdProposals)
+                .set({ status: "dac_review" })
+                .where(eq(phdProposals.id, proposalId));
+
+            await completeTodo(
+                {
+                    module: modules[3],
+                    completionEvent: `proposal:drc-review:${proposalId}`,
+                },
+                tx
+            );
+
+            if (proposal.dacMembers.length > 0) {
+                await createTodos(
+                    proposal.dacMembers.map((member) => ({
+                        module: modules[3],
+                        assignedTo: member.dacMemberEmail,
+                        createdBy: req.user!.email,
+                        title: "PhD Proposal Evaluation Required",
+                        description: `Please evaluate the PhD proposal for ${proposal.student.name}.`,
+                        link: `/phd/dac/proposals`,
+                        completionEvent: `proposal:dac-review:${proposalId}`,
+                    })),
+                    tx
+                );
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Proposal sent to DAC members.",
+        });
     })
 );
 

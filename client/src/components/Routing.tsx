@@ -34,6 +34,8 @@ import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
+import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
+import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
 import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
@@ -324,59 +326,111 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
-            <Route path="staff" element={<Outlet />}>
-              {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-                <Route
-                  path="update-semester-dates"
-                  element={<UpdateSemesterDates />}
-                />
-              )}
-              {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                <Route
-                  path="update-deadlines"
-                  element={<UpdateDeadlinesPage />}
-                />
-              )}
-              {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                <Route
-                  path="update-subareas"
-                  element={<UpdateSubAreasPage />}
-                />
-              )}
-              {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
-                <Route
-                  path="manage-email-templates"
-                  element={<ManageEmailTemplates />}
-                />
-              )}
-            </Route>
+            {/* Staff */}
+            {checkAccessAnyOne([
+              permissions["/phd/staff/getAllSem"],
+              permissions["/phd/staff/qualifyingExams"],
+              permissions["/phd/staff/emailTemplates"],
+            ]) && (
+              <Route path="staff" element={<Outlet />}>
+                {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+                  <Route
+                    path="update-semester-dates"
+                    element={<UpdateSemesterDates />}
+                  />
+                )}
+                {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
+                  <>
+                    <Route
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
+                    />
+                    <Route
+                      path="update-subareas"
+                      element={<UpdateSubAreasPage />}
+                    />
+                  </>
+                )}
+                {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
+                  <Route
+                    path="manage-email-templates"
+                    element={<ManageEmailTemplates />}
+                  />
+                )}
+              </Route>
+            )}
+
+            {/* Student */}
             {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
               <Route path="phd-student" element={<Outlet />}>
                 <Route path="proposals" element={<Proposal />} />
                 <Route path="qualifying-exams" element={<QualifyingExams />} />
               </Route>
             )}
-            {checkAccess(permissions["/phd/drcMember/getAvailableExams"]) && (
+
+            {/* DRC Convenor */}
+            {checkAccessAnyOne([
+              permissions["/phd/drcMember/getAvailableExams"],
+              permissions["/phd/proposal/drcConvener/getProposals"],
+            ]) && (
               <Route path="drc-convenor" element={<Outlet />}>
-                <Route
-                  path="qualifying-exam-management"
-                  element={<QualifyingExamManagement />}
-                />
+                {checkAccess(
+                  permissions["/phd/drcMember/getAvailableExams"]
+                ) && (
+                  <Route
+                    path="qualifying-exam-management"
+                    element={<QualifyingExamManagement />}
+                  />
+                )}
+                {checkAccess(
+                  permissions["/phd/proposal/drcConvener/getProposals"]
+                ) && (
+                  <Route
+                    path="proposal-management"
+                    element={<DrcProposalManagement />}
+                  />
+                )}
               </Route>
             )}
-            {checkAccess(permissions["/phd/supervisor/suggestExaminers"]) && (
+
+            {/* DAC Member */}
+            {checkAccess(
+              permissions["/phd/proposal/dacMember/getProposals"]
+            ) && (
+              <Route path="dac" element={<Outlet />}>
+                <Route path="proposals" element={<DacProposalManagement />} />
+              </Route>
+            )}
+
+            {/* Supervisor */}
+            {checkAccessAnyOne([
+              permissions["/phd/proposal/supervisor/getProposals"],
+              permissions["/phd/supervisor/suggestExaminers"],
+            ]) && (
               <Route path="supervisor" element={<Outlet />}>
-                <Route path="proposals" element={<SupervisorProposal />} />
-                <Route
-                  path="proposal/:id"
-                  element={<SupervisorViewProposal />}
-                />
-                <Route
-                  path="examiner-suggestions"
-                  element={<ExaminerSuggestions />}
-                />
+                {checkAccess(
+                  permissions["/phd/proposal/supervisor/getProposals"]
+                ) && (
+                  <>
+                    <Route path="proposals" element={<SupervisorProposal />} />
+                    <Route
+                      path="proposal/:id"
+                      element={<SupervisorViewProposal />}
+                    />
+                  </>
+                )}
+                {checkAccess(
+                  permissions["/phd/supervisor/suggestExaminers"]
+                ) && (
+                  <Route
+                    path="examiner-suggestions"
+                    element={<ExaminerSuggestions />}
+                  />
+                )}
               </Route>
             )}
+
+            {/* Co-Supervisor */}
             {checkAccess(
               permissions["/phd/proposal/coSupervisor/getProposals"]
             ) && (

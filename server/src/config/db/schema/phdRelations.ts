@@ -9,10 +9,11 @@ import {
     phdProposals,
     phdProposalCoSupervisors,
     phdProposalDacMembers,
+    phdExamTimetableSlots,
+    phdProposalDacReviews,
 } from "./phd.ts";
 import { faculty, phd } from "./admin.ts";
 import { files } from "./form.ts";
-
 export const phdCoursesRelations = relations(phdCourses, ({ one }) => ({
     student: one(phd, {
         fields: [phdCourses.studentEmail],
@@ -20,7 +21,6 @@ export const phdCoursesRelations = relations(phdCourses, ({ one }) => ({
         relationName: "studentCourses",
     }),
 }));
-
 export const phdQualifyingExamsRelations = relations(
     phdQualifyingExams,
     ({ one, many }) => ({
@@ -32,15 +32,16 @@ export const phdQualifyingExamsRelations = relations(
         applications: many(phdExamApplications, {
             relationName: "examApplications",
         }),
+        timetableSlots: many(phdExamTimetableSlots, {
+            relationName: "examTimetableSlots",
+        }),
     })
 );
-
 export const phdSemestersRelations = relations(phdSemesters, ({ many }) => ({
     qualifyingExams: many(phdQualifyingExams, {
         relationName: "qualifyingExamsBySemester",
     }),
 }));
-
 export const phdExamApplicationsRelations = relations(
     phdExamApplications,
     ({ one, many }) => ({
@@ -86,7 +87,6 @@ export const phdExamApplicationsRelations = relations(
         }),
     })
 );
-
 export const phdExaminerSuggestionsRelations = relations(
     phdExaminerSuggestions,
     ({ one }) => ({
@@ -97,7 +97,6 @@ export const phdExaminerSuggestionsRelations = relations(
         }),
     })
 );
-
 export const phdExaminerAssignmentsRelations = relations(
     phdExaminerAssignments,
     ({ one }) => ({
@@ -108,7 +107,6 @@ export const phdExaminerAssignmentsRelations = relations(
         }),
     })
 );
-
 export const phdProposalsRelations = relations(
     phdProposals,
     ({ one, many }) => ({
@@ -136,9 +134,11 @@ export const phdProposalsRelations = relations(
         dacMembers: many(phdProposalDacMembers, {
             relationName: "proposalDacMembers",
         }),
+        dacReviews: many(phdProposalDacReviews, {
+            relationName: "proposalDacReviews",
+        }),
     })
 );
-
 export const phdProposalCoSupervisorsRelations = relations(
     phdProposalCoSupervisors,
     ({ one }) => ({
@@ -154,7 +154,6 @@ export const phdProposalCoSupervisorsRelations = relations(
         }),
     })
 );
-
 export const phdProposalDacMembersRelations = relations(
     phdProposalDacMembers,
     ({ one }) => ({
@@ -167,6 +166,36 @@ export const phdProposalDacMembersRelations = relations(
             fields: [phdProposalDacMembers.dacMemberEmail],
             references: [faculty.email],
             relationName: "dacMemberProposals",
+        }),
+    })
+);
+export const phdExamTimetableSlotsRelations = relations(
+    phdExamTimetableSlots,
+    ({ one }) => ({
+        exam: one(phdQualifyingExams, {
+            fields: [phdExamTimetableSlots.examId],
+            references: [phdQualifyingExams.id],
+            relationName: "examTimetableSlots",
+        }),
+        student: one(phd, {
+            fields: [phdExamTimetableSlots.studentEmail],
+            references: [phd.email],
+            relationName: "studentTimetableSlots",
+        }),
+    })
+);
+export const phdProposalDacReviewsRelations = relations(
+    phdProposalDacReviews,
+    ({ one }) => ({
+        proposal: one(phdProposals, {
+            fields: [phdProposalDacReviews.proposalId],
+            references: [phdProposals.id],
+            relationName: "proposalDacReviews",
+        }),
+        dacMember: one(faculty, {
+            fields: [phdProposalDacReviews.dacMemberEmail],
+            references: [faculty.email],
+            relationName: "dacMemberReviews",
         }),
     })
 );
