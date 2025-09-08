@@ -330,6 +330,13 @@
       "when": 1757295077545,
       "tag": "0046_unknown_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1757327370912,
+      "tag": "0047_silent_chamber",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,7 @@ export const users = pgTable("users", {
         .notNull()
         .default(sql`'{}'::integer[]`),
     deactivated: boolean("deactivated").notNull().default(false),
+    tester: boolean("tester").notNull().default(false),
     type: userType("type").notNull(),
 });
 
