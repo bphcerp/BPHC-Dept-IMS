@@ -71,7 +71,7 @@ const VendorStatsPerYear: FunctionComponent<VendorStatsPerYearProps> = ({
     {
       accessorKey: "vendor.name",
       header: "Vendor Name",
-      meta: { tailwindWidthString: "min-w-44" },
+      meta: { tailwindWidthString: "min-w-44", filterType: 'search' },
     },
     ...(years.map((year) => ({
       accessorKey: year.toString(),
@@ -109,7 +109,6 @@ const VendorStatsPerYear: FunctionComponent<VendorStatsPerYearProps> = ({
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"vendor_name" as keyof VendorStatsPerYear}
       initialState={{
         columnPinning: { left: ["vendor_name"] },
       }}
