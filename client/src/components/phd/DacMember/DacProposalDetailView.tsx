@@ -52,10 +52,10 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
     data: proposal,
     isLoading,
     isError,
-  } = useQuery<ProposalDetails>({
+  } = useQuery({
     queryKey: ["dac-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalDetails>(
         `/phd/proposal/dacMember/viewProposal/${proposalId}`
       );
       return response.data;
@@ -115,7 +115,7 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex items-start justify-between">
             <div>
               <CardTitle>{proposal.title}</CardTitle>
               <CardDescription>
@@ -170,7 +170,7 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
         </CardContent>
       </Card>
       {alreadyReviewed ? (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" /> You Have
@@ -209,7 +209,9 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <RadioGroup
-              onValueChange={(val: "approve" | "reject") => setReviewStatus(val)}
+              onValueChange={(val: "approve" | "reject") =>
+                setReviewStatus(val)
+              }
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="approve" id="approve" />

@@ -91,7 +91,7 @@ router.post(
                             title: "PhD Proposal Ready for Review",
                             description: `Proposal by ${proposal.student.name} is approved by all co-supervisors and is awaiting your review.`,
                             link: `/phd/drc-convenor/proposal-management/view/${proposalId}`,
-                            completionEvent: `proposal:drc-review:${proposalId}:${drc.email}`,
+                            completionEvent: `proposal:drc-review:${proposalId}`,
                         })),
                         tx
                     );

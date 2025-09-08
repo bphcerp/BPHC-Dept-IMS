@@ -30,10 +30,12 @@ const DacProposalManagement: React.FC = () => {
     null
   );
 
-  const { data: proposals = [], isLoading } = useQuery<Proposal[]>({
+  const { data: proposals = [], isLoading } = useQuery({
     queryKey: ["dac-proposals"],
     queryFn: async () => {
-      const response = await api.get("/phd/proposal/dacMember/getProposals");
+      const response = await api.get<Proposal[]>(
+        "/phd/proposal/dacMember/getProposals"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -126,8 +128,8 @@ const DacProposalManagement: React.FC = () => {
                     Select a Proposal
                   </h3>
                   <p className="text-gray-500">
-                    Choose a proposal from the list to view its details and
-                    take action.
+                    Choose a proposal from the list to view its details and take
+                    action.
                   </p>
                 </div>
               </Card>
