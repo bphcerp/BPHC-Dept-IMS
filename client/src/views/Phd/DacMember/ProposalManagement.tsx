@@ -34,9 +34,7 @@ const DacProposalManagement: React.FC = () => {
   const { data: proposals, isLoading, error } = useQuery<Proposal[]>({
     queryKey: ["dac-proposals"],
     queryFn: async () => {
-      const response = await api.get<Proposal[]>(
-        "/phd/proposal/dacMember/getProposals"
-      );
+      const response = await api.get("/phd/proposal/dacMember/getProposals");
       return response.data;
     },
     refetchOnWindowFocus: false,

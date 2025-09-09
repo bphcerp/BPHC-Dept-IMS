@@ -17,68 +17,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FileText, Eye } from "lucide-react";
 
-interface ProposalListItem {
+interface Proposal {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
+  student: { name: string; email: string };
 }
 
-const DrcProposalManagement: React.FC = () => {
+const DacProposalManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { data: proposals, isLoading: listIsLoading } = useQuery({
-    queryKey: ["drc-proposals"],
+  const { data: proposals, isLoading, error } = useQuery<Proposal[]>({
+    queryKey: ["dac-proposals"],
     queryFn: async () => {
-      const response = await api.get<ProposalListItem[]>(
-        "/phd/proposal/drcConvener/getProposals"
-      );
-      const response = await api.get<ProposalListItem[]>(
-        "/phd/proposal/drcConvener/getProposals"
-      );
+      const response = await api.get("/phd/proposal/dacMember/getProposals");
       return response.data;
     },
     refetchOnWindowFocus: false,
   });
 
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-500">Error loading proposals for review.</div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">PhD Proposal Management</h1>
+        <h1 className="text-3xl font-bold">PhD Proposal Evaluation</h1>
         <p className="mt-2 text-gray-600">
-          Review proposals approved by co-supervisors and forward them to DAC
-          members.
+          Review PhD proposals assigned to you as a DAC member.
         </p>
       </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Awaiting Review</CardTitle>
+          <CardTitle className="text-xl font-semibold">
+            Proposals Awaiting Your Review
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {listIsLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <LoadingSpinner />
-            </div>
-          ) : proposals && proposals.length > 0 ? (
+          {proposals && proposals.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
+                  <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -86,22 +85,23 @@ const DrcProposalManagement: React.FC = () => {
                   <TableRow
                     key={proposal.id}
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/phd/drc-convenor/proposal-management/${proposal.id}`)}
+                    onClick={() => navigate(`/phd/dac/proposals/${proposal.id}`)}
                   >
                     <TableCell>
-                      <div className="font-medium">{proposal.student.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {proposal.title}
-                      </div>
+                      {proposal.student.name ?? proposal.student.email}
                     </TableCell>
+                    <TableCell>{proposal.title}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {proposal.status.replace("_", " ").toUpperCase()}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      {new Date(proposal.updatedAt).toLocaleDateString()}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
+                      <Button variant="outline" size="sm">
+                        <Eye className="mr-2 h-4 w-4" /> Review
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -115,7 +115,7 @@ const DrcProposalManagement: React.FC = () => {
                 No Pending Proposals
               </h3>
               <p className="text-gray-500">
-                No proposals are awaiting your review.
+                There are no proposals awaiting your review.
               </p>
             </div>
           )}
@@ -125,4 +125,4 @@ const DrcProposalManagement: React.FC = () => {
   );
 };
 
-export default DrcProposalManagement;
+export default DacProposalManagement;
