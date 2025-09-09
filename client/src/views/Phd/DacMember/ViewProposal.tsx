@@ -18,8 +18,8 @@ import { Download, CheckCircle, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { phdSchemas } from "lib";
 import BackButton from "@/components/BackButton";
+import { FileUploader } from "@/components/ui/file-uploader";
 
 interface ProposalDetails {
   id: number;
@@ -39,9 +39,9 @@ const DacViewProposal: React.FC = () => {
   const proposalId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const [reviewStatus, setReviewStatus] = useState<"approve" | "reject">();
   const [comments, setComments] = useState("");
+  const [suggestionFile, setSuggestionFile] = useState<File | null>(null);
 
   const {
     data: proposal,
@@ -59,8 +59,10 @@ const DacViewProposal: React.FC = () => {
   });
 
   const submitReviewMutation = useMutation({
-    mutationFn: (data: phdSchemas.SubmitDacReviewBody) =>
-      api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, data),
+    mutationFn: (data: FormData) =>
+      api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
     onSuccess: () => {
       toast.success("Review submitted successfully!");
       void queryClient.invalidateQueries({ queryKey: ["dac-proposals"] });
@@ -81,10 +83,15 @@ const DacViewProposal: React.FC = () => {
       toast.error("Comments are required.");
       return;
     }
-    submitReviewMutation.mutate({
-      approved: reviewStatus === "approve",
-      comments,
-    });
+
+    const formData = new FormData();
+    formData.append("approved", String(reviewStatus === "approve"));
+    formData.append("comments", comments);
+    if (suggestionFile) {
+      formData.append("suggestionFile", suggestionFile);
+    }
+
+    submitReviewMutation.mutate(formData);
   };
 
   if (isLoading)
@@ -145,7 +152,7 @@ const DacViewProposal: React.FC = () => {
           <div>
             <h3 className="font-semibold">Supervisor</h3>
             <p>
-              {proposal.supervisor.name} ({proposal.supervisor.email})
+              {proposal.supervisor.name}({proposal.supervisor.email})
             </p>
           </div>
           <div>
@@ -160,6 +167,7 @@ const DacViewProposal: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
       {alreadyReviewed ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
@@ -225,6 +233,17 @@ const DacViewProposal: React.FC = () => {
                 onChange={(e) => setComments(e.target.value)}
                 placeholder="Provide detailed feedback..."
                 rows={6}
+              />
+            </div>
+            <div>
+              <Label htmlFor="suggestionFile">
+                Suggestion Document (Optional, PDF only)
+              </Label>
+              <FileUploader
+                value={suggestionFile ? [suggestionFile] : []}
+                onValueChange={(files) => setSuggestionFile(files[0] ?? null)}
+                accept={{ "application/pdf": [] }}
+                className="mt-1"
               />
             </div>
           </CardContent>

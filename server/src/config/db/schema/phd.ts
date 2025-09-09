@@ -290,6 +290,10 @@ export const phdProposalDacReviews = pgTable(
             .references(() => faculty.email, { onDelete: "cascade" }),
         approved: boolean("approved").notNull(),
         comments: text("comments").notNull(),
+        suggestionFileId: integer("suggestion_file_id").references(
+            () => files.id,
+            { onDelete: "set null" }
+        ),
         createdAt: timestamp("created_at", { withTimezone: true })
             .defaultNow()
             .notNull(),

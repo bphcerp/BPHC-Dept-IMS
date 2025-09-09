@@ -331,7 +331,10 @@ export type FinalizeDacMembersDrcBody = z.infer<
     typeof finalizeDacMembersDrcSchema
 >;
 export const submitDacReviewSchema = z.object({
-    approved: z.boolean(),
+    approved: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean()
+    ),
     comments: z.string().trim().min(1, "Comments are required for DAC review"),
 });
 export type SubmitDacReviewBody = z.infer<typeof submitDacReviewSchema>;

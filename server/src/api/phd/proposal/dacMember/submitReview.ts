@@ -1,5 +1,6 @@
 import db from "@/config/db/index.ts";
 import { phdProposals, phdProposalDacReviews } from "@/config/db/schema/phd.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -7,12 +8,22 @@ import { eq } from "drizzle-orm";
 import express from "express";
 import { phdSchemas, modules } from "lib";
 import { completeTodo } from "@/lib/todos/index.ts";
+import { pdfUpload } from "@/config/multer.ts";
+import multer from "multer";
 
 const router = express.Router();
 
 router.post(
     "/:id",
     checkAccess(),
+    asyncHandler((req, res, next) =>
+        pdfUpload.single("suggestionFile")(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                throw new HttpError(HttpCode.BAD_REQUEST, err.message);
+            }
+            next(err);
+        })
+    ),
     asyncHandler(async (req, res) => {
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
@@ -22,6 +33,7 @@ router.post(
             req.body
         );
         const dacMemberEmail = req.user!.email;
+        const suggestionFile = req.file;
 
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
@@ -46,6 +58,23 @@ router.post(
                     "You are not assigned to review this proposal."
                 );
 
+            let suggestionFileId: number | null = null;
+            if (suggestionFile) {
+                const [insertedFile] = await tx
+                    .insert(files)
+                    .values({
+                        userEmail: dacMemberEmail,
+                        filePath: suggestionFile.path,
+                        originalName: suggestionFile.originalname,
+                        mimetype: suggestionFile.mimetype,
+                        size: suggestionFile.size,
+                        fieldName: "suggestionFile",
+                        module: modules[3],
+                    })
+                    .returning();
+                suggestionFileId = insertedFile.id;
+            }
+
             await tx
                 .insert(phdProposalDacReviews)
                 .values({
@@ -53,6 +82,7 @@ router.post(
                     dacMemberEmail,
                     approved,
                     comments,
+                    suggestionFileId,
                 })
                 .onConflictDoNothing();
 

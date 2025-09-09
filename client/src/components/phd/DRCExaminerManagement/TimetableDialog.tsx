@@ -327,7 +327,7 @@ const DroppableArea = ({
       <CardContent
         ref={setNodeRef}
         id={id}
-        className="flex-grow overflow-y-auto rounded-b-lg bg-muted/20 p-2"
+        className="flex-grow rounded-b-lg bg-muted/20 p-2"
       >
         <SortableContext
           id={id}
