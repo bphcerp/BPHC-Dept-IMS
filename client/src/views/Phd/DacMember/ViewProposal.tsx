@@ -109,7 +109,7 @@ const DacViewProposal: React.FC = () => {
       <BackButton />
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex items-start justify-between">
             <div>
               <CardTitle>{proposal.title}</CardTitle>
               <CardDescription>
@@ -161,7 +161,7 @@ const DacViewProposal: React.FC = () => {
         </CardContent>
       </Card>
       {alreadyReviewed ? (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" /> You Have

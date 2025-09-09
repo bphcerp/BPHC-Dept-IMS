@@ -72,7 +72,9 @@ const DrcViewProposal: React.FC = () => {
     mutationFn: () =>
       api.post(`/phd/proposal/drcConvener/sendToDac/${proposalId}`),
     onSuccess: () => {
-      toast.success("Proposal successfully sent to DAC members for evaluation.");
+      toast.success(
+        "Proposal successfully sent to DAC members for evaluation."
+      );
       void queryClient.invalidateQueries({ queryKey: ["drc-proposals"] });
       navigate("/phd/drc-convenor/proposal-management");
     },
@@ -101,7 +103,7 @@ const DrcViewProposal: React.FC = () => {
       <BackButton />
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl">{proposal.title}</CardTitle>
               <CardDescription>
@@ -112,7 +114,7 @@ const DrcViewProposal: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-semibold mb-2">Proposal Documents</h3>
+            <h3 className="mb-2 font-semibold">Proposal Documents</h3>
             <div className="flex space-x-2">
               <Button variant="outline" asChild>
                 <a
@@ -134,16 +136,16 @@ const DrcViewProposal: React.FC = () => {
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <h3 className="font-semibold mb-2">Supervisor</h3>
+              <h3 className="mb-2 font-semibold">Supervisor</h3>
               <p>
                 {proposal.supervisor.name} ({proposal.supervisor.email})
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Co-Supervisors</h3>
-              <ul className="list-disc list-inside">
+              <h3 className="mb-2 font-semibold">Co-Supervisors</h3>
+              <ul className="list-inside list-disc">
                 {proposal.coSupervisors.map((cs) => (
                   <li key={cs.coSupervisor.email}>
                     {cs.coSupervisor.name} ({cs.coSupervisor.email})
@@ -153,8 +155,8 @@ const DrcViewProposal: React.FC = () => {
             </div>
           </div>
           <div>
-            <h3 className="font-semibold mb-2">Assigned DAC Members</h3>
-            <ul className="list-disc list-inside">
+            <h3 className="mb-2 font-semibold">Assigned DAC Members</h3>
+            <ul className="list-inside list-disc">
               {proposal.dacMembers.map((dac) => (
                 <li key={dac.dacMember.email}>
                   {dac.dacMember.name} ({dac.dacMember.email})
@@ -173,7 +175,7 @@ const DrcViewProposal: React.FC = () => {
                   ? "Sending..."
                   : "Send to DAC for Evaluation"}
               </Button>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="mt-2 text-xs text-muted-foreground">
                 This will notify the DAC members and create a To-do item for
                 them.
               </p>

@@ -56,7 +56,7 @@ const DrcProposalManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             {listIsLoading ? (
-              <div className="flex justify-center items-center h-40">
+              <div className="flex h-40 items-center justify-center">
                 <LoadingSpinner />
               </div>
             ) : proposals && proposals.length > 0 ? (
@@ -81,7 +81,9 @@ const DrcProposalManagement: React.FC = () => {
                       }
                     >
                       <TableCell>
-                        <div className="font-medium">{proposal.student.name}</div>
+                        <div className="font-medium">
+                          {proposal.student.name}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {proposal.student.email}
                         </div>

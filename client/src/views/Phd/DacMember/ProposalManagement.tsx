@@ -68,7 +68,9 @@ const DacProposalManagement: React.FC = () => {
                     <TableRow
                       key={proposal.id}
                       className="cursor-pointer"
-                      onClick={() => navigate(`/phd/dac/proposals/${proposal.id}`)}
+                      onClick={() =>
+                        navigate(`/phd/dac/proposals/${proposal.id}`)
+                      }
                     >
                       <TableCell>
                         <div className="font-medium">
