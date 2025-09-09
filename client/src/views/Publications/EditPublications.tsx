@@ -35,7 +35,7 @@ const EditPublications = () => {
     isLoading: isLoadingPubs,
     isError: isPubsError,
   } = useQuery({
-    queryKey: ["publications/all"],
+    queryKey: ["publications/edit"],
     queryFn: async () => {
       const response = await api.get<publicationsSchemas.PublicationWithMetaResponse>("/publications/all/meta");
       return response.data;
@@ -56,7 +56,7 @@ const EditPublications = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["publications/all"] });
+      queryClient.invalidateQueries({ queryKey: ["publications/edit"] });
       toast.success("Publication updated successfully");
     },
     onError: (error) => {
