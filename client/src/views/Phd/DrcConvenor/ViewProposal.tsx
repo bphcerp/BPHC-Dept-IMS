@@ -15,15 +15,30 @@ import { Download, Send } from "lucide-react";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
 
-interface Student { name: string | null; email: string }
-interface Supervisor { name: string | null; email: string }
-interface CoSupervisor { coSupervisor: { name: string | null; email: string } }
-interface DacMember { dacMember: { name: string | null; email: string } }
+interface Student {
+  name: string | null;
+  email: string;
+}
+interface Supervisor {
+  name: string | null;
+  email: string;
+}
+interface CoSupervisor {
+  coSupervisor: {
+    name: string | null;
+    email: string;
+  };
+}
+interface DacMember {
+  dacMember: {
+    name: string | null;
+    email: string;
+  };
+}
 interface ProposalDetails {
   id: number;
   title: string;
   status: string;
-  updatedAt: string;
   student: Student;
   supervisor: Supervisor;
   coSupervisors: CoSupervisor[];
@@ -34,6 +49,7 @@ interface ProposalDetails {
 
 const DrcViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const proposalId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -42,18 +58,19 @@ const DrcViewProposal: React.FC = () => {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["drc-proposal-view", id],
+    queryKey: ["drc-proposal-view", proposalId],
     queryFn: async () => {
       const response = await api.get<ProposalDetails>(
-        `/phd/proposal/drcConvener/viewProposal/${id}`
+        `/phd/proposal/drcConvener/viewProposal/${proposalId}`
       );
       return response.data;
     },
-    enabled: !!id,
+    enabled: !!proposalId,
   });
 
   const sendToDacMutation = useMutation({
-    mutationFn: () => api.post(`/phd/proposal/drcConvener/sendToDac/${id}`),
+    mutationFn: () =>
+      api.post(`/phd/proposal/drcConvener/sendToDac/${proposalId}`),
     onSuccess: () => {
       toast.success("Proposal successfully sent to DAC members for evaluation.");
       void queryClient.invalidateQueries({ queryKey: ["drc-proposals"] });
@@ -70,7 +87,6 @@ const DrcViewProposal: React.FC = () => {
         <LoadingSpinner />
       </div>
     );
-
   if (isError || !proposal)
     return (
       <Card>
@@ -81,33 +97,43 @@ const DrcViewProposal: React.FC = () => {
     );
 
   return (
-    <div className="space-y-6">
-       <div className="flex justify-between items-center">
-         <h1 className="text-3xl font-bold">Proposal Details</h1>
-         <BackButton />
-       </div>
+    <div className="space-y-4">
+      <BackButton />
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{proposal.title}</CardTitle>
-          <CardDescription>Submitted by {proposal.student.name}</CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl">{proposal.title}</CardTitle>
+              <CardDescription>
+                Submitted by {proposal.student.name}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
             <h3 className="font-semibold mb-2">Proposal Documents</h3>
             <div className="flex space-x-2">
               <Button variant="outline" asChild>
-                <a href={proposal.abstractFileUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={proposal.abstractFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Download className="mr-2 h-4 w-4" /> Abstract
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a href={proposal.proposalFileUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={proposal.proposalFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <Download className="mr-2 h-4 w-4" /> Full Proposal
                 </a>
               </Button>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">Supervisor</h3>
@@ -148,7 +174,8 @@ const DrcViewProposal: React.FC = () => {
                   : "Send to DAC for Evaluation"}
               </Button>
               <p className="text-xs text-muted-foreground mt-2">
-                This will notify the DAC members and create a To-do item for them.
+                This will notify the DAC members and create a To-do item for
+                them.
               </p>
             </div>
           )}
@@ -157,4 +184,5 @@ const DrcViewProposal: React.FC = () => {
     </div>
   );
 };
+
 export default DrcViewProposal;

@@ -405,7 +405,6 @@ const Routing = () => {
                 <Route path="proposals/:id" element={<DacViewProposal />} />
               </Route>
             )}
-
             {/* Supervisor */}
             {checkAccessAnyOne([
               permissions["/phd/proposal/supervisor/getProposals"],

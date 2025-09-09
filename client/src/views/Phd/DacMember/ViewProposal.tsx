@@ -36,35 +36,35 @@ interface ProposalDetails {
 
 const DacViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const proposalId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const [reviewStatus, setReviewStatus] = useState<"approve" | "reject">();
   const [comments, setComments] = useState("");
 
   const {
     data: proposal,
     isLoading,
-    error,
+    isError,
   } = useQuery<ProposalDetails>({
-    queryKey: ["dac-proposal-view", id],
+    queryKey: ["dac-proposal-view", proposalId],
     queryFn: async () => {
       const response = await api.get(
-        `/phd/proposal/dacMember/viewProposal/${id}`
+        `/phd/proposal/dacMember/viewProposal/${proposalId}`
       );
       return response.data;
     },
-    enabled: !!id,
+    enabled: !!proposalId,
   });
 
   const submitReviewMutation = useMutation({
     mutationFn: (data: phdSchemas.SubmitDacReviewBody) =>
-      api.post(`/phd/proposal/dacMember/submitReview/${id}`, data),
+      api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, data),
     onSuccess: () => {
       toast.success("Review submitted successfully!");
-      void queryClient.invalidateQueries({
-        queryKey: ["dac-proposal-view", id],
-      });
       void queryClient.invalidateQueries({ queryKey: ["dac-proposals"] });
+      void queryClient.invalidateQueries({ queryKey: ["todos"] });
       navigate("/phd/dac/proposals");
     },
     onError: () => {
@@ -87,49 +87,57 @@ const DacViewProposal: React.FC = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner />
       </div>
     );
-  }
-
-  if (error || !proposal) {
-    return <div className="p-4 text-red-500">Error loading proposal details.</div>;
-  }
+  if (isError || !proposal)
+    return (
+      <Card>
+        <CardContent>
+          <p className="p-4 text-red-500">Could not load proposal details.</p>
+        </CardContent>
+      </Card>
+    );
 
   const alreadyReviewed = !!proposal.currentUserReview;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Proposal Details</h1>
-          <p className="mt-2 text-gray-600">
-            Submitted by {proposal.student.name} ({proposal.student.email})
-          </p>
-        </div>
-        <BackButton />
-      </div>
-
+      <BackButton />
       <Card>
         <CardHeader>
-          <CardTitle>{proposal.title}</CardTitle>
-          <CardDescription>
-            Status:{" "}
-            <Badge variant="outline">{proposal.status.replace("_", " ").toUpperCase()}</Badge>
-          </CardDescription>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>{proposal.title}</CardTitle>
+              <CardDescription>
+                Status:{" "}
+                <Badge variant="outline">
+                  {proposal.status.replace("_", " ").toUpperCase()}
+                </Badge>
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex space-x-2">
             <Button variant="outline" asChild>
-              <a href={proposal.abstractFileUrl} target="_blank" rel="noopener noreferrer">
+              <a
+                href={proposal.abstractFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Download className="mr-2 h-4 w-4" /> Abstract
               </a>
             </Button>
             <Button variant="outline" asChild>
-              <a href={proposal.proposalFileUrl} target="_blank" rel="noopener noreferrer">
+              <a
+                href={proposal.proposalFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Download className="mr-2 h-4 w-4" /> Full Proposal
               </a>
             </Button>
@@ -156,14 +164,20 @@ const DacViewProposal: React.FC = () => {
         <Card className="bg-green-50 border-green-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              You Have Reviewed This Proposal
+              <CheckCircle className="h-5 w-5 text-green-600" /> You Have
+              Reviewed This Proposal
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p>
               Your Decision:{" "}
-              <span className={`font-semibold ${proposal.currentUserReview?.approved ? "text-green-700" : "text-red-700"}`}>
+              <span
+                className={`font-semibold ${
+                  proposal.currentUserReview?.approved
+                    ? "text-green-700"
+                    : "text-red-700"
+                }`}
+              >
                 {proposal.currentUserReview?.approved ? "Approved" : "Rejected"}
               </span>
             </p>
@@ -180,11 +194,16 @@ const DacViewProposal: React.FC = () => {
           <CardHeader>
             <CardTitle>Your Evaluation</CardTitle>
             <CardDescription>
-              Please provide your feedback on this proposal. Your comments are required.
+              Please provide your feedback on this proposal. Your comments are
+              required.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RadioGroup onValueChange={(val: "approve" | "reject") => setReviewStatus(val)}>
+            <RadioGroup
+              onValueChange={(val: "approve" | "reject") =>
+                setReviewStatus(val)
+              }
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="approve" id="approve" />
                 <Label htmlFor="approve" className="flex items-center gap-2">
@@ -210,8 +229,13 @@ const DacViewProposal: React.FC = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleSubmitReview} disabled={submitReviewMutation.isLoading}>
-              {submitReviewMutation.isLoading && (<LoadingSpinner className="mr-2 h-4 w-4" />)}
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submitReviewMutation.isLoading}
+            >
+              {submitReviewMutation.isLoading && (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              )}
               Submit Review
             </Button>
           </CardFooter>
