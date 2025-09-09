@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -13,25 +12,53 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useEffect} from "react";
-import { useNavigate } from "react-router-dom";
 import logo from "/logo/bitspilanilogo.png";
 import { DEPARTMENT_NAME } from "@/lib/constants";
-import { Computer, FileText, GraduationCap, BookOpen, LibraryBig, Warehouse, File, ArrowLeftIcon, Users, BookMarked } from "lucide-react";
+import {
+  Computer,
+  FileText,
+  GraduationCap,
+  BookOpen,
+  LibraryBig,
+  Warehouse,
+  File,
+  ArrowLeftIcon,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 const modules = [
   {
     title: "Modules",
     items: [
       { title: "Admin", icon: <Computer />, doc: "/app-docs/main.pdf" },
-      { title: "Conference Approval", icon: <FileText />, doc: "/app-docs/conference.pdf" },
-      { title: "Course Handouts", icon: <BookOpen />, doc: "/app-docs/handouts.pdf" },
-      { title: "Inventory", icon: <Warehouse />, doc: "/app-docs/inventory.pdf" },
+      {
+        title: "Conference Approval",
+        icon: <FileText />,
+        doc: "/app-docs/conference.pdf",
+      },
+      {
+        title: "Course Handouts",
+        icon: <BookOpen />,
+        doc: "/app-docs/handouts.pdf",
+      },
+      {
+        title: "Inventory",
+        icon: <Warehouse />,
+        doc: "/app-docs/inventory.pdf",
+      },
       { title: "Patent", icon: <File />, doc: "/app-docs/patent.pdf" },
-      { title: "PhD", icon: <GraduationCap />, doc: "/app-docs/phd.pdf" },
+      { title: "PhD", icon: <GraduationCap />, doc: "/app-docs/wip.pdf" },
       { title: "Project", icon: <File />, doc: "/app-docs/project.pdf" },
-      { title: "Publications", icon: <LibraryBig />, doc: "/app-docs/publications.pdf" },
-      { title: "QP Review", icon: <FileText />, doc: "/app-docs/qp-review.pdf" },
+      {
+        title: "Publications",
+        icon: <LibraryBig />,
+        doc: "/app-docs/publications.pdf",
+      },
+      {
+        title: "QP Review",
+        icon: <FileText />,
+        doc: "/app-docs/wip.pdf",
+      },
       { title: "WILP Projects", icon: <BookOpen />, doc: "/app-docs/wilp.pdf" },
     ],
   },
@@ -39,45 +66,17 @@ const modules = [
 
 const HelpPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
-  const [docExists, setDocExists] = useState<boolean | null>(null);
-  const { state } = useSidebar ? useSidebar() : { state: "expanded" };
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!selectedDoc) {
-      setDocExists(null);
-      return;
-    }
-    // Always check, even if the same doc is selected again
-  fetch(selectedDoc.startsWith("/") ? selectedDoc : "client/public" + selectedDoc, { method: "HEAD" })
-      .then((res) => {
-        if (res.ok) {
-          setDocExists(true);
-        } else {
-          setDocExists(false);
-          setTimeout(() => navigate("../404", { replace: true }), 0);
-        }
-      })
-      .catch(() => {
-        setDocExists(false);
-        setTimeout(() => navigate("../404", { replace: true }), 0);
-      });
-  }, [selectedDoc, navigate]);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between">
-            <button
-              className="flex min-w-0 items-center gap-1"
-              onClick={() => (window.location.href = "/")}
-              style={{ background: "none", border: "none", padding: 0 }}
-            >
-              {!isCollapsed && (
-                <ArrowLeftIcon className="h-6 w-6 shrink-0" />
-              )}
+            <Link to="/" className="flex min-w-0 items-center gap-1">
+              {!isCollapsed && <ArrowLeftIcon className="h-6 w-6 shrink-0" />}
               {!isCollapsed && (
                 <img
                   src={logo}
@@ -90,7 +89,7 @@ const HelpPage = () => {
                   {DEPARTMENT_NAME} IMS
                 </span>
               )}
-            </button>
+            </Link>
             <SidebarTrigger className="hidden shrink-0 md:flex" />
           </div>
         </SidebarHeader>
@@ -103,9 +102,12 @@ const HelpPage = () => {
                   {group.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        isActive={selectedDoc === item.doc}
+                        isActive={selectedModule === item.title}
                         className="items-start"
-                        onClick={() => setSelectedDoc(item.doc)}
+                        onClick={() => {
+                          setSelectedDoc(item.doc);
+                          setSelectedModule(item.title);
+                        }}
                       >
                         {item.icon}
                         <span>{item.title}</span>
@@ -117,37 +119,20 @@ const HelpPage = () => {
             </SidebarGroup>
           ))}
         </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenuButton
-            tooltip="Wiki"
-            className="flex items-start gap-2 mb-1"
-            isActive={true}
-          >
-            <BookMarked className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span>Help</span>}
-          </SidebarMenuButton>
-          <SidebarMenuButton
-            tooltip="View Contributors"
-            className="flex items-start gap-2"
-            onClick={() => setSelectedDoc(null)}
-          >
-            <Users className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span>View Contributors</span>}
-          </SidebarMenuButton>
-        </SidebarFooter>
       </Sidebar>
-      
-      <div className="flex-1 h-screen w-full p-8">
-        {selectedDoc && docExists ? (
-          <iframe
+
+      <div className="h-screen w-full flex-1 p-8">
+        {selectedDoc ? (
+          <embed
             src={selectedDoc}
-            title="PDF Document"
-            className="w-full h-full border-0"
-            style={{ minHeight: "100vh" }}
+            type="application/pdf"
+            width="100%"
+            height="100%"
+            style={{ minHeight: "100vh", border: "none" }}
           />
         ) : (
-          <div className="flex justify-center items-center h-full bg-white">
-            <div className="text-gray-400 text-lg">
+          <div className="flex h-full items-center justify-center bg-white">
+            <div className="text-lg text-gray-400">
               Select a module from the sidebar to view its documentation.
             </div>
           </div>
