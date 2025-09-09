@@ -4,19 +4,12 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 const router = express.Router();
 
-
 router.get(
-    "/:id",
+    "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const { id } = req.params;
-
-        const form = await db.query.allocationForm.findFirst({
-            where: (form, { eq }) =>
-                eq(form.id, id)
-        });
-
-        res.status(200).json(form);
+        const forms = await db.query.allocationFormTemplate.findMany();
+        res.status(200).json(forms);
     })
 );
 

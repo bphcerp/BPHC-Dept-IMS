@@ -11,9 +11,9 @@ router.get(
     asyncHandler(async (req, res) => {
         const { id } = req.params;
 
-        const templateInfo = await db.query.allocationForm.findFirst({
+        const templateInfo = await db.query.allocationFormTemplate.findFirst({
             columns: {
-                title: true,
+                name: true,
                 description: true,
                 createdBy: true
             },
