@@ -7,6 +7,7 @@ import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
 import { publicationsTable, researgencePublications } from "@/config/db/schema/publications.ts";
 import { publicationsSchemas } from "lib";
+import logger from "@/config/logger.ts";
 
 const router = Router();
 
@@ -89,6 +90,7 @@ router.post(
             matched: 0,
             successful: 0,
             failed: 0,
+            repeated: 0,
             errors: [] as string[],
         };
 
@@ -108,10 +110,12 @@ router.post(
                     .from(researgencePublications)
                     .where(eq(researgencePublications.publicationTitle, parsedRow.publicationTitle));
                 if (existingPub) {
-                    results.failed++;
-                    results.errors.push(
-                        `Row ${i + 2}: Publication with title ${parsedRow.publicationTitle} already exists`
-                    );
+                    results.repeated++;
+                    await db
+                        .update(researgencePublications)
+                        .set(parsedRow)
+                        .where(eq(researgencePublications.publicationTitle, parsedRow.publicationTitle))
+
                     continue;
                 }
 
@@ -146,9 +150,12 @@ router.post(
                 results.errors.push(
                     `Row ${i + 2}: ${error instanceof Error ? error.message : "Unknown error"}`
                 );
+                logger.error(`Could not add publication : ${parsedRow.publicationTitle} due to an Unknown Error.`);
             }
         }
 
+        logger.info(`Updated ${results.repeated} duplicate publications.`);
+        logger.info("Data upload completed.");
         res.json({
             message: "Data upload completed",
             results,
