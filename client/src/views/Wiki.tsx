@@ -37,7 +37,7 @@ const modules = [
   },
 ];
 
-const WikiPage = () => {
+const HelpPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [docExists, setDocExists] = useState<boolean | null>(null);
   const { state } = useSidebar ? useSidebar() : { state: "expanded" };
@@ -124,7 +124,7 @@ const WikiPage = () => {
             isActive={true}
           >
             <BookMarked className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span>Wiki</span>}
+            {!isCollapsed && <span>Help</span>}
           </SidebarMenuButton>
           <SidebarMenuButton
             tooltip="View Contributors"
@@ -157,4 +157,4 @@ const WikiPage = () => {
   );
 };
 
-export default WikiPage;
+export default HelpPage;

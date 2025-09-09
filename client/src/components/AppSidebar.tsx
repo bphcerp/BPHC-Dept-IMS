@@ -121,12 +121,12 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
           {authState && (
             <SidebarMenuButton
               asChild
-              tooltip="Wiki"
+              tooltip="Help"
               className="flex items-start gap-2 mb-1"
             >
-              <Link to="/wiki">
+              <Link to="/help">
                 <BookMarked className="h-5 w-5 shrink-0" />
-                {!isCollapsed && <span>Wiki</span>}
+                {!isCollapsed && <span>Help</span>}
               </Link>
             </SidebarMenuButton>
           )}

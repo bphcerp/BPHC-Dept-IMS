@@ -70,7 +70,7 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
-import WikiPage from "@/views/Wiki";
+import HelpPage from "@/views/Wiki";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ProjectDetails from "@/views/Project/[id]";
@@ -208,7 +208,7 @@ const Routing = () => {
           }
         />
         <Route path="/contributors" element={<ContributorsPage />} />
-        <Route path="/wiki" element={authState ? <WikiPage /> : <Navigate to="/" replace />} />
+        <Route path="/help" element={authState ? <HelpPage /> : <Navigate to="/" replace />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
         {authState && <Route path="/profile" element={<ProfilePage />} />}
         {checkAccessAnyOne(adminModulePermissions) && (
