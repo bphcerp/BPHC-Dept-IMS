@@ -70,6 +70,7 @@ type BaseTableProps<T> =  {
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
+  mainSearchColumn? : keyof T;
 }
 
 type AltTableProps1<T> = {
@@ -111,6 +112,7 @@ export function DataTable<T>({
   additionalButtons,
   isTableHeaderFixed,
   tableElementRefProp,
+  mainSearchColumn
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -600,6 +602,20 @@ export function DataTable<T>({
           </div>
           <div className="flex justify-center space-x-2">
             {additionalButtons}
+          </div>
+          <div className="px-5">
+              {
+              mainSearchColumn ?
+              (
+                <Input
+                  placeholder={`Search ${String(mainSearchColumn)}..`}
+                  className="w-128"
+                  value={table.getColumn(String(mainSearchColumn))?.getFilterValue() as string}
+                  onChange={(event) => table.getColumn(String(mainSearchColumn))?.setFilterValue(event.target.value)}
+                />
+              ) :
+              undefined
+              }
           </div>
         </div>
       </div>
