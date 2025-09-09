@@ -40,4 +40,3 @@ COPY nginx.prod.conf /etc/nginx/nginx.conf
 COPY --from=build-stage /usr/local/app/client/dist .
 
 CMD ["nginx", "-g", "daemon off;"]
-COPY --from=build-stage /usr/local/app/client/public/app_docs ./app_docs
