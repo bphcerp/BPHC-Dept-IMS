@@ -14,8 +14,24 @@ router.get(
             where: (template, { eq }) =>
                 eq(template.id, id)
         });
+        
+        if (template) {
+            const fields = await db.query.allocationFormTemplateField.findMany({
+                where: (field, { eq }) => eq(field.templateId, id),
+                orderBy: (field) => field.order,
+            });
 
-        res.status(200).json(template);
+            res.status(200).json({
+                ...template,
+                fields,
+            });
+        }     
+        
+        else if (!template) {
+            res.status(404).json({ message: "Template not found" });
+        }       
+
+       
     })
 );
 

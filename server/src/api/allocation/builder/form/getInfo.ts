@@ -12,11 +12,6 @@ router.get(
         const { id } = req.params;
 
         const templateInfo = await db.query.allocationForm.findFirst({
-            columns: {
-                title: true,
-                description: true,
-                createdBy: true
-            },
             where: (template, { eq }) =>
                 eq(template.id, id)
         });
