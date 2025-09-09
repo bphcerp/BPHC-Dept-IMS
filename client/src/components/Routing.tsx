@@ -35,7 +35,9 @@ import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
+import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal"; 
 import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
+import DacViewProposal from "@/views/Phd/DacMember/ViewProposal";
 import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
@@ -368,15 +370,12 @@ const Routing = () => {
               </Route>
             )}
 
-            {/* DRC Convenor */}
             {checkAccessAnyOne([
               permissions["/phd/drcMember/getAvailableExams"],
               permissions["/phd/proposal/drcConvener/getProposals"],
             ]) && (
               <Route path="drc-convenor" element={<Outlet />}>
-                {checkAccess(
-                  permissions["/phd/drcMember/getAvailableExams"]
-                ) && (
+                {checkAccess(permissions["/phd/drcMember/getAvailableExams"]) && (
                   <Route
                     path="qualifying-exam-management"
                     element={<QualifyingExamManagement />}
@@ -385,20 +384,24 @@ const Routing = () => {
                 {checkAccess(
                   permissions["/phd/proposal/drcConvener/getProposals"]
                 ) && (
-                  <Route
-                    path="proposal-management"
-                    element={<DrcProposalManagement />}
-                  />
+                  <>
+                    <Route
+                      path="proposal-management"
+                      element={<DrcProposalManagement />}
+                    />
+                    <Route
+                      path="proposal-management/:id"
+                      element={<DrcViewProposal />}
+                    />
+                  </>
                 )}
               </Route>
             )}
-
-            {/* DAC Member */}
-            {checkAccess(
-              permissions["/phd/proposal/dacMember/getProposals"]
-            ) && (
+            {}
+            {checkAccess(permissions["/phd/proposal/dacMember/getProposals"]) && (
               <Route path="dac" element={<Outlet />}>
                 <Route path="proposals" element={<DacProposalManagement />} />
+                <Route path="proposals/:id" element={<DacViewProposal />} />
               </Route>
             )}
 
