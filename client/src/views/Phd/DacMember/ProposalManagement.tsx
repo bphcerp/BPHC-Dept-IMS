@@ -26,10 +26,12 @@ interface Proposal {
 
 const DacProposalManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { data: proposals = [], isLoading } = useQuery<Proposal[]>({
+  const { data: proposals = [], isLoading } = useQuery({
     queryKey: ["dac-proposals"],
     queryFn: async () => {
-      const response = await api.get("/phd/proposal/dacMember/getProposals");
+      const response = await api.get<Proposal[]>(
+        "/phd/proposal/dacMember/getProposals"
+      );
       return response.data;
     },
     refetchOnWindowFocus: false,
@@ -96,12 +98,10 @@ const DacProposalManagement: React.FC = () => {
               <div className="py-8 text-center">
                 <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <h3 className="mb-2 text-lg font-medium">
-                  {" "}
-                  No Pending Proposals{" "}
+                  No Pending Proposals
                 </h3>
                 <p className="text-gray-500">
-                  {" "}
-                  There are no proposals awaiting your review.{" "}
+                  There are no proposals awaiting your review.
                 </p>
               </div>
             )}

@@ -32,11 +32,6 @@ router.post(
                 HttpCode.BAD_REQUEST,
                 "proposal not in supervisor review stage"
             );
-        // if (proposal.coSupervisors.length < 1)
-        //     throw new HttpError(
-        //         HttpCode.BAD_REQUEST,
-        //         "No co-supervisors assigned"
-        //     );
         if (proposal.dacMembers.length < 2)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,

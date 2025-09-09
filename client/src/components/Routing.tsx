@@ -35,7 +35,7 @@ import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
-import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal"; 
+import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal";
 import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
 import DacViewProposal from "@/views/Phd/DacMember/ViewProposal";
 import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
@@ -376,7 +376,9 @@ const Routing = () => {
               permissions["/phd/proposal/drcConvener/getProposals"],
             ]) && (
               <Route path="drc-convenor" element={<Outlet />}>
-                {checkAccess(permissions["/phd/drcMember/getAvailableExams"]) && (
+                {checkAccess(
+                  permissions["/phd/drcMember/getAvailableExams"]
+                ) && (
                   <Route
                     path="qualifying-exam-management"
                     element={<QualifyingExamManagement />}
@@ -398,14 +400,14 @@ const Routing = () => {
                 )}
               </Route>
             )}
-            {}
-            {checkAccess(permissions["/phd/proposal/dacMember/getProposals"]) && (
+            {checkAccess(
+              permissions["/phd/proposal/dacMember/getProposals"]
+            ) && (
               <Route path="dac" element={<Outlet />}>
                 <Route path="proposals" element={<DacProposalManagement />} />
                 <Route path="proposals/:id" element={<DacViewProposal />} />
               </Route>
             )}
-            {/* Supervisor */}
             {checkAccessAnyOne([
               permissions["/phd/proposal/supervisor/getProposals"],
               permissions["/phd/supervisor/suggestExaminers"],
@@ -460,7 +462,10 @@ const Routing = () => {
               <Route path="all-publications" element={<AllPublications />} />
             )}
             {checkAccess(permissions["/publications/upload"]) && (
-              <Route path="upload-researgence" element={<UploadReseargence />} />
+              <Route
+                path="upload-researgence"
+                element={<UploadReseargence />}
+              />
             )}
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="edit-publications" element={<EditPublications />} />
