@@ -42,6 +42,7 @@ const AllPublications = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const updatePublicationsMutation = useMutation({
@@ -52,6 +53,7 @@ const AllPublications = () => {
       setErrorMessage(null);
       toast.success("Publications updated successfully");
       void queryClient.invalidateQueries({ queryKey: ["publications/all"] });
+      void queryClient.invalidateQueries({ queryKey: ["publications/edit"] });
     },
     onError: () => {
       setErrorMessage("Failed to update publications");
