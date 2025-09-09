@@ -17,6 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +42,9 @@ const DrcProposalManagement: React.FC = () => {
   const { data: proposals, isLoading: listIsLoading } = useQuery({
     queryKey: ["drc-proposals"],
     queryFn: async () => {
+      const response = await api.get<ProposalListItem[]>(
+        "/phd/proposal/drcConvener/getProposals"
+      );
       const response = await api.get<ProposalListItem[]>(
         "/phd/proposal/drcConvener/getProposals"
       );

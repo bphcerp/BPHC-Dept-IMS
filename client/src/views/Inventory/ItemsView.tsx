@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { TableFilterType, DataTable } from "@/components/shared/datatable/DataTable";
-import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
+import {
+  TableFilterType,
+  DataTable,
+} from "@/components/shared/datatable/DataTable";
 import { TransferConfirmationDialog } from "@/components/inventory/TransferConfirmationDialog";
 import VendorDetailsDialog from "@/components/inventory/VendorDetailsDialog";
 import api from "@/lib/axios-instance";
@@ -15,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { permissions } from "lib";
 import { InventoryItem, Vendor } from "node_modules/lib/src/types/inventory";
 import { DEPARTMENT_NAME } from "@/lib/constants";
+import DeleteItemConfirmationDialog from "@/components/inventory/DeleteItemConfirmationDialog";
 
 export const ItemsView = () => {
   // const [inventoryData, setInventoryData] = useState<InventoryItem[]>([]);
@@ -23,6 +26,7 @@ export const ItemsView = () => {
   const [isVendorDialogOpen, setVendorDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
   const [isTransferDialogOpen, setTransferDialogOpen] = useState(false);
+  const tableElementRef = useRef<HTMLTableElement | null>(null);
 
   const { checkAccess } = useAuth();
 
@@ -282,8 +286,13 @@ export const ItemsView = () => {
   };
 
   return (
-    <div className="inventory p-2">
-      <h1 className="text-3xl font-bold text-primary">Inventory</h1>
+    <div className="inventory w-full p-2">
+      <div
+        className="text-3xl font-bold text-primary"
+        style={{ width: tableElementRef.current?.offsetWidth }}
+      >
+        <span className="sticky left-2 z-10">Inventory</span>
+      </div>
       {isFetching ? (
         <div className="my-2 flex h-full w-full flex-col space-y-2">
           <Skeleton className="h-8 w-full" />
@@ -292,6 +301,7 @@ export const ItemsView = () => {
       ) : (
         <DataTable<InventoryItem>
           data={inventoryData}
+          idColumn="id"
           exportFunction={
             checkAccess(permissions["/inventory/items/export"])
               ? (itemIds, columnsVisible) => {
@@ -318,7 +328,7 @@ export const ItemsView = () => {
                       });
                       const link = document.createElement("a");
                       link.href = URL.createObjectURL(blob);
-                      link.download = `${DEPARTMENT_NAME} Department - Export Inventory.xlsx`;
+                      link.download = `${DEPARTMENT_NAME} Department_Export Inventory_${new Date().toLocaleDateString("en-IN")}.xlsx`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
@@ -333,8 +343,19 @@ export const ItemsView = () => {
               : undefined
           }
           columns={columns}
-          mainSearchColumn="itemName"
           setSelected={setSelectedItems}
+          initialState={{
+            columnPinning: {
+              left: [
+                "S.No",
+                "equipmentID",
+                "itemName",
+                "itemCategory",
+              ],
+            },
+          }}
+          isTableHeaderFixed={true}
+          tableElementRefProp={tableElementRef}
           additionalButtons={
             <>
               {selectedItems.length ? (
@@ -348,7 +369,10 @@ export const ItemsView = () => {
                 <></>
               )}
               {selectedItems.length === 1 && (
-                <DeleteConfirmationDialog onConfirm={handleDelete} />
+                <DeleteItemConfirmationDialog
+                  onConfirm={handleDelete}
+                  selectedItem={selectedItems[0]}
+                />
               )}
               {checkAccess("inventory:write") ? (
                 selectedItems.length === 1 ? (

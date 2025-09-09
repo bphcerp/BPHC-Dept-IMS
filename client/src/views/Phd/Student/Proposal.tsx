@@ -76,7 +76,9 @@ const StudentProposal: React.FC = () => {
       return response.data;
     },
     onSuccess: (res) => {
-      toast.success("Proposal submitted successfully with ID " + res.submittedProposalId);
+      toast.success(
+        "Proposal submitted successfully with ID " + res.submittedProposalId
+      );
       resetForm();
       void queryClient.invalidateQueries({ queryKey: ["student-proposals"] });
     },
@@ -90,11 +92,8 @@ const StudentProposal: React.FC = () => {
   });
 
   const resubmitMutation = useMutation({
-    mutationFn: async (data: {
-      proposalId: number;
-      formData: FormData;
-    }) => {
-      const response = await api.post(
+    mutationFn: async (data: { proposalId: number; formData: FormData }) => {
+      const response = await api.post<void>(
         `/phd/proposal/student/resubmit/${data.proposalId}`,
         data.formData,
         { headers: { "Content-Type": "multipart/form-data" } }
@@ -139,7 +138,6 @@ const StudentProposal: React.FC = () => {
 
   const { proposals = [], canApply = false } = data || {};
 
-  // ... (error and loading states remain the same)
   if (isLoading) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -175,10 +173,50 @@ const StudentProposal: React.FC = () => {
                 <DialogHeader>
                   <DialogTitle>Submit PhD Proposal</DialogTitle>
                 </DialogHeader>
-                {/* Form Content */}
-                <div className="space-y-4">
-                    {/* ... form inputs ... */}
-                    <Button onClick={() => handleFormSubmit(false)}>Submit</Button>
+                <div>
+                  <Label htmlFor="title">Proposal Title</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Enter proposal title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="abstract">Abstract File (PDF)</Label>
+                  <Input
+                    id="abstract"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) =>
+                      setAbstractFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="proposal">Proposal File (PDF)</Label>
+                  <Input
+                    id="proposal"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) =>
+                      setProposalFile(e.target.files?.[0] || null)
+                    }
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsNewProposalDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => handleFormSubmit(false)}
+                    disabled={submitMutation.isLoading}
+                  >
+                    {submitMutation.isLoading ? "Submitting..." : "Submit"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -274,12 +312,17 @@ const StudentProposal: React.FC = () => {
         </Card>
 
         {/* Resubmit Dialog */}
-        <Dialog open={!!proposalToResubmit} onOpenChange={() => setProposalToResubmit(null)}>
+        <Dialog
+          open={!!proposalToResubmit}
+          onOpenChange={() => setProposalToResubmit(null)}
+        >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Resubmit Proposal</DialogTitle>
               <DialogDescription>
-                You are resubmitting: <strong>{proposalToResubmit?.title}</strong>. Please upload the revised documents.
+                You are resubmitting:{" "}
+                <strong>{proposalToResubmit?.title}</strong>. Please upload the
+                revised documents.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
