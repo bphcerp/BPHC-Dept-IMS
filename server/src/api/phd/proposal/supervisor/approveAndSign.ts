@@ -1,7 +1,7 @@
 import db from "@/config/db/index.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { completeTodo } from "@/lib/todos/index.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
@@ -32,21 +32,24 @@ router.post(
                 HttpCode.BAD_REQUEST,
                 "proposal not in supervisor review stage"
             );
-        if (proposal.coSupervisors.length < 1)
+        // if (proposal.coSupervisors.length < 1)
+        //     throw new HttpError(
+        //         HttpCode.BAD_REQUEST,
+        //         "No co-supervisors assigned"
+        //     );
+        if (proposal.dacMembers.length < 2)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
-                "No co-supervisors assigned"
-            );
-        if (proposal.dacMembers.length < 1)
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "No DAC members assigned"
+                "At least 2 DAC members required"
             );
         await db.transaction(async (tx) => {
             await tx
                 .update(phdProposals)
                 .set({
-                    status: "cosupervisor_review",
+                    status:
+                        proposal.coSupervisors.length < 1
+                            ? "drc_review"
+                            : "cosupervisor_review",
                 })
                 .where(eq(phdProposals.id, proposalId));
             await completeTodo(
@@ -56,6 +59,19 @@ router.post(
                 },
                 tx
             );
+            if (proposal.coSupervisors.length)
+                await createTodos(
+                    proposal.coSupervisors.map((cs) => ({
+                        title: "PhD Proposal Co Supervisor Review",
+                        description: "Please verify the PhD proposal details",
+                        module: modules[3],
+                        completionEvent: `phd:proposal:supervisor-review:${proposal.id}`,
+                        assignedTo: cs.coSupervisorEmail,
+                        createdBy: req.user!.email,
+                        link: `/phd/coSupervisor/proposals/${proposal.id}`,
+                    })),
+                    tx
+                );
         });
         res.status(200).send();
     })

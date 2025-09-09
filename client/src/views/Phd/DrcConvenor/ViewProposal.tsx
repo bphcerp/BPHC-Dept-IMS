@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Send } from "lucide-react";
 import { toast } from "sonner";
 import BackButton from "@/components/BackButton";
@@ -52,6 +53,7 @@ const DrcViewProposal: React.FC = () => {
   const proposalId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [selectedDacMembers, setSelectedDacMembers] = useState<string[]>([]);
 
   const {
     data: proposal,
@@ -70,7 +72,9 @@ const DrcViewProposal: React.FC = () => {
 
   const sendToDacMutation = useMutation({
     mutationFn: () =>
-      api.post(`/phd/proposal/drcConvener/sendToDac/${proposalId}`),
+      api.post(`/phd/proposal/drcConvener/sendToDac/${proposalId}`, {
+        acceptedDacMembers: selectedDacMembers,
+      }),
     onSuccess: () => {
       toast.success(
         "Proposal successfully sent to DAC members for evaluation."
@@ -82,6 +86,14 @@ const DrcViewProposal: React.FC = () => {
       toast.error("Failed to send proposal to DAC.");
     },
   });
+
+  React.useEffect(() => {
+    if (proposal?.dacMembers) {
+      setSelectedDacMembers(
+        proposal.dacMembers.map((dac) => dac.dacMember.email)
+      );
+    }
+  }, [proposal]);
 
   if (isLoading)
     return (
@@ -156,28 +168,57 @@ const DrcViewProposal: React.FC = () => {
           </div>
           <div>
             <h3 className="mb-2 font-semibold">Assigned DAC Members</h3>
-            <ul className="list-inside list-disc">
+            <div className="space-y-2">
               {proposal.dacMembers.map((dac) => (
-                <li key={dac.dacMember.email}>
-                  {dac.dacMember.name} ({dac.dacMember.email})
-                </li>
+                <div
+                  key={dac.dacMember.email}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={dac.dacMember.email}
+                    checked={selectedDacMembers.includes(dac.dacMember.email)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedDacMembers((prev) => [
+                          ...prev,
+                          dac.dacMember.email,
+                        ]);
+                      } else {
+                        setSelectedDacMembers((prev) =>
+                          prev.filter((email) => email !== dac.dacMember.email)
+                        );
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={dac.dacMember.email}
+                    className="text-sm"
+                  >{`${dac.dacMember.name} (${dac.dacMember.email})`}</label>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
           {proposal.status === "drc_review" && (
             <div className="border-t pt-4 text-center">
               <Button
                 onClick={() => sendToDacMutation.mutate()}
-                disabled={sendToDacMutation.isLoading}
+                disabled={
+                  sendToDacMutation.isLoading || selectedDacMembers.length < 2
+                }
               >
                 <Send className="mr-2 h-4 w-4" />
                 {sendToDacMutation.isLoading
                   ? "Sending..."
                   : "Send to DAC for Evaluation"}
               </Button>
+              {selectedDacMembers.length < 2 && (
+                <p className="mt-2 text-xs text-red-500">
+                  Please select at least 2 DAC members.
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted-foreground">
-                This will notify the DAC members and create a To-do item for
-                them.
+                This will notify the selected DAC members and create a To-do
+                item for them.
               </p>
             </div>
           )}

@@ -454,3 +454,9 @@ export const updateTimetableSchema = z.object({
     }),
 });
 export type UpdateTimetableBody = z.infer<typeof updateTimetableSchema>;
+export const sendToDacSchema = z.object({
+    acceptedDacMembers: z
+        .array(z.string().email())
+        .min(2, "At least 2 DAC members must be selected"),
+});
+export type SendToDacBody = z.infer<typeof sendToDacSchema>;

@@ -1,12 +1,12 @@
 import db from "@/config/db/index.ts";
-import { phdProposals } from "@/config/db/schema/phd.ts";
+import { phdProposals, phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { eq } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
-import { modules } from "lib";
+import { phdSchemas, modules } from "lib";
 
 const router = express.Router();
 
@@ -17,6 +17,10 @@ router.post(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId) || proposalId < 0)
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+
+        const { acceptedDacMembers } = phdSchemas.sendToDacSchema.parse(
+            req.body
+        );
 
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
@@ -32,6 +36,38 @@ router.post(
                     "Proposal not ready to be sent to DAC"
                 );
 
+            const currentDacEmails = proposal.dacMembers.map(
+                (m) => m.dacMemberEmail
+            );
+            const acceptedEmails = acceptedDacMembers.filter((email) =>
+                currentDacEmails.includes(email)
+            );
+
+            if (acceptedEmails.length < 2) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "At least 2 DAC members must be accepted"
+                );
+            }
+
+            const emailsToDelete = currentDacEmails.filter(
+                (email) => !acceptedEmails.includes(email)
+            );
+
+            if (emailsToDelete.length > 0) {
+                await tx
+                    .delete(phdProposalDacMembers)
+                    .where(
+                        and(
+                            eq(phdProposalDacMembers.proposalId, proposalId),
+                            inArray(
+                                phdProposalDacMembers.dacMemberEmail,
+                                emailsToDelete
+                            )
+                        )
+                    );
+            }
+
             await tx
                 .update(phdProposals)
                 .set({ status: "dac_review" })
@@ -45,11 +81,11 @@ router.post(
                 tx
             );
 
-            if (proposal.dacMembers.length > 0) {
+            if (acceptedEmails.length > 0) {
                 await createTodos(
-                    proposal.dacMembers.map((member) => ({
+                    acceptedEmails.map((email) => ({
                         module: modules[3],
-                        assignedTo: member.dacMemberEmail,
+                        assignedTo: email,
                         createdBy: req.user!.email,
                         title: "PhD Proposal Evaluation Required",
                         description: `Please evaluate the PhD proposal for ${proposal.student.name}.`,

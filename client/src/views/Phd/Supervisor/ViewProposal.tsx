@@ -207,10 +207,23 @@ const SupervisorViewProposal: React.FC = () => {
   }
 
   const canEdit = proposal.status === "supervisor_review";
-  const canApprove =
-    canEdit &&
-    proposal.coSupervisors.length >= 1 &&
-    proposal.dacMembers.length >= 1;
+  const canApprove = canEdit && proposal.dacMembers.length >= 2;
+
+  const coSupervisorEmails = proposal.coSupervisors.map(
+    (cs) => cs.coSupervisor.email
+  );
+  const dacMemberEmails = proposal.dacMembers.map((dm) => dm.dacMember.email);
+
+  const availableCoSupervisors = faculty.filter(
+    (member) =>
+      !coSupervisorEmails.includes(member.email) &&
+      !dacMemberEmails.includes(member.email)
+  );
+  const availableDacMembers = faculty.filter(
+    (member) =>
+      !dacMemberEmails.includes(member.email) &&
+      !coSupervisorEmails.includes(member.email)
+  );
 
   const handleAddCoSupervisor = () => {
     if (selectedCoSupervisor) {
@@ -332,7 +345,7 @@ const SupervisorViewProposal: React.FC = () => {
                           <SelectValue placeholder="Select faculty member" />
                         </SelectTrigger>
                         <SelectContent>
-                          {faculty.map((member) => (
+                          {availableCoSupervisors.map((member) => (
                             <SelectItem key={member.email} value={member.email}>
                               {member.name} ({member.email})
                             </SelectItem>
@@ -425,7 +438,7 @@ const SupervisorViewProposal: React.FC = () => {
                           <SelectValue placeholder="Select faculty member" />
                         </SelectTrigger>
                         <SelectContent>
-                          {faculty.map((member) => (
+                          {availableDacMembers.map((member) => (
                             <SelectItem key={member.email} value={member.email}>
                               {member.name} -{" "}
                               {member.department?.length
@@ -495,6 +508,11 @@ const SupervisorViewProposal: React.FC = () => {
               </div>
             ) : (
               <p className="text-gray-500">No DAC members assigned</p>
+            )}
+            {proposal.dacMembers.length < 2 && (
+              <p className="mt-4 text-sm text-amber-600">
+                Minimum 2 DAC members required for approval
+              </p>
             )}
           </CardContent>
         </Card>
