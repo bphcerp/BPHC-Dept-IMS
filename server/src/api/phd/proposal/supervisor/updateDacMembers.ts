@@ -30,6 +30,19 @@ router.post(
             );
 
         if (parsed.add) {
+            const existsInCoSupervisors =
+                await db.query.phdProposalCoSupervisors.findFirst({
+                    where: (cols, { and, eq }) =>
+                        and(
+                            eq(cols.proposalId, proposalId),
+                            eq(cols.coSupervisorEmail, parsed.add!)
+                        ),
+                });
+            if (existsInCoSupervisors)
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "DAC member cannot be a co-supervisor"
+                );
             try {
                 await db.insert(phdProposalDacMembers).values({
                     proposalId,

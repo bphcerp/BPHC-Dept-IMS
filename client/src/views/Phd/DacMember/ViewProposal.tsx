@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -13,11 +14,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, CheckCircle, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Download, CheckCircle, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { phdSchemas } from "lib";
+import BackButton from "@/components/BackButton";
+import { FileUploader } from "@/components/ui/file-uploader";
 
 interface ProposalDetails {
   id: number;
@@ -29,33 +31,26 @@ interface ProposalDetails {
   dacMembers: { dacMember: { name: string | null; email: string } }[];
   abstractFileUrl: string;
   proposalFileUrl: string;
-  currentUserReview: {
-    approved: boolean;
-    comments: string;
-  } | null;
+  currentUserReview: { approved: boolean; comments: string } | null;
 }
 
-interface DacProposalDetailViewProps {
-  proposalId: number;
-  clearSelection: () => void;
-}
-
-const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
-  proposalId,
-  clearSelection,
-}) => {
+const DacViewProposal: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const proposalId = Number(id);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [reviewStatus, setReviewStatus] = useState<"approve" | "reject">();
   const [comments, setComments] = useState("");
+  const [suggestionFile, setSuggestionFile] = useState<File | null>(null);
 
   const {
     data: proposal,
     isLoading,
     isError,
-  } = useQuery({
+  } = useQuery<ProposalDetails>({
     queryKey: ["dac-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get<ProposalDetails>(
+      const response = await api.get(
         `/phd/proposal/dacMember/viewProposal/${proposalId}`
       );
       return response.data;
@@ -64,15 +59,15 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
   });
 
   const submitReviewMutation = useMutation({
-    mutationFn: (data: phdSchemas.SubmitDacReviewBody) =>
-      api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, data),
+    mutationFn: (data: FormData) =>
+      api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
     onSuccess: () => {
       toast.success("Review submitted successfully!");
-      void queryClient.invalidateQueries({
-        queryKey: ["dac-proposal-view", proposalId],
-      });
       void queryClient.invalidateQueries({ queryKey: ["dac-proposals"] });
-      clearSelection();
+      void queryClient.invalidateQueries({ queryKey: ["todos"] });
+      navigate("/phd/dac/proposals");
     },
     onError: () => {
       toast.error("Failed to submit review.");
@@ -88,17 +83,22 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
       toast.error("Comments are required.");
       return;
     }
-    submitReviewMutation.mutate({
-      approved: reviewStatus === "approve",
-      comments,
-    });
+
+    const formData = new FormData();
+    formData.append("approved", String(reviewStatus === "approve"));
+    formData.append("comments", comments);
+    if (suggestionFile) {
+      formData.append("suggestionFile", suggestionFile);
+    }
+
+    submitReviewMutation.mutate(formData);
   };
 
   if (isLoading)
     return (
-      <Card className="flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <LoadingSpinner />
-      </Card>
+      </div>
     );
   if (isError || !proposal)
     return (
@@ -113,6 +113,7 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
 
   return (
     <div className="space-y-6">
+      <BackButton />
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -125,9 +126,6 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
                 </Badge>
               </CardDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearSelection}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -154,7 +152,7 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
           <div>
             <h3 className="font-semibold">Supervisor</h3>
             <p>
-              {proposal.supervisor.name} ({proposal.supervisor.email})
+              {proposal.supervisor.name}({proposal.supervisor.email})
             </p>
           </div>
           <div>
@@ -169,6 +167,7 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
           </div>
         </CardContent>
       </Card>
+
       {alreadyReviewed ? (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
@@ -236,6 +235,17 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
                 rows={6}
               />
             </div>
+            <div>
+              <Label htmlFor="suggestionFile">
+                Suggestion Document (Optional, PDF only)
+              </Label>
+              <FileUploader
+                value={suggestionFile ? [suggestionFile] : []}
+                onValueChange={(files) => setSuggestionFile(files[0] ?? null)}
+                accept={{ "application/pdf": [] }}
+                className="mt-1"
+              />
+            </div>
           </CardContent>
           <CardFooter>
             <Button
@@ -254,4 +264,4 @@ const DacProposalDetailView: React.FC<DacProposalDetailViewProps> = ({
   );
 };
 
-export default DacProposalDetailView;
+export default DacViewProposal;

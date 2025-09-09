@@ -1,9 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  DndContext,
+  DragEndEvent,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import api from "@/lib/axios-instance";
@@ -18,10 +42,15 @@ interface TimetableDialogProps {
   selectedExamId: number;
 }
 
-const TimetableDialog: React.FC<TimetableDialogProps> = ({ isOpen, onClose, selectedExamId }) => {
+const TimetableDialog: React.FC<TimetableDialogProps> = ({
+  isOpen,
+  onClose,
+  selectedExamId,
+}) => {
   const queryClient = useQueryClient();
   const [timetable, setTimetable] = useState<phdSchemas.Timetable | null>(null);
-  const [activeItem, setActiveItem] = useState<phdSchemas.TimetableSlotItem | null>(null);
+  const [activeItem, setActiveItem] =
+    useState<phdSchemas.TimetableSlotItem | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["timetable", selectedExamId],
@@ -42,10 +71,13 @@ const TimetableDialog: React.FC<TimetableDialogProps> = ({ isOpen, onClose, sele
   }, [data]);
 
   const optimizeMutation = useMutation({
-    mutationFn: () => api.post(`/phd/drcMember/optimizeTimetable/${selectedExamId}`),
+    mutationFn: () =>
+      api.post(`/phd/drcMember/optimizeTimetable/${selectedExamId}`),
     onSuccess: () => {
       toast.success("Timetable has been auto-generated.");
-      void queryClient.invalidateQueries({ queryKey: ["timetable", selectedExamId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["timetable", selectedExamId],
+      });
     },
     onError: () => toast.error("Failed to generate timetable."),
   });
@@ -55,133 +87,265 @@ const TimetableDialog: React.FC<TimetableDialogProps> = ({ isOpen, onClose, sele
       api.post(`/phd/drcMember/timetable/${selectedExamId}`, updatedTimetable),
     onSuccess: () => {
       toast.success("Timetable changes saved successfully.");
-      void queryClient.invalidateQueries({ queryKey: ["timetable", selectedExamId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["timetable", selectedExamId],
+      });
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || "Failed to save changes";
       toast.error(message);
-      // Revert state on error by refetching
-      void queryClient.invalidateQueries({ queryKey: ["timetable", selectedExamId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["timetable", selectedExamId],
+      });
     },
   });
-  
+
   const downloadPdfMutation = useMutation({
-    mutationFn: () => api.get(`/phd/drcMember/generateTimetablePdf/${selectedExamId}`, { responseType: 'blob' }),
+    mutationFn: () =>
+      api.get(`/phd/drcMember/generateTimetablePdf/${selectedExamId}`, {
+        responseType: "blob",
+      }),
     onSuccess: (response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `Timetable-Exam-${selectedExamId}.pdf`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode?.removeChild(link);
-        toast.success("Timetable PDF downloaded.");
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Timetable-Exam-${selectedExamId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success("Timetable PDF downloaded.");
     },
     onError: () => toast.error("Failed to download PDF."),
   });
 
   const sensors = useSensors(useSensor(PointerSensor));
-  
-  const findContainer = (id: string) => {
+
+  const findContainer = (id: string): keyof phdSchemas.Timetable | null => {
     if (!timetable) return null;
-    if (timetable.slot1.some(item => `${item.studentEmail}|${item.qualifyingArea}` === id)) return "slot1";
-    if (timetable.slot2.some(item => `${item.studentEmail}|${item.qualifyingArea}` === id)) return "slot2";
-    if (timetable.unscheduled.some(item => `${item.studentEmail}|${item.qualifyingArea}` === id)) return "unscheduled";
+    if (
+      timetable.slot1.some(
+        (item) => `${item.studentEmail}|${item.qualifyingArea}` === id
+      )
+    )
+      return "slot1";
+    if (
+      timetable.slot2.some(
+        (item) => `${item.studentEmail}|${item.qualifyingArea}` === id
+      )
+    )
+      return "slot2";
+    if (
+      timetable.unscheduled.some(
+        (item) => `${item.studentEmail}|${item.qualifyingArea}` === id
+      )
+    )
+      return "unscheduled";
     return null;
   };
 
   const handleDragStart = (event: any) => {
-      setActiveItem(event.active.data.current as phdSchemas.TimetableSlotItem);
-  }
+    setActiveItem(event.active.data.current as phdSchemas.TimetableSlotItem);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveItem(null);
     const { active, over } = event;
-    if (!over?.id || !timetable) return;
 
-    const activeContainer = findContainer(active.id as string);
-    const overContainerId = (over.id as string).split("-")[0];
-    const overContainer = overContainerId as keyof phdSchemas.Timetable;
+    if (!over || !timetable) return;
 
-    if (!activeContainer || activeContainer === overContainer) return;
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    const activeContainer = findContainer(activeId);
+    const overContainer =
+      findContainer(overId) ||
+      (Object.keys(timetable).includes(overId)
+        ? (overId as keyof phdSchemas.Timetable)
+        : null);
+
+    if (
+      !activeContainer ||
+      !overContainer ||
+      activeContainer === overContainer
+    ) {
+      return;
+    }
 
     setTimetable((prev) => {
       if (!prev) return null;
-      const newTimetable = JSON.parse(JSON.stringify(prev)) as phdSchemas.Timetable;
-      
-      const activeItems = newTimetable[activeContainer];
-      const itemIndex = activeItems.findIndex(item => `${item.studentEmail}|${item.qualifyingArea}` === active.id);
+      const newTimetable = JSON.parse(
+        JSON.stringify(prev)
+      ) as phdSchemas.Timetable;
+
+      const sourceList = newTimetable[activeContainer];
+      const itemIndex = sourceList.findIndex(
+        (item) => `${item.studentEmail}|${item.qualifyingArea}` === activeId
+      );
       if (itemIndex === -1) return prev;
 
-      const [movedItem] = activeItems.splice(itemIndex, 1);
-      movedItem.slotNumber = overContainer === 'slot1' ? 1 : overContainer === 'slot2' ? 2 : 0;
-      
-      const overItems = newTimetable[overContainer];
-      overItems.push(movedItem);
+      const [movedItem] = sourceList.splice(itemIndex, 1);
+      const destinationList = newTimetable[overContainer];
 
-      const studentExamsInOverContainer = overItems.filter(item => item.studentEmail === movedItem.studentEmail);
-      if (overContainer !== 'unscheduled' && studentExamsInOverContainer.length > 1) {
-        toast.error(`A student cannot have both exams in the same slot.`);
-        return prev;
+      if (overContainer !== "unscheduled") {
+        const studentAlreadyInSlot = destinationList.some(
+          (item) => item.studentEmail === movedItem.studentEmail
+        );
+        if (studentAlreadyInSlot) {
+          toast.error(`A student cannot have both exams in the same slot.`);
+          return prev;
+        }
       }
+
+      movedItem.slotNumber =
+        overContainer === "slot1" ? 1 : overContainer === "slot2" ? 2 : 0;
+      destinationList.push(movedItem);
 
       return newTimetable;
     });
   };
 
   if (!isOpen) return null;
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+      <DialogContent className="flex h-[90vh] max-w-7xl flex-col">
         <DialogHeader>
           <DialogTitle>Manage Exam Timetable</DialogTitle>
-          <CardDescription>Drag and drop to schedule students. The system will prevent conflicts.</CardDescription>
+          <CardDescription>
+            Drag and drop to schedule students. The system will prevent
+            conflicts.
+          </CardDescription>
         </DialogHeader>
-        {isLoading ? ( <div className="flex-grow flex items-center justify-center"><LoadingSpinner /></div> ) : timetable ? (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow overflow-y-auto">
-              <DroppableArea id="slot1" title="Slot 1" items={timetable.slot1} />
-              <DroppableArea id="slot2" title="Slot 2" items={timetable.slot2} />
-              <DroppableArea id="unscheduled" title="Unscheduled" items={timetable.unscheduled} />
+        {isLoading ? (
+          <div className="flex flex-grow items-center justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : timetable ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid flex-grow grid-cols-1 gap-4 overflow-y-auto md:grid-cols-3">
+              <DroppableArea
+                id="slot1"
+                title="Slot 1"
+                items={timetable.slot1}
+              />
+              <DroppableArea
+                id="slot2"
+                title="Slot 2"
+                items={timetable.slot2}
+              />
+              <DroppableArea
+                id="unscheduled"
+                title="Unscheduled"
+                items={timetable.unscheduled}
+              />
             </div>
-            {data?.examinersWithDoubleDuty && data.examinersWithDoubleDuty.length > 0 && (
-                <div className="mt-4 p-4 border rounded-lg bg-muted/50 text-sm">
-                    <p className="font-semibold">Examiners with double duty:</p>
-                    <p className="text-muted-foreground">{data.examinersWithDoubleDuty.join(", ")}</p>
+            {data?.examinersWithDoubleDuty &&
+              data.examinersWithDoubleDuty.length > 0 && (
+                <div className="mt-4 rounded-lg border bg-muted/50 p-4 text-sm">
+                  <p className="font-semibold">Examiners with double duty:</p>
+                  <p className="text-muted-foreground">
+                    {data.examinersWithDoubleDuty.join(", ")}
+                  </p>
                 </div>
-            )}
+              )}
             <DragOverlay>
-                {activeItem ? <StudentExamCard id={`${activeItem.studentEmail}|${activeItem.qualifyingArea}`} item={activeItem} /> : null}
+              {activeItem ? (
+                <StudentExamCard
+                  id={`${activeItem.studentEmail}|${activeItem.qualifyingArea}`}
+                  item={activeItem}
+                />
+              ) : null}
             </DragOverlay>
           </DndContext>
-        ) : ( <p>No timetable data available.</p> )}
+        ) : (
+          <p>No timetable data available.</p>
+        )}
         <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => optimizeMutation.mutate()} disabled={optimizeMutation.isLoading || updateMutation.isLoading}><Zap className="mr-2 h-4 w-4" /> Auto-Generate</Button>
-            <Button variant="outline" onClick={() => downloadPdfMutation.mutate()} disabled={downloadPdfMutation.isLoading}><Download className="mr-2 h-4 w-4" /> Download PDF</Button>
-            <Button onClick={() => timetable && updateMutation.mutate({ timetable: {
-                slot1: timetable.slot1.map(({ id, student, ...rest }) => rest),
-                slot2: timetable.slot2.map(({ id, student, ...rest }) => rest),
-                unscheduled: timetable.unscheduled.map(({ id, student, ...rest }) => rest),
-            }})} disabled={updateMutation.isLoading || optimizeMutation.isLoading}><Save className="mr-2 h-4 w-4" /> Save Changes</Button>
+          <Button
+            variant="outline"
+            onClick={() => optimizeMutation.mutate()}
+            disabled={optimizeMutation.isLoading || updateMutation.isLoading}
+          >
+            <Zap className="mr-2 h-4 w-4" /> Auto-Generate
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => downloadPdfMutation.mutate()}
+            disabled={downloadPdfMutation.isLoading}
+          >
+            <Download className="mr-2 h-4 w-4" /> Download PDF
+          </Button>
+          <Button
+            onClick={() =>
+              timetable &&
+              updateMutation.mutate({
+                timetable: {
+                  slot1: timetable.slot1.map(
+                    ({ id, student, ...rest }) => rest
+                  ),
+                  slot2: timetable.slot2.map(
+                    ({ id, student, ...rest }) => rest
+                  ),
+                  unscheduled: timetable.unscheduled.map(
+                    ({ id, student, ...rest }) => rest
+                  ),
+                },
+              })
+            }
+            disabled={updateMutation.isLoading || optimizeMutation.isLoading}
+          >
+            <Save className="mr-2 h-4 w-4" /> Save Changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-const DroppableArea = ({ id, title, items }: { id: string; title: string; items: phdSchemas.TimetableSlotItem[]; }) => {
+const DroppableArea = ({
+  id,
+  title,
+  items,
+}: {
+  id: string;
+  title: string;
+  items: phdSchemas.TimetableSlotItem[];
+}) => {
+  const { setNodeRef } = useDroppable({ id });
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent id={`${id}-droppable`} className="flex-grow bg-muted/20 rounded-b-lg p-2 overflow-y-auto">
-        <SortableContext id={id} items={items.map(i => `${i.studentEmail}|${i.qualifyingArea}`)} strategy={verticalListSortingStrategy}>
-          {items.map(item => (
-            <StudentExamCard key={`${item.studentEmail}|${item.qualifyingArea}`} id={`${item.studentEmail}|${item.qualifyingArea}`} item={item} />
+      <CardContent
+        ref={setNodeRef}
+        id={id}
+        className="flex-grow rounded-b-lg bg-muted/20 p-2"
+      >
+        <SortableContext
+          id={id}
+          items={items.map((i) => `${i.studentEmail}|${i.qualifyingArea}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          {items.map((item) => (
+            <StudentExamCard
+              key={`${item.studentEmail}|${item.qualifyingArea}`}
+              id={`${item.studentEmail}|${item.qualifyingArea}`}
+              item={item}
+            />
           ))}
-          {items.length === 0 && <div className="text-center text-muted-foreground p-4">Drop here</div>}
+          {items.length === 0 && (
+            <div className="flex h-full items-center justify-center p-4 text-center text-muted-foreground">
+              Drop here
+            </div>
+          )}
         </SortableContext>
       </CardContent>
     </Card>

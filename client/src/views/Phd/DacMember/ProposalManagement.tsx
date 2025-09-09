@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +15,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
-import { cn } from "@/lib/utils";
-import DacProposalDetailView from "@/components/phd/DacMember/DacProposalDetailView";
 
 interface Proposal {
   id: number;
@@ -26,10 +25,7 @@ interface Proposal {
 }
 
 const DacProposalManagement: React.FC = () => {
-  const [selectedProposalId, setSelectedProposalId] = useState<number | null>(
-    null
-  );
-
+  const navigate = useNavigate();
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ["dac-proposals"],
     queryFn: async () => {
@@ -50,92 +46,67 @@ const DacProposalManagement: React.FC = () => {
             Review PhD proposals assigned to you as a DAC member.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle>Awaiting Your Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex h-40 items-center justify-center">
-                  <LoadingSpinner />
-                </div>
-              ) : proposals.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
+        <Card>
+          <CardHeader>
+            <CardTitle>Awaiting Your Review</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-40 items-center justify-center">
+                <LoadingSpinner />
+              </div>
+            ) : proposals.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {proposals.map((proposal) => (
+                    <TableRow
+                      key={proposal.id}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        navigate(`/phd/dac/proposals/${proposal.id}`)
+                      }
+                    >
+                      <TableCell>
+                        <div className="font-medium">
+                          {proposal.student.name ?? proposal.student.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{proposal.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {proposal.status.replace("_", " ").toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {proposals.map((proposal) => (
-                      <TableRow
-                        key={proposal.id}
-                        className={cn(
-                          "cursor-pointer",
-                          selectedProposalId === proposal.id && "bg-muted/50"
-                        )}
-                        onClick={() => setSelectedProposalId(proposal.id)}
-                      >
-                        <TableCell>
-                          <div className="font-medium">
-                            {proposal.student.name ?? proposal.student.email}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {proposal.title}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {proposal.status.replace("_", " ").toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-8 text-center">
-                  <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                  <h3 className="mb-2 text-lg font-medium">
-                    No Pending Proposals
-                  </h3>
-                  <p className="text-gray-500">
-                    There are no proposals awaiting your review.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <div className="lg:col-span-2">
-            {selectedProposalId ? (
-              <DacProposalDetailView
-                proposalId={selectedProposalId}
-                clearSelection={() => setSelectedProposalId(null)}
-              />
+                  ))}
+                </TableBody>
+              </Table>
             ) : (
-              <Card className="flex h-full items-center justify-center">
-                <div className="p-8 text-center">
-                  <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                  <h3 className="mb-2 text-lg font-medium">
-                    Select a Proposal
-                  </h3>
-                  <p className="text-gray-500">
-                    Choose a proposal from the list to view its details and take
-                    action.
-                  </p>
-                </div>
-              </Card>
+              <div className="py-8 text-center">
+                <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <h3 className="mb-2 text-lg font-medium">
+                  No Pending Proposals
+                </h3>
+                <p className="text-gray-500">
+                  There are no proposals awaiting your review.
+                </p>
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

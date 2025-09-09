@@ -8,7 +8,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { and, eq, not } from "drizzle-orm";
 import express from "express";
-import { createTodos } from "@/lib/todos/index.ts";
+import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { modules } from "lib";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 
@@ -53,6 +53,15 @@ router.post(
                 .update(phdProposalCoSupervisors)
                 .set({ approvalStatus: true })
                 .where(eq(phdProposalCoSupervisors.id, coSupervisorRecord.id));
+
+            await completeTodo(
+                {
+                    module: modules[3],
+                    completionEvent: `phd:proposal:supervisor-review:${proposal.id}`,
+                    assignedTo: req.user!.email,
+                },
+                tx
+            );
 
             // Check if all co-supervisors have approved
             const remainingApprovals =

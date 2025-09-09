@@ -331,7 +331,10 @@ export type FinalizeDacMembersDrcBody = z.infer<
     typeof finalizeDacMembersDrcSchema
 >;
 export const submitDacReviewSchema = z.object({
-    approved: z.boolean(),
+    approved: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean()
+    ),
     comments: z.string().trim().min(1, "Comments are required for DAC review"),
 });
 export type SubmitDacReviewBody = z.infer<typeof submitDacReviewSchema>;
@@ -451,3 +454,9 @@ export const updateTimetableSchema = z.object({
     }),
 });
 export type UpdateTimetableBody = z.infer<typeof updateTimetableSchema>;
+export const sendToDacSchema = z.object({
+    acceptedDacMembers: z
+        .array(z.string().email())
+        .min(2, "At least 2 DAC members must be selected"),
+});
+export type SendToDacBody = z.infer<typeof sendToDacSchema>;
