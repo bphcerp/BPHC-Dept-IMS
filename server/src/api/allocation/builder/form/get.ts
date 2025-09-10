@@ -1,0 +1,39 @@
+import express from "express";
+import db from "@/config/db/index.ts";
+import { checkAccess } from "@/middleware/auth.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
+const router = express.Router();
+
+router.get(
+    "/:id",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const { id } = req.params;
+
+        const form = await db.query.allocationForm.findFirst({
+            columns: {
+                templateId: false,
+            },
+            with: {
+                template: {
+                    with: {
+                        fields: {
+                            with: {
+                                options: true
+                            },
+                        },
+                    },
+                },
+            },
+            where: (form, { eq }) => eq(form.id, id),
+        });
+
+        if (!form)
+            return next(new HttpError(HttpCode.NOT_FOUND, "Form not found"));
+
+        res.status(200).json(form);
+    })
+);
+
+export default router;
