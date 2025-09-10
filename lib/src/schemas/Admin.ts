@@ -164,3 +164,11 @@ export interface MemberDetailsResponse {
     supervisorEmail?: string | null;
     emergencyPhoneNumber?: string | null;
 }
+
+// testing schemas
+export const startTestingBodySchema = z.object({
+    testerRoles: z
+        .array(z.string().trim().nonempty())
+        .min(1, "At least one role must be specified"),
+});
+export type StartTestingBody = z.infer<typeof startTestingBodySchema>;
