@@ -10,14 +10,14 @@ import FicSubmissionView from "@/views/QpReview/FicSubmission";
 import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
-import PhdLayout from "@/layouts/Phd/Phd";
+import PhdLayout from "@/layouts/Phd";
 import CourseLoadPage from "@/views/Allocation/CourseLoadPage";
 import { allPermissions, permissions } from "lib";
 import {
+  BookOpen,
   Computer,
   FileText,
   GraduationCap,
-  BookOpen,
   LibraryBig,
   Warehouse,
   File,
@@ -30,16 +30,22 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import UpdateGrade from "@/views/Phd/NotionalSupervisor/UpdateGrade";
-import CourseworkForm from "@/views/Phd/DrcConvenor/CourseworkForm";
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
-import AssignDacMembers from "@/views/Phd/DrcConvenor/AssignDacMemberes";
-import FormDeadline from "@/views/Phd/Student/FormDeadline";
-import ProposalSubmission from "@/views/Phd/Student/ProposalSubmission";
-import Profile from "@/views/Phd/Student/Profile";
-import CoSupervisedStudents from "@/views/Phd/CoSupervisor/CoSupervisedStudents";
-import SupervisedStudents from "@/views/Phd/Supervisor/SupervisedStudents";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
+import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
+import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
+import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
+import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
+import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
+import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal";
+import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
+import DacViewProposal from "@/views/Phd/DacMember/ViewProposal";
+import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
+import Proposal from "@/views/Phd/Student/Proposal";
+import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
+import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
+import CoSupervisorProposal from "@/views/Phd/CoSupervisor/Proposal";
+import CoSupervisorViewProposal from "@/views/Phd/CoSupervisor/ViewProposal";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -48,9 +54,7 @@ import DCAMemberReviewForm from "@/views/Handouts/DCAReview";
 import DCAConvenorHandouts from "@/views/Handouts/DCAConvenorHandouts";
 import DCAMemberHandouts from "@/views/Handouts/DCAMemberHandouts";
 import FacultyHandouts from "@/views/Handouts/FacultyHandouts";
-import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
 import FacultyHandout from "@/views/Handouts/FacultyHandout";
-import SuggestExaminer from "@/views/Phd/NotionalSupervisor/SuggestExaminer";
 import DCAConvenorReview from "@/views/Handouts/DCAConvenorReview";
 import ConferenceSubmittedApplicationsView from "@/views/Conference/Submitted";
 import DCAConvenerSummary from "@/views/Handouts/SummaryPage";
@@ -61,7 +65,7 @@ import PublicationsLayout from "@/layouts/Publications";
 import YourPublications from "@/views/Publications/YourPublications";
 import AllPublications from "@/views/Publications/AllPublications";
 import EditPublications from "@/views/Publications/EditPublications";
-import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
+import UploadReseargence from "@/views/Publications/UploadReseargence";
 import InventoryLayout from "@/layouts/Inventory";
 import Settings from "@/views/Inventory/Settings";
 import { ItemsView } from "@/views/Inventory/ItemsView";
@@ -70,6 +74,7 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
+import HelpPage from "@/views/Wiki";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ProjectDetails from "@/views/Project/[id]";
@@ -98,35 +103,27 @@ const adminModulePermissions = [
   permissions["/admin/member/details"],
   permissions["/admin/role"],
 ];
-
 const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("phd:")
 );
-
 const conferenceModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("conference:"));
-
 const qpReviewModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("qp:")
 );
-
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
 );
-
 const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("publications:")
 );
-
 const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("inventory:")
 );
-
 const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("project:")
 );
-
 const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("patent:")
 );
@@ -140,7 +137,6 @@ const courseLoadAllocationModulePermissions: string[] = Object.keys(allPermissio
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
-
   const modules = [
     {
       title: "Admin",
@@ -212,7 +208,6 @@ const Routing = () => {
 
   return (
     <BrowserRouter
-      // react-router future version flags, prevents console warnings
       future={{
         v7_relativeSplatPath: true,
         v7_startTransition: true,
@@ -237,10 +232,9 @@ const Routing = () => {
           }
         />
         <Route path="/contributors" element={<ContributorsPage />} />
+        <Route path="/help" element={authState ? <HelpPage /> : <Navigate to="/" replace />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
-
         {authState && <Route path="/profile" element={<ProfilePage />} />}
-
         {checkAccessAnyOne(adminModulePermissions) && (
           <Route path="/admin" element={<AdminLayout />}>
             <Route
@@ -261,7 +255,6 @@ const Routing = () => {
             )}
           </Route>
         )}
-
         {checkAccessAnyOne(conferenceModulePermissions) && (
           <Route path="/conference" element={<ConferenceLayout />}>
             <Route index element={<Navigate to="/conference/apply" />} />
@@ -291,7 +284,6 @@ const Routing = () => {
             )}
           </Route>
         )}
-
         {checkAccessAnyOne(qpReviewModulePermissions) && (
           <Route path="/qpReview" element={<QpReviewLayout />}>
             <Route
@@ -304,7 +296,6 @@ const Routing = () => {
             <Route path="facultyReview/:course" element={<FacultyReview />} />
           </Route>
         )}
-
         {checkAccessAnyOne(courseHandoutsPermissions) && (
           <Route path="/handout" element={<HandoutLayout />}>
             {checkAccess(permissions["/handout/faculty/get"]) &&
@@ -360,87 +351,128 @@ const Routing = () => {
               )}
           </Route>
         )}
-
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
-            {checkAccess(
-              permissions["/phd/notionalSupervisor/updateCourseDetails"]
-            ) && (
-                <Route path="notional-supervisor" element={<Outlet />}>
-                  <Route path="update-grade" element={<UpdateGrade />} />
-                  <Route path="suggest-examiner" element={<SuggestExaminer />} />
-                </Route>
-              )}
-            {checkAccess(
-              permissions["/phd/drcMember/generateCourseworkForm"]
-            ) && (
-                <Route path="drc-convenor" element={<Outlet />}>
-                  <Route path="coursework-form" element={<CourseworkForm />} />
+            {/* Staff */}
+            {checkAccessAnyOne([
+              permissions["/phd/staff/getAllSem"],
+              permissions["/phd/staff/qualifyingExams"],
+              permissions["/phd/staff/emailTemplates"],
+            ]) && (
+              <Route path="staff" element={<Outlet />}>
+                {checkAccess(permissions["/phd/staff/getAllSem"]) && (
                   <Route
-                    path="assign-dac-members"
-                    element={<AssignDacMembers />}
-                  ></Route>
+                    path="update-semester-dates"
+                    element={<UpdateSemesterDates />}
+                  />
+                )}
+                {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
+                  <>
+                    <Route
+                      path="update-deadlines"
+                      element={<UpdateDeadlinesPage />}
+                    />
+                    <Route
+                      path="update-subareas"
+                      element={<UpdateSubAreasPage />}
+                    />
+                  </>
+                )}
+                {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
+                  <Route
+                    path="manage-email-templates"
+                    element={<ManageEmailTemplates />}
+                  />
+                )}
+              </Route>
+            )}
+
+            {/* Student */}
+            {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
+              <Route path="phd-student" element={<Outlet />}>
+                <Route path="proposals" element={<Proposal />} />
+                <Route path="qualifying-exams" element={<QualifyingExams />} />
+              </Route>
+            )}
+
+            {checkAccessAnyOne([
+              permissions["/phd/drcMember/getAvailableExams"],
+              permissions["/phd/proposal/drcConvener/getProposals"],
+            ]) && (
+              <Route path="drc-convenor" element={<Outlet />}>
+                {checkAccess(
+                  permissions["/phd/drcMember/getAvailableExams"]
+                ) && (
                   <Route
                     path="qualifying-exam-management"
                     element={<QualifyingExamManagement />}
-                  ></Route>
-                  Handout
-                </Route>
-              )}
-            {checkAccess(permissions["/phd/student/checkExamStatus"]) && (
-              <Route path="phd-student" element={<Outlet />}>
-                <Route path="form-deadline" element={<FormDeadline />} />
-                <Route path="my-profile" element={<Profile />} />
+                  />
+                )}
+                {checkAccess(
+                  permissions["/phd/proposal/drcConvener/getProposals"]
+                ) && (
+                  <>
+                    <Route
+                      path="proposal-management"
+                      element={<DrcProposalManagement />}
+                    />
+                    <Route
+                      path="proposal-management/:id"
+                      element={<DrcViewProposal />}
+                    />
+                  </>
+                )}
+              </Route>
+            )}
+            {checkAccess(
+              permissions["/phd/proposal/dacMember/getProposals"]
+            ) && (
+              <Route path="dac" element={<Outlet />}>
+                <Route path="proposals" element={<DacProposalManagement />} />
+                <Route path="proposals/:id" element={<DacViewProposal />} />
+              </Route>
+            )}
+            {checkAccessAnyOne([
+              permissions["/phd/proposal/supervisor/getProposals"],
+              permissions["/phd/supervisor/suggestExaminers"],
+            ]) && (
+              <Route path="supervisor" element={<Outlet />}>
+                {checkAccess(
+                  permissions["/phd/proposal/supervisor/getProposals"]
+                ) && (
+                  <>
+                    <Route path="proposals" element={<SupervisorProposal />} />
+                    <Route
+                      path="proposal/:id"
+                      element={<SupervisorViewProposal />}
+                    />
+                  </>
+                )}
+                {checkAccess(
+                  permissions["/phd/supervisor/suggestExaminers"]
+                ) && (
+                  <Route
+                    path="examiner-suggestions"
+                    element={<ExaminerSuggestions />}
+                  />
+                )}
+              </Route>
+            )}
 
+            {/* Co-Supervisor */}
+            {checkAccess(
+              permissions["/phd/proposal/coSupervisor/getProposals"]
+            ) && (
+              <Route path="coSupervisor" element={<Outlet />}>
+                <Route path="proposals" element={<CoSupervisorProposal />} />
                 <Route
-                  path="proposal-submission"
-                  element={<ProposalSubmission />}
+                  path="proposal/:id"
+                  element={<CoSupervisorViewProposal />}
                 />
               </Route>
             )}
-            {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-              <Route path="staff" element={<Outlet />}>
-                <Route
-                  path="update-semester-dates"
-                  element={<UpdateSemesterDates />}
-                />
-                <Route
-                  path="update-deadlines"
-                  element={<UpdateDeadlinesPage />}
-                />
-                <Route
-                  path="update-subareas"
-                  element={<UpdateSubAreasPage />}
-                />
-              </Route>
-            )}
-            {checkAccess(
-              permissions[
-              "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-                <Route path="phd-co-supervisor" element={<Outlet />}>
-                  <Route
-                    path="co-supervised-students"
-                    element={<CoSupervisedStudents />}
-                  />
-                </Route>
-              )}
-            {checkAccess(
-              permissions[
-              "/phd/notionalSupervisor/updateCourseDetails"
-              ] as string
-            ) && (
-                <Route path="phd-supervisor" element={<Outlet />}>
-                  <Route
-                    path="supervised-students"
-                    element={<SupervisedStudents />}
-                  />
-                </Route>
-              )}
           </Route>
         )}
-
         {checkAccessAnyOne(publicationsPermissions) && (
           <Route path="/publications" element={<PublicationsLayout />}>
             <Route
@@ -452,6 +484,12 @@ const Routing = () => {
             <Route path="your-publications" element={<YourPublications />} />
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="all-publications" element={<AllPublications />} />
+            )}
+            {checkAccess(permissions["/publications/upload"]) && (
+              <Route
+                path="upload-researgence"
+                element={<UploadReseargence />}
+              />
             )}
             {checkAccess(permissions["/publications/all"]) && (
               <Route path="edit-publications" element={<EditPublications />} />
@@ -483,7 +521,6 @@ const Routing = () => {
             )}
           </Route>
         )}
-
         {checkAccessAnyOne(projectModulePermissions) && (
           <Route path="/project" element={<ProjectLayout />}>
             <Route
@@ -507,7 +544,6 @@ const Routing = () => {
             )}
           </Route>
         )}
-
         {checkAccessAnyOne(patentModulePermissions) && (
           <Route path="/patent" element={<PatentLayout />}>
             <Route
@@ -597,5 +633,4 @@ const Routing = () => {
     </BrowserRouter>
   );
 };
-
 export default Routing;

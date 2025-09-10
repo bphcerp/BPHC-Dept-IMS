@@ -29,8 +29,6 @@ router.get(
                 degreeProgram: wilpProject.degreeProgram,
                 researchArea: wilpProject.researchArea,
                 dissertationTitle: wilpProject.dissertationTitle,
-                reminder: wilpProject.reminder,
-                deadline: wilpProject.deadline,
                 createdAt: wilpProject.createdAt,
                 updatedAt: wilpProject.updatedAt,
                 facultyPsrn: faculty.psrn,
@@ -59,8 +57,6 @@ router.get(
             researchArea: data[0].researchArea,
             dissertationTitle: data[0].dissertationTitle,
             facultyEmail: data[0].facultyEmail,
-            reminder: data[0].reminder,
-            deadline: data[0].deadline,
             createdAt: data[0].createdAt,
             updatedAt: data[0].updatedAt,
             faculty: data[0].facultyEmail

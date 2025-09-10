@@ -18,37 +18,9 @@ import { Edit2, Save, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { publicationsSchemas } from "lib";
 
-type CoAuthor = {
-  authorId: string;
-  authorName: string;
-};
-type month = publicationsSchemas.month;
 const months = publicationsSchemas.months;
 
-
-type Publication = {
-  title: string;
-  type: string;
-  journal: string;
-  volume: string | null;
-  issue: string | null;
-  month: month,
-  year: string;
-  link: string;
-  citations: string;
-  citationId: string;
-  authorNames: string;
-  coAuthors: CoAuthor[];
-  comments?: string | null;
-};
-
-const PublicationSchema = publicationsSchemas.PublicationSchema;
-
-type PublicationResponse = {
-  publications: Publication[];
-};
-
-type EditingPublication = Publication & {
+type EditingPublication = publicationsSchemas.PublicationWithMeta & {
   isEditing?: boolean;
 };
 
@@ -65,7 +37,7 @@ const EditPublications = () => {
   } = useQuery({
     queryKey: ["publications/all"],
     queryFn: async () => {
-      const response = await api.get<PublicationResponse>("/publications/all");
+      const response = await api.get<publicationsSchemas.PublicationWithMetaResponse>("/publications/all/meta");
       return response.data;
     },
     retry: false,
@@ -73,8 +45,8 @@ const EditPublications = () => {
   });
 
   const updatePublicationMutation = useMutation({
-    mutationFn: async (publication: Publication) => {
-      const filteredPublication = PublicationSchema.parse(publication);
+    mutationFn: async (publication: publicationsSchemas.PublicationWithMeta) => {
+      const filteredPublication = publicationsSchemas.PublicationWithMetaSchema.parse(publication);
 
       const response = await api.patch("/publications/edit", {
         publication: filteredPublication,
@@ -93,7 +65,7 @@ const EditPublications = () => {
     },
   });
 
-  const handleEdit = (publication: Publication) => {
+  const handleEdit = (publication: publicationsSchemas.PublicationWithMeta) => {
     setEditingPublications({
       ...editingPublications,
       [publication.citationId]: { ...publication, isEditing: true },
@@ -116,7 +88,7 @@ const EditPublications = () => {
 
   const handleChange = (
     citationId: string,
-    field: keyof Publication,
+    field: keyof publicationsSchemas.PublicationWithMeta,
     value: string
   ) => {
     setEditingPublications({
@@ -129,19 +101,21 @@ const EditPublications = () => {
   };
 
   const sortedGroupedPublications = useMemo(() => {
-    if (!publicationsData?.publications) return {};
+    if (!publicationsData) return {};
 
     // Group publications by type
-    const grouped = publicationsData.publications.reduce(
+    const grouped = publicationsData.reduce(
       (groups, publication) => {
         const type = publication.type || "Uncategorized";
         if (!groups[type]) {
           groups[type] = [];
         }
-        groups[type].push(publication);
+        groups[type].push({
+          ...publication
+      });
         return groups;
       },
-      {} as Record<string, Publication[]>
+      {} as Record<string, publicationsSchemas.PublicationWithMeta[]>
     );
 
     // Sort groups and publications within each group
@@ -154,7 +128,7 @@ const EditPublications = () => {
           );
           return acc;
         },
-        {} as Record<string, Publication[]>
+        {} as Record<string, publicationsSchemas.PublicationWithMeta[]>
       );
 
     return sorted;
@@ -162,7 +136,7 @@ const EditPublications = () => {
 
 
   const renderPublicationsTable = (
-    publications: Publication[],
+    publications: publicationsSchemas.PublicationWithMeta[],
     type: string
   ) => (
     <Card key={type} className="mb-6">
@@ -234,7 +208,7 @@ const EditPublications = () => {
                     <TableCell>
                       {isEditing ? (
                         <Input
-                          value={editingPublication.type}
+                          value={editingPublication.type ?? "Unknown"}
                           onChange={(e) =>
                             handleChange(
                               publication.citationId,
@@ -253,7 +227,7 @@ const EditPublications = () => {
                     <TableCell>
                       {isEditing ? (
                         <Input
-                          value={editingPublication.journal}
+                          value={editingPublication.journal ?? "Not Provided"}
                           onChange={(e) =>
                             handleChange(
                               publication.citationId,
@@ -408,7 +382,7 @@ const EditPublications = () => {
           Edit Publications
         </h1>
         <div className="text-sm text-muted-foreground">
-          Total: {publicationsData?.publications?.length || 0} publications
+          Total: {publicationsData?.length || 0} publications
         </div>
       </div>
 

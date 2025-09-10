@@ -1,0 +1,2 @@
+ALTER TABLE "phd_proposal_dac_reviews" ADD COLUMN "suggestion_file_id" integer;--> statement-breakpoint
+ALTER TABLE "phd_proposal_dac_reviews" ADD CONSTRAINT "phd_proposal_dac_reviews_suggestion_file_id_files_id_fk" FOREIGN KEY ("suggestion_file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;

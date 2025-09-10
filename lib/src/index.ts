@@ -10,6 +10,7 @@ import * as inventorySchemas from "./schemas/Inventory.ts";
 import * as projectSchemas from "./schemas/Project.ts";
 import * as patentSchemas from "./schemas/Patent.ts";
 import * as wilpProjectSchemas from "./schemas/WilpProject.ts";
+import * as profileSchemas from "./schemas/Profile.ts";
 import * as allocationSchemas from "./schemas/Allocation.ts";
 import * as allocationFormBuilderSchemas from "./schemas/AllocationFormBuilder.ts";
 
@@ -38,4 +39,5 @@ export {
     authUtils,
     permissions,
     allPermissions,
+    profileSchemas
 };

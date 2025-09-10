@@ -39,7 +39,7 @@ export const asyncHandler = <
                 new HttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
                     "An error occurred",
-                    (e as Error)?.message
+                    (e as Error)?.stack || (e as Error)?.message
                 )
             );
         });

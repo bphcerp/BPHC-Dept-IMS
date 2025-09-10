@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
 import { InventoryItem } from "node_modules/lib/src/types/inventory";
+import { AlertTriangleIcon } from "lucide-react";
 
 interface TransferConfirmationDialogProps {
   open: boolean;
@@ -70,6 +71,12 @@ export const TransferConfirmationDialog = ({
         <DialogHeader>
           <DialogTitle>Transfer Items</DialogTitle>
         </DialogHeader>
+        <div
+          className="flex space-x-2 text-secondary"
+        >
+          <AlertTriangleIcon />
+          <span>The transfer functionality is still a <u>work in progress</u>. There is a possibility of unexpected behaviour. Please use with caution.</span>
+        </div>
         <div className="space-y-4">
           <p>Review the items to be transferred:</p>
           <div className="max-h-48 overflow-y-auto rounded border">

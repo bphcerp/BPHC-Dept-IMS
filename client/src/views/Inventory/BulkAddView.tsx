@@ -62,9 +62,16 @@ const BulkAddView = () => {
           Bulk Add Items from Excel
         </span>
 
-        <Link className="flex justify-end" to="/inventory/items/add-item">
-          <Button>Add Single Item</Button>
-        </Link>
+        <div className="flex justify-end space-x-2">
+          <Link to="/inventory_assets/inventory_bulk_add_format.xlsx" target="_blank">
+            <Button variant="secondary">
+              Download Excel Format
+            </Button>
+          </Link>
+          <Link to="/inventory/items/add-item">
+            <Button>Add Single Item</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex h-full flex-col space-y-14 px-5">

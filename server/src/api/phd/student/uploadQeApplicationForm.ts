@@ -1,215 +1,192 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import db from "@/config/db/index.ts";
-import { phd } from "@/config/db/schema/admin.ts";
-import {
-    applications,
-    textFields,
-    files,
-    fileFields,
-} from "@/config/db/schema/form.ts";
-import { eq } from "drizzle-orm";
-import assert from "assert";
-import { phdSchemas } from "lib";
-import { pdfUpload } from "@/config/multer.ts";
-import multer from "multer";
+import db, { type Tx } from "@/config/db/index.ts";
+import { phdExamApplications } from "@/config/db/schema/phd.ts";
+import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { modules } from "lib";
-import type { Request, Response, NextFunction } from "express";
+import { pdfUpload } from "@/config/multer.ts";
+import { phdSchemas, modules } from "lib";
+import multer from "multer";
+import { eq, and } from "drizzle-orm";
+import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
+type FileField = (typeof phdSchemas.fileFieldNames)[number];
+
+const handleFileUploads = async (
+    tx: Tx,
+    req: express.Request,
+    userEmail: string
+): Promise<Partial<Record<FileField, number>>> => {
+    if (Array.isArray(req.files)) throw new Error("Invalid files format");
+    const uploadedFiles = req.files as
+        | Record<string, Express.Multer.File[]>
+        | undefined;
+    const insertedFileIds: Partial<Record<FileField, number>> = {};
+    if (uploadedFiles && Object.entries(uploadedFiles).length > 0) {
+        const fileValues = Object.entries(uploadedFiles).map(
+            ([fieldName, files]) => {
+                const file = files[0];
+                return {
+                    userEmail,
+                    filePath: file.path,
+                    originalName: file.originalname,
+                    mimetype: file.mimetype,
+                    size: file.size,
+                    fieldName,
+                    module: modules[4],
+                };
+            }
+        );
+        if (fileValues.length > 0) {
+            const insertedFiles = await tx
+                .insert(files)
+                .values(fileValues)
+                .returning();
+            insertedFiles.forEach((file) => {
+                insertedFileIds[file.fieldName! as FileField] = file.id;
+            });
+        }
+    }
+    return insertedFileIds;
+};
 
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(async (req: Request, res: Response, next: NextFunction) =>
-        pdfUpload.single("qualificationForm")(req, res, (err) => {
+    asyncHandler((req, res, next) =>
+        pdfUpload.fields(phdSchemas.multerFileFields)(req, res, (err) => {
             if (err instanceof multer.MulterError)
                 return next(new HttpError(HttpCode.BAD_REQUEST, err.message));
             next(err);
         })
     ),
     asyncHandler(async (req, res) => {
-        assert(req.user);
-        const file = req.file;
-        if (!file) {
-            throw new HttpError(HttpCode.BAD_REQUEST, "PDF file is required");
-        }
-
-        const parseDate = (dateString: string | undefined): Date | null => {
-            if (!dateString) return null;
-            const parsedDate = new Date(dateString);
-            return !isNaN(parsedDate.getTime()) ? parsedDate : null;
-        };
-
-        const examId = parseInt(req.body.examId || "0", 10);
-        if (!examId) {
-            throw new HttpError(HttpCode.BAD_REQUEST, "Exam ID is required");
-        }
-
-        const examStartDate = parseDate(req.body.examStartDate);
-        const examEndDate = parseDate(req.body.examEndDate);
-        if (!examStartDate || !examEndDate) {
-            throw new HttpError(HttpCode.BAD_REQUEST, "Invalid exam dates");
-        }
-
-        const parsed = phdSchemas.uploadApplicationSchema.safeParse({
-            ...req.body,
-            fileUrl: file.path,
-            formName: file.originalname,
-            applicationType: "qualifying_exam",
-            examStartDate: examStartDate.toISOString(),
-            examEndDate: examEndDate.toISOString(),
+        const body = phdSchemas.qualifyingExamApplicationSchema.parse(req.body);
+        const userEmail = req.user!.email;
+        const studentProfile = await db.query.phd.findFirst({
+            where: eq(phd.email, userEmail),
         });
 
-        if (!parsed.success) {
+        if (!studentProfile) {
             throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "Invalid input data: " + parsed.error.message
+                HttpCode.NOT_FOUND,
+                "Your PhD student profile was not found. Please contact an administrator."
+            );
+        }
+        if (studentProfile.hasPassedQe) {
+            throw new HttpError(
+                HttpCode.FORBIDDEN,
+                "You have already passed the qualifying exam and cannot apply again."
+            );
+        }
+        if (studentProfile.qeAttemptCount >= 2) {
+            throw new HttpError(
+                HttpCode.FORBIDDEN,
+                "You have reached the maximum number of attempts for the qualifying exam."
             );
         }
 
-        const { qualifyingArea1, qualifyingArea2 } = parsed.data;
-        const { email } = req.user;
-
-        await db.transaction(async (tx) => {
-            // Get the student record
-            const student = await tx.query.phd.findFirst({
-                where: eq(phd.email, email),
+        const existingApplication =
+            await db.query.phdExamApplications.findFirst({
+                where: and(
+                    eq(phdExamApplications.examId, body.examId),
+                    eq(phdExamApplications.studentEmail, userEmail)
+                ),
             });
 
-            if (!student) {
-                throw new HttpError(
-                    HttpCode.NOT_FOUND,
-                    "Student record not found"
-                );
-            }
-
-            // Helper function to compare dates with tolerance for timezone differences
-            const areSameDates = (
-                date1: Date | null | undefined,
-                date2: Date | null
-            ): boolean => {
-                if (!date1 || !date2) return false;
-
-                // Convert to ISO string date parts only for comparison
-                return (
-                    date1.toISOString().split("T")[0] ===
-                    date2.toISOString().split("T")[0]
-                );
-            };
-
-            // Check if this is a resubmission for an existing attempt
-            const isResubmissionForAttempt1 =
-                student.qualifyingExam1StartDate &&
-                student.qualifyingExam1EndDate &&
-                areSameDates(student.qualifyingExam1StartDate, examStartDate) &&
-                areSameDates(student.qualifyingExam1EndDate, examEndDate);
-
-            const isResubmissionForAttempt2 =
-                student.qualifyingExam2StartDate &&
-                student.qualifyingExam2EndDate &&
-                areSameDates(student.qualifyingExam2StartDate, examStartDate) &&
-                areSameDates(student.qualifyingExam2EndDate, examEndDate);
-
-            const isResubmission =
-                isResubmissionForAttempt1 || isResubmissionForAttempt2;
-
-            // Current application count
-            const currentApplicationCount = student.numberOfQeApplication ?? 0;
-
-            // If this is a new application (not resubmission), check max attempts
-            if (!isResubmission && currentApplicationCount >= 2) {
+        if (existingApplication) {
+            if (
+                existingApplication.status === "resubmit" &&
+                body.applicationId === existingApplication.id
+            ) {
+                await db.transaction(async (tx) => {
+                    const newFileIds = await handleFileUploads(
+                        tx,
+                        req,
+                        userEmail
+                    );
+                    await tx
+                        .update(phdExamApplications)
+                        .set({
+                            qualifyingArea1: body.qualifyingArea1,
+                            qualifyingArea2: body.qualifyingArea2,
+                            status: "applied",
+                            comments: null,
+                            qualifyingArea1SyllabusFileId:
+                                newFileIds.qualifyingArea1Syllabus ??
+                                existingApplication.qualifyingArea1SyllabusFileId,
+                            qualifyingArea2SyllabusFileId:
+                                newFileIds.qualifyingArea2Syllabus ??
+                                existingApplication.qualifyingArea2SyllabusFileId,
+                            tenthReportFileId:
+                                newFileIds.tenthReport ??
+                                existingApplication.tenthReportFileId,
+                            twelfthReportFileId:
+                                newFileIds.twelfthReport ??
+                                existingApplication.twelfthReportFileId,
+                            undergradReportFileId:
+                                newFileIds.undergradReport ??
+                                existingApplication.undergradReportFileId,
+                            mastersReportFileId:
+                                newFileIds.mastersReport ??
+                                existingApplication.mastersReportFileId,
+                        })
+                        .where(eq(phdExamApplications.id, body.applicationId!));
+                });
+                res.status(200).json({
+                    success: true,
+                    message: "Application resubmitted successfully",
+                });
+            } else {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
-                    "Maximum number of qualifying exam attempts reached"
+                    "You have already submitted an application for this exam"
                 );
             }
-
-            // Prepare update fields
-            const updateFields: Record<string, unknown> = {
-                qualifyingArea1,
-                qualifyingArea2,
-                qualifyingAreasUpdatedAt: new Date(),
-            };
-
-            // Determine which attempt this is for
-            if (isResubmissionForAttempt1) {
-                // Just update the areas for attempt 1
-            } else if (isResubmissionForAttempt2) {
-                // Just update the areas for attempt 2
-            } else {
-                // This is a new application
-                if (currentApplicationCount === 0) {
-                    // First attempt
-                    updateFields.numberOfQeApplication = 1;
-                    updateFields.qualifyingExam1StartDate = examStartDate;
-                    updateFields.qualifyingExam1EndDate = examEndDate;
-                } else if (currentApplicationCount === 1) {
-                    // Second attempt
-                    updateFields.numberOfQeApplication = 2;
-                    updateFields.qualifyingExam2StartDate = examStartDate;
-                    updateFields.qualifyingExam2EndDate = examEndDate;
-                }
-            }
-
-            // Insert application record
-            await tx
-                .insert(applications)
-                .values({
-                    module: modules[4],
-                    userEmail: email,
-                    status: "pending",
-                })
-                .returning();
-
-            // Insert file record
-            const [fileRecord] = await tx
-                .insert(files)
-                .values({
-                    userEmail: email,
-                    filePath: file.path,
-                    originalName: file.originalname,
-                    mimetype: file.mimetype,
-                    size: file.size,
-                    fieldName: "qualificationForm",
-                    module: modules[4],
-                })
-                .returning();
-
-            // Insert file field record
-            await tx.insert(fileFields).values({
-                fileId: fileRecord.id,
-                module: modules[4],
-                userEmail: email,
-                fieldName: "qualificationForm",
+        } else {
+            const exam = await db.query.phdQualifyingExams.findFirst({
+                where: (table, { eq, and, gt }) =>
+                    and(
+                        eq(table.id, body.examId),
+                        gt(table.submissionDeadline, new Date())
+                    ),
             });
-
-            // Insert text fields
-            await tx.insert(textFields).values([
-                {
-                    value: qualifyingArea1,
-                    userEmail: email,
-                    module: modules[4],
-                    fieldName: "qualifyingArea1",
-                },
-                {
-                    value: qualifyingArea2,
-                    userEmail: email,
-                    module: modules[4],
-                    fieldName: "qualifyingArea2",
-                },
-            ]);
-
-            // Update the PhD record
-            await tx.update(phd).set(updateFields).where(eq(phd.email, email));
-        });
-
-        res.status(HttpCode.OK).json({
-            success: true,
-            message: "Qualification exam application submitted successfully",
-        });
+            if (!exam) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Exam not found or application deadline has passed"
+                );
+            }
+            await db.transaction(async (tx) => {
+                const insertedFileIds = await handleFileUploads(
+                    tx,
+                    req,
+                    userEmail
+                );
+                await tx.insert(phdExamApplications).values({
+                    examId: body.examId,
+                    studentEmail: userEmail,
+                    qualifyingArea1: body.qualifyingArea1,
+                    qualifyingArea2: body.qualifyingArea2,
+                    qualifyingArea1SyllabusFileId:
+                        insertedFileIds.qualifyingArea1Syllabus,
+                    qualifyingArea2SyllabusFileId:
+                        insertedFileIds.qualifyingArea2Syllabus,
+                    tenthReportFileId: insertedFileIds.tenthReport,
+                    twelfthReportFileId: insertedFileIds.twelfthReport,
+                    undergradReportFileId: insertedFileIds.undergradReport,
+                    mastersReportFileId: insertedFileIds.mastersReport,
+                    status: "applied",
+                    attemptNumber: studentProfile.qeAttemptCount + 1,
+                });
+            });
+            res.status(200).json({
+                success: true,
+                message: "Application submitted successfully",
+            });
+        }
     })
 );
 

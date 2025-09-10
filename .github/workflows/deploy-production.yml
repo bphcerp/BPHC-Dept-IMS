@@ -7,13 +7,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  production:
+  eee-prod:
     runs-on: eee-ims
     steps:
       - name: Deploy to production
         run: |
-          cd /home/ubuntu
-          cd bphcerp/ERP
+          cd /home/ubuntu/bphcerp/ERP
+          git pull
+          docker compose --profile prod up --build -d
+          docker compose exec server-prod pnpm db:migrate
+          docker compose exec server-prod pnpm db:seed
+  mech-prod:
+    runs-on: mech-ims
+    steps:
+      - name: Deploy to production
+        run: |
+          cd /home/ubuntu/mechims
           git pull
           docker compose --profile prod up --build -d
           docker compose exec server-prod pnpm db:migrate
