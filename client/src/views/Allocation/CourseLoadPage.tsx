@@ -55,7 +55,12 @@ const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "isCDC",
     header: "Is CDC?",
-    cell: ({ row }) => (row.original.isCDC) ? "Yes" : "No",
+    cell: ({ getValue }) => getValue() ? "Yes" : "No",
+  },
+  {
+    accessorKey: "hasLongPracticalSec",
+    header: "Longer Practical Section?",
+    cell: ({ getValue, row }) => getValue() ? "Yes" : row.original.practicalSecCount ? "No" : "NA",
   },
 ];
 
