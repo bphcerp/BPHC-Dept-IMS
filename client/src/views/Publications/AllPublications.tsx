@@ -34,7 +34,7 @@ const AllPublications = () => {
   } = useQuery({
     queryKey: ["publications/all"],
     queryFn: async () => {
-
+      
       return {
         all: (await api.get<publicationsSchemas.PublicationResponse>("/publications/all/")).data,
         ...(await api.get<publicationsSchemas.ValidatedResponse>("/publications/all/validated")).data
@@ -42,6 +42,7 @@ const AllPublications = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const updatePublicationsMutation = useMutation({
@@ -52,6 +53,7 @@ const AllPublications = () => {
       setErrorMessage(null);
       toast.success("Publications updated successfully");
       void queryClient.invalidateQueries({ queryKey: ["publications/all"] });
+      void queryClient.invalidateQueries({ queryKey: ["publications/edit"] });
     },
     onError: () => {
       setErrorMessage("Failed to update publications");
@@ -108,10 +110,7 @@ const AllPublications = () => {
     },
     {
       accessorKey: 'authors',
-      header: 'Authors',
-      meta : {
-        filterType: "search"
-      }
+      header: 'Authors'
     },
     {
       accessorKey: 'homeAuthors',
@@ -400,11 +399,13 @@ const AllPublications = () => {
                               key={pub.citationId}
                             >
                               <span className="font-medium">[{globalIndex}]</span>{" "}
-                              {pub.authorNames.replace(/,?\s*\.\.\.$/, "").trim()}
-                              {", "} &quot;{pub.title}
-                              ,&quot; <em>{pub.journal}</em>
-                              {pub.volume && `, vol. ${pub.volume}`}
-                              {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : ''}{pub.year}.
+                              <a href={pub.link??undefined} target="_blank">
+                                {pub.authorNames.replace(/,?\s*\.\.\.$/, "").trim()}
+                                {", "} &quot;{pub.title}
+                                ,&quot; <em>{pub.journal}</em>
+                                {pub.volume && `, vol. ${pub.volume}`}
+                                {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : ''}{pub.year}.
+                              </a>
                             </p>
                           );
                         })}
@@ -428,6 +429,7 @@ const AllPublications = () => {
               <DataTable<publicationsSchemas.ReseargencePublication>
                 data={publicationsData.validated}
                 columns={resColumns}
+                mainSearchColumn="authors"
               />
               </Collapsible>
               <Collapsible title={
@@ -436,7 +438,7 @@ const AllPublications = () => {
                 </h2>
               }>
               <DataTable<publicationsSchemas.Publication>
-                data={publicationsData.all}
+                data={publicationsData.nonValidated}
                 idColumn="citationId"
                 exportFunction={
                   checkAccess(permissions["/publications/export"])
@@ -470,6 +472,7 @@ const AllPublications = () => {
                     } : undefined
                 }
                 columns={pubColumns}
+                mainSearchColumn="authorNames"
               />
               </Collapsible>
             </div>
