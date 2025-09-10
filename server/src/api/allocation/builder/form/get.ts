@@ -2,35 +2,37 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { HttpError, HttpCode } from "@/config/errors.ts";
 const router = express.Router();
 
 router.get(
     "/:id",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req, res, next) => {
         const { id } = req.params;
 
-        const template = await db.query.allocationForm.findFirst({
-            where: (template, { eq }) =>
-                eq(template.id, id)
+        const form = await db.query.allocationForm.findFirst({
+            columns: {
+                templateId: false,
+            },
+            with: {
+                template: {
+                    with: {
+                        fields: {
+                            with: {
+                                options: true
+                            },
+                        },
+                    },
+                },
+            },
+            where: (form, { eq }) => eq(form.id, id),
         });
-        if (template) {
-            const fields = await db.query.allocationForm.findMany({
-                where: (field, { eq }) => eq(field.templateId, id),
-                
-            });
 
-            res.status(200).json({
-                ...template,
-                fields,
-            });
-        }
+        if (!form)
+            return next(new HttpError(HttpCode.NOT_FOUND, "Form not found"));
 
-        else if (!template) {
-            res.status(404).json({ message: "Template not found" });
-        }             
-
-        
+        res.status(200).json(form);
     })
 );
 

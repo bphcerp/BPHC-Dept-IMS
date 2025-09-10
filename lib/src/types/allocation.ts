@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
 	allocationSchema,
 	courseSchema,
-	coursePreferencesSchema,
 	semesterSchema
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "@/schemas/Admin.ts";
@@ -24,17 +23,6 @@ export type UpdateCourse = Partial<NewCourse>;
 export type Course = NewCourse & {
     createdAt: Date;
     updatedAt: Date;
-};
-
-export type NewCoursePreferences = z.infer<typeof coursePreferencesSchema>;
-export type UpdateCoursePreferences = Partial<NewCoursePreferences>;
-export type CoursePreferences = NewCoursePreferences & {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
-    course: Course;
-    semester: Semester;
-    instructor: MemberDetailsResponse;
 };
 
 export type NewSemester = z.infer<typeof semesterSchema>;
