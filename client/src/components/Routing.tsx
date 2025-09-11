@@ -20,6 +20,7 @@ import {
   LibraryBig,
   Warehouse,
   File,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -92,6 +93,8 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import AnalyticsLayout from "@/layouts/Analytics";
+import PublicationsAnalytics from "@/views/Analytics/Publications";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -124,6 +127,9 @@ const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
 );
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
+);
+const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("analytics:")
 );
 
 const Routing = () => {
@@ -189,6 +195,12 @@ const Routing = () => {
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
     },
+    {
+      title: "Analytics",
+      icon: <ChartNoAxesCombined />,
+      url: "/analytics",
+      requiredPermissions: analyticsModulePermissions,
+    },
   ];
 
   return (
@@ -210,7 +222,10 @@ const Routing = () => {
           }
         />
         <Route path="/contributors" element={<ContributorsPage />} />
-        <Route path="/help" element={authState ? <HelpPage /> : <Navigate to="/" replace />} />
+        <Route
+          path="/help"
+          element={authState ? <HelpPage /> : <Navigate to="/" replace />}
+        />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
         {authState && <Route path="/profile" element={<ProfilePage />} />}
         {checkAccessAnyOne(adminModulePermissions) && (
@@ -595,6 +610,17 @@ const Routing = () => {
               <Route path="view-stats" element={<Statistics />} />
             )}
             <Route path=":id" element={<WilpProjectDetails />} />
+          </Route>
+        )}
+        {checkAccessAnyOne(analyticsModulePermissions) && (
+          <Route path="/analytics" element={<AnalyticsLayout />}>
+            <Route
+              index
+              element={<Navigate to="/analytics/publications" replace={true} />}
+            />
+            {checkAccess(permissions["/analytics/publications"]) && (
+              <Route path="publications" element={<PublicationsAnalytics />} />
+            )}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

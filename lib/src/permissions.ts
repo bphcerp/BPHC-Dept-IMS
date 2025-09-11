@@ -69,7 +69,7 @@ export const allPermissions = {
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
     "publications:export": "Export Publications",
-    "publications:upload" : "Upload Researgence Data",
+    "publications:upload": "Upload Researgence Data",
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
@@ -106,6 +106,9 @@ export const allPermissions = {
     "wilp:project:deselect": "Remove selected WILP projects",
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
+
+    // ANALYTICS
+    "analytics:publications": "View publications analytics",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -235,7 +238,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
     "/publications/upload": "publications:upload",
-    
+
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",
@@ -293,4 +296,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/deselect": "wilp:project:deselect",
     "/wilpProject/mail": "wilp:project:mail",
     "/wilpProject/stats": "wilp:project:stats",
+
+    // Analytics
+    "/analytics/publications": "analytics:publications",
 } as const;
