@@ -25,10 +25,9 @@ export const allocationFormSubmittedAnswerSchema = z.object({
 
 export const allocationFormResponseSchema = z.object({
   formId: z.string().uuid(),
-  submittedBy: z.string().uuid().optional(),
-  submittedAt: z.date().optional(),
   answers: z.array(allocationFormSubmittedAnswerSchema),
 });
+
 export const allocationFormTemplateFieldOptionSchema = z.object({
   // id: z.string().uuid().optional(),
   templateFieldId: z.string().uuid().optional(), 

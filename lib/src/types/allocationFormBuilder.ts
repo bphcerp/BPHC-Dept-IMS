@@ -75,6 +75,8 @@ export type AllocationForm = NewAllocationForm & {
 
 export type AllocationFormResponse = NewAllocationFormResponse & {
 	form?: AllocationForm;
+	submittedBy: string;  
+  	submittedAt: Date;    
 	values?: AllocationFormResponseValue[];
 };
 

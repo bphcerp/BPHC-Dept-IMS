@@ -9,6 +9,8 @@ import {
   allocationFormResponseAnswer 
 } from "./allocationFormBuilder.ts";
 
+import { users } from "./admin.ts";
+
 
 export const allocationFormTemplateRelations = relations(
   allocationFormTemplate,
@@ -27,6 +29,11 @@ export const allocationFormRelations = relations(
       references: [allocationFormTemplate.id],
     }),
     responses: many(allocationFormResponse),
+    createdBy: one(users, {
+      fields: [allocationForm.createdBy],
+      references: [users.email]
+    })
+    
   })
 );
 
@@ -38,9 +45,12 @@ export const allocationFormResponseRelations = relations(
       references: [allocationForm.id],
     }),
     values: many(allocationFormResponseValue),
+    submittedBy: one(users, {
+      fields: [allocationFormResponse.submittedBy],
+      references: [users.email]
+    })
   })
 );
-
 
 export const allocationFormTemplateFieldRelations = relations(
   allocationFormTemplateField,

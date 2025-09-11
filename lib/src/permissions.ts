@@ -342,13 +342,13 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/delete": "allocation:semester:write",
     "/allocation/semester/update": "allocation:semester:write",
 
-    "/builder/template/create": "allocation:builder:template:write",
-    "/builder/template/get": "allocation:builder:template:read",
+    "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/get": "allocation:builder:template:read",
 
-    "/builder/form/create": "allocation:builder:form:write",
-    "/builder/form/get": "allocation:builder:form:read",
-    "/builder/form/getInfo": "allocation:builder:form:read",
-    "/builder/form/getAll": "allocation:builder:form:read",
+    "/allocation/builder/form/create": "allocation:builder:form:write",
+    "/allocation/builder/form/get": "allocation:builder:form:read",
+    "/allocation//builder/form/getInfo": "allocation:builder:form:read",
+    "/allocation//builder/form/getAll": "allocation:builder:form:read",
     
     "/response/register": "allocation:response:write",
     
