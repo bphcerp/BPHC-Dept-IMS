@@ -14,7 +14,6 @@ router.get(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
-
         const proposal = await db.query.phdProposals.findFirst({
             where: (cols, { eq }) => eq(cols.id, proposalId),
             with: {
@@ -34,12 +33,11 @@ router.get(
                 placeOfResearchFile: true,
                 outsideCoSupervisorFormatFile: true,
                 outsideSupervisorBiodataFile: true,
+                proposalSemester: true, 
             },
         });
-
         if (!proposal)
             throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
-
         const response = {
             ...proposal,
             appendixFileUrl: `${environment.SERVER_URL}/f/${proposal.appendixFileId}`,
@@ -57,7 +55,6 @@ router.get(
                     ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
                     : null,
         };
-
         res.status(200).json(response);
     })
 );
