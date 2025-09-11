@@ -7,6 +7,7 @@ const optionalString = z
     .transform((val) => (val?.length ? val : null));
 
 export const phdTypes = ["part-time", "full-time"] as const;
+
 export const phdExamApplicationStatuses = [
     "applied",
     "verified",
@@ -25,7 +26,6 @@ export const phdProposalStatuses = [
     "completed",
     "sent_to_agsrd",
 ] as const;
-
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
     ["completed", "deleted", "sent_to_agsrd"];
 
@@ -138,8 +138,9 @@ export const updateQualifyingExamSchema = z
 export type UpdateQualifyingExamBody = z.infer<
     typeof updateQualifyingExamSchema
 >;
-
-export const updateSubAreasSchema = z.object({ subArea: z.string().min(1) });
+export const updateSubAreasSchema = z.object({
+    subArea: z.string().min(1),
+});
 export type UpdateSubAreasBody = z.infer<typeof updateSubAreasSchema>;
 
 export const updateSemesterDatesSchema = z.object({
@@ -196,6 +197,7 @@ export const fileFieldNames = [
     "undergradReport",
     "mastersReport",
 ] as const;
+
 export const multerFileFields: Readonly<{ name: string; maxCount: number }[]> =
     (fileFieldNames as Readonly<string[]>).map((x) => {
         return { name: x, maxCount: 1 };
@@ -222,6 +224,7 @@ export const phdProposalFileFieldNames = [
     "outsideCoSupervisorFormatFile",
     "outsideSupervisorBiodataFile",
 ] as const;
+
 export const phdProposalMulterFileFields: Readonly<
     { name: string; maxCount: number }[]
 > = (phdProposalFileFieldNames as Readonly<string[]>).map((x) => {
@@ -231,6 +234,7 @@ export const phdProposalMulterFileFields: Readonly<
 export const proposalRevertSchema = z.object({
     comments: z.string().trim().min(1, "Comments are required for reverting"),
 });
+
 export const supervisorProposalAcceptSchema = z.object({
     dacMembers: z
         .array(z.string().email())
@@ -238,12 +242,14 @@ export const supervisorProposalAcceptSchema = z.object({
         .max(4, "Maximum 4 DAC members allowed"),
     comments: z.string().trim().optional(),
 });
+
 export const drcProposalAcceptSchema = z.object({
     selectedDacMembers: z
         .array(z.string().email())
         .length(2, "Exactly 2 DAC members must be selected"),
     comments: z.string().trim().optional(),
 });
+
 export const dacReviewFormSchema = z.object({
     q1a: z.boolean(),
     q1b: z.boolean(),
@@ -415,7 +421,6 @@ export const editCoSupervisorsBodySchema = z
         "Specify either add or remove"
     );
 export type EditCoSupervisorsBody = z.infer<typeof editCoSupervisorsBodySchema>;
-
 export const editDacMembersBodySchema = editCoSupervisorsBodySchema;
 export type EditDacMembersBody = z.infer<typeof editDacMembersBodySchema>;
 
@@ -423,10 +428,12 @@ export const coSupervisorApprovalSchema = z.object({
     approvalStatus: z.boolean(),
     comments: z.string().optional(),
 });
+
 export const dacEvaluationSchema = z.object({
     status: z.enum(["completed", "discarded"]),
     comments: z.string().optional(),
 });
+
 export const finalizeDacMembersDrcSchema = z.object({
     finalizedDacMembers: z
         .array(z.string().email())
@@ -446,7 +453,6 @@ export interface PhdStudent {
     coSupervisor1: string | null;
     coSupervisor2: string | null;
 }
-
 export interface QualifyingExamApplication {
     id: number;
     examId: number;
@@ -473,7 +479,6 @@ export interface QualifyingExamApplication {
         mastersReport: string | null;
     };
 }
-
 export interface VerifiedApplication {
     id: number;
     examId: number;
@@ -502,7 +507,6 @@ export interface VerifiedApplication {
     qualificationDate: string | null;
     supervisorTodoExists: boolean;
 }
-
 export interface QualifyingExamApplicationsResponse {
     exam: {
         id: number;
@@ -527,7 +531,6 @@ export interface QualifyingExamApplicationsResponse {
     };
     applications: Array<QualifyingExamApplication>;
 }
-
 const timetableSlotItemSchema = z.object({
     id: z.number(),
     examId: z.number(),
@@ -535,19 +538,24 @@ const timetableSlotItemSchema = z.object({
     qualifyingArea: z.string(),
     examinerEmail: z.string(),
     slotNumber: z.number(),
-    student: z.object({ name: z.string().nullable() }),
+    student: z.object({
+        name: z.string().nullable(),
+    }),
 });
 export type TimetableSlotItem = z.infer<typeof timetableSlotItemSchema>;
+
 const timetableUpdateSlotItemSchema = timetableSlotItemSchema.omit({
     id: true,
     student: true,
 });
+
 export const timetableSchema = z.object({
     slot1: z.array(timetableSlotItemSchema),
     slot2: z.array(timetableSlotItemSchema),
     unscheduled: z.array(timetableSlotItemSchema),
 });
 export type Timetable = z.infer<typeof timetableSchema>;
+
 export const updateTimetableSchema = z.object({
     timetable: z.object({
         slot1: z.array(timetableUpdateSlotItemSchema),

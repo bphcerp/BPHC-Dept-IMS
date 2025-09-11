@@ -35,6 +35,7 @@ export const phdProposalStatus = pgEnum(
     "phd_proposal_status_enum",
     phdSchemas.phdProposalStatuses
 );
+
 export const phdExamResultStatus = pgEnum("phd_exam_result_status", [
     "pass",
     "fail",
@@ -78,28 +79,24 @@ export const phdSemesters = pgTable(
     (table) => [unique().on(table.year, table.semesterNumber)]
 );
 
-export const phdProposalSemesters = pgTable(
-    "phd_proposal_semesters",
-    {
-        id: serial("id").primaryKey(),
-        semesterId: integer("semester_id")
-            .notNull()
-            .references(() => phdSemesters.id, { onDelete: "cascade" }),
-        studentSubmissionDate: timestamp("student_submission_date", {
-            withTimezone: true,
-        }).notNull(),
-        facultyReviewDate: timestamp("faculty_review_date", {
-            withTimezone: true,
-        }).notNull(),
-        drcReviewDate: timestamp("drc_review_date", {
-            withTimezone: true,
-        }).notNull(),
-        dacReviewDate: timestamp("dac_review_date", {
-            withTimezone: true,
-        }).notNull(),
-    },
-    (table) => [unique().on(table.semesterId)]
-);
+export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
+    id: serial("id").primaryKey(),
+    semesterId: integer("semester_id")
+        .notNull()
+        .references(() => phdSemesters.id, { onDelete: "cascade" }),
+    studentSubmissionDate: timestamp("student_submission_date", {
+        withTimezone: true,
+    }).notNull(),
+    facultyReviewDate: timestamp("faculty_review_date", {
+        withTimezone: true,
+    }).notNull(),
+    drcReviewDate: timestamp("drc_review_date", {
+        withTimezone: true,
+    }).notNull(),
+    dacReviewDate: timestamp("dac_review_date", {
+        withTimezone: true,
+    }).notNull(),
+});
 
 export const phdQualifyingExams = pgTable(
     "phd_qualifying_exams",
@@ -155,19 +152,27 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     ).references(() => files.id, { onDelete: "set null" }),
     tenthReportFileId: integer("tenth_report_file_id").references(
         () => files.id,
-        { onDelete: "set null" }
+        {
+            onDelete: "set null",
+        }
     ),
     twelfthReportFileId: integer("twelfth_report_file_id").references(
         () => files.id,
-        { onDelete: "set null" }
+        {
+            onDelete: "set null",
+        }
     ),
     undergradReportFileId: integer("undergrad_report_file_id").references(
         () => files.id,
-        { onDelete: "set null" }
+        {
+            onDelete: "set null",
+        }
     ),
     mastersReportFileId: integer("masters_report_file_id").references(
         () => files.id,
-        { onDelete: "set null" }
+        {
+            onDelete: "set null",
+        }
     ),
     result: phdExamResultStatus("result"),
     attemptNumber: integer("attempt_number").notNull().default(1),

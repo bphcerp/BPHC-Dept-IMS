@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/supervisor/reviewProposal.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -41,7 +40,7 @@ export default router.post(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.supervisorEmail, req.user!.email)
                 ),
-                with: { student: true },
+                with: { student: true, proposalSemester: true },
             });
 
             if (!proposal) {
@@ -50,6 +49,7 @@ export default router.post(
                     "Proposal not found or you are not the supervisor."
                 );
             }
+
             if (proposal.status !== "supervisor_review") {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
@@ -74,7 +74,6 @@ export default router.post(
                         comments: body.comments,
                     })
                     .where(eq(phdProposals.id, proposalId));
-
                 await createTodos(
                     [
                         {
@@ -92,20 +91,24 @@ export default router.post(
                 await sendEmail({
                     to: proposal.student.email,
                     subject: "Action Required: Your PhD Proposal Submission",
-                    html: `<p>Dear ${proposal.student.name || "Student"},</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${body.comments}</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
+                    html: `<p>Dear ${
+                        proposal.student.name || "Student"
+                    },</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${
+                        body.comments
+                    }</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
                 });
             } else if (body.action === "accept") {
                 await tx
                     .delete(phdProposalDacMembers)
                     .where(eq(phdProposalDacMembers.proposalId, proposalId));
-                await tx
-                    .insert(phdProposalDacMembers)
-                    .values(
-                        body.dacMembers.map((email) => ({
-                            proposalId,
-                            dacMemberEmail: email,
-                        }))
-                    );
+
+                await tx.insert(phdProposalDacMembers).values(
+                    body.dacMembers.map((email) => ({
+                        proposalId,
+                        dacMemberEmail: email,
+                    }))
+                );
+
                 await tx
                     .update(phdProposals)
                     .set({
@@ -128,10 +131,10 @@ export default router.post(
                             description: `Proposal by ${proposal.student.name} is approved by the supervisor and is awaiting your review.`,
                             link: `/phd/drc-convenor/proposal-management/${proposalId}`,
                             completionEvent: `proposal:drc-review:${proposalId}`,
+                            deadline: proposal.proposalSemester?.drcReviewDate,
                         })),
                         tx
                     );
-
                     await Promise.all(
                         drcConveners.map((drc) =>
                             sendEmail({

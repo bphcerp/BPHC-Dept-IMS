@@ -1,5 +1,4 @@
-// client/src/components/phd/proposal/StudentProposalForm.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
@@ -8,27 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/Auth";
 
 interface StudentProposalFormProps {
-  proposalId?: number; // For resubmission
+  proposalId?: number;
   onSuccess: () => void;
-}
-
-interface Deadline {
-  id: number;
-  semester: {
-    year: string;
-    semesterNumber: number;
-  };
 }
 
 interface UserProfile {
@@ -41,18 +25,9 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 }) => {
   const { authState } = useAuth();
   const [title, setTitle] = useState("");
-  const [proposalSemesterId, setProposalSemesterId] = useState<string>("");
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
-
-  const { data: deadlinesData } = useQuery<Deadline[]>({
-    queryKey: ["active-proposal-deadlines"],
-    queryFn: async () => {
-      const res = await api.get("/phd/student/getProposalDeadlines");
-      return res.data.deadlines;
-    },
-  });
 
   const { data: profileData } = useQuery<UserProfile>({
     queryKey: ["student-profile-details", authState?.email],
@@ -71,10 +46,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           formData
         );
       }
-      return api.post(
-        `/phd/proposal/student/submitProposal/${proposalSemesterId}`,
-        formData
-      );
+      return api.post(`/phd/proposal/student/submitProposal`, formData);
     },
     onSuccess: () => {
       toast.success(
@@ -93,10 +65,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!proposalId && !proposalSemesterId) {
-      toast.error("Please select a submission deadline.");
-      return;
-    }
     if (
       !title ||
       !files.appendixFile ||
@@ -128,7 +96,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       toast.error("You must agree to the declaration.");
       return;
     }
-
     const formData = new FormData();
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
@@ -139,7 +106,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         formData.append(key, files[key] as File);
       }
     });
-
     mutation.mutate(formData);
   };
 
@@ -173,26 +139,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {!proposalId && deadlinesData && (
-        <div>
-          <Label htmlFor="proposalSemesterId">Submission Deadline</Label>
-          <Select
-            value={proposalSemesterId}
-            onValueChange={setProposalSemesterId}
-          >
-            <SelectTrigger id="proposalSemesterId">
-              <SelectValue placeholder="Select a deadline..." />
-            </SelectTrigger>
-            <SelectContent>
-              {deadlinesData.map((d) => (
-                <SelectItem key={d.id} value={d.id.toString()}>
-                  {d.semester.year} - Semester {d.semester.semesterNumber}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
       <div>
         <Label htmlFor="title">Proposal Title</Label>
         <Input
@@ -208,7 +154,8 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         .map((field) => (
           <div key={field.key}>
             <Label>
-              {field.label} {field.required && "*"}
+              {field.label}
+              {field.required && "*"}
             </Label>
             <FileUploader
               value={files[field.key] ? [files[field.key] as File] : []}
@@ -232,7 +179,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           My co-supervisor is from outside of campus (Optional)
         </Label>
       </div>
-
       <div className="flex items-center space-x-2">
         <Checkbox
           id="declaration"

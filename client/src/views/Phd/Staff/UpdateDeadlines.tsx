@@ -19,7 +19,6 @@ interface Deadline {
 
 export default function UpdateDeadlinesPage() {
   const [selected, setSelected] = useState<Deadline | null>(null);
-
   const deadlines: Deadline[] = [
     {
       value: "qualifying_exam_deadline",
@@ -39,20 +38,22 @@ export default function UpdateDeadlinesPage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold">Update Deadlines</h1>
           <p className="mt-2 text-gray-600">
-            Manage various academic deadlines
+            {" "}
+            Manage various academic deadlines{" "}
           </p>
         </div>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-xl font-semibold">
-              Select Deadline Type
+              {" "}
+              Select Deadline Type{" "}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p className="text-center text-gray-600">
-                Select a category to update deadlines
+                {" "}
+                Select a category to update deadlines{" "}
               </p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

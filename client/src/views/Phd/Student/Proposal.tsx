@@ -2,7 +2,13 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,9 +31,20 @@ import {
   AlertTriangle,
   CalendarCheck,
   Info,
+  Clock,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
+import { cn } from "@/lib/utils";
+
+interface ProposalSemester {
+  id: number;
+  semesterId: number;
+  studentSubmissionDate: string;
+  facultyReviewDate: string;
+  drcReviewDate: string;
+  dacReviewDate: string;
+}
 
 interface Proposal {
   id: number;
@@ -40,6 +57,59 @@ interface Proposal {
   seminarTime?: string | null;
   seminarVenue?: string | null;
 }
+
+const DeadlinesCard = ({
+  deadlines,
+  highlight,
+}: {
+  deadlines: ProposalSemester;
+  highlight: keyof ProposalSemester;
+}) => {
+  const deadlineLabels: Record<
+    keyof Omit<ProposalSemester, "id" | "semesterId">,
+    string
+  > = {
+    studentSubmissionDate: "Your Submission",
+    facultyReviewDate: "Supervisor Review",
+    drcReviewDate: "DRC Review",
+    dacReviewDate: "DAC Review",
+  };
+
+  return (
+    <Card className="bg-muted/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Clock className="h-4 w-4" />
+          Current Proposal Deadlines
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        {Object.entries(deadlineLabels).map(([key, label]) => (
+          <div
+            key={key}
+            className={cn(
+              "rounded-lg border p-3 transition-all",
+              highlight === key
+                ? "border-primary bg-primary/10 shadow-md"
+                : "bg-background"
+            )}
+          >
+            <p className="font-semibold text-muted-foreground">{label}</p>
+            <p className="mt-1 font-medium">
+              {new Date(
+                deadlines[key as keyof ProposalSemester] as string
+              ).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
 
 const StudentProposal: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -58,17 +128,23 @@ const StudentProposal: React.FC = () => {
     },
   });
 
-  const {
-    data,
-    isLoading: isLoadingProposals,
-    isError,
-    error,
-    refetch,
-  } = useQuery<{ proposals: Proposal[]; canApply: boolean }>({
+  const { data: proposalData, refetch } = useQuery<{
+    proposals: Proposal[];
+    canApply: boolean;
+  }>({
     queryKey: ["student-proposals"],
     queryFn: async () => {
       const response = await api.get("/phd/proposal/student/getProposals");
       return response.data;
+    },
+    enabled: !!eligibility?.isEligible,
+  });
+
+  const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
+    queryKey: ["active-proposal-deadlines"],
+    queryFn: async () => {
+      const res = await api.get("/phd/student/getProposalDeadlines");
+      return res.data;
     },
     enabled: !!eligibility?.isEligible,
   });
@@ -86,44 +162,25 @@ const StudentProposal: React.FC = () => {
 
   if (isLoadingEligibility) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Submissions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-64 w-full items-center justify-center">
-            <LoadingSpinner />
-            <p className="ml-4 text-gray-500">Checking eligibility...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex h-64 w-full items-center justify-center">
+        <LoadingSpinner />
+        <p className="ml-4 text-gray-500">Checking eligibility...</p>
+      </div>
     );
   }
 
-  if (!eligibility?.isEligible) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
-        <AlertDescription>
-          You must pass your qualifying examinations before you can submit a
-          research proposal.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const currentDeadlines = deadlineData?.deadlines[0];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">PhD Proposal</h1>
           <p className="mt-2 text-gray-600">
             Manage your PhD proposal submission.
           </p>
         </div>
-        {/* Corrected Condition: Only render button if data exists and canApply is true */}
-        {data && data.canApply && (
+        {eligibility?.isEligible && proposalData?.canApply && (
           <Button
             onClick={() => {
               setProposalToResubmit(null);
@@ -135,30 +192,55 @@ const StudentProposal: React.FC = () => {
         )}
       </div>
 
-      {!eligibility.qualificationDate && (
-        <Alert>
+      {!eligibility?.isEligible ? (
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Qualification Date Missing</AlertTitle>
+          <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
           <AlertDescription>
-            Your qualification date has not been set. Please contact the DRC
-            Convenor to get it updated.
+            Since you haven't passed your qualifying exam yet, you are not
+            allowed to fill the form.
           </AlertDescription>
         </Alert>
+      ) : (
+        <>
+          {eligibility.qualificationDate ? (
+            <Alert variant="default" className="border-green-200 bg-green-50">
+              <CalendarCheck className="h-4 w-4 text-green-700" />
+              <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Congratulations! You passed your qualifying exam on:{" "}
+                <strong>
+                  {new Date(eligibility.qualificationDate).toLocaleDateString()}
+                </strong>
+                .
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Qualification Date Missing</AlertTitle>
+              <AlertDescription>
+                Your qualification date has not been set. Please contact the DRC
+                Convenor to get it updated.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
       )}
-      {eligibility.qualificationDate && (
-        <Alert variant="default" className="border-green-200 bg-green-50">
-          <CalendarCheck className="h-4 w-4 text-green-700" />
-          <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Congratulations! You passed your qualifying exam on:{" "}
-            {new Date(eligibility.qualificationDate).toLocaleDateString()}.
-          </AlertDescription>
-        </Alert>
+
+      {eligibility?.isEligible && currentDeadlines && (
+        <DeadlinesCard
+          deadlines={currentDeadlines}
+          highlight="studentSubmissionDate"
+        />
       )}
 
       <Card>
         <CardHeader>
           <CardTitle>Your Submissions</CardTitle>
+          <CardDescription>
+            A list of your past and current proposal submissions.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -171,36 +253,25 @@ const StudentProposal: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoadingProposals ||
-              isError ||
-              !data?.proposals ||
-              data.proposals.length === 0 ? (
+              {!proposalData?.proposals ||
+              proposalData.proposals.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                    {isLoadingProposals ? (
-                      "Loading submissions..."
-                    ) : isError ? (
-                      <span className="text-red-600">
-                        Failed to load proposals.
-                      </span>
-                    ) : (
-                      <div className="py-8 text-center">
-                        <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-lg font-medium">
-                          {" "}
-                          No Proposals Submitted{" "}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {data?.canApply
-                            ? "Click the button above to start your application."
-                            : "You currently have an active proposal in progress."}
-                        </p>
-                      </div>
-                    )}
+                    <div className="py-8 text-center">
+                      <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-lg font-medium">
+                        No Proposals Submitted
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {proposalData?.canApply
+                          ? "Click the button above to start your application."
+                          : "You currently have an active proposal in progress."}
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                data.proposals.map((p) => (
+                proposalData.proposals.map((p) => (
                   <React.Fragment key={p.id}>
                     <TableRow>
                       <TableCell>{p.title}</TableCell>
@@ -282,5 +353,4 @@ const StudentProposal: React.FC = () => {
     </div>
   );
 };
-
 export default StudentProposal;

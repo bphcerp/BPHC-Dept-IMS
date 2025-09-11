@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/drcConvener/downloadProposalPackage.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -14,19 +13,18 @@ import { faculty } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
 
-// Helper to generate Seminar Notice HTML
 const generateNoticeHtml = (proposals: any[], drcConvenerName: string) => {
     const rows = proposals
         .map(
             (p: any) => `
-    <tr>
-      <td>${p.student.name || ""}<br/>${p.student.idNumber || ""}</td>
-      <td>${p.title}</td>
-      <td>${p.supervisor.name || p.supervisor.email}</td>
-      <td>${p.dacMembers.map((m: any) => m.dacMember.name).join("<br/>")}</td>
-      <td>${new Date(p.seminarDate).toLocaleDateString()} at ${p.seminarTime}</td>
-      <td>${p.seminarVenue}</td>
-    </tr>`
+      <tr>
+        <td>${p.student.name || ""}<br/>${p.student.idNumber || ""}</td>
+        <td>${p.title}</td>
+        <td>${p.supervisor.name || p.supervisor.email}</td>
+        <td>${p.dacMembers.map((m: any) => m.dacMember.name).join("<br/>")}</td>
+        <td>${new Date(p.seminarDate).toLocaleDateString()} at ${p.seminarTime}</td>
+        <td>${p.seminarVenue}</td>
+      </tr>`
         )
         .join("");
 
@@ -52,7 +50,6 @@ const generateNoticeHtml = (proposals: any[], drcConvenerName: string) => {
     </body></html>`;
 };
 
-// Helper to generate DAC Evaluation Form HTML
 const generateDacReviewHtml = (review: any, proposal: any) => {
     const formData = review.reviewForm.formData;
     const tick = (value: boolean) => (value ? "☑" : "☐");
@@ -70,58 +67,104 @@ const generateDacReviewHtml = (review: any, proposal: any) => {
         <p><b>To:</b> Prof./Dr. ${review.dacMember.name}</p>
         <p><b>Sub:</b> Review of Doctoral Research Proposal.</p>
         <hr/>
-        <p><b>Name of Candidate:</b> ${proposal.student.name} &nbsp;&nbsp;&nbsp; <b>ID No.:</b> ${proposal.student.idNumber || "N/A"}</p>
+        <p><b>Name of Candidate:</b> ${proposal.student.name} &nbsp;&nbsp;&nbsp; <b>ID No.:</b> ${
+            proposal.student.idNumber || "N/A"
+        }</p>
         <p><b>Name of Proposed Supervisor:</b> ${proposal.supervisor.name}</p>
         <hr/>
         <h2>Proforma for Review of Doctoral Research Proposal</h2>
         
         <div class="section">
             <h3>1. Proposed Topic of Research</h3>
-            <div class="checkbox-row">a) Is the proposed topic in one of the research areas of the Institute? <b>${tick(formData.q1a)} Yes</b> &nbsp; ${tick(!formData.q1a)} No</div>
-            <div class="checkbox-row">b) Does the proposed topic reflect the theme propounded in the proposal write up? <b>${tick(formData.q1b)} Yes</b> &nbsp; ${tick(!formData.q1b)} No</div>
-            <div class="checkbox-row">c) Is the proposed topic relevant to the needs of the immediate environment? <b>${tick(formData.q1c)} Yes</b> &nbsp; ${tick(!formData.q1c)} No</div>
+            <div class="checkbox-row">a) Is the proposed topic in one of the research areas of the Institute? <b>${tick(
+                formData.q1a
+            )} Yes</b> &nbsp; ${tick(!formData.q1a)} No</div>
+            <div class="checkbox-row">b) Does the proposed topic reflect the theme propounded in the proposal write up? <b>${tick(
+                formData.q1b
+            )} Yes</b> &nbsp; ${tick(!formData.q1b)} No</div>
+            <div class="checkbox-row">c) Is the proposed topic relevant to the needs of the immediate environment? <b>${tick(
+                formData.q1c
+            )} Yes</b> &nbsp; ${tick(!formData.q1c)} No</div>
             <div class="checkbox-row">d) Does the proposed topic aim at:<br>
                 &nbsp;&nbsp; ${tickEnum(formData.q1d, "product")} designing an innovative product<br>
                 &nbsp;&nbsp; ${tickEnum(formData.q1d, "process")} designing a new process or a system<br>
-                &nbsp;&nbsp; ${tickEnum(formData.q1d, "frontier")} taking up research in an advanced frontier area
+                &nbsp;&nbsp; ${tickEnum(
+                    formData.q1d,
+                    "frontier"
+                )} taking up research in an advanced frontier area
             </div>
         </div>
         
         <div class="section">
             <h3>2. Objective of the proposed research</h3>
-            <div class="checkbox-row">a) Are objectives clearly spelt out? <b>${tick(formData.q2a)} Yes</b> &nbsp; ${tick(!formData.q2a)} No</div>
-            <div class="checkbox-row">b) Are objectives derived based on the literature survey? <b>${tick(formData.q2b)} Yes</b> &nbsp; ${tick(!formData.q2b)} No</div>
-            <div class="checkbox-row">c) Is the outcome of the work clearly visualized? <b>${tick(formData.q2c)} Yes</b> &nbsp; ${tick(!formData.q2c)} No</div>
+            <div class="checkbox-row">a) Are objectives clearly spelt out? <b>${tick(
+                formData.q2a
+            )} Yes</b> &nbsp; ${tick(!formData.q2a)} No</div>
+            <div class="checkbox-row">b) Are objectives derived based on the literature survey? <b>${tick(
+                formData.q2b
+            )} Yes</b> &nbsp; ${tick(!formData.q2b)} No</div>
+            <div class="checkbox-row">c) Is the outcome of the work clearly visualized? <b>${tick(
+                formData.q2c
+            )} Yes</b> &nbsp; ${tick(!formData.q2c)} No</div>
             <div class="checkbox-row">d) The outcome of the work: <br>
                 &nbsp;&nbsp; ${tickEnum(formData.q2d, "improve")} will improve the present state of art<br>
-                &nbsp;&nbsp; ${tickEnum(formData.q2d, "academic")} will only be of an academic interest<br>
+                &nbsp;&nbsp; ${tickEnum(
+                    formData.q2d,
+                    "academic"
+                )} will only be of an academic interest<br>
                 &nbsp;&nbsp; ${tickEnum(formData.q2d, "industry")} will be useful for the industries
             </div>
         </div>
 
         <div class="section">
             <h3>3. Background of the Proposed Research</h3>
-            <div class="checkbox-row">a) Is the literature survey up-to-date and adequately done? <b>${tick(formData.q3a)} Yes</b> &nbsp; ${tick(!formData.q3a)} No</div>
-            <div class="checkbox-row">b) Is a broad summary of the present status given? <b>${tick(formData.q3b)} Yes</b> &nbsp; ${tick(!formData.q3b)} No</div>
-            <div class="checkbox-row">c) Are unsolved academic issues in the area highlighted? <b>${tick(formData.q3c)} Yes</b> &nbsp; ${tick(!formData.q3c)} No</div>
+            <div class="checkbox-row">a) Is the literature survey up-to-date and adequately done? <b>${tick(
+                formData.q3a
+            )} Yes</b> &nbsp; ${tick(!formData.q3a)} No</div>
+            <div class="checkbox-row">b) Is a broad summary of the present status given? <b>${tick(
+                formData.q3b
+            )} Yes</b> &nbsp; ${tick(!formData.q3b)} No</div>
+            <div class="checkbox-row">c) Are unsolved academic issues in the area highlighted? <b>${tick(
+                formData.q3c
+            )} Yes</b> &nbsp; ${tick(!formData.q3c)} No</div>
         </div>
         
         <div class="section">
             <h3>4. Methodology</h3>
-            <div class="checkbox-row">a) Is the methodology for literature survey given? <b>${tick(formData.q4a)} Yes</b> &nbsp; ${tick(!formData.q4a)} No</div>
-            <div class="checkbox-row">b) Are data sources identified? <b>${tick(formData.q4b)} Yes</b> &nbsp; ${tick(!formData.q4b)} No</div>
-            <div class="checkbox-row">c) Are experimental facilities clearly envisaged? <b>${tick(formData.q4c)} Yes</b> &nbsp; ${tick(!formData.q4c)} No</div>
-            <div class="checkbox-row">d) Are envisaged experimental set-ups available? <b>${tick(formData.q4d)} Yes</b> &nbsp; ${tick(!formData.q4d)} No</div>
-            <div class="checkbox-row">e) If not available, is it explained how work will be carried out? <b>${tick(formData.q4e)} Yes</b> &nbsp; ${tick(!formData.q4e)} No</div>
-            <div class="checkbox-row">f) Are required computing facilities available? <b>${tick(formData.q4f)} Yes</b> &nbsp; ${tick(!formData.q4f)} No</div>
-            <div class="checkbox-row">g) Is methodology for completion clearly spelt out? <b>${tick(formData.q4g)} Yes</b> &nbsp; ${tick(!formData.q4g)} No</div>
+            <div class="checkbox-row">a) Is the methodology for literature survey given? <b>${tick(
+                formData.q4a
+            )} Yes</b> &nbsp; ${tick(!formData.q4a)} No</div>
+            <div class="checkbox-row">b) Are data sources identified? <b>${tick(
+                formData.q4b
+            )} Yes</b> &nbsp; ${tick(!formData.q4b)} No</div>
+            <div class="checkbox-row">c) Are experimental facilities clearly envisaged? <b>${tick(
+                formData.q4c
+            )} Yes</b> &nbsp; ${tick(!formData.q4c)} No</div>
+            <div class="checkbox-row">d) Are envisaged experimental set-ups available? <b>${tick(
+                formData.q4d
+            )} Yes</b> &nbsp; ${tick(!formData.q4d)} No</div>
+            <div class="checkbox-row">e) If not available, is it explained how work will be carried out? <b>${tick(
+                formData.q4e
+            )} Yes</b> &nbsp; ${tick(!formData.q4e)} No</div>
+            <div class="checkbox-row">f) Are required computing facilities available? <b>${tick(
+                formData.q4f
+            )} Yes</b> &nbsp; ${tick(!formData.q4f)} No</div>
+            <div class="checkbox-row">g) Is methodology for completion clearly spelt out? <b>${tick(
+                formData.q4g
+            )} Yes</b> &nbsp; ${tick(!formData.q4g)} No</div>
         </div>
 
         <div class="section">
             <h3>5. Literature References</h3>
-            <div class="checkbox-row">a) Is citation done in a standard format? <b>${tick(formData.q5a)} Yes</b> &nbsp; ${tick(!formData.q5a)} No</div>
-            <div class="checkbox-row">b) Is cited literature referred in the text? <b>${tick(formData.q5b)} Yes</b> &nbsp; ${tick(!formData.q5b)} No</div>
-            <div class="checkbox-row">c) Is cited literature relevant to the proposed work? <b>${tick(formData.q5c)} Yes</b> &nbsp; ${tick(!formData.q5c)} No</div>
+            <div class="checkbox-row">a) Is citation done in a standard format? <b>${tick(
+                formData.q5a
+            )} Yes</b> &nbsp; ${tick(!formData.q5a)} No</div>
+            <div class="checkbox-row">b) Is cited literature referred in the text? <b>${tick(
+                formData.q5b
+            )} Yes</b> &nbsp; ${tick(!formData.q5b)} No</div>
+            <div class="checkbox-row">c) Is cited literature relevant to the proposed work? <b>${tick(
+                formData.q5c
+            )} Yes</b> &nbsp; ${tick(!formData.q5c)} No</div>
         </div>
         
         <div class="section">
@@ -154,7 +197,7 @@ const generateDacReviewHtml = (review: any, proposal: any) => {
 };
 
 router.get(
-    "/:proposalId", // Changed to take a single proposal ID
+    "/:proposalId",
     checkAccess(),
     asyncHandler(async (req, res) => {
         const proposalId = parseInt(req.params.proposalId);
@@ -209,7 +252,6 @@ router.get(
         try {
             const page = await browser.newPage();
 
-            // 1. Generate and add Seminar Notice PDF
             const noticeHtml = generateNoticeHtml(
                 [proposalToPackage],
                 drcConvenerName
@@ -221,12 +263,10 @@ router.get(
             });
             zip.file("Seminar_Notice.pdf", noticePdf);
 
-            // 2. Process the student's proposal
-            const studentFolderName =
-                `${proposalToPackage.student.name || proposalToPackage.student.email}`.replace(
-                    /[\/\\?%*:|"<>]/g,
-                    "-"
-                );
+            const studentFolderName = `${
+                proposalToPackage.student.name ||
+                proposalToPackage.student.email
+            }`.replace(/[\/\\?%*:|"<>]/g, "-");
             const studentFolder = zip.folder(studentFolderName);
             if (!studentFolder)
                 throw new Error("Could not create student folder in zip.");
@@ -267,7 +307,6 @@ router.get(
                 }
             }
 
-            // 3. Generate and add DAC review PDFs for the student
             for (const review of proposalToPackage.dacReviews) {
                 if (review.reviewForm) {
                     const reviewHtml = generateDacReviewHtml(
@@ -293,15 +332,12 @@ router.get(
         }
 
         const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
-
         res.setHeader("Content-Type", "application/zip");
         res.setHeader(
             "Content-Disposition",
             `attachment; filename="ProposalPackage-${proposalId}.zip"`
         );
         res.end(zipBuffer);
-
-        // NOTE: The automatic status update logic has been REMOVED from this endpoint.
     })
 );
 

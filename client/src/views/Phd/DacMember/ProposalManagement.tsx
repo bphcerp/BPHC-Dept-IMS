@@ -19,8 +19,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye, AlertTriangle } from "lucide-react";
+import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
+import { cn } from "@/lib/utils";
+
+interface ProposalSemester {
+  id: number;
+  semesterId: number;
+  studentSubmissionDate: string;
+  facultyReviewDate: string;
+  drcReviewDate: string;
+  dacReviewDate: string;
+}
 
 interface Proposal {
   id: number;
@@ -31,14 +41,63 @@ interface Proposal {
     name: string;
     email: string;
   };
+  proposalSemester: ProposalSemester | null;
 }
+
+const DeadlinesCard = ({
+  deadlines,
+  highlight,
+}: {
+  deadlines: ProposalSemester;
+  highlight: keyof ProposalSemester;
+}) => {
+  const deadlineLabels: Record<
+    keyof Omit<ProposalSemester, "id" | "semesterId">,
+    string
+  > = {
+    studentSubmissionDate: "Student Submission",
+    facultyReviewDate: "Supervisor Review",
+    drcReviewDate: "DRC Review",
+    dacReviewDate: "DAC Review",
+  };
+
+  return (
+    <Card className="mb-6 bg-muted/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Clock className="h-4 w-4" />
+          Semester Deadlines
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        {Object.entries(deadlineLabels).map(([key, label]) => (
+          <div
+            key={key}
+            className={cn(
+              "rounded-lg border p-3",
+              highlight === key
+                ? "border-primary bg-primary/10"
+                : "bg-background"
+            )}
+          >
+            <p className="font-semibold text-muted-foreground">{label}</p>
+            <p className="mt-1">
+              {new Date(
+                deadlines[key as keyof ProposalSemester] as string
+              ).toLocaleDateString()}
+            </p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
 
 const DacProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
-
   const {
     data: proposals = [],
     isLoading,
@@ -55,6 +114,8 @@ const DacProposalManagement: React.FC = () => {
     enabled: !!selectedSemesterId,
   });
 
+  const semesterDeadlines = proposals?.[0]?.proposalSemester;
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -63,7 +124,6 @@ const DacProposalManagement: React.FC = () => {
           Review PhD proposals assigned to you as a DAC member.
         </p>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -78,6 +138,13 @@ const DacProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      {semesterDeadlines && (
+        <DeadlinesCard
+          deadlines={semesterDeadlines}
+          highlight="dacReviewDate"
+        />
+      )}
 
       <Card>
         <CardHeader>
@@ -151,5 +218,4 @@ const DacProposalManagement: React.FC = () => {
     </div>
   );
 };
-
 export default DacProposalManagement;

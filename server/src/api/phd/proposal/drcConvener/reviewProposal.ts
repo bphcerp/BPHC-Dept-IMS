@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/drcConvener/reviewProposal.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -37,8 +36,13 @@ export default router.post(
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: eq(phdProposals.id, proposalId),
-                with: { dacMembers: true, student: true },
+                with: {
+                    dacMembers: true,
+                    student: true,
+                    proposalSemester: true,
+                },
             });
+
             if (!proposal) {
                 throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found.");
             }
@@ -61,9 +65,11 @@ export default router.post(
             if (body.action === "revert") {
                 await tx
                     .update(phdProposals)
-                    .set({ status: "drc_revert", comments: body.comments })
+                    .set({
+                        status: "drc_revert",
+                        comments: body.comments,
+                    })
                     .where(eq(phdProposals.id, proposalId));
-
                 await createTodos(
                     [
                         {
@@ -107,6 +113,7 @@ export default router.post(
                             )
                         );
                 }
+
                 await tx
                     .update(phdProposals)
                     .set({
@@ -124,9 +131,11 @@ export default router.post(
                         module: modules[3],
                         completionEvent: `proposal:dac-review:${proposalId}`,
                         link: `/phd/dac/proposals/${proposalId}`,
+                        deadline: proposal.proposalSemester?.dacReviewDate,
                     })),
                     tx
                 );
+
                 await Promise.all(
                     body.selectedDacMembers.map((dacEmail) =>
                         sendEmail({
@@ -138,6 +147,7 @@ export default router.post(
                 );
             }
         });
+
         res.status(200).json({
             success: true,
             message: `Proposal ${body.action}ed successfully.`,

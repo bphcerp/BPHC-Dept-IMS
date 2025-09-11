@@ -5,25 +5,31 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdProposalSemesters } from "@/config/db/schema/phd.ts";
 import { phdSchemas } from "lib";
+import { eq } from "drizzle-orm";
+import z from "zod";
 
 const router = express.Router();
+
+const updateProposalDeadlineSchemaWithId =
+    phdSchemas.updateProposalDeadlineSchema.extend({
+        id: z.number().int().positive().optional(),
+    });
 
 export default router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const parsed = phdSchemas.updateProposalDeadlineSchema.parse(req.body);
-        const { semesterId, ...deadlines } = parsed;
+        const parsed = updateProposalDeadlineSchemaWithId.parse(req.body);
+        const { id, semesterId, ...deadlines } = parsed;
 
         const semester = await db.query.phdSemesters.findFirst({
             where: (table, { eq }) => eq(table.id, semesterId),
         });
-
         if (!semester) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Semester not found");
         }
 
-        const dataToInsert = {
+        const dataToUpsert = {
             semesterId,
             studentSubmissionDate: new Date(deadlines.studentSubmissionDate),
             facultyReviewDate: new Date(deadlines.facultyReviewDate),
@@ -31,16 +37,19 @@ export default router.post(
             dacReviewDate: new Date(deadlines.dacReviewDate),
         };
 
-        await db
-            .insert(phdProposalSemesters)
-            .values(dataToInsert)
-            .onConflictDoUpdate({
-                target: phdProposalSemesters.semesterId,
-                set: dataToInsert,
-            });
+        if (id) {
+            // If an ID is provided, update the existing record
+            await db
+                .update(phdProposalSemesters)
+                .set(dataToUpsert)
+                .where(eq(phdProposalSemesters.id, id));
+        } else {
+            // Otherwise, insert a new record
+            await db.insert(phdProposalSemesters).values(dataToUpsert);
+        }
 
         res.status(200).json({
-            message: "Proposal deadlines updated successfully",
+            message: `Proposal deadlines ${id ? "updated" : "created"} successfully`,
         });
     })
 );

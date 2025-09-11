@@ -19,7 +19,6 @@ router.get(
                 "Invalid Proposal Semester ID"
             );
         }
-
         const proposals = await db.query.phdProposals.findMany({
             columns: {
                 id: true,
@@ -34,13 +33,13 @@ router.get(
                         email: true,
                     },
                 },
+                proposalSemester: true,
             },
             where: and(
                 eq(phdProposals.supervisorEmail, req.user!.email),
                 eq(phdProposals.proposalSemesterId, proposalSemesterId)
             ),
         });
-
         res.status(200).json(proposals);
     })
 );

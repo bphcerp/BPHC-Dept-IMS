@@ -14,8 +14,9 @@ router.get(
         if (isNaN(semesterId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid semester ID");
 
-        const deadlines = await db.query.phdProposalSemesters.findFirst({
+        const deadlines = await db.query.phdProposalSemesters.findMany({
             where: (table, { eq }) => eq(table.semesterId, semesterId),
+            orderBy: (table, { asc }) => [asc(table.studentSubmissionDate)],
         });
 
         res.status(200).json({ deadlines });

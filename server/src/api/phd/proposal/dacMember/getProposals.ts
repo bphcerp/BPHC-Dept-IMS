@@ -2,7 +2,7 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import {  eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 
@@ -14,14 +14,12 @@ router.get(
     asyncHandler(async (req, res) => {
         const dacMemberEmail = req.user!.email;
         const proposalSemesterId = parseInt(req.params.proposalSemesterId);
-
         if (isNaN(proposalSemesterId)) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "Invalid Proposal Semester ID"
             );
         }
-
         const assignedProposalLinks =
             await db.query.phdProposalDacMembers.findMany({
                 where: eq(phdProposalDacMembers.dacMemberEmail, dacMemberEmail),
@@ -34,6 +32,7 @@ router.get(
                                     email: true,
                                 },
                             },
+                            proposalSemester: true,
                         },
                     },
                 },
@@ -54,6 +53,7 @@ router.get(
                     name: link.proposal.student.name,
                     email: link.proposal.student.email,
                 },
+                proposalSemester: link.proposal.proposalSemester,
             }));
 
         res.status(200).json(assignedProposals);

@@ -53,11 +53,14 @@ export const phdSemestersRelations = relations(phdSemesters, ({ many }) => ({
 
 export const phdProposalSemestersRelations = relations(
     phdProposalSemesters,
-    ({ one }) => ({
+    ({ one, many }) => ({
         semester: one(phdSemesters, {
             fields: [phdProposalSemesters.semesterId],
             references: [phdSemesters.id],
             relationName: "proposalDeadlinesBySemester",
+        }),
+        proposals: many(phdProposals, {
+            relationName: "proposalSemester",
         }),
     })
 );
@@ -142,6 +145,11 @@ export const phdProposalsRelations = relations(
             fields: [phdProposals.supervisorEmail],
             references: [faculty.email],
             relationName: "supervisorProposals",
+        }),
+        proposalSemester: one(phdProposalSemesters, {
+            fields: [phdProposals.proposalSemesterId],
+            references: [phdProposalSemesters.id],
+            relationName: "proposalSemester",
         }),
         appendixFile: one(files, {
             fields: [phdProposals.appendixFileId],

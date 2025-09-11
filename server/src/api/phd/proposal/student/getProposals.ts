@@ -3,7 +3,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { desc, eq, gte } from "drizzle-orm";
-import { phdProposals, phdProposalSemesters  } from "@/config/db/schema/phd.ts";
+import { phdProposals, phdProposalSemesters } from "@/config/db/schema/phd.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
@@ -31,6 +31,9 @@ router.get(
             where: (cols, { and, eq }) =>
                 and(eq(cols.studentEmail, req.user!.email)),
             orderBy: desc(phdProposals.updatedAt),
+            with: {
+                proposalSemester: true,
+            },
         });
         const now = new Date();
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
