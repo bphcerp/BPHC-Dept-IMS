@@ -4,6 +4,8 @@ import getForm from "./form/get.ts";
 import getFormInfo from "./form/getInfo.ts";
 import templateBuilder from "./template/create.ts";
 import getTemplate from "./template/get.ts";
+import getAllTemplates from "./template/getAll.ts";
+import getInfo from "./form/getInfo.ts";
 import getAllForms from "./form/getAll.ts";
 const router = Router();
 
@@ -13,6 +15,8 @@ router.use("/form/getInfo", getFormInfo);
 router.use("/form/getAll", getAllForms);
 
 router.use("/template/get", getTemplate);
+router.use("/template/getAll", getAllTemplates);
+router.use("/template/getInfo", getInfo);
 router.use("/template/create", templateBuilder);
 
 
