@@ -10,7 +10,8 @@ export const modules = [
     "Project Info",
     "Profile",
     "Patent Info",
-    "Publications"
+    "Publications",
+    "Meeting"
 ] as const;
 
 export const applicationStatuses = ["pending", "approved", "rejected"] as const;

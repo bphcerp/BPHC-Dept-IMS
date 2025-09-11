@@ -28,6 +28,12 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import { Calendar } from "lucide-react"; 
+import MeetingLayout from "@/layouts/MeetingLayout";
+import MeetingDashboardView from "@/views/Meeting/MeetingDashboardView"; 
+import CreateMeeting from "@/views/Meeting/CreateMeeting";
+import ViewMeeting from "@/views/Meeting/ViewMeeting";
+import RespondToInvite from "@/views/Meeting/RespondToInvite";
 import UpdateSemesterDates from "@/views/Phd/Staff/UpdateSemesterDates";
 import UpdateDeadlinesPage from "@/views/Phd/Staff/UpdateDeadlines";
 import UpdateSubAreasPage from "@/views/Phd/Staff/UpdateSubAreas";
@@ -125,7 +131,9 @@ const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
-
+const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("meeting:")
+);
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
   const modules = [
@@ -189,6 +197,12 @@ const Routing = () => {
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
     },
+    {
+      title: "Meeting",
+      icon: <Calendar />,
+      url: "/meeting",
+      requiredPermissions: meetingModulePermissions,
+    },
   ];
 
   return (
@@ -210,7 +224,10 @@ const Routing = () => {
           }
         />
         <Route path="/contributors" element={<ContributorsPage />} />
-        <Route path="/help" element={authState ? <HelpPage /> : <Navigate to="/" replace />} />
+        <Route
+          path="/help"
+          element={authState ? <HelpPage /> : <Navigate to="/" replace />}
+        />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
         {authState && <Route path="/profile" element={<ProfilePage />} />}
         {checkAccessAnyOne(adminModulePermissions) && (
@@ -260,6 +277,14 @@ const Routing = () => {
                 />
               </>
             )}
+          </Route>
+        )}
+        {checkAccessAnyOne(meetingModulePermissions) && (
+          <Route path="/meeting" element={<MeetingLayout />}>
+            <Route index element={<MeetingDashboardView />} /> 
+            <Route path="create" element={<CreateMeeting />} />
+            <Route path="view/:id" element={<ViewMeeting />} />
+            <Route path="respond/:id" element={<RespondToInvite />} />
           </Route>
         )}
         {checkAccessAnyOne(qpReviewModulePermissions) && (

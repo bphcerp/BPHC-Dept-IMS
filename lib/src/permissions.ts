@@ -44,6 +44,10 @@ export const allPermissions = {
     "phd:dac:proposal": "DAC Member operations on proposals",
     "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    //meeting
+    "meeting:use": "Access and use the meeting module",
+
+    //handout
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -162,7 +166,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
     "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
     "/phd/proposal/getProposalSemesters": "phd:proposal",
-    
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
@@ -222,7 +225,15 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
     "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
-    
+
+    //meeting
+    "/meeting/create": "meeting:use",
+    "/meeting/all": "meeting:use",
+    "/meeting/details": "meeting:use",
+    "/meeting/respond": "meeting:use",
+    "/meeting/finalize": "meeting:use",
+    "/meeting/all-users": "meeting:use",
+
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
