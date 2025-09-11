@@ -1,6 +1,9 @@
-// server/src/api/phd/proposal/student/resubmitProposal.ts
 import db from "@/config/db/index.ts";
-import { phdProposals, phdProposalDacReviews } from "@/config/db/schema/phd.ts";
+import {
+    phdProposals,
+    phdProposalDacReviews,
+    phdProposalSemesters,
+} from "@/config/db/schema/phd.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
@@ -15,7 +18,6 @@ import { eq, and } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
-
 router.post(
     "/:id",
     checkAccess(),
@@ -36,27 +38,34 @@ router.post(
         if (isNaN(proposalId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
         }
-
         const { title, hasOutsideCoSupervisor, declaration } =
-            phdSchemas.phdProposalSubmissionSchema.parse(req.body);
+            phdSchemas.phdProposalSubmissionSchema
+                .omit({ proposalCycleId: true })
+                .parse(req.body);
         const userEmail = req.user!.email;
-
         let supervisorEmail: string | null = null;
         let studentName: string | null = null;
-
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: and(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.studentEmail, userEmail)
                 ),
-                with: { student: true },
+                with: { student: true, proposalSemester: true },
             });
-
             if (!proposal) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
                     "Proposal not found or you do not have permission to edit it."
+                );
+            }
+            if (
+                new Date(proposal.proposalSemester.studentSubmissionDate) <
+                new Date()
+            ) {
+                throw new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "The resubmission deadline for this cycle has passed."
                 );
             }
             if (
@@ -69,10 +78,8 @@ router.post(
                     "This proposal cannot be resubmitted at its current stage."
                 );
             }
-
             supervisorEmail = proposal.supervisorEmail;
             studentName = proposal.student.name;
-
             const student = await tx.query.phd.findFirst({
                 where: eq(phd.email, userEmail),
             });
@@ -80,7 +87,6 @@ router.post(
                 (typeof phdSchemas.phdProposalFileFieldNames)[number],
                 Express.Multer.File[]
             >;
-
             if (
                 !uploadedFiles?.appendixFile ||
                 !uploadedFiles?.summaryFile ||
@@ -110,7 +116,6 @@ router.post(
                     "Documents for outside co-supervisor are required."
                 );
             }
-
             const insertedFileIds: Partial<
                 Record<
                     (typeof phdSchemas.phdProposalFileFieldNames)[number],
@@ -142,14 +147,11 @@ router.post(
                     ] = file.id;
                 });
             }
-
-            // If DAC reverted, clear their old reviews to allow re-review
             if (proposal.status === "dac_revert") {
                 await tx
                     .delete(phdProposalDacReviews)
                     .where(eq(phdProposalDacReviews.proposalId, proposalId));
             }
-
             await tx
                 .update(phdProposals)
                 .set({
@@ -169,8 +171,6 @@ router.post(
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
-
-            // Complete the student's existing todo
             await completeTodo(
                 {
                     module: modules[3],
@@ -180,8 +180,6 @@ router.post(
                 tx
             );
         });
-
-        // To-do and Email Notification Logic
         if (supervisorEmail) {
             await createTodos([
                 {
@@ -194,19 +192,16 @@ router.post(
                     link: `/phd/supervisor/proposal/${proposalId}`,
                 },
             ]);
-
             await sendEmail({
                 to: supervisorEmail,
                 subject: `Resubmitted PhD Proposal from ${studentName}`,
                 html: `<p>Dear Supervisor,</p><p>Your student, ${studentName}, has resubmitted their PhD proposal titled "<strong>${title}</strong>".</p><p>Please log in to the portal to review the changes.</p>`,
             });
         }
-
         res.status(200).send({
             success: true,
             message: "Proposal resubmitted successfully",
         });
     })
 );
-
 export default router;

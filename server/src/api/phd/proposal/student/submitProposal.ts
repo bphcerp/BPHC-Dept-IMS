@@ -11,10 +11,9 @@ import multer from "multer";
 import assert from "assert";
 import { createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
-import { gte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
-
 router.post(
     "/",
     checkAccess(),
@@ -30,41 +29,40 @@ router.post(
         )
     ),
     asyncHandler(async (req, res) => {
-        const { title, hasOutsideCoSupervisor, declaration } =
+        const { title, hasOutsideCoSupervisor, declaration, proposalCycleId } =
             phdSchemas.phdProposalSubmissionSchema.parse(req.body);
-
         const student = await db.query.phd.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
         });
         assert(student, "PhD student record not found");
-
         const supervisorEmail = student.supervisorEmail;
         if (!supervisorEmail || !supervisorEmail.trim().length)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "Supervisor not assigned"
             );
-
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
-            where: gte(phdProposalSemesters.studentSubmissionDate, new Date()),
-            orderBy: (cols, { asc }) => [asc(cols.studentSubmissionDate)],
+            where: eq(phdProposalSemesters.id, proposalCycleId),
         });
-
         if (!activeDeadline) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
-                "No active submission deadline found."
+                "The selected submission cycle was not found."
+            );
+        }
+        if (new Date(activeDeadline.studentSubmissionDate) < new Date()) {
+            throw new HttpError(
+                HttpCode.FORBIDDEN,
+                "The submission deadline for this cycle has passed."
             );
         }
         const proposalSemesterId = activeDeadline.id;
-
         if (Array.isArray(req.files))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid files");
         const uploadedFiles = req.files as Record<
             (typeof phdSchemas.phdProposalFileFieldNames)[number],
             Express.Multer.File[]
         >;
-
         if (
             !uploadedFiles?.appendixFile ||
             !uploadedFiles?.summaryFile ||
@@ -94,7 +92,6 @@ router.post(
                 "Documents for outside co-supervisor are required."
             );
         }
-
         let submittedProposalId: number = -1;
         await db.transaction(async (tx) => {
             const insertedFileIds: Partial<
@@ -103,7 +100,6 @@ router.post(
                     number
                 >
             > = {};
-
             if (req.files && Object.entries(req.files).length) {
                 const fileInserts = Object.entries(req.files).map(
                     ([fieldName, files]) => {
@@ -129,7 +125,6 @@ router.post(
                     ] = file.id;
                 });
             }
-
             const [proposal] = await tx
                 .insert(phdProposals)
                 .values({
@@ -149,7 +144,6 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile,
                 })
                 .returning();
-
             if (!proposal)
                 throw new HttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
@@ -157,7 +151,6 @@ router.post(
                 );
             submittedProposalId = proposal.id;
         });
-
         await createTodos([
             {
                 assignedTo: supervisorEmail,
@@ -170,18 +163,15 @@ router.post(
                 deadline: activeDeadline.facultyReviewDate,
             },
         ]);
-
         await sendEmail({
             to: supervisorEmail,
             subject: `PhD Proposal Submitted for Review by ${student.name}`,
             html: `<p>Dear Supervisor,</p><p>Your student, ${student.name}, has submitted their PhD research proposal titled "<strong>${title}</strong>" for your review.</p><p>Please log in to the portal to view the details and take action.</p><p>Thank you.</p>`,
         });
-
         res.status(200).send({
             success: true,
             message: "Proposal submitted successfully.",
         });
     })
 );
-
 export default router;

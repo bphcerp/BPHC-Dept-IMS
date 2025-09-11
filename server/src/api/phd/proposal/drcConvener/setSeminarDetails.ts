@@ -8,7 +8,6 @@ import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 
 const router = express.Router();
-
 export default router.post(
     "/:id",
     checkAccess(),
@@ -17,28 +16,31 @@ export default router.post(
         if (isNaN(proposalId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid Proposal ID");
         }
-        
         const body = phdSchemas.setSeminarDetailsSchema.parse(req.body);
-
         const result = await db
             .update(phdProposals)
-            .set({ 
+            .set({
                 seminarDate: new Date(body.seminarDate),
                 seminarTime: body.seminarTime,
                 seminarVenue: body.seminarVenue,
-                status: 'seminar_details_pending'
+                status: "finalising",
             })
-            .where(and(
-                eq(phdProposals.id, proposalId),
-                eq(phdProposals.status, "completed") // Or whatever status indicates DAC approval
-            )).returning();
-
-        if(result.length === 0) {
-            throw new HttpError(HttpCode.BAD_REQUEST, "Proposal not found or not in a valid state to set seminar details.");
+            .where(
+                and(
+                    eq(phdProposals.id, proposalId),
+                    eq(phdProposals.status, "seminar_incomplete")
+                )
+            )
+            .returning();
+        if (result.length === 0) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "Proposal not found or not in a valid state to set seminar details."
+            );
         }
-        
-        // TODO: Notify student and supervisor of seminar details.
-
-        res.status(200).json({ success: true, message: "Seminar details saved." });
+        res.status(200).json({
+            success: true,
+            message: "Seminar details saved.",
+        });
     })
 );

@@ -220,6 +220,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/downloadProposalPackage": "phd:drc:proposal",
     "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
     "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
     
     //Handout

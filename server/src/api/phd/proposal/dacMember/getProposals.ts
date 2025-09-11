@@ -26,22 +26,15 @@ router.get(
                 with: {
                     proposal: {
                         with: {
-                            student: {
-                                columns: {
-                                    name: true,
-                                    email: true,
-                                },
-                            },
+                            student: { columns: { name: true, email: true } },
                             proposalSemester: true,
                         },
                     },
                 },
-            });
-
+            }); // The status filter has been removed from the line below
         const assignedProposals = assignedProposalLinks
             .filter(
                 (link) =>
-                    link.proposal.status === "dac_review" &&
                     link.proposal.proposalSemesterId === proposalSemesterId
             )
             .map((link) => ({
@@ -55,7 +48,6 @@ router.get(
                 },
                 proposalSemester: link.proposal.proposalSemester,
             }));
-
         res.status(200).json(assignedProposals);
     })
 );

@@ -11,7 +11,6 @@ import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 
 const router = express.Router();
-
 const reviewActionSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("accept"),
@@ -22,7 +21,6 @@ const reviewActionSchema = z.discriminatedUnion("action", [
         ...phdSchemas.proposalRevertSchema.shape,
     }),
 ]);
-
 export default router.post(
     "/:id",
     checkAccess(),
@@ -32,7 +30,6 @@ export default router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid Proposal ID");
         }
         const body = reviewActionSchema.parse(req.body);
-
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: eq(phdProposals.id, proposalId),
@@ -42,9 +39,16 @@ export default router.post(
                     proposalSemester: true,
                 },
             });
-
             if (!proposal) {
                 throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found.");
+            }
+            if (
+                new Date(proposal.proposalSemester.drcReviewDate) < new Date()
+            ) {
+                throw new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "The deadline for DRC review has passed."
+                );
             }
             if (proposal.status !== "drc_review") {
                 throw new HttpError(
@@ -52,7 +56,6 @@ export default router.post(
                     "Proposal is not in the DRC review stage."
                 );
             }
-
             await completeTodo(
                 {
                     module: modules[3],
@@ -61,14 +64,10 @@ export default router.post(
                 },
                 tx
             );
-
             if (body.action === "revert") {
                 await tx
                     .update(phdProposals)
-                    .set({
-                        status: "drc_revert",
-                        comments: body.comments,
-                    })
+                    .set({ status: "drc_revert", comments: body.comments })
                     .where(eq(phdProposals.id, proposalId));
                 await createTodos(
                     [
@@ -113,7 +112,6 @@ export default router.post(
                             )
                         );
                 }
-
                 await tx
                     .update(phdProposals)
                     .set({
@@ -121,7 +119,6 @@ export default router.post(
                         comments: body.comments ?? null,
                     })
                     .where(eq(phdProposals.id, proposalId));
-
                 await createTodos(
                     body.selectedDacMembers.map((dacEmail) => ({
                         assignedTo: dacEmail,
@@ -135,7 +132,6 @@ export default router.post(
                     })),
                     tx
                 );
-
                 await Promise.all(
                     body.selectedDacMembers.map((dacEmail) =>
                         sendEmail({
@@ -147,7 +143,6 @@ export default router.post(
                 );
             }
         });
-
         res.status(200).json({
             success: true,
             message: `Proposal ${body.action}ed successfully.`,

@@ -1,7 +1,6 @@
-// client/src/views/Phd/DacMember/ViewProposal.tsx
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -31,14 +30,12 @@ interface ProposalDetails {
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
   currentUserReview: { approved: boolean; comments: string } | null;
+  proposalSemester: { dacReviewDate: string };
 }
-
 const DacViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const {
     data: proposal,
     isLoading,
@@ -54,7 +51,6 @@ const DacViewProposal: React.FC = () => {
     },
     enabled: !!proposalId,
   });
-
   const submitReviewMutation = useMutation({
     mutationFn: (formData: FormData) =>
       api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, formData),
@@ -64,16 +60,15 @@ const DacViewProposal: React.FC = () => {
       void refetch();
     },
   });
-
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
-        <LoadingSpinner />
+        {" "}
+        <LoadingSpinner />{" "}
       </div>
     );
   if (isError || !proposal)
     return <p className="text-destructive">Could not load proposal details.</p>;
-
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -87,46 +82,52 @@ const DacViewProposal: React.FC = () => {
       label: "Outside Supervisor's Biodata",
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
-  ];
-
+  ].filter((file) => file.url);
   const canReview =
     proposal.status === "dac_review" && !proposal.currentUserReview;
-
   return (
     <div className="space-y-6">
-      <BackButton />
+      {" "}
+      <BackButton />{" "}
       <Card>
+        {" "}
         <CardHeader>
-          <CardTitle>{proposal.title}</CardTitle>
+          {" "}
+          <CardTitle>{proposal.title}</CardTitle>{" "}
           <CardDescription>
-            Status:{" "}
+            {" "}
+            Submitted by: {proposal.student.name}({proposal.student.email})
+            <br /> Supervisor: {proposal.supervisor.name}(
+            {proposal.supervisor.email})<br /> Status:{" "}
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}
-            </Badge>
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
+            </Badge>{" "}
+          </CardDescription>{" "}
+        </CardHeader>{" "}
+      </Card>{" "}
       <ProposalDocumentsViewer files={documentFiles} />
-
       {canReview && (
         <DacReviewForm
-          proposalId={proposalId}
           onSubmit={submitReviewMutation.mutate}
           isSubmitting={submitReviewMutation.isLoading}
+          deadline={proposal.proposalSemester.dacReviewDate}
         />
       )}
-
       {proposal.currentUserReview && (
         <Card className="border-green-200 bg-green-50">
+          {" "}
           <CardHeader>
+            {" "}
             <CardTitle className="flex items-center gap-2 text-green-800">
+              {" "}
               <CheckCircle className="h-5 w-5" /> You Have Reviewed This
-              Proposal
-            </CardTitle>
-          </CardHeader>
+              Proposal{" "}
+            </CardTitle>{" "}
+          </CardHeader>{" "}
           <CardContent>
+            {" "}
             <p>
+              {" "}
               Your Decision:{" "}
               <strong
                 className={
@@ -136,32 +137,35 @@ const DacViewProposal: React.FC = () => {
                 }
               >
                 {proposal.currentUserReview.approved ? "Approved" : "Reverted"}
-              </strong>
-            </p>
+              </strong>{" "}
+            </p>{" "}
             <p className="mt-2">
-              <strong>Your Comments:</strong>
-            </p>
+              {" "}
+              <strong>Your Comments:</strong>{" "}
+            </p>{" "}
             <p className="text-muted-foreground">
               {proposal.currentUserReview.comments}
-            </p>
-          </CardContent>
+            </p>{" "}
+          </CardContent>{" "}
         </Card>
       )}
-
       {!canReview && !proposal.currentUserReview && (
         <Card>
+          {" "}
           <CardHeader>
-            <CardTitle>Review Status</CardTitle>
-          </CardHeader>
+            {" "}
+            <CardTitle>Review Status</CardTitle>{" "}
+          </CardHeader>{" "}
           <CardContent>
+            {" "}
             <p className="text-muted-foreground">
-              This proposal is not currently awaiting your review.
-            </p>
-          </CardContent>
+              {" "}
+              This proposal is not currently awaiting your review.{" "}
+            </p>{" "}
+          </CardContent>{" "}
         </Card>
       )}
     </div>
   );
 };
-
 export default DacViewProposal;

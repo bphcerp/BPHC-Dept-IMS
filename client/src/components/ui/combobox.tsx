@@ -31,6 +31,7 @@ interface ComboboxProps {
   searchPlaceholder?: string;
   emptyPlaceholder?: string;
   className?: string;
+  disabled?: boolean; // 1. Add disabled prop here
 }
 
 export function Combobox({
@@ -41,6 +42,7 @@ export function Combobox({
   searchPlaceholder = "Search...",
   emptyPlaceholder = "No options found.",
   className,
+  disabled = false, // 2. Destructure the prop with a default value
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -52,9 +54,7 @@ export function Combobox({
   };
 
   const selectedLabels = selectedValues
-    .map(
-      (value) => options.find((option) => option.value === value)?.label
-    )
+    .map((value) => options.find((option) => option.value === value)?.label)
     .filter(Boolean);
 
   return (
@@ -64,21 +64,23 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between h-auto min-h-[2.5rem]", className)}
+          className={cn(
+            "h-auto min-h-[2.5rem] w-full justify-between",
+            className
+          )}
+          disabled={disabled} // 3. Pass the disabled prop to the Button
         >
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex flex-wrap gap-1">
             {selectedLabels.length > 0 ? (
               selectedLabels.map((label) => (
-                <Badge
-                  key={label}
-                  variant="secondary"
-                  className="mr-1"
-                >
+                <Badge key={label} variant="secondary" className="mr-1">
                   {label}
                 </Badge>
               ))
             ) : (
-              <span className="text-muted-foreground font-normal">{placeholder}</span>
+              <span className="font-normal text-muted-foreground">
+                {placeholder}
+              </span>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

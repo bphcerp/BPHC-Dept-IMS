@@ -36,6 +36,15 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
 import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface ProposalSemester {
   id: number;
@@ -45,7 +54,6 @@ interface ProposalSemester {
   drcReviewDate: string;
   dacReviewDate: string;
 }
-
 interface Proposal {
   id: number;
   title: string;
@@ -56,8 +64,8 @@ interface Proposal {
   seminarDate?: string | null;
   seminarTime?: string | null;
   seminarVenue?: string | null;
+  proposalSemesterId: number;
 }
-
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -74,15 +82,16 @@ const DeadlinesCard = ({
     drcReviewDate: "DRC Review",
     dacReviewDate: "DAC Review",
   };
-
   return (
     <Card className="bg-muted/30">
+      {" "}
       <CardHeader>
+        {" "}
         <CardTitle className="flex items-center gap-2 text-base">
-          <Clock className="h-4 w-4" />
-          Current Proposal Deadlines
-        </CardTitle>
-      </CardHeader>
+          {" "}
+          <Clock className="h-4 w-4" /> Current Proposal Deadlines{" "}
+        </CardTitle>{" "}
+      </CardHeader>{" "}
       <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
         {Object.entries(deadlineLabels).map(([key, label]) => (
           <div
@@ -94,7 +103,8 @@ const DeadlinesCard = ({
                 : "bg-background"
             )}
           >
-            <p className="font-semibold text-muted-foreground">{label}</p>
+            {" "}
+            <p className="font-semibold text-muted-foreground">{label}</p>{" "}
             <p className="mt-1 font-medium">
               {new Date(
                 deadlines[key as keyof ProposalSemester] as string
@@ -103,20 +113,19 @@ const DeadlinesCard = ({
                 month: "long",
                 year: "numeric",
               })}
-            </p>
+            </p>{" "}
           </div>
         ))}
-      </CardContent>
+      </CardContent>{" "}
     </Card>
   );
 };
-
 const StudentProposal: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [proposalToResubmit, setProposalToResubmit] = useState<Proposal | null>(
     null
   );
-
+  const [selectedCycleId, setSelectedCycleId] = useState<string>("");
   const { data: eligibility, isLoading: isLoadingEligibility } = useQuery<{
     isEligible: boolean;
     qualificationDate: string | null;
@@ -127,7 +136,6 @@ const StudentProposal: React.FC = () => {
       return res.data;
     },
   });
-
   const { data: proposalData, refetch } = useQuery<{
     proposals: Proposal[];
     canApply: boolean;
@@ -139,7 +147,6 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
@@ -148,141 +155,182 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const openResubmitDialog = (proposal: Proposal) => {
+    const deadlineCycle = deadlineData?.deadlines.find(
+      (d) => d.id === proposal.proposalSemesterId
+    );
+    if (
+      !deadlineCycle ||
+      new Date(deadlineCycle.studentSubmissionDate) < new Date()
+    ) {
+      toast.error("The resubmission deadline for this proposal has passed.");
+      return;
+    }
     setProposalToResubmit(proposal);
     setIsFormOpen(true);
   };
-
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setProposalToResubmit(null);
     void refetch();
   };
-
+  const handleOpenNewProposalDialog = () => {
+    if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
+      toast.error("There are no active proposal submission cycles available.");
+      return;
+    }
+    if (deadlineData.deadlines.length === 1) {
+      setSelectedCycleId(deadlineData.deadlines[0].id.toString());
+    }
+    setIsFormOpen(true);
+  };
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
-        <LoadingSpinner />
-        <p className="ml-4 text-gray-500">Checking eligibility...</p>
+        {" "}
+        <LoadingSpinner />{" "}
+        <p className="ml-4 text-gray-500">Checking eligibility...</p>{" "}
       </div>
     );
   }
-
   const currentDeadlines = deadlineData?.deadlines[0];
-
+  const isDeadlinePassed = currentDeadlines
+    ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
+    : true;
   return (
     <div className="space-y-6">
+      {" "}
       <div className="flex flex-wrap items-center justify-between gap-4">
+        {" "}
         <div>
-          <h1 className="text-3xl font-bold">PhD Proposal</h1>
+          {" "}
+          <h1 className="text-3xl font-bold">PhD Proposal</h1>{" "}
           <p className="mt-2 text-gray-600">
-            Manage your PhD proposal submission.
-          </p>
+            {" "}
+            Manage your PhD proposal submission.{" "}
+          </p>{" "}
         </div>
         {eligibility?.isEligible && proposalData?.canApply && (
           <Button
-            onClick={() => {
-              setProposalToResubmit(null);
-              setIsFormOpen(true);
-            }}
+            onClick={handleOpenNewProposalDialog}
+            disabled={isDeadlinePassed}
+            title={
+              isDeadlinePassed ? "The application deadline has passed." : ""
+            }
           >
-            <Plus className="mr-2 h-4 w-4" /> Apply for Proposal
+            {" "}
+            <Plus className="mr-2 h-4 w-4" /> Apply for Proposal{" "}
           </Button>
         )}
       </div>
-
       {!eligibility?.isEligible ? (
         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
+          {" "}
+          <AlertTriangle className="h-4 w-4" />{" "}
+          <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>{" "}
           <AlertDescription>
+            {" "}
             Since you haven't passed your qualifying exam yet, you are not
-            allowed to fill the form.
-          </AlertDescription>
+            allowed to fill the form.{" "}
+          </AlertDescription>{" "}
         </Alert>
       ) : (
         <>
           {eligibility.qualificationDate ? (
             <Alert variant="default" className="border-green-200 bg-green-50">
-              <CalendarCheck className="h-4 w-4 text-green-700" />
-              <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
+              {" "}
+              <CalendarCheck className="h-4 w-4 text-green-700" />{" "}
+              <AlertTitle className="text-green-800">QE Passed!</AlertTitle>{" "}
               <AlertDescription className="text-green-700">
+                {" "}
                 Congratulations! You passed your qualifying exam on:{" "}
                 <strong>
                   {new Date(eligibility.qualificationDate).toLocaleDateString()}
-                </strong>
-                .
-              </AlertDescription>
+                </strong>{" "}
+                .{" "}
+              </AlertDescription>{" "}
             </Alert>
           ) : (
             <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Qualification Date Missing</AlertTitle>
+              {" "}
+              <AlertTriangle className="h-4 w-4" />{" "}
+              <AlertTitle>Qualification Date Missing</AlertTitle>{" "}
               <AlertDescription>
+                {" "}
                 Your qualification date has not been set. Please contact the DRC
-                Convenor to get it updated.
-              </AlertDescription>
+                Convenor to get it updated.{" "}
+              </AlertDescription>{" "}
             </Alert>
           )}
         </>
       )}
-
       {eligibility?.isEligible && currentDeadlines && (
         <DeadlinesCard
           deadlines={currentDeadlines}
           highlight="studentSubmissionDate"
         />
       )}
-
       <Card>
+        {" "}
         <CardHeader>
-          <CardTitle>Your Submissions</CardTitle>
+          {" "}
+          <CardTitle>Your Submissions</CardTitle>{" "}
           <CardDescription>
-            A list of your past and current proposal submissions.
-          </CardDescription>
-        </CardHeader>
+            {" "}
+            A list of your past and current proposal submissions.{" "}
+          </CardDescription>{" "}
+        </CardHeader>{" "}
         <CardContent>
+          {" "}
           <Table>
+            {" "}
             <TableHeader>
+              {" "}
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+                {" "}
+                <TableHead>Title</TableHead> <TableHead>Status</TableHead>{" "}
+                <TableHead>Last Updated</TableHead>{" "}
+                <TableHead>Actions</TableHead>{" "}
+              </TableRow>{" "}
+            </TableHeader>{" "}
             <TableBody>
               {!proposalData?.proposals ||
               proposalData.proposals.length === 0 ? (
                 <TableRow>
+                  {" "}
                   <TableCell colSpan={4} className="h-24 text-center">
+                    {" "}
                     <div className="py-8 text-center">
-                      <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                      {" "}
+                      <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />{" "}
                       <h3 className="mt-2 text-lg font-medium">
-                        No Proposals Submitted
-                      </h3>
+                        {" "}
+                        No Proposals Submitted{" "}
+                      </h3>{" "}
                       <p className="mt-1 text-sm text-gray-500">
                         {proposalData?.canApply
                           ? "Click the button above to start your application."
                           : "You currently have an active proposal in progress."}
-                      </p>
-                    </div>
-                  </TableCell>
+                      </p>{" "}
+                    </div>{" "}
+                  </TableCell>{" "}
                 </TableRow>
               ) : (
                 proposalData.proposals.map((p) => (
                   <React.Fragment key={p.id}>
+                    {" "}
                     <TableRow>
-                      <TableCell>{p.title}</TableCell>
+                      {" "}
+                      <TableCell>{p.title}</TableCell>{" "}
                       <TableCell>
+                        {" "}
                         <Badge>
                           {p.status.replace(/_/g, " ").toUpperCase()}
-                        </Badge>
-                      </TableCell>
+                        </Badge>{" "}
+                      </TableCell>{" "}
                       <TableCell>
                         {new Date(p.updatedAt).toLocaleString()}
-                      </TableCell>
+                      </TableCell>{" "}
                       <TableCell>
                         {[
                           "supervisor_revert",
@@ -293,63 +341,109 @@ const StudentProposal: React.FC = () => {
                             size="sm"
                             onClick={() => openResubmitDialog(p)}
                           >
-                            Resubmit
+                            {" "}
+                            Resubmit{" "}
                           </Button>
                         )}
-                      </TableCell>
+                      </TableCell>{" "}
                     </TableRow>
                     {p.comments && (
                       <TableRow>
+                        {" "}
                         <TableCell colSpan={4}>
+                          {" "}
                           <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Feedback/Comments</AlertTitle>
-                            <AlertDescription>{p.comments}</AlertDescription>
-                          </Alert>
-                        </TableCell>
+                            {" "}
+                            <AlertTriangle className="h-4 w-4" />{" "}
+                            <AlertTitle>Feedback/Comments</AlertTitle>{" "}
+                            <AlertDescription>{p.comments}</AlertDescription>{" "}
+                          </Alert>{" "}
+                        </TableCell>{" "}
                       </TableRow>
                     )}
                     {p.seminarDate && (
                       <TableRow>
+                        {" "}
                         <TableCell colSpan={4}>
+                          {" "}
                           <Alert>
-                            <Info className="h-4 w-4" />
-                            <AlertTitle>Seminar Details</AlertTitle>
+                            {" "}
+                            <Info className="h-4 w-4" />{" "}
+                            <AlertTitle>Seminar Details</AlertTitle>{" "}
                             <AlertDescription>
+                              {" "}
                               Your seminar is tentatively scheduled for{" "}
                               <strong>
                                 {new Date(p.seminarDate).toLocaleDateString()}
                               </strong>{" "}
                               at <strong>{p.seminarTime}</strong> in{" "}
-                              <strong>{p.seminarVenue}</strong>.
-                            </AlertDescription>
-                          </Alert>
-                        </TableCell>
+                              <strong>{p.seminarVenue}</strong>.{" "}
+                            </AlertDescription>{" "}
+                          </Alert>{" "}
+                        </TableCell>{" "}
                       </TableRow>
                     )}
                   </React.Fragment>
                 ))
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
+            </TableBody>{" "}
+          </Table>{" "}
+        </CardContent>{" "}
+      </Card>{" "}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        {" "}
         <DialogContent className="max-h-[90vh] overflow-y-auto">
+          {" "}
           <DialogHeader>
+            {" "}
             <DialogTitle>
               {proposalToResubmit
                 ? "Resubmit Proposal"
                 : "New Proposal Application"}
-            </DialogTitle>
+            </DialogTitle>{" "}
           </DialogHeader>
+          {!proposalToResubmit &&
+            deadlineData &&
+            deadlineData.deadlines.length > 1 && (
+              <div className="my-4 space-y-2">
+                {" "}
+                <Label htmlFor="proposal-cycle">
+                  Select Submission Cycle
+                </Label>{" "}
+                <Select
+                  value={selectedCycleId}
+                  onValueChange={setSelectedCycleId}
+                >
+                  {" "}
+                  <SelectTrigger id="proposal-cycle">
+                    {" "}
+                    <SelectValue placeholder="Select a deadline cycle..." />{" "}
+                  </SelectTrigger>{" "}
+                  <SelectContent>
+                    {deadlineData.deadlines.map((cycle) => (
+                      <SelectItem key={cycle.id} value={cycle.id.toString()}>
+                        {" "}
+                        Deadline:{" "}
+                        {new Date(
+                          cycle.studentSubmissionDate
+                        ).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>{" "}
+                </Select>{" "}
+              </div>
+            )}
           <StudentProposalForm
             proposalId={proposalToResubmit?.id}
+            proposalCycleId={
+              proposalToResubmit
+                ? proposalToResubmit.proposalSemesterId
+                : Number(selectedCycleId)
+            }
             onSuccess={handleFormSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+          />{" "}
+        </DialogContent>{" "}
+      </Dialog>{" "}
     </div>
   );
 };

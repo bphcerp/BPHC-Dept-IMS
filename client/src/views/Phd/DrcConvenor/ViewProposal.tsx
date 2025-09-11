@@ -1,7 +1,5 @@
-// client/src/views/Phd/DrcConvenor/ViewProposal.tsx
-import React, { useState } from "react"; // Import useState
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -19,26 +17,17 @@ import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocuments
 import { DrcReviewForm } from "@/components/phd/proposal/DrcReviewForm";
 import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm";
 import { phdSchemas } from "lib";
-import { Download, CheckCircle } from "lucide-react"; // Import new icon
+import { Download, CheckCircle } from "lucide-react";
 
 interface DacMember {
-  dacMember: {
-    name: string | null;
-    email: string;
-  };
+  dacMember: { name: string | null; email: string };
 }
 interface ProposalDetails {
   id: number;
   title: string;
   status: string;
-  student: {
-    name: string | null;
-    email: string;
-  };
-  supervisor: {
-    name: string | null;
-    email: string;
-  };
+  student: { name: string | null; email: string };
+  supervisor: { name: string | null; email: string };
   dacMembers: DacMember[];
   dacReviews: any[];
   appendixFileUrl: string;
@@ -47,15 +36,12 @@ interface ProposalDetails {
   placeOfResearchFileUrl?: string | null;
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
+  proposalSemester: { drcReviewDate: string };
 }
-
 const DrcViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isDownloaded, setIsDownloaded] = useState(false); // New state to track download
-
   const {
     data: proposal,
     isLoading,
@@ -71,7 +57,6 @@ const DrcViewProposal: React.FC = () => {
     },
     enabled: !!proposalId,
   });
-
   const setSeminarDetailsMutation = useMutation({
     mutationFn: (data: phdSchemas.SetSeminarDetailsBody) =>
       api.post(
@@ -88,14 +73,11 @@ const DrcViewProposal: React.FC = () => {
       );
     },
   });
-
   const downloadPackageMutation = useMutation({
     mutationFn: () =>
       api.get(
         `/phd/proposal/drcConvener/downloadProposalPackage/${proposalId}`,
-        {
-          responseType: "blob",
-        }
+        { responseType: "blob" }
       ),
     onSuccess: (response) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -106,18 +88,16 @@ const DrcViewProposal: React.FC = () => {
       link.click();
       link.parentNode?.removeChild(link);
       toast.success("Proposal package downloaded.");
-      setIsDownloaded(true); // Set download state to true on success
+      void refetch();
     },
     onError: () => toast.error("Failed to download package."),
   });
-
-  // New mutation for the finalize step
   const finalizeMutation = useMutation({
     mutationFn: () =>
       api.post(`/phd/proposal/drcConvener/finalizeProposals`, { proposalId }),
     onSuccess: () => {
       toast.success("Process finalized and status updated successfully!");
-      void refetch(); // Refetch to show the new 'sent_to_agsrd' status
+      void refetch();
       void queryClient.invalidateQueries({ queryKey: ["drc-proposals"] });
     },
     onError: (error: any) => {
@@ -126,15 +106,14 @@ const DrcViewProposal: React.FC = () => {
       );
     },
   });
-
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
-        <LoadingSpinner />
+        {" "}
+        <LoadingSpinner />{" "}
       </div>
     );
   if (isError || !proposal) return <div>Error loading proposal details.</div>;
-
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -149,7 +128,6 @@ const DrcViewProposal: React.FC = () => {
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
   ];
-
   const renderActionCard = () => {
     switch (proposal.status) {
       case "drc_review":
@@ -158,93 +136,111 @@ const DrcViewProposal: React.FC = () => {
             proposalId={proposalId}
             suggestedDacMembers={proposal.dacMembers}
             onSuccess={() => refetch()}
+            deadline={proposal.proposalSemester.drcReviewDate}
           />
         );
-      case "completed":
+      case "seminar_incomplete":
         return (
           <SeminarDetailsForm
             onSubmit={setSeminarDetailsMutation.mutate}
             isSubmitting={setSeminarDetailsMutation.isLoading}
           />
         );
-      case "seminar_details_pending":
+      case "finalising":
+      case "formalising":
         return (
           <Card>
+            {" "}
             <CardHeader>
-              <CardTitle>Finalize Process</CardTitle>
+              {" "}
+              <CardTitle>Finalize Process</CardTitle>{" "}
               <CardDescription>
+                {" "}
                 Step 1: Download all documents. Step 2: Confirm to finalize the
-                process.
-              </CardDescription>
-            </CardHeader>
+                process.{" "}
+              </CardDescription>{" "}
+            </CardHeader>{" "}
             <CardContent className="flex flex-col items-center gap-4">
+              {" "}
               <Button
                 onClick={() => downloadPackageMutation.mutate()}
-                disabled={downloadPackageMutation.isLoading || isDownloaded}
+                disabled={
+                  downloadPackageMutation.isLoading ||
+                  proposal.status === "formalising"
+                }
                 className="w-full max-w-xs"
               >
+                {" "}
                 <Download className="mr-2 h-4 w-4" />
                 {downloadPackageMutation.isLoading
                   ? "Generating..."
-                  : isDownloaded
-                    ? "Package Downloaded"
-                    : "Download Proposal Package"}
-              </Button>
+                  : "Download Proposal Package"}
+              </Button>{" "}
               <Button
                 onClick={() => finalizeMutation.mutate()}
-                disabled={!isDownloaded || finalizeMutation.isLoading}
+                disabled={
+                  proposal.status !== "formalising" ||
+                  finalizeMutation.isLoading
+                }
                 className="w-full max-w-xs bg-green-600 hover:bg-green-700"
               >
+                {" "}
                 <CheckCircle className="mr-2 h-4 w-4" />
                 {finalizeMutation.isLoading
                   ? "Finalizing..."
                   : "Confirm & Finalize Process"}
-              </Button>
+              </Button>{" "}
               <p className="mt-2 text-xs text-muted-foreground">
-                Finalizing will update the status to "Sent to AGSRD" and
-                complete the workflow.
-              </p>
-            </CardContent>
+                {" "}
+                Finalizing will update the status to &quot;Completed&quot; and
+                finish the workflow.{" "}
+              </p>{" "}
+            </CardContent>{" "}
           </Card>
         );
       default:
         return (
           <Card>
+            {" "}
             <CardHeader>
-              <CardTitle>Proposal Status</CardTitle>
-            </CardHeader>
+              {" "}
+              <CardTitle>Proposal Status</CardTitle>{" "}
+            </CardHeader>{" "}
             <CardContent>
+              {" "}
               <p>
+                {" "}
                 This proposal is currently at the{" "}
                 <strong>
                   {proposal.status.replace(/_/g, " ").toUpperCase()}
                 </strong>{" "}
-                stage and does not require your action at this moment.
-              </p>
-            </CardContent>
+                stage and does not require your action at this moment.{" "}
+              </p>{" "}
+            </CardContent>{" "}
           </Card>
         );
     }
   };
-
   return (
     <div className="space-y-6">
-      <BackButton />
+      {" "}
+      <BackButton />{" "}
       <Card>
+        {" "}
         <CardHeader>
-          <CardTitle>{proposal.title}</CardTitle>
+          {" "}
+          <CardTitle>{proposal.title}</CardTitle>{" "}
           <CardDescription>
-            Submitted by: {proposal.student.name} ({proposal.student.email})
-            <br />
+            {" "}
+            Submitted by:{proposal.student.name}({proposal.student.email})<br />{" "}
             Status:{" "}
-            <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
-          </CardDescription>
-        </CardHeader>
-      </Card>
+            <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>{" "}
+          </CardDescription>{" "}
+        </CardHeader>{" "}
+      </Card>{" "}
       <ProposalDocumentsViewer files={documentFiles} />
       {renderActionCard()}
     </div>
   );
 };
-
 export default DrcViewProposal;

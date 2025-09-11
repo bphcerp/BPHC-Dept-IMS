@@ -12,7 +12,6 @@ import { sendEmail } from "@/lib/common/email.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 
 const router = express.Router();
-
 const reviewActionSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("accept"),
@@ -23,7 +22,6 @@ const reviewActionSchema = z.discriminatedUnion("action", [
         ...phdSchemas.proposalRevertSchema.shape,
     }),
 ]);
-
 export default router.post(
     "/:id",
     checkAccess(),
@@ -33,7 +31,6 @@ export default router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid Proposal ID");
         }
         const body = reviewActionSchema.parse(req.body);
-
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: and(
@@ -42,21 +39,27 @@ export default router.post(
                 ),
                 with: { student: true, proposalSemester: true },
             });
-
             if (!proposal) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
                     "Proposal not found or you are not the supervisor."
                 );
             }
-
+            if (
+                new Date(proposal.proposalSemester.facultyReviewDate) <
+                new Date()
+            ) {
+                throw new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "The deadline for supervisor review has passed."
+                );
+            }
             if (proposal.status !== "supervisor_review") {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
                     "Proposal is not in the supervisor review stage."
                 );
             }
-
             await completeTodo(
                 {
                     module: modules[3],
@@ -65,7 +68,6 @@ export default router.post(
                 },
                 tx
             );
-
             if (body.action === "revert") {
                 await tx
                     .update(phdProposals)
@@ -91,24 +93,20 @@ export default router.post(
                 await sendEmail({
                     to: proposal.student.email,
                     subject: "Action Required: Your PhD Proposal Submission",
-                    html: `<p>Dear ${
-                        proposal.student.name || "Student"
-                    },</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${
-                        body.comments
-                    }</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
+                    html: `<p>Dear ${proposal.student.name || "Student"},</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${body.comments}</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
                 });
             } else if (body.action === "accept") {
                 await tx
                     .delete(phdProposalDacMembers)
                     .where(eq(phdProposalDacMembers.proposalId, proposalId));
-
-                await tx.insert(phdProposalDacMembers).values(
-                    body.dacMembers.map((email) => ({
-                        proposalId,
-                        dacMemberEmail: email,
-                    }))
-                );
-
+                await tx
+                    .insert(phdProposalDacMembers)
+                    .values(
+                        body.dacMembers.map((email) => ({
+                            proposalId,
+                            dacMemberEmail: email,
+                        }))
+                    );
                 await tx
                     .update(phdProposals)
                     .set({
@@ -116,7 +114,6 @@ export default router.post(
                         comments: body.comments ?? null,
                     })
                     .where(eq(phdProposals.id, proposalId));
-
                 const drcConveners = await getUsersWithPermission(
                     "phd:drc:proposal",
                     tx
@@ -128,7 +125,7 @@ export default router.post(
                             assignedTo: drc.email,
                             createdBy: req.user!.email,
                             title: "PhD Proposal Ready for DRC Review",
-                            description: `Proposal by ${proposal.student.name} is approved by the supervisor and is awaiting your review.`,
+                            description: `Proposal by ${proposal.student.name}is approved by the supervisor and is awaiting your review.`,
                             link: `/phd/drc-convenor/proposal-management/${proposalId}`,
                             completionEvent: `proposal:drc-review:${proposalId}`,
                             deadline: proposal.proposalSemester?.drcReviewDate,
@@ -139,15 +136,14 @@ export default router.post(
                         drcConveners.map((drc) =>
                             sendEmail({
                                 to: drc.email,
-                                subject: `PhD Proposal from ${proposal.student.name} requires DRC review`,
-                                html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name} has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
+                                subject: `PhD Proposal from ${proposal.student.name}requires DRC review`,
+                                html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name}has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
                             })
                         )
                     );
                 }
             }
         });
-
         res.status(200).json({
             success: true,
             message: `Proposal ${body.action}ed successfully.`,
