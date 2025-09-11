@@ -134,6 +134,7 @@ export const allPermissions = {
 
     "allocation:builder:form:write": "create a form instance of the template",
     "allocation:builder:form:read": "view form details",
+    "allocation:response:write": "submit responses",
 
     
 
@@ -348,6 +349,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/builder/form/get": "allocation:builder:form:read",
     "/builder/form/getInfo": "allocation:builder:form:read",
     "/builder/form/getAll": "allocation:builder:form:read",
+    
+    "/response/register": "allocation:response:write",
     
 
 } as const;

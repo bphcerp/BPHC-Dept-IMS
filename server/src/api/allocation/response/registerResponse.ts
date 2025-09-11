@@ -15,7 +15,7 @@ import {
 const router = express.Router();
 
 router.post(
-  "/responses",
+  "/",
   checkAccess(),
   asyncHandler(async (req, res, next) => {
     const parsed = allocationFormResponseSchema.parse(req.body);
