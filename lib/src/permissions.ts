@@ -42,6 +42,7 @@ export const allPermissions = {
     "phd:drc:proposal": "DRC Convener operations on proposals",
     "phd:faculty:proposal": "Faculty operations on proposals",
     "phd:dac:proposal": "DAC Member operations on proposals",
+    "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
@@ -69,7 +70,7 @@ export const allPermissions = {
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
     "publications:export": "Export Publications",
-    "publications:upload" : "Upload Researgence Data",
+    "publications:upload": "Upload Researgence Data",
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
@@ -157,10 +158,18 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
 
     "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
+    "/phd/staff/getLatestProposalSem": "phd:staff:manage-email-templates",
+    "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
+    "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
+    "/phd/proposal/getProposalSemesters": "phd:proposal",
+    
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/getProposalEligibility": "phd:student:proposal",
+    "/phd/student/getProposalDeadlines": "phd:student:proposal",
+    "/phd/student/getProfileDetails": "phd:student:proposal",
 
     "/phd/drcMember/getAvailableExams": "phd:drc:qe",
     "/phd/drcMember/updateApplicationStatus": "phd:drc:qe",
@@ -207,6 +216,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/approve": "phd:faculty:proposal",
 
+    "/phd/proposal/drcConvener/finalizeProposals": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalPackage": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
     "/handout/dca/assignReviewer": "handout:dca-convenor:assignreviewer",
@@ -235,7 +250,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
     "/publications/upload": "publications:upload",
-    
+
     // Inventory
     "/inventory/labs/get": "inventory:read",
     "/inventory/labs/lastItemNumber": "inventory:read",

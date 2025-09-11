@@ -4,6 +4,7 @@ import supervisorRouter from "./supervisor/index.ts";
 import drConvenerRouter from "./drcConvener/index.ts";
 import coSupervisorRouter from "./coSupervisor/index.ts";
 import dacMemberRouter from "./dacMember/index.ts";
+import getProposalSemestersRouter from "./getProposalSemesters.ts";
 
 const router = express.Router();
 
@@ -12,5 +13,6 @@ router.use("/supervisor", supervisorRouter);
 router.use("/drcConvener", drConvenerRouter);
 router.use("/coSupervisor", coSupervisorRouter);
 router.use("/dacMember", dacMemberRouter);
+router.use("/getProposalSemesters", getProposalSemestersRouter);
 
 export default router;

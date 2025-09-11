@@ -5,17 +5,18 @@ import db from "@/config/db/index.ts";
 
 const router = express.Router();
 
-export default router.get(
+router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res) => {
-        const facultyList = await db.query.faculty.findMany({
-            columns: {
-                email: true,
-                name: true,
-                department: true,
+        const proposalSemester = await db.query.phdProposalSemesters.findFirst({
+            orderBy: (table, { desc }) => [desc(table.id)],
+            with: {
+                semester: true,
             },
         });
-        res.status(200).json(facultyList);
+        res.status(200).json({ proposalSemester });
     })
 );
+
+export default router;
