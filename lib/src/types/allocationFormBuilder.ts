@@ -1,5 +1,3 @@
-
-
 import { z } from "zod";
 import {
 	allocationFormTemplateFieldTypeEnum,
@@ -54,26 +52,31 @@ export type AllocationFormTemplateFieldType = z.infer<typeof allocationFormTempl
 
 // GET TYPES WITH RELATIONS
 export type AllocationFormTemplateFieldOption = NewAllocationFormTemplateFieldOption & {
+	id: string;
 	field?: AllocationFormTemplateField;
 };
 
 export type AllocationFormTemplateField = NewAllocationFormTemplateField & {
+	id: string;
 	template?: AllocationFormTemplate;
 	options?: AllocationFormTemplateFieldOption[];
 	responseValues?: AllocationFormResponseValue[];
 };
 
 export type AllocationFormTemplate = NewAllocationFormTemplate & {
+	id: string;
 	fields?: AllocationFormTemplateField[];
 	forms?: AllocationForm[];
 };
 
 export type AllocationForm = NewAllocationForm & {
+	id: string;
 	template?: AllocationFormTemplate;
 	responses?: AllocationFormResponse[];
 };
 
 export type AllocationFormResponse = NewAllocationFormResponse & {
+	id: string;
 	form?: AllocationForm;
 	submittedBy: string;  
   	submittedAt: Date;    
@@ -81,12 +84,14 @@ export type AllocationFormResponse = NewAllocationFormResponse & {
 };
 
 export type AllocationFormResponseValue = NewAllocationFormResponseValue & {
+	id: string;
 	response?: AllocationFormResponse;
 	field?: AllocationFormTemplateField;
 	answers?: AllocationFormResponseAnswer[];
 };
 
 export type AllocationFormResponseAnswer = NewAllocationFormResponseAnswer & {
+	id: string;
 	responseValue?: AllocationFormResponseValue;
 	option?: AllocationFormTemplateFieldOption;
 };
