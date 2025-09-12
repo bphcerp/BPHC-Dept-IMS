@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { ClockArrowDownIcon, DatabaseIcon, MessageSquareReplyIcon, SendIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
+import { ClockArrowDownIcon, DatabaseIcon, FileTextIcon, MessageSquareReplyIcon, SendIcon, Square, SquareStackIcon, UserRoundIcon } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
@@ -54,6 +54,18 @@ const AllocationLayout = () => {
               },
             ],
           },
+          {
+            title: "Forms",
+            items: [
+              {
+                title: "Form Templates",
+                icon: <FileTextIcon />,
+                url: "/allocation/form-templates",
+                requiredPermissions: ["allocation:write"]
+              },
+              
+            ]
+          }
         ]}
       />
       <div className="w-full overflow-y-auto">

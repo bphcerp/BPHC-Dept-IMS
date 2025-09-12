@@ -12,7 +12,7 @@ const columns: ColumnDef<Course>[] = [
     accessorKey: "code",
     header: "Course Code",
   },
-  
+
   {
     accessorKey: "name",
     header: "Course Title",
@@ -65,27 +65,27 @@ const columns: ColumnDef<Course>[] = [
 ];
 
 const CourseLoadPage = () => {
-  const[courses, setCourses] = useState<Course[]>([]);
-  const[isLoading, setIsLoading] = useState(true);
-  const[isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
 
   const fetchCourses = async () => {
-      try {
-        const response = await api.get("/allocation/course/get");
-        setCourses(response.data);
-      } catch (error) {
-        toast.error("Error in fetching courses!");
-        console.error("Error in fetching courses: ", error);
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const response = await api.get("/allocation/course/get");
+      setCourses(response.data);
+    } catch (error) {
+      toast.error("Error in fetching courses!");
+      console.error("Error in fetching courses: ", error);
+    } finally {
+      setIsLoading(false);
     }
+  }
 
 
   useEffect(() => {
     fetchCourses();
   }, []);
-  
+
   const handleCourseAdded = () => {
     fetchCourses();
     setIsAddCourseOpen(false);
@@ -100,12 +100,12 @@ const CourseLoadPage = () => {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4"> Course Load allocation </h1>
-      <DataTable 
+      <DataTable
         columns={columns}
         data={courses}
         mainSearchColumn="name"
         additionalButtons={addCourseButton}
-        />
+      />
     </div>
   );
 };
