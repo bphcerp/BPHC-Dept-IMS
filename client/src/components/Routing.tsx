@@ -13,7 +13,7 @@ import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd";
 import CourseLoadPage from "@/views/Allocation/CourseLoadPage";
 import FormTemplateList from "@/views/Allocation/FormTemplateList";
-import FormTemplateCreate from "@/views/Allocation/FormTemplateCreate";
+import FormTemplateView from "@/views/Allocation/FormTemplateView";
 import { allPermissions, permissions } from "lib";
 import {
   BookOpen,
@@ -99,8 +99,6 @@ import SendMail from "@/views/Wilp/SendMail";
 import AllocationLayout from "@/layouts/Allocation";
 import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
 import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
-import path from 'path';
-import FormTemplateDetail from "@/views/Allocation/FormTemplateDetail";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -616,8 +614,8 @@ const Routing = () => {
                   <Route path="ongoing/new" element={<RegisterNewSemester />} />
                   <Route path="responses" element={<div />} />
                   <Route path="form-templates" element={<FormTemplateList />} />
-                  <Route path="form-templates/new" element={<FormTemplateCreate />} />
-                  <Route path="form-templates/:id" element={<FormTemplateDetail />} />
+                  <Route path="form-templates/new" element={<FormTemplateView />} />
+                  <Route path="form-templates/:id" element={<FormTemplateView create={false}/>} />
                 </>
               )
             }

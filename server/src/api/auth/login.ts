@@ -66,6 +66,7 @@ router.post(
                 );
 
             const name =
+                user?.name ??
                 user?.faculty?.name ??
                 user?.phd?.name ??
                 user?.staff?.name ??
@@ -83,6 +84,11 @@ router.post(
                     .update(userType)
                     .set({ name: ticketPayload.name })
                     .where(eq(userType.email, user.email));
+                
+                await db
+                    .update(users)
+                    .set({ name: ticketPayload.name })
+                    .where(eq(users.email, user.email));
             }
 
             const { refreshToken, sessionExpiry } = await generateRefreshToken(

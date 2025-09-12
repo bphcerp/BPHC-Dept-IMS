@@ -5,7 +5,7 @@ import {
 	courseSchema,
 	semesterSchema
 } from "../schemas/Allocation.ts";
-import { MemberDetailsResponse } from "@/schemas/Admin.ts";
+import { MemberDetailsResponse } from "../schemas/Admin.ts";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;

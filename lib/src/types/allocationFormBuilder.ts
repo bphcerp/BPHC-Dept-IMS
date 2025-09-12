@@ -11,21 +11,17 @@ import {
     updateAllocationFormResponseSchema,
     updateAllocationFormSchema,
     updateAllocationFormTemplateFieldSchema,
-    updateAllocationFormTemplateSchema
+    updateAllocationFormTemplateSchema,
+	allocationFormTemplatePreferenceTypeEnum,
+	allocationFormResponseSchema
 } from "../schemas/AllocationFormBuilder.ts";
-import { MemberDetailsResponse } from "@/schemas/Admin.ts";
+import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import { Course } from "./allocation.ts";
 
 export type NewAllocationFormTemplateField = z.infer<typeof allocationFormTemplateFieldSchema>;
 export type NewAllocationFormTemplate = z.infer<typeof allocationFormTemplateSchema>;
 export type NewAllocationForm = z.infer<typeof allocationFormSchema>;
-export type NewAllocationFormResponse = {
-    formId: string;
-    teachingAllocation?: number | undefined;
-    templateFieldId?: string | undefined;
-    courseCode?: string | undefined;
-    preference?: number | undefined;
-}
+export type NewAllocationFormResponse = z.infer<typeof allocationFormResponseSchema>;
 
 export type UpdateAllocationFormTemplateField = z.infer<typeof updateAllocationFormTemplateFieldSchema>;
 export type UpdateAllocationFormTemplate = z.infer<typeof updateAllocationFormTemplateSchema>;
@@ -38,6 +34,7 @@ export type DeleteAllocationForm = z.infer<typeof deleteAllocationFormSchema>;
 export type DeleteAllocationFormResponse = z.infer<typeof deleteAllocationFormResponseSchema>;
 
 export type AllocationFormTemplateFieldType = z.infer<typeof allocationFormTemplateFieldTypeEnum>;
+export type AllocationFormTemplatePreferenceFieldType = z.infer<typeof allocationFormTemplatePreferenceTypeEnum>;
 
 
 export type AllocationFormTemplateField = NewAllocationFormTemplateField & {
@@ -45,10 +42,11 @@ export type AllocationFormTemplateField = NewAllocationFormTemplateField & {
 	template?: AllocationFormTemplate;
 };
 
-export type AllocationFormTemplate = NewAllocationFormTemplate & {
+export type AllocationFormTemplate = Omit<NewAllocationFormTemplate, 'fields'> & {
 	id: string;
 	createdAt: Date;
 	updatedAt: Date;
+	fields: AllocationFormTemplateField[];
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>;  
 };
 
@@ -73,7 +71,15 @@ export type AllocationFormList = NewAllocationForm & {
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>;
 };
 
-export type AllocationFormResponse = NewAllocationFormResponse & {
+export type RawAllocationFormResponse = {
+    formId: string;
+    teachingAllocation?: number | null;
+    templateFieldId?: string | null;
+    courseCode?: string | null;
+    preference?: AllocationFormTemplatePreferenceFieldType | null;
+}
+
+export type AllocationFormResponse = RawAllocationFormResponse & {
 	id: string;
 	course: Pick<Course, 'name' | 'code'> | null;
 	templateField: AllocationFormTemplateField

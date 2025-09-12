@@ -17,7 +17,7 @@ const columns: ColumnDef<AllocationFormTemplate>[] = [
     header: "Description",
   },
   {
-    accessorKey: "createdBy",
+    accessorKey: "createdBy.name",
     header: "Created By: "
   },
   {
