@@ -101,9 +101,9 @@ const CourseLoadPage = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4"> Course Load allocation </h1>
       <DataTable
+        idColumn="code"
         columns={columns}
         data={courses}
-        mainSearchColumn="name"
         additionalButtons={addCourseButton}
       />
     </div>

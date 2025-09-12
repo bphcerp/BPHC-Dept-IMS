@@ -7,7 +7,7 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (_req, res) => {
         const templates = await db.query.allocationFormTemplate.findMany({
             with: {
                 createdBy: {

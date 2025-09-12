@@ -7,7 +7,7 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (_req, res) => {
         const forms = await db.query.allocationForm.findMany({
             with: {
                 createdBy: {

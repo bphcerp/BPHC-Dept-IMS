@@ -13,17 +13,19 @@ router.get(
         const forms = await db.query.allocationFormResponse.findMany({
             where: (fr, { eq }) => eq(fr.formId, formId),
             with: {
-                values: {
-                    with: {
-                        answers: {
-                            with: {
-                                option: true,
-                            },
-                        },
-                        field: true,
+                course: {
+                    columns: {
+                        name: true,
+                        code: true,
                     },
                 },
-                submittedBy: true,
+                templateField: true,
+                submittedBy: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
             },
             columns: {
                 submittedByEmail: false,
