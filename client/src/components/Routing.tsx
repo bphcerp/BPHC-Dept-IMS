@@ -48,8 +48,6 @@ import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
 import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
-import CoSupervisorProposal from "@/views/Phd/CoSupervisor/Proposal";
-import CoSupervisorViewProposal from "@/views/Phd/CoSupervisor/ViewProposal";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -461,19 +459,7 @@ const Routing = () => {
                 )}
               </Route>
             )}
-
-            {/* Co-Supervisor */}
-            {checkAccess(
-              permissions["/phd/proposal/coSupervisor/getProposals"]
-            ) && (
-              <Route path="coSupervisor" element={<Outlet />}>
-                <Route path="proposals" element={<CoSupervisorProposal />} />
-                <Route
-                  path="proposal/:id"
-                  element={<CoSupervisorViewProposal />}
-                />
-              </Route>
-            )}
+           
           </Route>
         )}
         {checkAccessAnyOne(publicationsPermissions) && (

@@ -2,7 +2,6 @@ import db from "@/config/db/index.ts";
 import {
     phdProposals,
     phdProposalDacReviews,
-    phdProposalSemesters,
 } from "@/config/db/schema/phd.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";

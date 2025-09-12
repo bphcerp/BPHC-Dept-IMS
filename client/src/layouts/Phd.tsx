@@ -36,19 +36,7 @@ const PhdLayout = () => {
         },
       ],
     },
-    {
-      title: "Co-Supervisor",
-      items: [
-        {
-          title: "Proposal Management",
-          icon: <FileText />,
-          url: "/phd/coSupervisor/proposals",
-          requiredPermissions: [
-            permissions["/phd/proposal/coSupervisor/getProposals"],
-          ],
-        },
-      ],
-    },
+    
     {
       title: "DAC Member",
       items: [

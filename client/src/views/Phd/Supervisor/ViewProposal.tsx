@@ -19,7 +19,6 @@ import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReview
 interface DacMember {
   dacMember: { name: string | null; email: string };
 }
-
 interface Proposal {
   id: number;
   title: string;
@@ -33,6 +32,9 @@ interface Proposal {
   placeOfResearchFileUrl?: string | null;
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
+  proposalSemester: {
+    facultyReviewDate: string;
+  };
 }
 
 const SupervisorViewProposal: React.FC = () => {
@@ -58,6 +60,7 @@ const SupervisorViewProposal: React.FC = () => {
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
+        
         <LoadingSpinner />
       </div>
     );
@@ -86,52 +89,66 @@ const SupervisorViewProposal: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      
       <BackButton />
       <Card>
+        
         <CardHeader>
+          
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            Submitted by: {proposal.student.name} ({proposal.student.email})
-            <br />
-            Status:{" "}
-            <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
+            
+            Submitted by: {proposal.student.name}({proposal.student.email})
+            <br /> Status:
+            <Badge>
+              {proposal.status.replace(/_/g, " ").toUpperCase()}
+            </Badge>
           </CardDescription>
         </CardHeader>
       </Card>
-
       <ProposalDocumentsViewer files={documentFiles} />
-
       {proposal.status === "supervisor_review" ? (
         <Card>
+          
           <CardHeader>
+            
             <CardTitle>Review and Action</CardTitle>
             <CardDescription>
+              
               Add DAC members and accept, or revert the proposal with comments.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            
             <SupervisorReviewForm
               proposalId={proposalId}
               onSuccess={handleSuccess}
+              deadline={proposal.proposalSemester.facultyReviewDate}
             />
           </CardContent>
         </Card>
       ) : (
         <Card>
+          
           <CardHeader>
+            
             <CardTitle>Review Information</CardTitle>
           </CardHeader>
           <CardContent>
+            
             <p className="text-sm text-muted-foreground">
+              
               This proposal is not currently awaiting your review. Current
-              status:{" "}
+              status:
               <strong>
                 {proposal.status.replace(/_/g, " ").toUpperCase()}
               </strong>
             </p>
             {proposal.comments && (
               <p className="mt-4">
-                <strong>Your last comment:</strong> {proposal.comments}
+                
+                <strong>Your last comment:</strong>
+                {proposal.comments}
               </p>
             )}
           </CardContent>

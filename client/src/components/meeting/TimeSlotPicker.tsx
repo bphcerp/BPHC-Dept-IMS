@@ -21,7 +21,7 @@ interface TimeSlotPickerProps {
 export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   selectedSlots,
   onSlotSelect,
-  duration,
+//   duration,
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()

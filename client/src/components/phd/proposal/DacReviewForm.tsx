@@ -1,3 +1,4 @@
+// client/src/components/phd/proposal/DacReviewForm.tsx
 import React, { useState } from "react";
 import { useForm, Controller, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +17,7 @@ interface DacReviewFormProps {
   isSubmitting: boolean;
   deadline: string;
 }
+
 const FormBooleanRadioGroup = ({
   control,
   name,
@@ -30,8 +32,7 @@ const FormBooleanRadioGroup = ({
   disabled: boolean;
 }) => (
   <div className="space-y-2">
-    {" "}
-    <Label>{label}</Label>{" "}
+    <Label>{label}</Label>
     <Controller
       control={control}
       name={name}
@@ -42,23 +43,23 @@ const FormBooleanRadioGroup = ({
           className="flex items-center space-x-4"
           disabled={disabled}
         >
-          {" "}
           <div className="flex items-center space-x-2">
-            {" "}
-            <RadioGroupItem value="true" id={`${name}-yes`} />{" "}
-            <Label htmlFor={`${name}-yes`}>Yes</Label>{" "}
-          </div>{" "}
+            
+            <RadioGroupItem value="true" id={`${name}-yes`} />
+            <Label htmlFor={`${name}-yes`}>Yes</Label>
+          </div>
           <div className="flex items-center space-x-2">
-            {" "}
-            <RadioGroupItem value="false" id={`${name}-no`} />{" "}
-            <Label htmlFor={`${name}-no`}>No</Label>{" "}
-          </div>{" "}
+            
+            <RadioGroupItem value="false" id={`${name}-no`} />
+            <Label htmlFor={`${name}-no`}>No</Label>
+          </div>
         </RadioGroup>
       )}
     />
     {error && <p className="text-xs text-destructive">{error.message}</p>}
   </div>
 );
+
 const FormEnumRadioGroup = ({
   control,
   name,
@@ -72,31 +73,35 @@ const FormEnumRadioGroup = ({
   error?: { message?: string };
   disabled: boolean;
 }) => (
-  <Controller
-    control={control}
-    name={name}
-    render={({ field }) => (
-      <RadioGroup
-        onValueChange={field.onChange}
-        value={field.value}
-        className="flex flex-col space-y-1"
-        disabled={disabled}
-      >
-        {" "}
-        {items.map((item) => (
-          <div key={item.value} className="flex items-center space-x-3">
-            {" "}
-            <RadioGroupItem
-              value={item.value}
-              id={`${name}-${item.value}`}
-            />{" "}
-            <Label htmlFor={`${name}-${item.value}`}>{item.label}</Label>{" "}
-          </div>
-        ))}
-      </RadioGroup>
-    )}
-  />
+  <div>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <RadioGroup
+          onValueChange={field.onChange}
+          value={field.value}
+          className="flex flex-col space-y-1"
+          disabled={disabled}
+        >
+          
+          {items.map((item) => (
+            <div key={item.value} className="flex items-center space-x-3">
+              
+              <RadioGroupItem
+                value={item.value}
+                id={`${name}-${item.value}`}
+              />
+              <Label htmlFor={`${name}-${item.value}`}>{item.label}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      )}
+    />
+    {error && <p className="mt-1 text-xs text-destructive">{error.message}</p>}
+  </div>
 );
+
 export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   onSubmit,
   isSubmitting,
@@ -137,9 +142,10 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
     "approved" | "reverted" | null
   >(null);
   const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
+
   const onFormSubmit = (data: phdSchemas.DacReviewFormData) => {
     if (!finalDecision) {
-      toast.error("Please select a final decision(Approve or Revert).");
+      toast.error("Please select a final decision (Approve or Revert).");
       return;
     }
     const formData = new FormData();
@@ -154,47 +160,48 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
     }
     onSubmit(formData);
   };
+
   return (
     <Card>
-      {" "}
+      
       <CardHeader>
-        {" "}
-        <CardTitle>DAC Review & Evaluation</CardTitle>{" "}
-      </CardHeader>{" "}
+        
+        <CardTitle>DAC Review & Evaluation</CardTitle>
+      </CardHeader>
       <CardContent>
-        {" "}
+        
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
+            
             <h3 className="text-lg font-semibold">
-              {" "}
-              1. Proposed Topic of Research{" "}
-            </h3>{" "}
+              
+              1. Proposed Topic of Research
+            </h3>
             <FormBooleanRadioGroup
               control={control}
               name="q1a"
-              label="a)Is the proposed topic in one of the research areas of the Institute?"
+              label="a) Is the proposed topic in one of the research areas of the Institute?"
               error={errors.q1a}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q1b"
-              label="b)Does the proposed topic reflect the theme propounded in the proposal write up?"
+              label="b) Does the proposed topic reflect the theme propounded in the proposal write up?"
               error={errors.q1b}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q1c"
-              label="c)Is the proposed topic relevant to the needs of the immediate environment?"
+              label="c) Is the proposed topic relevant to the needs of the immediate environment?"
               error={errors.q1c}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <div>
-              {" "}
-              <Label>d)Does the proposed topic aim at:</Label>{" "}
+              
+              <Label>d) Does the proposed topic aim at:</Label>
               <FormEnumRadioGroup
                 control={control}
                 name="q1d"
@@ -214,40 +221,40 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
                 ]}
                 error={errors.q1d}
                 disabled={isDeadlinePassed}
-              />{" "}
-            </div>{" "}
+              />
+            </div>
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
+            
             <h3 className="text-lg font-semibold">
-              {" "}
-              2. Objective of the proposed research{" "}
-            </h3>{" "}
+              
+              2. Objective of the proposed research
+            </h3>
             <FormBooleanRadioGroup
               control={control}
               name="q2a"
-              label="a)Are objectives clearly spelt out?"
+              label="a) Are objectives clearly spelt out?"
               error={errors.q2a}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q2b"
-              label="b)Are objectives derived based on the literature survey?"
+              label="b) Are objectives derived based on the literature survey?"
               error={errors.q2b}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q2c"
-              label="c)Is the outcome of the work clearly visualized?"
+              label="c) Is the outcome of the work clearly visualized?"
               error={errors.q2c}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <div>
-              {" "}
-              <Label>d)The outcome of the work:</Label>{" "}
+              
+              <Label>d) The outcome of the work:</Label>
               <FormEnumRadioGroup
                 control={control}
                 name="q2d"
@@ -267,124 +274,125 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
                 ]}
                 error={errors.q2d}
                 disabled={isDeadlinePassed}
-              />{" "}
-            </div>{" "}
+              />
+            </div>
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
+            
             <h3 className="text-lg font-semibold">
-              {" "}
-              3. Background of the Proposed Research{" "}
-            </h3>{" "}
+              
+              3. Background of the Proposed Research
+            </h3>
             <FormBooleanRadioGroup
               control={control}
               name="q3a"
-              label="a)Is the literature survey up-to-date and adequately done?"
+              label="a) Is the literature survey up-to-date and adequately done?"
               error={errors.q3a}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q3b"
-              label="b)Is a broad summary of the present status given?"
+              label="b) Is a broad summary of the present status given?"
               error={errors.q3b}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q3c"
-              label="c)Are unsolved academic issues in the area highlighted?"
+              label="c) Are unsolved academic issues in the area highlighted?"
               error={errors.q3c}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
-            <h3 className="text-lg font-semibold">4. Methodology</h3>{" "}
+            
+            <h3 className="text-lg font-semibold">4. Methodology</h3>
             <FormBooleanRadioGroup
               control={control}
               name="q4a"
-              label="a)Is the methodology for literature survey given?"
+              label="a) Is the methodology for literature survey given?"
               error={errors.q4a}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4b"
-              label="b)Are data sources identified?"
+              label="b) Are data sources identified?"
               error={errors.q4b}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4c"
-              label="c)Are experimental facilities clearly envisaged?"
+              label="c) Are experimental facilities clearly envisaged?"
               error={errors.q4c}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4d"
-              label="d)Are envisaged experimental set-ups available?"
+              label="d) Are envisaged experimental set-ups available?"
               error={errors.q4d}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4e"
-              label="e)If not available, is it explained how work will be carried out?"
+              label="e) If not available, is it explained how work will be carried out?"
               error={errors.q4e}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4f"
-              label="f)Are required computing facilities available?"
+              label="f) Are required computing facilities available?"
               error={errors.q4f}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q4g"
-              label="g)Is methodology for completion clearly spelt out?"
+              label="g) Is methodology for completion clearly spelt out?"
               error={errors.q4g}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
+            
             <h3 className="text-lg font-semibold">
+              
               5. Literature References
-            </h3>{" "}
+            </h3>
             <FormBooleanRadioGroup
               control={control}
               name="q5a"
-              label="a)Is citation done in a standard format?"
+              label="a) Is citation done in a standard format?"
               error={errors.q5a}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q5b"
-              label="b)Is cited literature referred in the text?"
+              label="b) Is cited literature referred in the text?"
               error={errors.q5b}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
             <FormBooleanRadioGroup
               control={control}
               name="q5c"
-              label="c)Is cited literature relevant to the proposed work?"
+              label="c) Is cited literature relevant to the proposed work?"
               error={errors.q5c}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
-            <h3 className="text-lg font-semibold">6. Overall Comments</h3>{" "}
+            
+            <h3 className="text-lg font-semibold">6. Overall Comments</h3>
             <FormEnumRadioGroup
               control={control}
               name="q6"
@@ -395,17 +403,17 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               ]}
               error={errors.q6}
               disabled={isDeadlinePassed}
-            />{" "}
+            />
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            {" "}
+            
             <div className="space-y-2">
-              {" "}
+              
               <Label htmlFor="q7_reasons" className="font-semibold">
-                {" "}
-                7. Reasons for recommendation at item No. 6: *{" "}
-              </Label>{" "}
+                
+                7. Reasons for recommendation at item No. 6: *
+              </Label>
               <Controller
                 control={control}
                 name="q7_reasons"
@@ -418,35 +426,35 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
                   {errors.q7_reasons.message}
                 </p>
               )}
-            </div>{" "}
+            </div>
             <div className="space-y-2">
-              {" "}
+              
               <Label htmlFor="q8_comments" className="font-semibold">
-                {" "}
-                8. Any other comments:{" "}
-              </Label>{" "}
+                
+                8. Any other comments:
+              </Label>
               <Controller
                 control={control}
                 name="q8_comments"
                 render={({ field }) => (
                   <Textarea {...field} disabled={isDeadlinePassed} />
                 )}
-              />{" "}
-            </div>{" "}
-          </div>{" "}
+              />
+            </div>
+          </div>
           <div>
-            {" "}
-            <Label>Optional Feedback Document(PDF)</Label>{" "}
+            
+            <Label>Optional Feedback Document (PDF)</Label>
             <FileUploader
               value={feedbackFile ? [feedbackFile] : []}
               onValueChange={(files) => setFeedbackFile(files[0] ?? null)}
               accept={{ "application/pdf": [] }}
               disabled={isDeadlinePassed}
-            />{" "}
-          </div>{" "}
+            />
+          </div>
           <div className="space-y-2 rounded-md border p-4">
-            {" "}
-            <Label className="text-lg font-semibold">Final Decision</Label>{" "}
+            
+            <Label className="text-lg font-semibold">Final Decision</Label>
             <RadioGroup
               onValueChange={(val: "approved" | "reverted") =>
                 setFinalDecision(val)
@@ -454,19 +462,19 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               className="mt-2 flex gap-4"
               disabled={isDeadlinePassed}
             >
-              {" "}
+              
               <div className="flex items-center space-x-2">
-                {" "}
-                <RadioGroupItem value="approved" id="approve" />{" "}
-                <Label htmlFor="approve">Approve</Label>{" "}
-              </div>{" "}
+                
+                <RadioGroupItem value="approved" id="approve" />
+                <Label htmlFor="approve">Approve</Label>
+              </div>
               <div className="flex items-center space-x-2">
-                {" "}
-                <RadioGroupItem value="reverted" id="revert" />{" "}
-                <Label htmlFor="revert">Revert with comments</Label>{" "}
-              </div>{" "}
-            </RadioGroup>{" "}
-          </div>{" "}
+                
+                <RadioGroupItem value="reverted" id="revert" />
+                <Label htmlFor="revert">Revert with comments</Label>
+              </div>
+            </RadioGroup>
+          </div>
           <Button
             type="submit"
             disabled={isSubmitting || isDeadlinePassed}
@@ -476,12 +484,12 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </Button>
           {isDeadlinePassed && (
             <p className="mt-4 text-center text-sm text-destructive">
-              {" "}
-              The deadline to submit this review has passed.{" "}
+              
+              The deadline to submit this review has passed.
             </p>
           )}
-        </form>{" "}
-      </CardContent>{" "}
+        </form>
+      </CardContent>
     </Card>
   );
 };

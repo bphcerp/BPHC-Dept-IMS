@@ -24,13 +24,18 @@ router.get(
             ),
             with: {
                 student: true,
-                dacMembers: { with: { dacMember: true } },
+                dacMembers: {
+                    with: {
+                        dacMember: true,
+                    },
+                },
                 appendixFile: true,
                 summaryFile: true,
                 outlineFile: true,
                 placeOfResearchFile: true,
                 outsideCoSupervisorFormatFile: true,
                 outsideSupervisorBiodataFile: true,
+                proposalSemester: true,
             },
         });
 
@@ -54,7 +59,6 @@ router.get(
                     ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
                     : null,
         };
-
         res.status(200).json(response);
     })
 );

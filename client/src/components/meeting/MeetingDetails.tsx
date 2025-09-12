@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, Users, X } from "lucide-react";
+import { Check, Clock, X } from "lucide-react";
 
 interface MeetingDetailsProps {
   meeting: any;
