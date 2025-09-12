@@ -1,11 +1,7 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import db from "@/config/db/index.ts";
-import { phd } from "@/config/db/schema/admin.ts";
-import { eq } from "drizzle-orm";
 import assert from "assert";
-import { HttpError, HttpCode } from "@/config/errors.ts";
 
 const router = express.Router();
 
@@ -15,13 +11,13 @@ export default router.get(
     asyncHandler(async (req, res) => {
         assert(req.user, "User must be authenticated");
 
-        const studentProfile = await db.query.phd.findFirst({
-            where: eq(phd.email, req.user.email),
-            columns: {
-                hasPassedQe: true,
-                qualificationDate: true,
-            },
-        });
+        // const studentProfile = await db.query.phd.findFirst({
+        //     where: (cols, { eq }) => eq(cols.email, req.user.email),
+        //     columns: {
+        //         hasPassedQe: true,
+        //         qualificationDate: true,
+        //     },
+        // });
 
         // if (!studentProfile) {
         //     throw new HttpError(
@@ -29,13 +25,12 @@ export default router.get(
         //         "Student profile not found."
         //     );
         // }
-        
+
         res.status(200).json({
             // isEligible: studentProfile.hasPassedQe,
             // qualificationDate:studentProfile.qualificationDate?.toISOString() ?? null,
             isEligible: true,
-            qualificationDate:"2023-06-15T00:00:00.000Z" ,
-            
+            qualificationDate: "2023-06-15T00:00:00.000Z",
         });
     })
 );
