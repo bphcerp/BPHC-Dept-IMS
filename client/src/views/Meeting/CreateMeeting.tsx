@@ -27,9 +27,9 @@ const CreateMeeting: React.FC = () => {
   >({});
   const [selectedSlots, setSelectedSlots] = useState<Date[]>([]);
 
-  // Corrected: Fetch from the new meeting-specific users endpoint
+  
   const { data: userData, isLoading: isLoadingUsers } = useQuery<User[]>({
-    queryKey: ["allUsersForMeeting"], // Changed queryKey for clarity
+    queryKey: ["allUsersForMeeting"],
     queryFn: () => api.get("/meeting/all-users").then((res) => res.data),
   });
 
