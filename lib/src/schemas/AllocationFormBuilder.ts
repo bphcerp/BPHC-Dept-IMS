@@ -11,6 +11,22 @@ export const allocationFormTemplateFieldTypeEnum = z.enum([
   "DROPDOWN", 
   "PREFERENCE"
 ]);
+export const allocationFormSubmittedAnswerSchema = z.object({
+  templateFieldId: z.string().uuid(),
+  value: z.object({
+    optionIds: z.array(z.string().uuid()).optional(),  
+    textValue: z.string().optional(),
+    numberValue: z.number().int().optional(),
+    dateValue: z.union([z.date(), z.string().datetime()]).optional(),
+    courseCode: z.string().optional(),
+    preference: z.number().int().optional(),
+  }),
+});
+
+export const allocationFormResponseSchema = z.object({
+  formId: z.string().uuid(),
+  answers: z.array(allocationFormSubmittedAnswerSchema),
+});
 
 export const allocationFormTemplateFieldOptionSchema = z.object({
   // id: z.string().uuid().optional(),
@@ -55,7 +71,6 @@ export const allocationFormTemplateSchema = z.object({
   description: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  createdBy: z.string().uuid().optional(),
   fields: z.array(allocationFormTemplateFieldSchema).optional(),
 });
 
@@ -75,7 +90,6 @@ export const allocationFormSchema = z.object({
   description: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  createdBy: z.string().uuid().optional(),
   isPublished: z.boolean().optional(),
 });
 
@@ -87,12 +101,7 @@ export const deleteAllocationFormSchema = z.object({
   id: z.string().uuid()
 });
 
-export const allocationFormResponseSchema = z.object({
-  // id: z.string().uuid().optional(),
-  formId: z.string().uuid(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-});
+
 
 export const updateAllocationFormResponseSchema = allocationFormResponseSchema.partial().extend({
   id: z.string().uuid()
@@ -135,3 +144,4 @@ export const updateAllocationFormResponseAnswerSchema = allocationFormResponseAn
 export const deleteAllocationFormResponseAnswerSchema = z.object({
   id: z.string().uuid()
 });
+

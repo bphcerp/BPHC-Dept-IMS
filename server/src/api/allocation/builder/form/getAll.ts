@@ -8,7 +8,22 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const forms = await db.query.allocationForm.findMany();
+        const forms = await db.query.allocationForm.findMany({
+            with: {
+                createdBy: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
+                template: {
+                    columns: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
         res.status(200).json(forms);
     })
 );

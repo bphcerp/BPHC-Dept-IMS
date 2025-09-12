@@ -23,6 +23,7 @@ import {
     updateAllocationFormTemplateFieldSchema,
     updateAllocationFormTemplateSchema
 } from "../schemas/AllocationFormBuilder.ts";
+import { MemberDetailsResponse } from "@/schemas/Admin.ts";
 
 export type NewAllocationFormTemplateFieldOption = z.infer<typeof allocationFormTemplateFieldOptionSchema>;
 export type NewAllocationFormTemplateField = z.infer<typeof allocationFormTemplateFieldSchema>;
@@ -66,18 +67,34 @@ export type AllocationFormTemplateField = NewAllocationFormTemplateField & {
 export type AllocationFormTemplate = NewAllocationFormTemplate & {
 	id: string;
 	fields?: AllocationFormTemplateField[];
-	forms?: AllocationForm[];
+	createdBy: MemberDetailsResponse;  
+};
+
+// Use this for the template/getAll endpoint
+export type AllocationFormTemplateList = Omit<NewAllocationFormTemplate, 'fields'> & {
+	id: string;
+	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>;  
 };
 
 export type AllocationForm = NewAllocationForm & {
 	id: string;
 	template?: AllocationFormTemplate;
+	createdBy: MemberDetailsResponse
 	responses?: AllocationFormResponse[];
+};
+
+// Use this for the form/getAll endpoint
+export type AllocationFormList = NewAllocationForm & {
+	id: string
+	template: Pick<AllocationFormTemplate, 'id' | 'name'>;
+	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>;
 };
 
 export type AllocationFormResponse = NewAllocationFormResponse & {
 	id: string;
 	form?: AllocationForm;
+	submittedBy: MemberDetailsResponse;  
+  	submittedAt: Date;    
 	values?: AllocationFormResponseValue[];
 };
 
