@@ -126,15 +126,15 @@ export const allPermissions = {
     "allocation:data:export": "Export allocation data",
     "allocation:data:archive": "View data of all semesters upto date",
 
-    "allocation:semester:read": "read the semester table",
-    "allocation:semester:write": "write to semester table",
+    "allocation:semester:read": "View the semester details",
+    "allocation:semester:write": "Create or Modify a semester",
 
-    "allocation:builder:template:write": "create a form template",
-    "allocation:builder:template:read": "view form template details",
+    "allocation:builder:template:write": "Create a form template",
+    "allocation:builder:template:read": "View form template details",
 
-    "allocation:builder:form:write": "create a form instance of the template",
-    "allocation:builder:form:read": "view form details",
-    "allocation:response:write": "submit responses",
+    "allocation:builder:form:write": "Create a form instance of a template",
+    "allocation:builder:form:read": "View form details",
+    "allocation:form:response:submit": "Can submit responses to forms",
 
     
 
@@ -347,10 +347,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
     "/allocation/builder/form/get": "allocation:builder:form:read",
-    "/allocation//builder/form/getInfo": "allocation:builder:form:read",
-    "/allocation//builder/form/getAll": "allocation:builder:form:read",
+    "/allocation/builder/form/getInfo": "allocation:builder:form:read",
+    "/allocation/builder/form/getAll": "allocation:builder:form:read",
     
-    "/response/register": "allocation:response:write",
+    "/allocation/builder/form/response/register": "allocation:form:response:submit",
     
 
 } as const;

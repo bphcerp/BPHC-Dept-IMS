@@ -71,7 +71,6 @@ export const allocationFormTemplateSchema = z.object({
   description: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  createdBy: z.string().uuid().optional(),
   fields: z.array(allocationFormTemplateFieldSchema).optional(),
 });
 
@@ -91,7 +90,6 @@ export const allocationFormSchema = z.object({
   description: z.string(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
-  createdBy: z.string().uuid().optional(),
   isPublished: z.boolean().optional(),
 });
 

@@ -25,6 +25,7 @@ router.get(
                         },
                     },
                 },
+                createdBy: true,
             },
             where: (form, { eq }) => eq(form.id, id),
         });

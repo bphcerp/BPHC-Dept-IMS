@@ -31,6 +31,7 @@ router.post(
     const [newResponse] = await db.insert(allocationFormResponse).values({
       formId: parsed.formId,
       submittedAt: new Date(),
+      submittedByEmail: req.user!.email,
     }).returning();
 
     if (!newResponse) {

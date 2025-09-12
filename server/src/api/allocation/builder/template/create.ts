@@ -21,7 +21,7 @@ router.post(
     const [newTemplate] = await db.insert(allocationFormTemplate).values({
       name: parsed.name,
       description: parsed.description,
-      createdBy: parsed.createdBy,
+      createdByEmail: req.user!.email,
     }).returning();
 
     if (!newTemplate) {

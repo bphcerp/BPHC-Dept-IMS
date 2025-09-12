@@ -32,7 +32,7 @@ router.post(
         templateId: parsed.templateId,
         title: template.name,
         description: template.description,
-        createdBy: template.createdBy,
+        createdByEmail: req.user!.email,
         isPublished: parsed.isPublished ?? false,
       }).returning();
   

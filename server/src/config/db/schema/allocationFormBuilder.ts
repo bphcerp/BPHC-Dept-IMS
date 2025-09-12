@@ -8,6 +8,7 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import { v4 as uuidv4 } from "uuid";
+import { users } from "./admin.ts";
 
 export const allocationFormTemplateFieldType = pgEnum(
     "allocation_form_template_field_type",
@@ -30,7 +31,7 @@ export const allocationFormTemplate = pgTable("allocation_form_template", {
     description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-    createdBy: uuid("created_by"),
+    createdByEmail: uuid("created_by").notNull().references(() => users.email),
 });
 
 export const allocationForm = pgTable("allocation_form", {
@@ -41,7 +42,7 @@ export const allocationForm = pgTable("allocation_form", {
     description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-    createdBy: uuid("created_by"),
+    createdByEmail: uuid("created_by").notNull().references(() => users.email),
     isPublished: boolean("is_published"),
 });
 
@@ -50,7 +51,7 @@ export const allocationFormResponse = pgTable("allocation_form_response", {
     formId: uuid("form_id")
         .references(() => allocationForm.id, { onDelete: "cascade" }),
     submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow(),
-    submittedBy: uuid("submitted_by"),
+    submittedByEmail: text("submitted_by").notNull().references(() => users.email),
 });
 
 export const allocationFormTemplateField = pgTable(
