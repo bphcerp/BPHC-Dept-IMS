@@ -14,6 +14,7 @@ interface UploadResults {
   matched: number,
   failed: number;
   total: number;
+  repeated: number;
   errors: string[];
 }
 
@@ -55,13 +56,16 @@ export default function UploadReseargence() {
       const fileInput = document.getElementById("file-upload-researgence") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
       if (responseData.results.successful > 0) {
-        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence Publications.`);
+        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence publications.`);
       }
       if (responseData.results.matched > 0) {
-        toast.success(`Successfully matched and updated ${responseData.results.matched} Publications`);
+        toast.success(`Successfully matched and updated ${responseData.results.matched} publications`);
       }
       if (responseData.results.failed > 0) {
-        toast.error(`${responseData.results.failed} Researgence Publications failed to upload.`);
+        toast.error(`${responseData.results.failed} Researgence publications failed to upload.`);
+      }
+      if( responseData.results.repeated > 0) {
+        toast.info(`${responseData.results.repeated} Researgence publications re-uploaded.`);
       }
     } catch (err) {
       const error = err as ApiError;

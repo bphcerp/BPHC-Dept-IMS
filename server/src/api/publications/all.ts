@@ -7,7 +7,7 @@ import {
     publicationsTable,
     researgencePublications,
 } from "@/config/db/schema/publications.ts";
-import { and, eq, isNotNull, isNull } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { publicationsSchemas } from "lib";
 
 const router = express.Router();
@@ -36,11 +36,9 @@ router.get(
                         publicationsTable.title,
                     ),
                 )
-                .where(and(
-                    isNull(researgencePublications.authors),
-                    isNotNull(publicationsTable.title), // Add this condition
-                ))).map((row) => row.publications)
-                .filter(x => x !== null),
+                .where(isNull(researgencePublications.authors)
+            ))
+            .map((row) => row.publications)
         };
         
         res.status(200).json(data);
@@ -51,7 +49,6 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res) => {
-
         const response : publicationsSchemas.PublicationResponse = await  db.select().from(publicationsTable);
         res.status(200).json(response);
 
