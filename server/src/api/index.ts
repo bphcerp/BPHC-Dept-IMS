@@ -4,6 +4,7 @@ import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
 import handoutRouter from "./handout/index.ts";
 import conferenceRouter from "./conference/index.ts";
+import analyticsRouter from "./analytics/index.ts";
 import qpRouter from "./qp/index.ts";
 import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
@@ -57,7 +58,7 @@ router.use("/conference", conferenceRouter);
 router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
 router.use("/inventory", inventoryRouter);
-
+router.use("/analytics", analyticsRouter);
 router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);

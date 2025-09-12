@@ -40,7 +40,7 @@ router.get(
             ))
             .map((row) => row.publications)
         };
-        
+        console.log(data);
         res.status(200).json(data);
     }),
 );
@@ -51,7 +51,6 @@ router.get(
     asyncHandler(async (_req, res) => {
         const response : publicationsSchemas.PublicationResponse = await  db.select().from(publicationsTable);
         res.status(200).json(response);
-
     }),
 );
 
