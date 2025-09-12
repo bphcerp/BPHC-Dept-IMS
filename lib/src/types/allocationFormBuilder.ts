@@ -90,9 +90,8 @@ export type AllocationFormList = NewAllocationForm & {
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>;
 };
 
-export type AllocationFormResponse = NewAllocationFormResponse & {
+export type AllocationFormResponse = Omit<NewAllocationFormResponse, 'answers'> & {
 	id: string;
-	form?: AllocationForm;
 	submittedBy: MemberDetailsResponse;  
   	submittedAt: Date;    
 	values?: AllocationFormResponseValue[];

@@ -1,10 +1,10 @@
 import { Router } from "express";
-import updateCategory from "./update.ts";
-import deleteCategory from "./delete.ts";
+import updateAllocation from "./update.ts";
+import deleteAllocation from "./delete.ts";
 
 const router = Router();
 
-router.use("/update", updateCategory);
-router.use("/delete", deleteCategory);
+router.use("/update", updateAllocation);
+router.use("/delete", deleteAllocation);
 
 export default router;
