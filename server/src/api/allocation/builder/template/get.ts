@@ -13,11 +13,7 @@ router.get(
 
         const template = await db.query.allocationFormTemplate.findFirst({
             with: {
-                fields: {
-                    with: {
-                        options: true,
-                    },
-                },
+                fields: true
             },
             where: (template, { eq }) => eq(template.id, id),
         });

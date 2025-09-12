@@ -4,12 +4,10 @@ import {
     allocationForm,
     allocationFormResponse,
     allocationFormTemplateField,
-    allocationFormTemplateFieldOption,
-    allocationFormResponseValue,
-    allocationFormResponseAnswer,
 } from "./allocationFormBuilder.ts";
 
 import { users } from "./admin.ts";
+import { course } from "./allocation.ts";
 
 export const allocationFormTemplateRelations = relations(
     allocationFormTemplate,
@@ -40,66 +38,32 @@ export const allocationFormRelations = relations(
 
 export const allocationFormResponseRelations = relations(
     allocationFormResponse,
-    ({ one, many }) => ({
+    ({ one }) => ({
         form: one(allocationForm, {
             fields: [allocationFormResponse.formId],
             references: [allocationForm.id],
         }),
-        values: many(allocationFormResponseValue),
         submittedBy: one(users, {
             fields: [allocationFormResponse.submittedByEmail],
             references: [users.email],
+        }),
+        course: one(course, {
+            fields: [allocationFormResponse.courseCode],
+            references: [course.code],
+        }),
+        templateField: one(allocationFormTemplateField, {
+            fields: [allocationFormResponse.templateFieldId],
+            references: [allocationFormTemplateField.id],
         }),
     })
 );
 
 export const allocationFormTemplateFieldRelations = relations(
     allocationFormTemplateField,
-    ({ one, many }) => ({
+    ({ one }) => ({
         template: one(allocationFormTemplate, {
             fields: [allocationFormTemplateField.templateId],
             references: [allocationFormTemplate.id],
-        }),
-        options: many(allocationFormTemplateFieldOption),
-        responseValues: many(allocationFormResponseValue),
-    })
-);
-
-export const allocationFormTemplateFieldOptionRelations = relations(
-    allocationFormTemplateFieldOption,
-    ({ one }) => ({
-        field: one(allocationFormTemplateField, {
-            fields: [allocationFormTemplateFieldOption.templateFieldId],
-            references: [allocationFormTemplateField.id],
-        }),
-    })
-);
-
-export const allocationFormResponseValueRelations = relations(
-    allocationFormResponseValue,
-    ({ one, many }) => ({
-        response: one(allocationFormResponse, {
-            fields: [allocationFormResponseValue.responseId],
-            references: [allocationFormResponse.id],
-        }),
-        field: one(allocationFormTemplateField, {
-            fields: [allocationFormResponseValue.templateFieldId],
-            references: [allocationFormTemplateField.id],
-        }),
-        answers: many(allocationFormResponseAnswer),
-    })
-);
-
-export const allocationFormResponseAnswerRelations = relations(
-    allocationFormResponseAnswer,
-    ({ one }) => ({
-        responseValue: one(allocationFormResponseValue, {
-            fields: [allocationFormResponseAnswer.responseValueId],
-            references: [allocationFormResponseValue.id],
-        }),
-        option: one(allocationFormTemplateFieldOption, {
-            fields: [allocationFormResponseAnswer.optionId],
-            references: [allocationFormTemplateFieldOption.id],
         }),
     })
 );

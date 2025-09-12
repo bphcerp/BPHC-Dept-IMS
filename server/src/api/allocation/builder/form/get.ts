@@ -18,14 +18,15 @@ router.get(
             with: {
                 template: {
                     with: {
-                        fields: {
-                            with: {
-                                options: true
-                            },
-                        },
+                        fields: true,
                     },
                 },
-                createdBy: true,
+                createdBy: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    }
+                },
             },
             where: (form, { eq }) => eq(form.id, id),
         });

@@ -7,36 +7,47 @@ import express from "express";
 const router = express.Router();
 
 router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (req, res, next) => {
-    const responseId = req.params.id;
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const responseId = req.params.id;
 
-    const formResponseWithDetails = await db.query.allocationFormResponse.findFirst({
-      where: (fr, { eq }) => eq(fr.id, responseId),
-      with: {
-        values: {
-          with: {
-            answers: {
-              with: {
-                option: true,
-              },
-            },
-            field: true,
-          },
-        },
-        submittedBy: true,
-      },
-    });
+        const formResponseWithDetails =
+            await db.query.allocationFormResponse.findFirst({
+                where: (fr, { eq }) => eq(fr.id, responseId),
+                with: {
+                    course: {
+                        columns: {
+                            name: true,
+                            code: true,
+                        },
+                    },
+                    templateField: true,
+                    submittedBy: {
+                        columns: {
+                            name: true,
+                            email: true,
+                        },
+                    },
+                },
+                columns: {
+                    courseCode: false,
+                    templateFieldId: false,
+                    submittedByEmail: false,
+                },
+            });
 
-    if (!formResponseWithDetails) {
-      return next(
-        new HttpError(HttpCode.NOT_FOUND, "Allocation form response not found")
-      );
-    }
+        if (!formResponseWithDetails) {
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "Allocation form response not found"
+                )
+            );
+        }
 
-    res.status(200).json(formResponseWithDetails);
-  })
+        res.status(200).json(formResponseWithDetails);
+    })
 );
 
 export default router;
