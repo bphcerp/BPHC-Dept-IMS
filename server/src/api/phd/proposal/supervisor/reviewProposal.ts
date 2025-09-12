@@ -136,8 +136,8 @@ export default router.post(
                         drcConveners.map((drc) =>
                             sendEmail({
                                 to: drc.email,
-                                subject: `PhD Proposal from ${proposal.student.name}requires DRC review`,
-                                html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name}has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
+                                subject: `PhD Proposal from ${proposal.student.name} requires DRC review`,
+                                html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name} has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
                             })
                         )
                     );
