@@ -18,13 +18,20 @@ import {
   CardTitle,
   CardFooter,
 } from "../ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, UserCircle2, X, User } from "lucide-react";
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
 import { Button } from "@/components/ui/button";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { adminSchemas } from "lib";
+import { adminSchemas, phdSchemas } from "lib";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
@@ -241,11 +248,29 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                                   .toUpperCase()}
                               </FormLabel>
                               <FormControl>
-                                <Input
-                                  {...field}
-                                  value={field.value ?? ""}
-                                  className="col-span-3"
-                                />
+                                {fieldName === "phdType" ? (
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value ?? undefined}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select PhD Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {phdSchemas.phdTypes.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                          {type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Input
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    className="col-span-3"
+                                  />
+                                )}
                               </FormControl>
                               <FormMessage />
                             </FormItem>
