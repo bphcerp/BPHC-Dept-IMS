@@ -208,6 +208,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/student/getProposals": "phd:student:proposal",
     "/phd/proposal/student/resubmit": "phd:student:proposal",
     "/phd/proposal/student/submitProposal": "phd:student:proposal",
+    "/phd/proposal/student/view": "phd:student:proposal",
 
     "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",

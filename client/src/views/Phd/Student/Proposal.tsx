@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
@@ -36,7 +36,6 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
-import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -49,7 +48,6 @@ import { toast } from "sonner";
 
 interface ProposalSemester {
   id: number;
-  semesterId: number;
   studentSubmissionDate: string;
   facultyReviewDate: string;
   drcReviewDate: string;
@@ -86,7 +84,6 @@ const DeadlinesCard = ({
   highlight,
 }: {
   deadlines: ProposalSemester;
-  // This is the corrected type for the 'highlight' prop
   highlight: keyof Omit<ProposalSemester, "id" | "semesterId">;
 }) => {
   const deadlineLabels: Record<
@@ -99,7 +96,6 @@ const DeadlinesCard = ({
     dacReviewDate: "DAC Review",
   };
 
-  // This line is now type-safe because 'highlight' can only be one of the valid keys
   const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
 
   return (
@@ -133,12 +129,10 @@ const DeadlinesCard = ({
 };
 
 const StudentProposal: React.FC = () => {
-  // ... (hooks and logic remain the same)
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [proposalToResubmit, setProposalToResubmit] = useState<Proposal | null>(
-    null
-  );
+  const [proposalForForm, setProposalForForm] = useState<any | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
+
   const { data: eligibility, isLoading: isLoadingEligibility } = useQuery<{
     isEligible: boolean;
     qualificationDate: string | null;
@@ -149,6 +143,7 @@ const StudentProposal: React.FC = () => {
       return res.data;
     },
   });
+
   const { data: proposalData, refetch } = useQuery<{
     proposals: Proposal[];
     canApply: boolean;
@@ -160,6 +155,7 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
+
   const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
@@ -168,15 +164,29 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
+
+  const fetchProposalDetailsMutation = useMutation({
+    mutationFn: (proposalId: number) =>
+      api.get(`/phd/proposal/student/view/${proposalId}`),
+    onSuccess: (response) => {
+      setProposalForForm(response.data);
+      setIsFormOpen(true);
+    },
+    onError: () => {
+      toast.error("Failed to fetch proposal details for editing.");
+    },
+  });
+
   const openResubmitDialog = (proposal: Proposal) => {
-    setProposalToResubmit(proposal);
-    setIsFormOpen(true);
+    fetchProposalDetailsMutation.mutate(proposal.id);
   };
+
   const handleFormSuccess = () => {
     setIsFormOpen(false);
-    setProposalToResubmit(null);
+    setProposalForForm(null);
     void refetch();
   };
+
   const handleOpenNewProposalDialog = () => {
     if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
       toast.error("There are no active proposal submission cycles available.");
@@ -185,17 +195,19 @@ const StudentProposal: React.FC = () => {
     if (deadlineData.deadlines.length === 1) {
       setSelectedCycleId(deadlineData.deadlines[0].id.toString());
     }
+    setProposalForForm(null); // Ensure form is empty for new proposals
     setIsFormOpen(true);
   };
+
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
-        {" "}
-        <LoadingSpinner />{" "}
-        <p className="ml-4 text-gray-500">Checking eligibility...</p>{" "}
+        <LoadingSpinner />
+        <p className="ml-4 text-gray-500">Checking eligibility...</p>
       </div>
     );
   }
+
   const currentDeadlines = deadlineData?.deadlines[0];
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
@@ -323,33 +335,20 @@ const StudentProposal: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResubmitDialog(p)}
+                            disabled={fetchProposalDetailsMutation.isLoading}
                           >
-                            Resubmit
+                            {fetchProposalDetailsMutation.isLoading &&
+                            fetchProposalDetailsMutation.variables === p.id ? (
+                              <LoadingSpinner className="h-4 w-4" />
+                            ) : (
+                              "Resubmit"
+                            )}
                           </Button>
                         )}
                       </TableCell>
                     </TableRow>
-                    {p.status === "dac_revert" && p.dacSummary && (
-                       <TableRow>
-                         <TableCell colSpan={4} className="bg-muted/50 p-0">
-                          <Alert variant="destructive" className="border-0 rounded-none">
-                             <AlertTriangle className="h-4 w-4" />
-                             <AlertTitle>DAC Feedback Received</AlertTitle>
-                             <AlertDescription className="flex items-center gap-4">
-                               {p.dacSummary.map((summary) => (
-                                 <div key={summary.label} className="flex items-center gap-2">
-                                   <span className="text-sm font-medium">{summary.label}:</span>
-                                   <Badge variant={summary.status === "Approved" ? "default" : "destructive"}>
-                                     {summary.status}
-                                   </Badge>
-                                 </div>
-                               ))}
-                             </AlertDescription>
-                           </Alert>
-                         </TableCell>
-                       </TableRow>
-                    )}
-                    {p.comments && p.status !== "dac_revert" && (
+
+                    {p.comments && (
                       <TableRow>
                         <TableCell colSpan={4}>
                           <Alert variant="destructive">
@@ -360,63 +359,7 @@ const StudentProposal: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                    {p.status === "dac_revert" && p.dacFeedback && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
-                          <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>DAC Feedback</AlertTitle>
-                            <AlertDescription className="space-y-4">
-                              {p.dacFeedback.map((feedback, index) => (
-                                <div key={index} className="rounded border p-2">
-                                  <p>
-                                    <strong>
-                                      DAC Member {index + 1} Status:
-                                    </strong>
-                                    <Badge
-                                      variant={
-                                        feedback.approved
-                                          ? "default"
-                                          : "destructive"
-                                      }
-                                      className="ml-2"
-                                    >
-                                      {feedback.approved
-                                        ? "Approved"
-                                        : "Revisions Required"}
-                                    </Badge>
-                                  </p>
-                                  {!feedback.approved && (
-                                    <>
-                                      <p className="mt-2 text-sm">
-                                        {feedback.comments}
-                                      </p>
-                                      {feedback.feedbackFileUrl && (
-                                        <Button
-                                          asChild
-                                          variant="link"
-                                          className="h-auto p-0"
-                                        >
-                                          <a
-                                            href={feedback.feedbackFileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-sm"
-                                          >
-                                            <Download className="mr-2 h-3 w-3" />
-                                            View Feedback Document
-                                          </a>
-                                        </Button>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              ))}
-                            </AlertDescription>
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    )}
+
                     {p.seminarDate && (
                       <TableRow>
                         <TableCell colSpan={4}>
@@ -447,12 +390,12 @@ const StudentProposal: React.FC = () => {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {proposalToResubmit
+              {proposalForForm
                 ? "Resubmit Proposal"
                 : "New Proposal Application"}
             </DialogTitle>
           </DialogHeader>
-          {!proposalToResubmit &&
+          {!proposalForForm &&
             deadlineData &&
             deadlineData.deadlines.length > 1 && (
               <div className="my-4 space-y-2">
@@ -477,12 +420,10 @@ const StudentProposal: React.FC = () => {
                 </Select>
               </div>
             )}
+
           <StudentProposalForm
-            proposalId={proposalToResubmit?.id}
-            proposalCycleId={
-              proposalToResubmit
-                ? proposalToResubmit.proposalSemesterId
-                : Number(selectedCycleId)
+            proposalData={
+              proposalForForm ?? { proposalCycleId: Number(selectedCycleId) }
             }
             onSuccess={handleFormSuccess}
           />

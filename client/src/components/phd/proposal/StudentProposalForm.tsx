@@ -1,5 +1,4 @@
-// client/src/components/phd/proposal/StudentProposalForm.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button";
@@ -14,10 +13,8 @@ import { Combobox } from "@/components/ui/combobox";
 import { File, ExternalLink, Replace } from "lucide-react";
 
 interface StudentProposalFormProps {
-  proposalId?: number;
-  proposalCycleId?: number;
   onSuccess: () => void;
-  existingFiles?: Record<string, string | null>;
+  proposalData?: any | null; // This will contain data for pre-filling
 }
 
 interface UserProfile {
@@ -30,10 +27,8 @@ interface Faculty {
 }
 
 export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
-  proposalId,
-  proposalCycleId,
   onSuccess,
-  existingFiles = {},
+  proposalData = null,
 }) => {
   const { authState } = useAuth();
   const [title, setTitle] = useState("");
@@ -41,7 +36,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
 
-  // Co-supervisor state
   const [coSupervisorEmail, setCoSupervisorEmail] = useState<string[]>([]);
   const [isOtherCoSupervisor, setIsOtherCoSupervisor] = useState(false);
   const [externalCoSupervisorName, setExternalCoSupervisorName] = useState("");
@@ -68,19 +62,45 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     },
   });
 
+  useEffect(() => {
+    if (proposalData) {
+      setTitle(proposalData.title || "");
+      setHasOutsideCoSupervisor(proposalData.hasOutsideCoSupervisor || false);
+      const coSupervisor = proposalData.coSupervisors?.[0];
+      if (coSupervisor) {
+        if (
+          facultyList.some((f) => f.value === coSupervisor.coSupervisorEmail)
+        ) {
+          setCoSupervisorEmail([coSupervisor.coSupervisorEmail]);
+          setIsOtherCoSupervisor(false);
+        } else {
+          setIsOtherCoSupervisor(true);
+          setCoSupervisorEmail([]);
+          setExternalCoSupervisorName(coSupervisor.coSupervisorName || "");
+          setExternalCoSupervisorEmail(coSupervisor.coSupervisorEmail || "");
+        }
+      }
+    }
+  }, [proposalData, facultyList]);
+
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
-      if (proposalId) {
+      if (proposalData?.id) {
         return api.post(
-          `/phd/proposal/student/resubmit/${proposalId}`,
+          `/phd/proposal/student/resubmit/${proposalData.id}`,
           formData
         );
       }
+      if (!proposalData?.proposalCycleId) {
+        toast.error("Proposal Submission Cycle is missing.");
+        throw new Error("Proposal Cycle ID is missing.");
+      }
+      formData.append("proposalCycleId", proposalData.proposalCycleId);
       return api.post(`/phd/proposal/student/submitProposal`, formData);
     },
     onSuccess: () => {
       toast.success(
-        `Proposal ${proposalId ? "resubmitted" : "submitted"} successfully!`
+        `Proposal ${proposalData?.id ? "resubmitted" : "submitted"} successfully!`
       );
       onSuccess();
     },
@@ -95,15 +115,15 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!proposalCycleId && !proposalId) {
+    if (!proposalData?.proposalCycleId && !proposalData?.id) {
       toast.error("Please select a proposal submission cycle.");
       return;
     }
     if (
       !title ||
-      (!files.appendixFile && !existingFiles.appendixFileUrl) ||
-      (!files.summaryFile && !existingFiles.summaryFileUrl) ||
-      (!files.outlineFile && !existingFiles.outlineFileUrl)
+      (!files.appendixFile && !proposalData?.appendixFileUrl) ||
+      (!files.summaryFile && !proposalData?.summaryFileUrl) ||
+      (!files.outlineFile && !proposalData?.outlineFileUrl)
     ) {
       toast.error(
         "Please fill in the title and upload all mandatory documents."
@@ -113,7 +133,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     if (
       profileData?.phdType === "part-time" &&
       !files.placeOfResearchFile &&
-      !existingFiles.placeOfResearchFileUrl
+      !proposalData?.placeOfResearchFileUrl
     ) {
       toast.error(
         "Part-time students must upload the 'Place of Research' document."
@@ -123,9 +143,9 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     if (
       hasOutsideCoSupervisor &&
       ((!files.outsideCoSupervisorFormatFile &&
-        !existingFiles.outsideCoSupervisorFormatFileUrl) ||
+        !proposalData?.outsideCoSupervisorFormatFileUrl) ||
         (!files.outsideSupervisorBiodataFile &&
-          !existingFiles.outsideSupervisorBiodataFileUrl))
+          !proposalData?.outsideSupervisorBiodataFileUrl))
     ) {
       toast.error(
         "Please upload both documents for the outside co-supervisor."
@@ -141,10 +161,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
-
-    if (proposalCycleId) {
-      formData.append("proposalCycleId", String(proposalCycleId));
-    }
 
     if (!hasOutsideCoSupervisor) {
       if (isOtherCoSupervisor) {
@@ -212,7 +228,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       {fileFields
         .filter((f) => f.condition ?? true)
         .map((field) => {
-          const existingFileUrl = existingFiles[field.key + "Url"];
+          const existingFileUrl = proposalData?.[`${field.key}Url`];
           return (
             <div key={field.key}>
               <Label>
@@ -295,7 +311,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
               />
             </div>
             <div className="relative">
-              {" "}
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -362,7 +377,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       <Button type="submit" className="w-full" disabled={mutation.isLoading}>
         {mutation.isLoading ? (
           <LoadingSpinner />
-        ) : proposalId ? (
+        ) : proposalData?.id ? (
           "Resubmit Proposal"
         ) : (
           "Submit Proposal"

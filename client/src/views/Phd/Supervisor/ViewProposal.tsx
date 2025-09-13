@@ -25,8 +25,10 @@ interface DacMember {
   dacMember: {
     name: string | null;
     email: string;
-  };
+  } | null; // Can be null for external members
+  dacMemberEmail: string;
 }
+
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
@@ -134,7 +136,6 @@ const SupervisorViewProposal: React.FC = () => {
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
 
-      {/* ADDED: This card now displays the DAC review status correctly */}
       {proposal.dacReviews && proposal.dacReviews.length > 0 && (
         <Card>
           <CardHeader>
@@ -181,7 +182,7 @@ const SupervisorViewProposal: React.FC = () => {
               onSuccess={handleSuccess}
               deadline={proposal.proposalSemester.facultyReviewDate}
               initialDacMembers={proposal.dacMembers.map(
-                (m) => m.dacMember.email
+                (m) => m.dacMemberEmail // Use the guaranteed email field
               )}
               isPostDacRevert={isPostDacRevert}
             />
@@ -200,7 +201,6 @@ const SupervisorViewProposal: React.FC = () => {
                 {proposal.status.replace(/_/g, " ").toUpperCase()}
               </strong>
             </p>
-            {/* CHANGED: Logic now correctly hides the internal revert flag */}
             {proposal.comments && proposal.comments !== "DAC_REVERT_FLAG" && (
               <p className="mt-4">
                 <strong>Your last comment:</strong>

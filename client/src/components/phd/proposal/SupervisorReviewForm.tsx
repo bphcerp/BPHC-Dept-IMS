@@ -17,7 +17,7 @@ interface SupervisorReviewFormProps {
   onSuccess: () => void;
   deadline: string;
   initialDacMembers?: string[];
-  isPostDacRevert?: boolean;
+  isPostDacRevert?: boolean; // ADDED: This prop is now officially declared
 }
 
 interface Faculty {
@@ -42,7 +42,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   const { data: facultyList = [] } = useQuery<Faculty[]>({
     queryKey: ["facultyList"],
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/supervisor/getFacultyList");
+      const res = await api.get("/phd/proposal/getFacultyList");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -153,12 +153,11 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
             >
               Revert to Student
             </Button>
-            {/* CHANGED: Button label updated for clarity */}
             <Button
               onClick={handleForwardToDac}
               disabled={mutation.isLoading || isDeadlinePassed}
             >
-              Accept & Forward to DAC
+              Accept & Forward 
             </Button>
           </div>
         </div>
@@ -228,7 +227,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
           onClick={handleAcceptWithEdits}
           disabled={mutation.isLoading || isDeadlinePassed}
         >
-          {mutation.isLoading ? <LoadingSpinner /> : "Accept & Forward to DRC"}
+          {mutation.isLoading ? <LoadingSpinner /> : "Accept & Forward"}
         </Button>
       </div>
 
