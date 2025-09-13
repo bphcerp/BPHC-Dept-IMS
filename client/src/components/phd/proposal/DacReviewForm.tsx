@@ -11,6 +11,8 @@ import { FileUploader } from "@/components/ui/file-uploader";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface DacReviewFormProps {
   onSubmit: (formData: FormData) => void;
@@ -44,12 +46,10 @@ const FormBooleanRadioGroup = ({
           disabled={disabled}
         >
           <div className="flex items-center space-x-2">
-            
             <RadioGroupItem value="true" id={`${name}-yes`} />
             <Label htmlFor={`${name}-yes`}>Yes</Label>
           </div>
           <div className="flex items-center space-x-2">
-            
             <RadioGroupItem value="false" id={`${name}-no`} />
             <Label htmlFor={`${name}-no`}>No</Label>
           </div>
@@ -84,14 +84,9 @@ const FormEnumRadioGroup = ({
           className="flex flex-col space-y-1"
           disabled={disabled}
         >
-          
           {items.map((item) => (
             <div key={item.value} className="flex items-center space-x-3">
-              
-              <RadioGroupItem
-                value={item.value}
-                id={`${name}-${item.value}`}
-              />
+              <RadioGroupItem value={item.value} id={`${name}-${item.value}`} />
               <Label htmlFor={`${name}-${item.value}`}>{item.label}</Label>
             </div>
           ))}
@@ -163,19 +158,23 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
 
   return (
     <Card>
-      
       <CardHeader>
-        
         <CardTitle>DAC Review & Evaluation</CardTitle>
       </CardHeader>
       <CardContent>
-        
+        <Alert className="mb-6">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Note for Reviewers</AlertTitle>
+          <AlertDescription>
+            If you choose to revert the proposal, only your final comment(number 8) and
+            any optional feedback document will be shared with the student. The
+            detailed evaluation form is for internal records only.
+          </AlertDescription>
+        </Alert>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <h3 className="text-lg font-semibold">
-              
               1. Proposed Topic of Research
             </h3>
             <FormBooleanRadioGroup
@@ -200,7 +199,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
             <div>
-              
               <Label>d) Does the proposed topic aim at:</Label>
               <FormEnumRadioGroup
                 control={control}
@@ -226,9 +224,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <h3 className="text-lg font-semibold">
-              
               2. Objective of the proposed research
             </h3>
             <FormBooleanRadioGroup
@@ -253,7 +249,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
             <div>
-              
               <Label>d) The outcome of the work:</Label>
               <FormEnumRadioGroup
                 control={control}
@@ -279,9 +274,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <h3 className="text-lg font-semibold">
-              
               3. Background of the Proposed Research
             </h3>
             <FormBooleanRadioGroup
@@ -308,7 +301,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <h3 className="text-lg font-semibold">4. Methodology</h3>
             <FormBooleanRadioGroup
               control={control}
@@ -362,11 +354,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
-            <h3 className="text-lg font-semibold">
-              
-              5. Literature References
-            </h3>
+            <h3 className="text-lg font-semibold">5. Literature References</h3>
             <FormBooleanRadioGroup
               control={control}
               name="q5a"
@@ -391,7 +379,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <h3 className="text-lg font-semibold">6. Overall Comments</h3>
             <FormEnumRadioGroup
               control={control}
@@ -407,11 +394,8 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </div>
           {}
           <div className="space-y-4 rounded-md border p-4">
-            
             <div className="space-y-2">
-              
               <Label htmlFor="q7_reasons" className="font-semibold">
-                
                 7. Reasons for recommendation at item No. 6: *
               </Label>
               <Controller
@@ -428,9 +412,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               )}
             </div>
             <div className="space-y-2">
-              
               <Label htmlFor="q8_comments" className="font-semibold">
-                
                 8. Any other comments:
               </Label>
               <Controller
@@ -443,7 +425,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
             </div>
           </div>
           <div>
-            
             <Label>Optional Feedback Document (PDF)</Label>
             <FileUploader
               value={feedbackFile ? [feedbackFile] : []}
@@ -453,7 +434,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
             />
           </div>
           <div className="space-y-2 rounded-md border p-4">
-            
             <Label className="text-lg font-semibold">Final Decision</Label>
             <RadioGroup
               onValueChange={(val: "approved" | "reverted") =>
@@ -462,14 +442,11 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               className="mt-2 flex gap-4"
               disabled={isDeadlinePassed}
             >
-              
               <div className="flex items-center space-x-2">
-                
                 <RadioGroupItem value="approved" id="approve" />
                 <Label htmlFor="approve">Approve</Label>
               </div>
               <div className="flex items-center space-x-2">
-                
                 <RadioGroupItem value="reverted" id="revert" />
                 <Label htmlFor="revert">Revert with comments</Label>
               </div>
@@ -484,7 +461,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
           </Button>
           {isDeadlinePassed && (
             <p className="mt-4 text-center text-sm text-destructive">
-              
               The deadline to submit this review has passed.
             </p>
           )}

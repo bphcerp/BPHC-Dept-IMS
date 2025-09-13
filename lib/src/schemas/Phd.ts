@@ -1,10 +1,13 @@
 import z from "zod";
+
 const optionalString = z
     .string()
     .trim()
     .nullish()
     .transform((val) => (val?.length ? val : null));
+
 export const phdTypes = ["part-time", "full-time"] as const;
+
 export const phdExamApplicationStatuses = [
     "applied",
     "verified",
@@ -24,15 +27,18 @@ export const phdProposalStatuses = [
     "formalising",
     "completed",
 ] as const;
+
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
     ["deleted", "completed"];
 
 export const resultStatusEnum = z.enum(["pass", "fail"]);
+
 export const notifyDeadlinePayloadSchema = z.object({
     subject: z.string().min(1, "Subject is required for emails."),
     body: z.string().min(1, "Body cannot be empty."),
 });
 export type NotifyDeadlinePayload = z.infer<typeof notifyDeadlinePayloadSchema>;
+
 export const singleNotificationPayloadSchema = z.object({
     subject: z.string().min(1, "Subject is required for emails."),
     body: z.string().min(1, "Body cannot be empty."),
@@ -41,17 +47,20 @@ export const singleNotificationPayloadSchema = z.object({
 export type SingleNotificationPayload = z.infer<
     typeof singleNotificationPayloadSchema
 >;
+
 export const notifyExaminerPayloadSchema = z.object({
     area: z.string().min(1, "Area is required."),
     subject: z.string().min(1, "Subject is required for emails."),
     body: z.string().min(1, "Body cannot be empty."),
 });
 export type NotifyExaminerPayload = z.infer<typeof notifyExaminerPayloadSchema>;
+
 export const submitResultSchema = z.object({
     applicationId: z.number().int().positive(),
     result: resultStatusEnum,
 });
 export type SubmitResultBody = z.infer<typeof submitResultSchema>;
+
 export const setQualificationDateSchema = z.object({
     studentEmail: z.string().email(),
     qualificationDate: z.string().datetime(),
@@ -59,10 +68,12 @@ export const setQualificationDateSchema = z.object({
 export type SetQualificationDateBody = z.infer<
     typeof setQualificationDateSchema
 >;
+
 export const updateApplicationStatusDRCSchema = z.object({
     status: z.enum(phdExamApplicationStatuses),
     comments: optionalString,
 });
+
 export const createSuggestExaminersSchema = (examinerCount: number) =>
     z.object({
         suggestionsArea1: z
@@ -240,6 +251,28 @@ export const supervisorProposalAcceptSchema = z.object({
         .max(4, "Maximum 4 DAC members allowed"),
     comments: z.string().trim().optional(),
 });
+
+export const supervisorProposalActionSchema = z.discriminatedUnion("action", [
+    z.object({
+        action: z.literal("accept"), 
+        dacMembers: z
+            .array(z.string().email())
+            .min(2, "Minimum 2 DAC members required")
+            .max(4, "Maximum 4 DAC members allowed"),
+        comments: z.string().trim().optional(),
+    }),
+    z.object({
+        action: z.literal("revert"),
+        comments: z
+            .string()
+            .trim()
+            .min(1, "Comments are required for reverting"),
+    }),
+    z.object({
+        action: z.literal("forward"), 
+        comments: z.string().trim().optional(),
+    }),
+]);
 
 export const drcProposalAcceptSchema = z.object({
     selectedDacMembers: z

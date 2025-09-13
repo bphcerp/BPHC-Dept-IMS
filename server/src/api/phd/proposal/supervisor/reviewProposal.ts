@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/supervisor/reviewProposal.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -7,22 +6,12 @@ import { phdProposals, phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { phdSchemas, modules } from "lib";
 import { and, eq } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import z from "zod";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 
 const router = express.Router();
-const reviewActionSchema = z.discriminatedUnion("action", [
-    z.object({
-        action: z.literal("accept"),
-        ...phdSchemas.supervisorProposalAcceptSchema.shape,
-    }),
-    z.object({
-        action: z.literal("revert"),
-        ...phdSchemas.proposalRevertSchema.shape,
-    }),
-]);
+const reviewActionSchema = phdSchemas.supervisorProposalActionSchema;
 
 export default router.post(
     "/:id",
@@ -109,38 +98,34 @@ export default router.post(
                         body.comments
                     }</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
                 });
-            } else if (body.action === "accept") {
-                const previousDacEmails = proposal.dacMembers.map(
-                    (m) => m.dacMemberEmail
-                );
-                const newDacEmails = body.dacMembers;
-                const wasDacReverted =
-                    proposal.comments?.includes("DAC_REVERT_FLAG"); // A simple flag mechanism
-
-                const dacMembersChanged =
-                    previousDacEmails.length !== newDacEmails.length ||
-                    !previousDacEmails.every((email) =>
-                        newDacEmails.includes(email)
-                    );
-
+            } else {
+                // Handle 'accept' and 'forward'
                 let nextStatus: typeof phdSchemas.phdProposalStatuses[number] =
                     "drc_review";
-                if (wasDacReverted && !dacMembersChanged) {
-                    nextStatus = "dac_review"; // Bypass DRC and send directly to DAC
-                }
+                let dacMembersToNotify: string[] = [];
 
-                await tx
-                    .delete(phdProposalDacMembers)
-                    .where(eq(phdProposalDacMembers.proposalId, proposalId));
-
-                await tx
-                    .insert(phdProposalDacMembers)
-                    .values(
-                        body.dacMembers.map((email) => ({
-                            proposalId,
-                            dacMemberEmail: email,
-                        }))
+                if (body.action === "forward") {
+                    nextStatus = "dac_review"; // Bypass DRC
+                    dacMembersToNotify = proposal.dacMembers.map(
+                        (m) => m.dacMemberEmail
                     );
+                } else {
+                    // action is "accept"
+                    nextStatus = "drc_review"; // Go to DRC for approval
+                    await tx
+                        .delete(phdProposalDacMembers)
+                        .where(
+                            eq(phdProposalDacMembers.proposalId, proposalId)
+                        );
+                    await tx
+                        .insert(phdProposalDacMembers)
+                        .values(
+                            body.dacMembers.map((email) => ({
+                                proposalId,
+                                dacMemberEmail: email,
+                            }))
+                        );
+                }
 
                 await tx
                     .update(phdProposals)
@@ -180,10 +165,9 @@ export default router.post(
                             )
                         );
                     }
-                } else {
-                    // Directly notify DAC members
+                } else if (nextStatus === "dac_review") {
                     await createTodos(
-                        body.dacMembers.map((dacEmail) => ({
+                        dacMembersToNotify.map((dacEmail) => ({
                             assignedTo: dacEmail,
                             createdBy: req.user!.email,
                             title: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
@@ -196,7 +180,7 @@ export default router.post(
                         tx
                     );
                     await Promise.all(
-                        body.dacMembers.map((dacEmail) =>
+                        dacMembersToNotify.map((dacEmail) =>
                             sendEmail({
                                 to: dacEmail,
                                 subject: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
@@ -210,7 +194,7 @@ export default router.post(
 
         res.status(200).json({
             success: true,
-            message: `Proposal ${body.action}ed successfully.`,
+            message: `Proposal action processed successfully.`,
         });
     })
 );

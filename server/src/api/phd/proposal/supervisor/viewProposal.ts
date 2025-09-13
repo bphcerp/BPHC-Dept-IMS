@@ -29,6 +29,11 @@ router.get(
                         dacMember: true,
                     },
                 },
+                dacReviews: {
+                    with: {
+                        dacMember: true,
+                    },
+                },
                 coSupervisors: {
                     with: {
                         coSupervisor: true,

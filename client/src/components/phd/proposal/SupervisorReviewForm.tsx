@@ -8,14 +8,16 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Edit } from "lucide-react";
 import { z } from "zod";
+import { phdSchemas } from "lib";
 
 interface SupervisorReviewFormProps {
   proposalId: number;
   onSuccess: () => void;
   deadline: string;
   initialDacMembers?: string[];
+  isPostDacRevert?: boolean;
 }
 
 interface Faculty {
@@ -28,18 +30,19 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   onSuccess,
   deadline,
   initialDacMembers = [],
+  isPostDacRevert = false,
 }) => {
   const queryClient = useQueryClient();
-  const [action, setAction] = useState<"accept" | "revert" | null>(null);
   const [comments, setComments] = useState("");
   const [selectedDac, setSelectedDac] = useState<string[]>(initialDacMembers);
   const [externalDacEmail, setExternalDacEmail] = useState("");
+  const [isEditingDac, setIsEditingDac] = useState(false);
   const isDeadlinePassed = new Date(deadline) < new Date();
 
   const { data: facultyList = [] } = useQuery<Faculty[]>({
     queryKey: ["facultyList"],
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList");
+      const res = await api.get("/phd/proposal/supervisor/getFacultyList");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -48,11 +51,9 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   });
 
   const mutation = useMutation({
-    mutationFn: (data: {
-      action: "accept" | "revert";
-      comments?: string;
-      dacMembers?: string[];
-    }) =>
+    mutationFn: (
+      data: z.infer<typeof phdSchemas.supervisorProposalActionSchema>
+    ) =>
       api.post(`/phd/proposal/supervisor/reviewProposal/${proposalId}`, data),
     onSuccess: () => {
       toast.success("Review submitted successfully!");
@@ -89,25 +90,81 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     setExternalDacEmail("");
   };
 
-  const handleSubmit = () => {
-    if (!action) return;
-    if (action === "revert" && !comments.trim()) {
+  const handleRevert = () => {
+    if (!comments.trim()) {
       toast.error("Comments are required to revert a proposal.");
       return;
     }
-    if (
-      action === "accept" &&
-      (selectedDac.length < 2 || selectedDac.length > 4)
-    ) {
+    mutation.mutate({ action: "revert", comments });
+  };
+
+  const handleForwardToDac = () => {
+    mutation.mutate({ action: "forward", comments: comments || undefined });
+  };
+
+  const handleAcceptWithEdits = () => {
+    if (selectedDac.length < 2 || selectedDac.length > 4) {
       toast.error("Please select between 2 and 4 DAC members.");
       return;
     }
     mutation.mutate({
-      action,
+      action: "accept",
       comments: comments || undefined,
-      ...(action === "accept" && { dacMembers: selectedDac }),
+      dacMembers: selectedDac,
     });
   };
+
+  if (isPostDacRevert && !isEditingDac) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <Label>Comments (Optional)</Label>
+          <Textarea
+            placeholder="Add optional comments for the DAC members..."
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            rows={3}
+            disabled={isDeadlinePassed}
+          />
+        </div>
+        <div>
+          <Label>Finalized DAC Members</Label>
+          <div className="space-y-2 rounded-md border p-3">
+            {initialDacMembers.map((email) => (
+              <p key={email} className="text-sm">
+                {email}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setIsEditingDac(true)}
+            disabled={isDeadlinePassed || mutation.isLoading}
+          >
+            <Edit className="mr-2 h-4 w-4" /> Edit DAC Members
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              onClick={handleRevert}
+              disabled={mutation.isLoading || isDeadlinePassed}
+            >
+              Revert to Student
+            </Button>
+            {/* CHANGED: Button label updated for clarity */}
+            <Button
+              onClick={handleForwardToDac}
+              disabled={mutation.isLoading || isDeadlinePassed}
+            >
+              Accept & Forward to DAC
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -119,81 +176,62 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
         rows={4}
         disabled={isDeadlinePassed}
       />
-      {action === "accept" && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Select DAC Members (2-4 required)</Label>{" "}
-            <Combobox
-              options={facultyList}
-              selectedValues={selectedDac}
-              onSelectedValuesChange={setSelectedDac}
-              placeholder="Search and select faculty..."
-              searchPlaceholder="Search faculty..."
-              emptyPlaceholder="No faculty found."
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Select DAC Members (2-4 required)</Label>
+          <Combobox
+            options={facultyList}
+            selectedValues={selectedDac}
+            onSelectedValuesChange={setSelectedDac}
+            placeholder="Search and select faculty..."
+            searchPlaceholder="Search faculty..."
+            emptyPlaceholder="No faculty found."
+            disabled={isDeadlinePassed}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="external-dac">Add External DAC Member</Label>
+          <div className="flex gap-2">
+            <Input
+              id="external-dac"
+              placeholder="external.member@domain.com"
+              value={externalDacEmail}
+              onChange={(e) => setExternalDacEmail(e.target.value)}
               disabled={isDeadlinePassed}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="external-dac">Add External DAC Member</Label>
-            <div className="flex gap-2">
-              <Input
-                id="external-dac"
-                placeholder="external.member@domain.com"
-                value={externalDacEmail}
-                onChange={(e) => setExternalDacEmail(e.target.value)}
-                disabled={isDeadlinePassed}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                type="button"
-                onClick={handleAddExternalDac}
-                disabled={!externalDacEmail.trim()}
-              >
-                <PlusCircle className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              type="button"
+              onClick={handleAddExternalDac}
+              disabled={!externalDacEmail.trim()}
+            >
+              <PlusCircle className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      )}
-      <div className="flex justify-end gap-2">
-        {action !== "revert" && (
-          <Button
-            variant="destructive"
-            onClick={() => setAction("revert")}
-            disabled={mutation.isLoading || isDeadlinePassed}
-          >
-            Revert to Student
+      </div>
+      <div className="flex justify-end gap-2 border-t pt-4">
+        {isPostDacRevert && isEditingDac && (
+          <Button variant="ghost" onClick={() => setIsEditingDac(false)}>
+            Cancel Edit
           </Button>
         )}
-        {action !== "accept" && (
-          <Button
-            variant="default"
-            onClick={() => setAction("accept")}
-            disabled={mutation.isLoading || isDeadlinePassed}
-          >
-            Accept & Add DAC
-          </Button>
-        )}
+        <Button
+          variant="destructive"
+          onClick={handleRevert}
+          disabled={mutation.isLoading || isDeadlinePassed}
+        >
+          Revert to Student
+        </Button>
+        <Button
+          onClick={handleAcceptWithEdits}
+          disabled={mutation.isLoading || isDeadlinePassed}
+        >
+          {mutation.isLoading ? <LoadingSpinner /> : "Accept & Forward to DRC"}
+        </Button>
       </div>
 
-      {action && (
-        <div className="flex justify-end gap-2 border-t pt-4">
-          <Button variant="ghost" onClick={() => setAction(null)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={mutation.isLoading || isDeadlinePassed}
-            title={
-              isDeadlinePassed ? "The deadline for review has passed." : ""
-            }
-          >
-            {mutation.isLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}
-            Confirm {action === "accept" ? "Acceptance" : "Reversion"}
-          </Button>
-        </div>
-      )}
       {isDeadlinePassed && (
         <p className="mt-2 text-center text-sm text-destructive">
           The deadline to review this proposal has passed.

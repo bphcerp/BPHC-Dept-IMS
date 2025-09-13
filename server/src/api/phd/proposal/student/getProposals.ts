@@ -40,7 +40,6 @@ router.get(
             },
         });
 
-        // Augment proposals with DAC review details if status is dac_revert
         const proposalsWithDacFeedback = await Promise.all(
             proposals.map(async (p) => {
                 if (p.status === "dac_revert") {
@@ -51,6 +50,7 @@ router.get(
                                 feedbackFile: true,
                             },
                         });
+
                     const dacFeedback = dacReviews.map((review) => ({
                         approved: review.approved,
                         comments: review.comments,
@@ -58,7 +58,13 @@ router.get(
                             ? `${environment.SERVER_URL}/f/${review.feedbackFileId}`
                             : null,
                     }));
-                    return { ...p, dacFeedback };
+
+                    const dacSummary = dacReviews.map((review, index) => ({
+                        label: `DAC ${index + 1}`,
+                        status: review.approved ? "Approved" : "Reverted",
+                    }));
+
+                    return { ...p, dacFeedback, dacSummary };
                 }
                 return p;
             })

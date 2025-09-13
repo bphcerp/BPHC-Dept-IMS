@@ -1,4 +1,3 @@
-// client/src/views/Phd/Supervisor/ViewProposal.tsx
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -15,6 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReviewForm";
+import { Check, X } from "lucide-react";
+
+interface DacReview {
+  dacMember: { name: string | null; email: string };
+  approved: boolean;
+}
 
 interface DacMember {
   dacMember: {
@@ -23,10 +28,12 @@ interface DacMember {
   };
 }
 interface CoSupervisor {
+  coSupervisorEmail: string;
+  coSupervisorName: string | null;
   coSupervisor: {
     name: string | null;
     email: string;
-  };
+  } | null;
 }
 interface Proposal {
   id: number;
@@ -38,6 +45,7 @@ interface Proposal {
     name: string | null;
   };
   dacMembers: DacMember[];
+  dacReviews: DacReview[];
   coSupervisors: CoSupervisor[];
   appendixFileUrl: string;
   summaryFileUrl: string;
@@ -99,6 +107,10 @@ const SupervisorViewProposal: React.FC = () => {
     });
   };
 
+  const isPostDacRevert =
+    proposal.status === "supervisor_review" &&
+    (proposal.comments ?? "").includes("DAC_REVERT_FLAG");
+
   return (
     <div className="space-y-6">
       <BackButton />
@@ -116,17 +128,51 @@ const SupervisorViewProposal: React.FC = () => {
           <CardContent>
             <strong>Co-Supervisor: </strong>
             {proposal.coSupervisors[0].coSupervisor?.name ??
-              proposal.coSupervisors[0].coSupervisor.email}
+              proposal.coSupervisors[0].coSupervisorEmail}
           </CardContent>
         )}
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
+
+      {/* ADDED: This card now displays the DAC review status correctly */}
+      {proposal.dacReviews && proposal.dacReviews.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>DAC Review Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {proposal.dacReviews.map((review) => (
+              <div
+                key={review.dacMember.email}
+                className="flex items-center justify-between text-sm"
+              >
+                <p>
+                  {review.dacMember.name} ({review.dacMember.email})
+                </p>
+                <Badge
+                  variant={review.approved ? "default" : "destructive"}
+                  className="flex items-center gap-1"
+                >
+                  {review.approved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                  {review.approved ? "Approved" : "Reverted"}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       {proposal.status === "supervisor_review" ? (
         <Card>
           <CardHeader>
             <CardTitle>Review and Action</CardTitle>
             <CardDescription>
-              Add DAC members and accept, or revert the proposal with comments.
+              {isPostDacRevert
+                ? "The proposal was reverted by the DAC and has been resubmitted by the student. You can forward it to the existing DAC or choose to edit the members."
+                : "Add DAC members and accept, or revert the proposal with comments."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -134,6 +180,10 @@ const SupervisorViewProposal: React.FC = () => {
               proposalId={proposalId}
               onSuccess={handleSuccess}
               deadline={proposal.proposalSemester.facultyReviewDate}
+              initialDacMembers={proposal.dacMembers.map(
+                (m) => m.dacMember.email
+              )}
+              isPostDacRevert={isPostDacRevert}
             />
           </CardContent>
         </Card>
@@ -150,7 +200,8 @@ const SupervisorViewProposal: React.FC = () => {
                 {proposal.status.replace(/_/g, " ").toUpperCase()}
               </strong>
             </p>
-            {proposal.comments && (
+            {/* CHANGED: Logic now correctly hides the internal revert flag */}
+            {proposal.comments && proposal.comments !== "DAC_REVERT_FLAG" && (
               <p className="mt-4">
                 <strong>Your last comment:</strong>
                 {proposal.comments}

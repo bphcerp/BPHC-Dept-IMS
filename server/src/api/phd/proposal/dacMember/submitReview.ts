@@ -37,6 +37,7 @@ router.post(
             phdSchemas.submitDacReviewSchema.parse(req.body);
         const dacMemberEmail = req.user!.email;
         const feedbackFile = req.file;
+
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: (cols, { eq }) => eq(cols.id, proposalId),
@@ -61,6 +62,7 @@ router.post(
                     HttpCode.BAD_REQUEST,
                     "Proposal is not in DAC review stage"
                 );
+
             const isDacMember = proposal.dacMembers.some(
                 (m) => m.dacMemberEmail === dacMemberEmail
             );
@@ -69,6 +71,7 @@ router.post(
                     HttpCode.FORBIDDEN,
                     "You are not assigned to review this proposal."
                 );
+
             let feedbackFileId: number | null = null;
             if (feedbackFile) {
                 const [insertedFile] = await tx
@@ -85,6 +88,7 @@ router.post(
                     .returning();
                 feedbackFileId = insertedFile.id;
             }
+
             const [review] = await tx
                 .insert(phdProposalDacReviews)
                 .values({
@@ -95,9 +99,11 @@ router.post(
                     feedbackFileId,
                 })
                 .returning();
+
             await tx
                 .insert(phdProposalDacReviewForms)
                 .values({ reviewId: review.id, formData: evaluation });
+
             await completeTodo(
                 {
                     module: modules[3],
@@ -106,18 +112,25 @@ router.post(
                 },
                 tx
             );
+
             const allReviews = await tx.query.phdProposalDacReviews.findMany({
                 where: (cols, { eq }) => eq(cols.proposalId, proposalId),
             });
+
             if (allReviews.length === proposal.dacMembers.length) {
                 const allApproved = allReviews.every((r) => r.approved);
                 const newStatus = allApproved
                     ? "seminar_incomplete"
                     : "dac_revert";
+
+                // ADDED: Append a flag on revert for the supervisor's workflow
+                const newComments = !allApproved ? "DAC_REVERT_FLAG" : null;
+
                 await tx
                     .update(phdProposals)
-                    .set({ status: newStatus })
+                    .set({ status: newStatus, comments: newComments })
                     .where(eq(phdProposals.id, proposalId));
+
                 if (allApproved) {
                     const drcConveners = await getUsersWithPermission(
                         "phd:drc:proposal",

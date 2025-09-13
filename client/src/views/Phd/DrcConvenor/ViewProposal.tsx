@@ -17,22 +17,26 @@ import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocuments
 import { DrcReviewForm } from "@/components/phd/proposal/DrcReviewForm";
 import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm";
 import { phdSchemas } from "lib";
-import { Download, CheckCircle } from "lucide-react";
+import { Download, CheckCircle, Check, X } from "lucide-react";
 
-// MODIFIED: Updated interface to handle external DAC members
+interface DacReview {
+  dacMember: { name: string | null; email: string };
+  approved: boolean;
+}
 interface DacMember {
-  dacMemberEmail: string; // The email is always present
+  dacMemberEmail: string;
   dacMember: {
-    // This can be null if the member is external
     name: string | null;
     email: string;
   } | null;
 }
 interface CoSupervisor {
+  coSupervisorEmail: string;
+  coSupervisorName: string | null;
   coSupervisor: {
     name: string | null;
     email: string;
-  };
+  } | null;
 }
 interface ProposalDetails {
   id: number;
@@ -48,7 +52,7 @@ interface ProposalDetails {
   };
   coSupervisors: CoSupervisor[];
   dacMembers: DacMember[];
-  dacReviews: any[];
+  dacReviews: DacReview[];
   appendixFileUrl: string;
   summaryFileUrl: string;
   outlineFileUrl: string;
@@ -81,6 +85,7 @@ const DrcViewProposal: React.FC = () => {
     enabled: !!proposalId,
   });
 
+  // ... (mutations remain the same)
   const setSeminarDetailsMutation = useMutation({
     mutationFn: (data: phdSchemas.SetSeminarDetailsBody) =>
       api.post(
@@ -245,7 +250,6 @@ const DrcViewProposal: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>{proposal.title}</CardTitle>
-          {/* CHANGED: Replaced CardDescription with divs to fix nesting warning */}
           <div className="pt-2 text-sm text-muted-foreground">
             <p>
               Submitted by: {proposal.student.name} ({proposal.student.email})
@@ -260,11 +264,41 @@ const DrcViewProposal: React.FC = () => {
           <CardContent>
             <strong>Co-Supervisor: </strong>
             {proposal.coSupervisors[0].coSupervisor?.name ??
-              proposal.coSupervisors[0].coSupervisor.email}
+              proposal.coSupervisors[0].coSupervisorEmail}
           </CardContent>
         )}
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
+      {proposal.dacReviews && proposal.dacReviews.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>DAC Review Status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {proposal.dacReviews.map((review) => (
+              <div
+                key={review.dacMember.email}
+                className="flex items-center justify-between text-sm"
+              >
+                <p>
+                  {review.dacMember.name} ({review.dacMember.email})
+                </p>
+                <Badge
+                  variant={review.approved ? "default" : "destructive"}
+                  className="flex items-center gap-1"
+                >
+                  {review.approved ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                  {review.approved ? "Approved" : "Reverted"}
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
       {renderActionCard()}
     </div>
   );

@@ -1,5 +1,4 @@
-// client/src/views/Phd/Student/Proposal.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -37,6 +36,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -61,6 +61,10 @@ interface DacFeedback {
   comments: string;
   feedbackFileUrl: string | null;
 }
+interface DacSummary {
+  label: string;
+  status: "Approved" | "Reverted";
+}
 
 interface Proposal {
   id: number;
@@ -74,6 +78,7 @@ interface Proposal {
   seminarVenue?: string | null;
   proposalSemesterId: number;
   dacFeedback?: DacFeedback[];
+  dacSummary?: DacSummary[];
 }
 
 const DeadlinesCard = ({
@@ -128,12 +133,12 @@ const DeadlinesCard = ({
 };
 
 const StudentProposal: React.FC = () => {
+  // ... (hooks and logic remain the same)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [proposalToResubmit, setProposalToResubmit] = useState<Proposal | null>(
     null
   );
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
-
   const { data: eligibility, isLoading: isLoadingEligibility } = useQuery<{
     isEligible: boolean;
     qualificationDate: string | null;
@@ -144,7 +149,6 @@ const StudentProposal: React.FC = () => {
       return res.data;
     },
   });
-
   const { data: proposalData, refetch } = useQuery<{
     proposals: Proposal[];
     canApply: boolean;
@@ -156,7 +160,6 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
@@ -165,18 +168,15 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const openResubmitDialog = (proposal: Proposal) => {
     setProposalToResubmit(proposal);
     setIsFormOpen(true);
   };
-
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setProposalToResubmit(null);
     void refetch();
   };
-
   const handleOpenNewProposalDialog = () => {
     if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
       toast.error("There are no active proposal submission cycles available.");
@@ -187,16 +187,15 @@ const StudentProposal: React.FC = () => {
     }
     setIsFormOpen(true);
   };
-
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
-        <LoadingSpinner />
-        <p className="ml-4 text-gray-500">Checking eligibility...</p>
+        {" "}
+        <LoadingSpinner />{" "}
+        <p className="ml-4 text-gray-500">Checking eligibility...</p>{" "}
       </div>
     );
   }
-
   const currentDeadlines = deadlineData?.deadlines[0];
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
@@ -330,6 +329,26 @@ const StudentProposal: React.FC = () => {
                         )}
                       </TableCell>
                     </TableRow>
+                    {p.status === "dac_revert" && p.dacSummary && (
+                       <TableRow>
+                         <TableCell colSpan={4} className="bg-muted/50 p-0">
+                          <Alert variant="destructive" className="border-0 rounded-none">
+                             <AlertTriangle className="h-4 w-4" />
+                             <AlertTitle>DAC Feedback Received</AlertTitle>
+                             <AlertDescription className="flex items-center gap-4">
+                               {p.dacSummary.map((summary) => (
+                                 <div key={summary.label} className="flex items-center gap-2">
+                                   <span className="text-sm font-medium">{summary.label}:</span>
+                                   <Badge variant={summary.status === "Approved" ? "default" : "destructive"}>
+                                     {summary.status}
+                                   </Badge>
+                                 </div>
+                               ))}
+                             </AlertDescription>
+                           </Alert>
+                         </TableCell>
+                       </TableRow>
+                    )}
                     {p.comments && p.status !== "dac_revert" && (
                       <TableRow>
                         <TableCell colSpan={4}>
