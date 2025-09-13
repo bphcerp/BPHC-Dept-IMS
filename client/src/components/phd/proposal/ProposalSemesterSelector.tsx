@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Semester {
   id: number;
   semesterId: number;
+  studentSubmissionDate: string;
   semester: {
     year: string;
     semesterNumber: number;
@@ -38,13 +39,20 @@ const ProposalSemesterSelector: React.FC<ProposalSemesterSelectorProps> = ({
       const response = await api.get("/phd/proposal/getProposalSemesters");
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
+
+  const getCycleLabel = (semester: Semester) => {
+    const deadline = new Date(
+      semester.studentSubmissionDate
+    ).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return `${semester.semester.year} - Sem ${semester.semester.semesterNumber} (Deadline: ${deadline})`;
+  };
 
   if (isLoading) {
     return (
       <div className={className}>
-        <Label>Proposal Deadline Semester</Label>
+        <Label>Proposal Deadline Cycle</Label>
         <Skeleton className="h-10 w-full" />
       </div>
     );
@@ -52,9 +60,7 @@ const ProposalSemesterSelector: React.FC<ProposalSemesterSelectorProps> = ({
 
   return (
     <div className={className}>
-      <Label htmlFor="proposal-semester-select">
-        Proposal Deadline Semester
-      </Label>
+      <Label htmlFor="proposal-semester-select">Proposal Deadline Cycle</Label>
       <Select
         value={selectedSemesterId?.toString() ?? ""}
         onValueChange={(value) =>
@@ -62,13 +68,13 @@ const ProposalSemesterSelector: React.FC<ProposalSemesterSelectorProps> = ({
         }
       >
         <SelectTrigger id="proposal-semester-select">
-          <SelectValue placeholder="Select a semester..." />
+          <SelectValue placeholder="Select a cycle..." />
         </SelectTrigger>
         <SelectContent>
           {semesters && semesters.length > 0 ? (
             semesters.map((sem) => (
               <SelectItem key={sem.id} value={sem.id.toString()}>
-                {sem.semester.year} - Semester {sem.semester.semesterNumber}
+                {getCycleLabel(sem)}
               </SelectItem>
             ))
           ) : (

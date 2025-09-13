@@ -1,3 +1,4 @@
+// client/src/views/Phd/DrcConvenor/ProposalManagement.tsx
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -31,6 +32,8 @@ import { useNavigate } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import RequestSeminarDetailsDialog from "@/components/phd/proposal/RequestSeminarDetailsDialog";
+
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -38,16 +41,25 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: { year: string; semesterNumber: number };
+  semester: {
+    year: string;
+    semesterNumber: number;
+  };
 }
+
 interface ProposalListItem {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
+  supervisorEmail: string;
+  student: {
+    name: string | null;
+    email: string;
+  };
   proposalSemester: ProposalSemester | null;
 }
+
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -90,12 +102,21 @@ const DeadlinesCard = ({
     </Card>
   );
 };
+
 const DrcProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
   const [selectedProposalIds, setSelectedProposalIds] = useState<number[]>([]);
+
+  // State for dialogs
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
+  const [proposalsForDialog, setProposalsForDialog] = useState<
+    ProposalListItem[]
+  >([]);
+
   const { data: semesters } = useQuery<ProposalSemester[]>({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
@@ -103,11 +124,13 @@ const DrcProposalManagement: React.FC = () => {
       return response.data;
     },
   });
+
   useEffect(() => {
     if (semesters && semesters.length > 0 && !selectedSemesterId) {
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
+
   const {
     data: proposals,
     isLoading,
@@ -124,6 +147,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
+
   const downloadNoticeMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -146,33 +170,11 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download notice."),
   });
-  const requestSeminarDetailsMutation = useMutation({
-    mutationFn: (proposalIds: number[]) =>
-      api.post("/phd/proposal/drcConvener/requestSeminarDetails", {
-        proposalIds,
-      }),
-    onSuccess: () => {
-      toast.success("Requests sent to supervisors successfully.");
-      void refetch();
-    },
-    onError: (err: any) =>
-      toast.error(err.response?.data?.message || "Failed to send requests."),
-  });
-  const remindSeminarDetailsMutation = useMutation({
-    mutationFn: (proposalId: number) =>
-      api.post("/phd/proposal/drcConvener/remindSeminarDetails", {
-        proposalId,
-      }),
-    onSuccess: () => {
-      toast.success("Reminder sent successfully.");
-    },
-    onError: (err: any) =>
-      toast.error(err.response?.data?.message || "Failed to send reminder."),
-  });
+
   const downloadPackagesMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
-        "/phd/proposal/drcConvener/downloadProposalPackage",
+        `/phd/proposal/drcConvener/downloadProposalPackage`,
         { proposalIds },
         { responseType: "blob" }
       ),
@@ -189,6 +191,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download packages."),
   });
+
   const finalizeProposalsMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post("/phd/proposal/drcConvener/finalizeProposals", { proposalIds }),
@@ -200,11 +203,13 @@ const DrcProposalManagement: React.FC = () => {
     onError: (err: any) =>
       toast.error(err.response?.data?.message || "Failed to finalize."),
   });
+
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const allIds = proposals?.map((p) => p.id) ?? [];
@@ -213,7 +218,27 @@ const DrcProposalManagement: React.FC = () => {
       setSelectedProposalIds([]);
     }
   };
+
+  const openRequestDialog = () => {
+    const selected =
+      proposals?.filter(
+        (p) =>
+          selectedProposalIds.includes(p.id) &&
+          p.status === "seminar_incomplete"
+      ) ?? [];
+    if (selected.length > 0) {
+      setProposalsForDialog(selected);
+      setIsRequestDialogOpen(true);
+    }
+  };
+
+  const openReminderDialog = (proposal: ProposalListItem) => {
+    setProposalsForDialog([proposal]);
+    setIsReminderDialogOpen(true);
+  };
+
   const semesterDeadlines = proposals?.[0]?.proposalSemester;
+
   const getSelectedProposalsByStatus = (status: string) => {
     return (
       proposals?.filter(
@@ -221,6 +246,7 @@ const DrcProposalManagement: React.FC = () => {
       ) ?? []
     );
   };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -244,12 +270,14 @@ const DrcProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
+
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="drcReviewDate"
         />
       )}
+
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -261,15 +289,14 @@ const DrcProposalManagement: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
-                onClick={() =>
-                  requestSeminarDetailsMutation.mutate(selectedProposalIds)
-                }
+                onClick={openRequestDialog}
                 disabled={
                   getSelectedProposalsByStatus("seminar_incomplete").length ===
-                    0 || requestSeminarDetailsMutation.isLoading
+                  0
                 }
               >
-                <Send className="mr-2 h-4 w-4" /> Request Details(
+                <Send className="mr-2 h-4 w-4" />
+                Request Details (
                 {getSelectedProposalsByStatus("seminar_incomplete").length})
               </Button>
               <Button
@@ -281,7 +308,8 @@ const DrcProposalManagement: React.FC = () => {
                   downloadPackagesMutation.isLoading
                 }
               >
-                <Download className="mr-2 h-4 w-4" /> Download Pkgs(
+                <Download className="mr-2 h-4 w-4" />
+                Download Pkgs (
                 {getSelectedProposalsByStatus("finalising").length})
               </Button>
               <Button
@@ -293,8 +321,8 @@ const DrcProposalManagement: React.FC = () => {
                   finalizeProposalsMutation.isLoading
                 }
               >
-                <CheckCircle className="mr-2 h-4 w-4" /> Finalize(
-                {getSelectedProposalsByStatus("formalising").length})
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Finalize ({getSelectedProposalsByStatus("formalising").length})
               </Button>
               <Button
                 onClick={() =>
@@ -305,8 +333,8 @@ const DrcProposalManagement: React.FC = () => {
                   downloadNoticeMutation.isLoading
                 }
               >
-                <Download className="mr-2 h-4 w-4" /> Gen. Notice(
-                {selectedProposalIds.length})
+                <Download className="mr-2 h-4 w-4" />
+                Gen. Notice ({selectedProposalIds.length})
               </Button>
             </div>
           </div>
@@ -326,7 +354,8 @@ const DrcProposalManagement: React.FC = () => {
                     disabled={!proposals || proposals.length === 0}
                   />
                 </TableHead>
-                <TableHead>Student</TableHead> <TableHead>Title</TableHead>
+                <TableHead>Student</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -338,7 +367,7 @@ const DrcProposalManagement: React.FC = () => {
                     colSpan={5}
                     className="h-24 text-center text-red-600"
                   >
-                    Error:
+                    Error:{" "}
                     {(error as any)?.response?.data?.message ||
                       "Failed to load proposals"}
                   </TableCell>
@@ -395,10 +424,7 @@ const DrcProposalManagement: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
-                            remindSeminarDetailsMutation.mutate(proposal.id)
-                          }
-                          disabled={remindSeminarDetailsMutation.isLoading}
+                          onClick={() => openReminderDialog(proposal)}
                         >
                           <BellRing className="h-4 w-4" />
                         </Button>
@@ -411,7 +437,29 @@ const DrcProposalManagement: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+      {isRequestDialogOpen && (
+        <RequestSeminarDetailsDialog
+          isOpen={isRequestDialogOpen}
+          setIsOpen={setIsRequestDialogOpen}
+          proposals={proposalsForDialog}
+          type="request"
+          onSuccess={() => {
+            setSelectedProposalIds([]);
+            void refetch();
+          }}
+        />
+      )}
+      {isReminderDialogOpen && (
+        <RequestSeminarDetailsDialog
+          isOpen={isReminderDialogOpen}
+          setIsOpen={setIsReminderDialogOpen}
+          proposals={proposalsForDialog}
+          type="reminder"
+          onSuccess={() => void refetch()}
+        />
+      )}
     </div>
   );
 };
+
 export default DrcProposalManagement;

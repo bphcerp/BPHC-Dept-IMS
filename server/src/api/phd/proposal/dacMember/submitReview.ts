@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/dacMember/submitReview.ts
 import db from "@/config/db/index.ts";
 import {
     phdProposals,
@@ -18,6 +19,7 @@ import { sendEmail } from "@/lib/common/email.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 
 const router = express.Router();
+
 router.post(
     "/:id",
     checkAccess(),
@@ -33,6 +35,7 @@ router.post(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+
         const { approved, comments, evaluation } =
             phdSchemas.submitDacReviewSchema.parse(req.body);
         const dacMemberEmail = req.user!.email;
@@ -62,7 +65,6 @@ router.post(
                     HttpCode.BAD_REQUEST,
                     "Proposal is not in DAC review stage"
                 );
-
             const isDacMember = proposal.dacMembers.some(
                 (m) => m.dacMemberEmail === dacMemberEmail
             );
@@ -100,9 +102,10 @@ router.post(
                 })
                 .returning();
 
-            await tx
-                .insert(phdProposalDacReviewForms)
-                .values({ reviewId: review.id, formData: evaluation });
+            await tx.insert(phdProposalDacReviewForms).values({
+                reviewId: review.id,
+                formData: evaluation,
+            });
 
             await completeTodo(
                 {
@@ -122,10 +125,7 @@ router.post(
                 const newStatus = allApproved
                     ? "seminar_incomplete"
                     : "dac_revert";
-
-                // ADDED: Append a flag on revert for the supervisor's workflow
                 const newComments = !allApproved ? "DAC_REVERT_FLAG" : null;
-
                 await tx
                     .update(phdProposals)
                     .set({ status: newStatus, comments: newComments })
@@ -165,6 +165,7 @@ router.post(
                                 `<li><b>${r.dacMemberEmail}:</b> ${r.comments}</li>`
                         )
                         .join("");
+
                     await createTodos(
                         [
                             {
@@ -180,16 +181,25 @@ router.post(
                         ],
                         tx
                     );
+                    // Email to student
                     await sendEmail({
                         to: proposal.student.email,
                         subject:
                             "Action Required: PhD Proposal Reverted by DAC",
                         html: `<p>Dear ${proposal.student.name},</p><p>The DAC has reviewed your proposal and requires revisions. Comments from the committee:<ul>${studentRevertComments}</ul></p><p>Please log in to resubmit.</p>`,
                     });
+                    // Email to supervisor
+                    await sendEmail({
+                        to: proposal.supervisorEmail,
+                        subject: `PhD Proposal for ${proposal.student.name} Reverted by DAC`,
+                        html: `<p>Dear Supervisor,</p><p>The DAC has reverted the proposal for your student, <strong>${proposal.student.name}</strong>. The student has been notified to make revisions and resubmit.</p><p>Comments from the committee:<ul>${studentRevertComments}</ul></p>`,
+                    });
                 }
             }
         });
+
         res.status(200).json({ success: true, message: "Review submitted." });
     })
 );
+
 export default router;

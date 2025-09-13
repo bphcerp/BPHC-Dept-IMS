@@ -1,3 +1,4 @@
+// client/src/components/phd/proposal/StudentProposalForm.tsx
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -10,21 +11,34 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/Auth";
 import { Combobox } from "@/components/ui/combobox";
-import { File, ExternalLink, Replace } from "lucide-react";
+import { File, ExternalLink, Replace, Download } from "lucide-react";
 
 interface StudentProposalFormProps {
   onSuccess: () => void;
-  proposalData?: any | null; // This will contain data for pre-filling
+  proposalData?: any | null;
 }
-
 interface UserProfile {
   phdType: "part-time" | "full-time";
 }
-
 interface Faculty {
   value: string;
   label: string;
 }
+
+const templateLinks: Record<string, string> = {
+  appendixFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/1.-Appendix-I-to-be-attached-with-research-Proposals.pdf",
+  summaryFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/2.-Summary-of-Research-Proposal.pdf",
+  outlineFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/3.-Outline-of-the-Proposed-topic-of-Research.pdf",
+  outsideSupervisorBiodataFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/5.-Format-For-Outside-Supervisors-Biodata.pdf",
+  outsideCoSupervisorFormatFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/7.-Format-for-Proposed-out-side-Co-Supervisor.pdf",
+  placeOfResearchFile:
+    "https://www.bits-pilani.ac.in/wp-content/uploads/6.-Format-for-proposed-as-Place-of-Research-Work.pdf",
+};
 
 export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   onSuccess,
@@ -35,7 +49,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
-
   const [coSupervisorEmail, setCoSupervisorEmail] = useState<string[]>([]);
   const [isOtherCoSupervisor, setIsOtherCoSupervisor] = useState(false);
   const [externalCoSupervisorName, setExternalCoSupervisorName] = useState("");
@@ -142,10 +155,10 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     }
     if (
       hasOutsideCoSupervisor &&
-      ((!files.outsideCoSupervisorFormatFile &&
-        !proposalData?.outsideCoSupervisorFormatFileUrl) ||
-        (!files.outsideSupervisorBiodataFile &&
-          !proposalData?.outsideSupervisorBiodataFileUrl))
+      !files.outsideCoSupervisorFormatFile &&
+      !proposalData?.outsideCoSupervisorFormatFileUrl &&
+      !files.outsideSupervisorBiodataFile &&
+      !proposalData?.outsideSupervisorBiodataFileUrl
     ) {
       toast.error(
         "Please upload both documents for the outside co-supervisor."
@@ -192,7 +205,11 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       label: "Summary of Research Proposal",
       required: true,
     },
-    { key: "outlineFile", label: "Outline of Proposed Topic", required: true },
+    {
+      key: "outlineFile",
+      label: "Outline of Proposed Topic",
+      required: true,
+    },
     {
       key: "placeOfResearchFile",
       label: "Format for Place of Research Work",
@@ -231,10 +248,21 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           const existingFileUrl = proposalData?.[`${field.key}Url`];
           return (
             <div key={field.key}>
-              <Label>
-                {field.label}
-                {field.required && "*"}
-              </Label>
+              <div className="mb-1 flex items-center gap-2">
+                <Label>
+                  {field.label}
+                  {field.required && "*"}
+                </Label>
+                <a
+                  href={templateLinks[field.key]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Download Template"
+                  className="text-primary hover:underline"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+              </div>
               {existingFileUrl && !files[field.key] ? (
                 <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
                   <a
@@ -293,6 +321,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
             My co-supervisor is from outside of BITS campuses
           </Label>
         </div>
+
         {!hasOutsideCoSupervisor && (
           <div className="space-y-4 border-l pl-6 pt-4">
             <div>
@@ -320,6 +349,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
                 </span>
               </div>
             </div>
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="isOther"
@@ -373,7 +403,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           the best of my knowledge. *
         </Label>
       </div>
-
       <Button type="submit" className="w-full" disabled={mutation.isLoading}>
         {mutation.isLoading ? (
           <LoadingSpinner />

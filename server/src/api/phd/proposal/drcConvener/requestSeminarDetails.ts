@@ -6,23 +6,36 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { modules, phdSchemas } from "lib";
-import { inArray, eq } from "drizzle-orm";
-import { phdProposals, phdEmailTemplates } from "@/config/db/schema/phd.ts";
+import { inArray } from "drizzle-orm";
+import { phdProposals } from "@/config/db/schema/phd.ts";
 import assert from "assert";
-import Mustache from "mustache";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
+
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user, "User must be authenticated");
-        const { proposalIds } = phdSchemas.requestSeminarDetailsSchema.parse(
+
+        const { requests } = phdSchemas.requestSeminarDetailsSchema.parse(
             req.body
         );
+
+        const proposalIds = requests.map((r) => r.proposalId);
         const proposals = await db.query.phdProposals.findMany({
             where: inArray(phdProposals.id, proposalIds),
-            with: { student: { columns: { name: true } } },
+            with: {
+                student: {
+                    columns: {
+                        name: true,
+                    },
+                },
+            },
         });
+
         const validProposals = proposals.filter(
             (p) => p.status === "seminar_incomplete"
         );
@@ -32,36 +45,47 @@ router.post(
                 "No valid proposals found in 'seminar_incomplete' state."
             );
         }
-        const todosToCreate = validProposals.map((p) => ({
-            assignedTo: p.supervisorEmail,
-            createdBy: req.user!.email,
-            title: `Set Seminar Details for ${p.student.name}'s Proposal`,
-            module: modules[3],
-            completionEvent: `proposal:set-seminar-details:${p.id}`,
-            link: `/phd/supervisor/proposal/${p.id}`,
-        }));
+
+        const todosToCreate = requests
+            .filter((r) => validProposals.some((p) => p.id === r.proposalId))
+            .map((r) => {
+                const proposal = validProposals.find(
+                    (p) => p.id === r.proposalId
+                )!;
+                return {
+                    assignedTo: proposal.supervisorEmail,
+                    createdBy: req.user!.email,
+                    title: `Set Seminar Details for ${proposal.student.name}'s Proposal`,
+                    module: modules[3],
+                    completionEvent: `proposal:set-seminar-details:${r.proposalId}`,
+                    link: `/phd/supervisor/proposal/${r.proposalId}`,
+                    deadline: r.deadline,
+                };
+            });
+
         await createTodos(todosToCreate);
-        const template = await db.query.phdEmailTemplates.findFirst({
-            where: eq(phdEmailTemplates.name, "request_seminar_details"),
-        });
-        if (template) {
-            const emailsToSend = validProposals.map((p) => ({
-                to: p.supervisorEmail,
-                subject: Mustache.render(template.subject, {
-                    studentName: p.student.name,
-                }),
-                html: Mustache.render(template.body, {
-                    supervisorName: "Supervisor",
-                    studentName: p.student.name,
-                    link: `${process.env.FRONTEND_URL}/phd/supervisor/proposal/${p.id}`,
-                }),
-            }));
-            await sendBulkEmails(emailsToSend);
-        }
+
+        const emailsToSend = requests
+            .filter((r) => validProposals.some((p) => p.id === r.proposalId))
+            .map((r) => {
+                const proposal = validProposals.find(
+                    (p) => p.id === r.proposalId
+                )!;
+                const htmlBody = DOMPurify.sanitize(marked(r.body));
+                return {
+                    to: proposal.supervisorEmail,
+                    subject: r.subject,
+                    html: htmlBody,
+                };
+            });
+
+        await sendBulkEmails(emailsToSend);
+
         res.status(200).json({
             success: true,
-            message: `To-Dos created for ${validProposals.length}supervisors.`,
+            message: `Notifications sent and To-Dos created for ${validProposals.length} supervisors.`,
         });
     })
 );
+
 export default router;

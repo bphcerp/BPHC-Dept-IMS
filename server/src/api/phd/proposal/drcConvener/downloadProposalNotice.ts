@@ -3,78 +3,39 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
-import puppeteer from "puppeteer";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { inArray } from "drizzle-orm";
 import environment from "@/config/environment.ts";
 import { z } from "zod";
+import fs from "fs/promises";
+import path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+// Promisify the exec function for async/await usage
+const execAsync = promisify(exec);
 
 const downloadNoticeSchema = z.object({
     proposalIds: z.array(z.number().int().positive()).min(1),
 });
 
-const generateNoticeHtml = (proposals: any[], drcConvenerName: string) => {
-    const rows = proposals
-        .map((p: any) => {
-            const seminarDateTime = p.seminarDate
-                ? `${new Date(p.seminarDate).toLocaleDateString()} at ${
-                      p.seminarTime || ""
-                  }`
-                : "TBD";
-            return `
-      <tr>
-        <td>${p.student.name || ""}<br/>${p.student.idNumber || ""}</td>
-        <td>${p.title}</td>
-        <td>${p.supervisor.name || p.supervisor.email}</td>
-        <td>${p.dacMembers.map((m: any) => m.dacMember.name).join("<br/>")}</td>
-        <td>${seminarDateTime}</td>
-        <td>${p.seminarVenue || "TBD"}</td>
-      </tr>`;
-        })
-        .join("");
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>PhD Proposal Seminar Notice</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
-        h1 { text-align: center; margin-bottom: 30px; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .welcome { text-align: center; font-weight: bold; margin: 30px 0; }
-        .signature { margin-top: 50px; }
-    </style>
-</head>
-<body>
-    <h1>PhD Proposal Seminar Notice</h1>
-    <p>Dear Sir/Madam,</p>
-    <p>The following candidates from the Department of ${
-        environment.DEPARTMENT_NAME || "___________________"
-    } are presenting their PhD proposal seminar as per the following schedule.</p>
-    <table>
-        <thead>
-            <tr>
-                <th>Name of student and ID No.</th>
-                <th>Proposed Topic of Research</th>
-                <th>Supervisor/Co-supervisor</th>
-                <th>DAC Members</th>
-                <th>Date & Time</th>
-                <th>Venue</th>
-            </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-    </table>
-    <p class="welcome">All are welcome to attend the seminar.</p>
-    <div class="signature">
-        <p>(${drcConvenerName})<br>DRC Convener<br>Department of ${
-            environment.DEPARTMENT_NAME || "_______________________"
-        }</p>
-    </div>
-</body>
-</html>`;
+// A function to run the LibreOffice command for DOCX to PDF conversion
+const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
+    const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir} ${docxPath}`;
+    try {
+        await execAsync(command);
+        const pdfPath = path.join(
+            outputDir,
+            path.basename(docxPath, ".docx") + ".pdf"
+        );
+        return pdfPath;
+    } catch (error) {
+        console.error("Error during DOCX to PDF conversion:", error);
+        throw new HttpError(
+            HttpCode.INTERNAL_SERVER_ERROR,
+            "Failed to convert document to PDF. Ensure LibreOffice is installed on the server."
+        );
+    }
 };
 
 const router = express.Router();
@@ -107,7 +68,10 @@ router.post(
 
         if (
             proposalsForNotice.some(
-                (p) => !["finalising", "formalising"].includes(p.status)
+                (p) =>
+                    !["finalising", "formalising", "completed"].includes(
+                        p.status
+                    )
             )
         ) {
             throw new HttpError(
@@ -122,32 +86,79 @@ router.post(
         });
         const drcConvenerName = drcUser?.name || req.user!.email;
 
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox"],
-        });
+        // --- DOCX Templating Logic ---
+        // Use createRequire to reliably load CJS modules in an ESM project
+        const { createRequire } = await import("node:module");
+        const require = createRequire(import.meta.url);
+        const Docxtemplater = require("docxtemplater");
+        const PizZip = require("pizzip");
+
+        // Correctly resolve the path relative to the current file
+        const templatePath = path.join(import.meta.dirname, "./notice.docx");
+        const tempDir = path.resolve("./temp"); // A temporary directory to store files
+
+        let generatedPdfPath = "";
+        let tempDocxPath = "";
+
         try {
-            const page = await browser.newPage();
-            const noticeHtml = generateNoticeHtml(
-                proposalsForNotice,
-                drcConvenerName
-            );
-            await page.setContent(noticeHtml, {
-                waitUntil: "domcontentloaded",
-            });
-            const noticePdf = await page.pdf({
-                format: "A4",
-                printBackground: true,
+            // 1. Prepare data for the template
+            const templateData = {
+                department_name:
+                    environment.DEPARTMENT_NAME || "___________________",
+                proposals: proposalsForNotice.map((p) => ({
+                    student_info: `${p.student.name || ""}\n${
+                        p.student.idNumber || ""
+                    }`,
+                    topic: p.title,
+                    supervisor: p.supervisor.name || p.supervisor.email,
+                    dac_members: p.dacMembers
+                        .map((m) => m.dacMember.name)
+                        .join(", "),
+                    datetime: p.seminarDate
+                        ? `${new Date(p.seminarDate).toLocaleDateString()} at ${
+                              p.seminarTime || ""
+                          }`
+                        : "TBD",
+                    venue: p.seminarVenue || "TBD",
+                })),
+                drc_convener_name: drcConvenerName,
+            };
+
+            // 2. Load the template and render the document
+            const content = await fs.readFile(templatePath);
+            const zip = new PizZip(content);
+            const doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
             });
 
+            doc.render(templateData);
+
+            const buf = doc.getZip().generate({ type: "nodebuffer" });
+
+            // 3. Save the generated DOCX temporarily
+            await fs.mkdir(tempDir, { recursive: true });
+            tempDocxPath = path.join(tempDir, `notice_${Date.now()}.docx`);
+            await fs.writeFile(tempDocxPath, buf);
+
+            // 4. Convert the generated DOCX to PDF using LibreOffice
+            generatedPdfPath = await convertDocxToPdf(tempDocxPath, tempDir);
+
+            const pdfBuffer = await fs.readFile(generatedPdfPath);
+
+            // 5. Send the final PDF to the user
             res.setHeader("Content-Type", "application/pdf");
             res.setHeader(
                 "Content-Disposition",
                 `attachment; filename="Seminar_Notice.pdf"`
             );
-            res.end(noticePdf);
+            res.end(pdfBuffer);
         } finally {
-            await browser.close();
+            // 6. Clean up temporary files
+            if (tempDocxPath)
+                await fs.unlink(tempDocxPath).catch(console.error);
+            if (generatedPdfPath)
+                await fs.unlink(generatedPdfPath).catch(console.error);
         }
     })
 );

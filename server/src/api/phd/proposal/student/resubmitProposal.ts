@@ -50,10 +50,11 @@ router.post(
         } = phdSchemas.phdProposalSubmissionSchema
             .omit({ proposalCycleId: true })
             .parse(req.body);
-        const userEmail = req.user!.email;
 
+        const userEmail = req.user!.email;
         let supervisorEmail: string | null = null;
         let studentName: string | null = null;
+        let facultyReviewDate: Date | null = null;
 
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
@@ -61,7 +62,10 @@ router.post(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.studentEmail, userEmail)
                 ),
-                with: { student: true, proposalSemester: true },
+                with: {
+                    student: true,
+                    proposalSemester: true, 
+                },
             });
 
             if (!proposal) {
@@ -79,6 +83,7 @@ router.post(
                     "The resubmission deadline for this cycle has passed."
                 );
             }
+
             if (
                 !["supervisor_revert", "drc_revert", "dac_revert"].includes(
                     proposal.status
@@ -89,9 +94,10 @@ router.post(
                     "This proposal cannot be resubmitted at its current stage."
                 );
             }
-
             supervisorEmail = proposal.supervisorEmail;
             studentName = proposal.student.name;
+            facultyReviewDate = proposal.proposalSemester.facultyReviewDate;
+
             const student = await tx.query.phd.findFirst({
                 where: eq(phd.email, userEmail),
             });
@@ -102,6 +108,7 @@ router.post(
                     number
                 >
             > = {};
+
             if (req.files && Object.entries(req.files).length) {
                 const fileInserts = Object.entries(req.files).map(
                     ([fieldName, files]) => {
@@ -161,9 +168,9 @@ router.post(
                 })
                 .where(eq(phdProposals.id, proposalId));
 
-            // Handle Co-supervisor update
             const finalCoSupervisorEmail =
                 coSupervisorEmail || externalCoSupervisorEmail;
+
             await tx
                 .delete(phdProposalCoSupervisors)
                 .where(eq(phdProposalCoSupervisors.proposalId, proposalId));
@@ -195,6 +202,7 @@ router.post(
                     module: modules[3],
                     completionEvent: `proposal:supervisor-review:${proposalId}`,
                     link: `/phd/supervisor/proposal/${proposalId}`,
+                    deadline: facultyReviewDate, 
                 },
             ]);
             await sendEmail({
@@ -203,10 +211,12 @@ router.post(
                 html: `<p>Dear Supervisor,</p><p>Your student, ${studentName}, has resubmitted their PhD proposal titled "<strong>${title}</strong>".</p><p>Please log in to the portal to review the changes.</p>`,
             });
         }
+
         res.status(200).send({
             success: true,
             message: "Proposal resubmitted successfully",
         });
     })
 );
+
 export default router;
