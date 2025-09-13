@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/supervisor/reviewProposal.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -5,7 +6,7 @@ import db from "@/config/db/index.ts";
 import { phdProposals, phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { phdSchemas, modules } from "lib";
 import { and, eq } from "drizzle-orm";
-import { HttpError, HttpCode } from "@/config/errors.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 import z from "zod";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
@@ -22,6 +23,7 @@ const reviewActionSchema = z.discriminatedUnion("action", [
         ...phdSchemas.proposalRevertSchema.shape,
     }),
 ]);
+
 export default router.post(
     "/:id",
     checkAccess(),
@@ -31,14 +33,20 @@ export default router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid Proposal ID");
         }
         const body = reviewActionSchema.parse(req.body);
+
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: and(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.supervisorEmail, req.user!.email)
                 ),
-                with: { student: true, proposalSemester: true },
+                with: {
+                    student: true,
+                    proposalSemester: true,
+                    dacMembers: true,
+                },
             });
+
             if (!proposal) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
@@ -60,6 +68,7 @@ export default router.post(
                     "Proposal is not in the supervisor review stage."
                 );
             }
+
             await completeTodo(
                 {
                     module: modules[3],
@@ -68,6 +77,7 @@ export default router.post(
                 },
                 tx
             );
+
             if (body.action === "revert") {
                 await tx
                     .update(phdProposals)
@@ -93,12 +103,36 @@ export default router.post(
                 await sendEmail({
                     to: proposal.student.email,
                     subject: "Action Required: Your PhD Proposal Submission",
-                    html: `<p>Dear ${proposal.student.name || "Student"},</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${body.comments}</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
+                    html: `<p>Dear ${
+                        proposal.student.name || "Student"
+                    },</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${
+                        body.comments
+                    }</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
                 });
             } else if (body.action === "accept") {
+                const previousDacEmails = proposal.dacMembers.map(
+                    (m) => m.dacMemberEmail
+                );
+                const newDacEmails = body.dacMembers;
+                const wasDacReverted =
+                    proposal.comments?.includes("DAC_REVERT_FLAG"); // A simple flag mechanism
+
+                const dacMembersChanged =
+                    previousDacEmails.length !== newDacEmails.length ||
+                    !previousDacEmails.every((email) =>
+                        newDacEmails.includes(email)
+                    );
+
+                let nextStatus: typeof phdSchemas.phdProposalStatuses[number] =
+                    "drc_review";
+                if (wasDacReverted && !dacMembersChanged) {
+                    nextStatus = "dac_review"; // Bypass DRC and send directly to DAC
+                }
+
                 await tx
                     .delete(phdProposalDacMembers)
                     .where(eq(phdProposalDacMembers.proposalId, proposalId));
+
                 await tx
                     .insert(phdProposalDacMembers)
                     .values(
@@ -107,43 +141,73 @@ export default router.post(
                             dacMemberEmail: email,
                         }))
                     );
+
                 await tx
                     .update(phdProposals)
                     .set({
-                        status: "drc_review",
+                        status: nextStatus,
                         comments: body.comments ?? null,
                     })
                     .where(eq(phdProposals.id, proposalId));
-                const drcConveners = await getUsersWithPermission(
-                    "phd:drc:proposal",
-                    tx
-                );
-                if (drcConveners.length > 0) {
+
+                if (nextStatus === "drc_review") {
+                    const drcConveners = await getUsersWithPermission(
+                        "phd:drc:proposal",
+                        tx
+                    );
+                    if (drcConveners.length > 0) {
+                        await createTodos(
+                            drcConveners.map((drc) => ({
+                                module: modules[3],
+                                assignedTo: drc.email,
+                                createdBy: req.user!.email,
+                                title: "PhD Proposal Ready for DRC Review",
+                                description: `Proposal by ${proposal.student.name} is approved by the supervisor and is awaiting your review.`,
+                                link: `/phd/drc-convenor/proposal-management/${proposalId}`,
+                                completionEvent: `proposal:drc-review:${proposalId}`,
+                                deadline:
+                                    proposal.proposalSemester?.drcReviewDate,
+                            })),
+                            tx
+                        );
+                        await Promise.all(
+                            drcConveners.map((drc) =>
+                                sendEmail({
+                                    to: drc.email,
+                                    subject: `PhD Proposal from ${proposal.student.name} requires DRC review`,
+                                    html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name} has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
+                                })
+                            )
+                        );
+                    }
+                } else {
+                    // Directly notify DAC members
                     await createTodos(
-                        drcConveners.map((drc) => ({
-                            module: modules[3],
-                            assignedTo: drc.email,
+                        body.dacMembers.map((dacEmail) => ({
+                            assignedTo: dacEmail,
                             createdBy: req.user!.email,
-                            title: "PhD Proposal Ready for DRC Review",
-                            description: `Proposal by ${proposal.student.name}is approved by the supervisor and is awaiting your review.`,
-                            link: `/phd/drc-convenor/proposal-management/${proposalId}`,
-                            completionEvent: `proposal:drc-review:${proposalId}`,
-                            deadline: proposal.proposalSemester?.drcReviewDate,
+                            title: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
+                            description: `Please evaluate the PhD proposal for ${proposal.student.name}.`,
+                            module: modules[3],
+                            completionEvent: `proposal:dac-review:${proposalId}`,
+                            link: `/phd/dac/proposals/${proposalId}`,
+                            deadline: proposal.proposalSemester?.dacReviewDate,
                         })),
                         tx
                     );
                     await Promise.all(
-                        drcConveners.map((drc) =>
+                        body.dacMembers.map((dacEmail) =>
                             sendEmail({
-                                to: drc.email,
-                                subject: `PhD Proposal from ${proposal.student.name}requires DRC review`,
-                                html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name}has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
+                                to: dacEmail,
+                                subject: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
+                                html: `<p>Dear DAC Member,</p><p>You have been assigned to evaluate the PhD proposal for ${proposal.student.name}. Please log in to the portal to submit your review.</p>`,
                             })
                         )
                     );
                 }
             }
         });
+
         res.status(200).json({
             success: true,
             message: `Proposal ${body.action}ed successfully.`,

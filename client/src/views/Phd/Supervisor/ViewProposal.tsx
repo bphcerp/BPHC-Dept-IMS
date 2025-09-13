@@ -17,15 +17,28 @@ import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocuments
 import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReviewForm";
 
 interface DacMember {
-  dacMember: { name: string | null; email: string };
+  dacMember: {
+    name: string | null;
+    email: string;
+  };
+}
+interface CoSupervisor {
+  coSupervisor: {
+    name: string | null;
+    email: string;
+  };
 }
 interface Proposal {
   id: number;
   title: string;
   status: string;
   comments: string | null;
-  student: { email: string; name: string | null };
+  student: {
+    email: string;
+    name: string | null;
+  };
   dacMembers: DacMember[];
+  coSupervisors: CoSupervisor[];
   appendixFileUrl: string;
   summaryFileUrl: string;
   outlineFileUrl: string;
@@ -60,7 +73,6 @@ const SupervisorViewProposal: React.FC = () => {
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
-        
         <LoadingSpinner />
       </div>
     );
@@ -89,37 +101,35 @@ const SupervisorViewProposal: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
       <BackButton />
       <Card>
-        
         <CardHeader>
-          
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            
-            Submitted by: {proposal.student.name}({proposal.student.email})
-            <br /> Status:
-            <Badge>
-              {proposal.status.replace(/_/g, " ").toUpperCase()}
-            </Badge>
+            Submitted by: {proposal.student.name} ({proposal.student.email})
+            <br />
+            Status:{" "}
+            <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
           </CardDescription>
         </CardHeader>
+        {proposal.coSupervisors.length > 0 && (
+          <CardContent>
+            <strong>Co-Supervisor: </strong>
+            {proposal.coSupervisors[0].coSupervisor?.name ??
+              proposal.coSupervisors[0].coSupervisor.email}
+          </CardContent>
+        )}
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
       {proposal.status === "supervisor_review" ? (
         <Card>
-          
           <CardHeader>
-            
             <CardTitle>Review and Action</CardTitle>
             <CardDescription>
-              
               Add DAC members and accept, or revert the proposal with comments.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            
             <SupervisorReviewForm
               proposalId={proposalId}
               onSuccess={handleSuccess}
@@ -129,24 +139,19 @@ const SupervisorViewProposal: React.FC = () => {
         </Card>
       ) : (
         <Card>
-          
           <CardHeader>
-            
             <CardTitle>Review Information</CardTitle>
           </CardHeader>
           <CardContent>
-            
             <p className="text-sm text-muted-foreground">
-              
               This proposal is not currently awaiting your review. Current
-              status:
+              status:{" "}
               <strong>
                 {proposal.status.replace(/_/g, " ").toUpperCase()}
               </strong>
             </p>
             {proposal.comments && (
               <p className="mt-4">
-                
                 <strong>Your last comment:</strong>
                 {proposal.comments}
               </p>
@@ -157,5 +162,4 @@ const SupervisorViewProposal: React.FC = () => {
     </div>
   );
 };
-
 export default SupervisorViewProposal;

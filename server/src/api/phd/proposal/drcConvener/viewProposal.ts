@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/drcConvener/viewProposal.ts
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -6,7 +7,6 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 
 const router = express.Router();
-
 router.get(
     "/:id",
     checkAccess(),
@@ -14,12 +14,22 @@ router.get(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+
         const proposal = await db.query.phdProposals.findFirst({
             where: (cols, { eq }) => eq(cols.id, proposalId),
             with: {
                 student: true,
                 supervisor: true,
-                dacMembers: { with: { dacMember: true } },
+                coSupervisors: {
+                    with: {
+                        coSupervisor: true,
+                    },
+                },
+                dacMembers: {
+                    with: {
+                        dacMember: true,
+                    },
+                },
                 dacReviews: {
                     with: {
                         dacMember: true,
@@ -33,11 +43,13 @@ router.get(
                 placeOfResearchFile: true,
                 outsideCoSupervisorFormatFile: true,
                 outsideSupervisorBiodataFile: true,
-                proposalSemester: true, 
+                proposalSemester: true,
             },
         });
+
         if (!proposal)
             throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
+
         const response = {
             ...proposal,
             appendixFileUrl: `${environment.SERVER_URL}/f/${proposal.appendixFileId}`,
@@ -58,5 +70,4 @@ router.get(
         res.status(200).json(response);
     })
 );
-
 export default router;

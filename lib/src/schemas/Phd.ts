@@ -69,26 +69,29 @@ export const createSuggestExaminersSchema = (examinerCount: number) =>
             .array(z.string().email())
             .length(
                 examinerCount,
-                `Must suggest exactly ${examinerCount}examiners`
+                `Must suggest exactly ${examinerCount} examiners`
             ),
         suggestionsArea2: z
             .array(z.string().email())
             .length(
                 examinerCount,
-                `Must suggest exactly ${examinerCount}examiners`
+                `Must suggest exactly ${examinerCount} examiners`
             ),
     });
+
 export const updateExaminerCountSchema = z.object({
     examId: z.number().int().positive(),
     examinerCount: z.number().int().min(2).max(4),
 });
 export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
+
 export const assignExaminersSchema = z.object({
     applicationId: z.number().int().positive(),
     examinerArea1: z.string().email(),
     examinerArea2: z.string().email(),
 });
 export type AssignExaminersBody = z.infer<typeof assignExaminersSchema>;
+
 export const updateProposalDeadlineSchema = z.object({
     semesterId: z.number().int().positive(),
     studentSubmissionDate: z.coerce.date(),
@@ -99,6 +102,7 @@ export const updateProposalDeadlineSchema = z.object({
 export type UpdateProposalDeadlineBody = z.infer<
     typeof updateProposalDeadlineSchema
 >;
+
 export const updateQualifyingExamSchema = z
     .object({
         semesterId: z.number().int().positive(),
@@ -125,8 +129,12 @@ export const updateQualifyingExamSchema = z
 export type UpdateQualifyingExamBody = z.infer<
     typeof updateQualifyingExamSchema
 >;
-export const updateSubAreasSchema = z.object({ subArea: z.string().min(1) });
+
+export const updateSubAreasSchema = z.object({
+    subArea: z.string().min(1),
+});
 export type UpdateSubAreasBody = z.infer<typeof updateSubAreasSchema>;
+
 export const updateSemesterDatesSchema = z.object({
     year: z.string(),
     semesterNumber: z.number(),
@@ -134,6 +142,7 @@ export const updateSemesterDatesSchema = z.object({
     endDate: z.string(),
 });
 export type UpdateSemesterDatesBody = z.infer<typeof updateSemesterDatesSchema>;
+
 export const updateQualificationDateSchema = z.array(
     z.object({
         email: z.string().email(),
@@ -143,21 +152,25 @@ export const updateQualificationDateSchema = z.array(
 export type UpdateQualificationDateBody = z.infer<
     typeof updateQualificationDateSchema
 >;
+
 export const suggestDacMembersSchema = z.object({
     dacMembers: z.array(z.string().email()),
     studentEmail: z.string().email(),
 });
 export type SuggestDacMembersBody = z.infer<typeof suggestDacMembersSchema>;
+
 export const selectDacSchema = z.object({
     email: z.string().email(),
     selectedDacMembers: z.array(z.string().email()).length(2),
 });
 export type SelectDacBody = z.infer<typeof selectDacSchema>;
+
 export const updateFinalDacSchema = z.object({
     email: z.string().email(),
     finalDacMembers: z.array(z.string().email()).length(2),
 });
 export type UpdateFinalDacBody = z.infer<typeof updateFinalDacSchema>;
+
 export const qualifyingExamApplicationSchema = z.object({
     applicationId: z.coerce.number().int().positive().optional(),
     examId: z.coerce.number().int().positive(),
@@ -167,6 +180,7 @@ export const qualifyingExamApplicationSchema = z.object({
 export type QualifyingExamApplicationBody = z.infer<
     typeof qualifyingExamApplicationSchema
 >;
+
 export const fileFieldNames = [
     "qualifyingArea1Syllabus",
     "qualifyingArea2Syllabus",
@@ -180,6 +194,7 @@ export const multerFileFields: Readonly<{ name: string; maxCount: number }[]> =
         return { name: x, maxCount: 1 };
     });
 export type FileField = (typeof fileFieldNames)[number];
+
 export const phdProposalSubmissionSchema = z.object({
     title: z.string().min(1, "Title is required"),
     hasOutsideCoSupervisor: z.preprocess(
@@ -194,7 +209,11 @@ export const phdProposalSubmissionSchema = z.object({
         .number()
         .int()
         .positive("A proposal cycle must be selected"),
+    coSupervisorEmail: z.string().email().optional().nullable(),
+    externalCoSupervisorName: z.string().optional().nullable(),
+    externalCoSupervisorEmail: z.string().email().optional().nullable(),
 });
+
 export const phdProposalFileFieldNames = [
     "appendixFile",
     "summaryFile",
@@ -203,14 +222,17 @@ export const phdProposalFileFieldNames = [
     "outsideCoSupervisorFormatFile",
     "outsideSupervisorBiodataFile",
 ] as const;
+
 export const phdProposalMulterFileFields: Readonly<
     { name: string; maxCount: number }[]
 > = (phdProposalFileFieldNames as Readonly<string[]>).map((x) => {
     return { name: x, maxCount: 1 };
 });
+
 export const proposalRevertSchema = z.object({
     comments: z.string().trim().min(1, "Comments are required for reverting"),
 });
+
 export const supervisorProposalAcceptSchema = z.object({
     dacMembers: z
         .array(z.string().email())
@@ -218,12 +240,14 @@ export const supervisorProposalAcceptSchema = z.object({
         .max(4, "Maximum 4 DAC members allowed"),
     comments: z.string().trim().optional(),
 });
+
 export const drcProposalAcceptSchema = z.object({
     selectedDacMembers: z
         .array(z.string().email())
         .length(2, "Exactly 2 DAC members must be selected"),
     comments: z.string().trim().optional(),
 });
+
 export const dacReviewFormSchema = z.object({
     q1a: z.boolean(),
     q1b: z.boolean(),
@@ -251,6 +275,7 @@ export const dacReviewFormSchema = z.object({
     q8_comments: z.string().trim().optional(),
 });
 export type DacReviewFormData = z.infer<typeof dacReviewFormSchema>;
+
 export const submitDacReviewSchema = z.object({
     approved: z.preprocess(
         (val) => val === "true" || val === true,
@@ -263,12 +288,14 @@ export const submitDacReviewSchema = z.object({
     ),
 });
 export type SubmitDacReviewBody = z.infer<typeof submitDacReviewSchema>;
+
 export const setSeminarDetailsSchema = z.object({
     seminarDate: z.coerce.date(),
     seminarTime: z.string(),
     seminarVenue: z.string().min(1),
 });
 export type SetSeminarDetailsBody = z.infer<typeof setSeminarDetailsSchema>;
+
 export const uploadProposalSchema = z.object({
     fileUrl1: z.string(),
     fileUrl2: z.string(),
@@ -280,7 +307,9 @@ export const uploadProposalSchema = z.object({
     coSupervisor1: z.string().email(),
     coSupervisor2: z.string().email(),
 });
+
 export type uploadProposalBody = z.infer<typeof uploadProposalSchema>;
+
 export const updatePhdGradeBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
@@ -288,6 +317,7 @@ export const updatePhdGradeBodySchema = z.object({
         .nonempty(),
 });
 export type UpdatePhdGradeBody = z.infer<typeof updatePhdGradeBodySchema>;
+
 export const updatePhdCoursesBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
@@ -302,18 +332,21 @@ export const updatePhdCoursesBodySchema = z.object({
         .min(0),
 });
 export type UpdatePhdCoursesBody = z.infer<typeof updatePhdCoursesBodySchema>;
+
 export const getQualifyingExamFormParamsSchema = z.object({
     email: z.string().email(),
 });
 export type GetQualifyingExamFormParams = z.infer<
     typeof getQualifyingExamFormParamsSchema
 >;
+
 export const updateQualifyingDeadlineBodySchema = z.object({
     deadline: z.string().datetime(),
 });
 export type UpdateQualifyingDeadlineBody = z.infer<
     typeof updateQualifyingDeadlineBodySchema
 >;
+
 export const courseworkFormSchema = z.array(
     z.object({
         name: z.string(),
@@ -328,6 +361,7 @@ export const courseworkFormSchema = z.array(
     })
 );
 export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
+
 export const addPhdCourseBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
@@ -341,17 +375,20 @@ export const addPhdCourseBodySchema = z.object({
         .nonempty(),
 });
 export type AddPhdCourseBody = z.infer<typeof addPhdCourseBodySchema>;
+
 export const deletePhdCourseBodySchema = z.object({
     studentEmail: z.string(),
     courseId: z.string(),
 });
 export type DeletePhdCourseBody = z.infer<typeof deletePhdCourseBodySchema>;
+
 export const updateExamDeadlineBodySchema = z.object({
     deadline: z.string().datetime(),
 });
 export type UpdateExamDeadlineBody = z.infer<
     typeof updateExamDeadlineBodySchema
 >;
+
 export const requestExaminerSuggestionsBodySchema = z.object({
     applicationId: z.number().int().positive(),
     subject: z.string().min(1, "Subject is required for emails."),
@@ -360,16 +397,19 @@ export const requestExaminerSuggestionsBodySchema = z.object({
 export type requestExaminerSuggestionsBody = z.infer<
     typeof requestExaminerSuggestionsBodySchema
 >;
+
 export const updateEmailTemplateSchema = z.object({
     name: z.string().min(1),
     subject: z.string().min(1),
     body: z.string().min(1),
 });
 export type UpdateEmailTemplateBody = z.infer<typeof updateEmailTemplateSchema>;
+
 export const updateProposalStatusSchema = z.object({
     status: z.enum(phdProposalStatuses),
     comments: z.string().optional(),
 });
+
 export const editCoSupervisorsBodySchema = z
     .object({
         add: z.string().trim().nonempty().email().optional(),
@@ -380,16 +420,20 @@ export const editCoSupervisorsBodySchema = z
         "Specify either add or remove"
     );
 export type EditCoSupervisorsBody = z.infer<typeof editCoSupervisorsBodySchema>;
+
 export const editDacMembersBodySchema = editCoSupervisorsBodySchema;
 export type EditDacMembersBody = z.infer<typeof editDacMembersBodySchema>;
+
 export const coSupervisorApprovalSchema = z.object({
     approvalStatus: z.boolean(),
     comments: z.string().optional(),
 });
+
 export const dacEvaluationSchema = z.object({
     status: z.enum(["completed", "discarded"]),
     comments: z.string().optional(),
 });
+
 export const finalizeDacMembersDrcSchema = z.object({
     finalizedDacMembers: z
         .array(z.string().email())
@@ -398,6 +442,7 @@ export const finalizeDacMembersDrcSchema = z.object({
 export type FinalizeDacMembersDrcBody = z.infer<
     typeof finalizeDacMembersDrcSchema
 >;
+
 export interface PhdStudent {
     email: string;
     name: string | null;
@@ -408,6 +453,7 @@ export interface PhdStudent {
     coSupervisor1: string | null;
     coSupervisor2: string | null;
 }
+
 export interface QualifyingExamApplication {
     id: number;
     examId: number;
@@ -434,6 +480,7 @@ export interface QualifyingExamApplication {
         mastersReport: string | null;
     };
 }
+
 export interface VerifiedApplication {
     id: number;
     examId: number;
@@ -462,6 +509,7 @@ export interface VerifiedApplication {
     qualificationDate: string | null;
     supervisorTodoExists: boolean;
 }
+
 export interface QualifyingExamApplicationsResponse {
     exam: {
         id: number;
@@ -486,6 +534,7 @@ export interface QualifyingExamApplicationsResponse {
     };
     applications: Array<QualifyingExamApplication>;
 }
+
 const timetableSlotItemSchema = z.object({
     id: z.number(),
     examId: z.number(),
@@ -496,16 +545,19 @@ const timetableSlotItemSchema = z.object({
     student: z.object({ name: z.string().nullable() }),
 });
 export type TimetableSlotItem = z.infer<typeof timetableSlotItemSchema>;
+
 const timetableUpdateSlotItemSchema = timetableSlotItemSchema.omit({
     id: true,
     student: true,
 });
+
 export const timetableSchema = z.object({
     slot1: z.array(timetableSlotItemSchema),
     slot2: z.array(timetableSlotItemSchema),
     unscheduled: z.array(timetableSlotItemSchema),
 });
 export type Timetable = z.infer<typeof timetableSchema>;
+
 export const updateTimetableSchema = z.object({
     timetable: z.object({
         slot1: z.array(timetableUpdateSlotItemSchema),
@@ -514,9 +566,11 @@ export const updateTimetableSchema = z.object({
     }),
 });
 export type UpdateTimetableBody = z.infer<typeof updateTimetableSchema>;
+
 export const sendToDacSchema = z.object({
     acceptedDacMembers: z
         .array(z.string().email())
         .min(2, "At least 2 DAC members must be selected"),
 });
+
 export type SendToDacBody = z.infer<typeof sendToDacSchema>;

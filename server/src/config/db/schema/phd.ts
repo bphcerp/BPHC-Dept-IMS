@@ -14,6 +14,7 @@ import { sql } from "drizzle-orm";
 import { faculty, phd } from "./admin.ts";
 import { phdSchemas } from "lib";
 import { files } from "./form.ts";
+
 export const phdEmailTemplates = pgTable("phd_email_templates", {
     id: serial("id").primaryKey(),
     name: text("name").notNull().unique(),
@@ -25,18 +26,22 @@ export const phdEmailTemplates = pgTable("phd_email_templates", {
         .$onUpdate(() => new Date())
         .notNull(),
 });
+
 export const phdExamApplicationStatus = pgEnum(
     "phd_exam_application_status",
     phdSchemas.phdExamApplicationStatuses
 );
+
 export const phdProposalStatus = pgEnum(
     "phd_proposal_status_enum",
     phdSchemas.phdProposalStatuses
 );
+
 export const phdExamResultStatus = pgEnum("phd_exam_result_status", [
     "pass",
     "fail",
 ]);
+
 export const phdCourses = pgTable("phd_courses", {
     id: serial("id").primaryKey(),
     studentEmail: text("student_email")
@@ -55,6 +60,7 @@ export const phdCourses = pgTable("phd_courses", {
         .array()
         .default(sql`'{}'::text[]`),
 });
+
 export const phdSemesters = pgTable(
     "phd_semesters",
     {
@@ -73,6 +79,7 @@ export const phdSemesters = pgTable(
     },
     (table) => [unique().on(table.year, table.semesterNumber)]
 );
+
 export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
     id: serial("id").primaryKey(),
     semesterId: integer("semester_id")
@@ -91,6 +98,7 @@ export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
         withTimezone: true,
     }).notNull(),
 });
+
 export const phdQualifyingExams = pgTable(
     "phd_qualifying_exams",
     {
@@ -120,6 +128,7 @@ export const phdQualifyingExams = pgTable(
     },
     (table) => [unique().on(table.semesterId, table.examName)]
 );
+
 export const phdExamApplications = pgTable("phd_exam_applications", {
     id: serial("id").primaryKey(),
     examId: integer("exam_id")
@@ -144,7 +153,9 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     ).references(() => files.id, { onDelete: "set null" }),
     tenthReportFileId: integer("tenth_report_file_id").references(
         () => files.id,
-        { onDelete: "set null" }
+        {
+            onDelete: "set null",
+        }
     ),
     twelfthReportFileId: integer("twelfth_report_file_id").references(
         () => files.id,
@@ -168,9 +179,11 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
         .$onUpdate(() => new Date())
         .notNull(),
 });
+
 export const phdSubAreas = pgTable("phd_sub_areas", {
     subArea: text("sub_area").notNull().primaryKey(),
 });
+
 export const phdExaminerSuggestions = pgTable(
     "phd_examiner_suggestions",
     {
@@ -195,6 +208,7 @@ export const phdExaminerSuggestions = pgTable(
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );
+
 export const phdExaminerAssignments = pgTable(
     "phd_examiner_assignments",
     {
@@ -211,6 +225,7 @@ export const phdExaminerAssignments = pgTable(
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );
+
 export const phdProposals = pgTable(
     "phd_proposals",
     {
@@ -275,6 +290,7 @@ export const phdProposals = pgTable(
         unique().on(table.studentEmail, table.active),
     ]
 );
+
 export const phdProposalCoSupervisors = pgTable(
     "phd_proposal_co_supervisors",
     {
@@ -282,9 +298,8 @@ export const phdProposalCoSupervisors = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        coSupervisorEmail: text("co_supervisor_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        coSupervisorEmail: text("co_supervisor_email").notNull(),
+        coSupervisorName: text("co_supervisor_name"),
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .$onUpdate(() => new Date())
@@ -296,6 +311,7 @@ export const phdProposalCoSupervisors = pgTable(
         index().on(table.proposalId),
     ]
 );
+
 export const phdProposalDacMembers = pgTable(
     "phd_proposal_dac_members",
     {
@@ -303,15 +319,14 @@ export const phdProposalDacMembers = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        dacMemberEmail: text("dac_member_email").notNull(),
     },
     (table) => [
         unique().on(table.proposalId, table.dacMemberEmail),
         index().on(table.proposalId),
     ]
 );
+
 export const phdProposalDacReviews = pgTable(
     "phd_proposal_dac_reviews",
     {
@@ -319,9 +334,7 @@ export const phdProposalDacReviews = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        dacMemberEmail: text("dac_member_email").notNull(),
         approved: boolean("approved").notNull(),
         comments: text("comments").notNull(),
         feedbackFileId: integer("feedback_file_id").references(() => files.id, {

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
   Card,
@@ -21,10 +21,8 @@ import { Button } from "@/components/ui/button";
 import { FileText, Eye, Clock, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { useMutation } from "@tanstack/react-query";
 
 interface ProposalSemester {
   id: number;
@@ -33,24 +31,33 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
+  semester: {
+    year: string;
+    semesterNumber: number;
+  };
 }
+
 interface ProposalListItem {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
+  student: {
+    name: string | null;
+    email: string;
+  };
   proposalSemester: ProposalSemester | null;
 }
+
 const DeadlinesCard = ({
   deadlines,
   highlight,
 }: {
   deadlines: ProposalSemester;
-  highlight: keyof ProposalSemester;
+  highlight: keyof Omit<ProposalSemester, "id" | "semesterId" | "semester">;
 }) => {
   const deadlineLabels: Record<
-    keyof Omit<ProposalSemester, "id" | "semesterId">,
+    keyof Omit<ProposalSemester, "id" | "semesterId" | "semester">,
     string
   > = {
     studentSubmissionDate: "Student Submission",
@@ -58,23 +65,21 @@ const DeadlinesCard = ({
     drcReviewDate: "DRC Review",
     dacReviewDate: "DAC Review",
   };
+
+  const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
+
   return (
     <Card className="mb-6 bg-muted/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Clock className="h-4 w-4" /> Semester Deadlines
+          <Clock className="h-4 w-4" /> Upcoming Deadline
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-        {Object.entries(deadlineLabels).map(([key, label]) => (
+      <CardContent className="grid grid-cols-1 gap-4 text-sm md:grid-cols-4">
+        {Object.entries(deadlineToShow).map(([key, label]) => (
           <div
             key={key}
-            className={cn(
-              "rounded-lg border p-3",
-              highlight === key
-                ? "border-primary bg-primary/10"
-                : "bg-background"
-            )}
+            className="rounded-lg border border-primary bg-primary/10 p-3 shadow-md transition-all"
           >
             <p className="font-semibold text-muted-foreground">{label}</p>
             <p className="mt-1">
@@ -88,12 +93,28 @@ const DeadlinesCard = ({
     </Card>
   );
 };
+
 const DrcProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
   const [selectedProposalIds, setSelectedProposalIds] = useState<number[]>([]);
+
+  const { data: semesters } = useQuery<ProposalSemester[]>({
+    queryKey: ["proposal-semesters"],
+    queryFn: async () => {
+      const response = await api.get("/phd/proposal/getProposalSemesters");
+      return response.data;
+    },
+  });
+
+  useEffect(() => {
+    if (semesters && semesters.length > 0 && !selectedSemesterId) {
+      setSelectedSemesterId(semesters[0].id);
+    }
+  }, [semesters, selectedSemesterId]);
+
   const {
     data: proposals,
     isLoading,
@@ -109,6 +130,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
+
   const downloadNoticeMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -131,11 +153,13 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download notice."),
   });
+
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const noticeReadyIds =
@@ -147,10 +171,12 @@ const DrcProposalManagement: React.FC = () => {
       setSelectedProposalIds([]);
     }
   };
+
   const semesterDeadlines = proposals?.[0]?.proposalSemester;
   const proposalsReadyForNotice = proposals?.filter((p) =>
     ["finalising", "formalising"].includes(p.status)
   );
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -159,11 +185,13 @@ const DrcProposalManagement: React.FC = () => {
           Monitor and manage all PhD proposals for the selected semester.
         </p>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
           <CardDescription>
-            Please select a semester to view its proposals.
+            The latest semester is selected by default. You can choose a
+            different one to view past proposals.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -173,12 +201,14 @@ const DrcProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
+
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="drcReviewDate"
         />
       )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -300,4 +330,5 @@ const DrcProposalManagement: React.FC = () => {
     </div>
   );
 };
+
 export default DrcProposalManagement;

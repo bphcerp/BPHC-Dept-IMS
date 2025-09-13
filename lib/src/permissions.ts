@@ -166,6 +166,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
     "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
     "/phd/proposal/getProposalSemesters": "phd:proposal",
+    "/phd/proposal/getFacultyList": "phd:proposal",
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
@@ -202,7 +203,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
-    "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
+    
 
     "/phd/proposal/student/getProposals": "phd:student:proposal",
     "/phd/proposal/student/resubmit": "phd:student:proposal",
@@ -213,7 +214,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/getFacultyList": "phd:faculty:proposal",
+    
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
