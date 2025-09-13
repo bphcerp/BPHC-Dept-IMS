@@ -227,6 +227,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
     "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
 
     //meeting
     "/meeting/create": "meeting:use",

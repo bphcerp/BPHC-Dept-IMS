@@ -10,7 +10,6 @@ import {
 } from "@/config/db/schema/phd.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import environment from "@/config/environment.ts";
-
 const router = express.Router();
 router.get(
     "/",
@@ -19,7 +18,6 @@ router.get(
         const student = await db.query.phd.findFirst({
             where: eq(phd.email, req.user!.email),
         });
-
         const proposals = await db.query.phdProposals.findMany({
             columns: {
                 id: true,
@@ -35,48 +33,39 @@ router.get(
             where: (cols, { and, eq }) =>
                 and(eq(cols.studentEmail, req.user!.email)),
             orderBy: desc(phdProposals.updatedAt),
-            with: {
-                proposalSemester: true,
-            },
+            with: { proposalSemester: true },
         });
-
         const proposalsWithDacFeedback = await Promise.all(
             proposals.map(async (p) => {
                 if (p.status === "dac_revert") {
                     const dacReviews =
                         await db.query.phdProposalDacReviews.findMany({
                             where: eq(phdProposalDacReviews.proposalId, p.id),
-                            with: {
-                                feedbackFile: true,
-                            },
+                            with: { feedbackFile: true },
                         });
-
-                    const dacFeedback = dacReviews.map((review) => ({
-                        approved: review.approved,
-                        comments: review.comments,
-                        feedbackFileUrl: review.feedbackFileId
-                            ? `${environment.SERVER_URL}/f/${review.feedbackFileId}`
-                            : null,
-                    }));
-
+                    const dacFeedback = dacReviews
+                        .filter((review) => !review.approved)
+                        .map((review) => ({
+                            comments: review.comments,
+                            feedbackFileUrl: review.feedbackFileId
+                                ? `${environment.SERVER_URL}/f/${review.feedbackFileId}`
+                                : null,
+                        }));
                     const dacSummary = dacReviews.map((review, index) => ({
                         label: `DAC ${index + 1}`,
                         status: review.approved ? "Approved" : "Reverted",
                     }));
-
                     return { ...p, dacFeedback, dacSummary };
                 }
                 return p;
             })
         );
-
         const now = new Date();
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
             where: gte(phdProposalSemesters.studentSubmissionDate, now),
         });
         // const canApply = student?.hasPassedQe && !proposals.some((p) => p.active) && !!activeDeadline;
         const canApply = true;
-
         res.status(200).json({ proposals: proposalsWithDacFeedback, canApply });
     })
 );

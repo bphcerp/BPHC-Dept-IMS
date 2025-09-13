@@ -18,12 +18,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye, Clock, Download } from "lucide-react";
+import {
+  FileText,
+  Eye,
+  Clock,
+  Download,
+  Send,
+  BellRing,
+  CheckCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -31,24 +38,16 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: {
-    year: string;
-    semesterNumber: number;
-  };
+  semester: { year: string; semesterNumber: number };
 }
-
 interface ProposalListItem {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: {
-    name: string | null;
-    email: string;
-  };
+  student: { name: string | null; email: string };
   proposalSemester: ProposalSemester | null;
 }
-
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -65,9 +64,7 @@ const DeadlinesCard = ({
     drcReviewDate: "DRC Review",
     dacReviewDate: "DAC Review",
   };
-
   const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
-
   return (
     <Card className="mb-6 bg-muted/30">
       <CardHeader>
@@ -93,14 +90,12 @@ const DeadlinesCard = ({
     </Card>
   );
 };
-
 const DrcProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
   const [selectedProposalIds, setSelectedProposalIds] = useState<number[]>([]);
-
   const { data: semesters } = useQuery<ProposalSemester[]>({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
@@ -108,18 +103,17 @@ const DrcProposalManagement: React.FC = () => {
       return response.data;
     },
   });
-
   useEffect(() => {
     if (semesters && semesters.length > 0 && !selectedSemesterId) {
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
-
   const {
     data: proposals,
     isLoading,
     isError,
     error,
+    refetch,
   } = useQuery<ProposalListItem[]>({
     queryKey: ["drc-proposals", selectedSemesterId],
     queryFn: async () => {
@@ -130,7 +124,6 @@ const DrcProposalManagement: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
-
   const downloadNoticeMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -153,30 +146,81 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download notice."),
   });
-
+  const requestSeminarDetailsMutation = useMutation({
+    mutationFn: (proposalIds: number[]) =>
+      api.post("/phd/proposal/drcConvener/requestSeminarDetails", {
+        proposalIds,
+      }),
+    onSuccess: () => {
+      toast.success("Requests sent to supervisors successfully.");
+      void refetch();
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message || "Failed to send requests."),
+  });
+  const remindSeminarDetailsMutation = useMutation({
+    mutationFn: (proposalId: number) =>
+      api.post("/phd/proposal/drcConvener/remindSeminarDetails", {
+        proposalId,
+      }),
+    onSuccess: () => {
+      toast.success("Reminder sent successfully.");
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message || "Failed to send reminder."),
+  });
+  const downloadPackagesMutation = useMutation({
+    mutationFn: (proposalIds: number[]) =>
+      api.post(
+        "/phd/proposal/drcConvener/downloadProposalPackage",
+        { proposalIds },
+        { responseType: "blob" }
+      ),
+    onSuccess: (response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `ProposalPackages.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      toast.success("Packages downloaded.");
+      void refetch();
+    },
+    onError: () => toast.error("Failed to download packages."),
+  });
+  const finalizeProposalsMutation = useMutation({
+    mutationFn: (proposalIds: number[]) =>
+      api.post("/phd/proposal/drcConvener/finalizeProposals", { proposalIds }),
+    onSuccess: () => {
+      toast.success("Selected proposals have been marked as complete.");
+      setSelectedProposalIds([]);
+      void refetch();
+    },
+    onError: (err: any) =>
+      toast.error(err.response?.data?.message || "Failed to finalize."),
+  });
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
-
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const noticeReadyIds =
-        proposals
-          ?.filter((p) => ["finalising", "formalising"].includes(p.status))
-          .map((p) => p.id) ?? [];
-      setSelectedProposalIds(noticeReadyIds);
+      const allIds = proposals?.map((p) => p.id) ?? [];
+      setSelectedProposalIds(allIds);
     } else {
       setSelectedProposalIds([]);
     }
   };
-
   const semesterDeadlines = proposals?.[0]?.proposalSemester;
-  const proposalsReadyForNotice = proposals?.filter((p) =>
-    ["finalising", "formalising"].includes(p.status)
-  );
-
+  const getSelectedProposalsByStatus = (status: string) => {
+    return (
+      proposals?.filter(
+        (p) => selectedProposalIds.includes(p.id) && p.status === status
+      ) ?? []
+    );
+  };
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -185,7 +229,6 @@ const DrcProposalManagement: React.FC = () => {
           Monitor and manage all PhD proposals for the selected semester.
         </p>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -201,33 +244,72 @@ const DrcProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
-
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="drcReviewDate"
         />
       )}
-
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>All Student Proposals</CardTitle>
-            <CardDescription>
-              Select proposals with status &quot;FINALISING&quot; or
-              &quot;FORMALISING&quot; to generate a notice.
-            </CardDescription>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <CardTitle>All Student Proposals</CardTitle>
+              <CardDescription>
+                Select proposals to perform bulk actions.
+              </CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() =>
+                  requestSeminarDetailsMutation.mutate(selectedProposalIds)
+                }
+                disabled={
+                  getSelectedProposalsByStatus("seminar_incomplete").length ===
+                    0 || requestSeminarDetailsMutation.isLoading
+                }
+              >
+                <Send className="mr-2 h-4 w-4" /> Request Details(
+                {getSelectedProposalsByStatus("seminar_incomplete").length})
+              </Button>
+              <Button
+                onClick={() =>
+                  downloadPackagesMutation.mutate(selectedProposalIds)
+                }
+                disabled={
+                  getSelectedProposalsByStatus("finalising").length === 0 ||
+                  downloadPackagesMutation.isLoading
+                }
+              >
+                <Download className="mr-2 h-4 w-4" /> Download Pkgs(
+                {getSelectedProposalsByStatus("finalising").length})
+              </Button>
+              <Button
+                onClick={() =>
+                  finalizeProposalsMutation.mutate(selectedProposalIds)
+                }
+                disabled={
+                  getSelectedProposalsByStatus("formalising").length === 0 ||
+                  finalizeProposalsMutation.isLoading
+                }
+              >
+                <CheckCircle className="mr-2 h-4 w-4" /> Finalize(
+                {getSelectedProposalsByStatus("formalising").length})
+              </Button>
+              <Button
+                onClick={() =>
+                  downloadNoticeMutation.mutate(selectedProposalIds)
+                }
+                disabled={
+                  selectedProposalIds.length === 0 ||
+                  downloadNoticeMutation.isLoading
+                }
+              >
+                <Download className="mr-2 h-4 w-4" /> Gen. Notice(
+                {selectedProposalIds.length})
+              </Button>
+            </div>
           </div>
-          <Button
-            onClick={() => downloadNoticeMutation.mutate(selectedProposalIds)}
-            disabled={
-              selectedProposalIds.length === 0 ||
-              downloadNoticeMutation.isLoading
-            }
-          >
-            <Download className="mr-2 h-4 w-4" /> Download Notice(
-            {selectedProposalIds.length})
-          </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -237,19 +319,14 @@ const DrcProposalManagement: React.FC = () => {
                   <Checkbox
                     onCheckedChange={handleSelectAll}
                     checked={
-                      proposalsReadyForNotice?.length
-                        ? selectedProposalIds.length ===
-                          proposalsReadyForNotice.length
+                      proposals?.length
+                        ? selectedProposalIds.length === proposals.length
                         : false
                     }
-                    disabled={
-                      !proposalsReadyForNotice ||
-                      proposalsReadyForNotice.length === 0
-                    }
+                    disabled={!proposals || proposals.length === 0}
                   />
                 </TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Title</TableHead>
+                <TableHead>Student</TableHead> <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -261,7 +338,7 @@ const DrcProposalManagement: React.FC = () => {
                     colSpan={5}
                     className="h-24 text-center text-red-600"
                   >
-                    Error:{" "}
+                    Error:
                     {(error as any)?.response?.data?.message ||
                       "Failed to load proposals"}
                   </TableCell>
@@ -288,11 +365,6 @@ const DrcProposalManagement: React.FC = () => {
                         onCheckedChange={(checked) =>
                           handleSelectProposal(proposal.id, checked as boolean)
                         }
-                        disabled={
-                          !["finalising", "formalising"].includes(
-                            proposal.status
-                          )
-                        }
                       />
                     </TableCell>
                     <TableCell>
@@ -307,10 +379,10 @@ const DrcProposalManagement: React.FC = () => {
                         {proposal.status.replace(/_/g, " ").toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="flex justify-end gap-2 text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() =>
                           navigate(
                             `/phd/drc-convenor/proposal-management/${proposal.id}`
@@ -319,6 +391,18 @@ const DrcProposalManagement: React.FC = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {proposal.status === "seminar_incomplete" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            remindSeminarDetailsMutation.mutate(proposal.id)
+                          }
+                          disabled={remindSeminarDetailsMutation.isLoading}
+                        >
+                          <BellRing className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -330,5 +414,4 @@ const DrcProposalManagement: React.FC = () => {
     </div>
   );
 };
-
 export default DrcProposalManagement;

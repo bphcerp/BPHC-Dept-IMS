@@ -45,7 +45,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
 interface ProposalSemester {
   id: number;
   studentSubmissionDate: string;
@@ -53,7 +52,6 @@ interface ProposalSemester {
   drcReviewDate: string;
   dacReviewDate: string;
 }
-
 interface DacFeedback {
   approved: boolean;
   comments: string;
@@ -63,7 +61,6 @@ interface DacSummary {
   label: string;
   status: "Approved" | "Reverted";
 }
-
 interface Proposal {
   id: number;
   title: string;
@@ -78,7 +75,6 @@ interface Proposal {
   dacFeedback?: DacFeedback[];
   dacSummary?: DacSummary[];
 }
-
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -95,9 +91,7 @@ const DeadlinesCard = ({
     drcReviewDate: "DRC Review",
     dacReviewDate: "DAC Review",
   };
-
   const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
-
   return (
     <Card className="mb-6 bg-muted/30">
       <CardHeader>
@@ -127,12 +121,10 @@ const DeadlinesCard = ({
     </Card>
   );
 };
-
 const StudentProposal: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [proposalForForm, setProposalForForm] = useState<any | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
-
   const { data: eligibility, isLoading: isLoadingEligibility } = useQuery<{
     isEligible: boolean;
     qualificationDate: string | null;
@@ -143,7 +135,6 @@ const StudentProposal: React.FC = () => {
       return res.data;
     },
   });
-
   const { data: proposalData, refetch } = useQuery<{
     proposals: Proposal[];
     canApply: boolean;
@@ -155,7 +146,6 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
@@ -164,7 +154,6 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
-
   const fetchProposalDetailsMutation = useMutation({
     mutationFn: (proposalId: number) =>
       api.get(`/phd/proposal/student/view/${proposalId}`),
@@ -176,17 +165,14 @@ const StudentProposal: React.FC = () => {
       toast.error("Failed to fetch proposal details for editing.");
     },
   });
-
   const openResubmitDialog = (proposal: Proposal) => {
     fetchProposalDetailsMutation.mutate(proposal.id);
   };
-
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setProposalForForm(null);
     void refetch();
   };
-
   const handleOpenNewProposalDialog = () => {
     if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
       toast.error("There are no active proposal submission cycles available.");
@@ -195,10 +181,9 @@ const StudentProposal: React.FC = () => {
     if (deadlineData.deadlines.length === 1) {
       setSelectedCycleId(deadlineData.deadlines[0].id.toString());
     }
-    setProposalForForm(null); // Ensure form is empty for new proposals
+    setProposalForForm(null);
     setIsFormOpen(true);
   };
-
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -207,12 +192,10 @@ const StudentProposal: React.FC = () => {
       </div>
     );
   }
-
   const currentDeadlines = deadlineData?.deadlines[0];
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
     : true;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -234,7 +217,6 @@ const StudentProposal: React.FC = () => {
           </Button>
         )}
       </div>
-
       {!eligibility?.isEligible ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -251,7 +233,7 @@ const StudentProposal: React.FC = () => {
               <CalendarCheck className="h-4 w-4 text-green-700" />
               <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
               <AlertDescription className="text-green-700">
-                Congratulations! You passed your qualifying exam on:{" "}
+                Congratulations! You passed your qualifying exam on:
                 <strong>
                   {new Date(eligibility.qualificationDate).toLocaleDateString()}
                 </strong>
@@ -270,14 +252,12 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
-
       {eligibility?.isEligible && currentDeadlines && (
         <DeadlinesCard
           deadlines={currentDeadlines}
           highlight="studentSubmissionDate"
         />
       )}
-
       <Card>
         <CardHeader>
           <CardTitle>Your Submissions</CardTitle>
@@ -289,8 +269,7 @@ const StudentProposal: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Title</TableHead> <TableHead>Status</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -347,19 +326,55 @@ const StudentProposal: React.FC = () => {
                         )}
                       </TableCell>
                     </TableRow>
-
-                    {p.comments && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
-                          <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Feedback/Comments</AlertTitle>
-                            <AlertDescription>{p.comments}</AlertDescription>
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    )}
-
+                    {(p.comments || p.dacFeedback) &&
+                      [
+                        "supervisor_revert",
+                        "drc_revert",
+                        "dac_revert",
+                      ].includes(p.status) && (
+                        <TableRow>
+                          <TableCell colSpan={4}>
+                            <Alert variant="destructive">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTitle>Feedback & Comments</AlertTitle>
+                              <AlertDescription>
+                                <div className="space-y-2">
+                                  {p.comments && <p>{p.comments}</p>}
+                                  {p.dacFeedback?.map((feedback, index) => (
+                                    <div
+                                      key={index}
+                                      className="mt-2 border-t pt-2"
+                                    >
+                                      <p className="font-semibold">
+                                        Feedback from Committee Member:
+                                      </p>
+                                      <p className="whitespace-pre-wrap">
+                                        {feedback.comments}
+                                      </p>
+                                      {feedback.feedbackFileUrl && (
+                                        <Button
+                                          asChild
+                                          variant="link"
+                                          className="h-auto p-0"
+                                        >
+                                          <a
+                                            href={feedback.feedbackFileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download Feedback Document
+                                          </a>
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </AlertDescription>
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
                     {p.seminarDate && (
                       <TableRow>
                         <TableCell colSpan={4}>
@@ -367,11 +382,11 @@ const StudentProposal: React.FC = () => {
                             <Info className="h-4 w-4" />
                             <AlertTitle>Seminar Details</AlertTitle>
                             <AlertDescription>
-                              Your seminar is tentatively scheduled for{" "}
+                              Your seminar is tentatively scheduled for
                               <strong>
                                 {new Date(p.seminarDate).toLocaleDateString()}
-                              </strong>{" "}
-                              at <strong>{p.seminarTime}</strong> in{" "}
+                              </strong>
+                              at <strong>{p.seminarTime}</strong> in
                               <strong>{p.seminarVenue}</strong>.
                             </AlertDescription>
                           </Alert>
@@ -385,7 +400,6 @@ const StudentProposal: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -410,7 +424,7 @@ const StudentProposal: React.FC = () => {
                   <SelectContent>
                     {deadlineData.deadlines.map((cycle) => (
                       <SelectItem key={cycle.id} value={cycle.id.toString()}>
-                        Deadline:{" "}
+                        Deadline:
                         {new Date(
                           cycle.studentSubmissionDate
                         ).toLocaleDateString()}
@@ -420,7 +434,6 @@ const StudentProposal: React.FC = () => {
                 </Select>
               </div>
             )}
-
           <StudentProposalForm
             proposalData={
               proposalForForm ?? { proposalCycleId: Number(selectedCycleId) }
@@ -432,5 +445,4 @@ const StudentProposal: React.FC = () => {
     </div>
   );
 };
-
 export default StudentProposal;
