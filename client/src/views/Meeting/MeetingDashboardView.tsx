@@ -6,7 +6,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { MeetingDashboard } from "@/components/meeting/MeetingDashboard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { isAxiosError } from "axios"; // Import the type guard
+import { isAxiosError } from "axios";
 
 // Define a type for the API response
 interface MeetingsData {

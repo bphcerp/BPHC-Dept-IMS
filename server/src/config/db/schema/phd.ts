@@ -33,7 +33,7 @@ export const phdExamApplicationStatus = pgEnum(
 );
 
 export const phdProposalStatus = pgEnum(
-    "phd_proposal_status_enum",
+    "phd_proposal_status",
     phdSchemas.phdProposalStatuses
 );
 

@@ -10,7 +10,7 @@ const router = express.Router();
 export default router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (_req, res) => {
         const now = new Date();
 
         const deadlines = await db.query.phdProposalSemesters.findMany({

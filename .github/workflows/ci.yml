@@ -28,7 +28,7 @@ jobs:
         run: pnpm install
 
       - name: Build server (TypeScript compilation)
-        run: pnpm --filter server tsc --build
+        run: pnpm --filter server run build
 
       - name: Build client (TypeScript + Vite)
         run: pnpm --filter client run build
