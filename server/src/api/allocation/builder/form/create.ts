@@ -29,26 +29,12 @@ router.post(
       }
   
       const [newForm] = await db.insert(allocationForm).values({
-        templateId: parsed.templateId,
-        title: template.name,
-        description: template.description,
+        ...parsed,
         createdByEmail: req.user!.email,
-        isPublished: parsed.isPublished ?? false,
       }).returning();
   
       if (!newForm) {
         return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "Failed to create form"));
-      }
-  
-      const templateFields = await db.query.allocationFormTemplateField.findMany({
-        where: (f, { eq }) => eq(f.templateId, template.id),
-      });
-  
-      for (const field of templateFields) {
-        await db.insert(allocationFormTemplateField).values({
-          ...field,
-          templateId: newForm.id,
-        });
       }
   
       res.status(201).json(newForm);

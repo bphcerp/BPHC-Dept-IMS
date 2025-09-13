@@ -25,7 +25,7 @@ const formatPreferenceType = (type?: AllocationFormTemplatePreferenceFieldType) 
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
-export const AllocationFormTemplateField = ({
+export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,

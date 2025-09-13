@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Trash2, PlusCircle, GripVertical, AlertTriangle } from "lucide-react";
+import { Trash2, PlusCircle, AlertTriangle } from "lucide-react";
 import {
   AllocationFormTemplate,
   AllocationFormTemplateFieldType,
@@ -22,18 +22,18 @@ import {
 } from "node_modules/lib/src/types/allocationFormBuilder";
 import {
   AllocationClientField,
-  AllocationFormTemplateField,
-} from "@/components/allocation/AllocationFormTemplateField";
+  FormTemplateFieldComponent,
+} from "@/components/allocation/FormTemplateFieldComponent";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 
-const fieldTypes: AllocationFormTemplateFieldType[] = [
+export const fieldTypes: AllocationFormTemplateFieldType[] = [
   "PREFERENCE",
   "TEACHING_ALLOCATION",
 ];
 
-const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
+export const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
   PREFERENCE: "Please rank your course preferences.",
   TEACHING_ALLOCATION: "What is your teaching allocation?",
 };
@@ -132,7 +132,7 @@ const FormTemplateView = ({ create = true }) => {
       };
       await api.post("/allocation/builder/template/create", templateCreateData);
       toast.success("Template saved successfully!");
-      navigate("/allocation/form-templates");
+      navigate("/allocation/templates");
     } catch (error) {
       console.error("Error saving template:", error);
       toast.error("Failed to save template.");
@@ -214,12 +214,8 @@ const FormTemplateView = ({ create = true }) => {
         <div className="space-y-6">
           {(create ? fields : templateToView!.fields!).map((field) => (
             <Card key={field.id} className="border-border">
-              <CardHeader
-                className={`${create && "grid grid-cols-[1fr_auto] md:grid-cols-[auto_1fr_auto]"} items-center gap-4 bg-muted/50 p-4`}
-              >
-                {create && (
-                  <GripVertical className="hidden h-5 w-5 cursor-grab text-muted-foreground md:block" />
-                )}
+              <CardHeader className="gap-4 bg-muted/50 p-4">
+                <div className="flex items-center justify-between">
                 <Input
                   placeholder="Enter question label..."
                   value={field.label}
@@ -257,9 +253,10 @@ const FormTemplateView = ({ create = true }) => {
                     </Button>
                   </div>
                 )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
-                <AllocationFormTemplateField
+                <FormTemplateFieldComponent
                   field={field}
                   create={create}
                   courses={courses}
