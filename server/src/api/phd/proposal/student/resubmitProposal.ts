@@ -15,7 +15,7 @@ import multer from "multer";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { eq, and } from "drizzle-orm";
-import { phd } from "@/config/db/schema/admin.ts";
+// import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
 
@@ -98,9 +98,9 @@ router.post(
             studentName = proposal.student.name;
             facultyReviewDate = proposal.proposalSemester.facultyReviewDate;
 
-            const student = await tx.query.phd.findFirst({
-                where: eq(phd.email, userEmail),
-            });
+            // const student = await tx.query.phd.findFirst({
+            //     where: eq(phd.email, userEmail),
+            // });
 
             const insertedFileIds: Partial<
                 Record<
