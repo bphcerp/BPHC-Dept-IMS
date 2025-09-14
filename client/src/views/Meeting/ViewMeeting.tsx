@@ -11,6 +11,9 @@ import { meetingSchemas } from "lib";
 import { z } from "zod";
 
 type FinalizeFormData = z.infer<typeof meetingSchemas.finalizeMeetingSchema>;
+type UpdateDetailsFormData = z.infer<
+  typeof meetingSchemas.updateMeetingDetailsSchema
+>;
 
 const ViewMeeting: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,7 +29,7 @@ const ViewMeeting: React.FC = () => {
     enabled: !!meetingId,
   });
 
-  const mutation = useMutation({
+  const finalizeMutation = useMutation({
     mutationFn: (variables: Omit<FinalizeFormData, "meetingId">) =>
       api.post("/meeting/finalize", { meetingId, ...variables }),
     onSuccess: () => {
@@ -42,12 +45,28 @@ const ViewMeeting: React.FC = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (variables: UpdateDetailsFormData) =>
+      api.put(`/meeting/update-details/${meetingId}`, variables),
+    onSuccess: () => {
+      toast.success("Meeting details have been updated!");
+      void queryClient.invalidateQueries({ queryKey: ["meeting", meetingId] });
+      void queryClient.invalidateQueries({ queryKey: ["meetings"] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to update meeting details."
+      );
+    },
+  });
+
   if (isLoading)
     return (
       <div className="flex justify-center p-8">
         <LoadingSpinner />
       </div>
     );
+
   if (isError || !data)
     return (
       <p className="text-center text-destructive">
@@ -60,8 +79,10 @@ const ViewMeeting: React.FC = () => {
   return (
     <MeetingDetails
       meeting={data}
-      onFinalize={mutation.mutate}
-      isFinalizing={mutation.isLoading}
+      onFinalize={finalizeMutation.mutate}
+      isFinalizing={finalizeMutation.isLoading}
+      onUpdateDetails={updateMutation.mutate}
+      isUpdating={updateMutation.isLoading}
       isOrganizer={isOrganizer}
     />
   );

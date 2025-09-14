@@ -1,5 +1,5 @@
 // client/src/components/meeting/MeetingDetails.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Users, X } from "lucide-react";
+import { Check, Users, X, Edit } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,12 +28,16 @@ import { z } from "zod";
 import { LoadingSpinner } from "../ui/spinner";
 
 type FinalizeFormData = z.infer<typeof meetingSchemas.finalizeMeetingSchema>;
-type FormValues = Omit<FinalizeFormData, "meetingId" | "finalTimeSlotId">;
+type UpdateDetailsFormData = z.infer<
+  typeof meetingSchemas.updateMeetingDetailsSchema
+>;
 
 interface MeetingDetailsProps {
   meeting: any;
   onFinalize: (variables: Omit<FinalizeFormData, "meetingId">) => void;
   isFinalizing: boolean;
+  onUpdateDetails: (variables: UpdateDetailsFormData) => void;
+  isUpdating: boolean;
   isOrganizer: boolean;
 }
 
@@ -44,7 +48,6 @@ const AvailabilityDialog = ({ slot }: { slot: any }) => {
   const unavailable = slot.availability.filter(
     (a: any) => a.availability === "unavailable"
   );
-
   return (
     <DialogContent>
       <DialogHeader>
@@ -89,14 +92,18 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   meeting,
   onFinalize,
   isFinalizing,
+  onUpdateDetails,
+  isUpdating,
   isOrganizer,
 }) => {
   const [finalizeSlot, setFinalizeSlot] = useState<any | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormValues>({
+    register: registerFinalize,
+    handleSubmit: handleFinalize,
+    formState: { errors: finalizeErrors },
+  } = useForm<Omit<FinalizeFormData, "meetingId" | "finalTimeSlotId">>({
     resolver: zodResolver(
       meetingSchemas.finalizeMeetingObjectSchema.omit({
         meetingId: true,
@@ -105,10 +112,37 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
     ),
   });
 
-  const handleFinalizeSubmit = (data: FormValues) => {
+  const {
+    register: registerUpdate,
+    handleSubmit: handleUpdate,
+    formState: { errors: updateErrors },
+    reset,
+  } = useForm<UpdateDetailsFormData>({
+    resolver: zodResolver(meetingSchemas.updateMeetingDetailsSchema),
+    defaultValues: {
+      venue: meeting.venue || "",
+      googleMeetLink: meeting.googleMeetLink || "",
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      venue: meeting.venue || "",
+      googleMeetLink: meeting.googleMeetLink || "",
+    });
+  }, [meeting, reset]);
+
+  const onFinalizeSubmit = (
+    data: Omit<FinalizeFormData, "meetingId" | "finalTimeSlotId">
+  ) => {
     if (finalizeSlot) {
       onFinalize({ finalTimeSlotId: finalizeSlot.id, ...data });
     }
+  };
+
+  const onUpdateSubmit = (data: UpdateDetailsFormData) => {
+    onUpdateDetails(data);
+    setIsEditDialogOpen(false);
   };
 
   return (
@@ -131,29 +165,109 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
                 <strong>Scheduled Time:</strong>{" "}
                 {new Date(meeting.finalizedTime).toLocaleString()}
               </p>
-              {meeting.venue && (
-                <p>
-                  <strong>Venue:</strong> {meeting.venue}
-                </p>
-              )}
-              {meeting.googleMeetLink && (
-                <p>
-                  <strong>Meet Link:</strong>{" "}
-                  <a
-                    href={meeting.googleMeetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
+              <div className="flex items-center gap-4">
+                <div>
+                  {meeting.venue && (
+                    <p>
+                      <strong>Venue:</strong> {meeting.venue}
+                    </p>
+                  )}
+                  {meeting.googleMeetLink && (
+                    <p>
+                      <strong>Meet Link:</strong>{" "}
+                      <a
+                        href={meeting.googleMeetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {meeting.googleMeetLink}
+                      </a>
+                    </p>
+                  )}
+                </div>
+                {isOrganizer && meeting.status === "scheduled" && (
+                  <Dialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
                   >
-                    {meeting.googleMeetLink}
-                  </a>
-                </p>
-              )}
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Edit className="mr-2 h-4 w-4" /> Edit Details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <form onSubmit={handleUpdate(onUpdateSubmit)}>
+                        <DialogHeader>
+                          <DialogTitle>Update Meeting Details</DialogTitle>
+                          <DialogDescription>
+                            Edit the location for the meeting. Participants will
+                            be notified of the changes.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor="venue-update"
+                              className="text-right"
+                            >
+                              Venue
+                            </Label>
+                            <Input
+                              id="venue-update"
+                              {...registerUpdate("venue")}
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor="googleMeetLink-update"
+                              className="text-right"
+                            >
+                              Meet Link
+                            </Label>
+                            <Input
+                              id="googleMeetLink-update"
+                              {...registerUpdate("googleMeetLink")}
+                              placeholder="https://meet.google.com/..."
+                              className="col-span-3"
+                            />
+                          </div>
+                          {updateErrors.venue?.message && (
+                            <p className="col-span-4 text-center text-sm text-destructive">
+                              {updateErrors.venue.message}
+                            </p>
+                          )}
+                          {updateErrors.googleMeetLink?.message && (
+                            <p className="col-span-4 text-center text-sm text-destructive">
+                              {updateErrors.googleMeetLink.message}
+                            </p>
+                          )}
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsEditDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={isUpdating}>
+                            {isUpdating && (
+                              <LoadingSpinner className="mr-2 h-4 w-4" />
+                            )}
+                            Update Meeting
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                )}
+              </div>
             </>
           )}
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Participants</CardTitle>
@@ -166,7 +280,6 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
           </ul>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Suggested Time Slots & Availability</CardTitle>
@@ -190,8 +303,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm">
-                        <Users className="mr-2 h-4 w-4" />
-                        View Details
+                        <Users className="mr-2 h-4 w-4" /> View Details
                       </Button>
                     </DialogTrigger>
                     <AvailabilityDialog slot={slot} />
@@ -208,10 +320,10 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
           ))}
         </CardContent>
       </Card>
-
+      {/* Finalize Dialog */}
       <Dialog open={!!finalizeSlot} onOpenChange={() => setFinalizeSlot(null)}>
         <DialogContent>
-          <form onSubmit={handleSubmit(handleFinalizeSubmit)}>
+          <form onSubmit={handleFinalize(onFinalizeSubmit)}>
             <DialogHeader>
               <DialogTitle>Finalize Meeting</DialogTitle>
               <DialogDescription>
@@ -224,34 +336,34 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="venue" className="text-right">
+                <Label htmlFor="venue-finalize" className="text-right">
                   Venue
                 </Label>
                 <Input
-                  id="venue"
-                  {...register("venue")}
+                  id="venue-finalize"
+                  {...registerFinalize("venue")}
                   className="col-span-3"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="googleMeetLink" className="text-right">
+                <Label htmlFor="googleMeetLink-finalize" className="text-right">
                   Meet Link
                 </Label>
                 <Input
-                  id="googleMeetLink"
-                  {...register("googleMeetLink")}
+                  id="googleMeetLink-finalize"
+                  {...registerFinalize("googleMeetLink")}
                   placeholder="https://meet.google.com/..."
                   className="col-span-3"
                 />
               </div>
-              {errors.venue?.message && (
+              {finalizeErrors.venue?.message && (
                 <p className="col-span-4 text-center text-sm text-destructive">
-                  {errors.venue.message}
+                  {finalizeErrors.venue.message}
                 </p>
               )}
-              {errors.googleMeetLink?.message && (
+              {finalizeErrors.googleMeetLink?.message && (
                 <p className="col-span-4 text-center text-sm text-destructive">
-                  {errors.googleMeetLink.message}
+                  {finalizeErrors.googleMeetLink.message}
                 </p>
               )}
             </div>

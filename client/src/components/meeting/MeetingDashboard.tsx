@@ -31,8 +31,8 @@ interface Meeting {
   status: string;
   finalizedTime: string | null;
   organizerEmail: string;
-  participantCount?: number;
-  responseCount?: number;
+  participantCount: number;
+  responseCount: number;
 }
 
 interface MeetingDashboardProps {
@@ -94,7 +94,7 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
-              {isOrganizer && <TableHead>Responses</TableHead>}
+              <TableHead>Responses</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -104,13 +104,9 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
                 <TableRow key={m.id}>
                   <TableCell>{m.title}</TableCell>
                   <TableCell>{getStatusBadge(m.status)}</TableCell>
-                  {isOrganizer && (
-                    <TableCell>
-                      {m.participantCount !== undefined
-                        ? `${m.responseCount}/${m.participantCount}`
-                        : "-"}
-                    </TableCell>
-                  )}
+                  <TableCell>
+                    {`${m.responseCount}/${m.participantCount}`}
+                  </TableCell>
                   <TableCell className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -166,10 +162,7 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={isOrganizer ? 4 : 3}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={4} className="h-24 text-center">
                   No meetings found.
                 </TableCell>
               </TableRow>

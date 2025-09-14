@@ -3,7 +3,6 @@ import { z } from "zod";
 
 export const availabilityStatusEnum = z.enum(["available", "unavailable"]);
 
-// --- Create Meeting Schemas ---
 const createMeetingObjectSchema = z.object({
     title: z.string().min(1, "Title is required").max(255),
     purpose: z.string().max(1000).optional(),
@@ -31,19 +30,16 @@ export const createMeetingSchema = createMeetingObjectSchema.refine(
         path: ["timeSlots"],
     }
 );
-// Export the base object so it can be imported and used with .omit()
+
 export { createMeetingObjectSchema };
 
-// --- Finalize Meeting Schemas ---
-// FIX: Create a base object schema for finalization
 const finalizeMeetingObjectSchema = z.object({
     meetingId: z.number().int(),
     finalTimeSlotId: z.number().int(),
     venue: z.string().trim().optional(),
-    googleMeetLink: z.string().url("Must be a valid URL").trim().optional(),
+    googleMeetLink: z.string().trim().optional(),
 });
 
-// FIX: Create the refined schema from the base object
 export const finalizeMeetingSchema = finalizeMeetingObjectSchema.refine(
     (data) => !!data.venue || !!data.googleMeetLink,
     {
@@ -51,10 +47,18 @@ export const finalizeMeetingSchema = finalizeMeetingObjectSchema.refine(
         path: ["venue"],
     }
 );
-// FIX: Export the new base object for the finalization form
 export { finalizeMeetingObjectSchema };
 
-// --- Other Schemas ---
+export const updateMeetingDetailsSchema = z
+    .object({
+        venue: z.string().trim().optional(),
+        googleMeetLink: z.string().url("Must be a valid URL").trim().optional(),
+    })
+    .refine((data) => !!data.venue || !!data.googleMeetLink, {
+        message: "Either a venue or a Google Meet link must be provided.",
+        path: ["venue"],
+    });
+
 export const submitAvailabilitySchema = z.object({
     meetingId: z.number().int(),
     availability: z

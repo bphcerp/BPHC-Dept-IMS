@@ -7,6 +7,7 @@ import {
     meetings,
     meetingParticipants,
     meetingAvailability,
+    meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
 import { eq, and, sql, ne } from "drizzle-orm";
 
@@ -18,33 +19,59 @@ router.get(
     asyncHandler(async (req, res) => {
         const userEmail = req.user!.email;
 
-        const organizedMeetingsQuery = await db
+        // Subquery to get participant count for each meeting
+        const participantCountsSq = db
+            .select({
+                meetingId: meetingParticipants.meetingId,
+                count: sql<number>`count(${meetingParticipants.participantEmail})`
+                    .mapWith(Number)
+                    .as("participant_count"),
+            })
+            .from(meetingParticipants)
+            .groupBy(meetingParticipants.meetingId)
+            .as("participant_counts");
+
+        // Subquery to get response count for each meeting
+        const responseCountsSq = db
+            .select({
+                meetingId: meetingTimeSlots.meetingId,
+                count: sql<number>`count(distinct ${meetingAvailability.participantEmail})`
+                    .mapWith(Number)
+                    .as("response_count"),
+            })
+            .from(meetingAvailability)
+            .innerJoin(
+                meetingTimeSlots,
+                eq(meetingAvailability.timeSlotId, meetingTimeSlots.id)
+            )
+            .groupBy(meetingTimeSlots.meetingId)
+            .as("response_counts");
+
+        // Query for meetings organized by the user
+        const organizedMeetings = await db
             .select({
                 id: meetings.id,
                 title: meetings.title,
+                status: meetings.status,
                 finalizedTime: meetings.finalizedTime,
                 organizerEmail: meetings.organizerEmail,
-                status: meetings.status,
                 participantCount:
-                    sql<number>`count(distinct ${meetingParticipants.participantEmail})`.mapWith(
+                    sql<number>`coalesce(${participantCountsSq.count}, 0)`.mapWith(
                         Number
                     ),
                 responseCount:
-                    sql<number>`count(distinct ${meetingAvailability.participantEmail})`.mapWith(
+                    sql<number>`coalesce(${responseCountsSq.count}, 0)`.mapWith(
                         Number
                     ),
             })
             .from(meetings)
             .leftJoin(
-                meetingParticipants,
-                eq(meetings.id, meetingParticipants.meetingId)
+                participantCountsSq,
+                eq(meetings.id, participantCountsSq.meetingId)
             )
             .leftJoin(
-                meetingAvailability,
-                eq(
-                    meetingParticipants.participantEmail,
-                    meetingAvailability.participantEmail
-                )
+                responseCountsSq,
+                eq(meetings.id, responseCountsSq.meetingId)
             )
             .where(
                 and(
@@ -53,16 +80,37 @@ router.get(
                     ne(meetings.status, "cancelled")
                 )
             )
-            .groupBy(meetings.id);
+            .orderBy(meetings.createdAt);
 
-        const participatedMeetings = await db
+        // Query for meetings the user is invited to
+        const invitedMeetings = await db
             .select({
-                meeting: meetings,
+                id: meetings.id,
+                title: meetings.title,
+                status: meetings.status,
+                finalizedTime: meetings.finalizedTime,
+                organizerEmail: meetings.organizerEmail,
+                participantCount:
+                    sql<number>`coalesce(${participantCountsSq.count}, 0)`.mapWith(
+                        Number
+                    ),
+                responseCount:
+                    sql<number>`coalesce(${responseCountsSq.count}, 0)`.mapWith(
+                        Number
+                    ),
             })
             .from(meetings)
             .innerJoin(
                 meetingParticipants,
                 eq(meetings.id, meetingParticipants.meetingId)
+            )
+            .leftJoin(
+                participantCountsSq,
+                eq(meetings.id, participantCountsSq.meetingId)
+            )
+            .leftJoin(
+                responseCountsSq,
+                eq(meetings.id, responseCountsSq.meetingId)
             )
             .where(
                 and(
@@ -70,12 +118,12 @@ router.get(
                     ne(meetings.status, "completed"),
                     ne(meetings.status, "cancelled")
                 )
-            );
+            )
+            .orderBy(meetings.createdAt);
 
         res.status(200).json({
-            organized: organizedMeetingsQuery,
-            // Adjust the map to access the meeting object from the new query shape
-            invited: participatedMeetings.map((p) => p.meeting),
+            organized: organizedMeetings,
+            invited: invitedMeetings,
         });
     })
 );

@@ -39,13 +39,17 @@ router.post(
             throw new HttpError(HttpCode.NOT_FOUND, "Meeting not found.");
         }
 
+        const allowedStatuses: string[] = [
+            "pending_responses",
+            "awaiting_finalization",
+        ];
         if (
             new Date() > meeting.deadline ||
-            meeting.status !== "pending_responses"
+            !allowedStatuses.includes(meeting.status)
         ) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
-                "Cannot submit availability. The deadline has passed or the meeting is already finalized."
+                "Cannot submit availability. The deadline has passed or the meeting has already been scheduled or cancelled."
             );
         }
 
@@ -109,10 +113,12 @@ router.post(
                     eq(meetingAvailability.timeSlotId, meetingTimeSlots.id)
                 )
                 .where(eq(meetingTimeSlots.meetingId, body.meetingId));
-
             const responseCount = responseStats.total;
 
-            if (participantCount === responseCount) {
+            if (
+                participantCount === responseCount &&
+                meeting.status === "pending_responses"
+            ) {
                 await tx
                     .update(meetings)
                     .set({ status: "awaiting_finalization" })
@@ -120,7 +126,6 @@ router.post(
 
                 const subject = `All responses received for: ${meeting.title}`;
                 const content = `All participants have submitted their availability for the meeting "${meeting.title}". You can now finalize the meeting time.`;
-
                 await createNotifications(
                     [
                         {
@@ -140,7 +145,6 @@ router.post(
                 });
             }
         });
-
         res.status(200).json({
             success: true,
             message: "Availability submitted successfully.",

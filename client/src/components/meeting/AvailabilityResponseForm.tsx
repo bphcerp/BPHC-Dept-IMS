@@ -24,6 +24,7 @@ import {
 } from "../ui/dialog";
 
 type AvailabilityStatus = z.infer<typeof meetingSchemas.availabilityStatusEnum>;
+
 interface TimeSlot {
   id: number;
   startTime: string;
@@ -33,15 +34,13 @@ interface TimeSlot {
     participantEmail: string;
     availability: AvailabilityStatus;
   }[];
+  userAvailability: AvailabilityStatus | null;
 }
 
 interface AvailabilityResponseFormProps {
   timeSlots: TimeSlot[];
   onSubmit: (
-    availability: {
-      timeSlotId: number;
-      status: AvailabilityStatus;
-    }[]
+    availability: { timeSlotId: number; status: AvailabilityStatus }[]
   ) => void;
   isSubmitting: boolean;
 }
@@ -97,9 +96,21 @@ const AvailabilityDialog = ({ slot }: { slot: TimeSlot }) => {
 export const AvailabilityResponseForm: React.FC<
   AvailabilityResponseFormProps
 > = ({ timeSlots, onSubmit, isSubmitting }) => {
+  // This initialization function runs only once and pre-fills the state
+  // with previously submitted availabilities.
   const [responses, setResponses] = useState<
     Record<number, AvailabilityStatus>
-  >({});
+  >(() =>
+    timeSlots.reduce(
+      (acc, slot) => {
+        if (slot.userAvailability) {
+          acc[slot.id] = slot.userAvailability;
+        }
+        return acc;
+      },
+      {} as Record<number, AvailabilityStatus>
+    )
+  );
 
   const handleValueChange = (slotId: number, value: AvailabilityStatus) => {
     setResponses((prev) => ({ ...prev, [slotId]: value }));
@@ -128,7 +139,7 @@ export const AvailabilityResponseForm: React.FC<
         {timeSlots.map((slot) => (
           <Dialog key={slot.id}>
             <div className="rounded-md border p-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <p className="font-semibold">
                   {new Date(slot.startTime).toLocaleString()}
                 </p>
@@ -139,17 +150,18 @@ export const AvailabilityResponseForm: React.FC<
                   </div>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <Users className="mr-2 h-4 w-4" />
-                      View Details
+                      <Users className="mr-2 h-4 w-4" /> View Details
                     </Button>
                   </DialogTrigger>
                 </div>
               </div>
               <RadioGroup
+                // The defaultValue is set from the initial state, pre-selecting the option.
+                defaultValue={responses[slot.id]}
                 onValueChange={(value) =>
                   handleValueChange(slot.id, value as AvailabilityStatus)
                 }
-                className="mt-2 flex flex-col gap-4 sm:flex-row"
+                className="mt-4 flex flex-col gap-4 sm:flex-row"
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem
@@ -172,7 +184,9 @@ export const AvailabilityResponseForm: React.FC<
         ))}
         <Button
           onClick={handleSubmit}
-          disabled={isSubmitting || Object.keys(responses).length === 0}
+          disabled={
+            isSubmitting || Object.keys(responses).length < timeSlots.length
+          }
         >
           {isSubmitting && <LoadingSpinner className="mr-2 h-4 w-4" />}
           Submit Availability

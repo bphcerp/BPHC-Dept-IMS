@@ -37,6 +37,9 @@ const RespondToInvite: React.FC = () => {
     onSuccess: () => {
       toast.success("Your availability has been submitted.");
       void queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["meeting-response", meetingId],
+      });
       navigate("/meeting");
     },
     onError: (error: any) => {
@@ -54,7 +57,11 @@ const RespondToInvite: React.FC = () => {
     );
   if (isError || !meeting) return <p>Could not load invitation.</p>;
 
-  if (meeting.status !== "pending_responses") {
+  const canRespond =
+    meeting.status === "pending_responses" ||
+    meeting.status === "awaiting_finalization";
+
+  if (!canRespond) {
     return (
       <Card>
         <CardHeader>

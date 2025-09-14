@@ -48,7 +48,6 @@ router.get(
             );
         }
 
-        // Augment time slots with availability counts
         const augmentedTimeSlots = meeting.timeSlots.map((slot) => {
             const availableCount = slot.availability.filter(
                 (a) => a.availability === "available"
@@ -56,19 +55,19 @@ router.get(
             const unavailableCount = slot.availability.filter(
                 (a) => a.availability === "unavailable"
             ).length;
+            const userAvailability =
+                slot.availability.find((a) => a.participantEmail === userEmail)
+                    ?.availability ?? null;
 
             return {
                 ...slot,
                 availableCount,
                 unavailableCount,
+                userAvailability,
             };
         });
 
-        const response = {
-            ...meeting,
-            timeSlots: augmentedTimeSlots,
-        };
-
+        const response = { ...meeting, timeSlots: augmentedTimeSlots };
         res.status(200).json({ meeting: response });
     })
 );

@@ -8,6 +8,7 @@ import finalizeMeeting from "./finalizeMeeting.ts";
 import getAllUsers from "./getAllUsers.ts";
 import remindMeeting from "./remindMeeting.ts";
 import deleteMeeting from "./deleteMeeting.ts";
+import updateMeetingDetails from "./updateMeetingDetails.ts";
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.use("/finalize", finalizeMeeting);
 router.use("/all-users", getAllUsers);
 router.use("/remind", remindMeeting);
 router.use("/delete", deleteMeeting);
+router.use("/update-details", updateMeetingDetails);
 
 export default router;
