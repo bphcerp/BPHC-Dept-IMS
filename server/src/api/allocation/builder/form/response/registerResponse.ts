@@ -46,10 +46,7 @@ router.post(
                     formId: parsed.formId,
                     submittedAt: new Date(),
                     submittedByEmail: req.user!.email,
-                    templateFieldId: field.templateFieldId,
-                    teachingAllocation: field.teachingAllocation,
-                    courseCode: field.courseCode,
-                    preference: field.preference,
+                    ...field
                 })
             );
             await Promise.all(insertPromises);

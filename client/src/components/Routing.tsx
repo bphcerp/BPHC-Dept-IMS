@@ -648,9 +648,18 @@ const Routing = () => {
             ]) && (
               <>
                 <Route path="forms" element={<FormList />} />
+                <Route path="forms/:id" element={<FormView />} />
+              </>
+            )}
+
+            {checkAccessAnyOne([
+              "allocation:form:response:submit",
+              "allocation:write",
+            ]) && (
+              <>
                 <Route
-                  path="forms/:id"
-                  element={<FormView />}
+                  path="forms/response/:id"
+                  element={<FormView preview={false} />}
                 />
               </>
             )}

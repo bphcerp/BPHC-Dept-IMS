@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/axios-instance";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useParams } from "react-router-dom";
@@ -16,10 +15,14 @@ import {
 import { Trash2 } from "lucide-react";
 import { fieldTypes } from "./FormTemplateView";
 import { FormTemplateFieldComponent } from "@/components/allocation/FormTemplateFieldComponent";
+import { useForm } from "react-hook-form";
+import { Label } from "@radix-ui/react-label";
 
-const FormView = ({ preview = false }: { preview?: boolean }) => {
+const FormView = ({ preview = true }: { preview?: boolean }) => {
   const [form, setForm] = useState<AllocationForm | null>(null);
   const [courses, setCourses] = useState([]);
+
+  const formHandler = useForm();
 
   const id = useParams().id;
 
@@ -46,22 +49,8 @@ const FormView = ({ preview = false }: { preview?: boolean }) => {
     fetchCourses();
   }, [id]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    // event.preventDefault();
-    // try {
-    //   const formData: Record<string, string> = form?.template.fields.reduce(
-    //     (data, field) => {
-    //       data[field.id] = field.value || "";
-    //       return data;
-    //     },
-    //     {}
-    //   );
-    //   await api.post(`/allocation/form/submit/${id}`, formData);
-    //   alert("Form submitted successfully!");
-    // } catch (error) {
-    //   console.error("Error submitting form:", error);
-    //   alert("Failed to submit form.");
-    // }
+  const handleSubmitResponse = async (data: Record<string, any>) => {
+    console.log(data);
   };
 
   return (
@@ -75,33 +64,36 @@ const FormView = ({ preview = false }: { preview?: boolean }) => {
 
           <Separator />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={formHandler.handleSubmit(handleSubmitResponse)}
+            className="space-y-6"
+          >
             {form.template.fields.map((field) => (
               <Card key={field.id} className="border-border">
                 <CardHeader className="gap-4 bg-muted/50 p-4">
                   <div className="flex items-center justify-between">
-                    <Input
-                      placeholder="Enter question label..."
-                      value={field.label}
-                      className="h-auto border-none bg-transparent p-0 text-base font-semibold shadow-none focus-visible:ring-0"
-                    />
-                    <div className="flex items-center justify-start gap-2">
-                      <Select value={field.type}>
-                        <SelectTrigger className="w-[220px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fieldTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type.replace("_", " ")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
+                    <Label className="h-auto border-none bg-transparent p-0 text-base font-semibold shadow-none focus-visible:ring-0">
+                      {field.label}
+                    </Label>
+                    {preview && (
+                      <div className="flex items-center justify-start gap-2">
+                        <Select value={field.type}>
+                          <SelectTrigger className="w-[220px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type.replace("_", " ")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 p-6">
@@ -109,6 +101,7 @@ const FormView = ({ preview = false }: { preview?: boolean }) => {
                     field={field}
                     create={false}
                     courses={courses}
+                    form={formHandler}
                   />
                 </CardContent>
               </Card>

@@ -72,6 +72,7 @@ export const allocationFormResponse = pgTable("allocation_form_response", {
     teachingAllocation: integer("teaching_allocation"),
     courseCode: text("course_code").references(() => course.code),
     preference: integer("preference"),
+    takenConsecutively: boolean("taken_consecutively"),
 });
 
 export const allocationFormTemplateField = pgTable(
