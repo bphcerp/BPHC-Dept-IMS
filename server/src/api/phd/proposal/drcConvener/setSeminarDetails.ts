@@ -28,7 +28,7 @@ export default router.post(
             .where(
                 and(
                     eq(phdProposals.id, proposalId),
-                    eq(phdProposals.status, "seminar_incomplete")
+                    eq(phdProposals.status, "dac_accepted")
                 )
             )
             .returning();
