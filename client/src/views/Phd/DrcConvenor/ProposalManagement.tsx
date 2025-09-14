@@ -309,7 +309,7 @@ const DrcProposalManagement: React.FC = () => {
                 }
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download Pkgs (
+                Download all forms (
                 {getSelectedProposalsByStatus("finalising").length})
               </Button>
               <Button
@@ -334,7 +334,7 @@ const DrcProposalManagement: React.FC = () => {
                 }
               >
                 <Download className="mr-2 h-4 w-4" />
-                Gen. Notice ({selectedProposalIds.length})
+                Sample Notice ({selectedProposalIds.length})
               </Button>
             </div>
           </div>
