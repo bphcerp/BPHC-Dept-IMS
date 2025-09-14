@@ -12,6 +12,7 @@ import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd";
 import { allPermissions, permissions } from "lib";
+import ExaminerAssignments from "@/views/Phd/Examiner/Assignments";
 import {
   BookOpen,
   Computer,
@@ -457,6 +458,11 @@ const Routing = () => {
                     element={<ExaminerSuggestions />}
                   />
                 )}
+              </Route>
+            )}
+            {checkAccess(permissions["/phd/examiner/assignments"]) && (
+              <Route path="examiner" element={<Outlet />}>
+                <Route path="assignments" element={<ExaminerAssignments />} />
               </Route>
             )}
           </Route>

@@ -111,6 +111,8 @@ export const allPermissions = {
     "wilp:project:deselect": "Remove selected WILP projects",
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
+
+    "phd:examiner:qe": "View and respond to examiner assignments",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -193,6 +195,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/optimizeTimetable": "phd:drc:qe-timetable",
     "/phd/drcMember/generateTimetablePdf": "phd:drc:qe-timetable",
 
+    "/phd/examiner/assignments": "phd:examiner:qe",
+    "/phd/examiner/acceptAssignment": "phd:examiner:qe",
+    "/phd/examiner/rejectAssignment": "phd:examiner:qe",
+
     "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
     "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
@@ -203,7 +209,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
-    
+    "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
 
     "/phd/proposal/student/getProposals": "phd:student:proposal",
     "/phd/proposal/student/resubmit": "phd:student:proposal",
@@ -215,7 +221,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
-    
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",

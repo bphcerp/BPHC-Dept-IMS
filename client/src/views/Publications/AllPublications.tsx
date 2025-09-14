@@ -32,7 +32,7 @@ const AllPublications = () => {
     isLoading: isLoadingPubs,
     isError: isPubsError,
   } = useQuery({
-    queryKey: ["publications/all"],
+    queryKey: ["publications", "all"],
     queryFn: async () => {
       
       return {
@@ -42,7 +42,7 @@ const AllPublications = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
   });
 
   const updatePublicationsMutation = useMutation({

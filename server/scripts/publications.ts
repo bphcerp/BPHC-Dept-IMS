@@ -12,7 +12,7 @@ import {
 } from "@/config/db/schema/publications.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
 import db from "@/config/db/index.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { createNotifications } from "@/lib/todos/index.ts";
 import environment from "@/config/environment.ts";
 
@@ -133,7 +133,7 @@ const getPublicationsFromAuthor = async (
                     .select()
                     .from(researgencePublications)
                     .where(
-                        eq(researgencePublications.publicationTitle, publication.title)
+                        eq( sql`lower(${publication.title})`, sql`lower(${researgencePublications.publicationTitle})`)
                     );
 
                     if(inReseargence) {
