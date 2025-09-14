@@ -65,7 +65,7 @@ services:
     ports:
       - ${REDIS_PORT}:${REDIS_PORT}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-p", "${REDIS_PORT}", "ping"]
       interval: 3s
       timeout: 3s
       retries: 3
