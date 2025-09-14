@@ -351,6 +351,13 @@
       "when": 1757674208168,
       "tag": "0049_nebulous_fenris",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1757809338971,
+      "tag": "0050_nervous_mac_gargan",
+      "breakpoints": true
     }
   ]
 }
