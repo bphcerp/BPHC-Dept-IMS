@@ -138,7 +138,7 @@ const SupervisorViewProposal: React.FC = () => {
             </CardContent>
           </Card>
         );
-      case "seminar_incomplete":
+      case "dac_accepted":
         return (
           <SeminarDetailsForm
             onSubmit={setSeminarDetailsMutation.mutate}
@@ -184,9 +184,15 @@ const SupervisorViewProposal: React.FC = () => {
         </CardHeader>
         {proposal.coSupervisors.length > 0 && (
           <CardContent>
-            <strong>Co-Supervisor: </strong>
-            {proposal.coSupervisors[0].coSupervisor?.name ??
-              proposal.coSupervisors[0].coSupervisorEmail}
+            <strong>Co-Supervisors:</strong>
+            <ul className="list-disc pl-5">
+              {proposal.coSupervisors.map((coSup, index) => (
+                <li key={index}>
+                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName}(
+                  {coSup.coSupervisorEmail})
+                </li>
+              ))}
+            </ul>
           </CardContent>
         )}
       </Card>

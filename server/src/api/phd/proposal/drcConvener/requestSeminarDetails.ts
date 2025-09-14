@@ -11,41 +11,29 @@ import { phdProposals } from "@/config/db/schema/phd.ts";
 import assert from "assert";
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
-
 const router = express.Router();
-
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
         assert(req.user, "User must be authenticated");
-
         const { requests } = phdSchemas.requestSeminarDetailsSchema.parse(
             req.body
         );
-
         const proposalIds = requests.map((r) => r.proposalId);
         const proposals = await db.query.phdProposals.findMany({
             where: inArray(phdProposals.id, proposalIds),
-            with: {
-                student: {
-                    columns: {
-                        name: true,
-                    },
-                },
-            },
+            with: { student: { columns: { name: true } } },
         });
-
         const validProposals = proposals.filter(
-            (p) => p.status === "seminar_incomplete"
+            (p) => p.status === "dac_accepted"
         );
         if (validProposals.length === 0) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
-                "No valid proposals found in 'seminar_incomplete' state."
+                "No valid proposals found in 'DAC Accepted' state."
             );
         }
-
         const todosToCreate = requests
             .filter((r) => validProposals.some((p) => p.id === r.proposalId))
             .map((r) => {
@@ -62,9 +50,7 @@ router.post(
                     deadline: r.deadline,
                 };
             });
-
         await createTodos(todosToCreate);
-
         const emailsToSend = requests
             .filter((r) => validProposals.some((p) => p.id === r.proposalId))
             .map((r) => {
@@ -78,14 +64,11 @@ router.post(
                     html: htmlBody,
                 };
             });
-
         await sendBulkEmails(emailsToSend);
-
         res.status(200).json({
             success: true,
-            message: `Notifications sent and To-Dos created for ${validProposals.length} supervisors.`,
+            message: `Notifications sent and To-Dos created for ${validProposals.length}supervisors.`,
         });
     })
 );
-
 export default router;

@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/dacMember/viewProposal.ts
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -7,7 +6,6 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { and, eq } from "drizzle-orm";
 import { phdProposalDacReviews } from "@/config/db/schema/phd.ts";
-
 const router = express.Router();
 router.get(
     "/:id",
@@ -16,22 +14,13 @@ router.get(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
-
         const proposal = await db.query.phdProposals.findFirst({
             where: (cols, { eq }) => eq(cols.id, proposalId),
             with: {
                 student: true,
                 supervisor: true,
-                coSupervisors: {
-                    with: {
-                        coSupervisor: true,
-                    },
-                },
-                dacMembers: {
-                    with: {
-                        dacMember: true,
-                    },
-                },
+                coSupervisors: { with: { coSupervisor: true } },
+                dacMembers: { with: { dacMember: true } },
                 appendixFile: true,
                 summaryFile: true,
                 outlineFile: true,
@@ -41,10 +30,8 @@ router.get(
                 proposalSemester: true,
             },
         });
-
         if (!proposal)
             throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
-
         const isDacMember = proposal.dacMembers.some(
             (m) => m.dacMemberEmail === req.user!.email
         );
@@ -54,7 +41,6 @@ router.get(
                 "You are not a DAC member for this proposal"
             );
         }
-
         const currentUserReview =
             await db.query.phdProposalDacReviews.findFirst({
                 where: and(
@@ -62,7 +48,6 @@ router.get(
                     eq(phdProposalDacReviews.dacMemberEmail, req.user!.email)
                 ),
             });
-
         const response = {
             ...proposal,
             appendixFileUrl: `${environment.SERVER_URL}/f/${proposal.appendixFileId}`,

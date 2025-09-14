@@ -8,23 +8,20 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Edit } from "lucide-react";
+import { PlusCircle, Edit, X } from "lucide-react";
 import { z } from "zod";
 import { phdSchemas } from "lib";
-
 interface SupervisorReviewFormProps {
   proposalId: number;
   onSuccess: () => void;
   deadline: string;
   initialDacMembers?: string[];
-  isPostDacRevert?: boolean; // ADDED: This prop is now officially declared
+  isPostDacRevert?: boolean;
 }
-
 interface Faculty {
   value: string;
   label: string;
 }
-
 export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   proposalId,
   onSuccess,
@@ -38,18 +35,16 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   const [externalDacEmail, setExternalDacEmail] = useState("");
   const [isEditingDac, setIsEditingDac] = useState(false);
   const isDeadlinePassed = new Date(deadline) < new Date();
-
   const { data: facultyList = [] } = useQuery<Faculty[]>({
     queryKey: ["facultyList"],
     queryFn: async () => {
       const res = await api.get("/phd/proposal/getFacultyList");
       return res.data.map((f: { name: string; email: string }) => ({
-        label: `${f.name} (${f.email})`,
+        label: `${f.name}(${f.email})`,
         value: f.email,
       }));
     },
   });
-
   const mutation = useMutation({
     mutationFn: (
       data: z.infer<typeof phdSchemas.supervisorProposalActionSchema>
@@ -69,14 +64,12 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       toast.error(error.response?.data?.message || "Failed to submit review.");
     },
   });
-
   const handleAddExternalDac = () => {
     const emailCheck = z.string().email().safeParse(externalDacEmail);
     if (!emailCheck.success) {
       toast.error("Please enter a valid email address.");
       return;
     }
-
     if (
       selectedDac.includes(externalDacEmail) ||
       facultyList.some((f) => f.value === externalDacEmail)
@@ -89,7 +82,9 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     setSelectedDac((prev) => [...prev, externalDacEmail]);
     setExternalDacEmail("");
   };
-
+  const handleRemoveDac = (emailToRemove: string) => {
+    setSelectedDac((prev) => prev.filter((email) => email !== emailToRemove));
+  };
   const handleRevert = () => {
     if (!comments.trim()) {
       toast.error("Comments are required to revert a proposal.");
@@ -97,11 +92,9 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     }
     mutation.mutate({ action: "revert", comments });
   };
-
   const handleForwardToDac = () => {
     mutation.mutate({ action: "forward", comments: comments || undefined });
   };
-
   const handleAcceptWithEdits = () => {
     if (selectedDac.length < 2 || selectedDac.length > 4) {
       toast.error("Please select between 2 and 4 DAC members.");
@@ -113,12 +106,11 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       dacMembers: selectedDac,
     });
   };
-
   if (isPostDacRevert && !isEditingDac) {
     return (
       <div className="space-y-4">
         <div>
-          <Label>Comments (Optional)</Label>
+          <Label>Comments(Optional)</Label>
           <Textarea
             placeholder="Add optional comments for the DAC members..."
             value={comments}
@@ -157,19 +149,18 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
               onClick={handleForwardToDac}
               disabled={mutation.isLoading || isDeadlinePassed}
             >
-              Accept & Forward 
+              Accept & Forward
             </Button>
           </div>
         </div>
       </div>
     );
   }
-
   return (
     <div className="space-y-4">
       <Label>Your Review</Label>
       <Textarea
-        placeholder="Add your comments here... (Required if reverting)"
+        placeholder="Add your comments here...(Required if reverting)"
         value={comments}
         onChange={(e) => setComments(e.target.value)}
         rows={4}
@@ -177,7 +168,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       />
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Select DAC Members (2-4 required)</Label>
+          <Label>Select DAC Members(2-4 required)</Label>
           <Combobox
             options={facultyList}
             selectedValues={selectedDac}
@@ -209,6 +200,32 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
             </Button>
           </div>
         </div>
+        {selectedDac.length > 0 && (
+          <div className="space-y-2 pt-2">
+            <Label>Selected DAC Members</Label>
+            {selectedDac.map((email) => {
+              const facultyMember = facultyList.find((f) => f.value === email);
+              return (
+                <div
+                  key={email}
+                  className="flex items-center justify-between rounded-md border bg-muted/50 p-2 text-sm"
+                >
+                  <span>
+                    {facultyMember ? facultyMember.label : `${email}(External)`}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => handleRemoveDac(email)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       <div className="flex justify-end gap-2 border-t pt-4">
         {isPostDacRevert && isEditingDac && (
@@ -230,7 +247,6 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
           {mutation.isLoading ? <LoadingSpinner /> : "Accept & Forward"}
         </Button>
       </div>
-
       {isDeadlinePassed && (
         <p className="mt-2 text-center text-sm text-destructive">
           The deadline to review this proposal has passed.
