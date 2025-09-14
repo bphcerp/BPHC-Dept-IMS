@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess(),
     asyncHandler(async (req, res) => {
         const formId = req.params.formId;
 
