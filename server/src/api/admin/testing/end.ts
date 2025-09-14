@@ -40,7 +40,7 @@ router.post(
             return;
         }
 
-        res.status(200).json({ message: "Testing mode started ended" });
+        res.status(200).json({ message: "Testing mode ended successfully" });
     })
 );
 
