@@ -36,7 +36,7 @@ const PhdLayout = () => {
         },
       ],
     },
-    
+
     {
       title: "DAC Member",
       items: [
@@ -57,7 +57,9 @@ const PhdLayout = () => {
           title: "Qualifying Exam Management",
           icon: <FileQuestion />,
           url: "/phd/drc-convenor/qualifying-exam-management",
-          requiredPermissions: [permissions["/phd/drcMember/getAvailableExams"]],
+          requiredPermissions: [
+            permissions["/phd/drcMember/getAvailableExams"],
+          ],
         },
         {
           title: "Proposal Management",
@@ -119,6 +121,17 @@ const PhdLayout = () => {
           icon: <Mail />,
           url: "/phd/staff/manage-email-templates",
           requiredPermissions: [permissions["/phd/staff/emailTemplates"]],
+        },
+      ],
+    },
+    {
+      title: "Examiner",
+      items: [
+        {
+          title: "Assignments",
+          icon: <ClipboardCheck />,
+          url: "/phd/examiner/assignments",
+          requiredPermissions: [permissions["/phd/examiner/assignments"]],
         },
       ],
     },

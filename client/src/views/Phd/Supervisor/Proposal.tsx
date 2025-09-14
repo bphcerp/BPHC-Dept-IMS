@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
-import { cn } from "@/lib/utils";
 
 interface ProposalSemester {
   id: number;
@@ -30,6 +29,10 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
+  semester: {
+    year: string;
+    semesterNumber: number;
+  };
 }
 
 interface Proposal {
@@ -49,10 +52,10 @@ const DeadlinesCard = ({
   highlight,
 }: {
   deadlines: ProposalSemester;
-  highlight: keyof ProposalSemester;
+  highlight: keyof Omit<ProposalSemester, "id" | "semesterId" | "semester">;
 }) => {
   const deadlineLabels: Record<
-    keyof Omit<ProposalSemester, "id" | "semesterId">,
+    keyof Omit<ProposalSemester, "id" | "semesterId" | "semester">,
     string
   > = {
     studentSubmissionDate: "Student Submission",
@@ -61,27 +64,23 @@ const DeadlinesCard = ({
     dacReviewDate: "DAC Review",
   };
 
+  const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
+
   return (
     <Card className="mb-6 bg-muted/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Clock className="h-4 w-4" />
-          Semester Deadlines
+          <Clock className="h-4 w-4" /> Upcoming Deadline
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-        {Object.entries(deadlineLabels).map(([key, label]) => (
+      <CardContent className="grid grid-cols-1 gap-4 text-sm md:grid-cols-4">
+        {Object.entries(deadlineToShow).map(([key, label]) => (
           <div
             key={key}
-            className={cn(
-              "rounded-lg border p-3",
-              highlight === key
-                ? "border-primary bg-primary/10"
-                : "bg-background"
-            )}
+            className="rounded-lg border border-primary bg-primary/10 p-3 shadow-md transition-all"
           >
             <p className="font-semibold text-muted-foreground">{label}</p>
-            <p className="mt-1">
+            <p className="mt-1 font-medium">
               {new Date(
                 deadlines[key as keyof ProposalSemester] as string
               ).toLocaleDateString()}
@@ -98,6 +97,21 @@ const SupervisorProposal: React.FC = () => {
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
+
+  const { data: semesters } = useQuery<ProposalSemester[]>({
+    queryKey: ["proposal-semesters"],
+    queryFn: async () => {
+      const response = await api.get("/phd/proposal/getProposalSemesters");
+      return response.data;
+    },
+  });
+
+  useEffect(() => {
+    if (semesters && semesters.length > 0 && !selectedSemesterId) {
+      setSelectedSemesterId(semesters[0].id);
+    }
+  }, [semesters, selectedSemesterId]);
+
   const {
     data: proposals,
     isLoading,
@@ -128,7 +142,8 @@ const SupervisorProposal: React.FC = () => {
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
           <CardDescription>
-            Please select a semester to view proposals for your students.
+            The latest semester is selected by default. You can choose a
+            different one to view past proposals.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,4 +233,5 @@ const SupervisorProposal: React.FC = () => {
     </div>
   );
 };
+
 export default SupervisorProposal;

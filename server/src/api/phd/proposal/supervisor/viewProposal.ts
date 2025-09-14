@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/supervisor/viewProposal.ts
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -8,7 +9,6 @@ import { eq, and } from "drizzle-orm";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 
 const router = express.Router();
-
 router.get(
     "/:id",
     checkAccess(),
@@ -27,6 +27,16 @@ router.get(
                 dacMembers: {
                     with: {
                         dacMember: true,
+                    },
+                },
+                dacReviews: {
+                    with: {
+                        dacMember: true,
+                    },
+                },
+                coSupervisors: {
+                    with: {
+                        coSupervisor: true,
                     },
                 },
                 appendixFile: true,
@@ -62,5 +72,4 @@ router.get(
         res.status(200).json(response);
     })
 );
-
 export default router;

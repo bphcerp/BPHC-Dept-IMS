@@ -1,54 +1,45 @@
-// server/src/api/phd/proposal/drcConvener/viewProposal.ts
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
+import { and, eq } from "drizzle-orm";
+import { phdProposals } from "@/config/db/schema/phd.ts";
 
 const router = express.Router();
+
 router.get(
     "/:id",
     checkAccess(),
     asyncHandler(async (req, res) => {
         const proposalId = parseInt(req.params.id);
-        if (isNaN(proposalId))
+        if (isNaN(proposalId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+        }
 
         const proposal = await db.query.phdProposals.findFirst({
-            where: (cols, { eq }) => eq(cols.id, proposalId),
+            where: and(
+                eq(phdProposals.id, proposalId),
+                eq(phdProposals.studentEmail, req.user!.email)
+            ),
             with: {
-                student: true,
-                supervisor: true,
-                coSupervisors: {
-                    with: {
-                        coSupervisor: true,
-                    },
-                },
-                dacMembers: {
-                    with: {
-                        dacMember: true,
-                    },
-                },
-                dacReviews: {
-                    with: {
-                        dacMember: true,
-                        reviewForm: true,
-                        feedbackFile: true,
-                    },
-                },
+                coSupervisors: true,
                 appendixFile: true,
                 summaryFile: true,
                 outlineFile: true,
                 placeOfResearchFile: true,
                 outsideCoSupervisorFormatFile: true,
                 outsideSupervisorBiodataFile: true,
-                proposalSemester: true,
             },
         });
 
-        if (!proposal)
-            throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
+        if (!proposal) {
+            throw new HttpError(
+                HttpCode.NOT_FOUND,
+                "Proposal not found or you do not have permission to view it."
+            );
+        }
 
         const response = {
             ...proposal,
@@ -67,7 +58,9 @@ router.get(
                     ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
                     : null,
         };
+
         res.status(200).json(response);
     })
 );
+
 export default router;

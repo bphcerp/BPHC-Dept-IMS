@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/drcConvener/reviewProposal.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -5,12 +6,13 @@ import db from "@/config/db/index.ts";
 import { phdProposals, phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { phdSchemas, modules } from "lib";
 import { and, eq, inArray } from "drizzle-orm";
-import { HttpError, HttpCode } from "@/config/errors.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 import z from "zod";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 
 const router = express.Router();
+
 const reviewActionSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("accept"),
@@ -21,6 +23,7 @@ const reviewActionSchema = z.discriminatedUnion("action", [
         ...phdSchemas.proposalRevertSchema.shape,
     }),
 ]);
+
 export default router.post(
     "/:id",
     checkAccess(),
@@ -30,6 +33,7 @@ export default router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid Proposal ID");
         }
         const body = reviewActionSchema.parse(req.body);
+
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: eq(phdProposals.id, proposalId),
@@ -39,6 +43,7 @@ export default router.post(
                     proposalSemester: true,
                 },
             });
+
             if (!proposal) {
                 throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found.");
             }
@@ -64,6 +69,7 @@ export default router.post(
                 },
                 tx
             );
+
             if (body.action === "revert") {
                 await tx
                     .update(phdProposals)
@@ -88,6 +94,11 @@ export default router.post(
                     to: proposal.student.email,
                     subject: "Action Required: PhD Proposal Reverted by DRC",
                     html: `<p>Dear ${proposal.student.name},</p><p>The DRC has reviewed your proposal and requires revisions. Comments: <blockquote>${body.comments}</blockquote></p><p>Please log in to resubmit.</p>`,
+                });
+                await sendEmail({
+                    to: proposal.supervisorEmail,
+                    subject: `PhD Proposal for ${proposal.student.name} Reverted by DRC`,
+                    html: `<p>Dear Supervisor,</p><p>The DRC has reverted the proposal for your student, <strong>${proposal.student.name}</strong>, with the following comments:</p><blockquote>${body.comments}</blockquote><p>The student has been asked to make the necessary revisions and resubmit.</p>`,
                 });
             } else if (body.action === "accept") {
                 const currentDacEmails = proposal.dacMembers.map(
@@ -119,6 +130,7 @@ export default router.post(
                         comments: body.comments ?? null,
                     })
                     .where(eq(phdProposals.id, proposalId));
+
                 await createTodos(
                     body.selectedDacMembers.map((dacEmail) => ({
                         assignedTo: dacEmail,

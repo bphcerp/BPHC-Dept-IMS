@@ -1,5 +1,9 @@
 import db from "@/config/db/index.ts";
-import { phdProposals, phdProposalSemesters } from "@/config/db/schema/phd.ts";
+import {
+    phdProposals,
+    phdProposalSemesters,
+    phdProposalCoSupervisors,
+} from "@/config/db/schema/phd.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
@@ -14,6 +18,7 @@ import { sendEmail } from "@/lib/common/email.ts";
 import { eq } from "drizzle-orm";
 
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
@@ -29,21 +34,32 @@ router.post(
         )
     ),
     asyncHandler(async (req, res) => {
-        const { title, hasOutsideCoSupervisor, declaration, proposalCycleId } =
-            phdSchemas.phdProposalSubmissionSchema.parse(req.body);
+        const {
+            title,
+            hasOutsideCoSupervisor,
+            declaration,
+            proposalCycleId,
+            coSupervisorEmail,
+            externalCoSupervisorName,
+            externalCoSupervisorEmail,
+        } = phdSchemas.phdProposalSubmissionSchema.parse(req.body);
+
         const student = await db.query.phd.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
         });
         assert(student, "PhD student record not found");
+
         const supervisorEmail = student.supervisorEmail;
         if (!supervisorEmail || !supervisorEmail.trim().length)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "Supervisor not assigned"
             );
+
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
             where: eq(phdProposalSemesters.id, proposalCycleId),
         });
+
         if (!activeDeadline) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -56,13 +72,16 @@ router.post(
                 "The submission deadline for this cycle has passed."
             );
         }
+
         const proposalSemesterId = activeDeadline.id;
         if (Array.isArray(req.files))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid files");
+
         const uploadedFiles = req.files as Record<
             (typeof phdSchemas.phdProposalFileFieldNames)[number],
             Express.Multer.File[]
         >;
+
         if (
             !uploadedFiles?.appendixFile ||
             !uploadedFiles?.summaryFile ||
@@ -92,6 +111,7 @@ router.post(
                 "Documents for outside co-supervisor are required."
             );
         }
+
         let submittedProposalId: number = -1;
         await db.transaction(async (tx) => {
             const insertedFileIds: Partial<
@@ -100,6 +120,7 @@ router.post(
                     number
                 >
             > = {};
+
             if (req.files && Object.entries(req.files).length) {
                 const fileInserts = Object.entries(req.files).map(
                     ([fieldName, files]) => {
@@ -125,6 +146,7 @@ router.post(
                     ] = file.id;
                 });
             }
+
             const [proposal] = await tx
                 .insert(phdProposals)
                 .values({
@@ -144,13 +166,25 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile,
                 })
                 .returning();
+
             if (!proposal)
                 throw new HttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
                     "Failed to create proposal"
                 );
             submittedProposalId = proposal.id;
+
+            const finalCoSupervisorEmail =
+                coSupervisorEmail || externalCoSupervisorEmail;
+            if (finalCoSupervisorEmail) {
+                await tx.insert(phdProposalCoSupervisors).values({
+                    proposalId: submittedProposalId,
+                    coSupervisorEmail: finalCoSupervisorEmail,
+                    coSupervisorName: externalCoSupervisorName,
+                });
+            }
         });
+
         await createTodos([
             {
                 assignedTo: supervisorEmail,
@@ -168,6 +202,7 @@ router.post(
             subject: `PhD Proposal Submitted for Review by ${student.name}`,
             html: `<p>Dear Supervisor,</p><p>Your student, ${student.name}, has submitted their PhD research proposal titled "<strong>${title}</strong>" for your review.</p><p>Please log in to the portal to view the details and take action.</p><p>Thank you.</p>`,
         });
+
         res.status(200).send({
             success: true,
             message: "Proposal submitted successfully.",

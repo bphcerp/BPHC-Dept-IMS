@@ -1,3 +1,4 @@
+// server/src/api/phd/drcMember/notifyExaminer.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -48,9 +49,7 @@ export default router.post(
                 "Examiner assignment not found for the specified area."
             );
         }
-
-        const htmlBody = DOMPurify.sanitize(marked(body));
-
+        const htmlBody = DOMPurify.sanitize(marked(body) as string);
         const syllabusFileId =
             assignment.application.qualifyingArea1 === area
                 ? assignment.application.qualifyingArea1SyllabusFileId
@@ -62,7 +61,6 @@ export default router.post(
                 "Syllabus file not found for the specified area."
             );
         }
-
         await sendEmail({
             to: assignment.examinerEmail,
             subject,
