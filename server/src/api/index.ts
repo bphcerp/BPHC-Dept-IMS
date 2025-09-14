@@ -17,6 +17,7 @@ import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
 import publicProfileRouter from "./profile/[id].ts";
+import meetingRouter from "./meeting/index.ts";
 import { testingMiddleware } from "@/middleware/testing.ts";
 
 const favicon = Buffer.from(
@@ -68,5 +69,6 @@ router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
+router.use("/meeting", meetingRouter);
 
 export default router;

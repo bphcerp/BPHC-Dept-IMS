@@ -16,7 +16,6 @@ export default router.get(
                 department: true,
             },
         });
-
         res.status(200).json(facultyList);
     })
 );

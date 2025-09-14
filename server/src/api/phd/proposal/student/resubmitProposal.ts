@@ -1,8 +1,8 @@
 import db from "@/config/db/index.ts";
 import {
     phdProposals,
-    phdProposalCoSupervisors,
     phdProposalDacReviews,
+    phdProposalCoSupervisors,
 } from "@/config/db/schema/phd.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -12,8 +12,10 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { modules, phdSchemas } from "lib";
 import multer from "multer";
-import { createTodos } from "@/lib/todos/index.ts";
+import { createTodos, completeTodo } from "@/lib/todos/index.ts";
+import { sendEmail } from "@/lib/common/email.ts";
 import { eq, and } from "drizzle-orm";
+// import { phd } from "@/config/db/schema/admin.ts";
 
 const router = express.Router();
 
@@ -38,21 +40,21 @@ router.post(
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
         }
 
-        const { title } = phdSchemas.phdProposalSubmissionSchema.parse(
-            req.body
-        );
-        const userEmail = req.user!.email;
+        const {
+            title,
+            hasOutsideCoSupervisor,
+            declaration,
+            coSupervisorEmail,
+            externalCoSupervisorEmail,
+            externalCoSupervisorName,
+        } = phdSchemas.phdProposalSubmissionSchema
+            .omit({ proposalCycleId: true })
+            .parse(req.body);
 
-        if (
-            Array.isArray(req.files) ||
-            !req.files?.abstractFile ||
-            !req.files?.proposalFile
-        ) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "Both abstract and proposal files are required for resubmission."
-            );
-        }
+        const userEmail = req.user!.email;
+        let supervisorEmail: string | null = null;
+        let studentName: string | null = null;
+        let facultyReviewDate: Date | null = null;
 
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
@@ -60,7 +62,10 @@ router.post(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.studentEmail, userEmail)
                 ),
-                with: { student: true },
+                with: {
+                    student: true,
+                    proposalSemester: true, 
+                },
             });
 
             if (!proposal) {
@@ -69,81 +74,143 @@ router.post(
                     "Proposal not found or you do not have permission to edit it."
                 );
             }
-            if (proposal.status !== "dac_rejected") {
+            if (
+                new Date(proposal.proposalSemester.studentSubmissionDate) <
+                new Date()
+            ) {
+                throw new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "The resubmission deadline for this cycle has passed."
+                );
+            }
+
+            if (
+                !["supervisor_revert", "drc_revert", "dac_revert"].includes(
+                    proposal.status
+                )
+            ) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
                     "This proposal cannot be resubmitted at its current stage."
                 );
             }
+            supervisorEmail = proposal.supervisorEmail;
+            studentName = proposal.student.name;
+            facultyReviewDate = proposal.proposalSemester.facultyReviewDate;
 
-            // 1. Upload new files
-            const insertedFileIds: { [key: string]: number } = {};
-            if (
-                !Array.isArray(req.files) &&
-                req.files &&
-                Object.entries(req.files).length
-            ) {
-                const insertedFiles = await tx
+            // const student = await tx.query.phd.findFirst({
+            //     where: eq(phd.email, userEmail),
+            // });
+
+            const insertedFileIds: Partial<
+                Record<
+                    (typeof phdSchemas.phdProposalFileFieldNames)[number],
+                    number
+                >
+            > = {};
+
+            if (req.files && Object.entries(req.files).length) {
+                const fileInserts = Object.entries(req.files).map(
+                    ([fieldName, files]) => {
+                        const file = (files as Express.Multer.File[])[0];
+                        return {
+                            userEmail: req.user!.email,
+                            filePath: file.path,
+                            originalName: file.originalname,
+                            mimetype: file.mimetype,
+                            size: file.size,
+                            fieldName,
+                            module: modules[3],
+                        };
+                    }
+                );
+                const inserted = await tx
                     .insert(files)
-                    .values(
-                        Object.entries(req.files).map(([fieldName, files]) => {
-                            const file = files[0];
-                            return {
-                                userEmail: req.user!.email,
-                                filePath: file.path,
-                                originalName: file.originalname,
-                                mimetype: file.mimetype,
-                                size: file.size,
-                                fieldName,
-                                module: modules[3],
-                            };
-                        })
-                    )
+                    .values(fileInserts)
                     .returning();
-                insertedFiles.forEach((file) => {
-                    insertedFileIds[file.fieldName!] = file.id;
+                inserted.forEach((file) => {
+                    insertedFileIds[
+                        file.fieldName as (typeof phdSchemas.phdProposalFileFieldNames)[number]
+                    ] = file.id;
                 });
             }
 
-            // 2. Clear old reviews
-            await tx
-                .delete(phdProposalCoSupervisors)
-                .where(eq(phdProposalCoSupervisors.proposalId, proposalId));
-            await tx
-                .delete(phdProposalDacReviews)
-                .where(eq(phdProposalDacReviews.proposalId, proposalId));
+            if (proposal.status === "dac_revert") {
+                await tx
+                    .delete(phdProposalDacReviews)
+                    .where(eq(phdProposalDacReviews.proposalId, proposalId));
+            }
 
-            // 3. Update the proposal to start the review process again
             await tx
                 .update(phdProposals)
                 .set({
                     title,
-                    abstractFileId: insertedFileIds["abstractFile"],
-                    proposalFileId: insertedFileIds["proposalFile"],
+                    hasOutsideCoSupervisor,
+                    declaration,
+                    appendixFileId:
+                        insertedFileIds.appendixFile ?? proposal.appendixFileId,
+                    summaryFileId:
+                        insertedFileIds.summaryFile ?? proposal.summaryFileId,
+                    outlineFileId:
+                        insertedFileIds.outlineFile ?? proposal.outlineFileId,
+                    placeOfResearchFileId:
+                        insertedFileIds.placeOfResearchFile ??
+                        proposal.placeOfResearchFileId,
+                    outsideCoSupervisorFormatFileId:
+                        insertedFileIds.outsideCoSupervisorFormatFile ??
+                        proposal.outsideCoSupervisorFormatFileId,
+                    outsideSupervisorBiodataFileId:
+                        insertedFileIds.outsideSupervisorBiodataFile ??
+                        proposal.outsideSupervisorBiodataFileId,
                     status: "supervisor_review",
-                    comments: null, // Clear old rejection comments
+                    comments: null,
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
 
-            // 4. Notify supervisor again
-            await createTodos(
-                [
-                    {
-                        module: modules[3],
-                        assignedTo: proposal.supervisorEmail,
-                        createdBy: userEmail,
-                        title: `Resubmitted PhD Proposal by ${proposal.student.name}`,
-                        description: `A PhD proposal by ${
-                            proposal.student.name ?? "Student"
-                        } has been resubmitted and is pending your review.`,
-                        link: `/phd/supervisor/proposal/${proposal.id}`,
-                        completionEvent: `proposal:supervisor-review:${proposal.id}`,
-                    },
-                ],
+            const finalCoSupervisorEmail =
+                coSupervisorEmail || externalCoSupervisorEmail;
+
+            await tx
+                .delete(phdProposalCoSupervisors)
+                .where(eq(phdProposalCoSupervisors.proposalId, proposalId));
+            if (finalCoSupervisorEmail) {
+                await tx.insert(phdProposalCoSupervisors).values({
+                    proposalId,
+                    coSupervisorEmail: finalCoSupervisorEmail,
+                    coSupervisorName: externalCoSupervisorName,
+                });
+            }
+
+            await completeTodo(
+                {
+                    module: modules[3],
+                    completionEvent: `proposal:student-resubmit:${proposalId}`,
+                    assignedTo: userEmail,
+                },
                 tx
             );
         });
+
+        if (supervisorEmail) {
+            await createTodos([
+                {
+                    assignedTo: supervisorEmail,
+                    createdBy: userEmail,
+                    title: `Resubmitted PhD Proposal for ${studentName}`,
+                    description: `Your student, ${studentName}, has resubmitted their PhD proposal for your review.`,
+                    module: modules[3],
+                    completionEvent: `proposal:supervisor-review:${proposalId}`,
+                    link: `/phd/supervisor/proposal/${proposalId}`,
+                    deadline: facultyReviewDate, 
+                },
+            ]);
+            await sendEmail({
+                to: supervisorEmail,
+                subject: `Resubmitted PhD Proposal from ${studentName}`,
+                html: `<p>Dear Supervisor,</p><p>Your student, ${studentName}, has resubmitted their PhD proposal titled "<strong>${title}</strong>".</p><p>Please log in to the portal to review the changes.</p>`,
+            });
+        }
 
         res.status(200).send({
             success: true,

@@ -320,6 +320,12 @@ importers:
       cors:
         specifier: ^2.8.5
         version: 2.8.5
+      docxtemplater:
+        specifier: ^3.66.3
+        version: 3.66.3
+      docxtemplater-image-module-free:
+        specifier: ^1.1.1
+        version: 1.1.1
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -383,6 +389,9 @@ importers:
       pg:
         specifier: ^8.14.0
         version: 8.14.0
+      pizzip:
+        specifier: ^3.2.0
+        version: 3.2.0
       puppeteer:
         specifier: ^24.10.2
         version: 24.10.2(typescript@5.8.2)
@@ -441,6 +450,9 @@ importers:
       '@types/pg':
         specifier: ^8.11.8
         version: 8.11.11
+      '@types/pizzip':
+        specifier: ^3.1.2
+        version: 3.1.2
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.26.1
         version: 8.26.1(@typescript-eslint/parser@8.26.1(eslint@9.22.0(jiti@1.21.7))(typescript@5.8.2))(eslint@9.22.0(jiti@1.21.7))(typescript@5.8.2)
@@ -2783,6 +2795,10 @@ packages:
   '@types/pg@8.11.11':
     resolution: {integrity: sha512-kGT1qKM8wJQ5qlawUrEkXgvMSXoV213KfMGXcwfDwUIfUHXqXYXOfS1nE1LINRJVVVx5wCm70XnFlMHaIcQAfw==}
 
+  '@types/pizzip@3.1.2':
+    resolution: {integrity: sha512-ii/53SEJROmMeBjutNSgvmbFi5WQJX7rl80SmEPY4EJU/WfGM9EX7UB8S9YVnGavLwp1em/3SxKOiUUtiAsQ5w==}
+    deprecated: This is a stub types definition. pizzip provides its own type definitions, so you do not need this installed.
+
   '@types/prismjs@1.26.5':
     resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
 
@@ -2905,6 +2921,10 @@ packages:
 
   '@web3-storage/multipart-parser@1.0.0':
     resolution: {integrity: sha512-BEO6al7BYqcnfX15W2cnGR+Q566ACXAT9UQykORCWW80lmkpWsnEob6zJS1ZVBKsSJC8+7vJkHwlp+lXG1UCdw==}
+
+  '@xmldom/xmldom@0.9.8':
+    resolution: {integrity: sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==}
+    engines: {node: '>=14.6'}
 
   '@zxing/text-encoding@0.9.0':
     resolution: {integrity: sha512-U/4aVJ2mxI0aDNI8Uq0wEhMgY+u4CNtEb0om3+y3+niDAsoTCOB33UF0sxpzqzdqXLqmvc+vZyAt4O8pPdfkwA==}
@@ -3710,6 +3730,13 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  docxtemplater-image-module-free@1.1.1:
+    resolution: {integrity: sha512-aWOzVQN7ggDYjfoy3pTTNrcrZ7/CJrQcI9cT+hmyHE6nRLR67nt5yPFPe9hm9VWbfYIED2fi+3itOnF0TE/RWQ==}
+
+  docxtemplater@3.66.3:
+    resolution: {integrity: sha512-fTBNyqa+dEAQ6enQmvXnR1wSyedbCn5zbQ6OuIGyGfYcMiwc0xVgRC3JoFjr39Na3/zvxcacqoN2VOTU6I29DQ==}
+    engines: {node: '>=0.10'}
 
   dom-serializer@0.1.1:
     resolution: {integrity: sha512-l0IU0pPzLWSHBcieZbpOKgkIn3ts3vAh7ZuFyXNwJxJXk/c4Gwj9xaTJwIDVQCXawWD0qb3IzMGH5rglQaO0XA==}
@@ -5687,6 +5714,9 @@ packages:
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
 
+  pako@2.1.0:
+    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -5811,6 +5841,9 @@ packages:
   pirates@4.0.6:
     resolution: {integrity: sha512-saLsH7WeYYPiD25LDuLRRY/i+6HaPYr6G1OUlN39otzkSTxKnubR9RTxS3/Kk50s1g2JTgFwWQDQyplC5/SHZg==}
     engines: {node: '>= 6'}
+
+  pizzip@3.2.0:
+    resolution: {integrity: sha512-X4NPNICxCfIK8VYhF6wbksn81vTiziyLbvKuORVAmolvnUzl1A1xmz9DAWKxPRq9lZg84pJOOAMq3OE61bD8IQ==}
 
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
@@ -6025,7 +6058,7 @@ packages:
   puppeteer@10.4.0:
     resolution: {integrity: sha512-2cP8mBoqnu5gzAVpbZ0fRaobBWZM8GEUF4I1F6WbgHrKV/rz7SX8PG2wMymZgD0wo0UBlg2FBPNxlF/xlqW6+w==}
     engines: {node: '>=10.18.1'}
-    deprecated: < 24.10.2 is no longer supported
+    deprecated: < 24.9.0 is no longer supported
 
   puppeteer@24.10.2:
     resolution: {integrity: sha512-+k26rCz6akFZntx0hqUoFjCojgOLIxZs6p2k53LmEicwsT8F/FMBKfRfiBw1sitjiCvlR/15K7lBqfjXa251FA==}
@@ -7145,6 +7178,11 @@ packages:
 
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
+
+  xmldom@0.1.31:
+    resolution: {integrity: sha512-yS2uJflVQs6n+CyjHoaBmVSqIDevTAWrzMmjG1Gc7h1qQ7uVozNhEPJAwZXWyGQ/Gafo3fCwrcaokezLPupVyQ==}
+    engines: {node: '>=0.1'}
+    deprecated: Deprecated due to CVE-2021-21366 resolved in 0.5.0
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -9301,6 +9339,10 @@ snapshots:
       pg-protocol: 1.8.0
       pg-types: 4.0.2
 
+  '@types/pizzip@3.1.2':
+    dependencies:
+      pizzip: 3.2.0
+
   '@types/prismjs@1.26.5': {}
 
   '@types/prop-types@15.7.14': {}
@@ -9473,6 +9515,8 @@ snapshots:
       - '@swc/helpers'
 
   '@web3-storage/multipart-parser@1.0.0': {}
+
+  '@xmldom/xmldom@0.9.8': {}
 
   '@zxing/text-encoding@0.9.0':
     optional: true
@@ -10317,6 +10361,14 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  docxtemplater-image-module-free@1.1.1:
+    dependencies:
+      xmldom: 0.1.31
+
+  docxtemplater@3.66.3:
+    dependencies:
+      '@xmldom/xmldom': 0.9.8
 
   dom-serializer@0.1.1:
     dependencies:
@@ -13033,6 +13085,8 @@ snapshots:
 
   pako@1.0.11: {}
 
+  pako@2.1.0: {}
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -13155,6 +13209,10 @@ snapshots:
   pify@2.3.0: {}
 
   pirates@4.0.6: {}
+
+  pizzip@3.2.0:
+    dependencies:
+      pako: 2.1.0
 
   pkg-dir@4.2.0:
     dependencies:
@@ -14692,6 +14750,8 @@ snapshots:
   xml-name-validator@5.0.0: {}
 
   xmlchars@2.2.0: {}
+
+  xmldom@0.1.31: {}
 
   xtend@4.0.2: {}
 

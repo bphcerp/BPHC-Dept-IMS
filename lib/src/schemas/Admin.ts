@@ -1,4 +1,5 @@
 import z from "zod";
+import { phdTypes } from "./Phd.ts";
 
 export const userTypes = ["faculty", "phd", "staff"] as const;
 
@@ -134,6 +135,7 @@ export const editDetailsBodySchema = z.intersection(
             notionalSupervisorEmail: optionalEmail,
             supervisorEmail: optionalEmail,
             emergencyPhoneNumber: optionalString,
+            phdType: z.enum(phdTypes).nullish(),
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
@@ -163,6 +165,7 @@ export interface MemberDetailsResponse {
     notionalSupervisorEmail?: string | null;
     supervisorEmail?: string | null;
     emergencyPhoneNumber?: string | null;
+    phdType?: (typeof phdTypes)[number] | null;
 }
 
 // testing schemas

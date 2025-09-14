@@ -53,6 +53,7 @@ router.get(
                 columns: {
                     email: true,
                     name: true,
+                    phdType: true,
                 },
                 where: (fields, { or, ilike }) =>
                     searchQuery?.length

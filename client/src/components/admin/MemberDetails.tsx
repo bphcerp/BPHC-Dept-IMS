@@ -18,13 +18,20 @@ import {
   CardTitle,
   CardFooter,
 } from "../ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, UserCircle2, X, User } from "lucide-react";
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
 import { Button } from "@/components/ui/button";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { adminSchemas } from "lib";
+import { adminSchemas, phdSchemas } from "lib";
 import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
@@ -51,6 +58,7 @@ const editableFields = [
   "notionalSupervisorEmail",
   "supervisorEmail",
   "emergencyPhoneNumber",
+  "phdType",
 ] as const;
 
 export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
@@ -64,8 +72,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       await api.post("/admin/member/editroles", data);
     },
     onMutate(data) {
-      // Optimistic update
-      void queryClient.cancelQueries(["member", data.email]);
+      void queryClient.cancelQueries({ queryKey: ["member", data.email] });
       const previousData =
         queryClient.getQueryData<adminSchemas.MemberDetailsResponse>([
           "member",
@@ -87,7 +94,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       return { previousData };
     },
     onError: (_err, _variables, context) => {
-      // If mutation fails, use context from onMutate to rollback
       queryClient.setQueryData<adminSchemas.MemberDetailsResponse>(
         ["member", data.email],
         context?.previousData
@@ -95,9 +101,9 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       toast.error("An error occurred while editing roles");
     },
     onSettled: () => {
-      void queryClient.invalidateQueries(["member", data.email]);
-      void queryClient.invalidateQueries(["members"]);
-      void queryClient.invalidateQueries(["roles"]);
+      void queryClient.invalidateQueries({ queryKey: ["member", data.email] });
+      void queryClient.invalidateQueries({ queryKey: ["members"] });
+      void queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
   });
 
@@ -106,8 +112,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       await api.post("/admin/member/editdetails", data);
     },
     onMutate(data) {
-      // Optimistic update
-      void queryClient.cancelQueries(["member", data.email]);
+      void queryClient.cancelQueries({ queryKey: ["member", data.email] });
       const previousData =
         queryClient.getQueryData<adminSchemas.MemberDetailsResponse>([
           "member",
@@ -123,7 +128,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       return { previousData };
     },
     onError: (err, _variables, context) => {
-      // If mutation fails, use context from onMutate to rollback
       queryClient.setQueryData<adminSchemas.MemberDetailsResponse>(
         ["member", data.email],
         context?.previousData
@@ -136,11 +140,10 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       );
     },
     onSettled: () => {
-      void queryClient.invalidateQueries(["member", data.email]);
+      void queryClient.invalidateQueries({ queryKey: ["member", data.email] });
     },
   });
 
-  // New edit state and react-hook-form integration
   const [isEditing, setIsEditing] = useState(false);
 
   const onSubmit: SubmitHandler<adminSchemas.EditDetailsBody> = (formData) => {
@@ -183,11 +186,9 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
           </div>
         );
       }
-
       if (typeof value === "boolean") {
         return value === true ? "Yes" : "No";
       }
-
       return String(value);
     },
     [data.email, editRoleMutation]
@@ -195,7 +196,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
 
   return (
     <div className="space-y-6">
-      {/* Profile Image Section */}
       <Card className="mx-auto max-w-5xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -229,6 +229,12 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                   {Object.keys(data).map((key) => {
                     const fieldName = key as (typeof editableFields)[number];
                     if (!editableFields.includes(fieldName)) return null;
+
+                    if (data.type === "phd" && fieldName === "designation")
+                      return null;
+                    if (data.type !== "phd" && fieldName === "phdType")
+                      return null;
+
                     return (
                       <div key={fieldName} className="space-y-1">
                         <FormField
@@ -242,11 +248,29 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                                   .toUpperCase()}
                               </FormLabel>
                               <FormControl>
-                                <Input
-                                  {...field}
-                                  value={field.value ?? ""}
-                                  className="col-span-3"
-                                />
+                                {fieldName === "phdType" ? (
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value ?? undefined}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select PhD Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {phdSchemas.phdTypes.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                          {type}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Input
+                                    {...field}
+                                    value={field.value ?? ""}
+                                    className="col-span-3"
+                                  />
+                                )}
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -286,44 +310,42 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                   </p>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(data).map(
-                  ([key, value]) =>
-                    key !== "name" &&
-                    key !== "type" && (
-                      <div key={key} className="space-y-1">
-                        <div className="flex gap-2 text-sm uppercase text-muted-foreground">
-                          {key.replace(/([A-Z]+)/g, " $1").toUpperCase()}
-                          {key === "roles" && !data.deactivated && (
-                            <AssignRoleComboBox
-                              existing={data.roles}
-                              callback={(role) => {
-                                editRoleMutation.mutate({
-                                  email: data.email,
-                                  add: role,
-                                });
-                              }}
+                {Object.entries(data).map(([key, value]) => {
+                  if (key === "name" || key === "type") return null;
+                  if (data.type === "phd" && key === "designation") return null;
+                  if (data.type !== "phd" && key === "phdType") return null;
+
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div className="flex gap-2 text-sm uppercase text-muted-foreground">
+                        {key.replace(/([A-Z]+)/g, " $1").toUpperCase()}
+                        {key === "roles" && !data.deactivated && (
+                          <AssignRoleComboBox
+                            existing={data.roles}
+                            callback={(role) => {
+                              editRoleMutation.mutate({
+                                email: data.email,
+                                add: role,
+                              });
+                            }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-5 w-5 items-start"
                             >
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-5 w-5 items-start"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </AssignRoleComboBox>
-                          )}
-                        </div>
-                        <div className="text-sm">
-                          {renderValue(
-                            key,
-                            value as string | number | boolean | string[] | null
-                          )}
-                        </div>
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </AssignRoleComboBox>
+                        )}
                       </div>
-                    )
-                )}
+                      <div className="text-sm">
+                        {renderValue(key, value as any)}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
             <CardFooter className="justify-between">
@@ -343,7 +365,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                         key,
                         value ?? "",
                       ])
-                    )
+                    ) as any
                   );
                 }}
               >

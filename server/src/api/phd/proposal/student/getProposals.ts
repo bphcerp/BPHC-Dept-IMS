@@ -2,15 +2,24 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { desc } from "drizzle-orm";
-import { phdProposals } from "@/config/db/schema/phd.ts";
-
+import { desc, eq, 
+    // gte
+ } from "drizzle-orm";
+import {
+    phdProposals,
+    // phdProposalSemesters,
+    phdProposalDacReviews,
+} from "@/config/db/schema/phd.ts";
+// import { phd } from "@/config/db/schema/admin.ts";
+import environment from "@/config/environment.ts";
 const router = express.Router();
-
 router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
+        // const student = await db.query.phd.findFirst({
+        //     where: eq(phd.email, req.user!.email),
+        // });
         const proposals = await db.query.phdProposals.findMany({
             columns: {
                 id: true,
@@ -18,43 +27,48 @@ router.get(
                 status: true,
                 updatedAt: true,
                 active: true,
+                comments: true,
+                seminarDate: true,
+                seminarTime: true,
+                seminarVenue: true,
             },
             where: (cols, { and, eq }) =>
                 and(eq(cols.studentEmail, req.user!.email)),
-            with: {
-                dacReviews: {
-                    columns: {
-                        comments: true,
-                        approved: true,
-                    },
-                },
-            },
             orderBy: desc(phdProposals.updatedAt),
+            with: { proposalSemester: true },
         });
-
-        const formattedProposals = proposals.map((p) => {
-            const rejectionComments =
-                p.status === "dac_rejected"
-                    ? p.dacReviews
-                          .filter((r) => !r.approved)
-                          .map((r) => r.comments)
-                          .join("\n---\n") // TODO: improve comment feedback formatting
-                    : null;
-
-            return {
-                id: p.id,
-                title: p.title,
-                status: p.status,
-                updatedAt: p.updatedAt,
-                active: p.active,
-                comments: rejectionComments,
-            };
-        });
-
-        const canApply = !proposals.some((p) => p.active);
-
-        res.status(200).json({ proposals: formattedProposals, canApply });
+        const proposalsWithDacFeedback = await Promise.all(
+            proposals.map(async (p) => {
+                if (p.status === "dac_revert") {
+                    const dacReviews =
+                        await db.query.phdProposalDacReviews.findMany({
+                            where: eq(phdProposalDacReviews.proposalId, p.id),
+                            with: { feedbackFile: true },
+                        });
+                    const dacFeedback = dacReviews
+                        .filter((review) => !review.approved)
+                        .map((review) => ({
+                            comments: review.comments,
+                            feedbackFileUrl: review.feedbackFileId
+                                ? `${environment.SERVER_URL}/f/${review.feedbackFileId}`
+                                : null,
+                        }));
+                    const dacSummary = dacReviews.map((review, index) => ({
+                        label: `DAC ${index + 1}`,
+                        status: review.approved ? "Approved" : "Reverted",
+                    }));
+                    return { ...p, dacFeedback, dacSummary };
+                }
+                return p;
+            })
+        );
+        // const now = new Date();
+        // const activeDeadline = await db.query.phdProposalSemesters.findFirst({
+        //     where: gte(phdProposalSemesters.studentSubmissionDate, now),
+        // });
+        // const canApply = student?.hasPassedQe && !proposals.some((p) => p.active) && !!activeDeadline;
+        const canApply = true;
+        res.status(200).json({ proposals: proposalsWithDacFeedback, canApply });
     })
 );
-
 export default router;
