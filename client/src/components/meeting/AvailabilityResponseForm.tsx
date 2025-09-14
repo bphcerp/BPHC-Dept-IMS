@@ -12,19 +12,23 @@ import {
   CardTitle,
 } from "../ui/card";
 import { LoadingSpinner } from "../ui/spinner";
-import { z } from "zod"; // Corrected: Added zod import
+import { z } from "zod";
 
 type AvailabilityStatus = z.infer<typeof meetingSchemas.availabilityStatusEnum>;
 
 interface TimeSlot {
   id: number;
   startTime: string;
+  availableCount: number;
+  unavailableCount: number;
 }
-
 interface AvailabilityResponseFormProps {
   timeSlots: TimeSlot[];
   onSubmit: (
-    availability: { timeSlotId: number; status: AvailabilityStatus }[]
+    availability: {
+      timeSlotId: number;
+      status: AvailabilityStatus;
+    }[]
   ) => void;
   isSubmitting: boolean;
 }
@@ -55,15 +59,22 @@ export const AvailabilityResponseForm: React.FC<
       <CardHeader>
         <CardTitle>Your Availability</CardTitle>
         <CardDescription>
-          Please mark your availability for the suggested time slots.
+          Please mark your availability for the suggested time slots. You can
+          change your response until the deadline.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {timeSlots.map((slot) => (
           <div key={slot.id} className="rounded-md border p-4">
-            <p className="font-semibold">
-              {new Date(slot.startTime).toLocaleString()}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-semibold">
+                {new Date(slot.startTime).toLocaleString()}
+              </p>
+              <div className="flex gap-2 text-sm text-muted-foreground">
+                <span>✅ {slot.availableCount} Available</span>
+                <span>❌ {slot.unavailableCount} Unavailable</span>
+              </div>
+            </div>
             <RadioGroup
               onValueChange={(value) =>
                 handleValueChange(slot.id, value as AvailabilityStatus)
@@ -71,12 +82,8 @@ export const AvailabilityResponseForm: React.FC<
               className="mt-2 flex flex-col gap-4 sm:flex-row"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="best_available" id={`best-${slot.id}`} />
-                <Label htmlFor={`best-${slot.id}`}>Best Available</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="tentative" id={`tentative-${slot.id}`} />
-                <Label htmlFor={`tentative-${slot.id}`}>Tentative</Label>
+                <RadioGroupItem value="available" id={`available-${slot.id}`} />
+                <Label htmlFor={`available-${slot.id}`}>Available</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem
@@ -90,9 +97,7 @@ export const AvailabilityResponseForm: React.FC<
         ))}
         <Button
           onClick={handleSubmit}
-          disabled={
-            isSubmitting || Object.keys(responses).length !== timeSlots.length
-          }
+          disabled={isSubmitting || Object.keys(responses).length === 0}
         >
           {isSubmitting && <LoadingSpinner className="mr-2 h-4 w-4" />}
           Submit Availability

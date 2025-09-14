@@ -15,19 +15,19 @@ import { X, Clock } from "lucide-react";
 interface TimeSlotPickerProps {
   selectedSlots: Date[];
   onSlotSelect: (slots: Date[]) => void;
-  duration: number; // in minutes
+  deadline: string; // Deadline is a string in ISO format
 }
 
 export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   selectedSlots,
   onSlotSelect,
-//   duration,
+  deadline,
 }) => {
+  const deadlineDate = new Date(deadline);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date()
+    new Date(deadlineDate.getTime() + 24 * 60 * 60 * 1000) // Default to day after deadline
   );
 
-  // Generate time slots for the selected day (e.g., 9 AM to 5 PM, every 30 mins)
   const timeSlotsForDay = useMemo(() => {
     if (!selectedDate) return [];
     const slots = [];
@@ -44,9 +44,7 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   }, [selectedDate]);
 
   const handleTimeSelect = (slot: Date) => {
-    // Prevent adding duplicate slots
     if (selectedSlots.some((s) => s.getTime() === slot.getTime())) return;
-
     const newSelectedSlots = [...selectedSlots, slot].sort(
       (a, b) => a.getTime() - b.getTime()
     );
@@ -65,25 +63,20 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
       <CardHeader>
         <CardTitle>Suggest Meeting Time Slots</CardTitle>
         <CardDescription>
-          Select a day, then choose one or more available time slots for the
-          meeting.
+          Select a day after the response deadline, then choose one or more
+          available time slots for the meeting.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Calendar for Date Selection */}
         <div className="flex justify-center">
           <Calendar
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
             className="rounded-md border"
-            disabled={(date) =>
-              date < new Date(new Date().setDate(new Date().getDate() - 1))
-            } // Disable past dates
+            disabled={(date) => date <= deadlineDate}
           />
         </div>
-
-        {/* Time Slot Selection and Display */}
         <div className="space-y-4">
           <div>
             <h4 className="mb-2 font-semibold">
@@ -119,8 +112,8 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
           </div>
           <div>
             <h4 className="mb-2 flex items-center gap-2 font-semibold">
-              <Clock className="h-4 w-4" />
-              Selected Slots ({selectedSlots.length})
+              <Clock className="h-4 w-4" /> Selected Slots (
+              {selectedSlots.length})
             </h4>
             <div className="flex flex-wrap gap-2">
               {selectedSlots.length > 0 ? (

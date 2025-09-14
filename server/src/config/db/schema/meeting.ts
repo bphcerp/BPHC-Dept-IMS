@@ -9,18 +9,25 @@ import {
     pgEnum,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
-import { meetingSchemas } from "lib";
 
 export const meetingAvailabilityStatusEnum = pgEnum(
     "meeting_availability_status",
-    meetingSchemas.availabilityStatusEnum.options
+    ["available", "unavailable"]
 );
+
+export const meetingStatusEnum = pgEnum("meeting_status", [
+    "pending_responses",
+    "awaiting_finalization",
+    "scheduled",
+    "cancelled",
+    "completed",
+]);
 
 export const meetings = pgTable("meetings", {
     id: serial("id").primaryKey(),
     title: text("title").notNull(),
     purpose: text("purpose"),
-    duration: integer("duration").notNull(), // Duration in minutes
+    duration: integer("duration").notNull(),
     organizerEmail: text("organizer_email")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
@@ -28,6 +35,7 @@ export const meetings = pgTable("meetings", {
     finalizedTime: timestamp("finalized_time", { withTimezone: true }),
     venue: text("venue"),
     googleMeetLink: text("google_meet_link"),
+    status: meetingStatusEnum("status").default("pending_responses").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
@@ -44,9 +52,8 @@ export const meetingParticipants = pgTable(
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
     },
-    (table) => ({
-        unq: unique().on(table.meetingId, table.participantEmail),
-    })
+    // FIX: Change from an object to an array
+    (table) => [unique().on(table.meetingId, table.participantEmail)]
 );
 
 export const meetingTimeSlots = pgTable("meeting_time_slots", {
@@ -70,7 +77,6 @@ export const meetingAvailability = pgTable(
             .references(() => users.email, { onDelete: "cascade" }),
         availability: meetingAvailabilityStatusEnum("availability").notNull(),
     },
-    (table) => ({
-        unq: unique().on(table.timeSlotId, table.participantEmail),
-    })
+    // FIX: Change from an object to an array
+    (table) => [unique().on(table.timeSlotId, table.participantEmail)]
 );

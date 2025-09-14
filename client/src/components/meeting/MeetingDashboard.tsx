@@ -11,26 +11,65 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Plus, Send, Trash2 } from "lucide-react";
 import { Badge } from "../ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Meeting {
   id: number;
   title: string;
+  status: string;
   finalizedTime: string | null;
   organizerEmail: string;
+  participantCount?: number;
+  responseCount?: number;
 }
-
 interface MeetingDashboardProps {
   organizedMeetings: Meeting[];
   invitedMeetings: Meeting[];
+  onRemind: (meetingId: number) => void;
+  onDelete: (meetingId: number) => void;
+  isReminding: boolean;
+  isDeleting: boolean;
 }
 
 export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
   organizedMeetings,
   invitedMeetings,
+  onRemind,
+  onDelete,
+  isReminding,
+  isDeleting,
 }) => {
   const navigate = useNavigate();
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return <Badge>Scheduled</Badge>;
+      case "awaiting_finalization":
+        // FIX: Use custom classes for yellow color instead of a variant
+        return (
+          <Badge className="border-yellow-200 bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80 dark:border-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
+            Awaiting Finalization
+          </Badge>
+        );
+      case "pending_responses":
+        return <Badge variant="secondary">Pending Responses</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   const renderTable = (
     title: string,
@@ -47,7 +86,8 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
+              {isOrganizer && <TableHead>Responses</TableHead>}
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -55,12 +95,15 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
               meetings.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell>{m.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={m.finalizedTime ? "default" : "secondary"}>
-                      {m.finalizedTime ? "Scheduled" : "Pending"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
+                  <TableCell>{getStatusBadge(m.status)}</TableCell>
+                  {isOrganizer && (
+                    <TableCell>
+                      {m.participantCount !== undefined
+                        ? `${m.responseCount}/${m.participantCount}`
+                        : "-"}
+                    </TableCell>
+                  )}
+                  <TableCell className="flex justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -74,12 +117,53 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
                     >
                       <Eye className="mr-2 h-4 w-4" /> View
                     </Button>
+                    {isOrganizer && m.status === "pending_responses" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onRemind(m.id)}
+                        disabled={isReminding}
+                      >
+                        <Send className="mr-2 h-4 w-4" /> Remind
+                      </Button>
+                    )}
+                    {isOrganizer && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action will cancel the meeting and notify all
+                              participants. This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDelete(m.id)}>
+                              Yes, Cancel Meeting
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
+                <TableCell
+                  colSpan={isOrganizer ? 4 : 3}
+                  className="h-24 text-center"
+                >
                   No meetings found.
                 </TableCell>
               </TableRow>

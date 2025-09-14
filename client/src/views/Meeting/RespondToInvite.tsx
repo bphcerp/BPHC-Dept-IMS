@@ -54,34 +54,25 @@ const RespondToInvite: React.FC = () => {
     );
   if (isError || !meeting) return <p>Could not load invitation.</p>;
 
-  if (meeting.finalizedTime) {
+  if (meeting.status !== "pending_responses") {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Meeting Already Scheduled</CardTitle>
+          <CardTitle>Response Not Possible</CardTitle>
           <CardDescription>
-            This meeting has already been finalized and cannot be responded to.
+            This meeting is no longer accepting availability responses.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p>
-            Scheduled for:{" "}
-            <strong>{new Date(meeting.finalizedTime).toLocaleString()}</strong>
+            Current Status: <strong>{meeting.status}</strong>
           </p>
-          {meeting.venue && (
-            <p>
-              Venue: <strong>{meeting.venue}</strong>
-            </p>
-          )}
-          {meeting.googleMeetLink && (
-            <p>
-              Link:{" "}
-              <a
-                href={meeting.googleMeetLink}
-                className="text-blue-600 hover:underline"
-              >
-                {meeting.googleMeetLink}
-              </a>
+          {meeting.finalizedTime && (
+            <p className="mt-2">
+              Scheduled for:{" "}
+              <strong>
+                {new Date(meeting.finalizedTime).toLocaleString()}
+              </strong>
             </p>
           )}
         </CardContent>

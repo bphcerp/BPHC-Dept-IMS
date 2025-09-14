@@ -7,10 +7,12 @@ import { meetings, meetingTimeSlots } from "@/config/db/schema/meeting.ts";
 import { meetingSchemas } from "lib";
 import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { createTodos } from "@/lib/todos/index.ts";
+import { createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
-// You might need a utility to create Google Meet links. This is a placeholder.
-// import { createGoogleMeetLink } from '@/lib/google';
+import {
+    schedulePreMeetingReminder,
+    scheduleCompletionJob,
+} from "@/lib/jobs/meetingJobs.ts";
 
 const router = express.Router();
 
@@ -35,8 +37,7 @@ router.post(
                 "You are not the organizer of this meeting."
             );
         }
-
-        if (meeting.finalizedTime) {
+        if (meeting.status === "scheduled" || meeting.status === "completed") {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "This meeting has already been finalized."
@@ -57,42 +58,42 @@ router.post(
             );
         }
 
-        let venue: string | null = null;
-        let googleMeetLink: string | null = null;
-        let locationDetails: string;
-
-        if (body.location.type === "venue") {
-            venue = body.location.details;
-            locationDetails = `Venue: ${venue}`;
-        } else {
-            // googleMeetLink = await createGoogleMeetLink(meeting.title, finalSlot.startTime, finalSlot.endTime);
-            googleMeetLink = `https://meet.google.com/lookup/${Math.random().toString(36).substring(2)}`; // Placeholder
-            locationDetails = `Google Meet: <a href="${googleMeetLink}">${googleMeetLink}</a>`;
-        }
-
         await db
             .update(meetings)
             .set({
                 finalizedTime: finalSlot.startTime,
-                venue,
-                googleMeetLink,
+                venue: body.venue ?? null,
+                googleMeetLink: body.googleMeetLink ?? null,
+                status: "scheduled",
             })
             .where(eq(meetings.id, body.meetingId));
+
+        // Schedule pre-meeting reminder and completion job
+        const meetingEndTime = new Date(
+            finalSlot.startTime.getTime() + meeting.duration * 60000
+        );
+        await schedulePreMeetingReminder(meeting.id, finalSlot.startTime);
+        await scheduleCompletionJob(meeting.id, meetingEndTime);
 
         const allParticipants = meeting.participants.map(
             (p) => p.participantEmail
         );
         const subject = `Meeting Finalized: ${meeting.title}`;
-        const description = `The meeting "${meeting.title}" has been scheduled for ${finalSlot.startTime.toLocaleString()}. ${locationDetails}`;
+        let locationDetails = "";
+        if (body.venue) locationDetails += `<p><b>Venue:</b> ${body.venue}</p>`;
+        if (body.googleMeetLink)
+            locationDetails += `<p><b>Google Meet:</b> <a href="${body.googleMeetLink}">${body.googleMeetLink}</a></p>`;
 
-        await createTodos(
+        const description = `<p>The meeting "<b>${
+            meeting.title
+        }</b>" has been scheduled for <b>${finalSlot.startTime.toLocaleString()}</b>.</p>${locationDetails}`;
+
+        await createNotifications(
             allParticipants.map((email) => ({
-                assignedTo: email,
-                createdBy: organizerEmail,
+                userEmail: email,
                 title: subject,
-                description,
+                content: description,
                 module: "Meeting" as any,
-                completionEvent: `meeting:finalized:${body.meetingId}`,
             }))
         );
 
@@ -100,7 +101,7 @@ router.post(
             allParticipants.map((email) => ({
                 to: email,
                 subject,
-                html: `<p>${description}</p>`,
+                html: description,
             }))
         );
 

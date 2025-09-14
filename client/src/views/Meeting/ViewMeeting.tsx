@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { MeetingDetails } from "@/components/meeting/MeetingDetails";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/Auth";
+import { meetingSchemas } from "lib";
+import { z } from "zod";
+
+type FinalizeFormData = z.infer<typeof meetingSchemas.finalizeMeetingSchema>;
 
 const ViewMeeting: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +27,7 @@ const ViewMeeting: React.FC = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: (variables: { finalTimeSlotId: number; location: any }) =>
+    mutationFn: (variables: Omit<FinalizeFormData, "meetingId">) =>
       api.post("/meeting/finalize", { meetingId, ...variables }),
     onSuccess: () => {
       toast.success("Meeting has been finalized!");
@@ -56,7 +60,8 @@ const ViewMeeting: React.FC = () => {
   return (
     <MeetingDetails
       meeting={data}
-      onFinalize={mutation.mutate} // This now works correctly
+      onFinalize={mutation.mutate}
+      isFinalizing={mutation.isLoading}
       isOrganizer={isOrganizer}
     />
   );

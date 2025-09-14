@@ -238,6 +238,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/meeting/respond": "meeting:use",
     "/meeting/finalize": "meeting:use",
     "/meeting/all-users": "meeting:use",
+    "/meeting/remind": "meeting:use",
+    "/meeting/delete": "meeting:use",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",

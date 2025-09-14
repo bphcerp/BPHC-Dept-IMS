@@ -28,9 +28,9 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { Calendar } from "lucide-react"; 
+import { Calendar } from "lucide-react";
 import MeetingLayout from "@/layouts/MeetingLayout";
-import MeetingDashboardView from "@/views/Meeting/MeetingDashboardView"; 
+import MeetingDashboardView from "@/views/Meeting/MeetingDashboardView";
 import CreateMeeting from "@/views/Meeting/CreateMeeting";
 import ViewMeeting from "@/views/Meeting/ViewMeeting";
 import RespondToInvite from "@/views/Meeting/RespondToInvite";
@@ -279,7 +279,7 @@ const Routing = () => {
         )}
         {checkAccessAnyOne(meetingModulePermissions) && (
           <Route path="/meeting" element={<MeetingLayout />}>
-            <Route index element={<MeetingDashboardView />} /> 
+            <Route index element={<MeetingDashboardView />} />
             <Route path="create" element={<CreateMeeting />} />
             <Route path="view/:id" element={<ViewMeeting />} />
             <Route path="respond/:id" element={<RespondToInvite />} />
@@ -459,7 +459,6 @@ const Routing = () => {
                 )}
               </Route>
             )}
-           
           </Route>
         )}
         {checkAccessAnyOne(publicationsPermissions) && (
