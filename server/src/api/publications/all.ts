@@ -7,7 +7,7 @@ import {
     publicationsTable,
     researgencePublications,
 } from "@/config/db/schema/publications.ts";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { publicationsSchemas } from "lib";
 
 const router = express.Router();
@@ -22,9 +22,9 @@ router.get(
                 .innerJoin(
                     publicationsTable,
                     eq(
-                        researgencePublications.publicationTitle,
-                        publicationsTable.title,
-                    ),
+                        sql`lower(${researgencePublications.publicationTitle})`, 
+                        sql`lower(${publicationsTable.title})`
+                    )
                 )).map((row) => row.researgence),
 
             nonValidated: (await db.select()
@@ -32,9 +32,9 @@ router.get(
                 .leftJoin(
                     researgencePublications,
                     eq(
-                        researgencePublications.publicationTitle,
-                        publicationsTable.title,
-                    ),
+                        sql`lower(${researgencePublications.publicationTitle})`, 
+                        sql`lower(${publicationsTable.title})`
+                    )
                 )
                 .where(isNull(researgencePublications.authors)
             ))
