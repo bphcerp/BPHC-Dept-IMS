@@ -76,6 +76,7 @@ export default router.get(
                                 ? assignment.notifiedAt.toISOString()
                                 : null,
                             qpSubmitted: assignment.qpSubmitted,
+                            hasAccepted: assignment.hasAccepted,
                         };
                         return acc;
                     },
@@ -85,6 +86,7 @@ export default router.get(
                             examinerEmail: string;
                             notifiedAt: string | null;
                             qpSubmitted: boolean;
+                            hasAccepted: boolean | null;
                         }
                     >
                 ),

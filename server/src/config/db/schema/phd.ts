@@ -219,8 +219,11 @@ export const phdExaminerAssignments = pgTable(
         qualifyingArea: text("qualifying_area")
             .notNull()
             .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
-        examinerEmail: text("examiner_email").notNull(),
+        examinerEmail: text("examiner_email")
+            .notNull()
+            .references(() => faculty.email, { onDelete: "cascade" }),
         notifiedAt: timestamp("notified_at", { withTimezone: true }),
+        hasAccepted: boolean("has_accepted"),
         qpSubmitted: boolean("qp_submitted").default(false).notNull(),
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
@@ -319,7 +322,9 @@ export const phdProposalDacMembers = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email").notNull(),
+        dacMemberEmail: text("dac_member_email")
+            .notNull()
+            .references(() => faculty.email, { onDelete: "cascade" }),
     },
     (table) => [
         unique().on(table.proposalId, table.dacMemberEmail),
@@ -334,7 +339,9 @@ export const phdProposalDacReviews = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email").notNull(),
+        dacMemberEmail: text("dac_member_email")
+            .notNull()
+            .references(() => faculty.email, { onDelete: "cascade" }),
         approved: boolean("approved").notNull(),
         comments: text("comments").notNull(),
         feedbackFileId: integer("feedback_file_id").references(() => files.id, {

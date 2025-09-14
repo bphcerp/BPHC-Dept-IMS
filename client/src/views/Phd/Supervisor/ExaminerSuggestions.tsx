@@ -36,17 +36,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Check,
-  ChevronsUpDown,
-  UserPlus,
-  X,
-  PlusCircle,
-  AlertCircle,
-} from "lucide-react";
+import { Check, ChevronsUpDown, UserPlus, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isAxiosError } from "axios";
 import { phdSchemas } from "lib";
@@ -301,7 +292,7 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({
           <DialogDescription className="text-sm text-muted-foreground">
             Select exactly {application.examinerCount} examiner
             {application.examinerCount > 1 ? "s" : ""} for each qualifying area
-            from the faculty list or add external examiners by email.
+            from the faculty list
           </DialogDescription>
 
           {validationErrors.length > 0 && (
@@ -386,7 +377,6 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({
   hasError = false,
 }) => {
   const [open, setOpen] = useState(false);
-  const [externalEmail, setExternalEmail] = useState("");
 
   const handleSelect = (email: string) => {
     if (selected.length < maxCount && !selected.includes(email)) {
@@ -399,28 +389,6 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({
 
   const handleRemove = (email: string) => {
     setSelected(selected.filter((s) => s !== email));
-  };
-
-  const handleAddExternal = () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(externalEmail)) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (selected.length >= maxCount) {
-      toast.error(`You cannot suggest more than ${maxCount} examiners.`);
-      return;
-    }
-    if (
-      selected.includes(externalEmail) ||
-      facultyList.some((f) => f.email === externalEmail)
-    ) {
-      toast.error(
-        "This examiner has already been suggested or is in the faculty list."
-      );
-      return;
-    }
-    setSelected([...selected, externalEmail]);
-    setExternalEmail("");
   };
 
   return (
@@ -498,36 +466,8 @@ const ExaminerSelector: React.FC<ExaminerSelectorProps> = ({
         </PopoverContent>
       </Popover>
 
-      <div className="relative">
-        <Separator />
-        <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-2 text-xs text-muted-foreground">
-          OR
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="external-email" className="text-sm">
-          Add External Examiner
-        </Label>
-        <div className="flex gap-2">
-          <Input
-            id="external-email"
-            placeholder="examiner@email.com"
-            value={externalEmail}
-            onChange={(e) => setExternalEmail(e.target.value)}
-            disabled={selected.length >= maxCount}
-            className={cn(hasError && "border-destructive")}
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleAddExternal}
-            disabled={selected.length >= maxCount || !externalEmail.trim()}
-            className="shrink-0"
-          >
-            <PlusCircle className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="text-sm text-muted-foreground">
+        If the examiner is not listed, please contact the admin.
       </div>
 
       {selected.length > 0 && (

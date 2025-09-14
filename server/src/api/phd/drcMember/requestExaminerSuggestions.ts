@@ -11,13 +11,12 @@ import db from "@/config/db/index.ts";
 import {
     phdExamApplications,
     phdExaminerSuggestions,
+    phdExaminerAssignments,
 } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
 
 const router = express.Router();
 
-// This endpoint is reverted to accept subject/body from the client,
-// as the client will now handle fetching and editing the template.
 router.post(
     "/",
     checkAccess(),
@@ -55,11 +54,15 @@ router.post(
         });
 
         await db.transaction(async (tx) => {
-            // For re-requests, clear existing suggestions to allow for new ones
             await tx
                 .delete(phdExaminerSuggestions)
                 .where(
                     eq(phdExaminerSuggestions.applicationId, application.id)
+                );
+            await tx
+                .delete(phdExaminerAssignments)
+                .where(
+                    eq(phdExaminerAssignments.applicationId, application.id)
                 );
 
             await createTodos(

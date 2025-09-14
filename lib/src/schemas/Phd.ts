@@ -92,7 +92,7 @@ export const createSuggestExaminersSchema = (examinerCount: number) =>
 
 export const updateExaminerCountSchema = z.object({
     examId: z.number().int().positive(),
-    examinerCount: z.number().int().min(2).max(4),
+    examinerCount: z.number().int().min(0).max(6),
 });
 export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
 
@@ -562,6 +562,7 @@ export interface VerifiedApplication {
             examinerEmail: string;
             notifiedAt: string | null;
             qpSubmitted: boolean;
+            hasAccepted: boolean | null;
         }
     >;
     result: "pass" | "fail" | null;
@@ -633,3 +634,16 @@ export const sendToDacSchema = z.object({
         .min(2, "At least 2 DAC members must be selected"),
 });
 export type SendToDacBody = z.infer<typeof sendToDacSchema>;
+
+export type ExaminerAssignmentsResponse = Array<{
+    id: number;
+    student: {
+        name: string | null;
+        email: string;
+        idNumber: string | null;
+        phone: string | null;
+    };
+    qualifyingArea: string;
+    syllabusFile: string;
+    hasAccepted: boolean | null;
+}>;
