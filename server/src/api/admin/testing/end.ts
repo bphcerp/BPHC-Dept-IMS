@@ -30,11 +30,14 @@ router.post(
         }
 
         // move roles from tester rollback roles to roles
-        const updateUser = await db.update(users).set({
-            roles: data[0].testerRollbackRoles,
-            testerRollbackRoles: [],
-            inTestingMode: false,
-        });
+        const updateUser = await db
+            .update(users)
+            .set({
+                roles: data[0].testerRollbackRoles,
+                testerRollbackRoles: [],
+                inTestingMode: false,
+            })
+            .where(eq(users.email, req.user.email));
         if (!updateUser || !updateUser.rowCount) {
             res.status(500).json({ message: "Failed to update user" });
             return;

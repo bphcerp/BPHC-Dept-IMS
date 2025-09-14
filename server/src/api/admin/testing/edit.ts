@@ -42,9 +42,12 @@ router.post(
         }
 
         // assign new testing roles
-        const updateUser = await db.update(users).set({
-            roles: roleIDs.map((r) => r.id),
-        });
+        const updateUser = await db
+            .update(users)
+            .set({
+                roles: roleIDs.map((r) => r.id),
+            })
+            .where(eq(users.email, req.user.email));    
         if (!updateUser || !updateUser.rowCount) {
             res.status(500).json({ message: "Failed to update user roles" });
             return;
