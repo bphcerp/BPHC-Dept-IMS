@@ -305,9 +305,8 @@ export const phdProposalDacMembers = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        dacMemberEmail: text("dac_member_email").notNull(),
+        dacMemberName: text("dac_member_name"),
     },
     (table) => [
         unique().on(table.proposalId, table.dacMemberEmail),

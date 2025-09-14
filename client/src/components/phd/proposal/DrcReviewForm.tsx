@@ -125,7 +125,7 @@ export const DrcReviewForm: React.FC<DrcReviewFormProps> = ({
               const name = member.dacMember?.name ?? email;
               const label = member.dacMember
                 ? `${name} (${email})`
-                : `${name} (External)`;
+                : `${name} (External, ask the admin to add this user, before continuing)`;
 
               return (
                 <div key={email} className="flex items-center space-x-2">

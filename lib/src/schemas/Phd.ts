@@ -238,7 +238,9 @@ export const proposalRevertSchema = z.object({
 });
 export const supervisorProposalAcceptSchema = z.object({
     dacMembers: z
-        .array(z.string().email())
+        .array(
+            z.object({ email: z.string().email(), name: z.string().optional() })
+        )
         .min(2, "Minimum 2 DAC members required")
         .max(4, "Maximum 4 DAC members allowed"),
     comments: z.string().trim().optional(),
@@ -246,23 +248,9 @@ export const supervisorProposalAcceptSchema = z.object({
 export const supervisorProposalActionSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("accept"),
-        dacMembers: z
-            .array(z.string().email())
-            .min(2, "Minimum 2 DAC members required")
-            .max(4, "Maximum 4 DAC members allowed"),
-        comments: z.string().trim().optional(),
+        ...supervisorProposalAcceptSchema.shape,
     }),
-    z.object({
-        action: z.literal("revert"),
-        comments: z
-            .string()
-            .trim()
-            .min(1, "Comments are required for reverting"),
-    }),
-    z.object({
-        action: z.literal("forward"),
-        comments: z.string().trim().optional(),
-    }),
+    z.object({ action: z.literal("revert"), ...proposalRevertSchema.shape }),
 ]);
 export const drcProposalAcceptSchema = z.object({
     selectedDacMembers: z

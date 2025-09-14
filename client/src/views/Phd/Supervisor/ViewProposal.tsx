@@ -18,19 +18,24 @@ import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm
 import { phdSchemas } from "lib";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
+
 interface DacReview {
   dacMember: { name: string | null; email: string };
   approved: boolean;
 }
+
 interface DacMember {
   dacMember: { name: string | null; email: string } | null;
   dacMemberEmail: string;
+  dacMemberName: string | null;
 }
+
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
   coSupervisor: { name: string | null; email: string } | null;
 }
+
 interface Proposal {
   id: number;
   title: string;
@@ -48,6 +53,7 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
   proposalSemester: { facultyReviewDate: string };
 }
+
 const SupervisorViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
@@ -67,6 +73,7 @@ const SupervisorViewProposal: React.FC = () => {
     },
     enabled: !!id,
   });
+
   const setSeminarDetailsMutation = useMutation({
     mutationFn: (data: phdSchemas.SetSeminarDetailsBody) =>
       api.post(
@@ -83,6 +90,7 @@ const SupervisorViewProposal: React.FC = () => {
       );
     },
   });
+
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
@@ -90,6 +98,7 @@ const SupervisorViewProposal: React.FC = () => {
       </div>
     );
   if (isError || !proposal) return <div>Error loading proposal.</div>;
+
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -104,14 +113,17 @@ const SupervisorViewProposal: React.FC = () => {
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
   ];
+
   const handleSuccess = () => {
     void queryClient.invalidateQueries({
       queryKey: ["supervisor-proposal", id],
     });
   };
+
   const isPostDacRevert =
     proposal.status === "supervisor_review" &&
     (proposal.comments ?? "").includes("DAC_REVERT_FLAG");
+
   const renderActionCard = () => {
     switch (proposal.status) {
       case "supervisor_review":
@@ -130,9 +142,10 @@ const SupervisorViewProposal: React.FC = () => {
                 proposalId={proposalId}
                 onSuccess={handleSuccess}
                 deadline={proposal.proposalSemester.facultyReviewDate}
-                initialDacMembers={proposal.dacMembers.map(
-                  (m) => m.dacMemberEmail
-                )}
+                initialDacMembers={proposal.dacMembers.map((m) => ({
+                  dacMemberEmail: m.dacMemberEmail,
+                  dacMemberName: m.dacMemberName,
+                }))}
                 isPostDacRevert={isPostDacRevert}
               />
             </CardContent>
@@ -177,7 +190,8 @@ const SupervisorViewProposal: React.FC = () => {
         <CardHeader>
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            Submitted by:{proposal.student.name}({proposal.student.email})<br />
+            Submitted by: {proposal.student.name} ({proposal.student.email})
+            <br />
             Status:
             <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
           </CardDescription>
@@ -188,7 +202,7 @@ const SupervisorViewProposal: React.FC = () => {
             <ul className="list-disc pl-5">
               {proposal.coSupervisors.map((coSup, index) => (
                 <li key={index}>
-                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName}(
+                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName} (
                   {coSup.coSupervisorEmail})
                 </li>
               ))}
@@ -209,7 +223,7 @@ const SupervisorViewProposal: React.FC = () => {
                 className="flex items-center justify-between text-sm"
               >
                 <p>
-                  {review.dacMember.name}({review.dacMember.email})
+                  {review.dacMember.name} ({review.dacMember.email})
                 </p>
                 <Badge
                   variant={review.approved ? "default" : "destructive"}

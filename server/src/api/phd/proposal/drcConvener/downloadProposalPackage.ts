@@ -19,7 +19,7 @@ const PizZip = require("pizzip");
 const ImageModule = require("docxtemplater-image-module-free");
 const execAsync = promisify(exec);
 const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
-    const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir}${docxPath}`;
+    const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir} ${docxPath}`;
     try {
         await execAsync(command);
         const pdfPath = path.join(
@@ -75,7 +75,11 @@ router.post(
         const zip = new JSZip();
         const tempDir = path.resolve("./temp");
         await fs.mkdir(tempDir, { recursive: true });
-        const dacTemplatePath = path.join(import.meta.dirname, "./dac.docx");
+
+        const dacTemplatePath = path.join(
+            import.meta.dirname,
+            "./dac.docx"
+        );
         const dacTemplateContent = await fs.readFile(dacTemplatePath);
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
@@ -215,6 +219,15 @@ router.post(
                     }
                 }
             }
+            await db
+                .update(phdProposals)
+                .set({ status: "formalising" })
+                .where(
+                    inArray(
+                        phdProposals.id,
+                        proposalsToPackage.map((p) => p.id)
+                    )
+                );
             const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
             res.setHeader("Content-Type", "application/zip");
             res.setHeader(
