@@ -105,7 +105,3 @@ volumes:
   postgres_db:
   server_logs:
   server_files:
-
-networks:
-  default:
-    name: "erp_net"
