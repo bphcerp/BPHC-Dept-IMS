@@ -9,11 +9,14 @@ import { eq } from "drizzle-orm";
 import z from "zod";
 import { createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+
 const router = express.Router();
+
 const updateProposalDeadlineSchemaWithId =
     phdSchemas.updateProposalDeadlineSchema.extend({
         id: z.number().int().positive().optional(),
     });
+
 export default router.post(
     "/",
     checkAccess(),
@@ -51,7 +54,7 @@ export default router.post(
         const subject = id
             ? "PhD Proposal Deadline Updated"
             : "New PhD Proposal Deadline Announced";
-        const body = `<p>Dear BITS Community,</p><p>Please note that the PhD Proposal deadlines for the ${semester.year}Semester ${semester.semesterNumber}have been ${id ? "updated" : "announced"}.</p><ul><li><b>Student Submission Deadline:</b> ${dataToUpsert.studentSubmissionDate.toLocaleString()}</li><li><b>Supervisor Review Deadline:</b> ${dataToUpsert.facultyReviewDate.toLocaleString()}</li><li><b>DRC Review Deadline:</b> ${dataToUpsert.drcReviewDate.toLocaleString()}</li><li><b>DAC Review Deadline:</b> ${dataToUpsert.dacReviewDate.toLocaleString()}</li></ul><p>Please plan your submissions accordingly.</p>`;
+        const body = `Dear BITS Community,\n\nPlease note that the PhD Proposal deadlines for the ${semester.year}Semester ${semester.semesterNumber}have been ${id ? "updated" : "announced"}.\n\n- Student Submission Deadline: ${dataToUpsert.studentSubmissionDate.toLocaleString()}\n- Supervisor Review Deadline: ${dataToUpsert.facultyReviewDate.toLocaleString()}\n- DRC Review Deadline: ${dataToUpsert.drcReviewDate.toLocaleString()}\n- DAC Review Deadline: ${dataToUpsert.dacReviewDate.toLocaleString()}\n\nPlease plan your submissions accordingly.`;
         await createNotifications(
             allUsers.map((user) => ({
                 userEmail: user.email,
@@ -61,7 +64,7 @@ export default router.post(
             }))
         );
         await sendBulkEmails(
-            allUsers.map((user) => ({ to: user.email, subject, html: body }))
+            allUsers.map((user) => ({ to: user.email, subject, text: body }))
         );
         res.status(200).json({
             message: `Proposal deadlines ${id ? "updated" : "created"}successfully`,

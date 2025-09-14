@@ -15,7 +15,9 @@ import multer from "multer";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { eq, and } from "drizzle-orm";
+
 const router = express.Router();
+
 router.post(
     "/:id",
     checkAccess(),
@@ -198,7 +200,7 @@ router.post(
             await sendEmail({
                 to: supervisorEmail,
                 subject: `Resubmitted PhD Proposal from ${studentName}`,
-                html: `<p>Dear Supervisor,</p><p>Your student, ${studentName}, has resubmitted their PhD proposal titled "<strong>${title}</strong>".</p><p>Please log in to the portal to review the changes.</p>`,
+                text: `Dear Supervisor,\n\nYour student, ${studentName}, has resubmitted their PhD proposal titled "${title}".\n\nPlease log in to the portal to review the changes.`,
             });
         }
         res.status(200).send({
@@ -207,4 +209,5 @@ router.post(
         });
     })
 );
+
 export default router;

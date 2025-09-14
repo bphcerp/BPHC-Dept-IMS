@@ -9,9 +9,9 @@ import { modules, phdSchemas } from "lib";
 import { inArray } from "drizzle-orm";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import assert from "assert";
-import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
@@ -57,11 +57,10 @@ router.post(
                 const proposal = validProposals.find(
                     (p) => p.id === r.proposalId
                 )!;
-                const htmlBody = DOMPurify.sanitize(marked(r.body));
                 return {
                     to: proposal.supervisorEmail,
                     subject: r.subject,
-                    html: htmlBody,
+                    text: r.body,
                 };
             });
         await sendBulkEmails(emailsToSend);
@@ -71,4 +70,5 @@ router.post(
         });
     })
 );
+
 export default router;

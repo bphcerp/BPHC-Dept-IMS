@@ -8,10 +8,10 @@ import { modules, phdSchemas } from "lib";
 import { eq } from "drizzle-orm";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import assert from "assert";
-import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
 import { createTodos } from "@/lib/todos/index.ts";
+
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
@@ -32,12 +32,7 @@ router.post(
                 "Reminder can only be sent for proposals awaiting seminar details."
             );
         }
-        const htmlBody = DOMPurify.sanitize(marked(body) as string);
-        await sendEmail({
-            to: proposal.supervisorEmail,
-            subject,
-            html: htmlBody,
-        });
+        await sendEmail({ to: proposal.supervisorEmail, subject, text: body });
         await createTodos([
             {
                 assignedTo: proposal.supervisorEmail,
@@ -55,4 +50,5 @@ router.post(
         });
     })
 );
+
 export default router;

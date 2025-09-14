@@ -16,7 +16,9 @@ import assert from "assert";
 import { createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { eq } from "drizzle-orm";
+
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
@@ -198,7 +200,7 @@ router.post(
         await sendEmail({
             to: supervisorEmail,
             subject: `PhD Proposal Submitted for Review by ${student.name}`,
-            html: `<p>Dear Supervisor,</p><p>Your student, ${student.name}, has submitted their PhD research proposal titled "<strong>${title}</strong>" for your review.</p><p>Please log in to the portal to view the details and take action.</p><p>Thank you.</p>`,
+            text: `Dear Supervisor,\n\nYour student, ${student.name}, has submitted their PhD research proposal titled "${title}" for your review.\n\nPlease log in to the portal to view the details and take action.\n\nThank you.`,
         });
         res.status(200).send({
             success: true,
@@ -206,4 +208,5 @@ router.post(
         });
     })
 );
+
 export default router;

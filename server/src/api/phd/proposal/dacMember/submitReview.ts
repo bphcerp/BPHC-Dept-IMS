@@ -16,7 +16,9 @@ import { eq } from "drizzle-orm";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
+
 const router = express.Router();
+
 router.post(
     "/:id",
     checkAccess(),
@@ -138,18 +140,15 @@ router.post(
                             sendEmail({
                                 to: drc.email,
                                 subject: `PhD Proposal Approved for ${proposal.student.name}`,
-                                html: `<p>Dear DRC Convenor,</p><p>The DAC has approved the proposal for ${proposal.student.name}. Please log in to the portal to set the seminar details.</p>`,
+                                text: `Dear DRC Convenor,\n\nThe DAC has approved the proposal for ${proposal.student.name}. Please log in to the portal to set the seminar details.`,
                             })
                         )
                     );
                 } else {
                     const studentRevertComments = allReviews
                         .filter((r) => !r.approved)
-                        .map(
-                            (r) =>
-                                `<li><b>${r.dacMemberEmail}:</b> ${r.comments}</li>`
-                        )
-                        .join("");
+                        .map((r) => `- ${r.dacMemberEmail}: ${r.comments}`)
+                        .join("\n");
                     await createTodos(
                         [
                             {
@@ -169,12 +168,12 @@ router.post(
                         to: proposal.student.email,
                         subject:
                             "Action Required: PhD Proposal Reverted by DAC",
-                        html: `<p>Dear ${proposal.student.name},</p><p>The DAC has reviewed your proposal and requires revisions. Comments from the committee:<ul>${studentRevertComments}</ul></p><p>Please log in to resubmit.</p>`,
+                        text: `Dear ${proposal.student.name},\n\nThe DAC has reviewed your proposal and requires revisions. Comments from the committee:\n${studentRevertComments}\n\nPlease log in to resubmit.`,
                     });
                     await sendEmail({
                         to: proposal.supervisorEmail,
                         subject: `PhD Proposal for ${proposal.student.name}Reverted by DAC`,
-                        html: `<p>Dear Supervisor,</p><p>The DAC has reverted the proposal for your student, <strong>${proposal.student.name}</strong>. The student has been notified to make revisions and resubmit.</p><p>Comments from the committee:<ul>${studentRevertComments}</ul></p>`,
+                        text: `Dear Supervisor,\n\nThe DAC has reverted the proposal for your student, ${proposal.student.name}. The student has been notified to make revisions and resubmit.\n\nComments from the committee:\n${studentRevertComments}`,
                     });
                 }
             }
@@ -182,4 +181,5 @@ router.post(
         res.status(200).json({ success: true, message: "Review submitted." });
     })
 );
+
 export default router;
