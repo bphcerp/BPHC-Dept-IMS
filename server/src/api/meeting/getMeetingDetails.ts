@@ -6,7 +6,6 @@ import db from "@/config/db/index.ts";
 import { eq } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { meetings } from "@/config/db/schema/meeting.ts";
-import { alias } from "drizzle-orm/pg-core";
 
 const router = express.Router();
 

@@ -34,6 +34,7 @@ interface Meeting {
   participantCount?: number;
   responseCount?: number;
 }
+
 interface MeetingDashboardProps {
   organizedMeetings: Meeting[];
   invitedMeetings: Meeting[];
@@ -53,12 +54,19 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  const handleInviteeViewClick = (meeting: Meeting) => {
+    if (meeting.status === "pending_responses") {
+      navigate(`/meeting/respond/${meeting.id}`);
+    } else {
+      navigate(`/meeting/view/${meeting.id}`);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "scheduled":
         return <Badge>Scheduled</Badge>;
       case "awaiting_finalization":
-        // FIX: Use custom classes for yellow color instead of a variant
         return (
           <Badge className="border-yellow-200 bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80 dark:border-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
             Awaiting Finalization
@@ -108,11 +116,9 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        navigate(
-                          isOrganizer
-                            ? `/meeting/view/${m.id}`
-                            : `/meeting/respond/${m.id}`
-                        )
+                        isOrganizer
+                          ? navigate(`/meeting/view/${m.id}`)
+                          : handleInviteeViewClick(m)
                       }
                     >
                       <Eye className="mr-2 h-4 w-4" /> View

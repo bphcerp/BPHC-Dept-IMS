@@ -7,7 +7,7 @@ import {
     meetings,
     meetingParticipants,
     meetingAvailability,
-    meetingTimeSlots, // FIX: Import the missing table schema
+    meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
 import { meetingSchemas } from "lib";
 import { eq, and } from "drizzle-orm";
@@ -37,7 +37,6 @@ router.post(
                 "You are not the organizer of this meeting."
             );
         }
-
         if (meeting.status !== "pending_responses") {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -45,9 +44,8 @@ router.post(
             );
         }
 
-        // Find participants who have responded
         const respondedParticipants = await db
-            .selectDistinct({ email: meetingAvailability.participantEmail }) // Use distinct to avoid duplicates
+            .selectDistinct({ email: meetingAvailability.participantEmail })
             .from(meetingAvailability)
             .innerJoin(
                 meetingTimeSlots,
@@ -57,7 +55,6 @@ router.post(
 
         const respondedEmails = respondedParticipants.map((p) => p.email);
 
-        // Find participants who have not responded
         const allParticipants = await db
             .select({ email: meetingParticipants.participantEmail })
             .from(meetingParticipants)
@@ -72,21 +69,21 @@ router.post(
                 success: true,
                 message: "All participants have already responded.",
             });
+            return;
         }
 
-        // Send reminder emails
         const subject = `Reminder: RSVP for meeting: ${meeting.title}`;
-        const description = `<p>This is a reminder to submit your availability for the meeting "<b>${
+        const description = `This is a reminder to submit your availability for the meeting "${
             meeting.title
-        }</b>" organized by ${organizerEmail}.</p><p>Please respond by ${meeting.deadline.toLocaleString()}.</p><p><a href="${
+        }" organized by ${organizerEmail}.\n\nPlease respond by ${meeting.deadline.toLocaleString()}.\n\nRespond here: ${
             environment.FRONTEND_URL
-        }/meeting/respond/${meeting.id}">Click here to respond</a>.</p>`;
+        }/meeting/respond/${meeting.id}`;
 
         await sendBulkEmails(
             nonRespondedEmails.map((email) => ({
                 to: email,
                 subject,
-                html: description,
+                text: description,
             }))
         );
 

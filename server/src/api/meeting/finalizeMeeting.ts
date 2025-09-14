@@ -28,7 +28,9 @@ router.post(
                 eq(meetings.id, body.meetingId),
                 eq(meetings.organizerEmail, organizerEmail)
             ),
-            with: { participants: true },
+            with: {
+                participants: true,
+            },
         });
 
         if (!meeting) {
@@ -68,7 +70,6 @@ router.post(
             })
             .where(eq(meetings.id, body.meetingId));
 
-        // Schedule pre-meeting reminder and completion job
         const meetingEndTime = new Date(
             finalSlot.startTime.getTime() + meeting.duration * 60000
         );
@@ -79,14 +80,16 @@ router.post(
             (p) => p.participantEmail
         );
         const subject = `Meeting Finalized: ${meeting.title}`;
-        let locationDetails = "";
-        if (body.venue) locationDetails += `<p><b>Venue:</b> ${body.venue}</p>`;
-        if (body.googleMeetLink)
-            locationDetails += `<p><b>Google Meet:</b> <a href="${body.googleMeetLink}">${body.googleMeetLink}</a></p>`;
 
-        const description = `<p>The meeting "<b>${
+        let locationDetails = "";
+        if (body.venue) locationDetails += `Venue: ${body.venue}\n`;
+        if (body.googleMeetLink) {
+            locationDetails += `Google Meet: ${body.googleMeetLink}\n`;
+        }
+
+        const description = `The meeting "${
             meeting.title
-        }</b>" has been scheduled for <b>${finalSlot.startTime.toLocaleString()}</b>.</p>${locationDetails}`;
+        }" has been scheduled for ${finalSlot.startTime.toLocaleString()}.\n\n${locationDetails}`;
 
         await createNotifications(
             allParticipants.map((email) => ({
@@ -101,7 +104,7 @@ router.post(
             allParticipants.map((email) => ({
                 to: email,
                 subject,
-                html: description,
+                text: description,
             }))
         );
 

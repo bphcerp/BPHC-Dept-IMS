@@ -75,6 +75,24 @@ const RespondToInvite: React.FC = () => {
               </strong>
             </p>
           )}
+          {meeting.venue && (
+            <p className="mt-2">
+              <strong>Venue:</strong> {meeting.venue}
+            </p>
+          )}
+          {meeting.googleMeetLink && (
+            <p className="mt-2">
+              <strong>Google Meet:</strong>{" "}
+              <a
+                href={meeting.googleMeetLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+              >
+                {meeting.googleMeetLink}
+              </a>
+            </p>
+          )}
         </CardContent>
       </Card>
     );

@@ -9,13 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Check, Users, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +17,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +36,54 @@ interface MeetingDetailsProps {
   isFinalizing: boolean;
   isOrganizer: boolean;
 }
+
+const AvailabilityDialog = ({ slot }: { slot: any }) => {
+  const available = slot.availability.filter(
+    (a: any) => a.availability === "available"
+  );
+  const unavailable = slot.availability.filter(
+    (a: any) => a.availability === "unavailable"
+  );
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Availability Details</DialogTitle>
+        <DialogDescription>
+          {new Date(slot.startTime).toLocaleString()}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="mb-2 font-semibold">Available ({available.length})</h4>
+          {available.length > 0 ? (
+            <ul className="list-disc pl-5 text-sm">
+              {available.map((a: any) => (
+                <li key={a.participantEmail}>{a.participantEmail}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">None</p>
+          )}
+        </div>
+        <div>
+          <h4 className="mb-2 font-semibold">
+            Unavailable ({unavailable.length})
+          </h4>
+          {unavailable.length > 0 ? (
+            <ul className="list-disc pl-5 text-sm">
+              {unavailable.map((a: any) => (
+                <li key={a.participantEmail}>{a.participantEmail}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">None</p>
+          )}
+        </div>
+      </div>
+    </DialogContent>
+  );
+};
 
 export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   meeting,
@@ -64,136 +107,107 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
 
   const handleFinalizeSubmit = (data: FormValues) => {
     if (finalizeSlot) {
-      onFinalize({
-        finalTimeSlotId: finalizeSlot.id,
-        ...data,
-      });
+      onFinalize({ finalTimeSlotId: finalizeSlot.id, ...data });
     }
   };
 
-  const renderTooltipContent = (
-    availabilityList: { participantEmail: string }[]
-  ) => (
-    <div>
-      {availabilityList.length > 0 ? (
-        availabilityList.map((avail) => (
-          <p key={avail.participantEmail}>{avail.participantEmail}</p>
-        ))
-      ) : (
-        <p>No one</p>
-      )}
-    </div>
-  );
-
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        {/* Component content remains the same */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{meeting.title}</CardTitle>
-            <CardDescription>{meeting.purpose}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>
-              <strong>Organizer:</strong> {meeting.organizerEmail}
-            </p>
-            <p>
-              <strong>Status:</strong> <Badge>{meeting.status}</Badge>
-            </p>
-            {meeting.finalizedTime && (
-              <>
-                <p className="mt-2">
-                  <strong>Scheduled Time:</strong>{" "}
-                  {new Date(meeting.finalizedTime).toLocaleString()}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{meeting.title}</CardTitle>
+          <CardDescription>{meeting.purpose}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>
+            <strong>Organizer:</strong> {meeting.organizerEmail}
+          </p>
+          <p>
+            <strong>Status:</strong> <Badge>{meeting.status}</Badge>
+          </p>
+          {meeting.finalizedTime && (
+            <>
+              <p className="mt-2">
+                <strong>Scheduled Time:</strong>{" "}
+                {new Date(meeting.finalizedTime).toLocaleString()}
+              </p>
+              {meeting.venue && (
+                <p>
+                  <strong>Venue:</strong> {meeting.venue}
                 </p>
-                {meeting.venue && (
-                  <p>
-                    <strong>Venue:</strong> {meeting.venue}
-                  </p>
-                )}
-                {meeting.googleMeetLink && (
-                  <p>
-                    <strong>Meet Link:</strong>{" "}
-                    <a
-                      href={meeting.googleMeetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {meeting.googleMeetLink}
-                    </a>
-                  </p>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+              )}
+              {meeting.googleMeetLink && (
+                <p>
+                  <strong>Meet Link:</strong>{" "}
+                  <a
+                    href={meeting.googleMeetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    {meeting.googleMeetLink}
+                  </a>
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Participants</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc pl-5">
-              {meeting.participants.map((p: any) => (
-                <li key={p.participantEmail}>{p.participantEmail}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Participants</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc pl-5">
+            {meeting.participants.map((p: any) => (
+              <li key={p.participantEmail}>{p.participantEmail}</li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Suggested Time Slots & Availability</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {meeting.timeSlots.map((slot: any) => (
-              <div key={slot.id} className="rounded-lg border p-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">
-                    {new Date(slot.startTime).toLocaleString()}
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <Tooltip>
-                      <TooltipTrigger className="flex cursor-default items-center gap-1">
-                        <Check className="h-5 w-5 text-green-500" />
-                        <span>{slot.availableCount}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {renderTooltipContent(
-                          slot.availability.filter(
-                            (a: any) => a.availability === "available"
-                          )
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger className="flex cursor-default items-center gap-1">
-                        <X className="h-5 w-5 text-red-500" />
-                        <span>{slot.unavailableCount}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {renderTooltipContent(
-                          slot.availability.filter(
-                            (a: any) => a.availability === "unavailable"
-                          )
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                    {isOrganizer &&
-                      meeting.status === "awaiting_finalization" && (
-                        <Button size="sm" onClick={() => setFinalizeSlot(slot)}>
-                          Select this time
-                        </Button>
-                      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Suggested Time Slots & Availability</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {meeting.timeSlots.map((slot: any) => (
+            <div key={slot.id} className="rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">
+                  {new Date(slot.startTime).toLocaleString()}
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1 text-green-600">
+                    <Check className="h-5 w-5" />
+                    <span>{slot.availableCount}</span>
                   </div>
+                  <div className="flex items-center gap-1 text-red-600">
+                    <X className="h-5 w-5" />
+                    <span>{slot.unavailableCount}</span>
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Users className="mr-2 h-4 w-4" />
+                        View Details
+                      </Button>
+                    </DialogTrigger>
+                    <AvailabilityDialog slot={slot} />
+                  </Dialog>
+                  {isOrganizer &&
+                    meeting.status === "awaiting_finalization" && (
+                      <Button size="sm" onClick={() => setFinalizeSlot(slot)}>
+                        Select this time
+                      </Button>
+                    )}
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Dialog open={!!finalizeSlot} onOpenChange={() => setFinalizeSlot(null)}>
         <DialogContent>
@@ -257,6 +271,6 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
           </form>
         </DialogContent>
       </Dialog>
-    </TooltipProvider>
+    </div>
   );
 };

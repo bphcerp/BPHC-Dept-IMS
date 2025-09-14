@@ -4,7 +4,7 @@ import { redisConfig } from "@/config/redis.ts";
 import logger from "@/config/logger.ts";
 import db from "@/config/db/index.ts";
 import { meetings } from "@/config/db/schema/meeting.ts";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createNotifications, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail, sendBulkEmails } from "@/lib/common/email.ts";
 
@@ -19,9 +19,16 @@ export const meetingQueue = new Queue<JobData>(QUEUE_NAME, {
     connection: redisConfig,
     defaultJobOptions: {
         attempts: 3,
-        backoff: { type: "exponential", delay: 10000 },
-        removeOnComplete: { age: 3600 * 24 },
-        removeOnFail: { age: 3600 * 24 * 7 },
+        backoff: {
+            type: "exponential",
+            delay: 10000,
+        },
+        removeOnComplete: {
+            age: 3600 * 24, // keep for 1 day
+        },
+        removeOnFail: {
+            age: 3600 * 24 * 7, // keep for 7 days
+        },
     },
 });
 
@@ -54,7 +61,7 @@ const meetingWorker = new Worker<JobData>(
                         .where(eq(meetings.id, meetingId));
 
                     const subject = `Response deadline reached for: ${meeting.title}`;
-                    const content = `<p>The response deadline for the meeting "<b>${meeting.title}</b>" has passed. Please finalize the meeting time.</p>`;
+                    const content = `The response deadline for the meeting "${meeting.title}" has passed. Please finalize the meeting time.`;
 
                     await createNotifications([
                         {
@@ -64,41 +71,40 @@ const meetingWorker = new Worker<JobData>(
                             module: "Meeting" as any,
                         },
                     ]);
-
                     await sendEmail({
                         to: meeting.organizerEmail,
                         subject,
-                        html: content,
+                        text: content,
                     });
                 }
                 break;
-
             case "reminder":
                 if (meeting.status === "scheduled" && meeting.finalizedTime) {
                     const allAttendees = [
                         meeting.organizerEmail,
                         ...meeting.participants.map((p) => p.participantEmail),
                     ];
+
                     const subject = `Reminder: Meeting starting soon - ${meeting.title}`;
-                    const description = `<p>This is a reminder that the meeting "<b>${meeting.title}</b>" is scheduled to start in 15 minutes at <b>${meeting.finalizedTime.toLocaleTimeString()}</b>.</p>`;
+                    const description = `This is a reminder that the meeting "${
+                        meeting.title
+                    }" is scheduled to start in 15 minutes at ${meeting.finalizedTime.toLocaleTimeString()}.`;
 
                     await sendBulkEmails(
                         allAttendees.map((email) => ({
                             to: email,
                             subject,
-                            html: description,
+                            text: description,
                         }))
                     );
                 }
                 break;
-
             case "completion":
                 if (meeting.status === "scheduled") {
                     await db
                         .update(meetings)
                         .set({ status: "completed" })
                         .where(eq(meetings.id, meetingId));
-                    // Clean up any lingering notifications or todos if necessary
                     await completeTodo({
                         module: "Meeting" as any,
                         completionEvent: `meeting:finalized:${meetingId}`,
@@ -114,7 +120,6 @@ meetingWorker.on("failed", (job, err) => {
     logger.error(`Meeting job ${job?.id} failed with error: ${err.message}`);
 });
 
-// Helper functions to add jobs to the queue
 export async function scheduleDeadlineJob(meetingId: number, deadline: Date) {
     const delay = deadline.getTime() - Date.now();
     if (delay > 0) {

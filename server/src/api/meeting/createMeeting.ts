@@ -81,13 +81,12 @@ router.post(
                 body.participants.map((email) => ({
                     to: email,
                     subject: `Meeting Invitation: ${body.title}`,
-                    html: `<p>${todoDescription}</p><p>Please respond by ${deadlineDate.toLocaleString()}.</p><p><a href="${
+                    text: `${todoDescription}\n\nPlease respond by ${deadlineDate.toLocaleString()}.\n\nView invitation: ${
                         environment.FRONTEND_URL
-                    }/meeting/respond/${meetingId}">Click here to respond</a>.</p>`,
+                    }/meeting/respond/${meetingId}`,
                 }))
             );
 
-            // Schedule job for when the deadline passes
             await scheduleDeadlineJob(meetingId, deadlineDate);
 
             return { meetingId };

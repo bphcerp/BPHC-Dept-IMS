@@ -23,7 +23,9 @@ router.delete(
                 eq(meetings.id, meetingId),
                 eq(meetings.organizerEmail, organizerEmail)
             ),
-            with: { participants: true },
+            with: {
+                participants: true,
+            },
         });
 
         if (!meeting) {
@@ -38,24 +40,22 @@ router.delete(
             .set({ status: "cancelled" })
             .where(eq(meetings.id, meetingId));
 
-        // Delete associated todos
         await completeTodo({
             module: "Meeting" as any,
             completionEvent: `meeting:rsvp:${meetingId}`,
         });
 
-        // Notify participants
         const allParticipants = meeting.participants.map(
             (p) => p.participantEmail
         );
         if (allParticipants.length > 0) {
             const subject = `Meeting Cancelled: ${meeting.title}`;
-            const description = `<p>The meeting "<b>${meeting.title}</b>" scheduled by ${organizerEmail} has been cancelled.</p>`;
+            const description = `The meeting "${meeting.title}" scheduled by ${organizerEmail} has been cancelled.`;
             await sendBulkEmails(
                 allParticipants.map((email) => ({
                     to: email,
                     subject,
-                    html: description,
+                    text: description,
                 }))
             );
         }

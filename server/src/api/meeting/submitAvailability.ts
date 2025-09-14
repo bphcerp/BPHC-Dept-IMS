@@ -7,9 +7,10 @@ import {
     meetingAvailability,
     meetingParticipants,
     meetings,
+    meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
 import { meetingSchemas } from "lib";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, countDistinct } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { completeTodo, createNotifications } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
@@ -89,37 +90,36 @@ router.post(
                 tx
             );
 
-            // Check if all participants have responded
-            const counts = await tx
+            const [participantStats] = await tx
                 .select({
-                    participantCount:
-                        sql<number>`count(distinct ${meetingParticipants.participantEmail})`.mapWith(
-                            Number
-                        ),
-                    responseCount:
-                        sql<number>`count(distinct ${meetingAvailability.participantEmail})`.mapWith(
-                            Number
-                        ),
+                    total: countDistinct(meetingParticipants.participantEmail),
                 })
                 .from(meetingParticipants)
-                .leftJoin(
-                    meetingAvailability,
-                    eq(
-                        meetingParticipants.participantEmail,
-                        meetingAvailability.participantEmail
-                    )
-                )
                 .where(eq(meetingParticipants.meetingId, body.meetingId));
 
-            if (counts[0].participantCount === counts[0].responseCount) {
+            const participantCount = participantStats.total;
+
+            const [responseStats] = await tx
+                .select({
+                    total: countDistinct(meetingAvailability.participantEmail),
+                })
+                .from(meetingAvailability)
+                .innerJoin(
+                    meetingTimeSlots,
+                    eq(meetingAvailability.timeSlotId, meetingTimeSlots.id)
+                )
+                .where(eq(meetingTimeSlots.meetingId, body.meetingId));
+
+            const responseCount = responseStats.total;
+
+            if (participantCount === responseCount) {
                 await tx
                     .update(meetings)
                     .set({ status: "awaiting_finalization" })
                     .where(eq(meetings.id, body.meetingId));
 
-                // Notify organizer
                 const subject = `All responses received for: ${meeting.title}`;
-                const content = `<p>All participants have submitted their availability for the meeting "<b>${meeting.title}</b>". You can now finalize the meeting time.</p>`;
+                const content = `All participants have submitted their availability for the meeting "${meeting.title}". You can now finalize the meeting time.`;
 
                 await createNotifications(
                     [
@@ -133,11 +133,10 @@ router.post(
                     false,
                     tx
                 );
-
                 await sendEmail({
                     to: meeting.organizerEmail,
                     subject,
-                    html: content,
+                    text: content,
                 });
             }
         });
