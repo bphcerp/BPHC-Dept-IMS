@@ -8,7 +8,7 @@ import {
     meetingParticipants,
     meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
-import { meetingSchemas } from "lib";
+import { meetingSchemas, modules } from "lib";
 import { createTodos } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
@@ -69,7 +69,7 @@ router.post(
                     createdBy: organizerEmail,
                     title: todoTitle,
                     description: todoDescription,
-                    module: "Meeting" as any,
+                    module: modules[11],
                     completionEvent: `meeting:rsvp:${meetingId}`,
                     link: `/meeting/respond/${meetingId}`,
                     deadline: deadlineDate,

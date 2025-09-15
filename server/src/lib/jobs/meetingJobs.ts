@@ -7,6 +7,7 @@ import { meetings } from "@/config/db/schema/meeting.ts";
 import { eq } from "drizzle-orm";
 import { createNotifications, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail, sendBulkEmails } from "@/lib/common/email.ts";
+import { modules } from "lib";
 
 const QUEUE_NAME = "meetingQueue";
 
@@ -68,7 +69,7 @@ const meetingWorker = new Worker<JobData>(
                             userEmail: meeting.organizerEmail,
                             title: subject,
                             content,
-                            module: "Meeting" as any,
+                            module: modules[11],
                         },
                     ]);
                     await sendEmail({
@@ -106,7 +107,7 @@ const meetingWorker = new Worker<JobData>(
                         .set({ status: "completed" })
                         .where(eq(meetings.id, meetingId));
                     await completeTodo({
-                        module: "Meeting" as any,
+                        module: modules[11],
                         completionEvent: `meeting:finalized:${meetingId}`,
                     });
                 }

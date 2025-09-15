@@ -4,7 +4,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { meetings, meetingTimeSlots } from "@/config/db/schema/meeting.ts";
-import { meetingSchemas } from "lib";
+import { meetingSchemas, modules } from "lib";
 import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { createNotifications } from "@/lib/todos/index.ts";
@@ -96,7 +96,7 @@ router.post(
                 userEmail: email,
                 title: subject,
                 content: description,
-                module: "Meeting" as any,
+                module: modules[11],
             }))
         );
 

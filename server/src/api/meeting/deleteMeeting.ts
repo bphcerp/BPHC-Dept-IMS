@@ -8,6 +8,7 @@ import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { completeTodo } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+import { modules } from "lib";
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.delete(
             .where(eq(meetings.id, meetingId));
 
         await completeTodo({
-            module: "Meeting" as any,
+            module: modules[11],
             completionEvent: `meeting:rsvp:${meetingId}`,
         });
 

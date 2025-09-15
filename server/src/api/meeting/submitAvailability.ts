@@ -9,7 +9,7 @@ import {
     meetings,
     meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
-import { meetingSchemas } from "lib";
+import { meetingSchemas, modules } from "lib";
 import { eq, and, countDistinct } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { completeTodo, createNotifications } from "@/lib/todos/index.ts";
@@ -87,7 +87,7 @@ router.post(
 
             await completeTodo(
                 {
-                    module: "Meeting" as any,
+                    module: modules[11],
                     completionEvent: `meeting:rsvp:${body.meetingId}`,
                     assignedTo: participantEmail,
                 },
@@ -132,7 +132,7 @@ router.post(
                             userEmail: meeting.organizerEmail,
                             title: subject,
                             content,
-                            module: "Meeting" as any,
+                            module: modules[11],
                         },
                     ],
                     false,
