@@ -75,3 +75,22 @@ export const updateSemesterSchema = semesterSchema.partial().extend({
 export const deleteSemesterSchema = z.object({
     id: z.string().uuid() 
 });
+
+export const allocationSectionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  credits: z.number().int(),
+  type: sectionTypeEnum,
+  instructorEmails: z.array(z.string().email()),
+});
+
+
+export const masterAllocationSchema = z.object({
+  id: z.string().uuid(),
+  semesterId: z.string().uuid(),
+  ic: z.string().email(),
+  courseCode: z.string(),
+  lectures: z.string().uuid(),
+  tutorials: z.string().uuid(),
+  practicals: z.string().uuid(),
+});

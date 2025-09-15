@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
+import { number } from "zod";
 
 export const sectionTypeEnum = pgEnum(
     "section_type_enum",
@@ -24,6 +25,31 @@ export const allocationStatus = pgEnum(
     "allocation_status",
     ["notStarted", "ongoing", "completed", "suspended"]
 );
+
+export const masterAllocation = pgTable("allocation_master_allocation", {
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
+
+  semesterId: uuid("semester_id")
+    .references(() => semester.id, { onDelete: "cascade" }),
+
+  ic: text("instructor_email")
+    .notNull()
+    .references(() => users.email),
+
+  courseCode: text("course_code").notNull(), 
+
+  lectures: uuid("lectures").notNull().references(() => allocationSection.id),
+  tutorials: uuid("tutorials").notNull().references(() => allocationSection.id),
+  practicals: uuid("practicals").notNull().references(() => allocationSection.id),
+});
+
+export const allocationSection = pgTable("allocation_section", {
+  id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
+  name: text("section_name").notNull(),   
+  credits: integer("credits").notNull(),
+  type: sectionTypeEnum("section_type").notNull(),
+  instructorEmails: text("instructor_emails").array().notNull(),
+});
 
 
 export const allocation = pgTable("allocation_allocation_result", {
