@@ -67,7 +67,7 @@ export default router.post(
             allUsers.map((user) => ({ to: user.email, subject, text: body }))
         );
         res.status(200).json({
-            message: `Proposal deadlines ${id ? "updated" : "created"}successfully`,
+            message: `Proposal deadlines ${id ? "updated" : "created"} successfully`,
         });
     })
 );
