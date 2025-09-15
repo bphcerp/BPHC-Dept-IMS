@@ -43,15 +43,24 @@ export const FormTemplateFieldComponent = ({
     case "TEACHING_ALLOCATION":
       return (
         <div className="relative w-32">
-          <Input
-            {...form?.register(`${field.id}_teachingAllocation`, {
-              required: true,
-            })}
-            disabled={create}
-            required
-            type="number"
-            placeholder="e.g., 50"
-          />
+          {form ? (
+            <Input
+              {...form.register(`${field.id}_teachingAllocation`, {
+                required: true,
+              })}
+              disabled={create}
+              required
+              type="number"
+              placeholder="e.g., 50"
+            />
+          ) : (
+            <Input
+              value={field.value || ""}
+              disabled
+              type="number"
+              placeholder="e.g., 50"
+            />
+          )}
           <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
             %
           </span>
@@ -69,49 +78,79 @@ export const FormTemplateFieldComponent = ({
                     Preference {i + 1} (
                     {formatPreferenceType(field.preferenceType)})
                   </Label>
-                  <Controller
-                    name={`${field.id}_preference_${i}`}
-                    control={form?.control}
-                    rules={{
-                      required: true,
-                    }}
-                    render={({ field }) => (
-                      <Select
-                        disabled={create}
-                        {...field}
-                        required
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a course..." />
-                        </SelectTrigger>
-                        {!create && (
-                          <SelectContent>
-                            {courses.map((course) => (
-                              <SelectItem key={course.code} value={course.code}>
-                                {course.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        )}
-                      </Select>
-                    )}
-                  />
+                  {form ? (
+                    <Controller
+                      name={`${field.id}_preference_${i}`}
+                      control={form.control}
+                      rules={{
+                        required: true,
+                      }}
+                      render={({ field: controllerField }) => (
+                        <Select
+                          disabled={create}
+                          required
+                          onValueChange={controllerField.onChange}
+                          value={controllerField.value}
+                        >
+                          <SelectTrigger {...controllerField}>
+                            <SelectValue placeholder="Select a course..." />
+                          </SelectTrigger>
+                          {!create && (
+                            <SelectContent>
+                              {courses.map((course) => (
+                                <SelectItem key={course.code} value={course.code}>
+                                  {course.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          )}
+                        </Select>
+                      )}
+                    />
+                  ) : (
+                    <Select
+                      disabled
+                      value={
+                        courses.find(
+                          (c) => c.id === field.preferences?.[i]?.courseId
+                        )?.code || ""
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a course..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courses.map((course) => (
+                          <SelectItem key={course.code} value={course.code}>
+                            {course.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="flex shrink-0 items-center pb-2">
-                  <Controller
-                    name={`${field.id}_courseAgain_${i}`}
-                    control={form?.control}
-                    render={({ field: controllerField }) => (
-                      <Checkbox
-                        {...controllerField}
-                        checked={controllerField.value}
-                        onCheckedChange={controllerField.onChange}
-                        id={`course-again-${field.id}-${i}`}
-                        disabled={create}
-                      />
-                    )}
-                  />
+                  {form ? (
+                    <Controller
+                      name={`${field.id}_courseAgain_${i}`}
+                      control={form.control}
+                      render={({ field: controllerField }) => (
+                        <Checkbox
+                          {...controllerField}
+                          checked={controllerField.value}
+                          onCheckedChange={controllerField.onChange}
+                          id={`course-again-${field.id}-${i}`}
+                          disabled={create}
+                        />
+                      )}
+                    />
+                  ) : (
+                    <Checkbox
+                      checked={field.preferences?.[i]?.takenConsecutively || false}
+                      id={`course-again-${field.id}-${i}`}
+                      disabled
+                    />
+                  )}
                 </div>
               </div>
             ))}

@@ -101,6 +101,8 @@ import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
 import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 import FormList from "@/views/Allocation/FormList";
 import FormView from "@/views/Allocation/FormView";
+import FormResponsesView from "@/views/Allocation/FormResponsesView";
+import FormResponse from "@/views/Allocation/FormResponse";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -649,6 +651,14 @@ const Routing = () => {
               <>
                 <Route path="forms" element={<FormList />} />
                 <Route path="forms/:id" element={<FormView />} />
+                <Route
+                  path="forms/:id/responses"
+                  element={<FormResponsesView />}
+                />
+                 <Route 
+                  path="forms/:id/submit"
+                  element={<FormResponse />}
+                />
               </>
             )}
 
