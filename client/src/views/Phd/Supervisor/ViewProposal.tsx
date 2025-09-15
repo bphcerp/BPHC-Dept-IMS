@@ -86,7 +86,8 @@ const SupervisorViewProposal: React.FC = () => {
     },
     onError: (error) => {
       toast.error(
-        (error as {response: {data: {message: string}}})?.response?.data?.message || "Failed to save seminar details."
+        (error as { response: { data: string } })?.response?.data ||
+          "Failed to save seminar details."
       );
     },
   });

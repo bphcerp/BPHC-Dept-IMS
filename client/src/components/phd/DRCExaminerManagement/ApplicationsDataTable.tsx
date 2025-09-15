@@ -36,34 +36,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { phdSchemas } from "lib";
 
-export interface QualifyingExamApplication {
-  id: number;
-  status: "applied" | "verified" | "resubmit";
-  comments: string | null;
-  qualifyingArea1: string;
-  qualifyingArea2: string;
-  createdAt: string;
-  updatedAt: string;
-  student: {
-    email: string;
-    name: string | null;
-    erpId: string | null;
-    phone: string | null;
-    supervisor: string | null;
-    idNumber: string | null;
-    coSupervisor1: string | null;
-    coSupervisor2: string | null;
-  };
-  files: {
-    qualifyingArea1Syllabus: string | null;
-    qualifyingArea2Syllabus: string | null;
-    tenthReport: string | null;
-    twelfthReport: string | null;
-    undergradReport: string | null;
-    mastersReport: string | null;
-  };
+export interface QualifyingExamApplication
+  extends phdSchemas.QualifyingExamApplication {
+  student: phdSchemas.PhdStudent;
   examinerSuggestionCount: number;
   examinerAssignmentCount: number;
 }
@@ -126,10 +108,13 @@ export function ApplicationsDataTable({
           area
         ) : (
           <Tooltip>
-            <span className="whitespace-nowrap">{area}{" "}
-            <TooltipTrigger className="text-red-500">*</TooltipTrigger></span>
+            <span className="whitespace-nowrap">
+              {area} <TooltipTrigger className="text-red-500">*</TooltipTrigger>
+            </span>
             <TooltipContent>
-              <p className="text-sm">This area is not in the predefined sub-areas.</p>
+              <p className="text-sm">
+                This area is not in the predefined sub-areas.
+              </p>
             </TooltipContent>
           </Tooltip>
         )}
