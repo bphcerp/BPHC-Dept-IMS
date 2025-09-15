@@ -16,6 +16,7 @@ export const allocationFormResponsesClientSchema = z.object({
     templateFieldId: z.string().uuid().optional(),
     courseCode: z.string().optional(),
     preference: z.number().int().optional(),
+    takenConsecutively: z.boolean().optional(),
 })
 
 export const allocationFormResponseSchema = z.object({

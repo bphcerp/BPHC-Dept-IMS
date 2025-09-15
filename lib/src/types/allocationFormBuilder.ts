@@ -13,7 +13,8 @@ import {
     updateAllocationFormTemplateFieldSchema,
     updateAllocationFormTemplateSchema,
 	allocationFormTemplatePreferenceTypeEnum,
-	allocationFormResponseSchema
+	allocationFormResponseSchema,
+	allocationFormResponsesClientSchema
 } from "../schemas/AllocationFormBuilder.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import { Course } from "./allocation.ts";
@@ -21,6 +22,7 @@ import { Course } from "./allocation.ts";
 export type NewAllocationFormTemplateField = z.infer<typeof allocationFormTemplateFieldSchema>;
 export type NewAllocationFormTemplate = z.infer<typeof allocationFormTemplateSchema>;
 export type NewAllocationForm = z.infer<typeof allocationFormSchema>;
+export type NewAllocationFormClientResponse = z.infer<typeof allocationFormResponsesClientSchema>;
 export type NewAllocationFormResponse = z.infer<typeof allocationFormResponseSchema>;
 
 export type UpdateAllocationFormTemplateField = z.infer<typeof updateAllocationFormTemplateFieldSchema>;
@@ -77,6 +79,7 @@ export type RawAllocationFormResponse = {
     templateFieldId?: string | null;
     courseCode?: string | null;
     preference?: AllocationFormTemplatePreferenceFieldType | null;
+	takenConsecutively?: boolean | null;
 }
 
 export type AllocationFormResponse = RawAllocationFormResponse & {

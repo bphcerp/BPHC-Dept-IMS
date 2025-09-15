@@ -58,9 +58,21 @@ const columns: ColumnDef<AllocationForm>[] = [
     accessorFn: () => "",
     cell: ({ row }) => {
       return (
-        <Button asChild>
-          <Link to={`/allocation/forms/${row.original.id}`}> View </Link>
-        </Button>
+        <div className="flex flex-row gap-2">
+          <Button asChild>
+            <Link to={`/allocation/forms/${row.original.id}`}> View </Link>
+          </Button>
+          <Button asChild>
+            <Link to={`/allocation/forms/${row.original.id}/responses`}>
+              View Responses
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to={`/allocation/forms/${row.original.id}/submit`}>
+              Submit Response
+            </Link>
+          </Button>
+        </div>
       );
     },
   },
