@@ -53,10 +53,10 @@ const RequestSeminarDetailsDialog: React.FC<
   const [body, setBody] = useState("");
   const [deadline, setDeadline] = useState("");
 
-  const { data: templates = [] } = useQuery<EmailTemplate[]>({
+  const { data: templates = [] } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
-      const response = await api.get("/phd/staff/emailTemplates");
+      const response = await api.get<EmailTemplate[]>("/phd/staff/emailTemplates");
       return response.data;
     },
   });
@@ -102,9 +102,9 @@ const RequestSeminarDetailsDialog: React.FC<
       onSuccess();
       setIsOpen(false);
     },
-    onError: (err: any) => {
+    onError: (err) => {
       toast.error(
-        err.response?.data?.message || "Failed to send notifications."
+        (err as { response: { data: { message: string } } }).response?.data?.message || "Failed to send notifications."
       );
     },
   });

@@ -2,12 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import {
-  Card,
-  CardContent,
-    CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
@@ -46,16 +41,15 @@ interface ProposalDetails {
 const DrcViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
-  // const queryClient = useQueryClient();
   const {
     data: proposal,
     isLoading,
     isError,
     refetch,
-  } = useQuery<ProposalDetails>({
+  } = useQuery({
     queryKey: ["drc-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalDetails>(
         `/phd/proposal/drcConvener/viewProposal/${proposalId}`
       );
       return response.data;
@@ -90,7 +84,7 @@ const DrcViewProposal: React.FC = () => {
           <DrcReviewForm
             proposalId={proposalId}
             suggestedDacMembers={proposal.dacMembers}
-            onSuccess={() => refetch()}
+            onSuccess={() => void refetch()}
             deadline={proposal.proposalSemester.drcReviewDate}
           />
         );
@@ -132,9 +126,15 @@ const DrcViewProposal: React.FC = () => {
         </CardHeader>
         {proposal.coSupervisors.length > 0 && (
           <CardContent>
-            <strong>Co-Supervisor: </strong>
-            {proposal.coSupervisors[0].coSupervisor?.name ??
-              proposal.coSupervisors[0].coSupervisorEmail}
+            <strong>Co-Supervisors:</strong>
+            <ul className="list-disc pl-5">
+              {proposal.coSupervisors.map((coSup, index) => (
+                <li key={index}>
+                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName}(
+                  {coSup.coSupervisorEmail})
+                </li>
+              ))}
+            </ul>
           </CardContent>
         )}
       </Card>

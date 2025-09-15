@@ -18,19 +18,24 @@ import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm
 import { phdSchemas } from "lib";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
+
 interface DacReview {
   dacMember: { name: string | null; email: string };
   approved: boolean;
 }
+
 interface DacMember {
   dacMember: { name: string | null; email: string } | null;
   dacMemberEmail: string;
+  dacMemberName: string | null;
 }
+
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
   coSupervisor: { name: string | null; email: string } | null;
 }
+
 interface Proposal {
   id: number;
   title: string;
@@ -48,6 +53,7 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
   proposalSemester: { facultyReviewDate: string };
 }
+
 const SupervisorViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
@@ -57,16 +63,17 @@ const SupervisorViewProposal: React.FC = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery<Proposal>({
+  } = useQuery({
     queryKey: ["supervisor-proposal", id],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<Proposal>(
         `/phd/proposal/supervisor/viewProposal/${id}`
       );
       return response.data;
     },
     enabled: !!id,
   });
+
   const setSeminarDetailsMutation = useMutation({
     mutationFn: (data: phdSchemas.SetSeminarDetailsBody) =>
       api.post(
@@ -77,12 +84,13 @@ const SupervisorViewProposal: React.FC = () => {
       toast.success("Seminar details saved successfully!");
       void refetch();
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(
-        error.response?.data?.message || "Failed to save seminar details."
+        (error as {response: {data: {message: string}}})?.response?.data?.message || "Failed to save seminar details."
       );
     },
   });
+
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
@@ -90,6 +98,7 @@ const SupervisorViewProposal: React.FC = () => {
       </div>
     );
   if (isError || !proposal) return <div>Error loading proposal.</div>;
+
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -104,14 +113,17 @@ const SupervisorViewProposal: React.FC = () => {
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
   ];
+
   const handleSuccess = () => {
     void queryClient.invalidateQueries({
       queryKey: ["supervisor-proposal", id],
     });
   };
+
   const isPostDacRevert =
     proposal.status === "supervisor_review" &&
     (proposal.comments ?? "").includes("DAC_REVERT_FLAG");
+
   const renderActionCard = () => {
     switch (proposal.status) {
       case "supervisor_review":
@@ -130,15 +142,16 @@ const SupervisorViewProposal: React.FC = () => {
                 proposalId={proposalId}
                 onSuccess={handleSuccess}
                 deadline={proposal.proposalSemester.facultyReviewDate}
-                initialDacMembers={proposal.dacMembers.map(
-                  (m) => m.dacMemberEmail
-                )}
+                initialDacMembers={proposal.dacMembers.map((m) => ({
+                  dacMemberEmail: m.dacMemberEmail,
+                  dacMemberName: m.dacMemberName,
+                }))}
                 isPostDacRevert={isPostDacRevert}
               />
             </CardContent>
           </Card>
         );
-      case "seminar_incomplete":
+      case "dac_accepted":
         return (
           <SeminarDetailsForm
             onSubmit={setSeminarDetailsMutation.mutate}
@@ -177,16 +190,23 @@ const SupervisorViewProposal: React.FC = () => {
         <CardHeader>
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            Submitted by:{proposal.student.name}({proposal.student.email})<br />
+            Submitted by: {proposal.student.name} ({proposal.student.email})
+            <br />
             Status:
             <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
           </CardDescription>
         </CardHeader>
         {proposal.coSupervisors.length > 0 && (
           <CardContent>
-            <strong>Co-Supervisor: </strong>
-            {proposal.coSupervisors[0].coSupervisor?.name ??
-              proposal.coSupervisors[0].coSupervisorEmail}
+            <strong>Co-Supervisors:</strong>
+            <ul className="list-disc pl-5">
+              {proposal.coSupervisors.map((coSup, index) => (
+                <li key={index}>
+                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName} (
+                  {coSup.coSupervisorEmail})
+                </li>
+              ))}
+            </ul>
           </CardContent>
         )}
       </Card>
@@ -203,7 +223,7 @@ const SupervisorViewProposal: React.FC = () => {
                 className="flex items-center justify-between text-sm"
               >
                 <p>
-                  {review.dacMember.name}({review.dacMember.email})
+                  {review.dacMember.name} ({review.dacMember.email})
                 </p>
                 <Badge
                   variant={review.approved ? "default" : "destructive"}

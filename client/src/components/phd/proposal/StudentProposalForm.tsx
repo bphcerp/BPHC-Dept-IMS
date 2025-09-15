@@ -1,4 +1,3 @@
-// client/src/components/phd/proposal/StudentProposalForm.tsx
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -11,15 +10,18 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/Auth";
 import { Combobox } from "@/components/ui/combobox";
-import { File, ExternalLink, Replace, Download } from "lucide-react";
+import { File, ExternalLink, Replace, Download, X } from "lucide-react";
+import { z } from "zod";
 
 interface StudentProposalFormProps {
   onSuccess: () => void;
   proposalData?: any | null;
 }
+
 interface UserProfile {
   phdType: "part-time" | "full-time";
 }
+
 interface Faculty {
   value: string;
   label: string;
@@ -49,11 +51,18 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
-  const [coSupervisorEmail, setCoSupervisorEmail] = useState<string[]>([]);
-  const [isOtherCoSupervisor, setIsOtherCoSupervisor] = useState(false);
-  const [externalCoSupervisorName, setExternalCoSupervisorName] = useState("");
-  const [externalCoSupervisorEmail, setExternalCoSupervisorEmail] =
-    useState("");
+
+  // State to manage multiple co-supervisors
+  const [internalCoSupervisors, setInternalCoSupervisors] = useState<string[]>(
+    []
+  );
+  const [externalCoSupervisors, setExternalCoSupervisors] = useState<
+    { name: string; email: string }[]
+  >([]);
+
+  // Temporary state for the "add external" input fields
+  const [tempExternalName, setTempExternalName] = useState("");
+  const [tempExternalEmail, setTempExternalEmail] = useState("");
 
   const { data: profileData } = useQuery<UserProfile>({
     queryKey: ["student-profile-details", authState?.email],
@@ -76,23 +85,30 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   });
 
   useEffect(() => {
-    if (proposalData) {
+    if (proposalData && facultyList.length > 0) {
       setTitle(proposalData.title || "");
       setHasOutsideCoSupervisor(proposalData.hasOutsideCoSupervisor || false);
-      const coSupervisor = proposalData.coSupervisors?.[0];
-      if (coSupervisor) {
-        if (
-          facultyList.some((f) => f.value === coSupervisor.coSupervisorEmail)
-        ) {
-          setCoSupervisorEmail([coSupervisor.coSupervisorEmail]);
-          setIsOtherCoSupervisor(false);
-        } else {
-          setIsOtherCoSupervisor(true);
-          setCoSupervisorEmail([]);
-          setExternalCoSupervisorName(coSupervisor.coSupervisorName || "");
-          setExternalCoSupervisorEmail(coSupervisor.coSupervisorEmail || "");
-        }
-      }
+
+      // Correctly populate internal and external co-supervisors on edit
+      const internals =
+        proposalData.coSupervisors
+          ?.filter((s: any) =>
+            facultyList.some((f) => f.value === s.coSupervisorEmail)
+          )
+          .map((s: any) => s.coSupervisorEmail) ?? [];
+      const externals =
+        proposalData.coSupervisors
+          ?.filter(
+            (s: any) =>
+              !facultyList.some((f) => f.value === s.coSupervisorEmail)
+          )
+          .map((s: any) => ({
+            name: s.coSupervisorName || "",
+            email: s.coSupervisorEmail,
+          })) ?? [];
+
+      setInternalCoSupervisors(internals);
+      setExternalCoSupervisors(externals);
     }
   }, [proposalData, facultyList]);
 
@@ -108,7 +124,10 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         toast.error("Proposal Submission Cycle is missing.");
         throw new Error("Proposal Cycle ID is missing.");
       }
-      formData.append("proposalCycleId", proposalData.proposalCycleId);
+      formData.append(
+        "proposalCycleId",
+        proposalData.proposalCycleId.toString()
+      );
       return api.post(`/phd/proposal/student/submitProposal`, formData);
     },
     onSuccess: () => {
@@ -124,6 +143,34 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   const handleFileChange = (key: string, file: File | null) => {
     setFiles((prev) => ({ ...prev, [key]: file }));
+  };
+
+  const handleAddExternal = () => {
+    const emailCheck = z.string().email().safeParse(tempExternalEmail);
+    if (!tempExternalName.trim() || !emailCheck.success) {
+      toast.error(
+        "Please enter a valid name and email for the external co-supervisor."
+      );
+      return;
+    }
+    if (externalCoSupervisors.some((e) => e.email === tempExternalEmail)) {
+      toast.error("This external co-supervisor has already been added.");
+      return;
+    }
+    setExternalCoSupervisors((prev) => [
+      ...prev,
+      { name: tempExternalName, email: tempExternalEmail },
+    ]);
+    setTempExternalName("");
+    setTempExternalEmail("");
+  };
+
+  const handleRemoveInternal = (email: string) => {
+    setInternalCoSupervisors((prev) => prev.filter((e) => e !== email));
+  };
+
+  const handleRemoveExternal = (email: string) => {
+    setExternalCoSupervisors((prev) => prev.filter((e) => e.email !== email));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,20 +222,15 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
 
-    if (!hasOutsideCoSupervisor) {
-      if (isOtherCoSupervisor) {
-        if (!externalCoSupervisorName || !externalCoSupervisorEmail) {
-          toast.error(
-            "Please enter the name and email for the external co-supervisor."
-          );
-          return;
-        }
-        formData.append("externalCoSupervisorName", externalCoSupervisorName);
-        formData.append("externalCoSupervisorEmail", externalCoSupervisorEmail);
-      } else if (coSupervisorEmail.length > 0) {
-        formData.append("coSupervisorEmail", coSupervisorEmail[0]);
-      }
-    }
+    // Append arrays of co-supervisors
+    formData.append(
+      "internalCoSupervisors",
+      JSON.stringify(internalCoSupervisors)
+    );
+    formData.append(
+      "externalCoSupervisors",
+      JSON.stringify(externalCoSupervisors)
+    );
 
     Object.keys(files).forEach((key) => {
       if (files[key]) {
@@ -309,6 +351,86 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         })}
 
       <div className="space-y-4 rounded-md border p-4">
+        <Label className="font-semibold">Co-Supervisors</Label>
+        <div className="space-y-2">
+          <Label>Internal Co-Supervisors (from BITS)</Label>
+          <Combobox
+            options={facultyList}
+            selectedValues={internalCoSupervisors}
+            onSelectedValuesChange={setInternalCoSupervisors}
+            placeholder="Select faculty members..."
+            searchPlaceholder="Search faculty..."
+            emptyPlaceholder="No faculty found."
+          />
+          {internalCoSupervisors.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {internalCoSupervisors.map((email) => (
+                <div
+                  key={email}
+                  className="flex items-center justify-between rounded-md bg-muted/50 p-2 text-sm"
+                >
+                  <span>
+                    {facultyList.find((f) => f.value === email)?.label ?? email}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => handleRemoveInternal(email)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label>External Co-Supervisors</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Name"
+              value={tempExternalName}
+              onChange={(e) => setTempExternalName(e.target.value)}
+            />
+            <Input
+              placeholder="Email"
+              type="email"
+              value={tempExternalEmail}
+              onChange={(e) => setTempExternalEmail(e.target.value)}
+            />
+            <Button type="button" variant="outline" onClick={handleAddExternal}>
+              Add
+            </Button>
+          </div>
+          {externalCoSupervisors.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {externalCoSupervisors.map((ext) => (
+                <div
+                  key={ext.email}
+                  className="flex items-center justify-between rounded-md bg-muted/50 p-2 text-sm"
+                >
+                  <span>
+                    {ext.name} ({ext.email})
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => handleRemoveExternal(ext.email)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-md border p-4">
         <div className="flex items-center space-x-2">
           <Checkbox
             id="hasOutsideCoSupervisor"
@@ -318,78 +440,10 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
             }
           />
           <Label htmlFor="hasOutsideCoSupervisor">
-            My co-supervisor is from outside of BITS campuses
+            I have an outside co-supervisor (from outside of BITS Pilani
+            campuses) and have attached the required forms.
           </Label>
         </div>
-
-        {!hasOutsideCoSupervisor && (
-          <div className="space-y-4 border-l pl-6 pt-4">
-            <div>
-              <Label>Select Co-Supervisor from BITS</Label>
-              <Combobox
-                options={facultyList}
-                selectedValues={coSupervisorEmail}
-                onSelectedValuesChange={(vals) => {
-                  setCoSupervisorEmail(vals);
-                  setIsOtherCoSupervisor(false);
-                }}
-                placeholder="Select a faculty member..."
-                searchPlaceholder="Search faculty..."
-                emptyPlaceholder="No faculty found."
-                disabled={isOtherCoSupervisor}
-              />
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isOther"
-                checked={isOtherCoSupervisor}
-                onCheckedChange={(checked) => {
-                  setIsOtherCoSupervisor(checked as boolean);
-                  if (checked) setCoSupervisorEmail([]);
-                }}
-              />
-              <Label htmlFor="isOther">
-                My co-supervisor is not in the list above
-              </Label>
-            </div>
-            {isOtherCoSupervisor && (
-              <div className="grid grid-cols-1 gap-4 border-l pl-6 pt-2 md:grid-cols-2">
-                <div>
-                  <Label htmlFor="externalName">Co-Supervisor Name</Label>
-                  <Input
-                    id="externalName"
-                    value={externalCoSupervisorName}
-                    onChange={(e) =>
-                      setExternalCoSupervisorName(e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="externalEmail">Co-Supervisor Email</Label>
-                  <Input
-                    id="externalEmail"
-                    type="email"
-                    value={externalCoSupervisorEmail}
-                    onChange={(e) =>
-                      setExternalCoSupervisorEmail(e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -397,6 +451,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           id="declaration"
           checked={declaration}
           onCheckedChange={(checked) => setDeclaration(checked as boolean)}
+          required
         />
         <Label htmlFor="declaration">
           I hereby declare that all the information I have filled is correct to

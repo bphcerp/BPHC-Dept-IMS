@@ -39,27 +39,22 @@ router.post(
             hasOutsideCoSupervisor,
             declaration,
             proposalCycleId,
-            coSupervisorEmail,
-            externalCoSupervisorName,
-            externalCoSupervisorEmail,
+            internalCoSupervisors,
+            externalCoSupervisors,
         } = phdSchemas.phdProposalSubmissionSchema.parse(req.body);
-
         const student = await db.query.phd.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
         });
         assert(student, "PhD student record not found");
-
         const supervisorEmail = student.supervisorEmail;
         if (!supervisorEmail || !supervisorEmail.trim().length)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "Supervisor not assigned"
             );
-
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
             where: eq(phdProposalSemesters.id, proposalCycleId),
         });
-
         if (!activeDeadline) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -72,16 +67,13 @@ router.post(
                 "The submission deadline for this cycle has passed."
             );
         }
-
         const proposalSemesterId = activeDeadline.id;
         if (Array.isArray(req.files))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid files");
-
         const uploadedFiles = req.files as Record<
             (typeof phdSchemas.phdProposalFileFieldNames)[number],
             Express.Multer.File[]
         >;
-
         if (
             !uploadedFiles?.appendixFile ||
             !uploadedFiles?.summaryFile ||
@@ -111,7 +103,6 @@ router.post(
                 "Documents for outside co-supervisor are required."
             );
         }
-
         let submittedProposalId: number = -1;
         await db.transaction(async (tx) => {
             const insertedFileIds: Partial<
@@ -120,7 +111,6 @@ router.post(
                     number
                 >
             > = {};
-
             if (req.files && Object.entries(req.files).length) {
                 const fileInserts = Object.entries(req.files).map(
                     ([fieldName, files]) => {
@@ -146,7 +136,6 @@ router.post(
                     ] = file.id;
                 });
             }
-
             const [proposal] = await tx
                 .insert(phdProposals)
                 .values({
@@ -166,25 +155,36 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile,
                 })
                 .returning();
-
             if (!proposal)
                 throw new HttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
                     "Failed to create proposal"
                 );
             submittedProposalId = proposal.id;
-
-            const finalCoSupervisorEmail =
-                coSupervisorEmail || externalCoSupervisorEmail;
-            if (finalCoSupervisorEmail) {
-                await tx.insert(phdProposalCoSupervisors).values({
-                    proposalId: submittedProposalId,
-                    coSupervisorEmail: finalCoSupervisorEmail,
-                    coSupervisorName: externalCoSupervisorName,
-                });
+            const coSupervisorsToInsert = [];
+            if (internalCoSupervisors) {
+                coSupervisorsToInsert.push(
+                    ...internalCoSupervisors.map((email) => ({
+                        proposalId: submittedProposalId,
+                        coSupervisorEmail: email,
+                    }))
+                );
+            }
+            if (externalCoSupervisors) {
+                coSupervisorsToInsert.push(
+                    ...externalCoSupervisors.map((ext) => ({
+                        proposalId: submittedProposalId,
+                        coSupervisorEmail: ext.email,
+                        coSupervisorName: ext.name,
+                    }))
+                );
+            }
+            if (coSupervisorsToInsert.length > 0) {
+                await tx
+                    .insert(phdProposalCoSupervisors)
+                    .values(coSupervisorsToInsert);
             }
         });
-
         await createTodos([
             {
                 assignedTo: supervisorEmail,
@@ -200,13 +200,13 @@ router.post(
         await sendEmail({
             to: supervisorEmail,
             subject: `PhD Proposal Submitted for Review by ${student.name}`,
-            html: `<p>Dear Supervisor,</p><p>Your student, ${student.name}, has submitted their PhD research proposal titled "<strong>${title}</strong>" for your review.</p><p>Please log in to the portal to view the details and take action.</p><p>Thank you.</p>`,
+            text: `Dear Supervisor,\n\nYour student, ${student.name}, has submitted their PhD research proposal titled "${title}" for your review.\n\nPlease log in to the portal to view the details and take action.\n\nThank you.`,
         });
-
         res.status(200).send({
             success: true,
             message: "Proposal submitted successfully.",
         });
     })
 );
+
 export default router;

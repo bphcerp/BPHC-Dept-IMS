@@ -123,40 +123,40 @@ const DeadlinesCard = ({
 };
 const StudentProposal: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [proposalForForm, setProposalForForm] = useState<any | null>(null);
+  const [proposalForForm, setProposalForForm] = useState<Proposal | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
-  const { data: eligibility, isLoading: isLoadingEligibility } = useQuery<{
-    isEligible: boolean;
-    qualificationDate: string | null;
-  }>({
+  const { data: eligibility, isLoading: isLoadingEligibility } = useQuery({
     queryKey: ["proposal-eligibility"],
     queryFn: async () => {
-      const res = await api.get("/phd/student/getProposalEligibility");
+      const res = await api.get<{
+    isEligible: boolean;
+    qualificationDate: string | null;
+  }>("/phd/student/getProposalEligibility");
       return res.data;
     },
   });
-  const { data: proposalData, refetch } = useQuery<{
-    proposals: Proposal[];
-    canApply: boolean;
-  }>({
+  const { data: proposalData, refetch } = useQuery({
     queryKey: ["student-proposals"],
     queryFn: async () => {
-      const response = await api.get("/phd/proposal/student/getProposals");
+      const response = await api.get<{
+    proposals: Proposal[];
+    canApply: boolean;
+  }>("/phd/proposal/student/getProposals");
       return response.data;
     },
     enabled: !!eligibility?.isEligible,
   });
-  const { data: deadlineData } = useQuery<{ deadlines: ProposalSemester[] }>({
+  const { data: deadlineData } = useQuery({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
-      const res = await api.get("/phd/student/getProposalDeadlines");
+      const res = await api.get<{ deadlines: ProposalSemester[] }>("/phd/student/getProposalDeadlines");
       return res.data;
     },
     enabled: !!eligibility?.isEligible,
   });
   const fetchProposalDetailsMutation = useMutation({
     mutationFn: (proposalId: number) =>
-      api.get(`/phd/proposal/student/view/${proposalId}`),
+      api.get<Proposal>(`/phd/proposal/student/view/${proposalId}`),
     onSuccess: (response) => {
       setProposalForForm(response.data);
       setIsFormOpen(true);
@@ -222,7 +222,7 @@ const StudentProposal: React.FC = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
           <AlertDescription>
-            Since you haven't passed your qualifying exam yet, you are not
+            Since you haven&apos;t passed your qualifying exam yet, you are not
             allowed to fill the form.
           </AlertDescription>
         </Alert>

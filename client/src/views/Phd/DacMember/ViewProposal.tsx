@@ -16,12 +16,18 @@ import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocuments
 import { DacReviewForm } from "@/components/phd/proposal/DacReviewForm";
 import { CheckCircle } from "lucide-react";
 
+interface CoSupervisor {
+  coSupervisorEmail: string;
+  coSupervisorName: string | null;
+  coSupervisor: { name: string | null; email: string } | null;
+}
 interface ProposalDetails {
   id: number;
   title: string;
   status: string;
   student: { email: string; name: string | null };
   supervisor: { email: string; name: string | null };
+  coSupervisors: CoSupervisor[];
   dacMembers: { dacMember: { name: string | null; email: string } }[];
   appendixFileUrl: string;
   summaryFileUrl: string;
@@ -41,10 +47,10 @@ const DacViewProposal: React.FC = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery<ProposalDetails>({
+  } = useQuery({
     queryKey: ["dac-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalDetails>(
         `/phd/proposal/dacMember/viewProposal/${proposalId}`
       );
       return response.data;
@@ -63,8 +69,7 @@ const DacViewProposal: React.FC = () => {
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
-        {" "}
-        <LoadingSpinner />{" "}
+        <LoadingSpinner />
       </div>
     );
   if (isError || !proposal)
@@ -87,24 +92,35 @@ const DacViewProposal: React.FC = () => {
     proposal.status === "dac_review" && !proposal.currentUserReview;
   return (
     <div className="space-y-6">
-      {" "}
-      <BackButton />{" "}
+      <BackButton />
       <Card>
-        {" "}
         <CardHeader>
-          {" "}
-          <CardTitle>{proposal.title}</CardTitle>{" "}
+          <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            {" "}
-            Submitted by: {proposal.student.name}({proposal.student.email})
-            <br /> Supervisor: {proposal.supervisor.name}(
-            {proposal.supervisor.email})<br /> Status:{" "}
+            Submitted by:{proposal.student.name}({proposal.student.email})<br />
+            Supervisor:{proposal.supervisor.name}({proposal.supervisor.email})
+            <br /> Status:
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}
-            </Badge>{" "}
-          </CardDescription>{" "}
-        </CardHeader>{" "}
-      </Card>{" "}
+            </Badge>
+          </CardDescription>
+        </CardHeader>
+        {proposal.coSupervisors.length > 0 && (
+          <CardContent>
+            <strong>Co-Supervisors:</strong>
+            <ul className="list-inside list-disc pl-2">
+              {proposal.coSupervisors.map((coSup, index) => (
+                <li key={index}>
+                  {coSup.coSupervisor?.name ??
+                    coSup.coSupervisorName ??
+                    "External"}
+                  ({coSup.coSupervisorEmail})
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        )}
+      </Card>
       <ProposalDocumentsViewer files={documentFiles} />
       {canReview && (
         <DacReviewForm
@@ -115,20 +131,15 @@ const DacViewProposal: React.FC = () => {
       )}
       {proposal.currentUserReview && (
         <Card className="border-green-200 bg-green-50">
-          {" "}
           <CardHeader>
-            {" "}
             <CardTitle className="flex items-center gap-2 text-green-800">
-              {" "}
               <CheckCircle className="h-5 w-5" /> You Have Reviewed This
-              Proposal{" "}
-            </CardTitle>{" "}
-          </CardHeader>{" "}
+              Proposal
+            </CardTitle>
+          </CardHeader>
           <CardContent>
-            {" "}
             <p>
-              {" "}
-              Your Decision:{" "}
+              Your Decision:
               <strong
                 className={
                   proposal.currentUserReview.approved
@@ -137,32 +148,27 @@ const DacViewProposal: React.FC = () => {
                 }
               >
                 {proposal.currentUserReview.approved ? "Approved" : "Reverted"}
-              </strong>{" "}
-            </p>{" "}
+              </strong>
+            </p>
             <p className="mt-2">
-              {" "}
-              <strong>Your Comments:</strong>{" "}
-            </p>{" "}
+              <strong>Your Comments:</strong>
+            </p>
             <p className="text-muted-foreground">
               {proposal.currentUserReview.comments}
-            </p>{" "}
-          </CardContent>{" "}
+            </p>
+          </CardContent>
         </Card>
       )}
       {!canReview && !proposal.currentUserReview && (
         <Card>
-          {" "}
           <CardHeader>
-            {" "}
-            <CardTitle>Review Status</CardTitle>{" "}
-          </CardHeader>{" "}
+            <CardTitle>Review Status</CardTitle>
+          </CardHeader>
           <CardContent>
-            {" "}
             <p className="text-muted-foreground">
-              {" "}
-              This proposal is not currently awaiting your review.{" "}
-            </p>{" "}
-          </CardContent>{" "}
+              This proposal is not currently awaiting your review.
+            </p>
+          </CardContent>
         </Card>
       )}
     </div>

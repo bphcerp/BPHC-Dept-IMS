@@ -13,6 +13,7 @@ import { getUsersWithPermission } from "@/lib/common/index.ts";
 
 const router = express.Router();
 
+// Simplified schema, no more "forward" action
 const reviewActionSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("accept"),
@@ -86,6 +87,7 @@ export default router.post(
                         comments: body.comments,
                     })
                     .where(eq(phdProposals.id, proposalId));
+
                 await createTodos(
                     [
                         {
@@ -100,20 +102,21 @@ export default router.post(
                     ],
                     tx
                 );
+
                 await sendEmail({
                     to: proposal.student.email,
                     subject: "Action Required: Your PhD Proposal Submission",
-                    html: `<p>Dear ${
+                    text: `Dear ${
                         proposal.student.name || "Student"
-                    },</p><p>Your supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:</p><blockquote>${
+                    },\n\nYour supervisor has reviewed your PhD proposal and requires revisions. Please find the comments below:\n\n${
                         body.comments
-                    }</blockquote><p>Please log in to the portal to make the necessary changes and resubmit.</p>`,
+                    }\n\nPlease log in to the portal to make the necessary changes and resubmit.`,
                 });
             } else if (body.action === "accept") {
                 const currentDacEmails = proposal.dacMembers
                     .map((m) => m.dacMemberEmail)
                     .sort();
-                const newDacEmails = [...body.dacMembers].sort();
+                const newDacEmails = body.dacMembers.map((m) => m.email).sort();
 
                 const dacMembersChanged =
                     currentDacEmails.length !== newDacEmails.length ||
@@ -125,17 +128,21 @@ export default router.post(
 
                 let nextStatus: (typeof phdSchemas.phdProposalStatuses)[number] =
                     "drc_review";
+
+                // THIS IS THE RESTORED LOGIC: If DAC existed and hasn't changed, skip DRC
                 if (wasPreviouslySubmitted && !dacMembersChanged) {
                     nextStatus = "dac_review";
                 }
 
+                // Always update the DAC members in the DB on accept
                 await tx
                     .delete(phdProposalDacMembers)
                     .where(eq(phdProposalDacMembers.proposalId, proposalId));
                 await tx.insert(phdProposalDacMembers).values(
-                    body.dacMembers.map((email) => ({
+                    body.dacMembers.map((member) => ({
                         proposalId,
-                        dacMemberEmail: email,
+                        dacMemberEmail: member.email,
+                        dacMemberName: member.name,
                     }))
                 );
 
@@ -147,6 +154,7 @@ export default router.post(
                     })
                     .where(eq(phdProposals.id, proposalId));
 
+                // Send notifications based on the determined nextStatus
                 if (nextStatus === "drc_review") {
                     const drcConveners = await getUsersWithPermission(
                         "phd:drc:proposal",
@@ -172,15 +180,16 @@ export default router.post(
                                 sendEmail({
                                     to: drc.email,
                                     subject: `PhD Proposal from ${proposal.student.name} requires DRC review`,
-                                    html: `<p>Dear DRC Convenor,</p><p>A PhD proposal submitted by ${proposal.student.name} has been approved by their supervisor and is now ready for your review.</p><p>Please log in to the portal to take action.</p>`,
+                                    text: `Dear DRC Convenor,\n\nA PhD proposal submitted by ${proposal.student.name} has been approved by their supervisor and is now ready for your review.\n\nPlease log in to the portal to take action.`,
                                 })
                             )
                         );
                     }
                 } else {
+                    // This block runs if nextStatus is 'dac_review'
                     await createTodos(
-                        body.dacMembers.map((dacEmail) => ({
-                            assignedTo: dacEmail,
+                        body.dacMembers.map((dacMember) => ({
+                            assignedTo: dacMember.email,
                             createdBy: req.user!.email,
                             title: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
                             description: `Please evaluate the PhD proposal for ${proposal.student.name}.`,
@@ -192,11 +201,11 @@ export default router.post(
                         tx
                     );
                     await Promise.all(
-                        body.dacMembers.map((dacEmail) =>
+                        body.dacMembers.map((dacMember) =>
                             sendEmail({
-                                to: dacEmail,
+                                to: dacMember.email,
                                 subject: `PhD Proposal Evaluation Required for ${proposal.student.name}`,
-                                html: `<p>Dear DAC Member,</p><p>You have been assigned to evaluate the PhD proposal for ${proposal.student.name}. Please log in to the portal to submit your review.</p>`,
+                                text: `Dear DAC Member,\n\nYou have been assigned to evaluate the PhD proposal for ${proposal.student.name}. Please log in to the portal to submit your review.`,
                             })
                         )
                     );
@@ -206,7 +215,9 @@ export default router.post(
 
         res.status(200).json({
             success: true,
-            message: `Proposal ${body.action}ed successfully.`,
+            message: `Proposal ${
+                body.action === "revert" ? "reverted" : "processed"
+            } successfully.`,
         });
     })
 );
