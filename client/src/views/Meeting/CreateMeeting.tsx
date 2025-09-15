@@ -1,3 +1,4 @@
+// client/src/views/Meeting/CreateMeeting.tsx
 import React, { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -10,10 +11,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { meetingSchemas } from "lib";
 import { z } from "zod";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { formatDateForInputLocal } from "@/lib/utils"; // Import the new utility
 
 type MeetingFormData = z.infer<typeof meetingSchemas.createMeetingSchema>;
-
 interface User {
   name: string | null;
   email: string;
@@ -27,20 +26,10 @@ const CreateMeeting: React.FC = () => {
   >({});
   const [selectedSlots, setSelectedSlots] = useState<Date[]>([]);
 
-  
   const { data: userData, isLoading: isLoadingUsers } = useQuery<User[]>({
     queryKey: ["allUsersForMeeting"],
     queryFn: () => api.get("/meeting/all-users").then((res) => res.data),
   });
-
-  const defaultFormValues = useMemo(() => {
-    const deadlineDate = new Date();
-    deadlineDate.setDate(deadlineDate.getDate() + 1); // Default deadline is 24 hours from now
-    return {
-      participants: [],
-      deadline: formatDateForInputLocal(deadlineDate),
-    };
-  }, []);
 
   const userListOptions = useMemo(() => {
     if (!userData) return [];
@@ -96,17 +85,16 @@ const CreateMeeting: React.FC = () => {
               onSubmit={handleFormSubmit}
               isSubmitting={mutation.isLoading}
               facultyList={userListOptions}
-              defaultValues={defaultFormValues} // Pass the calculated defaults
             />
           </CardContent>
         </Card>
       )}
-      {step === 2 && (
+      {step === 2 && formData.deadline && (
         <div className="space-y-4">
           <TimeSlotPicker
             selectedSlots={selectedSlots}
             onSlotSelect={setSelectedSlots}
-            duration={formData.duration || 60}
+            deadline={formData.deadline}
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setStep(1)}>

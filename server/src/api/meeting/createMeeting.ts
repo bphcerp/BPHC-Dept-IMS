@@ -8,10 +8,11 @@ import {
     meetingParticipants,
     meetingTimeSlots,
 } from "@/config/db/schema/meeting.ts";
-import { meetingSchemas } from "lib";
+import { meetingSchemas, modules } from "lib";
 import { createTodos } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import { scheduleDeadlineJob } from "@/lib/jobs/meetingJobs.ts";
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post(
                     duration: body.duration,
                     organizerEmail,
                     deadline: new Date(body.deadline),
+                    status: "pending_responses",
                 })
                 .returning({ id: meetings.id });
 
@@ -59,6 +61,7 @@ router.post(
 
             const todoTitle = `RSVP for meeting: ${body.title}`;
             const todoDescription = `You have been invited to a meeting by ${organizerEmail}. Please provide your availability.`;
+            const deadlineDate = new Date(body.deadline);
 
             await createTodos(
                 body.participants.map((email) => ({
@@ -66,10 +69,10 @@ router.post(
                     createdBy: organizerEmail,
                     title: todoTitle,
                     description: todoDescription,
-                    module: "Meeting" as any, // Add "Meeting" to your modules list in lib/src/schemas/Form.ts
+                    module: modules[11],
                     completionEvent: `meeting:rsvp:${meetingId}`,
                     link: `/meeting/respond/${meetingId}`,
-                    deadline: new Date(body.deadline),
+                    deadline: deadlineDate,
                 })),
                 tx
             );
@@ -78,13 +81,13 @@ router.post(
                 body.participants.map((email) => ({
                     to: email,
                     subject: `Meeting Invitation: ${body.title}`,
-                    html: `<p>${todoDescription}</p><p>Please respond by ${new Date(
-                        body.deadline
-                    ).toLocaleString()}.</p><p><a href="${
+                    text: `${todoDescription}\n\nPlease respond by ${deadlineDate.toLocaleString()}.\n\nView invitation: ${
                         environment.FRONTEND_URL
-                    }/meeting/respond/${meetingId}">Click here to respond</a>.</p>`,
+                    }/meeting/respond/${meetingId}`,
                 }))
             );
+
+            await scheduleDeadlineJob(meetingId, deadlineDate);
 
             return { meetingId };
         });

@@ -55,8 +55,12 @@ export const users = pgTable("users", {
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
+        testerRollbackRoles: integer("tester_rollback_roles")
+        .array()
+        .notNull()
+        .default(sql`'{}'::integer[]`),
     deactivated: boolean("deactivated").notNull().default(false),
-    tester: boolean("tester").notNull().default(false),
+    inTestingMode: boolean("in_testing_mode").notNull().default(false),
     type: userType("type").notNull(),
 });
 

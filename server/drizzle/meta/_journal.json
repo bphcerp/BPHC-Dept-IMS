@@ -358,6 +358,20 @@
       "when": 1757809338971,
       "tag": "0050_nervous_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1757913539760,
+      "tag": "0051_flaky_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1757914004187,
+      "tag": "0052_marvelous_excalibur",
+      "breakpoints": true
     }
   ]
 }
