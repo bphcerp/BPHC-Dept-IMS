@@ -131,11 +131,9 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     status: phdExamApplicationStatus("status").notNull().default("applied"),
     comments: text("comments"),
     qualifyingArea1: text("qualifying_area_1")
-        .notNull()
-        .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
+        .notNull(),
     qualifyingArea2: text("qualifying_area_2")
-        .notNull()
-        .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
+        .notNull(),
     qualifyingArea1SyllabusFileId: integer(
         "qualifying_area_1_syllabus_file_id"
     ).references(() => files.id, { onDelete: "set null" }),

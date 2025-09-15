@@ -88,6 +88,8 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     mastersReport: null,
   });
 
+  const [customAreas, setCustomAreas] = useState<{ area1: string; area2: string }>({ area1: "", area2: "" });
+
   useEffect(() => {
     if (existingApplication) {
       setFormData({
@@ -119,8 +121,8 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
       return response.data as { success: boolean; message: string };
     },
     onSuccess,
-    onError: () => {
-      toast.error("Failed to submit application");
+    onError: (e) => {
+      toast.error((e as { response?: { data: string } }).response?.data || "Failed to submit application");
     },
   });
 
@@ -128,13 +130,22 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     setFiles((prev) => ({ ...prev, [fileType]: file }));
   };
 
+  const handleAreaChange = (areaKey: "qualifyingArea1" | "qualifyingArea2", value: string) => {
+    setFormData((prev) => ({ ...prev, [areaKey]: value }));
+    if (value !== "__not_listed__") {
+      setCustomAreas((prev) => ({ ...prev, [areaKey === "qualifyingArea1" ? "area1" : "area2"]: "" }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.qualifyingArea1 || !formData.qualifyingArea2) {
-      toast.error("Please select both qualifying areas");
+    const area1 = formData.qualifyingArea1 === "__not_listed__" ? customAreas.area1.trim() : formData.qualifyingArea1;
+    const area2 = formData.qualifyingArea2 === "__not_listed__" ? customAreas.area2.trim() : formData.qualifyingArea2;
+    if (!area1 || !area2) {
+      toast.error("Please select or enter both qualifying areas");
       return;
     }
-    if (formData.qualifyingArea1 === formData.qualifyingArea2) {
+    if (area1 === area2) {
       toast.error("Please select different areas");
       return;
     }
@@ -159,8 +170,8 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
 
     const submitData = new FormData();
     submitData.append("examId", exam.id.toString());
-    submitData.append("qualifyingArea1", formData.qualifyingArea1);
-    submitData.append("qualifyingArea2", formData.qualifyingArea2);
+    submitData.append("qualifyingArea1", area1);
+    submitData.append("qualifyingArea2", area2);
 
     if (existingApplication) {
       submitData.append("applicationId", existingApplication.id.toString());
@@ -190,49 +201,46 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
             <div className="space-y-4">
               {/* Area selection dropdowns */}
               <div>
-                {" "}
                 <Label htmlFor="qualifyingArea1">
-                  Qualifying Area 1 *
-                </Label>{" "}
+                  Qualifying Area 1
+                </Label>
                 <select
                   id="qualifyingArea1"
                   value={formData.qualifyingArea1}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      qualifyingArea1: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => handleAreaChange("qualifyingArea1", e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   required
                 >
-                  {" "}
                   <option value="">Select Area 1</option>
                   {subAreas.map((area) => (
                     <option key={area} value={area}>
                       {area}
                     </option>
                   ))}
-                </select>{" "}
-              </div>{" "}
+                  <option value="__not_listed__">Not listed...</option>
+                </select>
+                {formData.qualifyingArea1 === "__not_listed__" && (
+                  <input
+                    type="text"
+                    className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder="Enter custom area 1"
+                    value={customAreas.area1}
+                    onChange={e => setCustomAreas(prev => ({ ...prev, area1: e.target.value }))}
+                    required
+                  />
+                )}
+              </div>
               <div>
-                {" "}
                 <Label htmlFor="qualifyingArea2">
-                  Qualifying Area 2 *
-                </Label>{" "}
+                  Qualifying Area 2
+                </Label>
                 <select
                   id="qualifyingArea2"
                   value={formData.qualifyingArea2}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      qualifyingArea2: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => handleAreaChange("qualifyingArea2", e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   required
                 >
-                  {" "}
                   <option value="">Select Area 2</option>
                   {subAreas.map((area) => (
                     <option
@@ -243,7 +251,18 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
                       {area}
                     </option>
                   ))}
-                </select>{" "}
+                  <option value="__not_listed__">Not listed...</option>
+                </select>
+                {formData.qualifyingArea2 === "__not_listed__" && (
+                  <input
+                    type="text"
+                    className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder="Enter custom area 2"
+                    value={customAreas.area2}
+                    onChange={e => setCustomAreas(prev => ({ ...prev, area2: e.target.value }))}
+                    required
+                  />
+                )}
               </div>
             </div>
 

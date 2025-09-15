@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
 
 import {
   User,
@@ -95,6 +97,15 @@ export const ApplicationDetailsDialog: React.FC<
     undergradReport: "Undergraduate Report",
     mastersReport: "Masters Report (Optional)",
   };
+
+  const { data: subAreasData } = useQuery({
+    queryKey: ["phd-sub-areas"],
+    queryFn: async () => {
+      const response = await api.get<{ subAreas: string[] }>("/phd/getSubAreas");
+      return response.data;
+    },
+  });
+  const subAreas = useMemo(() => subAreasData?.subAreas || [], [subAreasData]);
 
   if (!application) return null;
 
@@ -205,6 +216,9 @@ export const ApplicationDetailsDialog: React.FC<
                     </span>
                     <p className="mt-1 text-sm text-gray-600">
                       {application.qualifyingArea1}
+                      {subAreas.length > 0 && !subAreas.includes(application.qualifyingArea1) && (
+                        <span className="ml-2 text-xs text-red-600 font-semibold">(Not in predefined sub-areas)</span>
+                      )}
                     </p>
                   </div>
                   <div>
@@ -213,6 +227,9 @@ export const ApplicationDetailsDialog: React.FC<
                     </span>
                     <p className="mt-1 text-sm text-gray-600">
                       {application.qualifyingArea2}
+                      {subAreas.length > 0 && !subAreas.includes(application.qualifyingArea2) && (
+                        <span className="ml-2 text-xs text-red-600 font-semibold">(Not in predefined sub-areas)</span>
+                      )}
                     </p>
                   </div>
                 </div>

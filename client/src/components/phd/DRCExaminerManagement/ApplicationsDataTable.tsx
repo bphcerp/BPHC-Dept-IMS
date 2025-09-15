@@ -34,6 +34,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface QualifyingExamApplication {
   id: number;
@@ -88,6 +91,16 @@ export function ApplicationsDataTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  const { data: subAreasData } = useQuery({
+    queryKey: ["phd-sub-areas"],
+    queryFn: async () => {
+      const response = await api.get<{ subAreas: string[] }>(
+        "/phd/getSubAreas"
+      );
+      return response.data;
+    },
+  });
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
       month: "short",
@@ -98,6 +111,31 @@ export function ApplicationsDataTable({
       hour12: true,
     });
   };
+
+  function QualifyingAreaCell({
+    area,
+    subAreas,
+  }: {
+    area: string;
+    subAreas?: string[];
+  }) {
+    const isInSubAreas = subAreas?.includes(area);
+    return (
+      <div className="text-sm">
+        {isInSubAreas ? (
+          area
+        ) : (
+          <Tooltip>
+            <span className="whitespace-nowrap">{area}{" "}
+            <TooltipTrigger className="text-red-500">*</TooltipTrigger></span>
+            <TooltipContent>
+              <p className="text-sm">This area is not in the predefined sub-areas.</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    );
+  }
 
   const columns: ColumnDef<QualifyingExamApplication>[] = [
     {
@@ -166,14 +204,20 @@ export function ApplicationsDataTable({
       accessorKey: "qualifyingArea1",
       header: "Area 1",
       cell: ({ row }) => (
-        <div className="text-sm">{row.original.qualifyingArea1}</div>
+        <QualifyingAreaCell
+          area={row.original.qualifyingArea1}
+          subAreas={subAreasData?.subAreas}
+        />
       ),
     },
     {
       accessorKey: "qualifyingArea2",
       header: "Area 2",
       cell: ({ row }) => (
-        <div className="text-sm">{row.original.qualifyingArea2}</div>
+        <QualifyingAreaCell
+          area={row.original.qualifyingArea2}
+          subAreas={subAreasData?.subAreas}
+        />
       ),
     },
     {
