@@ -66,7 +66,7 @@ router.post(
         await sendBulkEmails(emailsToSend);
         res.status(200).json({
             success: true,
-            message: `Notifications sent and To-Dos created for ${validProposals.length}supervisors.`,
+            message: `Notifications sent and To-Dos created for ${validProposals.length} supervisors.`,
         });
     })
 );
