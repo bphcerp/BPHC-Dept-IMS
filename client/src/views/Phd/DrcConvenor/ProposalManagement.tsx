@@ -303,7 +303,7 @@ const DrcProposalManagement: React.FC = () => {
                   finalizeProposalsMutation.isLoading
                 }
               >
-                <CheckCircle className="mr-2 h-4 w-4" /> Finalize(
+                <CheckCircle className="mr-2 h-4 w-4" /> Finalize (
                 {getSelectedProposalsByStatus("formalising").length})
               </Button>
               <Button
