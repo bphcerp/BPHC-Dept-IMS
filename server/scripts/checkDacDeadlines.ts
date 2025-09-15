@@ -31,7 +31,7 @@ async function checkDacDeadlines() {
                 assignedTo: drc.email,
                 createdBy: "system",
                 title: `DAC Review Overdue for ${proposal.student.name}`,
-                description: `The DAC review deadline for ${proposal.student.name}(${proposal.student.email})has passed. Please follow up with the DAC members and then request seminar details from the supervisor.`,
+                description: `The DAC review deadline for ${proposal.student.name}(${proposal.student.email}) has passed. Please follow up with the DAC members and then request seminar details from the supervisor.`,
                 module: modules[3],
                 completionEvent: `proposal:dac-deadline-passed:${proposal.id}`,
                 link: `/phd/drc-convenor/proposal-management/${proposal.id}`,
