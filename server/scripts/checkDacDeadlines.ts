@@ -41,7 +41,7 @@ async function checkDacDeadlines() {
     if (todosToCreate.length > 0) {
         await createTodos(todosToCreate);
         logger.info(
-            `Created ${todosToCreate.length}To-Dos for overdue DAC reviews.`
+            `Created ${todosToCreate.length} To-Dos for overdue DAC reviews.`
         );
     } else {
         logger.info("No new To-Dos needed for overdue DAC reviews.");
