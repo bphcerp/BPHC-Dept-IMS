@@ -172,7 +172,7 @@ router.post(
                     });
                     await sendEmail({
                         to: proposal.supervisorEmail,
-                        subject: `PhD Proposal for ${proposal.student.name}Reverted by DAC`,
+                        subject: `PhD Proposal for ${proposal.student.name} Reverted by DAC`,
                         text: `Dear Supervisor,\n\nThe DAC has reverted the proposal for your student, ${proposal.student.name}. The student has been notified to make revisions and resubmit.\n\nComments from the committee:\n${studentRevertComments}`,
                     });
                 }
