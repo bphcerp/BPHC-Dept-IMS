@@ -105,10 +105,10 @@ const DrcProposalManagement: React.FC = () => {
   const [proposalsForDialog, setProposalsForDialog] = useState<
     ProposalListItem[]
   >([]);
-  const { data: semesters } = useQuery<ProposalSemester[]>({
+  const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
-      const response = await api.get("/phd/proposal/getProposalSemesters");
+      const response = await api.get<ProposalSemester[]>("/phd/proposal/getProposalSemesters");
       return response.data;
     },
   });
@@ -123,10 +123,10 @@ const DrcProposalManagement: React.FC = () => {
     isError,
     error,
     refetch,
-  } = useQuery<ProposalListItem[]>({
+  } = useQuery({
     queryKey: ["drc-proposals", selectedSemesterId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalListItem[]>(
         `/phd/proposal/drcConvener/getProposals/${selectedSemesterId}`
       );
       return response.data;
@@ -183,8 +183,8 @@ const DrcProposalManagement: React.FC = () => {
       setSelectedProposalIds([]);
       void refetch();
     },
-    onError: (err: any) =>
-      toast.error(err.response?.data?.message || "Failed to finalize."),
+    onError: (err) =>
+      toast.error((err as { response: { data: { message: string } } }).response?.data?.message || "Failed to finalize."),
   });
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
@@ -258,8 +258,8 @@ const DrcProposalManagement: React.FC = () => {
         <Info className="h-4 w-4" />
         <AlertTitle>Action Required for DAC Accepted Proposals</AlertTitle>
         <AlertDescription>
-          To proceed with proposals marked as 'DAC ACCEPTED', please select them
-          from the table below and click the 'Request Details' button. This will
+          To proceed with proposals marked as &apos;DAC ACCEPTED&apos;, please select them
+          from the table below and click the &apos;Request Details&apos; button. This will
           send a notification to the supervisor to provide seminar details.
         </AlertDescription>
       </Alert>
@@ -291,7 +291,7 @@ const DrcProposalManagement: React.FC = () => {
                   downloadPackagesMutation.isLoading
                 }
               >
-                <Download className="mr-2 h-4 w-4" /> Download all forms(
+                <Download className="mr-2 h-4 w-4" /> Download all forms (
                 {getSelectedProposalsByStatus("finalising").length})
               </Button>
               <Button
@@ -349,7 +349,7 @@ const DrcProposalManagement: React.FC = () => {
                     className="h-24 text-center text-red-600"
                   >
                     Error:
-                    {(error as any)?.response?.data?.message ||
+                    {(error as {response: {data: {message: string}}})?.response?.data?.message ||
                       "Failed to load proposals"}
                   </TableCell>
                 </TableRow>

@@ -47,10 +47,10 @@ const DacViewProposal: React.FC = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery<ProposalDetails>({
+  } = useQuery({
     queryKey: ["dac-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalDetails>(
         `/phd/proposal/dacMember/viewProposal/${proposalId}`
       );
       return response.data;

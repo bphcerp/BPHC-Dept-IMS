@@ -46,10 +46,10 @@ const DrcViewProposal: React.FC = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery<ProposalDetails>({
+  } = useQuery({
     queryKey: ["drc-proposal-view", proposalId],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<ProposalDetails>(
         `/phd/proposal/drcConvener/viewProposal/${proposalId}`
       );
       return response.data;
@@ -84,7 +84,7 @@ const DrcViewProposal: React.FC = () => {
           <DrcReviewForm
             proposalId={proposalId}
             suggestedDacMembers={proposal.dacMembers}
-            onSuccess={() => refetch()}
+            onSuccess={() => void refetch()}
             deadline={proposal.proposalSemester.drcReviewDate}
           />
         );

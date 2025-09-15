@@ -63,10 +63,10 @@ const SupervisorViewProposal: React.FC = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery<Proposal>({
+  } = useQuery({
     queryKey: ["supervisor-proposal", id],
     queryFn: async () => {
-      const response = await api.get(
+      const response = await api.get<Proposal>(
         `/phd/proposal/supervisor/viewProposal/${id}`
       );
       return response.data;
@@ -84,9 +84,9 @@ const SupervisorViewProposal: React.FC = () => {
       toast.success("Seminar details saved successfully!");
       void refetch();
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(
-        error.response?.data?.message || "Failed to save seminar details."
+        (error as {response: {data: {message: string}}})?.response?.data?.message || "Failed to save seminar details."
       );
     },
   });
