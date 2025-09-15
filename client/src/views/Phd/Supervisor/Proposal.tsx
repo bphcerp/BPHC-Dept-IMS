@@ -101,7 +101,9 @@ const SupervisorProposal: React.FC = () => {
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
-      const response = await api.get<ProposalSemester[]>("/phd/proposal/getProposalSemesters");
+      const response = await api.get<ProposalSemester[]>(
+        "/phd/proposal/getProposalSemesters"
+      );
       return response.data;
     },
   });
@@ -183,8 +185,8 @@ const SupervisorProposal: React.FC = () => {
                     className="h-24 text-center text-red-600"
                   >
                     Error:{" "}
-                    {(error as {response: {data: {message: string}}})?.response?.data?.message ||
-                      "Failed to load proposals"}
+                    {(error as { response: { data: string } })?.response
+                      ?.data || "Failed to load proposals"}
                   </TableCell>
                 </TableRow>
               ) : isLoading || !proposals || proposals.length === 0 ? (

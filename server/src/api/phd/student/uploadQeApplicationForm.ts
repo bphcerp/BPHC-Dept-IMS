@@ -114,6 +114,9 @@ router.post(
                             qualifyingArea2: body.qualifyingArea2,
                             status: "applied",
                             comments: null,
+                            applicationFormFileId:
+                                newFileIds.applicationForm ??
+                                existingApplication.applicationFormFileId,
                             qualifyingArea1SyllabusFileId:
                                 newFileIds.qualifyingArea1Syllabus ??
                                 existingApplication.qualifyingArea1SyllabusFileId,
@@ -170,6 +173,7 @@ router.post(
                     studentEmail: userEmail,
                     qualifyingArea1: body.qualifyingArea1,
                     qualifyingArea2: body.qualifyingArea2,
+                    applicationFormFileId: insertedFileIds.applicationForm,
                     qualifyingArea1SyllabusFileId:
                         insertedFileIds.qualifyingArea1Syllabus,
                     qualifyingArea2SyllabusFileId:

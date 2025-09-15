@@ -166,6 +166,7 @@ export type QualifyingExamApplicationBody = z.infer<
     typeof qualifyingExamApplicationSchema
 >;
 export const fileFieldNames = [
+    "applicationForm",
     "qualifyingArea1Syllabus",
     "qualifyingArea2Syllabus",
     "tenthReport",
@@ -173,6 +174,16 @@ export const fileFieldNames = [
     "undergradReport",
     "mastersReport",
 ] as const;
+export const fileFieldLabels: Record<(typeof fileFieldNames)[number], string> =
+    {
+        applicationForm: "Application Form",
+        qualifyingArea1Syllabus: "Qualifying Area 1 Syllabus",
+        qualifyingArea2Syllabus: "Qualifying Area 2 Syllabus",
+        tenthReport: "10th Grade Report",
+        twelfthReport: "12th Grade Report",
+        undergradReport: "Undergraduate Degree Report",
+        mastersReport: "Master's Degree Report",
+    };
 export const multerFileFields: Readonly<{ name: string; maxCount: number }[]> =
     (fileFieldNames as Readonly<string[]>).map((x) => {
         return { name: x, maxCount: 1 };
@@ -484,6 +495,7 @@ export interface QualifyingExamApplication {
         idNumber: string | null;
     };
     files: {
+        applicationForm: string | null;
         qualifyingArea1Syllabus: string | null;
         qualifyingArea2Syllabus: string | null;
         tenthReport: string | null;

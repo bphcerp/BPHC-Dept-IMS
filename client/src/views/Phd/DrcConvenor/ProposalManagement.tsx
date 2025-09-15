@@ -108,7 +108,9 @@ const DrcProposalManagement: React.FC = () => {
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
-      const response = await api.get<ProposalSemester[]>("/phd/proposal/getProposalSemesters");
+      const response = await api.get<ProposalSemester[]>(
+        "/phd/proposal/getProposalSemesters"
+      );
       return response.data;
     },
   });
@@ -184,7 +186,10 @@ const DrcProposalManagement: React.FC = () => {
       void refetch();
     },
     onError: (err) =>
-      toast.error((err as { response: { data: { message: string } } }).response?.data?.message || "Failed to finalize."),
+      toast.error(
+        (err as { response: { data: { message: string } } }).response?.data
+          ?.message || "Failed to finalize."
+      ),
   });
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
@@ -258,9 +263,10 @@ const DrcProposalManagement: React.FC = () => {
         <Info className="h-4 w-4" />
         <AlertTitle>Action Required for DAC Accepted Proposals</AlertTitle>
         <AlertDescription>
-          To proceed with proposals marked as &apos;DAC ACCEPTED&apos;, please select them
-          from the table below and click the &apos;Request Details&apos; button. This will
-          send a notification to the supervisor to provide seminar details.
+          To proceed with proposals marked as &apos;DAC ACCEPTED&apos;, please
+          select them from the table below and click the &apos;Request
+          Details&apos; button. This will send a notification to the supervisor
+          to provide seminar details.
         </AlertDescription>
       </Alert>
       <Card>
@@ -349,8 +355,8 @@ const DrcProposalManagement: React.FC = () => {
                     className="h-24 text-center text-red-600"
                   >
                     Error:
-                    {(error as {response: {data: {message: string}}})?.response?.data?.message ||
-                      "Failed to load proposals"}
+                    {(error as { response: { data: string } })?.response
+                      ?.data || "Failed to load proposals"}
                   </TableCell>
                 </TableRow>
               ) : isLoading || !proposals || proposals.length === 0 ? (

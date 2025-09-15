@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
 
 import {
   User,
@@ -27,6 +29,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { QualifyingExamApplication } from "./ApplicationsDataTable";
+import { phdSchemas } from "lib";
 
 interface ApplicationDetailsDialogProps {
   application: QualifyingExamApplication | null;
@@ -87,14 +90,18 @@ export const ApplicationDetailsDialog: React.FC<
     resubmit: "destructive",
   } as const;
 
-  const fileLabels = {
-    qualifyingArea1Syllabus: "Area 1 Syllabus",
-    qualifyingArea2Syllabus: "Area 2 Syllabus",
-    tenthReport: "10th Grade Report",
-    twelfthReport: "12th Grade Report",
-    undergradReport: "Undergraduate Report",
-    mastersReport: "Masters Report (Optional)",
-  };
+  const fileLabels = phdSchemas.fileFieldLabels;
+
+  const { data: subAreasData } = useQuery({
+    queryKey: ["phd-sub-areas"],
+    queryFn: async () => {
+      const response = await api.get<{ subAreas: string[] }>(
+        "/phd/getSubAreas"
+      );
+      return response.data;
+    },
+  });
+  const subAreas = useMemo(() => subAreasData?.subAreas || [], [subAreasData]);
 
   if (!application) return null;
 
@@ -205,6 +212,12 @@ export const ApplicationDetailsDialog: React.FC<
                     </span>
                     <p className="mt-1 text-sm text-gray-600">
                       {application.qualifyingArea1}
+                      {subAreas.length > 0 &&
+                        !subAreas.includes(application.qualifyingArea1) && (
+                          <span className="ml-2 text-xs font-semibold text-red-600">
+                            (Not in predefined sub-areas)
+                          </span>
+                        )}
                     </p>
                   </div>
                   <div>
@@ -213,6 +226,12 @@ export const ApplicationDetailsDialog: React.FC<
                     </span>
                     <p className="mt-1 text-sm text-gray-600">
                       {application.qualifyingArea2}
+                      {subAreas.length > 0 &&
+                        !subAreas.includes(application.qualifyingArea2) && (
+                          <span className="ml-2 text-xs font-semibold text-red-600">
+                            (Not in predefined sub-areas)
+                          </span>
+                        )}
                     </p>
                   </div>
                 </div>
@@ -298,106 +317,68 @@ export const ApplicationDetailsDialog: React.FC<
           </Card>
 
           {/* Status Management Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Application Review</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="comments">Comments (optional)</Label>
-                <Textarea
-                  id="comments"
-                  placeholder="Add any comments for the student..."
-                  value={comments}
-                  onChange={(e) => setComments(e.target.value)}
-                  rows={3}
-                  className="mt-2"
-                />
-              </div>
+          {application.status !== "resubmit" && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Application Review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="comments">Comments (optional)</Label>
+                  <Textarea
+                    id="comments"
+                    placeholder="Add any comments for the student..."
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                    rows={3}
+                    className="mt-2"
+                  />
+                </div>
 
-              <Separator />
+                <Separator />
 
-              <div className="flex gap-3">
-                {application.status === "applied" && (
-                  <>
-                    <Button
-                      onClick={() => handleStatusUpdate("verified")}
-                      disabled={isUpdating}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      {isUpdating && pendingAction === "verified" ? (
-                        <>
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Verifying...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Verify Application
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => handleStatusUpdate("resubmit")}
-                      disabled={isUpdating}
-                      variant="destructive"
-                      className="flex-1"
-                    >
-                      {isUpdating && pendingAction === "resubmit" ? (
-                        <>
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Requesting Resubmit...
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="mr-2 h-4 w-4" />
-                          Request Resubmit
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
+                <div className="flex gap-3">
+                  {application.status === "applied" && (
+                    <>
+                      <Button
+                        onClick={() => handleStatusUpdate("verified")}
+                        disabled={isUpdating}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating && pendingAction === "verified" ? (
+                          <>
+                            <LoadingSpinner className="mr-2 h-4 w-4" />
+                            Verifying...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Verify Application
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleStatusUpdate("resubmit")}
+                        disabled={isUpdating}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        {isUpdating && pendingAction === "resubmit" ? (
+                          <>
+                            <LoadingSpinner className="mr-2 h-4 w-4" />
+                            Requesting Resubmit...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Request Resubmit
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
 
-                {application.status === "verified" && (
-                  <Button
-                    onClick={() => handleStatusUpdate("applied")}
-                    disabled={isUpdating}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    {isUpdating && pendingAction === "applied" ? (
-                      <>
-                        <LoadingSpinner className="mr-2 h-4 w-4" />
-                        Reverting...
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Mark as Not Verified
-                      </>
-                    )}
-                  </Button>
-                )}
-
-                {application.status === "resubmit" && (
-                  <>
-                    <Button
-                      onClick={() => handleStatusUpdate("verified")}
-                      disabled={isUpdating}
-                      className="flex-1 bg-green-600 hover:bg-green-700"
-                    >
-                      {isUpdating && pendingAction === "verified" ? (
-                        <>
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Verifying...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Verify Application
-                        </>
-                      )}
-                    </Button>
+                  {application.status === "verified" && (
                     <Button
                       onClick={() => handleStatusUpdate("applied")}
                       disabled={isUpdating}
@@ -407,20 +388,20 @@ export const ApplicationDetailsDialog: React.FC<
                       {isUpdating && pendingAction === "applied" ? (
                         <>
                           <LoadingSpinner className="mr-2 h-4 w-4" />
-                          Resetting...
+                          Reverting...
                         </>
                       ) : (
                         <>
                           <RotateCcw className="mr-2 h-4 w-4" />
-                          Reset to Applied
+                          Mark as Not Verified
                         </>
                       )}
                     </Button>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DialogContent>
     </Dialog>
