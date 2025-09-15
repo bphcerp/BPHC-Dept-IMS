@@ -136,7 +136,7 @@ const FormResponsesView = () => {
                         preferences: currentUserResponses
                           .filter((r) => r.templateFieldId === field.id)
                           .map((r) => ({
-                            courseId: r.preference || 0,
+                            courseCode: r.courseCode!,
                             takenConsecutively: r.takenConsecutively || false,
                           })),
                       }}

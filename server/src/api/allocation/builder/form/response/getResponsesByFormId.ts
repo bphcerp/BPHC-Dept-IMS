@@ -14,7 +14,6 @@ router.get(
       with: {
         course: {
           columns: {
-            id: true,
             name: true,
             code: true,
           },
@@ -29,7 +28,6 @@ router.get(
       },
       columns: {
         submittedByEmail: false,
-        takenConsecutively: true,
       },
     });
     res.status(200).json(forms);

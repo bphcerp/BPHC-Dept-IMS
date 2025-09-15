@@ -22,22 +22,16 @@ router.post(
             return next(new HttpError(HttpCode.BAD_REQUEST, "Form not found"));
         }
 
-        const [newResponse] = await db
-            .insert(allocationFormResponse)
-            .values({
-                formId: parsed.formId,
-                submittedAt: new Date(),
-                submittedByEmail: req.user!.email,
-            })
-            .returning();
+        const formResponseExists = await db.query.allocationFormResponse.findFirst({
+            where: (fr, { and, eq }) =>
+                and(
+                    eq(fr.formId, parsed.formId),
+                    eq(fr.submittedByEmail, req.user!.email)
+                ),
+        });
 
-        if (!newResponse) {
-            return next(
-                new HttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Failed to create response"
-                )
-            );
+        if (formResponseExists) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "You have already submitted a response for this form"));
         }
 
         await db.transaction(async (tx) => {
@@ -52,7 +46,7 @@ router.post(
             await Promise.all(insertPromises);
         });
 
-        res.status(201).send();
+        res.status(201).send({ message: "Form response registered successfully"});
     })
 );
 

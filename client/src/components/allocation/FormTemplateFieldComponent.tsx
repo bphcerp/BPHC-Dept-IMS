@@ -14,11 +14,12 @@ import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
 import { Course } from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
+import { useState } from "react";
 
 export type AllocationClientField = NewAllocationFormTemplateField & {
   id: string;
   value?: string | number;
-  preferences?: { courseId: number; takenConsecutively: boolean }[];
+  preferences?: { courseCode: string; takenConsecutively: boolean }[];
 };
 
 const formatPreferenceType = (
@@ -39,6 +40,14 @@ export const FormTemplateFieldComponent = ({
   courses: Course[];
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+
+  const handleCourseChange = (courseCode: string, index: number) => {
+    const updatedSelectedCourses = [...selectedCourses];
+    updatedSelectedCourses[index] = courseCode;
+    setSelectedCourses(updatedSelectedCourses);
+  };
+
   switch (field.type) {
     case "TEACHING_ALLOCATION":
       return (
@@ -89,7 +98,10 @@ export const FormTemplateFieldComponent = ({
                         <Select
                           disabled={create}
                           required
-                          onValueChange={controllerField.onChange}
+                          onValueChange={(value) => {
+                            controllerField.onChange(value);
+                            handleCourseChange(value, i);
+                          }}
                           value={controllerField.value}
                         >
                           <SelectTrigger {...controllerField}>
@@ -97,11 +109,20 @@ export const FormTemplateFieldComponent = ({
                           </SelectTrigger>
                           {!create && (
                             <SelectContent>
-                              {courses.map((course) => (
-                                <SelectItem key={course.code} value={course.code}>
-                                  {course.name}
-                                </SelectItem>
-                              ))}
+                              {courses
+                                .filter(
+                                  (course) =>
+                                    !selectedCourses.includes(course.code) ||
+                                    course.code === controllerField.value
+                                )
+                                .map((course) => (
+                                  <SelectItem
+                                    key={course.code}
+                                    value={course.code}
+                                  >
+                                    {course.name}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           )}
                         </Select>
@@ -112,7 +133,7 @@ export const FormTemplateFieldComponent = ({
                       disabled
                       value={
                         courses.find(
-                          (c) => c.id === field.preferences?.[i]?.courseId
+                          (c) => c.code === field.preferences?.[i]?.courseCode
                         )?.code || ""
                       }
                     >
@@ -146,7 +167,9 @@ export const FormTemplateFieldComponent = ({
                     />
                   ) : (
                     <Checkbox
-                      checked={field.preferences?.[i]?.takenConsecutively || false}
+                      checked={
+                        field.preferences?.[i]?.takenConsecutively || false
+                      }
                       id={`course-again-${field.id}-${i}`}
                       disabled
                     />
