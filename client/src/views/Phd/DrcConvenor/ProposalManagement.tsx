@@ -279,7 +279,7 @@ const DrcProposalManagement: React.FC = () => {
                   getSelectedProposalsByStatus("dac_accepted").length === 0
                 }
               >
-                <Send className="mr-2 h-4 w-4" /> Request Details(
+                <Send className="mr-2 h-4 w-4" /> Request Details (
                 {getSelectedProposalsByStatus("dac_accepted").length})
               </Button>
               <Button
