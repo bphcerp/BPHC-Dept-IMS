@@ -37,6 +37,9 @@ const RespondToInvite: React.FC = () => {
     onSuccess: () => {
       toast.success("Your availability has been submitted.");
       void queryClient.invalidateQueries({ queryKey: ["meetings"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["meeting-response", meetingId],
+      });
       navigate("/meeting");
     },
     onError: (error: any) => {
@@ -54,31 +57,44 @@ const RespondToInvite: React.FC = () => {
     );
   if (isError || !meeting) return <p>Could not load invitation.</p>;
 
-  if (meeting.finalizedTime) {
+  const canRespond =
+    meeting.status === "pending_responses" ||
+    meeting.status === "awaiting_finalization";
+
+  if (!canRespond) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Meeting Already Scheduled</CardTitle>
+          <CardTitle>Response Not Possible</CardTitle>
           <CardDescription>
-            This meeting has already been finalized and cannot be responded to.
+            This meeting is no longer accepting availability responses.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p>
-            Scheduled for:{" "}
-            <strong>{new Date(meeting.finalizedTime).toLocaleString()}</strong>
+            Current Status: <strong>{meeting.status}</strong>
           </p>
+          {meeting.finalizedTime && (
+            <p className="mt-2">
+              Scheduled for:{" "}
+              <strong>
+                {new Date(meeting.finalizedTime).toLocaleString()}
+              </strong>
+            </p>
+          )}
           {meeting.venue && (
-            <p>
-              Venue: <strong>{meeting.venue}</strong>
+            <p className="mt-2">
+              <strong>Venue:</strong> {meeting.venue}
             </p>
           )}
           {meeting.googleMeetLink && (
-            <p>
-              Link:{" "}
+            <p className="mt-2">
+              <strong>Google Meet:</strong>{" "}
               <a
                 href={meeting.googleMeetLink}
-                className="text-blue-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
               >
                 {meeting.googleMeetLink}
               </a>

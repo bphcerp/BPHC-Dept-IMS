@@ -2,7 +2,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { meetingSchemas } from "lib";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { z } from "zod";
 import { MultiSelectCombobox } from "../ui/multi-select-combobox";
-import { DateTimePicker } from "../ui/date-time-picker"; // New Import
+import { DateTimePicker } from "../ui/date-time-picker";
+import { meetingSchemas } from "lib";
 
 type MeetingFormData = z.infer<typeof meetingSchemas.createMeetingSchema>;
 type FormValues = Omit<MeetingFormData, "timeSlots">;
@@ -19,14 +19,12 @@ interface MeetingCreationFormProps {
   onSubmit: (data: FormValues) => void;
   isSubmitting: boolean;
   facultyList: { value: string; label: string }[];
-  defaultValues: Partial<FormValues>;
 }
 
 export const MeetingCreationForm: React.FC<MeetingCreationFormProps> = ({
   onSubmit,
   isSubmitting,
   facultyList,
-  defaultValues,
 }) => {
   const {
     register,
@@ -35,9 +33,8 @@ export const MeetingCreationForm: React.FC<MeetingCreationFormProps> = ({
     control,
   } = useForm<FormValues>({
     resolver: zodResolver(
-      meetingSchemas.createMeetingSchema.omit({ timeSlots: true })
+      meetingSchemas.createMeetingObjectSchema.omit({ timeSlots: true })
     ),
-    defaultValues: defaultValues,
   });
 
   return (
@@ -86,7 +83,6 @@ export const MeetingCreationForm: React.FC<MeetingCreationFormProps> = ({
       </div>
       <div>
         <Label htmlFor="deadline">Response Deadline</Label>
-        {/* Corrected: Replaced the native input with the new custom component */}
         <DateTimePicker control={control} name="deadline" />
         {errors.deadline && (
           <p className="mt-1 text-xs text-destructive">
