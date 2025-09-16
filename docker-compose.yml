@@ -64,7 +64,7 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: db
     ports:
-      - "${ADMINER_PORT:-8080}:8080"
+      - ${ADMINER_PORT:-8080}:8080
     depends_on:
       db:
         condition: service_healthy
