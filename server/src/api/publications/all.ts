@@ -44,7 +44,6 @@ router.get(
                     .where(isNull(researgencePublications.authors))
             ).map((row) => row.publications),
         };
-        console.log(data);
         res.status(200).json(data);
     })
 );
