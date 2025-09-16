@@ -57,7 +57,21 @@ services:
     profiles:
       - "dev"
       - "prod"
-  
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - "dev"
+      - "prod"
+
   redis:
     image: redis:latest
     env_file:
