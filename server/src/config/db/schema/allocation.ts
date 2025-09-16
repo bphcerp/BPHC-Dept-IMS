@@ -9,7 +9,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
-import { number } from "zod";
 
 export const sectionTypeEnum = pgEnum("section_type_enum", [
     "Lecture",

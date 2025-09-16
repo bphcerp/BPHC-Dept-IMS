@@ -1,9 +1,10 @@
-
 import { z } from "zod";
 import {
-	allocationSchema,
-	courseSchema,
-	semesterSchema
+    allocationSchema,
+    allocationSectionSchema,
+    courseSchema,
+    masterAllocationSchema,
+    semesterSchema,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 
@@ -13,7 +14,7 @@ export type Allocation = NewAllocation & {
     id: string;
     allocatedOn: Date;
     updatedOn: Date;
-    course: Course
+    course: Course;
     semester: Semester;
     instructor: MemberDetailsResponse;
 };
@@ -34,3 +35,6 @@ export type Semester = NewSemester & {
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;
     hodAtStartOfSem: MemberDetailsResponse | null;
 };
+
+export type MasterAllocation = z.infer<typeof masterAllocationSchema>;
+export type AllocationSection = z.infer<typeof allocationSectionSchema>;
