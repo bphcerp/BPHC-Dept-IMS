@@ -16,6 +16,11 @@ export const sectionTypeEnum = pgEnum("section_type_enum", [
     "Practical",
 ]);
 
+export const degreeTypeEnum = pgEnum("degree_type_enum", [
+    "FD",
+    "HD"
+]);
+
 export const oddEven = pgEnum("odd_even_enum", ["odd", "even"]);
 
 export const allocationStatus = pgEnum("allocation_status", [
@@ -94,14 +99,12 @@ export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),
     name: text("name").notNull(),
 
-    lectureSecCount: integer("lecture_sec_count").notNull(),
-    tutSecCount: integer("tut_sec_count").notNull(),
-    practicalSecCount: integer("practical_sec_count").notNull(),
-
-    units: integer("units"),
-    hasLongPracticalSec: boolean("has_long_practical_sec").default(false),
+    lectureUnits: integer("lecture_units").notNull(),
+    practicalUnits: integer("practical_units").notNull(),
+    totalUnits: integer("total_units"),
 
     isCDC: boolean("is_cdc").notNull(),
+    offeredTo: degreeTypeEnum('offered_to').notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

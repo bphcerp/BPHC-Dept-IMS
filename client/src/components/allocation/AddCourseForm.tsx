@@ -42,7 +42,6 @@ const AddCourseForm = ({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       isCDC: false,
-      hasLongPracticalSec: false,
     },
   });
 
@@ -73,8 +72,6 @@ const AddCourseForm = ({
     console.log("Submitting new course:", newCourse);
     addCourse(newCourse);
   };
-
-  const hasPracticalSection = form.watch("practicalSecCount") > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -123,7 +120,7 @@ const AddCourseForm = ({
                 />
                 <FormField
                   control={form.control}
-                  name="units"
+                  name="totalUnits"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel> Credits </FormLabel>
@@ -167,14 +164,14 @@ const AddCourseForm = ({
               <div className="flex-1 space-y-4">
                 <FormField
                   control={form.control}
-                  name="lectureSecCount"
+                  name="lectureUnits"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel> Lecture Sections </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Enter the number of lecture sections."
+                          placeholder="Enter the number of lecture units."
                           {...field}
                           onChange={(event) =>
                             field.onChange(+event.target.value)
@@ -187,34 +184,14 @@ const AddCourseForm = ({
                 />
                 <FormField
                   control={form.control}
-                  name="tutSecCount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel> Tutorial Sections </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Enter the number of tutorial sections."
-                          {...field}
-                          onChange={(event) =>
-                            field.onChange(+event.target.value)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="practicalSecCount"
+                  name="practicalUnits"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel> Practical Sections </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Enter the number of practical sections."
+                          placeholder="Enter the number of practical units."
                           {...field}
                           onChange={(event) =>
                             field.onChange(+event.target.value)
@@ -225,28 +202,6 @@ const AddCourseForm = ({
                     </FormItem>
                   )}
                 />
-                {hasPracticalSection && (
-                  <FormField
-                    control={form.control}
-                    name="hasLongPracticalSec"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            {" "}
-                            Is the Practical Section 3 hours long?
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
             </div>
             <Button type="submit" disabled={isLoading}>

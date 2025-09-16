@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const sectionTypeEnum = z.enum(["Lecture", "Tutorial", "Practical"]);
+export const degreeTypeEnum = z.enum(["FD", "HD"]);
 export const oddEvenEnum = z.enum(["odd", "even"]);
 export const allocationStatusEnum = z.enum([
     "notStarted",
@@ -30,29 +31,17 @@ export const deleteAllocationSchema = z.object({
     id: z.string().uuid(),
 });
 
-export const courseSchema = z
-    .object({
-        code: z.string(),
-        name: z.string(),
-        lectureSecCount: z.number().int().min(0),
-        tutSecCount: z.number().int().min(0),
-        practicalSecCount: z.number().int().min(0),
-        hasLongPracticalSec: z.boolean().optional(),
-        units: z.number().int().min(1),
-        isCDC: z.boolean(),
-        // createdAt: z.date().optional(),
-        // updatedAt: z.date().optional()
-    })
-    .refine(
-        (data) =>
-            (data.lectureSecCount ?? 0) > 0 ||
-            (data.tutSecCount ?? 0) > 0 ||
-            (data.practicalSecCount ?? 0) > 0,
-        {
-            message:
-                "A course should have atleast one section of any type (Lecture, Tutorial, Practical).",
-        }
-    );
+export const courseSchema = z.object({
+    code: z.string(),
+    name: z.string(),
+    lectureUnits: z.number().int().min(0),
+    practicalUnits: z.number().int().min(0),
+    offeredTo: sectionTypeEnum,
+    totalUnits: z.number().int().min(1),
+    isCDC: z.boolean(),
+    // createdAt: z.date().optional(),
+    // updatedAt: z.date().optional()
+});
 
 export const deleteCourseSchema = z.object({
     code: z.string(),

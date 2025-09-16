@@ -24,29 +24,19 @@ const columns: ColumnDef<Course>[] = [
   },
 
   {
-    accessorKey: "lectureSecCount",
+    accessorKey: "lectureUnits",
     header: "Lecture Sections",
     cell: ({ row }) => {
-      const value = row.original.lectureSecCount;
+      const value = row.original.lectureUnits;
       return value === 0 ? "0" : value;
     }
   },
 
   {
-    accessorKey: "tutSecCount",
-    header: "Tutorial Sections",
-    cell: ({ row }) => {
-      const value = row.original.tutSecCount;
-      return value === 0 ? "0" : value;
-    }
-
-  },
-
-  {
-    accessorKey: "practicalSecCount",
+    accessorKey: "practicalUnits",
     header: "Practical Sections",
     cell: ({ row }) => {
-      const value = row.original.practicalSecCount;
+      const value = row.original.practicalUnits;
       return value === 0 ? "0" : value;
     }
 
@@ -56,17 +46,11 @@ const columns: ColumnDef<Course>[] = [
     accessorKey: "isCDC",
     header: "Is CDC?",
     cell: ({ getValue }) => getValue() ? "Yes" : "No",
-  },
-  {
-    accessorKey: "hasLongPracticalSec",
-    header: "Longer Practical Section?",
-    cell: ({ getValue, row }) => getValue() ? "Yes" : row.original.practicalSecCount ? "No" : "NA",
-  },
+  }
 ];
 
 const CourseLoadPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
 
   const fetchCourses = async () => {
@@ -76,8 +60,6 @@ const CourseLoadPage = () => {
     } catch (error) {
       toast.error("Error in fetching courses!");
       console.error("Error in fetching courses: ", error);
-    } finally {
-      setIsLoading(false);
     }
   }
 
