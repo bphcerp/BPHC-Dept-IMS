@@ -5,29 +5,68 @@ import {
     boolean,
     timestamp,
     pgEnum,
-    uuid
+    uuid,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 
-export const sectionTypeEnum = pgEnum(
-    "section_type_enum",
-    ["Lecture", "Tutorial", "Practical"]
-);
+export const sectionTypeEnum = pgEnum("section_type_enum", [
+    "Lecture",
+    "Tutorial",
+    "Practical",
+]);
 
-export const oddEven = pgEnum(
-    "odd_even_enum",
-    ["odd", "even"]
-);
+export const oddEven = pgEnum("odd_even_enum", ["odd", "even"]);
 
-export const allocationStatus = pgEnum(
-    "allocation_status",
-    ["notStarted", "ongoing", "completed", "suspended"]
-);
+export const allocationStatus = pgEnum("allocation_status", [
+    "notStarted",
+    "ongoing",
+    "completed",
+    "suspended",
+]);
 
+export const masterAllocation = pgTable("allocation_master_allocation", {
+    id: uuid("id")
+        .primaryKey()
+        .$defaultFn(() => uuidv4()),
+
+    semesterId: uuid("semester_id").references(() => semester.id, {
+        onDelete: "cascade",
+    }),
+
+    ic: text("instructor_email")
+        .notNull()
+        .references(() => users.email),
+
+    courseCode: text("course_code")
+        .notNull()
+        .references(() => course.code),
+
+    lectures: uuid("lectures")
+        .notNull()
+        .references(() => allocationSection.id),
+    tutorials: uuid("tutorials")
+        .notNull()
+        .references(() => allocationSection.id),
+    practicals: uuid("practicals")
+        .notNull()
+        .references(() => allocationSection.id),
+});
+
+export const allocationSection = pgTable("allocation_section", {
+    id: uuid("id")
+        .primaryKey()
+        .$defaultFn(() => uuidv4()),
+    number: integer("section_name").notNull(),
+    credits: integer("credits").notNull(),
+    type: sectionTypeEnum("section_type").notNull(),
+    instructorEmails: text("instructor_emails").array().notNull(),
+});
 
 export const allocation = pgTable("allocation_allocation_result", {
-    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
+    id: uuid("id")
+        .primaryKey()
+        .$defaultFn(() => uuidv4()),
     instructorEmail: text("instructor_email")
         .notNull()
         .references(() => users.email),
@@ -43,10 +82,8 @@ export const allocation = pgTable("allocation_allocation_result", {
     sectionType: sectionTypeEnum("section_type").notNull(),
 
     noOfSections: integer("no_of_sections").notNull(),
-    allocatedOn: timestamp("allocated_on", { withTimezone: true })
-        .defaultNow(),
-    updatedOn: timestamp("updated_on", { withTimezone: true })
-        .defaultNow()
+    allocatedOn: timestamp("allocated_on", { withTimezone: true }).defaultNow(),
+    updatedOn: timestamp("updated_on", { withTimezone: true }).defaultNow(),
 });
 
 export const course = pgTable("allocation_course", {
@@ -62,15 +99,14 @@ export const course = pgTable("allocation_course", {
 
     isCDC: boolean("is_cdc").notNull(),
 
-    createdAt: timestamp("created_at", { withTimezone: true })
-        .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-        .defaultNow()
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
-
 export const semester = pgTable("allocation_semester", {
-    id: uuid("id").primaryKey().$defaultFn(() => uuidv4()),
+    id: uuid("id")
+        .primaryKey()
+        .$defaultFn(() => uuidv4()),
     year: integer("year").notNull(),
     oddEven: oddEven("odd_even").notNull(),
 
@@ -79,17 +115,17 @@ export const semester = pgTable("allocation_semester", {
     allocationDeadline: timestamp("allocation_deadline"),
 
     noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
-    noOfDisciplineCoursesPerInstructor: integer("no_of_discipline_courses_per_instructor"),
+    noOfDisciplineCoursesPerInstructor: integer(
+        "no_of_discipline_courses_per_instructor"
+    ),
 
     hodAtStartOfSemEmail: text("hod_at_start").references(() => users.email),
-    dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(() => users.email),
+    dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
+        () => users.email
+    ),
     allocationStatus: allocationStatus("allocation_status"),
 
-    createdAt: timestamp("created_at", { withTimezone: true })
-        .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-        .defaultNow()
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
-
-
