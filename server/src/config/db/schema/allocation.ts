@@ -41,16 +41,6 @@ export const masterAllocation = pgTable("allocation_master_allocation", {
     courseCode: text("course_code")
         .notNull()
         .references(() => course.code),
-
-    lectures: uuid("lectures")
-        .notNull()
-        .references(() => allocationSection.id),
-    tutorials: uuid("tutorials")
-        .notNull()
-        .references(() => allocationSection.id),
-    practicals: uuid("practicals")
-        .notNull()
-        .references(() => allocationSection.id),
 });
 
 export const allocationSection = pgTable("allocation_section", {
@@ -60,8 +50,22 @@ export const allocationSection = pgTable("allocation_section", {
     number: integer("section_name").notNull(),
     credits: integer("credits").notNull(),
     type: sectionTypeEnum("section_type").notNull(),
-    instructorEmails: text("instructor_emails").array().notNull(),
+    masterId: uuid("master_id")
+        .notNull()
+        .references(() => masterAllocation.id, { onDelete: "cascade" }),
 });
+
+export const allocationSectionInstructors = pgTable(
+    "allocation_section_instructors",
+    {
+        sectionId: uuid("section_id")
+            .notNull()
+            .references(() => allocationSection.id, { onDelete: "cascade" }),
+        instructorEmail: text("instructor_email")
+            .notNull()
+            .references(() => users.email, { onDelete: "cascade" }),
+    }
+);
 
 export const allocation = pgTable("allocation_allocation_result", {
     id: uuid("id")

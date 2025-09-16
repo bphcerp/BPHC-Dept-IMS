@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { allocation } from "./allocation.ts";
+import { allocation, allocationSectionInstructors } from "./allocation.ts";
 import { course } from "./allocation.ts";
 import { semester } from "./allocation.ts";
 import { users } from "./admin.ts";
@@ -42,12 +42,31 @@ export const masterAllocationRelations = relations(
             fields: [masterAllocation.courseCode],
             references: [course.code],
         }),
-        lecture: many(allocationSection),
-        tutorial: many(allocationSection),
-        practical: many(allocationSection),
+        sections: many(allocationSection),
     })
 );
 
-export const sectionRelations = relations(allocationSection, ({ many }) => ({
-    instructorEmails: many(users),
-}));
+export const sectionRelations = relations(
+    allocationSection,
+    ({ many, one }) => ({
+        instructors: many(allocationSectionInstructors),
+        sections: one(masterAllocation, {
+            fields: [allocationSection.id],
+            references: [masterAllocation.id],
+        }),
+    })
+);
+
+export const allocationSectionInstructorsRelations = relations(
+    allocationSectionInstructors,
+    ({ one }) => ({
+        section: one(allocationSection, {
+            fields: [allocationSectionInstructors.sectionId],
+            references: [allocationSection.id],
+        }),
+        instructor: one(users, {
+            fields: [allocationSectionInstructors.instructorEmail],
+            references: [users.email],
+        }),
+    })
+);
