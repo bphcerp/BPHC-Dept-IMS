@@ -21,6 +21,7 @@ import {
   LibraryBig,
   Warehouse,
   File,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -97,6 +98,8 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import AnalyticsLayout from "@/layouts/Analytics";
+import PublicationsAnalytics from "@/views/Analytics/Publications";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -132,7 +135,10 @@ const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
 );
 const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("meeting:")
+);const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("analytics:")
 );
+
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
   const modules = [
@@ -201,6 +207,12 @@ const Routing = () => {
       icon: <Calendar />,
       url: "/meeting",
       requiredPermissions: meetingModulePermissions,
+    },
+    {
+      title: "Analytics",
+      icon: <ChartNoAxesCombined />,
+      url: "/analytics",
+      requiredPermissions: analyticsModulePermissions,
     },
   ];
 
@@ -611,6 +623,22 @@ const Routing = () => {
               <Route path="view-stats" element={<Statistics />} />
             )}
             <Route path=":id" element={<WilpProjectDetails />} />
+          </Route>
+        )}
+        {checkAccessAnyOne(analyticsModulePermissions) && (
+          <Route path="/analytics" element={<AnalyticsLayout />}>
+            <Route
+              index
+              element={<Navigate to="/analytics/publications" replace={true} />}
+            />
+            {checkAccess(permissions["/analytics/publications"]) && (
+              <>
+                <Route
+                  path="publications"
+                  element={<PublicationsAnalytics />}
+                />
+              </>
+            )}
           </Route>
         )}
         <Route path="*" element={<NotFoundPage />} />

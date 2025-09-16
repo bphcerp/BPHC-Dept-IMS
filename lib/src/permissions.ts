@@ -113,6 +113,9 @@ export const allPermissions = {
     "wilp:project:stats": "View all WILP project statistics",
 
     "phd:examiner:qe": "View and respond to examiner assignments",
+
+    // ANALYTICS
+    "analytics:publications": "View publications analytics",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -333,4 +336,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/deselect": "wilp:project:deselect",
     "/wilpProject/mail": "wilp:project:mail",
     "/wilpProject/stats": "wilp:project:stats",
+
+    // Analytics
+    "/analytics/publications": "analytics:publications",
 } as const;
