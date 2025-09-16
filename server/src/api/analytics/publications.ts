@@ -1,86 +1,132 @@
+// routes/analytics.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import db from "@/config/db/index.ts";
-import { publicationsTable } from "@/config/db/schema/publications.ts";
 
-import { publicationsSchemas } from "lib";
+import {
+    generateTimePeriods,
+    getValidatedPublications,
+    calculateTimeSeries,
+    calculatePublicationTypeBreakdown,
+    calculateSingleMetrics,
+    calculateAuthorContributions,
+} from "@/lib/analytics/publications.ts";
+
+import { analyticsSchemas } from "lib";
+import db from "@/config/db/index.ts";
+import { faculty } from "@/config/db/schema/admin.ts";
+
 const router = express.Router();
 
+// Main analytics endpoint
 router.get(
     "/",
     checkAccess(),
+    asyncHandler(async (req, res) => {
+        // Validate query parameters
+        const parsedQuery = {
+            ...req.query,
+            startMonth: req.query.startMonth
+                ? Number(req.query.startMonth)
+                : undefined,
+            startYear: req.query.startYear
+                ? Number(req.query.startYear)
+                : undefined,
+            endMonth: req.query.endMonth
+                ? Number(req.query.endMonth)
+                : undefined,
+            endYear: req.query.endYear ? Number(req.query.endYear) : undefined,
+        };
+
+        const validatedQuery =
+            analyticsSchemas.analyticsQuerySchema.parse(parsedQuery);
+
+        const {
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
+            grouping,
+            authorIds,
+        } = validatedQuery;
+
+        // Generate the period buckets
+        const periods = generateTimePeriods(
+            startMonth,
+            startYear,
+            endMonth,
+            endYear,
+            grouping
+        );
+
+        // Fetch validated publications (dedup + range filter)
+        const publications = await getValidatedPublications(
+            authorIds,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear
+        );
+
+        // Build publication count time series
+        const publicationTimeSeries = calculateTimeSeries(
+            publications,
+            periods,
+            grouping,
+            () => 1
+        );
+
+        // Build citation time series
+        const citationTimeSeries = calculateTimeSeries(
+            publications,
+            periods,
+            grouping,
+            ({ researgence }) =>
+                Math.max(researgence.scs ?? 0, researgence.wos ?? 0)
+        );
+
+        // Breakdown by type
+        const publicationTypeBreakdown =
+            calculatePublicationTypeBreakdown(publications);
+
+        // Single metrics
+        const singleMetrics = await calculateSingleMetrics(authorIds);
+
+        // Author contributions
+        const authorContributions = await calculateAuthorContributions(
+            authorIds,
+            startMonth,
+            startYear,
+            endMonth,
+            endYear
+        );
+
+        // Final response
+        const response: analyticsSchemas.AnalyticsResponse = {
+            publicationTimeSeries,
+            citationTimeSeries,
+            publicationTypeBreakdown,
+            singleMetrics,
+            authorContributions,
+        };
+
+        res.status(200).json(response);
+    })
+);
+
+router.get(
+    "/faculty",
+    checkAccess(),
     asyncHandler(async (_req, res) => {
-        const response: publicationsSchemas.PublicationResponse = await db
-            .select()
-            .from(publicationsTable);
+        const result = await db
+            .select({
+                authorId: faculty.authorId,
+                name: faculty.name,
+                email: faculty.email,
+            })
+            .from(faculty);
 
-        const yearMap: Record<string, { pubCount: number; citCount: number }> =
-            {};
-        const nameMap: Record<string, number> = {};
-        let mostRecentYear: number | null = null;
-        let totalCitations = 0;
-        let citationCount = 0;
-        const typeCounts: Record<string, number> = {};
-
-        response.forEach((pub) => {
-            const year = pub.year ? Number(pub.year) : null;
-            const citations = pub.citations ? parseInt(pub.citations, 10) : 0;
-            const names = pub.authorNames
-                .trim()
-                .split(",")
-                .map((n) => n.trim());
-            names.forEach((name) => {
-                if (name) {
-                    nameMap[name] = (nameMap[name] || 0) + 1;
-                }
-            });
-            if (year !== null) {
-                if (!yearMap[year]) {
-                    yearMap[year] = { pubCount: 0, citCount: 0 };
-                }
-                yearMap[year].pubCount += 1;
-                yearMap[year].citCount += citations;
-
-                if (!mostRecentYear || year > mostRecentYear) {
-                    mostRecentYear = year;
-                }
-            }
-
-            if (citations > 0) {
-                totalCitations += citations;
-                citationCount++;
-            }
-
-            if (pub.type) {
-                const t = pub.type.toLowerCase();
-                typeCounts[t] = (typeCounts[t] || 0) + 1;
-            }
-        });
-        const topNames = Object.entries(nameMap)
-            .sort((a, b) => b[1] - a[1])
-            .map((pub) => ({
-                name: pub[0],
-                count: pub[1],
-            }));
-
-        const statsByYear = Object.entries(yearMap).map(([year, values]) => ({
-            year: Number(year),
-            pubCount: values.pubCount,
-            citCount: values.citCount,
-        }));
-
-        statsByYear.sort((a, b) => a.year - b.year);
-
-        const avgCitations =
-            citationCount > 0 ? totalCitations / citationCount : 0;
-        res.status(200).json({
-            statsByYear,
-            mostRecentYear,
-            averageCitationsPerPaper: avgCitations,
-            publicationsByType: typeCounts,
-            topAuthors: topNames.slice(0, 5),
-        });
+        res.json(result);
     })
 );
 

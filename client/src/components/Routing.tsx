@@ -619,7 +619,12 @@ const Routing = () => {
               element={<Navigate to="/analytics/publications" replace={true} />}
             />
             {checkAccess(permissions["/analytics/publications"]) && (
-              <Route path="publications" element={<PublicationsAnalytics />} />
+              <>
+                <Route
+                  path="publications"
+                  element={<PublicationsAnalytics />}
+                />
+              </>
             )}
           </Route>
         )}
