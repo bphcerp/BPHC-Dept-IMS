@@ -30,10 +30,10 @@ const ManageEmailTemplates: React.FC = () => {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
 
-  const { data: templates = [], isLoading } = useQuery<EmailTemplate[]>({
+  const { data: templates = [], isLoading } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
-      const response = await api.get("/phd/staff/emailTemplates");
+      const response = await api.get<EmailTemplate[]>("/phd/staff/emailTemplates");
       return response.data;
     },
   });

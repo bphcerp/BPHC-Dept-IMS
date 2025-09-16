@@ -4,6 +4,7 @@ const optionalString = z
     .trim()
     .nullish()
     .transform((val) => (val?.length ? val : null));
+export const phdTypes = ["part-time", "full-time"] as const;
 export const phdExamApplicationStatuses = [
     "applied",
     "verified",
@@ -12,15 +13,18 @@ export const phdExamApplicationStatuses = [
 export const phdProposalStatuses = [
     "deleted",
     "supervisor_review",
-    "cosupervisor_review",
+    "supervisor_revert",
     "drc_review",
+    "drc_revert",
     "dac_review",
-    "dac_rejected",
+    "dac_revert",
+    "dac_accepted",
+    "finalising",
+    "formalising",
     "completed",
 ] as const;
-
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
-    ["completed", "deleted", "dac_rejected"];
+    ["deleted", "completed"];
 export const resultStatusEnum = z.enum(["pass", "fail"]);
 export const notifyDeadlinePayloadSchema = z.object({
     subject: z.string().min(1, "Subject is required for emails."),
@@ -74,7 +78,7 @@ export const createSuggestExaminersSchema = (examinerCount: number) =>
     });
 export const updateExaminerCountSchema = z.object({
     examId: z.number().int().positive(),
-    examinerCount: z.number().int().min(2).max(4),
+    examinerCount: z.number().int().min(0).max(6),
 });
 export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
 export const assignExaminersSchema = z.object({
@@ -83,27 +87,12 @@ export const assignExaminersSchema = z.object({
     examinerArea2: z.string().email(),
 });
 export type AssignExaminersBody = z.infer<typeof assignExaminersSchema>;
-export const updateExamStatusSchema = z.array(
-    z.object({ email: z.string().email(), ifPass: z.boolean() })
-);
-export type UpdateExamStatusSchemaBody = z.infer<typeof updateExamStatusSchema>;
-export const updatePhdExamStatusSchema = z.object({
-    email: z.string().email(),
-    examNumber: z.number().int().min(1).max(2),
-    status: z.enum(["pass", "fail"]),
-    date: z.string().optional(),
-});
-export type UpdatePhdExamStatusBody = z.infer<typeof updatePhdExamStatusSchema>;
-export const updateQualifyingExamStatusSchema = z.record(
-    z.string(),
-    z.enum(["pass", "fail"])
-);
-export type UpdateQualifyingExamStatusBody = z.infer<
-    typeof updateQualifyingExamStatusSchema
->;
 export const updateProposalDeadlineSchema = z.object({
     semesterId: z.number().int().positive(),
-    deadline: z.string().datetime(),
+    studentSubmissionDate: z.coerce.date(),
+    facultyReviewDate: z.coerce.date(),
+    drcReviewDate: z.coerce.date(),
+    dacReviewDate: z.coerce.date(),
 });
 export type UpdateProposalDeadlineBody = z.infer<
     typeof updateProposalDeadlineSchema
@@ -177,6 +166,7 @@ export type QualifyingExamApplicationBody = z.infer<
     typeof qualifyingExamApplicationSchema
 >;
 export const fileFieldNames = [
+    "applicationForm",
     "qualifyingArea1Syllabus",
     "qualifyingArea2Syllabus",
     "tenthReport",
@@ -184,11 +174,146 @@ export const fileFieldNames = [
     "undergradReport",
     "mastersReport",
 ] as const;
+export const fileFieldLabels: Record<(typeof fileFieldNames)[number], string> =
+    {
+        applicationForm: "Application Form",
+        qualifyingArea1Syllabus: "Qualifying Area 1 Syllabus",
+        qualifyingArea2Syllabus: "Qualifying Area 2 Syllabus",
+        tenthReport: "10th Grade Report",
+        twelfthReport: "12th Grade Report",
+        undergradReport: "Undergraduate Degree Report",
+        mastersReport: "Master's Degree Report",
+    };
 export const multerFileFields: Readonly<{ name: string; maxCount: number }[]> =
     (fileFieldNames as Readonly<string[]>).map((x) => {
         return { name: x, maxCount: 1 };
     });
 export type FileField = (typeof fileFieldNames)[number];
+export const phdProposalSubmissionSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    hasOutsideCoSupervisor: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean()
+    ),
+    declaration: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean().refine((val) => val, "Declaration is required")
+    ),
+    proposalCycleId: z.coerce
+        .number()
+        .int()
+        .positive("A proposal cycle must be selected"),
+    internalCoSupervisors: z.preprocess((val) => {
+        if (typeof val === "string") {
+            try {
+                return JSON.parse(val);
+            } catch {
+                return [];
+            }
+        }
+        return val;
+    }, z.array(z.string().email()).optional()),
+    externalCoSupervisors: z.preprocess(
+        (val) => {
+            if (typeof val === "string") {
+                try {
+                    return JSON.parse(val);
+                } catch {
+                    return [];
+                }
+            }
+            return val;
+        },
+        z
+            .array(
+                z.object({ name: z.string().min(1), email: z.string().email() })
+            )
+            .optional()
+    ),
+});
+export const phdProposalFileFieldNames = [
+    "appendixFile",
+    "summaryFile",
+    "outlineFile",
+    "placeOfResearchFile",
+    "outsideCoSupervisorFormatFile",
+    "outsideSupervisorBiodataFile",
+] as const;
+export const phdProposalMulterFileFields: Readonly<
+    { name: string; maxCount: number }[]
+> = (phdProposalFileFieldNames as Readonly<string[]>).map((x) => {
+    return { name: x, maxCount: 1 };
+});
+export const proposalRevertSchema = z.object({
+    comments: z.string().trim().min(1, "Comments are required for reverting"),
+});
+export const supervisorProposalAcceptSchema = z.object({
+    dacMembers: z
+        .array(
+            z.object({ email: z.string().email(), name: z.string().optional() })
+        )
+        .min(2, "Minimum 2 DAC members required")
+        .max(4, "Maximum 4 DAC members allowed"),
+    comments: z.string().trim().optional(),
+});
+export const supervisorProposalActionSchema = z.discriminatedUnion("action", [
+    z.object({
+        action: z.literal("accept"),
+        ...supervisorProposalAcceptSchema.shape,
+    }),
+    z.object({ action: z.literal("revert"), ...proposalRevertSchema.shape }),
+]);
+export const drcProposalAcceptSchema = z.object({
+    selectedDacMembers: z
+        .array(z.string().email())
+        .length(2, "Exactly 2 DAC members must be selected"),
+    comments: z.string().trim().optional(),
+});
+export const dacReviewFormSchema = z.object({
+    q1a: z.boolean(),
+    q1b: z.boolean(),
+    q1c: z.boolean(),
+    q1d: z.enum(["product", "process", "frontier"]),
+    q2a: z.boolean(),
+    q2b: z.boolean(),
+    q2c: z.boolean(),
+    q2d: z.enum(["improve", "academic", "industry"]),
+    q3a: z.boolean(),
+    q3b: z.boolean(),
+    q3c: z.boolean(),
+    q4a: z.boolean(),
+    q4b: z.boolean(),
+    q4c: z.boolean(),
+    q4d: z.boolean(),
+    q4e: z.boolean(),
+    q4f: z.boolean(),
+    q4g: z.boolean(),
+    q5a: z.boolean(),
+    q5b: z.boolean(),
+    q5c: z.boolean(),
+    q6: z.enum(["accepted", "minor", "revision"]),
+    q7_reasons: z.string().trim().min(1),
+    q8_comments: z.string().trim().optional(),
+});
+export type DacReviewFormData = z.infer<typeof dacReviewFormSchema>;
+export const submitDacReviewSchema = z.object({
+    approved: z.preprocess(
+        (val) => val === "true" || val === true,
+        z.boolean()
+    ),
+    comments: z.string().trim().min(1, "Comments are required for DAC review"),
+    evaluation: z.preprocess(
+        (val) => (typeof val === "string" ? JSON.parse(val) : val),
+        dacReviewFormSchema
+    ),
+});
+export type SubmitDacReviewBody = z.infer<typeof submitDacReviewSchema>;
+export const setSeminarDetailsSchema = z.object({
+    seminarDate: z.coerce.date(),
+    seminarTime: z.string().min(1, "Time is required"),
+    seminarVenue: z.string().min(1, "Venue is required"),
+});
+export type SetSeminarDetailsBody = z.infer<typeof setSeminarDetailsSchema>;
 export const uploadProposalSchema = z.object({
     fileUrl1: z.string(),
     fileUrl2: z.string(),
@@ -247,6 +372,7 @@ export const courseworkFormSchema = z.array(
         ),
     })
 );
+export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
 export const addPhdCourseBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
@@ -260,7 +386,6 @@ export const addPhdCourseBodySchema = z.object({
         .nonempty(),
 });
 export type AddPhdCourseBody = z.infer<typeof addPhdCourseBodySchema>;
-export type CourseworkFormData = z.infer<typeof courseworkFormSchema>;
 export const deletePhdCourseBodySchema = z.object({
     studentEmail: z.string(),
     courseId: z.string(),
@@ -286,18 +411,6 @@ export const updateEmailTemplateSchema = z.object({
     body: z.string().min(1),
 });
 export type UpdateEmailTemplateBody = z.infer<typeof updateEmailTemplateSchema>;
-export const phdProposalSubmissionSchema = z.object({
-    title: z.string().min(1, "Title is required"),
-});
-export const phdProposalFileFieldNames = [
-    "abstractFile",
-    "proposalFile",
-] as const;
-export const phdProposalMulterFileFields: Readonly<
-    { name: string; maxCount: number }[]
-> = (phdProposalFileFieldNames as Readonly<string[]>).map((x) => {
-    return { name: x, maxCount: 1 };
-});
 export const updateProposalStatusSchema = z.object({
     status: z.enum(phdProposalStatuses),
     comments: z.string().optional(),
@@ -330,14 +443,30 @@ export const finalizeDacMembersDrcSchema = z.object({
 export type FinalizeDacMembersDrcBody = z.infer<
     typeof finalizeDacMembersDrcSchema
 >;
-export const submitDacReviewSchema = z.object({
-    approved: z.preprocess(
-        (val) => val === "true" || val === true,
-        z.boolean()
-    ),
-    comments: z.string().trim().min(1, "Comments are required for DAC review"),
+export const requestSeminarDetailsSchema = z.object({
+    requests: z
+        .array(
+            z.object({
+                proposalId: z.number().int().positive(),
+                subject: z.string().min(1),
+                body: z.string().min(1),
+                deadline: z.coerce.date().optional(),
+            })
+        )
+        .min(1),
 });
-export type SubmitDacReviewBody = z.infer<typeof submitDacReviewSchema>;
+export const remindSeminarDetailsSchema = z.object({
+    proposalId: z.number().int().positive(),
+    subject: z.string().min(1),
+    body: z.string().min(1),
+    deadline: z.coerce.date().optional(),
+});
+export const finalizeProposalsSchema = z.object({
+    proposalIds: z.array(z.number().int().positive()).min(1),
+});
+export const downloadBulkPackageSchema = z.object({
+    proposalIds: z.array(z.number().int().positive()).min(1),
+});
 export interface PhdStudent {
     email: string;
     name: string | null;
@@ -366,6 +495,7 @@ export interface QualifyingExamApplication {
         idNumber: string | null;
     };
     files: {
+        applicationForm: string | null;
         qualifyingArea1Syllabus: string | null;
         qualifyingArea2Syllabus: string | null;
         tenthReport: string | null;
@@ -396,6 +526,7 @@ export interface VerifiedApplication {
             examinerEmail: string;
             notifiedAt: string | null;
             qpSubmitted: boolean;
+            hasAccepted: boolean | null;
         }
     >;
     result: "pass" | "fail" | null;
@@ -460,3 +591,15 @@ export const sendToDacSchema = z.object({
         .min(2, "At least 2 DAC members must be selected"),
 });
 export type SendToDacBody = z.infer<typeof sendToDacSchema>;
+export type ExaminerAssignmentsResponse = Array<{
+    id: number;
+    student: {
+        name: string | null;
+        email: string;
+        idNumber: string | null;
+        phone: string | null;
+    };
+    qualifyingArea: string;
+    syllabusFile: string;
+    hasAccepted: boolean | null;
+}>;

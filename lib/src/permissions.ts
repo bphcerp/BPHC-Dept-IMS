@@ -42,7 +42,12 @@ export const allPermissions = {
     "phd:drc:proposal": "DRC Convener operations on proposals",
     "phd:faculty:proposal": "Faculty operations on proposals",
     "phd:dac:proposal": "DAC Member operations on proposals",
+    "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    //meeting
+    "meeting:use": "Access and use the meeting module",
+
+    //handout
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -107,6 +112,8 @@ export const allPermissions = {
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
 
+    "phd:examiner:qe": "View and respond to examiner assignments",
+
     // ANALYTICS
     "analytics:publications": "View publications analytics",
 } as const;
@@ -160,10 +167,18 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
 
     "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
+    "/phd/staff/getLatestProposalSem": "phd:staff:manage-email-templates",
+    "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
+    "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
+    "/phd/proposal/getProposalSemesters": "phd:proposal",
+    "/phd/proposal/getFacultyList": "phd:proposal",
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/getProposalEligibility": "phd:student:proposal",
+    "/phd/student/getProposalDeadlines": "phd:student:proposal",
+    "/phd/student/getProfileDetails": "phd:student:proposal",
 
     "/phd/drcMember/getAvailableExams": "phd:drc:qe",
     "/phd/drcMember/updateApplicationStatus": "phd:drc:qe",
@@ -183,6 +198,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/optimizeTimetable": "phd:drc:qe-timetable",
     "/phd/drcMember/generateTimetablePdf": "phd:drc:qe-timetable",
 
+    "/phd/examiner/assignments": "phd:examiner:qe",
+    "/phd/examiner/acceptAssignment": "phd:examiner:qe",
+    "/phd/examiner/rejectAssignment": "phd:examiner:qe",
+
     "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
     "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
@@ -198,17 +217,38 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/student/getProposals": "phd:student:proposal",
     "/phd/proposal/student/resubmit": "phd:student:proposal",
     "/phd/proposal/student/submitProposal": "phd:student:proposal",
+    "/phd/proposal/student/view": "phd:student:proposal",
 
     "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/getFacultyList": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/approve": "phd:faculty:proposal",
+
+    "/phd/proposal/drcConvener/finalizeProposals": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalPackage": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
+
+    //meeting
+    "/meeting/create": "meeting:use",
+    "/meeting/all": "meeting:use",
+    "/meeting/details": "meeting:use",
+    "/meeting/respond": "meeting:use",
+    "/meeting/finalize": "meeting:use",
+    "/meeting/all-users": "meeting:use",
+    "/meeting/remind": "meeting:use",
+    "/meeting/delete": "meeting:use",
+    "/meeting/update-details": "meeting:use",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",

@@ -35,7 +35,7 @@ const EditPublications = () => {
     isLoading: isLoadingPubs,
     isError: isPubsError,
   } = useQuery({
-    queryKey: ["publications/edit"],
+    queryKey: ["publications", "edit"],
     queryFn: async () => {
       const response = await api.get<publicationsSchemas.PublicationWithMetaResponse>("/publications/all/meta");
       return response.data;

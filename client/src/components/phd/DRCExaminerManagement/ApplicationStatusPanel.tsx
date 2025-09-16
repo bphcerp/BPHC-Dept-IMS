@@ -78,11 +78,9 @@ const ApplicationStatusPanel: React.FC<ApplicationStatusPanelProps> = ({
       setIsDetailsDialogOpen(false);
       toast.success("Application status updated successfully");
     },
-    onError: (
-      error: Error & { response?: { data?: { message?: string } } }
-    ) => {
+    onError: (error: Error & { response?: { data?: string } }) => {
       const errorMessage: string =
-        error.response?.data?.message || "Failed to update application status";
+        error.response?.data || "Failed to update application status";
       toast.error(errorMessage);
     },
   });

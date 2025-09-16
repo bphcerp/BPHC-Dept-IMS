@@ -8,12 +8,12 @@ import {
     pgEnum,
     boolean,
     index,
+    jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { faculty, phd } from "./admin.ts";
 import { phdSchemas } from "lib";
 import { files } from "./form.ts";
-
 export const phdEmailTemplates = pgTable("phd_email_templates", {
     id: serial("id").primaryKey(),
     name: text("name").notNull().unique(),
@@ -30,14 +30,13 @@ export const phdExamApplicationStatus = pgEnum(
     phdSchemas.phdExamApplicationStatuses
 );
 export const phdProposalStatus = pgEnum(
-    "phd_proposal_status_enum",
+    "phd_proposal_status",
     phdSchemas.phdProposalStatuses
 );
 export const phdExamResultStatus = pgEnum("phd_exam_result_status", [
     "pass",
     "fail",
 ]);
-
 export const phdCourses = pgTable("phd_courses", {
     id: serial("id").primaryKey(),
     studentEmail: text("student_email")
@@ -74,6 +73,24 @@ export const phdSemesters = pgTable(
     },
     (table) => [unique().on(table.year, table.semesterNumber)]
 );
+export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
+    id: serial("id").primaryKey(),
+    semesterId: integer("semester_id")
+        .notNull()
+        .references(() => phdSemesters.id, { onDelete: "cascade" }),
+    studentSubmissionDate: timestamp("student_submission_date", {
+        withTimezone: true,
+    }).notNull(),
+    facultyReviewDate: timestamp("faculty_review_date", {
+        withTimezone: true,
+    }).notNull(),
+    drcReviewDate: timestamp("drc_review_date", {
+        withTimezone: true,
+    }).notNull(),
+    dacReviewDate: timestamp("dac_review_date", {
+        withTimezone: true,
+    }).notNull(),
+});
 export const phdQualifyingExams = pgTable(
     "phd_qualifying_exams",
     {
@@ -113,12 +130,12 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
         .references(() => phd.email, { onDelete: "cascade" }),
     status: phdExamApplicationStatus("status").notNull().default("applied"),
     comments: text("comments"),
-    qualifyingArea1: text("qualifying_area_1")
-        .notNull()
-        .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
-    qualifyingArea2: text("qualifying_area_2")
-        .notNull()
-        .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
+    qualifyingArea1: text("qualifying_area_1").notNull(),
+    qualifyingArea2: text("qualifying_area_2").notNull(),
+    applicationFormFileId: integer("application_form_file_id").references(
+        () => files.id,
+        { onDelete: "set null" }
+    ),
     qualifyingArea1SyllabusFileId: integer(
         "qualifying_area_1_syllabus_file_id"
     ).references(() => files.id, { onDelete: "set null" }),
@@ -188,17 +205,22 @@ export const phdExaminerAssignments = pgTable(
         qualifyingArea: text("qualifying_area")
             .notNull()
             .references(() => phdSubAreas.subArea, { onDelete: "cascade" }),
-        examinerEmail: text("examiner_email").notNull(),
+        examinerEmail: text("examiner_email")
+            .notNull()
+            .references(() => faculty.email, { onDelete: "cascade" }),
         notifiedAt: timestamp("notified_at", { withTimezone: true }),
+        hasAccepted: boolean("has_accepted"),
         qpSubmitted: boolean("qp_submitted").default(false).notNull(),
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );
-
 export const phdProposals = pgTable(
     "phd_proposals",
     {
         id: serial("id").primaryKey(),
+        proposalSemesterId: integer("proposal_semester_id")
+            .notNull()
+            .references(() => phdProposalSemesters.id, { onDelete: "cascade" }),
         studentEmail: text("student_email")
             .notNull()
             .references(() => phd.email, { onDelete: "cascade" }),
@@ -206,12 +228,6 @@ export const phdProposals = pgTable(
             .notNull()
             .references(() => faculty.email, { onDelete: "cascade" }),
         title: text("title").notNull(),
-        abstractFileId: integer("abstract_file_id")
-            .notNull()
-            .references(() => files.id, { onDelete: "cascade" }),
-        proposalFileId: integer("proposal_file_id")
-            .notNull()
-            .references(() => files.id, { onDelete: "cascade" }),
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .$onUpdate(() => new Date())
@@ -220,9 +236,32 @@ export const phdProposals = pgTable(
             .notNull()
             .default("supervisor_review"),
         comments: text("comments"),
-        suggestedDacMembers: text("suggested_dac_members")
-            .array()
-            .default(sql`'{}'::text[]`),
+        seminarDate: timestamp("seminar_date", { withTimezone: true }),
+        seminarTime: text("seminar_time"),
+        seminarVenue: text("seminar_venue"),
+        hasOutsideCoSupervisor: boolean("has_outside_co_supervisor")
+            .default(false)
+            .notNull(),
+        declaration: boolean("declaration").default(true).notNull(),
+        appendixFileId: integer("appendix_file_id")
+            .notNull()
+            .references(() => files.id, { onDelete: "cascade" }),
+        summaryFileId: integer("summary_file_id")
+            .notNull()
+            .references(() => files.id, { onDelete: "cascade" }),
+        outlineFileId: integer("outline_file_id")
+            .notNull()
+            .references(() => files.id, { onDelete: "cascade" }),
+        placeOfResearchFileId: integer("place_of_research_file_id").references(
+            () => files.id,
+            { onDelete: "cascade" }
+        ),
+        outsideCoSupervisorFormatFileId: integer(
+            "outside_co_supervisor_format_file_id"
+        ).references(() => files.id, { onDelete: "cascade" }),
+        outsideSupervisorBiodataFileId: integer(
+            "outside_supervisor_biodata_file_id"
+        ).references(() => files.id, { onDelete: "cascade" }),
         active: boolean("active").generatedAlwaysAs(
             sql.raw(
                 `CASE WHEN status IN(` +
@@ -239,7 +278,6 @@ export const phdProposals = pgTable(
         unique().on(table.studentEmail, table.active),
     ]
 );
-
 export const phdProposalCoSupervisors = pgTable(
     "phd_proposal_co_supervisors",
     {
@@ -247,9 +285,8 @@ export const phdProposalCoSupervisors = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        coSupervisorEmail: text("co_supervisor_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        coSupervisorEmail: text("co_supervisor_email").notNull(),
+        coSupervisorName: text("co_supervisor_name"),
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .$onUpdate(() => new Date())
@@ -268,16 +305,14 @@ export const phdProposalDacMembers = pgTable(
         proposalId: integer("proposal_id")
             .notNull()
             .references(() => phdProposals.id, { onDelete: "cascade" }),
-        dacMemberEmail: text("dac_member_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
+        dacMemberEmail: text("dac_member_email").notNull(),
+        dacMemberName: text("dac_member_name"),
     },
     (table) => [
         unique().on(table.proposalId, table.dacMemberEmail),
         index().on(table.proposalId),
     ]
 );
-
 export const phdProposalDacReviews = pgTable(
     "phd_proposal_dac_reviews",
     {
@@ -290,17 +325,28 @@ export const phdProposalDacReviews = pgTable(
             .references(() => faculty.email, { onDelete: "cascade" }),
         approved: boolean("approved").notNull(),
         comments: text("comments").notNull(),
-        suggestionFileId: integer("suggestion_file_id").references(
-            () => files.id,
-            { onDelete: "set null" }
-        ),
+        feedbackFileId: integer("feedback_file_id").references(() => files.id, {
+            onDelete: "set null",
+        }),
         createdAt: timestamp("created_at", { withTimezone: true })
             .defaultNow()
             .notNull(),
     },
     (table) => [unique().on(table.proposalId, table.dacMemberEmail)]
 );
-
+export const phdProposalDacReviewForms = pgTable(
+    "phd_proposal_dac_review_forms",
+    {
+        id: serial("id").primaryKey(),
+        reviewId: integer("review_id")
+            .notNull()
+            .unique()
+            .references(() => phdProposalDacReviews.id, {
+                onDelete: "cascade",
+            }),
+        formData: jsonb("form_data").notNull(),
+    }
+);
 export const phdExamTimetableSlots = pgTable(
     "phd_exam_timetable_slots",
     {

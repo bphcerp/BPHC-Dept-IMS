@@ -58,6 +58,9 @@ export default router.get(
                 idNumber: app.student.idNumber,
             },
             files: {
+                applicationForm: app.applicationFormFileId
+                    ? `${environment.SERVER_URL}/f/${app.applicationFormFileId}`
+                    : null,
                 qualifyingArea1Syllabus: app.qualifyingArea1SyllabusFileId
                     ? `${environment.SERVER_URL}/f/${app.qualifyingArea1SyllabusFileId}`
                     : null,

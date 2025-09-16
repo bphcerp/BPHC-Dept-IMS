@@ -18,6 +18,8 @@ import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
 import publicProfileRouter from "./profile/[id].ts";
+import meetingRouter from "./meeting/index.ts";
+import { testingMiddleware } from "@/middleware/testing.ts";
 
 const favicon = Buffer.from(
     "AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA",
@@ -52,6 +54,8 @@ router.use("/f", fileRouter);
 router.use(authRouter);
 
 router.use("/admin", adminRouter);
+router.use(testingMiddleware);
+
 router.use("/phd", phdRouter);
 router.use("/handout", handoutRouter);
 router.use("/conference", conferenceRouter);
@@ -66,5 +70,6 @@ router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
+router.use("/meeting", meetingRouter);
 
 export default router;

@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { ExternalLink, File, Replace, XIcon } from "lucide-react";
 import { toast } from "sonner";
+import { phdSchemas } from "lib";
 
 interface QualifyingExam {
   id: number;
@@ -38,36 +39,6 @@ interface ApplicationFormData {
   qualifyingArea2: string;
 }
 
-interface FileFields {
-  qualifyingArea1Syllabus: File | null;
-  qualifyingArea2Syllabus: File | null;
-  tenthReport: File | null;
-  twelfthReport: File | null;
-  undergradReport: File | null;
-  mastersReport: File | null;
-}
-
-const fileMetadata = [
-  {
-    key: "qualifyingArea1Syllabus",
-    label: "Qualifying Area 1 Syllabus",
-    required: true,
-  },
-  {
-    key: "qualifyingArea2Syllabus",
-    label: "Qualifying Area 2 Syllabus",
-    required: true,
-  },
-  { key: "tenthReport", label: "10th Grade Report Card", required: true },
-  { key: "twelfthReport", label: "12th Grade Report Card", required: true },
-  {
-    key: "undergradReport",
-    label: "Undergraduate Report Card",
-    required: true,
-  },
-  { key: "mastersReport", label: "Masters Report Card", required: false },
-] as const;
-
 const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
   exam,
   existingApplication,
@@ -79,14 +50,23 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     qualifyingArea2: "",
   });
 
-  const [files, setFiles] = useState<FileFields>({
-    qualifyingArea1Syllabus: null,
-    qualifyingArea2Syllabus: null,
-    tenthReport: null,
-    twelfthReport: null,
-    undergradReport: null,
-    mastersReport: null,
-  });
+  // Dynamically build FileFields type from phdSchemas.fileFieldNames
+  type FileFieldKey = (typeof phdSchemas.fileFieldNames)[number];
+  type FileFields = Record<FileFieldKey, File | null>;
+
+  const initialFiles: FileFields = phdSchemas.fileFieldNames.reduce(
+    (acc, key) => {
+      acc[key] = null;
+      return acc;
+    },
+    {} as FileFields
+  );
+  const [files, setFiles] = useState<FileFields>(initialFiles);
+
+  const [customAreas, setCustomAreas] = useState<{
+    area1: string;
+    area2: string;
+  }>({ area1: "", area2: "" });
 
   useEffect(() => {
     if (existingApplication) {
@@ -119,57 +99,75 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
       return response.data as { success: boolean; message: string };
     },
     onSuccess,
-    onError: () => {
-      toast.error("Failed to submit application");
+    onError: (e) => {
+      toast.error(
+        (e as { response?: { data: string } }).response?.data ||
+          "Failed to submit application"
+      );
     },
   });
 
-  const handleFileChange = (fileType: keyof FileFields, file: File | null) => {
+  const handleFileChange = (fileType: FileFieldKey, file: File | null) => {
     setFiles((prev) => ({ ...prev, [fileType]: file }));
+  };
+
+  const handleAreaChange = (
+    areaKey: "qualifyingArea1" | "qualifyingArea2",
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [areaKey]: value }));
+    if (value !== "__not_listed__") {
+      setCustomAreas((prev) => ({
+        ...prev,
+        [areaKey === "qualifyingArea1" ? "area1" : "area2"]: "",
+      }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.qualifyingArea1 || !formData.qualifyingArea2) {
-      toast.error("Please select both qualifying areas");
+    const area1 =
+      formData.qualifyingArea1 === "__not_listed__"
+        ? customAreas.area1.trim()
+        : formData.qualifyingArea1;
+    const area2 =
+      formData.qualifyingArea2 === "__not_listed__"
+        ? customAreas.area2.trim()
+        : formData.qualifyingArea2;
+    if (!area1 || !area2) {
+      toast.error("Please select or enter both qualifying areas");
       return;
     }
-    if (formData.qualifyingArea1 === formData.qualifyingArea2) {
+    if (area1 === area2) {
       toast.error("Please select different areas");
       return;
     }
 
     const isNewApplication = !existingApplication;
-    const requiredFiles: (keyof FileFields)[] = [
-      "qualifyingArea1Syllabus",
-      "qualifyingArea2Syllabus",
-      "tenthReport",
-      "twelfthReport",
-      "undergradReport",
-    ];
+    // Required fields except mastersReport
+    const requiredFiles = phdSchemas.fileFieldNames.filter(
+      (key) => key !== "mastersReport"
+    );
 
     for (const field of requiredFiles) {
       if (isNewApplication && !files[field]) {
-        toast.error(
-          "Please upload all required documents. Only the Master's report is optional."
-        );
+        toast.error("Please upload all required documents.");
         return;
       }
     }
 
     const submitData = new FormData();
     submitData.append("examId", exam.id.toString());
-    submitData.append("qualifyingArea1", formData.qualifyingArea1);
-    submitData.append("qualifyingArea2", formData.qualifyingArea2);
+    submitData.append("qualifyingArea1", area1);
+    submitData.append("qualifyingArea2", area2);
 
     if (existingApplication) {
       submitData.append("applicationId", existingApplication.id.toString());
     }
 
-    for (const key in files) {
-      const fileKey = key as keyof FileFields;
-      if (files[fileKey]) {
-        submitData.append(fileKey, files[fileKey]);
+    for (const key of phdSchemas.fileFieldNames) {
+      if (files[key]) {
+        submitData.append(key, files[key]);
       }
     }
 
@@ -190,49 +188,51 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
             <div className="space-y-4">
               {/* Area selection dropdowns */}
               <div>
-                {" "}
-                <Label htmlFor="qualifyingArea1">
-                  Qualifying Area 1 *
-                </Label>{" "}
+                <Label htmlFor="qualifyingArea1">Qualifying Area 1</Label>
                 <select
                   id="qualifyingArea1"
                   value={formData.qualifyingArea1}
                   onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      qualifyingArea1: e.target.value,
-                    }))
+                    handleAreaChange("qualifyingArea1", e.target.value)
                   }
                   className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   required
                 >
-                  {" "}
                   <option value="">Select Area 1</option>
                   {subAreas.map((area) => (
                     <option key={area} value={area}>
                       {area}
                     </option>
                   ))}
-                </select>{" "}
-              </div>{" "}
+                  <option value="__not_listed__">Not listed...</option>
+                </select>
+                {formData.qualifyingArea1 === "__not_listed__" && (
+                  <input
+                    type="text"
+                    className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder="Enter custom area 1"
+                    value={customAreas.area1}
+                    onChange={(e) =>
+                      setCustomAreas((prev) => ({
+                        ...prev,
+                        area1: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                )}
+              </div>
               <div>
-                {" "}
-                <Label htmlFor="qualifyingArea2">
-                  Qualifying Area 2 *
-                </Label>{" "}
+                <Label htmlFor="qualifyingArea2">Qualifying Area 2</Label>
                 <select
                   id="qualifyingArea2"
                   value={formData.qualifyingArea2}
                   onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      qualifyingArea2: e.target.value,
-                    }))
+                    handleAreaChange("qualifyingArea2", e.target.value)
                   }
                   className="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   required
                 >
-                  {" "}
                   <option value="">Select Area 2</option>
                   {subAreas.map((area) => (
                     <option
@@ -243,7 +243,23 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
                       {area}
                     </option>
                   ))}
-                </select>{" "}
+                  <option value="__not_listed__">Not listed...</option>
+                </select>
+                {formData.qualifyingArea2 === "__not_listed__" && (
+                  <input
+                    type="text"
+                    className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    placeholder="Enter custom area 2"
+                    value={customAreas.area2}
+                    onChange={(e) =>
+                      setCustomAreas((prev) => ({
+                        ...prev,
+                        area2: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                )}
               </div>
             </div>
 
@@ -251,16 +267,23 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
               <h4 className="text-lg font-medium">
                 Required Documents (PDF only)
               </h4>
-              {fileMetadata.map(({ key, label, required }) => {
+              {phdSchemas.fileFieldNames.map((key) => {
+                const label = phdSchemas.fileFieldLabels[key];
+                const required = key !== "mastersReport";
                 const existingFileUrl = existingApplication?.files[key];
                 const newFile = files[key];
-
                 return (
                   <div key={key}>
                     <Label htmlFor={key}>
                       {label}
                       {required && " *"}
                     </Label>
+                    {key === "mastersReport" && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        (Required only if you have completed a master&apos;s
+                        degree)
+                      </span>
+                    )}
                     {newFile ? (
                       <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-gray-50 p-3">
                         <span className="text-sm text-gray-700">

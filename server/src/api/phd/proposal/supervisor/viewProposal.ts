@@ -4,9 +4,9 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-
+import { eq, and } from "drizzle-orm";
+import { phdProposals } from "@/config/db/schema/phd.ts";
 const router = express.Router();
-
 router.get(
     "/:id",
     checkAccess(),
@@ -15,42 +15,44 @@ router.get(
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
         const proposal = await db.query.phdProposals.findFirst({
-            where: (cols, { eq }) => eq(cols.id, proposalId),
+            where: and(
+                eq(phdProposals.id, proposalId),
+                eq(phdProposals.supervisorEmail, req.user!.email)
+            ),
             with: {
                 student: true,
-                coSupervisors: {
-                    with: {
-                        coSupervisor: {
-                            columns: {
-                                name: true,
-                                email: true,
-                            },
-                        },
-                    },
-                },
-                dacMembers: {
-                    with: {
-                        dacMember: {
-                            columns: {
-                                name: true,
-                                department: true,
-                                email: true,
-                            },
-                        },
-                    },
-                },
+                dacMembers: { with: { dacMember: true } },
+                dacReviews: { with: { dacMember: true } },
+                coSupervisors: { with: { coSupervisor: true } },
+                appendixFile: true,
+                summaryFile: true,
+                outlineFile: true,
+                placeOfResearchFile: true,
+                outsideCoSupervisorFormatFile: true,
+                outsideSupervisorBiodataFile: true,
+                proposalSemester: true,
             },
         });
         if (!proposal)
             throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
-        const { abstractFileId, proposalFileId, ...rest } = proposal;
-
-        res.status(200).json({
-            abstractFileUrl: environment.SERVER_URL + "/f/" + abstractFileId,
-            proposalFileUrl: environment.SERVER_URL + "/f/" + proposalFileId,
-            ...rest,
-        });
+        const response = {
+            ...proposal,
+            appendixFileUrl: `${environment.SERVER_URL}/f/${proposal.appendixFileId}`,
+            summaryFileUrl: `${environment.SERVER_URL}/f/${proposal.summaryFileId}`,
+            outlineFileUrl: `${environment.SERVER_URL}/f/${proposal.outlineFileId}`,
+            placeOfResearchFileUrl: proposal.placeOfResearchFileId
+                ? `${environment.SERVER_URL}/f/${proposal.placeOfResearchFileId}`
+                : null,
+            outsideCoSupervisorFormatFileUrl:
+                proposal.outsideCoSupervisorFormatFileId
+                    ? `${environment.SERVER_URL}/f/${proposal.outsideCoSupervisorFormatFileId}`
+                    : null,
+            outsideSupervisorBiodataFileUrl:
+                proposal.outsideSupervisorBiodataFileId
+                    ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
+                    : null,
+        };
+        res.status(200).json(response);
     })
 );
-
 export default router;
