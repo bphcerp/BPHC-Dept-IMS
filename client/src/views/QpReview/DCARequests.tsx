@@ -20,8 +20,10 @@ import { Pencil } from "lucide-react";
 import { AssignICDialog } from "@/components/qp_review/updateICDialog";
 import { AssignDCADialog } from "@/components/qp_review/assignDCADialog";
 import { SetDeadlineDialog } from "@/components/qp_review/setDeadline";
+import { CreateRequestDialog } from "@/components/qp_review/createRequestDialog";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
+
 
 interface QPDCAcon {
   reviewerEmail: string;
@@ -35,6 +37,15 @@ interface QPDCAcon {
   status: string;
 }
 
+interface CreateRequestData {
+  icEmail: string;
+  courseName: string;
+  courseCode: string;
+  requestType: ("Mid Sem" | "Comprehensive")[];
+  category: "HD" | "FD";
+}
+
+
 export const DCAConvenercourses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
@@ -45,14 +56,18 @@ export const DCAConvenercourses: React.FC = () => {
     []
   );
 
+
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
+  const [isCreateRequestDialogOpen, setIsCreateRequestDialogOpen] = useState(false);
   const [currentcourseId, setCurrentcourseId] = useState<string | null>(null);
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
 
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
 
   const updateICMutation = useMutation({
     mutationFn: async ({
@@ -85,6 +100,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+
   const updateReviewerMutation = useMutation({
     mutationFn: async ({
       id,
@@ -116,6 +132,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+
   const bulkUpdateReviewerMutation = useMutation({
     mutationFn: async ({
       ids,
@@ -135,6 +152,7 @@ export const DCAConvenercourses: React.FC = () => {
         })
       );
 
+
       return Promise.all(promises);
     },
     onSuccess: async () => {
@@ -150,6 +168,29 @@ export const DCAConvenercourses: React.FC = () => {
       toast.error("Failed to assign reviewer to some courses");
     },
   });
+
+  const createRequestMutation = useMutation({
+    mutationFn: async (data: CreateRequestData) => {
+      const response = await api.post<{ success: boolean }>("/qp/createRequest", {
+        icEmail: data.icEmail,
+        courseName: data.courseName,
+        courseCode: data.courseCode,
+        requestType: data.requestType,
+        category: data.category,
+      });
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Request created successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["*"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to create request");
+    },
+  });
+
 
   const {
     data: courses,
@@ -171,10 +212,13 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+
   useEffect(() => {
     if (!courses) return;
 
+
     localStorage.setItem("courses DCA CONVENOR", JSON.stringify(courses));
+
 
     let results = courses;
     if (searchQuery) {
@@ -198,8 +242,10 @@ export const DCAConvenercourses: React.FC = () => {
       return matchesCategory && matchesStatus;
     });
 
+
     setFilteredCourses(results);
   }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+
 
   const handlePencilClick = (courseId: string, isReviewer: boolean) => {
     setCurrentcourseId(courseId);
@@ -211,11 +257,13 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+
   const handleAssignIC = (email: string, sendEmail: boolean) => {
     if (!currentcourseId) {
       toast.error("No course selected");
       return;
     }
+
 
     updateICMutation.mutate({
       id: currentcourseId,
@@ -223,8 +271,10 @@ export const DCAConvenercourses: React.FC = () => {
       sendEmail,
     });
 
+
     setIsICDialogOpen(false);
   };
+
 
   const handleAssignReviewer = (email: string, sendEmail: boolean) => {
     if (isBulkAssign) {
@@ -232,6 +282,7 @@ export const DCAConvenercourses: React.FC = () => {
         toast.error("No courses selected");
         return;
       }
+
 
       bulkUpdateReviewerMutation.mutate({
         ids: selectedcourses,
@@ -244,6 +295,7 @@ export const DCAConvenercourses: React.FC = () => {
         return;
       }
 
+
       updateReviewerMutation.mutate({
         id: currentcourseId,
         reviewerEmail: email,
@@ -251,8 +303,14 @@ export const DCAConvenercourses: React.FC = () => {
       });
     }
 
+
     setIsReviewerDialogOpen(false);
   };
+
+  const handleCreateRequest = (data: CreateRequestData) => {
+    createRequestMutation.mutate(data);
+  };
+
 
   const handleSelectcourse = (courseId: string, isSelected: boolean) => {
     if (isSelected) {
@@ -261,6 +319,7 @@ export const DCAConvenercourses: React.FC = () => {
       setSelectedcourses((prev) => prev.filter((id) => id !== courseId));
     }
   };
+
 
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
@@ -271,19 +330,23 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+
   const handleBulkAssignReviewer = () => {
     if (selectedcourses.length === 0) {
       toast.error("No courses selected");
       return;
     }
 
+
     setIsBulkAssign(true);
     setIsReviewerDialogOpen(true);
   };
 
+
   const isAllSelected =
     filteredCourses.length > 0 &&
     selectedcourses.length === filteredCourses.length;
+
 
   if (isLoading) {
     return (
@@ -293,6 +356,7 @@ export const DCAConvenercourses: React.FC = () => {
     );
   }
 
+
   if (isError) {
     return (
       <div className="flex h-screen items-center justify-center text-red-500">
@@ -300,6 +364,7 @@ export const DCAConvenercourses: React.FC = () => {
       </div>
     );
   }
+
 
   return (
     <div className="w-full px-4">
@@ -311,6 +376,13 @@ export const DCAConvenercourses: React.FC = () => {
             </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
             <div className="mt-2 flex gap-2">
+              <Button
+                variant="default"
+                className="bg-primary text-white"
+                onClick={() => setIsCreateRequestDialogOpen(true)}
+              >
+                Create Request
+              </Button>
               <SetDeadlineDialog />
               <Link to="/course/summary">
                 <Button
@@ -344,7 +416,9 @@ export const DCAConvenercourses: React.FC = () => {
         </div>
       </div>
 
+
       <hr className="my-1 border-gray-300" />
+
 
       <div className="w-full overflow-x-auto bg-white shadow">
         <div className="inline-block min-w-full align-middle">
@@ -473,11 +547,13 @@ export const DCAConvenercourses: React.FC = () => {
         </div>
       </div>
 
+
       <AssignICDialog
         isOpen={isICDialogOpen}
         setIsOpen={setIsICDialogOpen}
         onAssign={handleAssignIC}
       />
+
 
       <AssignDCADialog
         isOpen={isReviewerDialogOpen}
@@ -486,8 +562,16 @@ export const DCAConvenercourses: React.FC = () => {
         isBulkAssign={isBulkAssign}
         selectedCount={selectedcourses.length}
       />
+
+      <CreateRequestDialog
+        isOpen={isCreateRequestDialogOpen}
+        setIsOpen={setIsCreateRequestDialogOpen}
+        onSubmit={handleCreateRequest}
+        isLoading={createRequestMutation.isPending}
+      />
     </div>
   );
 };
+
 
 export default DCAConvenercourses;

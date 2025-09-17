@@ -17,33 +17,49 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { qpSchemas } from "lib";
 
+export const requestTypes = ["Mid Sem", "Comprehensive", "Both"] as const;
+type RequestType = typeof requestTypes[number];
+
+type ServerRequestType = "Mid Sem" | "Comprehensive" | "Both";
+
 interface FacultyCourse {
   id: string;
   courseCode: string;
   courseName: string;
-  category: "FD" | "HD"; // New property
+  category: "FD" | "HD";
   reviewerName: string;
-  submittedOn: string;
+  submittedOn: string | null;
   status: qpSchemas.QpStatus;
+  requestType: ServerRequestType | RequestType;
 }
 
 export const FacultyHandouts: React.FC = () => {
   const [filteredCourses, setFilteredCourses] = useState<FacultyCourse[]>();
   const navigate = useNavigate();
+
   const {
     data: courses,
     isLoading,
     isError,
     refetch,
   } = useQuery<FacultyCourse[]>({
-    queryKey: ["*"],
+    queryKey: ["fic-submissions"],
     queryFn: async () => {
       try {
         const response = await api.get<{ data: FacultyCourse[] }>(
           "/qp/getAllFICSubmissions"
         );
-        if (response.data.data) setFilteredCourses(response.data.data);
-        return response.data.data;
+        const list = (response.data?.data ?? []).map((c) => ({
+          ...c,
+          requestType:
+            c.requestType === "Mid Sem" ||
+            c.requestType === "Comprehensive" ||
+            c.requestType === "Both"
+              ? (c.requestType as RequestType)
+              : "Comprehensive",
+        }));
+        if (list) setFilteredCourses(list);
+        return list;
       } catch (error) {
         toast.error("Failed to fetch handouts");
         throw error;
@@ -61,18 +77,23 @@ export const FacultyHandouts: React.FC = () => {
     null
   );
 
+  const [uploadContext, setUploadContext] = useState<
+    "mid" | "compre" | "both" | null
+  >(null);
+
   useMemo(() => {
     if (courses) {
       let results = courses;
+
       if (searchQuery) {
+        const q = searchQuery.toLowerCase();
         results = results.filter(
           (course) =>
-            course.courseName
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+            course.courseName.toLowerCase().includes(q) ||
+            course.courseCode.toLowerCase().includes(q)
         );
       }
+
       results = results.filter((course) => {
         const matchesCategory =
           activeCategoryFilters.length > 0
@@ -87,16 +108,21 @@ export const FacultyHandouts: React.FC = () => {
 
       setFilteredCourses(results);
     }
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]); [18]
 
-  const handleUploadClick = (handoutId: string) => {
+  const openUploadDialog = (
+    handoutId: string,
+    ctx: "mid" | "compre" | "both"
+  ) => {
     setSelectedHandoutId(handoutId);
+    setUploadContext(ctx);
     setIsUploadDialogOpen(true);
   };
 
   const handleUploadComplete = () => {
     setIsUploadDialogOpen(false);
     setSelectedHandoutId(null);
+    setUploadContext(null);
   };
 
   if (isLoading)
@@ -111,6 +137,7 @@ export const FacultyHandouts: React.FC = () => {
         Error fetching handouts
       </div>
     );
+
   return (
     <div className="w-full px-4">
       <div className="px-2 py-6">
@@ -141,62 +168,25 @@ export const FacultyHandouts: React.FC = () => {
           <Table className="min-w-full">
             <TableHeader className="bg-gray-100">
               <TableRow>
-                <TableHead className="px-4 py-2 text-left">
-                  Course Code
-                </TableHead>
-                <TableHead className="px-4 py-2 text-left">
-                  Course Name
-                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Course Code</TableHead>
+                <TableHead className="px-4 py-2 text-left">Course Name</TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
                 <TableHead className="px-4 py-2 text-left">Reviewer</TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
-                <TableHead className="px-4 py-2 text-left">
-                  Submitted On
-                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Request Type</TableHead>
+                <TableHead className="px-4 py-2 text-left">Submitted On</TableHead>
                 <TableHead className="px-4 py-2 text-left">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-300">
               {filteredCourses?.length ? (
-                filteredCourses.map((course) => (
-                  <TableRow
-                    key={course.id}
-                    className="odd:bg-white even:bg-gray-100"
-                  >
-                    <TableCell className="px-4 py-2">
-                      {course.courseCode}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.courseName}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.category}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.reviewerName || "Unassigned"}
-                    </TableCell>
-                    <TableCell className="px-4 py-2 uppercase">
-                      <span className={STATUS_COLORS[course.status]}>
-                        {course.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {!course.submittedOn ? (
-                        <span className="mx-3">NA</span>
-                      ) : (
-                        new Date(course.submittedOn).toLocaleDateString()
-                      )}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.status === "notsubmitted" ? (
-                        <Button
-                          variant="outline"
-                          className="hover:bg-primary hover:text-white"
-                          onClick={() => handleUploadClick(course.id)}
-                        >
-                          Upload
-                        </Button>
-                      ) : (
+                filteredCourses.map((course) => {
+                  const submitted = course.status !== "notsubmitted";
+                  const reqType = course.requestType as RequestType;
+
+                  const renderUploadActions = () => {
+                    if (submitted) {
+                      return (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
@@ -204,13 +194,71 @@ export const FacultyHandouts: React.FC = () => {
                         >
                           Details
                         </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                      );
+                    }
+
+                    if (reqType === "Mid Sem") {
+                      return (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => openUploadDialog(course.id, "mid")}
+                        >
+                          Upload Mid Sem
+                        </Button>
+                      );
+                    }
+                    if (reqType === "Comprehensive") {
+                      return (
+                        <Button
+                          variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => openUploadDialog(course.id, "compre")}
+                        >
+                          Upload Comprehensive
+                        </Button>
+                      );
+                    }
+                    // Both
+                    return (
+                      <Button
+                        variant="outline"
+                        className="hover:bg-primary hover:text-white"
+                        onClick={() => openUploadDialog(course.id, "both")}
+                      >
+                        Upload All (Mid + Compre)
+                      </Button>
+                    );
+                  };
+
+                  return (
+                    <TableRow key={course.id} className="odd:bg-white even:bg-gray-100">
+                      <TableCell className="px-4 py-2">{course.courseCode}</TableCell>
+                      <TableCell className="px-4 py-2">{course.courseName}</TableCell>
+                      <TableCell className="px-4 py-2">{course.category}</TableCell>
+                      <TableCell className="px-4 py-2">
+                        {course.reviewerName || "Unassigned"}
+                      </TableCell>
+                      <TableCell className="px-4 py-2 uppercase">
+                        <span className={STATUS_COLORS[course.status]}>
+                          {course.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="px-4 py-2">{reqType}</TableCell>
+                      <TableCell className="px-4 py-2">
+                        {!course.submittedOn ? (
+                          <span className="mx-3">NA</span>
+                        ) : (
+                          new Date(course.submittedOn).toLocaleDateString()
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-2">{renderUploadActions()}</TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-4 py-2 text-center">
+                  <TableCell colSpan={8} className="px-4 py-2 text-center">
                     No courses found
                   </TableCell>
                 </TableRow>
@@ -220,12 +268,12 @@ export const FacultyHandouts: React.FC = () => {
         </div>
       </div>
 
-      {/* Upload Dialog for new uploads */}
       <UploadDialogBox
         isOpen={isUploadDialogOpen}
         onClose={() => setIsUploadDialogOpen(false)}
         onUploadSuccess={handleUploadComplete}
         id={selectedHandoutId!}
+        mode={uploadContext ?? undefined}
         refetch={async () => {
           await refetch();
         }}

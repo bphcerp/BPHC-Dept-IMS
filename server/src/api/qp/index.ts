@@ -11,6 +11,7 @@ import getReviews from './getReviews.ts'
 import assignICRouter from './assignIc.ts'
 import updateIcRouter from './updateIc.ts'
 import updateFacultyRouter from './updateFaculty.ts'
+import createRequestRouter from "./createRequest.ts"
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use("/getFilesByRequestId/", getFilesByRequestIdRouter);
 router.use("/submitReview", submitReviewRouter);
 // router.use("/approveSubmission", approveSubmissionRouter);
 router.use("/assignFaculty", assignFacultyRouter);
+router.use("/createRequest" , createRequestRouter)
 router.use("/getAllFICSubmissions", getFicSubmissionsRouter);
 router.use("/editQpRequest/:id", editQpRequestRouter);
 router.use("/getAllDcaMemberRequests", getDcaMemberRequestsRouter);

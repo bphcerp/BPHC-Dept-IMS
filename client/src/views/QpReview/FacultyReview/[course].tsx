@@ -9,9 +9,9 @@ import api from "@/lib/axios-instance";
 import { useLocation } from "react-router-dom";
 
 const tabItems = [
-  { value: "midSem", label: "Mid Sem" },
+  { value: "midSemQp", label: "Mid Sem" },
   { value: "midSemSol", label: "Mid Sem Solutions" },
-  { value: "compre", label: "Compre" },
+  { value: "compreQp", label: "Compre" },
   { value: "compreSol", label: "Compre Solutions" },
 ];
 
@@ -29,10 +29,7 @@ export default function FacultyReview() {
         const response = await api.get(
           `/qp/getFilesByRequestID/${Number(requestId)}`
         );
-        const data = response.data.data;
-
-        setFiles(() => data);
-        console.log(files);
+        setFiles(response.data.data);
       } catch (error) {
         console.error("Error fetching files:", error);
       } finally {
@@ -40,12 +37,48 @@ export default function FacultyReview() {
       }
     }
 
-    fetchFiles();
-    console.log(files);
+    if (requestId) {
+      fetchFiles();
+    }
   }, [requestId]);
 
+  // Filter tabs to only show those with valid document URLs
+  const availableTabs = tabItems.filter(tab => files[tab.value]);
+
   if (loading) {
-    return <>Loading...</>;
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+
+  // If no documents are available, show message
+  if (availableTabs.length === 0) {
+    return (
+      <main className="w-full bg-background">
+        <div className="mx-4 mt-2">
+          <div className="overflow-hidden rounded-md border">
+            <div className="flex items-center justify-between border-b p-4">
+              <h1 className="text-2xl font-bold">Review Documents</h1>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowReviewModal(true)}
+              >
+                Review
+              </Button>
+            </div>
+            <div className="flex h-[75vh] items-center justify-center bg-gray-100">
+              <p className="text-gray-500">No documents available for review</p>
+            </div>
+          </div>
+        </div>
+        <EvaluationFormModal
+          open={showReviewModal}
+          onOpenChange={setShowReviewModal}
+          courseCode={undefined}
+          requestId={requestId}
+          email={email}
+        />
+      </main>
+    );
   }
 
   return (
@@ -64,10 +97,10 @@ export default function FacultyReview() {
           </div>
 
           <div>
-            <Tabs defaultValue={tabItems[0].value} className="w-full">
+            <Tabs defaultValue={availableTabs[0]?.value} className="w-full">
               <div className="border-b px-4">
                 <TabsList className="h-12 bg-transparent">
-                  {tabItems.map((tab) => (
+                  {availableTabs.map((tab) => (
                     <TabsTrigger
                       key={tab.value}
                       value={tab.value}
@@ -79,9 +112,9 @@ export default function FacultyReview() {
                 </TabsList>
               </div>
 
-              {tabItems.map((tab) => (
+              {availableTabs.map((tab) => (
                 <TabsContent key={tab.value} value={tab.value} className="m-0">
-                  <DocumentDownload documentUrl={files[tab.value]} />
+                  <DocumentPreview documentUrl={files[tab.value]} />
                 </TabsContent>
               ))}
             </Tabs>
@@ -100,7 +133,7 @@ export default function FacultyReview() {
   );
 }
 
-function DocumentDownload({ documentUrl }: { documentUrl: string | null }) {
+function DocumentPreview({ documentUrl }: { documentUrl: string | null }) {
   if (!documentUrl) {
     return (
       <div className="flex h-[75vh] items-center justify-center bg-gray-100">
@@ -110,13 +143,38 @@ function DocumentDownload({ documentUrl }: { documentUrl: string | null }) {
   }
 
   return (
-    <div className="relative flex h-[75vh] items-center justify-center bg-gray-100">
-      <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
-        <Button size="sm" className="absolute right-2 top-2 flex gap-2">
-          <Download className="h-5 w-5" />
-          Download PDF
-        </Button>
-      </a>
+    <div className="relative h-[75vh] bg-gray-100">
+      {/* Download Button - Top Right Corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
+          <Button size="sm" className="flex gap-2 shadow-lg">
+            <Download className="h-4 w-4" />
+            Download PDF
+          </Button>
+        </a>
+      </div>
+
+      {/* PDF Preview */}
+      <iframe
+        src={documentUrl}
+        className="w-full h-full border-0"
+        title="Document Preview"
+        loading="lazy"
+      >
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">
+              Your browser doesn't support PDF preview
+            </p>
+            <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
+              <Button className="flex gap-2">
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+            </a>
+          </div>
+        </div>
+      </iframe>
     </div>
   );
 }
