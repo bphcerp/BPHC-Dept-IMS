@@ -87,3 +87,7 @@ export const masterAllocationSchema = z.object({
     ic: z.string().email(),
     courseCode: z.string(),
 });
+
+export const courseCodeSchema = z.object({
+    code: z.string().nonempty(),
+});

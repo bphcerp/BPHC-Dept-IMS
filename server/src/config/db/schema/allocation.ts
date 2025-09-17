@@ -2,7 +2,6 @@ import {
     pgTable,
     integer,
     text,
-    boolean,
     timestamp,
     pgEnum,
     uuid,
@@ -11,15 +10,12 @@ import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 
 export const sectionTypeEnum = pgEnum("section_type_enum", [
-    "Lecture",
-    "Tutorial",
-    "Practical",
+    "LECTURE",
+    "TUTORIAL",
+    "PRACTICAL",
 ]);
 
-export const degreeTypeEnum = pgEnum("degree_type_enum", [
-    "FD",
-    "HD"
-]);
+export const degreeTypeEnum = pgEnum("degree_type_enum", ["FD", "HD"]);
 
 export const oddEven = pgEnum("odd_even_enum", ["odd", "even"]);
 export const courseTypeEnum = pgEnum("course_type_enum", ["CDC", "Elective"]);
@@ -103,9 +99,9 @@ export const course = pgTable("allocation_course", {
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),
     totalUnits: integer("total_units"),
-    
-    offeredAs: courseTypeEnum('offered_as').notNull(),
-    offeredTo: degreeTypeEnum('offered_to').notNull(),
+
+    offeredAs: courseTypeEnum("offered_as").notNull(),
+    offeredTo: degreeTypeEnum("offered_to").notNull(),
     offeredAlsoBy: text("offered_also_by").array(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
     allocationSchema,
     allocationSectionSchema,
+    courseCodeSchema,
     courseSchema,
     masterAllocationSchema,
     semesterSchema,
@@ -38,6 +39,8 @@ export type Semester = NewSemester & {
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;
 export type AllocationSection = z.infer<typeof allocationSectionSchema>;
+
+export type CourseCodeType = z.infer<typeof courseCodeSchema>;
 
 export type TTDCourse = {
     id: number;
