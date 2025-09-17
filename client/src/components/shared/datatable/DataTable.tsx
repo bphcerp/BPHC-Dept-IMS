@@ -56,7 +56,6 @@ import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
 
-
 const HEADER_COLOR = "#E8E8F0"
 const ROW_COLOR_ODD = "#F7F7FB"
 const ROW_COLOR_EVEN = "white"
@@ -294,11 +293,11 @@ export function DataTable<T>({
       setSearchParams(params);
     },
     onSortingChange: (updater) => {
-      console.log("test");
       let newSorting =
         typeof updater === "function"
           ? updater(table.getState().sorting)
           : updater;
+
       const params = new URLSearchParams(searchParams);
       if (newSorting.length > 0) {
         const s = newSorting[0];
@@ -486,13 +485,15 @@ export function DataTable<T>({
   };
 
   const resetFiltersAndSorting = () => {
-    // table.reset() doesn't work
-    table.resetColumnFilters();
-    table.resetColumnVisibility();
-    table.resetGlobalFilter();
-    table.resetRowSelection();
-    table.resetSorting();
-    table.resetRowSelection();
+    const params = new URLSearchParams(searchParams);
+    [...params.keys()]
+      .filter((k) => k.startsWith("filter_"))
+      .forEach((k) => params.delete(k));
+    params.delete("sort");
+    setSearchParams(params);
+
+    // Reset table state
+    table.reset()
   };
 
   const handleExport = (selected: boolean) => {
@@ -633,7 +634,8 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (checkbox for select all) */}
                 <TableHead
-                  className="sticky left-0 w-2 z-30 bg-gray-200"
+                  className="sticky left-0 w-2 z-3"
+                  style={{ backgroundColor: HEADER_COLOR }}
                 >
                   <Checkbox
                     checked={
@@ -689,7 +691,10 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (row checkbox) */}
                 <TableCell
-                  className={`sticky left-0 w-2 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}`}
+                  className="sticky left-0 z-10 w-2"
+                  style={{
+                    backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_EVEN,
+                  }}
                 >
                   <Checkbox
                     checked={row.getIsSelected()}
@@ -710,7 +715,10 @@ export function DataTable<T>({
                         ? "text-center"
                         : ""
                     }`}
-                    style={{ ...getCommonPinningStyles(cell.column), backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_ODD}}
+                    style={{
+                      ...getCommonPinningStyles(cell.column),
+                      backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_EVEN,
+                    }}
                     title={
                       cell.getValue() &&
                       (cell.getValue() as any).toString().length > 20
@@ -742,14 +750,17 @@ export function DataTable<T>({
             {/* Sum row (sticky first column) */}
             {columns.some((column) => column.meta?.calculateSum) && (
               <TableRow>
-                <TableCell
-                  className="sticky w-2 left-0 z-10 opacity-100 bg-white"
-                >
+                <TableCell className="sticky left-0 z-10 w-2 bg-white opacity-100">
                   {/* empty cell for checkbox column */}
                 </TableCell>
                 {table.getVisibleLeafColumns().map((column) => (
-                  <TableCell key={column.id} className="font-bold"
-                    style={{ ...getCommonPinningStyles(column), backgroundColor: ROW_COLOR_EVEN }}
+                  <TableCell
+                    key={column.id}
+                    className="font-bold"
+                    style={{
+                      ...getCommonPinningStyles(column),
+                      backgroundColor: ROW_COLOR_EVEN,
+                    }}
                   >
                     {column.columnDef.meta?.calculateSum?.(
                       table.getRowModel().rows.map((row) => row.original)
