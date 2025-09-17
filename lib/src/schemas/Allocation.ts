@@ -3,6 +3,7 @@ import { z } from "zod";
 export const sectionTypeEnum = z.enum(["Lecture", "Tutorial", "Practical"]);
 export const degreeTypeEnum = z.enum(["FD", "HD"]);
 export const oddEvenEnum = z.enum(["odd", "even"]);
+export const courseTypeEnum = z.enum(["CDC", "Elective"]);
 export const allocationStatusEnum = z.enum([
     "notStarted",
     "ongoing",
@@ -36,9 +37,10 @@ export const courseSchema = z.object({
     name: z.string(),
     lectureUnits: z.number().int().min(0),
     practicalUnits: z.number().int().min(0),
-    offeredTo: sectionTypeEnum,
+    offeredAs: courseTypeEnum,
+    offeredTo: degreeTypeEnum,
+    offeredAlsoBy: z.array(z.string()).optional(),
     totalUnits: z.number().int().min(1),
-    isCDC: z.boolean(),
     // createdAt: z.date().optional(),
     // updatedAt: z.date().optional()
 });

@@ -11,7 +11,7 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd";
-import CourseLoadPage from "@/views/Allocation/CourseLoadPage";
+import CoursesPage from "@/views/Allocation/CoursesPage";
 import FormTemplateList from "@/views/Allocation/FormTemplateList";
 import FormTemplateView from "@/views/Allocation/FormTemplateView";
 import { allPermissions, permissions } from "lib";
@@ -664,7 +664,7 @@ const Routing = () => {
             {checkAccessAnyOne([
               "allocation:courses:write",
               "allocation:write",
-            ]) && <Route path="courses" element={<CourseLoadPage />} />}
+            ]) && <Route path="courses" element={<CoursesPage />} />}
 
             {checkAccessAnyOne([
               "allocation:data:archive",

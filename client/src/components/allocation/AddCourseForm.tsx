@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { courseSchema } from "../../../../lib/src/schemas/Allocation";
@@ -41,11 +42,11 @@ const AddCourseForm = ({
   const form = useForm<NewCourse>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
-      isCDC: false,
+      offeredAs: "CDC",
     },
   });
 
-  const { mutate: addCourse, isLoading} = useMutation({
+  const { mutate: addCourse, isLoading } = useMutation({
     mutationFn: (newCourse: NewCourse) =>
       api.post("/allocation/course/create", newCourse),
     onSuccess: (data) => {
@@ -141,13 +142,15 @@ const AddCourseForm = ({
 
                 <FormField
                   control={form.control}
-                  name="isCDC"
+                  name="offeredAs"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
+                          checked={field.value === "CDC"}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked ? "CDC" : "Elective")
+                          }
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
@@ -167,7 +170,7 @@ const AddCourseForm = ({
                   name="lectureUnits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Lecture Sections </FormLabel>
+                      <FormLabel> Lecture Units </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -187,7 +190,7 @@ const AddCourseForm = ({
                   name="practicalUnits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Practical Sections </FormLabel>
+                      <FormLabel> Practical Units </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -197,6 +200,33 @@ const AddCourseForm = ({
                             field.onChange(+event.target.value)
                           }
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="offeredTo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Offered To</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="FD">FD</SelectItem>
+                            <SelectItem value="HD">HD</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -214,4 +244,3 @@ const AddCourseForm = ({
   );
 };
 export { AddCourseForm };
-

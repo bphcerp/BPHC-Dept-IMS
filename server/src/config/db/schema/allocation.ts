@@ -22,6 +22,7 @@ export const degreeTypeEnum = pgEnum("degree_type_enum", [
 ]);
 
 export const oddEven = pgEnum("odd_even_enum", ["odd", "even"]);
+export const courseTypeEnum = pgEnum("course_type_enum", ["CDC", "Elective"]);
 
 export const allocationStatus = pgEnum("allocation_status", [
     "notStarted",
@@ -102,9 +103,10 @@ export const course = pgTable("allocation_course", {
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),
     totalUnits: integer("total_units"),
-
-    isCDC: boolean("is_cdc").notNull(),
+    
+    offeredAs: courseTypeEnum('offered_as').notNull(),
     offeredTo: degreeTypeEnum('offered_to').notNull(),
+    offeredAlsoBy: text("offered_also_by").array(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

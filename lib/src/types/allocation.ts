@@ -38,3 +38,23 @@ export type Semester = NewSemester & {
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;
 export type AllocationSection = z.infer<typeof allocationSectionSchema>;
+
+export type TTDCourse = {
+    id: number;
+    courseCode: string;
+    deptCode: string;
+    name: string;
+    courseStrength: number;
+    totalUnits: number;
+    lectureUnits: number;
+    labUnits: number;
+    active: boolean;
+    offeredAs: string;
+    offeredBy: string[];
+    offeredTo: string;
+    offeredToYear: number;
+    offeredInSem: number;
+    sections: any[];
+    preferredRooms: any[];
+    textbooks: any[];
+};

@@ -120,7 +120,7 @@ export const FormTemplateFieldComponent = ({
                                     key={course.code}
                                     value={course.code}
                                   >
-                                    {course.name}
+                                    {course.code} {course.name}
                                   </SelectItem>
                                 ))}
                             </SelectContent>

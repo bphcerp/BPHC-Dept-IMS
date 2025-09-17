@@ -35,6 +35,7 @@ const serverSchema = z.object({
     SERP_API_KEY: z.string(),
     DEPARTMENT_NAME: z.string(),
     DEPARTMENT_EMAIL: z.string().email().optional(),
+    TTD_API_URL: z.string().url().min(1),
 });
 
 const parsed = serverSchema.parse(process.env);

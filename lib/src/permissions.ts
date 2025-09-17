@@ -114,6 +114,7 @@ export const allPermissions = {
   "allocation:courses:write": "Create or Modify a new course",
   "allocation:courses:bulk-add": "Create or Modify a new course",
   "allocation:courses:view": "View all existing courses",
+  "allocation:courses:sync": "Sync all courses of the department from TTD",
 
   "allocation:write": "Have read and write access to the allocation module",
   "allocation:view": "Have readonly access to the allocation module",
