@@ -2,10 +2,10 @@ import {
     pgTable,
     integer,
     text,
-    boolean,
     timestamp,
     pgEnum,
     uuid,
+    unique,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
@@ -137,4 +137,8 @@ export const semester = pgTable("allocation_semester", {
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+},
+    (table) => [
+        unique().on(table.year, table.oddEven)
+    ]
+);

@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
     allocationSchema,
     allocationSectionSchema,
+    allocationStatusEnum,
     courseSchema,
     masterAllocationSchema,
     semesterSchema,
@@ -26,7 +27,26 @@ export type Course = NewCourse & {
     updatedAt: Date;
 };
 
-export type NewSemester = z.infer<typeof semesterSchema>;
+export type SemesterAllocationStatusEnumType = z.infer<
+    typeof allocationStatusEnum
+>;
+export const semesterStatusMap: Record<
+    SemesterAllocationStatusEnumType,
+    string
+> = {
+    completed: "Completed",
+    notStarted: "Not Started",
+    ongoing: "Ongoing",
+    suspended: "Suspended",
+};
+
+export type NewSemester = Omit<
+    z.infer<typeof semesterSchema>,
+    "startDate" | "endDate"
+> & {
+    startDate: string;
+    endDate: string;
+};
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
     id: string;
@@ -57,4 +77,20 @@ export type TTDCourse = {
     sections: any[];
     preferredRooms: any[];
     textbooks: any[];
+};
+
+export type TTDDepartment = {
+    id: string;
+    name: string;
+    hodName: string;
+    hodPsrn: string;
+    dcaConvener: {
+        name: string;
+        psrn: string;
+    };
+    delegated: {
+        _id: string;
+        psrn: string;
+        name: string;
+    };
 };

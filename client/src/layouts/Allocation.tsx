@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { ClipboardCheckIcon, ClockArrowDownIcon, DatabaseIcon, FrameIcon, MessageSquareReplyIcon, SendIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
+import { BookIcon, ClipboardCheckIcon, ClockArrowDownIcon, DatabaseIcon, FrameIcon, MessageSquareReplyIcon, SendIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
@@ -27,7 +27,13 @@ const AllocationLayout = () => {
                 title: "Courses",
                 icon: <DatabaseIcon />,
                 url: "/allocation/courses",
-                requiredPermissions: ["allocation:courses:write"]
+                requiredPermissions: ["allocation:courses:read"]
+              },
+              {
+                title: "Semesters",
+                icon: <BookIcon />,
+                url: "/allocation/semesters",
+                requiredPermissions: ["allocation:semesters:read"]
               },
               {
                 title: "Archive",

@@ -102,6 +102,7 @@ import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 import FormList from "@/views/Allocation/FormList";
 import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
+import SemesterList from "@/views/Allocation/SemesterList";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -624,7 +625,6 @@ const Routing = () => {
             {checkAccess("allocation:write") && (
               <>
                 <Route path="ongoing" element={<AllocationOverview />} />
-                <Route path="ongoing/new" element={<RegisterNewSemester />} />
                 <Route path="responses" element={<div />} />
               </>
             )}
@@ -654,7 +654,7 @@ const Routing = () => {
                   path="forms/:id/responses"
                   element={<FormResponsesView />}
                 />
-                 <Route 
+                <Route
                   path="forms/:id/submit"
                   element={<FormResponse preview={false} />}
                 />
@@ -662,9 +662,19 @@ const Routing = () => {
             )}
 
             {checkAccessAnyOne([
-              "allocation:courses:write",
+              "allocation:courses:read",
               "allocation:write",
             ]) && <Route path="courses" element={<CoursesPage />} />}
+
+            {checkAccessAnyOne([
+              "allocation:semesters:read",
+              "allocation:write",
+            ]) && (
+              <>
+                <Route path="semesters/new" element={<RegisterNewSemester />} />
+                <Route path="semesters" element={<SemesterList />} />
+              </>
+            )}
 
             {checkAccessAnyOne([
               "allocation:data:archive",

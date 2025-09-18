@@ -341,6 +341,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
   "/allocation/coursePreferences/update": "allocation:preference:write",
 
   "/allocation/semester/create": "allocation:semester:write",
+  "/allocation/semester/get": "allocation:semester:read",
   "/allocation/semester/delete": "allocation:semester:write",
   "/allocation/semester/update": "allocation:semester:write",
 

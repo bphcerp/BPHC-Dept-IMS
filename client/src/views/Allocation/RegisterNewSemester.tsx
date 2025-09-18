@@ -1,72 +1,164 @@
-// TODO: use tanstack form, use zod for validation, and handle form submission with a proper API call
 // TODO: fetch HoD and Convener details from the server
 
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { NewSemester } from "../../../../lib/src/types/allocation";
+import { semesterSchema } from "../../../../lib/src/schemas/Allocation";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import api from "@/lib/axios-instance";
+import { AxiosError } from "axios";
 
-export const RegisterNewSemester = () => {
-    const [semester, setSemester] = useState(1);
-    const [academicYear, setAcademicYear] = useState("");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [hod, setHod] = useState("");
-    const [convener, setConvener] = useState("");
-    const [committee, setCommittee] = useState<string>("");
+const RegisterNewSemester = () => {
+  const form = useForm<NewSemester>({
+    resolver: zodResolver(semesterSchema),
+    defaultValues: {
+      oddEven: "odd",
+      allocationStatus: "notStarted",
+      year: new Date().getFullYear(),
+      noOfDisciplineCoursesPerInstructor: 3,
+      noOfElectivesPerInstructor: 3,
+      startDate: "",
+      endDate: "",
+    },
+  });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // TODO: handle form submission logic
-        alert("Semester registered! (stub)");
-    };
+  const { mutate: addSemester, isLoading } = useMutation({
+    mutationFn: (newCourse: NewSemester) =>
+      api.post("/allocation/semester/create", newCourse),
+    onSuccess: (response) => {
+      toast.success("Semester added successfully!");
+      form.reset();
+    },
+    onError: (error) => {
+      console.error("Error adding semester:", error);
+      toast.error(((error as AxiosError).response?.data as string) ?? "An error occurred while adding the semester.");
+    },
+  });
 
-    return (
-        <div className="registerNewSemesterContainer p-4 flex flex-col space-y-8">
-            <h1 className="text-3xl font-bold text-primary">Register New Semester</h1>
-            <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-                <h2 className="text-xl font-semibold mb-2 text-primary">Semester Details</h2>
-                <section className="semesterDetails grid grid-cols-3 gap-4">
-                    <div>
-                        <Label htmlFor="semester">Semester</Label>
-                        <Input id="semester" type="number" min={1} max={8} value={semester} onChange={e => setSemester(Number(e.target.value))} required />
-                    </div>
-                    <div>
-                        <Label htmlFor="academicYear">Academic Year</Label>
-                        <Input id="academicYear" type="text" placeholder="2025-2026" value={academicYear} onChange={e => setAcademicYear(e.target.value)} required />
-                    </div>
-                    <div>
-                        <Label htmlFor="startDate">Start Date</Label>
-                        <Input id="startDate" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
-                    </div>
-                    <div>
-                        <Label htmlFor="endDate">End Date</Label>
-                        <Input id="endDate" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required />
-                    </div>
-                    <div>
-                        <Label htmlFor="hod">
-                            HoD
-                            <span className="text-xs text-zinc-600">Auto filled</span>
-                        </Label>
-                        <Input readOnly id="hod" type="text" value={hod} onChange={e => setHod(e.target.value)} />
-                    </div>
-                    <div>
-                        <Label htmlFor="convener">DCA Convener ( Auto Filled )</Label>
-                        <Input readOnly id="convener" type="text" value={convener} onChange={e => setConvener(e.target.value)} />
-                    </div>
-                    <div>
-                        <Label htmlFor="committee">DCA Committee (comma separated)</Label>
-                        <Input id="committee" type="text" value={committee} onChange={e => setCommittee(e.target.value)} />
-                    </div>
-                </section>
-                <section className="coursesSection flex flex-col space-y-2">
-                    <h2 className="text-xl font-semibold text-primary">Courses</h2>
-                    <span>Will be loaded</span>
-                </section>               
-            </form>
-            <Button type="submit">Register Semester</Button>
-        </div>
-    );
+  const onSubmit = (values: NewSemester) => addSemester(values);
+
+  return (
+    <div className="registerNewSemesterContainer flex flex-col space-y-8 p-4">
+      <h1 className="text-3xl font-bold text-primary">Register New Semester</h1>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <h2 className="mb-2 text-xl font-semibold text-primary">
+            Semester Details
+          </h2>
+          <section className="semesterDetails grid grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Year</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="oddEven"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Semester Type</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="odd">Odd</SelectItem>
+                        <SelectItem value="even">Even</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="noOfDisciplineCoursesPerInstructor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Discipline Courses Per Instructor</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} value={Number(field.value)} onChange={(e) => field.onChange(Number(e.target.value))}/>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="noOfElectivesPerInstructor"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Electives Per Instructor</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} value={Number(field.value)}  onChange={(e) => field.onChange(Number(e.target.value))}/>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </section>
+          <h4 className="text-sm text-muted-foreground italic">* HoD and DCA Convener are automatically fetched from the TimeTable Division</h4>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating..." : "Register Semester"}
+          </Button>
+        </form>
+      </Form>
+    </div>
+  );
 };
 
 export default RegisterNewSemester;

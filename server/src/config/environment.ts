@@ -36,6 +36,7 @@ const serverSchema = z.object({
     DEPARTMENT_NAME: z.string(),
     DEPARTMENT_EMAIL: z.string().email().optional(),
     TTD_API_URL: z.string().url().min(1),
+    TTD_DEPARTMENT_NAME: z.string(),
 });
 
 const parsed = serverSchema.parse(process.env);
