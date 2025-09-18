@@ -50,7 +50,6 @@ export const allocationSection = pgTable("allocation_section", {
         .primaryKey()
         .$defaultFn(() => uuidv4()),
     number: integer("section_name").notNull(),
-    credits: integer("credits").notNull(),
     type: sectionTypeEnum("section_type").notNull(),
     masterId: uuid("master_id")
         .notNull()

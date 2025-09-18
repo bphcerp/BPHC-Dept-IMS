@@ -76,7 +76,6 @@ export const deleteSemesterSchema = z.object({
 export const allocationSectionSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
-    credits: z.number().int(),
     type: sectionTypeEnum,
     masterId: z.string().uuid(),
 });

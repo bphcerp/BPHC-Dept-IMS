@@ -1,5 +1,6 @@
 import AddSectionDialog from "@/components/allocation/AddSectionDialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -26,7 +27,9 @@ import { toast } from "sonner";
 const AllocateCourse = () => {
   const { id: code } = useParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [sections, setSections] = useState<object[]>([]);
+  const [sections, setSections] = useState<
+    { type: string; instructors: [string, string][] }[]
+  >([]);
   const [lecturePrefs, setLecturePrefs] = useState<PreferredFaculty[]>([]);
   const [tutorialPrefs, setTutorialPrefs] = useState<PreferredFaculty[]>([]);
   const [practicalPrefs, setPracticalPrefs] = useState<PreferredFaculty[]>([]);
@@ -113,7 +116,7 @@ const AllocateCourse = () => {
         <div>
           <span className="font-semibold">Course Code:</span> {courseData?.code}
         </div>
-        <div className="rouded-xl bordered-black flex space-x-4 rounded-xl border-2 border-black px-4 py-2">
+        <div className="rouded-xl bordered-black flex space-x-4 rounded-xl border px-4 py-2">
           <div> L - {courseData?.lectureUnits}</div>
           <div> P - {courseData?.practicalUnits}</div>
           <div>
@@ -166,12 +169,37 @@ const AllocateCourse = () => {
               </FormItem>
             )}
           />
+          <div className="mt-2 flex flex-col gap-2">
+            {sections.map((el, i) => {
+              return (
+                <Card key={i} className="pt-4">
+                  <CardContent className="flex flex-col gap-2">
+                    <CardTitle>{el.type}</CardTitle>
+                    <div className="flex gap-2">
+                      <div className="text-md font-medium uppercase">
+                        Instructors :{" "}
+                      </div>
+                      {el.instructors.map((instructor, ind) => (
+                        <>
+                          {ind == 0 ? "" : " ,"}
+                          <div key={ind} className="text-base">
+                            {instructor[1]}
+                          </div>
+                        </>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
           <Button className="mx-auto mt-4" onClick={handleAddClick}>
             {" "}
             Add Section
           </Button>
         </form>
       </Form>
+
       <AddSectionDialog
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}

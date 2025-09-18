@@ -39,11 +39,10 @@ router.post(
                 })
                 .returning();
 
-            for (const { credits, type, number, instructors } of sections) {
+            for (const { type, number, instructors } of sections) {
                 const section = await tx
                     .insert(allocationSection)
                     .values({
-                        credits,
                         type,
                         number,
                         masterId: master[0].id,

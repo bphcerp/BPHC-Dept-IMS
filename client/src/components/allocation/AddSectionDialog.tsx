@@ -16,7 +16,9 @@ import { Checkbox } from "../ui/checkbox";
 
 interface AddSectionDialogProps {
   isDialogOpen: boolean;
-  setSections: React.Dispatch<React.SetStateAction<object[]>>;
+  setSections: React.Dispatch<
+    React.SetStateAction<{ type: string; instructors: [string, string][] }[]>
+  >;
   setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   lecturePrefs: PreferredFaculty[];
   tutorialPrefs: PreferredFaculty[];
@@ -32,7 +34,7 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   practicalPrefs,
 }) => {
   const [type, setType] = useState<string>("LECTURE");
-  const [instructors, setInstructors] = useState<string[]>([]);
+  const [instructors, setInstructors] = useState<[string, string][]>([]);
   const [currentPrefs, setCurrentPrefs] = useState<PreferredFaculty[]>([]);
   const prevType = useRef(type);
   useEffect(() => {
@@ -48,10 +50,15 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
       prevType.current = type;
     }
   }, [type, lecturePrefs, tutorialPrefs, practicalPrefs]);
-  const handleCheck = (email: string) => {
-    setInstructors((el) =>
-      el.includes(email) ? el.filter((v) => v !== email) : [...el, email]
-    );
+  console.log(currentPrefs);
+  const handleCheck = (email: string, name: string) => {
+    setInstructors((prev) => {
+      const exists = prev.some(([e]) => e === email);
+      if (exists) {
+        return prev.filter(([e]) => e !== email);
+      }
+      return [...prev, [email, name]];
+    });
   };
   const handleSubmit = () => {
     setSections((el) => [...el, { type, instructors: instructors }]);
@@ -96,8 +103,15 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
                   className="flex cursor-pointer items-center space-x-2 p-1"
                 >
                   <Checkbox
-                    checked={instructors.includes(pref.submittedBy.email)}
-                    onCheckedChange={() => handleCheck(pref.submittedBy.email)}
+                    checked={instructors.some(
+                      ([e]) => e === pref.submittedBy.email
+                    )}
+                    onCheckedChange={() =>
+                      handleCheck(
+                        pref.submittedBy.email,
+                        pref.submittedBy.name || ""
+                      )
+                    }
                   />
                   <span>{pref.submittedBy.name}</span>
                 </div>
