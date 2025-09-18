@@ -26,7 +26,7 @@ import { toast } from "sonner";
 const AllocateCourse = () => {
   const { id: code } = useParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState<object[]>([]);
   const [lecturePrefs, setLecturePrefs] = useState<PreferredFaculty[]>([]);
   const [tutorialPrefs, setTutorialPrefs] = useState<PreferredFaculty[]>([]);
   const [practicalPrefs, setPracticalPrefs] = useState<PreferredFaculty[]>([]);
@@ -174,8 +174,8 @@ const AllocateCourse = () => {
       </Form>
       <AddSectionDialog
         isDialogOpen={isDialogOpen}
-        sections={sections}
-        courseCode={code}
+        setIsDialogOpen={setIsDialogOpen}
+        setSections={setSections}
         lecturePrefs={lecturePrefs}
         tutorialPrefs={tutorialPrefs}
         practicalPrefs={practicalPrefs}
