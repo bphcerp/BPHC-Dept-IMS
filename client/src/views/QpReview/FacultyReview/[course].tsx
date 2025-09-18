@@ -21,7 +21,7 @@ export default function FacultyReview() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
   const requestId = location.state?.requestId;
-  const email = "harishdixit@university.com";
+  const email = "f20240500@hyderabad.bits-pilani.ac.in";
 
   useEffect(() => {
     async function fetchFiles() {

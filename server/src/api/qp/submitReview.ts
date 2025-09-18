@@ -36,18 +36,24 @@ router.post("/", async (req, res) => {
 
         if (request.reviewerEmail === email) {
             updateFields.review1 = review;
-        }else {
+        } else {
             return res.status(403).json({
                 success: false,
                 message: "Unauthorized to submit review",
             });
         }
 
-        // Mark as reviewed if both reviews are complete
-        if (
-            (updateFields.review1 ?? request.review) 
-        ) {
+        // Mark as reviewed if review1 is filled OR an old review exists
+        if ((updateFields.review1 ?? request.review)) {
             updateFields.reviewed = "reviewed";
+        }
+
+        // ✅ Prevent empty update that causes SQL syntax error
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No valid fields to update",
+            });
         }
 
         const updateResult = await db

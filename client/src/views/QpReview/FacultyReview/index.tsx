@@ -59,7 +59,7 @@ export const DCAMemberHandouts: React.FC = () => {
   );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<DCAQpReview[]>();
-  const slugify = (courseCode:string)=>{ encodeURIComponent(
+  const slugify = (courseCode:string)=>{  return encodeURIComponent(
     courseCode.toLowerCase().replace(/\s+/g, "-")
   )};
 
@@ -189,7 +189,7 @@ export const DCAMemberHandouts: React.FC = () => {
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                           onClick={() =>
-                            navigate(`/qp/FacultyReview/${slugify(course.courseCode)}`,{
+                            navigate(`/qpReview/FacultyReview/${slugify(course.courseCode)}`,{
                               state: { courseCode: course.courseCode, requestId: course.id },
                             })
                           }

@@ -16,8 +16,7 @@ const createRequestSchema = z.object({
 });
 
 router.post(
-    "/createRequest",
-    checkAccess(),
+    "/",
     asyncHandler(async (req, res, next) => {
         const result = createRequestSchema.safeParse(req.body);
         if (!result.success) {
