@@ -25,6 +25,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
 import { AxiosError } from "axios";
+import { useNavigate } from "react-router-dom";
 
 const RegisterNewSemester = () => {
   const form = useForm<NewSemester>({
@@ -40,12 +41,15 @@ const RegisterNewSemester = () => {
     },
   });
 
+  const navigate = useNavigate()
+
   const { mutate: addSemester, isLoading } = useMutation({
-    mutationFn: (newCourse: NewSemester) =>
-      api.post("/allocation/semester/create", newCourse),
-    onSuccess: (response) => {
+    mutationFn: (newSemester: NewSemester) =>
+      api.post("/allocation/semester/create", newSemester),
+    onSuccess: () => {
       toast.success("Semester added successfully!");
       form.reset();
+      navigate(-1)
     },
     onError: (error) => {
       console.error("Error adding semester:", error);

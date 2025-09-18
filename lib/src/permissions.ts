@@ -125,7 +125,6 @@ export const allPermissions = {
   "allocation:form:view": "View allocation data retrieval form",
 
   "allocation:data:export": "Export allocation data",
-  "allocation:data:archive": "View data of all semesters upto date",
 
   "allocation:semester:read": "View the semester details",
   "allocation:semester:write": "Create or Modify a semester",
@@ -342,6 +341,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
   "/allocation/semester/create": "allocation:semester:write",
   "/allocation/semester/get": "allocation:semester:read",
+  "/allocation/semester/getLatest": "allocation:semester:read",
   "/allocation/semester/delete": "allocation:semester:write",
   "/allocation/semester/update": "allocation:semester:write",
 

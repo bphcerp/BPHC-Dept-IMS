@@ -61,6 +61,8 @@ export type AllocationFormTemplateList = Omit<NewAllocationFormTemplate, 'fields
 export type AllocationForm = NewAllocationForm & {
 	id: string;
 	template: AllocationFormTemplate;
+	publishedDate: Date | null
+	allocationDeadline: Date | null
 	createdAt: Date;
 	updatedAt: Date;
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>

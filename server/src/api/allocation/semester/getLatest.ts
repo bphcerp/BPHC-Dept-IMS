@@ -7,18 +7,21 @@ import express from "express";
 const router = express.Router();
 
 router.get(
-  "/:id",
-  checkAccess('allocation:semester:read'),
-  asyncHandler(async (req, res, next) => {
-    const { id } = req.params;
-
+  "/",
+  checkAccess(),
+  asyncHandler(async (_req, res, next) => {
     const semesterData = await db.query.semester.findFirst({
-      where: (c, { eq }) => eq(c.id, id),
+      orderBy: (semester, { desc, asc }) => [desc(semester.year), asc(semester.oddEven)],
+      with:{
+        dcaConvenerAtStartOfSem: true,
+        hodAtStartOfSem: true,
+        form: true
+      }
     });
 
     if (!semesterData) {
       return next(
-        new HttpError(HttpCode.NOT_FOUND, "Semester not found for given ID")
+        new HttpError(HttpCode.NOT_FOUND, "No semesters found in the database")
       );
     }
 

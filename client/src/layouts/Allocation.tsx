@@ -18,12 +18,6 @@ const AllocationLayout = () => {
                 requiredPermissions: ["allocation:write"]
               },
               {
-                title: "Responses",
-                icon: <MessageSquareReplyIcon />,
-                url: "/allocation/responses",
-                requiredPermissions: ["allocation:write"]
-              },
-              {
                 title: "Courses",
                 icon: <DatabaseIcon />,
                 url: "/allocation/courses",
@@ -35,12 +29,6 @@ const AllocationLayout = () => {
                 url: "/allocation/semesters",
                 requiredPermissions: ["allocation:semesters:read"]
               },
-              {
-                title: "Archive",
-                icon: <SquareStackIcon />,
-                url: "/allocation/archive",
-                requiredPermissions: ["allocation:data:history"],
-              }
             ]
           },
           {

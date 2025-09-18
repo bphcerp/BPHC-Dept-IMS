@@ -8,6 +8,7 @@ import {
     semesterSchema,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
+import { AllocationForm } from "./allocationFormBuilder.ts";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -50,6 +51,7 @@ export type NewSemester = Omit<
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
     id: string;
+    form: AllocationForm
     createdAt: Date;
     updatedAt: Date;
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;

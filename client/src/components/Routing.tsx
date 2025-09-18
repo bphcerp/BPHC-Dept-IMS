@@ -675,18 +675,6 @@ const Routing = () => {
                 <Route path="semesters" element={<SemesterList />} />
               </>
             )}
-
-            {checkAccessAnyOne([
-              "allocation:data:archive",
-              "allocation:write",
-            ]) && <Route path="archive" element={<div />} />}
-
-            {checkAccessAnyOne([
-              "allocation:form:view",
-              "allocation:write",
-            ]) && <Route path="submit" element={<div />} />}
-
-            <Route path="personal" element={<div />} />
           </Route>
         )}
 

@@ -49,13 +49,16 @@ export const deleteCourseSchema = z.object({
     code: z.string(),
 });
 
+export const semesterFormLinkSchema = z.object({
+    formId: z.string().uuid(),
+})
+
 export const semesterSchema = z.object({
     id: z.string().uuid().optional(),
     year: z.number().int(),
     oddEven: oddEvenEnum,
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
-    allocationDeadline: z.date().optional(),
     noOfElectivesPerInstructor: z.number().int().min(0),
     noOfDisciplineCoursesPerInstructor: z.number().int().min(0),
     // hodAtStartOfSemEmail: z.string().email().optional(),
