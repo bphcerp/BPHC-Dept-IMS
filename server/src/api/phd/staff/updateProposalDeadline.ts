@@ -8,7 +8,7 @@ import { phdSchemas, modules } from "lib";
 import { eq } from "drizzle-orm";
 import z from "zod";
 import { createNotifications } from "@/lib/todos/index.ts";
-import { sendBulkEmails } from "@/lib/common/email.ts";
+// import { sendBulkEmails } from "@/lib/common/email.ts";
 
 const router = express.Router();
 
@@ -63,9 +63,9 @@ export default router.post(
                 content: body,
             }))
         );
-        await sendBulkEmails(
-            allUsers.map((user) => ({ to: user.email, subject, text: body }))
-        );
+        // await sendBulkEmails(
+        //     allUsers.map((user) => ({ to: user.email, subject, text: body }))
+        // );
         res.status(200).json({
             message: `Proposal deadlines ${id ? "updated" : "created"} successfully`,
         });
