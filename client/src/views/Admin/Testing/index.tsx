@@ -1,4 +1,9 @@
 import { AssignRoleComboBox } from "@/components/admin/AssignRoleDialog";
+import {
+  handleEdit,
+  handleStart,
+  handleEnd,
+} from "@/components/admin/TestingPopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,14 +11,6 @@ import api from "@/lib/axios-instance";
 import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-interface ApiError {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-}
 
 const TestingView = () => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -33,89 +30,6 @@ const TestingView = () => {
       .catch(() => {
         toast.error("Failed to load testing status");
       });
-  }
-
-  async function handleStart() {
-    if (!roles.length) {
-      toast.error("Please select atleast 1 role");
-      return;
-    }
-
-    try {
-      await api.post("/admin/testing/start", {
-        testerRoles: roles,
-      });
-      toast.success(`Testing mode started with roles: ${roles.join(", ")}`);
-      updateStatus();
-    } catch (err) {
-      console.error("Start testing error: ", err);
-      let errorMessage = "Failed to start testing mode";
-      if (err && typeof err === "object") {
-        const apiErr = err as ApiError & { message?: string; status?: number };
-        console.log("API Error: ", apiErr);
-        if (apiErr.response?.data?.message) {
-          errorMessage = apiErr.response.data.message;
-        } else if (apiErr.message) {
-          errorMessage = apiErr.message;
-        } else if (apiErr.status) {
-          errorMessage += ` (Status: ${apiErr.status})`;
-        }
-      }
-      toast.error(errorMessage);
-    }
-  }
-
-  async function handleEdit() {
-    if (!roles.length) {
-      toast.error("Please select atleast 1 role");
-      return;
-    }
-
-    try {
-      await api.post("/admin/testing/edit", {
-        testerRoles: roles,
-      });
-      toast.success(`Roles updated: ${roles.join(", ")}`);
-      updateStatus();
-    } catch (err) {
-      console.error("Edit roles error: ", err);
-      let errorMessage = "Failed to edit testing roles";
-      if (err && typeof err === "object") {
-        const apiErr = err as ApiError & { message?: string; status?: number };
-        console.log("API Error: ", apiErr);
-        if (apiErr.response?.data?.message) {
-          errorMessage = apiErr.response.data.message;
-        } else if (apiErr.message) {
-          errorMessage = apiErr.message;
-        } else if (apiErr.status) {
-          errorMessage += ` (Status: ${apiErr.status})`;
-        }
-      }
-      toast.error(errorMessage);
-    }
-  }
-
-  async function handleEnd() {
-    try {
-      await api.post("/admin/testing/end");
-      toast.success(`Testing mode ended successfully`);
-      updateStatus();
-    } catch (err) {
-      console.error("End testing error: ", err);
-      let errorMessage = "Failed to end testing mode";
-      if (err && typeof err === "object") {
-        const apiErr = err as ApiError & { message?: string; status?: number };
-        console.log("API Error: ", apiErr);
-        if (apiErr.response?.data?.message) {
-          errorMessage = apiErr.response.data.message;
-        } else if (apiErr.message) {
-          errorMessage = apiErr.message;
-        } else if (apiErr.status) {
-          errorMessage += ` (Status: ${apiErr.status})`;
-        }
-      }
-      toast.error(errorMessage);
-    }
   }
 
   return (
@@ -171,7 +85,11 @@ const TestingView = () => {
               <Button
                 type="submit"
                 className="w-max"
-                onClick={inTestingMode ? handleEdit : handleStart}
+                onClick={
+                  inTestingMode
+                    ? () => handleEdit(roles, updateStatus)
+                    : () => handleStart(roles, updateStatus)
+                }
               >
                 {inTestingMode ? "Update Roles" : "Start Testing Mode"}
               </Button>
@@ -180,7 +98,7 @@ const TestingView = () => {
                   type="submit"
                   variant={"outline"}
                   className="w-max"
-                  onClick={handleEnd}
+                  onClick={() => handleEnd(updateStatus)}
                 >
                   End Testing
                 </Button>
