@@ -11,10 +11,12 @@ import api from "@/lib/axios-instance";
 import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const TestingView = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     updateStatus();
@@ -30,6 +32,13 @@ const TestingView = () => {
       .catch(() => {
         toast.error("Failed to load testing status");
       });
+  }
+
+  async function updateCallback() {
+    // updateStatus();
+    // todo: update the jwts for new permissions
+    navigate("/");
+    window.location.reload();
   }
 
   return (
@@ -87,8 +96,8 @@ const TestingView = () => {
                 className="w-max"
                 onClick={
                   inTestingMode
-                    ? () => handleEdit(roles, updateStatus)
-                    : () => handleStart(roles, updateStatus)
+                    ? () => handleEdit(roles, updateCallback)
+                    : () => handleStart(roles, updateCallback)
                 }
               >
                 {inTestingMode ? "Update Roles" : "Start Testing Mode"}
