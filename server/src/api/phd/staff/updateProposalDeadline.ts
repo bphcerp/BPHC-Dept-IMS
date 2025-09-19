@@ -63,9 +63,9 @@ export default router.post(
                 content: body,
             }))
         );
-        await sendBulkEmails(
-            allUsers.map((user) => ({ to: user.email, subject, text: body }))
-        );
+        // await sendBulkEmails(
+        //     allUsers.map((user) => ({ to: user.email, subject, text: body }))
+        // );
         res.status(200).json({
             message: `Proposal deadlines ${id ? "updated" : "created"} successfully`,
         });
