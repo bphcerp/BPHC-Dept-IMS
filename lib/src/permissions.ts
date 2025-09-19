@@ -138,6 +138,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/admin/permission/all": "admin:role:read",
 
+    "/admin/testing": "admin:tester",
+
     // Conference
 
     "/conference/createApplication": "conference:application:create",

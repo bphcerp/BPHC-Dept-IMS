@@ -100,6 +100,7 @@ import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
+import TestingView from "@/views/Admin/Testing";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -258,6 +259,9 @@ const Routing = () => {
                 <Route path="roles" element={<RolesView />} />
                 <Route path="roles/:role" element={<RoleDetailsView />} />
               </>
+            )}
+            {checkAccess(permissions["/admin/testing"]) && (
+              <Route path="testing" element={<TestingView />} />
             )}
           </Route>
         )}
