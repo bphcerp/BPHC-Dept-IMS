@@ -1,13 +1,7 @@
 import AddSectionDialog from "@/components/allocation/AddSectionDialog";
+import AddSectionCard from "@/components/allocation/AllocationSectionCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,23 +10,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/axios-instance";
-import { useQuery } from "@tanstack/react-query";
-import { Course } from "node_modules/lib/src/types/allocation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Course,
+  CourseAllocateType,
+  SectionClient,
+} from "node_modules/lib/src/types/allocation";
 import { PreferredFaculty } from "node_modules/lib/src/types/allocationFormBuilder";
 import { useEffect, useMemo, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const AllocateCourse = () => {
   const { id: code } = useParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [sections, setSections] = useState<
-    { type: string; instructors: [string, string][] }[]
-  >([]);
+  const [sections, setSections] = useState<SectionClient[]>([]);
   const [lecturePrefs, setLecturePrefs] = useState<PreferredFaculty[]>([]);
   const [tutorialPrefs, setTutorialPrefs] = useState<PreferredFaculty[]>([]);
   const [practicalPrefs, setPracticalPrefs] = useState<PreferredFaculty[]>([]);
+  const [IC, setIC] = useState<string>("");
+  const [lecturesSections, setLectureSections] = useState<SectionClient[]>([]);
+  const [tutorialSections, setTutorialSections] = useState<SectionClient[]>([]);
+  const [practicalSections, setPracticalSections] = useState<SectionClient[]>(
+    []
+  );
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: [`course code ${code}`],
     queryFn: async () => {
@@ -61,13 +62,46 @@ const AllocateCourse = () => {
       }
     },
   });
-  const form = useForm({
-    defaultValues: {
-      ic: "",
+  const allocationMutation = useMutation({
+    mutationFn: async (data: CourseAllocateType) => {
+      await api.post("/allocation/allocation/create", data);
+    },
+    onSuccess: () => {
+      toast.success("Course allocated Successfully");
+    },
+    onError: () => {
+      toast.error("An error occurred");
     },
   });
-  const onSubmit: SubmitHandler<any> = (data) => {
-    console.log(data);
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const lectures = lecturesSections.map((el, i) => {
+      return {
+        type: el.type,
+        number: i + 1,
+        instructors: el.instructors.map((ins) => ins[0]),
+      };
+    });
+    const practicals = practicalSections.map((el, i) => {
+      return {
+        type: el.type,
+        number: i + 1,
+        instructors: el.instructors.map((ins) => ins[0]),
+      };
+    });
+    const tutorials = tutorialSections.map((el, i) => {
+      return {
+        type: el.type,
+        number: i + 1,
+        instructors: el.instructors.map((ins) => ins[0]),
+      };
+    });
+    const data = {
+      courseCode: code ?? "",
+      ic: IC,
+      sections: [...lectures, ...practicals, ...tutorials],
+    };
+    allocationMutation.mutate(data);
   };
   const mp = useMemo(() => {
     const map = new Map<string, string>();
@@ -98,6 +132,11 @@ const AllocateCourse = () => {
       )
     );
   }, [preferredFaculties]);
+  useEffect(() => {
+    setLectureSections(sections.filter((el) => el.type == "LECTURE"));
+    setPracticalSections(sections.filter((el) => el.type == "PRACTICAL"));
+    setTutorialSections(sections.filter((el) => el.type == "TUTORIAL"));
+  }, [sections]);
 
   const handleAddClick = () => {
     setIsDialogOpen(true);
@@ -132,73 +171,44 @@ const AllocateCourse = () => {
           {courseData?.offeredAs}
         </div>
       </div>
-      <Form {...form}>
-        <form
-          onSubmit={(e) => {
-            void form.handleSubmit(onSubmit)(e);
-          }}
-          className="flex flex-col gap-2 pt-4"
-        >
-          <FormField
-            control={form.control}
-            name="ic"
-            render={({ field }) => (
-              <FormItem className="mx-auto flex items-center gap-4">
-                <FormLabel className="text-md pt-2 font-semibold">
-                  Instructor Incharge
-                </FormLabel>
-                <div className="flex gap-2">
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value ?? ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select IC..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Array.from(mp.entries()).map(([email, name], i) => (
-                        <SelectItem key={i} value={email}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </FormItem>
-            )}
-          />
-          <div className="mt-2 flex flex-col gap-2">
-            {sections.map((el, i) => {
-              return (
-                <Card key={i} className="pt-4">
-                  <CardContent className="flex flex-col gap-2">
-                    <CardTitle>{el.type}</CardTitle>
-                    <div className="flex gap-2">
-                      <div className="text-md font-medium uppercase">
-                        Instructors :{" "}
-                      </div>
-                      {el.instructors.map((instructor, ind) => (
-                        <>
-                          {ind == 0 ? "" : " ,"}
-                          <div key={ind} className="text-base">
-                            {instructor[1]}
-                          </div>
-                        </>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+      <form onSubmit={(e) => onSubmit(e)} className="flex flex-col gap-2 pt-4">
+        <div className="mx-auto flex items-center gap-4">
+          <Label className="text-md pt-2 font-semibold">
+            Instructor Incharge
+          </Label>
+          <div className="flex gap-2">
+            <Select onValueChange={setIC} value={IC}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select IC..." />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from(mp.entries()).map(([email, name], i) => (
+                  <SelectItem key={i} value={email}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Button className="mx-auto mt-4" onClick={handleAddClick}>
-            {" "}
+        </div>
+        <div className="mt-2 flex flex-col gap-2">
+          {lecturesSections.map((el, i) => {
+            return <AddSectionCard section={el} number={i + 1} key={i} />;
+          })}
+          {tutorialSections.map((el, i) => {
+            return <AddSectionCard section={el} number={i + 1} key={i} />;
+          })}
+          {practicalSections.map((el, i) => {
+            return <AddSectionCard section={el} number={i + 1} key={i} />;
+          })}
+        </div>
+        <div className="mx-auto mt-2 flex gap-2">
+          <Button type="button" onClick={handleAddClick}>
             Add Section
           </Button>
-        </form>
-      </Form>
+          <Button type="submit">Finish Allocation</Button>
+        </div>
+      </form>
 
       <AddSectionDialog
         isDialogOpen={isDialogOpen}

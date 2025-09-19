@@ -90,3 +90,15 @@ export const masterAllocationSchema = z.object({
 export const courseCodeSchema = z.object({
     code: z.string().nonempty(),
 });
+
+export const courseAllocateSchema = z.object({
+    courseCode: z.string().nonempty(),
+    ic: z.string().email().nonempty(),
+    sections: z.array(
+        z.object({
+            number: z.coerce.number(),
+            type: z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]),
+            instructors: z.array(z.string().email().nonempty()),
+        })
+    ),
+});

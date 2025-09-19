@@ -13,12 +13,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { ChevronDown } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
+import { SectionClient } from "node_modules/lib/src/types/allocation";
 
 interface AddSectionDialogProps {
   isDialogOpen: boolean;
-  setSections: React.Dispatch<
-    React.SetStateAction<{ type: string; instructors: [string, string][] }[]>
-  >;
+  setSections: React.Dispatch<React.SetStateAction<SectionClient[]>>;
   setIsDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   lecturePrefs: PreferredFaculty[];
   tutorialPrefs: PreferredFaculty[];
@@ -33,7 +32,9 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   tutorialPrefs,
   practicalPrefs,
 }) => {
-  const [type, setType] = useState<string>("LECTURE");
+  const [type, setType] = useState<"LECTURE" | "TUTORIAL" | "PRACTICAL">(
+    "LECTURE"
+  );
   const [instructors, setInstructors] = useState<[string, string][]>([]);
   const [currentPrefs, setCurrentPrefs] = useState<PreferredFaculty[]>([]);
   const prevType = useRef(type);
@@ -50,7 +51,7 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
       prevType.current = type;
     }
   }, [type, lecturePrefs, tutorialPrefs, practicalPrefs]);
-  console.log(currentPrefs);
+
   const handleCheck = (email: string, name: string) => {
     setInstructors((prev) => {
       const exists = prev.some(([e]) => e === email);
@@ -62,7 +63,7 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   };
   const handleSubmit = () => {
     setSections((el) => [...el, { type, instructors: instructors }]);
-    setType("LECTURES");
+    setType("LECTURE");
     setInstructors([]);
     setIsDialogOpen(false);
   };
@@ -76,7 +77,12 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
         </DialogHeader>
         <div className="flex items-center gap-4">
           <Label className="mr-4 font-medium">Select Section Type</Label>
-          <Select value={type} onValueChange={setType}>
+          <Select
+            value={type}
+            onValueChange={(val) =>
+              setType(val as "LECTURE" | "TUTORIAL" | "PRACTICAL")
+            }
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Select..." />
             </SelectTrigger>

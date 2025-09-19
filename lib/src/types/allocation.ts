@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
     allocationSchema,
     allocationSectionSchema,
+    courseAllocateSchema,
     courseCodeSchema,
     courseSchema,
     masterAllocationSchema,
@@ -60,4 +61,11 @@ export type TTDCourse = {
     sections: any[];
     preferredRooms: any[];
     textbooks: any[];
+};
+
+export type CourseAllocateType = z.infer<typeof courseAllocateSchema>;
+
+export type SectionClient = {
+    type: "LECTURE" | "TUTORIAL" | "PRACTICAL";
+    instructors: [string, string][];
 };

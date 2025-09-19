@@ -6,22 +6,9 @@ import {
 } from "@/config/db/schema/allocation.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { z } from "zod";
+import { courseAllocateSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
 const router = express.Router();
-
-const courseAllocateSchema = z.object({
-    courseCode: z.string().nonempty(),
-    ic: z.string().email().nonempty(),
-    sections: z.array(
-        z.object({
-            number: z.coerce.number(),
-            credits: z.coerce.number(),
-            type: z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]),
-            instructors: z.array(z.string().email().nonempty()),
-        })
-    ),
-});
 
 router.post(
     "/",
@@ -38,7 +25,6 @@ router.post(
                     ic,
                 })
                 .returning();
-
             for (const { type, number, instructors } of sections) {
                 const section = await tx
                     .insert(allocationSection)
