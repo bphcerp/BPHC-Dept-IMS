@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FilterBar } from "@/components/handouts/filterBar";
+import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import {
   Table,
   TableBody,
@@ -14,6 +14,7 @@ import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
+
 export interface DCAQpReview {
   id: string;
   courseName: string;
@@ -22,16 +23,24 @@ export interface DCAQpReview {
   professorName: string;
   submittedOn: string;
   status: string;
+  requestType?: string; // Add this field if it exists in your API response
 }
 
 export const DCAMemberHandouts: React.FC = () => {
   const navigate = useNavigate();
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<string[]>([]);
+
   const {
     data: courses,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["*"],
+    queryKey: ["dca-member-requests"],
     queryFn: async () => {
       try {
         const response = await api.get<{
@@ -39,7 +48,6 @@ export const DCAMemberHandouts: React.FC = () => {
           success: boolean;
         }>("/qp/getAllDcaMemberRequests");
         if (response.data.courses) {
-          setFilteredCourses(response.data.courses);
           localStorage.setItem(
             "Qp Reviews DCA MEMBER",
             JSON.stringify(response.data.courses)
@@ -53,43 +61,45 @@ export const DCAMemberHandouts: React.FC = () => {
     },
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
-    []
-  );
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<DCAQpReview[]>();
-  const slugify = (courseCode:string)=>{  return encodeURIComponent(
-    courseCode.toLowerCase().replace(/\s+/g, "-")
-  )};
+  const slugify = (courseCode: string) => {
+    return encodeURIComponent(courseCode.toLowerCase().replace(/\s+/g, "-"));
+  };
 
-  useEffect(() => {
+  // Use useMemo for filtering instead of useEffect
+  const filteredCourses = useMemo(() => {
+    if (!courses) return [];
+
     let results = courses;
 
+    // Search filter
     if (searchQuery) {
-      results = results?.filter(
+      results = results.filter(
         (course) =>
-          course.courseName
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
+          course.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    results = results?.filter((handout) => {
+    // Apply all filters
+    results = results.filter((course) => {
       const matchesCategory =
         activeCategoryFilters.length > 0
-          ? activeCategoryFilters.includes(handout.category)
+          ? activeCategoryFilters.includes(course.category)
           : true;
       const matchesStatus =
         activeStatusFilters.length > 0
-          ? activeStatusFilters.includes(handout.status)
+          ? activeStatusFilters.includes(course.status)
           : true;
-      return matchesCategory && matchesStatus;
+      const matchesRequestType =
+        activeRequestTypeFilters.length > 0 && course.requestType
+          ? activeRequestTypeFilters.includes(course.requestType)
+          : activeRequestTypeFilters.length === 0; // Show all if no request type filter or no requestType field
+
+      return matchesCategory && matchesStatus && matchesRequestType;
     });
 
-    setFilteredCourses(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+    return results;
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, activeRequestTypeFilters, courses]);
 
   if (isLoading)
     return (
@@ -115,13 +125,15 @@ export const DCAMemberHandouts: React.FC = () => {
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
           </div>
           <div className="ml-4">
-            <FilterBar
+            <QpFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               activeCategoryFilters={activeCategoryFilters}
               onCategoryFilterChange={setActiveCategoryFilters}
               activeStatusFilters={activeStatusFilters}
               onStatusFilterChange={setActiveStatusFilters}
+              activeRequestTypeFilters={activeRequestTypeFilters}
+              onRequestTypeFilterChange={setActiveRequestTypeFilters}
             />
           </div>
         </div>
@@ -134,18 +146,12 @@ export const DCAMemberHandouts: React.FC = () => {
           <Table className="min-w-full">
             <TableHeader className="bg-gray-100">
               <TableRow>
-                <TableHead className="px-4 py-2 text-left">
-                  Course Code
-                </TableHead>
-                <TableHead className="px-4 py-2 text-left">
-                  Course Name
-                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Course Code</TableHead>
+                <TableHead className="px-4 py-2 text-left">Course Name</TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
                 <TableHead className="px-4 py-2 text-left">IC Name</TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
-                <TableHead className="px-4 py-2 text-left">
-                  Submitted On
-                </TableHead>
+                <TableHead className="px-4 py-2 text-left">Submitted On</TableHead>
                 <TableHead className="px-4 py-2 text-left">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -156,25 +162,19 @@ export const DCAMemberHandouts: React.FC = () => {
                     key={course.id}
                     className="odd:bg-white even:bg-gray-100"
                   >
-                    <TableCell className="px-4 py-2">
-                      {course.courseCode}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.courseName}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.category}
-                    </TableCell>
-                    <TableCell className="px-4 py-2">
-                      {course.professorName}
-                    </TableCell>
+                    <TableCell className="px-4 py-2">{course.courseCode}</TableCell>
+                    <TableCell className="px-4 py-2">{course.courseName}</TableCell>
+                    <TableCell className="px-4 py-2">{course.category}</TableCell>
+                    <TableCell className="px-4 py-2">{course.professorName}</TableCell>
                     <TableCell className="px-4 py-2 uppercase">
                       <span className={STATUS_COLORS[course.status]}>
                         {course.status}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {course.submittedOn? new Date(course.submittedOn).toLocaleDateString() : "-"}
+                      {course.submittedOn
+                        ? new Date(course.submittedOn).toLocaleDateString()
+                        : "-"}
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       {course.status == "notsubmitted" ? (
@@ -189,14 +189,12 @@ export const DCAMemberHandouts: React.FC = () => {
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                           onClick={() =>
-                            navigate(`/qpReview/FacultyReview/${slugify(course.courseCode)}`,{
+                            navigate(`/qpReview/FacultyReview/${slugify(course.courseCode)}`, {
                               state: { courseCode: course.courseCode, requestId: course.id },
                             })
                           }
                         >
-                          {course.status === "review pending"
-                            ? "Review"
-                            : "Details"}
+                          {course.status === "review pending" ? "Review" : "Details"}
                         </Button>
                       )}
                     </TableCell>

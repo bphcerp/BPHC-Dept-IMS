@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FilterBar } from "@/components/handouts/filterBar";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { UploadDialogBox } from "@/components/qp_review/uploadDialogBox";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +15,7 @@ import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { qpSchemas } from "lib";
+import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 
 export const requestTypes = ["Mid Sem", "Comprehensive", "Both"] as const;
 type RequestType = typeof requestTypes[number];
@@ -34,8 +34,18 @@ interface FacultyCourse {
 }
 
 export const FacultyHandouts: React.FC = () => {
-  const [filteredCourses, setFilteredCourses] = useState<FacultyCourse[]>();
   const navigate = useNavigate();
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
+  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<string[]>([]);
+
+  // Dialog states
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(null);
+  const [uploadContext, setUploadContext] = useState<"mid" | "compre" | "both" | null>(null);
 
   const {
     data: courses,
@@ -58,7 +68,6 @@ export const FacultyHandouts: React.FC = () => {
               ? (c.requestType as RequestType)
               : "Comprehensive",
         }));
-        if (list) setFilteredCourses(list);
         return list;
       } catch (error) {
         toast.error("Failed to fetch handouts");
@@ -67,48 +76,42 @@ export const FacultyHandouts: React.FC = () => {
     },
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
-    []
-  );
-  const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [selectedHandoutId, setSelectedHandoutId] = useState<string | null>(
-    null
-  );
+  // Use useMemo for filtering logic instead of useMemo with side effects
+  const filteredCourses = useMemo(() => {
+    if (!courses) return [];
 
-  const [uploadContext, setUploadContext] = useState<
-    "mid" | "compre" | "both" | null
-  >(null);
+    let results = courses;
 
-  useMemo(() => {
-    if (courses) {
-      let results = courses;
-
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        results = results.filter(
-          (course) =>
-            course.courseName.toLowerCase().includes(q) ||
-            course.courseCode.toLowerCase().includes(q)
-        );
-      }
-
-      results = results.filter((course) => {
-        const matchesCategory =
-          activeCategoryFilters.length > 0
-            ? activeCategoryFilters.includes(course.category)
-            : true;
-        const matchesStatus =
-          activeStatusFilters.length > 0
-            ? activeStatusFilters.includes(course.status)
-            : true;
-        return matchesCategory && matchesStatus;
-      });
-
-      setFilteredCourses(results);
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      results = results.filter(
+        (course) =>
+          course.courseName.toLowerCase().includes(q) ||
+          course.courseCode.toLowerCase().includes(q)
+      );
     }
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]); [18]
+
+    // Apply all filters
+    results = results.filter((course) => {
+      const matchesCategory =
+        activeCategoryFilters.length > 0
+          ? activeCategoryFilters.includes(course.category)
+          : true;
+      const matchesStatus =
+        activeStatusFilters.length > 0
+          ? activeStatusFilters.includes(course.status)
+          : true;
+      const matchesRequestType =
+        activeRequestTypeFilters.length > 0
+          ? activeRequestTypeFilters.includes(course.requestType as string)
+          : true;
+
+      return matchesCategory && matchesStatus && matchesRequestType;
+    });
+
+    return results;
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, activeRequestTypeFilters, courses]);
 
   const openUploadDialog = (
     handoutId: string,
@@ -149,13 +152,15 @@ export const FacultyHandouts: React.FC = () => {
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
           </div>
           <div className="ml-4">
-            <FilterBar
+            <QpFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               activeCategoryFilters={activeCategoryFilters}
               onCategoryFilterChange={setActiveCategoryFilters}
               activeStatusFilters={activeStatusFilters}
               onStatusFilterChange={setActiveStatusFilters}
+              activeRequestTypeFilters={activeRequestTypeFilters}
+              onRequestTypeFilterChange={setActiveRequestTypeFilters}
             />
           </div>
         </div>

@@ -21,6 +21,7 @@ router.post("/", async (req, res) => {
 
         const { requestId, email, review } = parsed.data;
 
+        // find request by ID
         const request = await db.query.qpReviewRequests.findFirst({
             where: eq(qpReviewRequests.id, requestId),
         });
@@ -34,8 +35,9 @@ router.post("/", async (req, res) => {
 
         const updateFields: Record<string, any> = {};
 
+        // reviewer check
         if (request.reviewerEmail === email) {
-            updateFields.review1 = review;
+            updateFields.review = review; // ✅ matches schema column
         } else {
             return res.status(403).json({
                 success: false,
@@ -43,12 +45,12 @@ router.post("/", async (req, res) => {
             });
         }
 
-        // Mark as reviewed if review1 is filled OR an old review exists
-        if ((updateFields.review1 ?? request.review)) {
-            updateFields.reviewed = "reviewed";
+        // mark as reviewed if new review added OR old one exists
+        if (updateFields.review || request.review) {
+            updateFields.status = "reviewed"; // ✅ schema column
         }
 
-        // ✅ Prevent empty update that causes SQL syntax error
+        // guard against empty updates
         if (Object.keys(updateFields).length === 0) {
             return res.status(400).json({
                 success: false,

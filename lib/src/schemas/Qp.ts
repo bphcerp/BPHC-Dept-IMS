@@ -144,8 +144,8 @@ export type UploadFICDocuments = z.infer<typeof uploadDocumentsSchema>;
 
 export const requestIdSchema = z.object({
     requestId: z.preprocess(
-        (val) => Number(val), // Convert string to number
-        z.number().int().positive() // Ensure it's a positive integer
+        (val) => Number(val), 
+        z.number().int().positive() 
     ),
 });
 

@@ -1,7 +1,6 @@
 "use client";
 import type React from "react";
 import { useState, useEffect } from "react";
-import { FilterBar } from "@/components/handouts/filterBar";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
 import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -19,11 +17,10 @@ import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { AssignICDialog } from "@/components/qp_review/updateICDialog";
 import { AssignDCADialog } from "@/components/qp_review/assignDCADialog";
-import { SetDeadlineDialog } from "@/components/qp_review/setDeadline";
 import { CreateRequestDialog } from "@/components/qp_review/createRequestDialog";
+import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
-
 
 interface QPDCAcon {
   reviewerEmail: string;
@@ -31,6 +28,7 @@ interface QPDCAcon {
   courseName: string;
   courseCode: string;
   category: string;
+  requestType: string;
   reviewerName: string | null;
   professorName: string;
   submittedOn: string;
@@ -45,17 +43,13 @@ interface CreateRequestData {
   category: "HD" | "FD";
 }
 
-
 export const DCAConvenercourses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
-    []
-  );
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>(
-    []
-  );
-
+  // ADD THIS MISSING STATE
+  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<string[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>([]);
 
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
@@ -64,11 +58,10 @@ export const DCAConvenercourses: React.FC = () => {
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
 
-
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-
+  // ... (all your mutation definitions remain the same)
   const updateICMutation = useMutation({
     mutationFn: async ({
       id,
@@ -99,7 +92,6 @@ export const DCAConvenercourses: React.FC = () => {
       toast.error("Failed to update instructor");
     },
   });
-
 
   const updateReviewerMutation = useMutation({
     mutationFn: async ({
@@ -132,7 +124,6 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
-
   const bulkUpdateReviewerMutation = useMutation({
     mutationFn: async ({
       ids,
@@ -143,7 +134,6 @@ export const DCAConvenercourses: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
-      // For each ID, call the updateReviewer endpoint
       const promises = ids.map((id) =>
         api.post<{ success: boolean }>("/qp/updateFaculty", {
           id: id.toString(),
@@ -151,7 +141,6 @@ export const DCAConvenercourses: React.FC = () => {
           sendEmail,
         })
       );
-
 
       return Promise.all(promises);
     },
@@ -191,7 +180,6 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
-
   const {
     data: courses,
     isLoading,
@@ -212,15 +200,15 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
-
+  // UPDATED useEffect to include request type filtering
   useEffect(() => {
     if (!courses) return;
 
-
     localStorage.setItem("courses DCA CONVENOR", JSON.stringify(courses));
 
-
     let results = courses;
+    
+    // Search filter
     if (searchQuery) {
       results = results.filter(
         (course) =>
@@ -230,6 +218,8 @@ export const DCAConvenercourses: React.FC = () => {
           course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+    
+    // Apply all filters
     results = results.filter((course) => {
       const matchesCategory =
         activeCategoryFilters.length > 0
@@ -239,14 +229,19 @@ export const DCAConvenercourses: React.FC = () => {
         activeStatusFilters.length > 0
           ? activeStatusFilters.includes(course.status)
           : true;
-      return matchesCategory && matchesStatus;
+      // ADD REQUEST TYPE FILTER LOGIC
+      const matchesRequestType =
+        activeRequestTypeFilters.length > 0
+          ? activeRequestTypeFilters.includes(course.requestType)
+          : true;
+      
+      return matchesCategory && matchesStatus && matchesRequestType;
     });
 
-
     setFilteredCourses(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+  }, [searchQuery, activeCategoryFilters, activeStatusFilters, activeRequestTypeFilters, courses]);
 
-
+  // ... (all your handler functions remain the same)
   const handlePencilClick = (courseId: string, isReviewer: boolean) => {
     setCurrentcourseId(courseId);
     setIsBulkAssign(false);
@@ -257,13 +252,11 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
-
   const handleAssignIC = (email: string, sendEmail: boolean) => {
     if (!currentcourseId) {
       toast.error("No course selected");
       return;
     }
-
 
     updateICMutation.mutate({
       id: currentcourseId,
@@ -271,10 +264,8 @@ export const DCAConvenercourses: React.FC = () => {
       sendEmail,
     });
 
-
     setIsICDialogOpen(false);
   };
-
 
   const handleAssignReviewer = (email: string, sendEmail: boolean) => {
     if (isBulkAssign) {
@@ -282,7 +273,6 @@ export const DCAConvenercourses: React.FC = () => {
         toast.error("No courses selected");
         return;
       }
-
 
       bulkUpdateReviewerMutation.mutate({
         ids: selectedcourses,
@@ -295,14 +285,12 @@ export const DCAConvenercourses: React.FC = () => {
         return;
       }
 
-
       updateReviewerMutation.mutate({
         id: currentcourseId,
         reviewerEmail: email,
         sendEmail,
       });
     }
-
 
     setIsReviewerDialogOpen(false);
   };
@@ -311,7 +299,6 @@ export const DCAConvenercourses: React.FC = () => {
     createRequestMutation.mutate(data);
   };
 
-
   const handleSelectcourse = (courseId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedcourses((prev) => [...prev, courseId]);
@@ -319,7 +306,6 @@ export const DCAConvenercourses: React.FC = () => {
       setSelectedcourses((prev) => prev.filter((id) => id !== courseId));
     }
   };
-
 
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
@@ -330,23 +316,19 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
-
   const handleBulkAssignReviewer = () => {
     if (selectedcourses.length === 0) {
       toast.error("No courses selected");
       return;
     }
 
-
     setIsBulkAssign(true);
     setIsReviewerDialogOpen(true);
   };
 
-
   const isAllSelected =
     filteredCourses.length > 0 &&
     selectedcourses.length === filteredCourses.length;
-
 
   if (isLoading) {
     return (
@@ -356,7 +338,6 @@ export const DCAConvenercourses: React.FC = () => {
     );
   }
 
-
   if (isError) {
     return (
       <div className="flex h-screen items-center justify-center text-red-500">
@@ -364,7 +345,6 @@ export const DCAConvenercourses: React.FC = () => {
       </div>
     );
   }
-
 
   return (
     <div className="w-full px-4">
@@ -383,15 +363,6 @@ export const DCAConvenercourses: React.FC = () => {
               >
                 Create Request
               </Button>
-              <SetDeadlineDialog />
-              <Link to="/course/summary">
-                <Button
-                  variant="outline"
-                  className="hover:bg-primary hover:text-white"
-                >
-                  Summary
-                </Button>
-              </Link>
               {selectedcourses.length > 0 && (
                 <Button
                   variant="default"
@@ -404,22 +375,24 @@ export const DCAConvenercourses: React.FC = () => {
             </div>
           </div>
           <div className="ml-4">
-            <FilterBar
+            {/* UPDATED QpFilterBar with all required props */}
+            <QpFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               activeCategoryFilters={activeCategoryFilters}
               onCategoryFilterChange={setActiveCategoryFilters}
               activeStatusFilters={activeStatusFilters}
               onStatusFilterChange={setActiveStatusFilters}
+              activeRequestTypeFilters={activeRequestTypeFilters}
+              onRequestTypeFilterChange={setActiveRequestTypeFilters}
             />
           </div>
         </div>
       </div>
 
-
       <hr className="my-1 border-gray-300" />
 
-
+      {/* Rest of your table JSX remains exactly the same */}
       <div className="w-full overflow-x-auto bg-white shadow">
         <div className="inline-block min-w-full align-middle">
           <Table className="min-w-full">
@@ -439,6 +412,7 @@ export const DCAConvenercourses: React.FC = () => {
                   Course Name
                 </TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">Request Type</TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Instructor Email
                 </TableHead>
@@ -478,6 +452,9 @@ export const DCAConvenercourses: React.FC = () => {
                       {course.category}
                     </TableCell>
                     <TableCell className="px-4 py-2">
+                      {course.requestType}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
                       <div className="flex items-center">
                         <span>{course.professorName}</span>
                         <button
@@ -512,17 +489,17 @@ export const DCAConvenercourses: React.FC = () => {
                         : "NA"}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {course.status != "notsubmitted" ? (
+                      {course.status == "reviewed" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                           onClick={() =>
                             navigate(
-                              `/course/dcaconvenor/review/${course.id}`
+                              `/qpReview/dcarequests/review/${course.id}`
                             )
                           }
                         >
-                          {course.status === "reviewed" ? "Review" : "View"}
+                          View Review
                         </Button>
                       ) : (
                         <Button
@@ -537,7 +514,7 @@ export const DCAConvenercourses: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-4 py-2 text-center">
+                  <TableCell colSpan={10} className="px-4 py-2 text-center">
                     No courses found
                   </TableCell>
                 </TableRow>
@@ -547,13 +524,11 @@ export const DCAConvenercourses: React.FC = () => {
         </div>
       </div>
 
-
       <AssignICDialog
         isOpen={isICDialogOpen}
         setIsOpen={setIsICDialogOpen}
         onAssign={handleAssignIC}
       />
-
 
       <AssignDCADialog
         isOpen={isReviewerDialogOpen}
@@ -572,6 +547,5 @@ export const DCAConvenercourses: React.FC = () => {
     </div>
   );
 };
-
 
 export default DCAConvenercourses;

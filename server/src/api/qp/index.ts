@@ -12,13 +12,16 @@ import assignICRouter from './assignIc.ts'
 import updateIcRouter from './updateIc.ts'
 import updateFacultyRouter from './updateFaculty.ts'
 import createRequestRouter from "./createRequest.ts"
+import approveSubmissionRouter from "./approveSubmission.ts"
+import rejectSubmissionRouter from "./rejectSubmission.ts"
 
 const router = express.Router();
 
 router.use("/uploadDocuments", uploadDocumentsRouter);
 router.use("/getFilesByRequestId/", getFilesByRequestIdRouter);
 router.use("/submitReview", submitReviewRouter);
-// router.use("/approveSubmission", approveSubmissionRouter);
+router.use("/approveSubmission", approveSubmissionRouter);
+router.use("/rejectSubmission", rejectSubmissionRouter);
 router.use("/assignFaculty", assignFacultyRouter);
 router.use("/createRequest" , createRequestRouter)
 router.use("/getAllFICSubmissions", getFicSubmissionsRouter);

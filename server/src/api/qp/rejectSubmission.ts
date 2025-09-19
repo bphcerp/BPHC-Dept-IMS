@@ -36,7 +36,7 @@ router.post(
 
         const [updatedRequest] = await db
             .update(qpReviewRequests)
-            .set({ status: "approved" })
+            .set({ status: "rejected" })
             .where(eq(qpReviewRequests.id, Number(id)))
             .returning();
 
@@ -45,13 +45,13 @@ router.post(
                 .status(500)
                 .json({
                     success: false,
-                    message: "Failed to approve submission.",
+                    message: "Failed to reject submission.",
                 });
         }
 
         return res.status(200).json({
             success: true,
-            message: "Submission approved successfully.",
+            message: "Submission rejected successfully.",
             data: updatedRequest,
         });
     })

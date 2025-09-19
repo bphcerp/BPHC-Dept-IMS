@@ -87,6 +87,7 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import DcaReview from "@/views/QpReview/DcaReview";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -284,6 +285,7 @@ const Routing = () => {
               element={<Navigate to="/qpReview/ficSubmission" replace={true} />}
             />
             <Route path="ficSubmission" element={<FicSubmissionView />} />
+            <Route path="dcarequests/review/:id" element={<DcaReview />} />
             <Route path="dcarequests" element={<DCARequestsView />} />
             <Route path="facultyReview" element={<ReviewPage />} />
             <Route path="facultyReview/:course" element={<FacultyReview />} />
