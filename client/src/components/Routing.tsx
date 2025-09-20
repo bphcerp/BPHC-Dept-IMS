@@ -102,6 +102,7 @@ import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
+import { useState } from "react";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -143,6 +144,9 @@ const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
 );
 
 const Routing = () => {
+  const updateTesting = () => setPopupKey((popupKey + 1) % 2);
+  const [popupKey, setPopupKey] = useState(0); //keeps toggling popup key to force update popup compnent's states
+
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
   const modules = [
     {
@@ -267,7 +271,12 @@ const Routing = () => {
                 </>
               )}
               {checkAccess(permissions["/admin/testing"]) && (
-                <Route path="testing" element={<TestingView />} />
+                <Route
+                  path="testing"
+                  element={
+                    <TestingView key={popupKey} updatePopup={updateTesting} />
+                  }
+                />
               )}
             </Route>
           )}
@@ -679,7 +688,7 @@ const Routing = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
-      <TestingPopup />
+      <TestingPopup key={popupKey} updatePage={updateTesting} />
     </>
   );
 };

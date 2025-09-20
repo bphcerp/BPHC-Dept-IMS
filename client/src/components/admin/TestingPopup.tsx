@@ -98,7 +98,7 @@ export async function handleEnd(callback: () => void) {
   }
 }
 
-function TestingPopup() {
+function TestingPopup({ updatePage }: { updatePage: () => void }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -119,15 +119,17 @@ function TestingPopup() {
         console.log("Failed to load testing status");
       });
   }
+
+  const update = () => {
+    // todo: update the jwts for new permissions
+    updateStatus();
+    updatePage();
+  };
+
   return (
     <>
       {inTestingMode ? (
         <>
-          <ConfirmEndTestingPopup
-            value={isConfirmEndOpen}
-            setValue={setIsConfirmEndOpen}
-            callback={() => handleEnd(updateStatus)}
-          />
           <div className="absolute bottom-0 right-0 z-20 flex flex-col items-end gap-4 p-6">
             {isOpen && (
               <div className="mx-auto flex h-[18rem] w-[26rem] max-w-6xl flex-1 flex-col gap-2 rounded-lg border-[1px] bg-white p-4">
@@ -187,7 +189,7 @@ function TestingPopup() {
                     <Button
                       type="submit"
                       className="w-max"
-                      onClick={() => handleEdit(roles, updateStatus)}
+                      onClick={() => handleEdit(roles, update)}
                     >
                       Update Roles
                     </Button>
@@ -212,6 +214,11 @@ function TestingPopup() {
               </Button>
             </div>
           </div>
+          <ConfirmEndTestingPopup
+            value={isConfirmEndOpen}
+            setValue={setIsConfirmEndOpen}
+            callback={() => handleEnd(update)}
+          />
         </>
       ) : null}
     </>

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ConfirmEndTestingPopup from "@/components/admin/ConfirmEndTestingPopup";
 
-const TestingView = () => {
+const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
   const [isConfirmEndOpen, setIsConfirmEndOpen] = useState(false);
@@ -36,12 +36,11 @@ const TestingView = () => {
       });
   }
 
-  async function updateCallback() {
-    // updateStatus();
+  const update = () => {
     // todo: update the jwts for new permissions
-    navigate("/");
-    window.location.reload();
-  }
+    updateStatus();
+    updatePopup();
+  };
 
   return (
     <>
@@ -55,7 +54,7 @@ const TestingView = () => {
             value={isConfirmEndOpen}
             setValue={setIsConfirmEndOpen}
             callback={() => {
-              handleEnd(updateStatus);
+              handleEnd(update);
               setIsConfirmEndOpen(false);
             }}
           />
@@ -106,8 +105,13 @@ const TestingView = () => {
                 className="w-max"
                 onClick={
                   inTestingMode
-                    ? () => handleEdit(roles, updateCallback)
-                    : () => handleStart(roles, updateCallback)
+                    ? () => handleEdit(roles, update)
+                    : () => {
+                        handleStart(roles, () => {
+                          update();
+                          navigate("/");
+                        });
+                      }
                 }
               >
                 {inTestingMode ? "Update Roles" : "Start Testing Mode"}
