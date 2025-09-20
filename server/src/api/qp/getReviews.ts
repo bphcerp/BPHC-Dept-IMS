@@ -43,11 +43,18 @@ router.get("/:email/:requestId", async (req, res) => {
             });
         }
 
+        const dataToReturn = {
+            courseName : request.courseName,
+            courseCode : request.courseCode,
+            review : request.review,
+        }
+
         // ✅ Send review data
         return res.status(200).json({
             success: true,
-            data: request.review || null,
+            data: dataToReturn,
         });
+        
     } catch (error) {
         console.error("Error fetching review:", error);
 

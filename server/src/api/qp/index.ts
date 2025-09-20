@@ -14,12 +14,15 @@ import updateFacultyRouter from './updateFaculty.ts'
 import createRequestRouter from "./createRequest.ts"
 import approveSubmissionRouter from "./approveSubmission.ts"
 import rejectSubmissionRouter from "./rejectSubmission.ts"
+import saveReviewRouter from "./saveReview.ts"
+import sendReminders from "./sendReminders.ts"
 
 const router = express.Router();
 
 router.use("/uploadDocuments", uploadDocumentsRouter);
 router.use("/getFilesByRequestId/", getFilesByRequestIdRouter);
 router.use("/submitReview", submitReviewRouter);
+router.use("/saveReview", saveReviewRouter);
 router.use("/approveSubmission", approveSubmissionRouter);
 router.use("/rejectSubmission", rejectSubmissionRouter);
 router.use("/assignFaculty", assignFacultyRouter);
@@ -32,5 +35,6 @@ router.use("/getAllCourses", getAllCourses);
 router.use("/assignIc", assignICRouter);
 router.use("/updateIc", updateIcRouter);
 router.use("/updateFaculty", updateFacultyRouter);
+router.use("/sendReminders", sendReminders);
 
 export default router;
