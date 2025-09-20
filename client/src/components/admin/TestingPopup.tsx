@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { AssignRoleComboBox } from "./AssignRoleDialog";
+import ConfirmEndTestingPopup from "./ConfirmEndTestingPopup";
 interface ApiError {
   response?: {
     data?: {
@@ -101,6 +102,7 @@ function TestingPopup() {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isConfirmEndOpen, setIsConfirmEndOpen] = useState(false);
 
   useEffect(() => {
     updateStatus();
@@ -120,83 +122,97 @@ function TestingPopup() {
   return (
     <>
       {inTestingMode ? (
-        <div className="absolute bottom-0 right-0 z-20 flex flex-col items-end gap-4 p-6">
-          {isOpen && (
-            <div className="mx-auto flex h-[18rem] w-[26rem] max-w-6xl flex-1 flex-col gap-2 rounded-lg border-[1px] bg-white p-4">
-              <div className="flex flex-row items-center justify-between">
-                <h1 className="text-xl font-bold text-primary">
-                  Testing Ongoing
-                </h1>
-                <div
-                  className="h-min cursor-pointer rounded-full p-2 hover:bg-accent/50"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <X className="s-4" />
+        <>
+          <ConfirmEndTestingPopup
+            value={isConfirmEndOpen}
+            setValue={setIsConfirmEndOpen}
+            callback={() => handleEnd(updateStatus)}
+          />
+          <div className="absolute bottom-0 right-0 z-20 flex flex-col items-end gap-4 p-6">
+            {isOpen && (
+              <div className="mx-auto flex h-[18rem] w-[26rem] max-w-6xl flex-1 flex-col gap-2 rounded-lg border-[1px] bg-white p-4">
+                <div className="flex flex-row items-center justify-between">
+                  <h1 className="text-xl font-bold text-primary">
+                    Testing Ongoing
+                  </h1>
+                  <div
+                    className="h-min cursor-pointer rounded-full p-2 hover:bg-accent/50"
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsConfirmEndOpen(false);
+                    }}
+                  >
+                    <X className="s-4" />
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <Card className="relative h-36 overflow-scroll rounded-none border-0 shadow-none">
-                  <CardContent className="flex flex-wrap gap-2 px-0 py-2">
-                    {roles.map((role, i) => (
-                      <Badge
-                        key={i}
-                        variant="secondary"
-                        className="flex gap-1 pt-1 text-sm"
-                      >
-                        {role}
-                        <button
-                          className="p-1 pr-0"
-                          onClick={() => {
-                            setRoles(roles.filter((r) => r !== role));
-                          }}
+                <div className="flex flex-col gap-2">
+                  <Card className="relative h-36 overflow-scroll rounded-none border-0 shadow-none">
+                    <CardContent className="flex flex-wrap gap-2 px-0 py-2">
+                      {roles.map((role, i) => (
+                        <Badge
+                          key={i}
+                          variant="secondary"
+                          className="flex gap-1 pt-1 text-sm"
                         >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
+                          {role}
+                          <button
+                            className="p-1 pr-0"
+                            onClick={() => {
+                              setRoles(roles.filter((r) => r !== role));
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
 
-                    <AssignRoleComboBox
-                      existing={roles}
-                      callback={(role) => {
-                        setRoles([...roles, role]);
-                      }}
+                      <AssignRoleComboBox
+                        existing={roles}
+                        callback={(role) => {
+                          setRoles([...roles, role]);
+                        }}
+                      >
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </AssignRoleComboBox>
+                    </CardContent>
+                  </Card>
+                  <div className="flex flex-row gap-4">
+                    <Button
+                      type="submit"
+                      className="w-max"
+                      onClick={() => handleEdit(roles, updateStatus)}
                     >
-                      <Button variant="outline" size="icon" className="h-7 w-7">
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </AssignRoleComboBox>
-                  </CardContent>
-                </Card>
-                <div className="flex flex-row gap-4">
-                  <Button
-                    type="submit"
-                    className="w-max"
-                    onClick={() => handleEdit(roles, updateStatus)}
-                  >
-                    Update Roles
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant={"outline"}
-                    className="w-max"
-                    onClick={() => handleEnd(updateStatus)}
-                  >
-                    End Testing
-                  </Button>
+                      Update Roles
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant={"outline"}
+                      className="w-max"
+                      onClick={() => setIsConfirmEndOpen(true)}
+                    >
+                      End Testing
+                    </Button>
+                  </div>
                 </div>
               </div>
+            )}
+            <div>
+              <Button
+                className="text-base font-bold"
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                Edit Testing Scope
+              </Button>
             </div>
-          )}
-          <div>
-            <Button
-              className="text-base font-bold"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              Edit Testing Scope
-            </Button>
           </div>
-        </div>
+        </>
       ) : null}
     </>
   );

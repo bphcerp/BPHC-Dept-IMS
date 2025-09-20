@@ -12,10 +12,12 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import ConfirmEndTestingPopup from "@/components/admin/ConfirmEndTestingPopup";
 
 const TestingView = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
+  const [isConfirmEndOpen, setIsConfirmEndOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,6 +51,14 @@ const TestingView = () => {
         </div>
       ) : (
         <div className="mx-auto flex max-w-6xl flex-1 flex-col gap-8 p-4">
+          <ConfirmEndTestingPopup
+            value={isConfirmEndOpen}
+            setValue={setIsConfirmEndOpen}
+            callback={() => {
+              handleEnd(updateStatus);
+              setIsConfirmEndOpen(false);
+            }}
+          />
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-primary">Testing Module</h1>
           </div>
@@ -107,7 +117,7 @@ const TestingView = () => {
                   type="submit"
                   variant={"outline"}
                   className="w-max"
-                  onClick={() => handleEnd(updateStatus)}
+                  onClick={() => setIsConfirmEndOpen(true)}
                 >
                   End Testing
                 </Button>
