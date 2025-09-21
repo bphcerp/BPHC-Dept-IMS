@@ -125,7 +125,7 @@ const SupervisorProposal: React.FC = () => {
           Review and manage PhD proposal submissions for your students.
         </p>
       </div>
-      <ProposalStatusTimeline />
+      <ProposalStatusTimeline role="supervisor" />
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>

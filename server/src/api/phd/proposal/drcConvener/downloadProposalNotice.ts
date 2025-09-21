@@ -69,7 +69,7 @@ router.post(
         if (
             proposalsForNotice.some(
                 (p) =>
-                    !["finalising", "formalising", "completed"].includes(
+                    ![ "finalising_documents", "completed"].includes(
                         p.status
                     )
             )

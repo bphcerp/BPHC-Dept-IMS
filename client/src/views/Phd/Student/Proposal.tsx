@@ -256,8 +256,8 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
-      {eligibility?.isEligible && <ProposalStatusTimeline />}
-      {eligibility?.isEligible && currentDeadlines && (
+      
+      {eligibility?.isEligible && <ProposalStatusTimeline role="student"/> && currentDeadlines && (
         <DeadlinesCard
           deadlines={currentDeadlines}
           highlight="studentSubmissionDate"

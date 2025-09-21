@@ -221,7 +221,7 @@ router.post(
             }
             await db
                 .update(phdProposals)
-                .set({ status: "formalising" })
+                .set({ status: "finalising_documents" })
                 .where(
                     inArray(
                         phdProposals.id,

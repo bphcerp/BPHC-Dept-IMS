@@ -132,7 +132,7 @@ const DacProposalManagement: React.FC = () => {
           Review PhD proposals assigned to you as a DAC member.
         </p>
       </div>
-      <ProposalStatusTimeline />
+      <ProposalStatusTimeline role="dac" />
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
