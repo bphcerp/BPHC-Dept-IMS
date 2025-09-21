@@ -393,6 +393,13 @@
       "when": 1757946569684,
       "tag": "0055_sour_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1758491999167,
+      "tag": "0056_stale_wallflower",
+      "breakpoints": true
     }
   ]
 }
