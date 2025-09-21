@@ -46,6 +46,9 @@ export const finalizedMeetingSlots = pgTable("finalized_meeting_slots", {
     endTime: timestamp("end_time", { withTimezone: true }).notNull(),
     venue: text("venue"),
     googleMeetLink: text("google_meet_link"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
 });
 
 export const meetingParticipants = pgTable(
@@ -58,6 +61,9 @@ export const meetingParticipants = pgTable(
         participantEmail: text("participant_email")
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
     },
     (table) => [unique().on(table.meetingId, table.participantEmail)]
 );

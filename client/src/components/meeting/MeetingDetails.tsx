@@ -30,6 +30,14 @@ import { Checkbox } from "../ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { MultiSelectCombobox } from "../ui/multi-select-combobox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "../ui/form";
+import { Separator } from "../ui/separator";
 
 type FinalizeFormData = z.infer<typeof meetingSchemas.finalizeMeetingSchema>;
 type UpdateSlotFormData = z.infer<
@@ -81,6 +89,7 @@ const AvailabilityDialog = ({ slot }: { slot: any }) => {
         </div>
         <div>
           <h4 className="mb-2 font-semibold">
+            {" "}
             Unavailable ({unavailable.length})
           </h4>
           {unavailable.length > 0 ? (
@@ -118,7 +127,6 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
   const [editingSlot, setEditingSlot] = useState<any | null>(null);
   const [isAddInviteesOpen, setIsAddInviteesOpen] = useState(false);
 
-  // Form for updating a single slot
   const {
     register: registerUpdate,
     handleSubmit: handleUpdateSubmit,
@@ -127,15 +135,11 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
     resolver: zodResolver(meetingSchemas.updateMeetingSlotSchema),
   });
 
-  // Form for adding new invitees
-  const {
-    control: addInviteesControl,
-    handleSubmit: handleAddInviteesSubmit,
-    reset: resetAddInviteesForm,
-  } = useForm<Omit<AddInviteesFormData, "meetingId">>({
+  const addInviteesForm = useForm<Omit<AddInviteesFormData, "meetingId">>({
     resolver: zodResolver(
       meetingSchemas.addInviteesSchema.omit({ meetingId: true })
     ),
+    defaultValues: { participants: [] },
   });
 
   const { data: userList } = useQuery({
@@ -197,12 +201,19 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
       setEditingSlot(null);
     }
   };
-
+  const initialInvitees = useMemo(
+    () => meeting.participants.filter((p: any) => p.type === "initial"),
+    [meeting.participants]
+  );
+  const otherInvitees = useMemo(
+    () => meeting.participants.filter((p: any) => p.type === "other"),
+    [meeting.participants]
+  );
   const onAddInviteesSubmit = (
     data: Omit<AddInviteesFormData, "meetingId">
   ) => {
     onAddInvitees(data);
-    resetAddInviteesForm({ participants: [] });
+    addInviteesForm.reset();
     setIsAddInviteesOpen(false);
   };
 
@@ -227,38 +238,55 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
-                  <form onSubmit={handleAddInviteesSubmit(onAddInviteesSubmit)}>
-                    <DialogHeader>
-                      <DialogTitle>Add More Invitees</DialogTitle>
-                      <DialogDescription>
-                        Select additional faculty or staff to invite. They will
-                        be notified of the scheduled times.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <MultiSelectCombobox
-                        control={addInviteesControl}
-                        name="participants"
-                        options={userListOptions}
-                        placeholder="Select new invitees..."
-                      />
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddInviteesOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isAddingInvitees}>
-                        {isAddingInvitees && (
-                          <LoadingSpinner className="mr-2 h-4 w-4" />
-                        )}
-                        Add & Notify
-                      </Button>
-                    </DialogFooter>
-                  </form>
+                  <Form {...addInviteesForm}>
+                    <form
+                      onSubmit={addInviteesForm.handleSubmit(
+                        onAddInviteesSubmit
+                      )}
+                    >
+                      <DialogHeader>
+                        <DialogTitle>Add More Invitees</DialogTitle>
+                        <DialogDescription>
+                          Select additional faculty or staff to invite. They
+                          will be notified of the scheduled times.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4">
+                        <FormField
+                          control={addInviteesForm.control}
+                          name="participants"
+                          render={() => (
+                            <FormItem>
+                              <FormControl>
+                                <MultiSelectCombobox
+                                  control={addInviteesForm.control}
+                                  name="participants"
+                                  options={userListOptions}
+                                  placeholder="Select new invitees..."
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsAddInviteesOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={isAddingInvitees}>
+                          {isAddingInvitees && (
+                            <LoadingSpinner className="mr-2 h-4 w-4" />
+                          )}
+                          Add & Notify
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
                 </DialogContent>
               </Dialog>
             )}
@@ -320,12 +348,28 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
         <CardHeader>
           <CardTitle>Participants ({meeting.participants.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ul className="list-disc pl-5">
-            {meeting.participants.map((p: any) => (
-              <li key={p.participantEmail}>{p.participantEmail}</li>
-            ))}
-          </ul>
+        <CardContent className="space-y-4">
+          {initialInvitees.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-semibold">Initial Invitees</h4>
+              <ul className="list-disc pl-5 text-sm">
+                {initialInvitees.map((p: any) => (
+                  <li key={p.participantEmail}>{p.participantEmail}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {otherInvitees.length > 0 && (
+            <div>
+              {initialInvitees.length > 0 && <Separator className="my-3" />}
+              <h4 className="mb-2 text-sm font-semibold">Other Invitees</h4>
+              <ul className="list-disc pl-5 text-sm">
+                {otherInvitees.map((p: any) => (
+                  <li key={p.participantEmail}>{p.participantEmail}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
 
