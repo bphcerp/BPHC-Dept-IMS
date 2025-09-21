@@ -1,3 +1,4 @@
+// client/src/components/phd/proposal/StaffProposalDeadline.tsx
 import React, { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -30,13 +31,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import NotifyProposalDeadlineDialog, {
+  type ViewData,
+} from "./NotifyProposalDeadlineDialog";
 interface Semester {
   id: number;
   year: string;
   semesterNumber: number;
 }
-
 interface ProposalDeadline {
   id: number;
   studentSubmissionDate: string;
@@ -44,14 +46,13 @@ interface ProposalDeadline {
   drcReviewDate: string;
   dacReviewDate: string;
 }
-
 const DeadlineForm = ({
   currentSemesterId,
   onSuccess,
   deadlineToEdit,
 }: {
   currentSemesterId: number;
-  onSuccess: () => void;
+  onSuccess: (updatedDeadline: ProposalDeadline) => void;
   deadlineToEdit?: ProposalDeadline | null;
 }) => {
   const queryClient = useQueryClient();
@@ -61,7 +62,6 @@ const DeadlineForm = ({
     drcReviewDate: "",
     dacReviewDate: "",
   });
-
   useEffect(() => {
     if (deadlineToEdit) {
       const format = (dateStr: string) =>
@@ -81,19 +81,18 @@ const DeadlineForm = ({
       });
     }
   }, [deadlineToEdit]);
-
   const mutation = useMutation({
     mutationFn: (
       newDeadlines: { id?: number; semesterId: number } & typeof deadlines
     ) => api.post("/phd/staff/updateProposalDeadline", newDeadlines),
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast.success(
-        `Deadlines ${deadlineToEdit ? "updated" : "created"} successfully!`
+        `Deadlines ${deadlineToEdit ? "updated" : "created"}successfully!`
       );
       void queryClient.invalidateQueries({
         queryKey: ["proposal-deadlines", currentSemesterId],
       });
-      onSuccess();
+      onSuccess(response.data.deadline);
     },
     onError: (error: any) => {
       toast.error(
@@ -101,7 +100,6 @@ const DeadlineForm = ({
       );
     },
   });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (Object.values(deadlines).some((date) => !date)) {
@@ -114,11 +112,9 @@ const DeadlineForm = ({
       ...deadlines,
     });
   };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeadlines((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-4">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -177,12 +173,12 @@ const DeadlineForm = ({
     </form>
   );
 };
-
 const StaffProposalDeadline: React.FC = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [editingDeadline, setEditingDeadline] =
     useState<ProposalDeadline | null>(null);
-
+  const [viewData, setViewData] = useState<ViewData | null>(null);
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
     useQuery({
       queryKey: ["current-phd-semester"],
@@ -194,7 +190,6 @@ const StaffProposalDeadline: React.FC = () => {
       },
     });
   const currentSemesterId = currentSemesterData?.semester?.id;
-
   const { data: deadlinesData } = useQuery<{ deadlines: ProposalDeadline[] }>({
     queryKey: ["proposal-deadlines", currentSemesterId],
     queryFn: async () => {
@@ -206,17 +201,25 @@ const StaffProposalDeadline: React.FC = () => {
     },
     enabled: !!currentSemesterId,
   });
-
+  const handleFormSuccess = (updatedDeadline: ProposalDeadline) => {
+    setIsFormDialogOpen(false);
+    if (currentSemesterData?.semester) {
+      setViewData({
+        semesterYear: currentSemesterData.semester.year,
+        semesterNumber: currentSemesterData.semester.semesterNumber.toString(),
+        ...updatedDeadline,
+      });
+      setIsNotifyDialogOpen(true);
+    }
+  };
   const handleEdit = (deadline: ProposalDeadline) => {
     setEditingDeadline(deadline);
-    setIsDialogOpen(true);
+    setIsFormDialogOpen(true);
   };
-
   const handleAdd = () => {
     setEditingDeadline(null);
-    setIsDialogOpen(true);
+    setIsFormDialogOpen(true);
   };
-
   if (isLoadingCurrentSemester) {
     return (
       <div className="flex justify-center py-8">
@@ -224,7 +227,6 @@ const StaffProposalDeadline: React.FC = () => {
       </div>
     );
   }
-
   if (!currentSemesterData?.semester) {
     return (
       <Card>
@@ -239,110 +241,111 @@ const StaffProposalDeadline: React.FC = () => {
       </Card>
     );
   }
-
   const semester = currentSemesterData.semester;
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Academic Semester</CardTitle>
-          <CardDescription>
-            Deadlines will be set for: {semester.year} - Semester{" "}
-            {semester.semesterNumber}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <div>
-            <CardTitle>Proposal Deadline Cycles</CardTitle>
+    <>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Academic Semester</CardTitle>
             <CardDescription>
-              Manage deadlines for the current semester.
+              Deadlines will be set for:{semester.year}- Semester
+              {semester.semesterNumber}
             </CardDescription>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleAdd}>
-                <Plus className="mr-2 h-4 w-4" /> Add New Cycle
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingDeadline ? "Edit" : "Create"} Deadline Cycle
-                </DialogTitle>
-              </DialogHeader>
-              <DeadlineForm
-                currentSemesterId={semester.id}
-                onSuccess={() => setIsDialogOpen(false)}
-                deadlineToEdit={editingDeadline}
-              />
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student Deadline</TableHead>
-                <TableHead>Supervisor Deadline</TableHead>
-                <TableHead>DRC Deadline</TableHead>
-                <TableHead>DAC Deadline</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {deadlinesData?.deadlines &&
-              deadlinesData.deadlines.length > 0 ? (
-                deadlinesData.deadlines.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell>
-                      {new Date(d.studentSubmissionDate).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(d.facultyReviewDate).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(d.drcReviewDate).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(d.dacReviewDate).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(d.studentSubmissionDate) > new Date() ? (
-                        <Badge variant="default">Active</Badge>
-                      ) : (
-                        <Badge variant="secondary">Expired</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(d)}
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </Button>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle>Proposal Deadline Cycles</CardTitle>
+              <CardDescription>
+                Manage deadlines for the current semester.
+              </CardDescription>
+            </div>
+            <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={handleAdd}>
+                  <Plus className="mr-2 h-4 w-4" /> Add New Cycle
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingDeadline ? "Edit" : "Create"}Deadline Cycle
+                  </DialogTitle>
+                </DialogHeader>
+                <DeadlineForm
+                  currentSemesterId={semester.id}
+                  onSuccess={handleFormSuccess}
+                  deadlineToEdit={editingDeadline}
+                />
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student Deadline</TableHead>
+                  <TableHead>Supervisor Deadline</TableHead>
+                  <TableHead>DRC Deadline</TableHead>
+                  <TableHead>DAC Deadline</TableHead>
+                  <TableHead>Status</TableHead> <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deadlinesData?.deadlines &&
+                deadlinesData.deadlines.length > 0 ? (
+                  deadlinesData.deadlines.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell>
+                        {new Date(d.studentSubmissionDate).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(d.facultyReviewDate).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(d.drcReviewDate).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(d.dacReviewDate).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(d.studentSubmissionDate) > new Date() ? (
+                          <Badge variant="default">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Expired</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(d)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No deadline cycles found for this semester.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No deadline cycles found for this semester.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+      <NotifyProposalDeadlineDialog
+        isOpen={isNotifyDialogOpen}
+        setIsOpen={setIsNotifyDialogOpen}
+        view={viewData}
+      />
+    </>
   );
 };
-
 export default StaffProposalDeadline;

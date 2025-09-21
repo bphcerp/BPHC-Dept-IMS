@@ -15,7 +15,6 @@ import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import { DacReviewForm } from "@/components/phd/proposal/DacReviewForm";
 import { CheckCircle } from "lucide-react";
-
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
@@ -57,6 +56,7 @@ const DacViewProposal: React.FC = () => {
     },
     enabled: !!proposalId,
   });
+
   const submitReviewMutation = useMutation({
     mutationFn: (formData: FormData) =>
       api.post(`/phd/proposal/dacMember/submitReview/${proposalId}`, formData),
@@ -66,6 +66,7 @@ const DacViewProposal: React.FC = () => {
       void refetch();
     },
   });
+
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
@@ -74,6 +75,7 @@ const DacViewProposal: React.FC = () => {
     );
   if (isError || !proposal)
     return <p className="text-destructive">Could not load proposal details.</p>;
+
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -88,8 +90,10 @@ const DacViewProposal: React.FC = () => {
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
   ].filter((file) => file.url);
+
   const canReview =
     proposal.status === "dac_review" && !proposal.currentUserReview;
+
   return (
     <div className="space-y-6">
       <BackButton />
@@ -97,9 +101,11 @@ const DacViewProposal: React.FC = () => {
         <CardHeader>
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
-            Submitted by:{proposal.student.name}({proposal.student.email})<br />
-            Supervisor:{proposal.supervisor.name}({proposal.supervisor.email})
-            <br /> Status:
+            Submitted by: {proposal.student.name} ({proposal.student.email})
+            <br />
+            Supervisor: {proposal.supervisor.name} ({proposal.supervisor.email})
+            <br />
+            Status:{" "}
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}
             </Badge>
@@ -113,7 +119,7 @@ const DacViewProposal: React.FC = () => {
                 <li key={index}>
                   {coSup.coSupervisor?.name ??
                     coSup.coSupervisorName ??
-                    "External"}
+                    "External"}{" "}
                   ({coSup.coSupervisorEmail})
                 </li>
               ))}
@@ -139,7 +145,7 @@ const DacViewProposal: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p>
-              Your Decision:
+              Your Decision:{" "}
               <strong
                 className={
                   proposal.currentUserReview.approved

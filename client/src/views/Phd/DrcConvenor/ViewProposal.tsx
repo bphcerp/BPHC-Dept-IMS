@@ -8,6 +8,7 @@ import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import { DrcReviewForm } from "@/components/phd/proposal/DrcReviewForm";
 import { Check, X } from "lucide-react";
+
 interface DacReview {
   dacMember: { name: string | null; email: string };
   approved: boolean;
@@ -56,6 +57,7 @@ const DrcViewProposal: React.FC = () => {
     },
     enabled: !!proposalId,
   });
+
   if (isLoading)
     return (
       <div className="flex h-full items-center justify-center">
@@ -63,6 +65,7 @@ const DrcViewProposal: React.FC = () => {
       </div>
     );
   if (isError || !proposal) return <div>Error loading proposal details.</div>;
+
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -77,6 +80,7 @@ const DrcViewProposal: React.FC = () => {
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
   ];
+
   const renderActionCard = () => {
     switch (proposal.status) {
       case "drc_review":
@@ -96,10 +100,10 @@ const DrcViewProposal: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p>
-                This proposal is currently at the
+                This proposal is currently at the{" "}
                 <strong>
                   {proposal.status.replace(/_/g, " ").toUpperCase()}
-                </strong>
+                </strong>{" "}
                 stage and does not require your direct action on this page.
                 Please use the main dashboard for bulk actions.
               </p>
@@ -108,6 +112,7 @@ const DrcViewProposal: React.FC = () => {
         );
     }
   };
+
   return (
     <div className="space-y-6">
       <BackButton />
@@ -116,7 +121,7 @@ const DrcViewProposal: React.FC = () => {
           <CardTitle>{proposal.title}</CardTitle>
           <div className="pt-2 text-sm text-muted-foreground">
             <p>
-              Submitted by:{proposal.student.name}({proposal.student.email})
+              Submitted by: {proposal.student.name} ({proposal.student.email})
             </p>
             <div className="mt-1 flex items-center gap-2">
               <span>Status:</span>
@@ -130,7 +135,7 @@ const DrcViewProposal: React.FC = () => {
             <ul className="list-disc pl-5">
               {proposal.coSupervisors.map((coSup, index) => (
                 <li key={index}>
-                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName}(
+                  {coSup.coSupervisor?.name ?? coSup.coSupervisorName} (
                   {coSup.coSupervisorEmail})
                 </li>
               ))}
@@ -151,7 +156,7 @@ const DrcViewProposal: React.FC = () => {
                 className="flex items-center justify-between text-sm"
               >
                 <p>
-                  {review.dacMember.name}({review.dacMember.email})
+                  {review.dacMember.name} ({review.dacMember.email})
                 </p>
                 <Badge
                   variant={review.approved ? "default" : "destructive"}

@@ -42,6 +42,78 @@ const templateLinks: Record<string, string> = {
     "https://www.bits-pilani.ac.in/wp-content/uploads/6.-Format-for-proposed-as-Place-of-Research-Work.pdf",
 };
 
+// A helper component to render each file field, reducing repetition
+const FileField = ({
+  field,
+  existingFileUrl,
+  currentFile,
+  handleFileChange,
+}: {
+  field: { key: string; label: string; required: boolean };
+  existingFileUrl?: string | null;
+  currentFile: File | null;
+  handleFileChange: (key: string, file: File | null) => void;
+}) => (
+  <div key={field.key}>
+    <div className="mb-1 flex items-center gap-2">
+      <Label>
+        {field.label}
+        {field.required && "*"}
+      </Label>
+      <a
+        href={templateLinks[field.key]}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Download Template"
+        className="text-primary hover:underline"
+      >
+        <Download className="h-4 w-4" />
+      </a>
+    </div>
+    {existingFileUrl && !currentFile ? (
+      <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
+        <a
+          href={existingFileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+        >
+          <File className="h-4 w-4" /> View Current File{" "}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          onClick={() =>
+            document.getElementById(`uploader-${field.key}`)?.click()
+          }
+        >
+          <Replace className="mr-2 h-4 w-4" /> Replace
+        </Button>
+        <div className="hidden">
+          <FileUploader
+            id={`uploader-${field.key}`}
+            value={[]}
+            onValueChange={(newFiles) =>
+              handleFileChange(field.key, newFiles[0] ?? null)
+            }
+            accept={{ "application/pdf": [] }}
+          />
+        </div>
+      </div>
+    ) : (
+      <FileUploader
+        value={currentFile ? [currentFile] : []}
+        onValueChange={(newFiles) =>
+          handleFileChange(field.key, newFiles[0] ?? null)
+        }
+        accept={{ "application/pdf": [] }}
+      />
+    )}
+  </div>
+);
+
 export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   onSuccess,
   proposalData = null,
@@ -51,16 +123,12 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
-
-  // State to manage multiple co-supervisors
   const [internalCoSupervisors, setInternalCoSupervisors] = useState<string[]>(
     []
   );
   const [externalCoSupervisors, setExternalCoSupervisors] = useState<
     { name: string; email: string }[]
   >([]);
-
-  // Temporary state for the "add external" input fields
   const [tempExternalName, setTempExternalName] = useState("");
   const [tempExternalEmail, setTempExternalEmail] = useState("");
 
@@ -88,8 +156,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     if (proposalData && facultyList.length > 0) {
       setTitle(proposalData.title || "");
       setHasOutsideCoSupervisor(proposalData.hasOutsideCoSupervisor || false);
-
-      // Correctly populate internal and external co-supervisors on edit
       const internals =
         proposalData.coSupervisors
           ?.filter((s: any) =>
@@ -106,7 +172,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
             name: s.coSupervisorName || "",
             email: s.coSupervisorEmail,
           })) ?? [];
-
       setInternalCoSupervisors(internals);
       setExternalCoSupervisors(externals);
     }
@@ -132,7 +197,9 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     },
     onSuccess: () => {
       toast.success(
-        `Proposal ${proposalData?.id ? "resubmitted" : "submitted"} successfully!`
+        `Proposal ${
+          proposalData?.id ? "resubmitted" : "submitted"
+        } successfully!`
       );
       onSuccess();
     },
@@ -175,6 +242,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // (Existing validation logic remains the same)
     if (!proposalData?.proposalCycleId && !proposalData?.id) {
       toast.error("Please select a proposal submission cycle.");
       return;
@@ -221,8 +289,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
-
-    // Append arrays of co-supervisors
     formData.append(
       "internalCoSupervisors",
       JSON.stringify(internalCoSupervisors)
@@ -240,7 +306,8 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     mutation.mutate(formData);
   };
 
-  const fileFields = [
+  // Static definitions for file fields
+  const unconditionalFileFields = [
     { key: "appendixFile", label: "Appendix I", required: true },
     {
       key: "summaryFile",
@@ -252,23 +319,24 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       label: "Outline of Proposed Topic",
       required: true,
     },
-    {
-      key: "placeOfResearchFile",
-      label: "Format for Place of Research Work",
-      required: profileData?.phdType === "part-time",
-      condition: profileData?.phdType === "part-time",
-    },
+  ];
+
+  const partTimeFileField = {
+    key: "placeOfResearchFile",
+    label: "Format for Place of Research Work",
+    required: true,
+  };
+
+  const outsideSupervisorFileFields = [
     {
       key: "outsideCoSupervisorFormatFile",
       label: "Format for Proposed Outside Co-Supervisor",
-      required: hasOutsideCoSupervisor,
-      condition: hasOutsideCoSupervisor,
+      required: true,
     },
     {
       key: "outsideSupervisorBiodataFile",
       label: "Format for Outside Supervisor's Biodata",
-      required: hasOutsideCoSupervisor,
-      condition: hasOutsideCoSupervisor,
+      required: true,
     },
   ];
 
@@ -284,71 +352,26 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         />
       </div>
 
-      {fileFields
-        .filter((f) => f.condition ?? true)
-        .map((field) => {
-          const existingFileUrl = proposalData?.[`${field.key}Url`];
-          return (
-            <div key={field.key}>
-              <div className="mb-1 flex items-center gap-2">
-                <Label>
-                  {field.label}
-                  {field.required && "*"}
-                </Label>
-                <a
-                  href={templateLinks[field.key]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Download Template"
-                  className="text-primary hover:underline"
-                >
-                  <Download className="h-4 w-4" />
-                </a>
-              </div>
-              {existingFileUrl && !files[field.key] ? (
-                <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
-                  <a
-                    href={existingFileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
-                  >
-                    <File className="h-4 w-4" /> View Current File{" "}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() =>
-                      document.getElementById(`uploader-${field.key}`)?.click()
-                    }
-                  >
-                    <Replace className="mr-2 h-4 w-4" /> Replace
-                  </Button>
-                  <div className="hidden">
-                    <FileUploader
-                      id={`uploader-${field.key}`}
-                      value={[]}
-                      onValueChange={(newFiles) =>
-                        handleFileChange(field.key, newFiles[0] ?? null)
-                      }
-                      accept={{ "application/pdf": [] }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <FileUploader
-                  value={files[field.key] ? [files[field.key] as File] : []}
-                  onValueChange={(newFiles) =>
-                    handleFileChange(field.key, newFiles[0] ?? null)
-                  }
-                  accept={{ "application/pdf": [] }}
-                />
-              )}
-            </div>
-          );
-        })}
+      {/* Unconditional file fields */}
+      {unconditionalFileFields.map((field) => (
+        <FileField
+          key={field.key}
+          field={field}
+          existingFileUrl={proposalData?.[`${field.key}Url`]}
+          currentFile={files[field.key]}
+          handleFileChange={handleFileChange}
+        />
+      ))}
+
+      {/* Conditional field for Part-Time students */}
+      {profileData?.phdType === "part-time" && (
+        <FileField
+          field={partTimeFileField}
+          existingFileUrl={proposalData?.[`${partTimeFileField.key}Url`]}
+          currentFile={files[partTimeFileField.key]}
+          handleFileChange={handleFileChange}
+        />
+      )}
 
       <div className="space-y-4 rounded-md border p-4">
         <Label className="font-semibold">Co-Supervisors</Label>
@@ -429,6 +452,18 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           )}
         </div>
       </div>
+
+      {/* Conditional fields for Outside Co-Supervisor - APPEAR HERE NOW */}
+      {hasOutsideCoSupervisor &&
+        outsideSupervisorFileFields.map((field) => (
+          <FileField
+            key={field.key}
+            field={field}
+            existingFileUrl={proposalData?.[`${field.key}Url`]}
+            currentFile={files[field.key]}
+            handleFileChange={handleFileChange}
+          />
+        ))}
 
       <div className="space-y-2 rounded-md border p-4">
         <div className="flex items-center space-x-2">

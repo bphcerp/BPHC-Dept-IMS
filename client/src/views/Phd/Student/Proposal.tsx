@@ -45,6 +45,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline.tsx";
+import { phdSchemas } from "lib";
 interface ProposalSemester {
   id: number;
   studentSubmissionDate: string;
@@ -64,7 +66,7 @@ interface DacSummary {
 interface Proposal {
   id: number;
   title: string;
-  status: string;
+  status: (typeof phdSchemas.phdProposalStatuses)[number];
   updatedAt: string;
   active: boolean;
   comments?: string | null;
@@ -129,9 +131,9 @@ const StudentProposal: React.FC = () => {
     queryKey: ["proposal-eligibility"],
     queryFn: async () => {
       const res = await api.get<{
-    isEligible: boolean;
-    qualificationDate: string | null;
-  }>("/phd/student/getProposalEligibility");
+        isEligible: boolean;
+        qualificationDate: string | null;
+      }>("/phd/student/getProposalEligibility");
       return res.data;
     },
   });
@@ -139,9 +141,9 @@ const StudentProposal: React.FC = () => {
     queryKey: ["student-proposals"],
     queryFn: async () => {
       const response = await api.get<{
-    proposals: Proposal[];
-    canApply: boolean;
-  }>("/phd/proposal/student/getProposals");
+        proposals: Proposal[];
+        canApply: boolean;
+      }>("/phd/proposal/student/getProposals");
       return response.data;
     },
     enabled: !!eligibility?.isEligible,
@@ -149,7 +151,9 @@ const StudentProposal: React.FC = () => {
   const { data: deadlineData } = useQuery({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
-      const res = await api.get<{ deadlines: ProposalSemester[] }>("/phd/student/getProposalDeadlines");
+      const res = await api.get<{ deadlines: ProposalSemester[] }>(
+        "/phd/student/getProposalDeadlines"
+      );
       return res.data;
     },
     enabled: !!eligibility?.isEligible,
@@ -233,7 +237,7 @@ const StudentProposal: React.FC = () => {
               <CalendarCheck className="h-4 w-4 text-green-700" />
               <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
               <AlertDescription className="text-green-700">
-                Congratulations! You passed your qualifying exam on:
+                Congratulations! You passed your qualifying exam on:{" "}
                 <strong>
                   {new Date(eligibility.qualificationDate).toLocaleDateString()}
                 </strong>
@@ -252,6 +256,7 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
+      {eligibility?.isEligible && <ProposalStatusTimeline />}
       {eligibility?.isEligible && currentDeadlines && (
         <DeadlinesCard
           deadlines={currentDeadlines}
@@ -269,7 +274,8 @@ const StudentProposal: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead> <TableHead>Status</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -382,11 +388,11 @@ const StudentProposal: React.FC = () => {
                             <Info className="h-4 w-4" />
                             <AlertTitle>Seminar Details</AlertTitle>
                             <AlertDescription>
-                              Your seminar is tentatively scheduled for
+                              Your seminar is tentatively scheduled for{" "}
                               <strong>
                                 {new Date(p.seminarDate).toLocaleDateString()}
-                              </strong>
-                              at <strong>{p.seminarTime}</strong> in
+                              </strong>{" "}
+                              at <strong>{p.seminarTime}</strong> in{" "}
                               <strong>{p.seminarVenue}</strong>.
                             </AlertDescription>
                           </Alert>

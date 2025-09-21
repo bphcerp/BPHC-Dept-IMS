@@ -23,7 +23,7 @@ export default router.post(
                 seminarDate: new Date(body.seminarDate),
                 seminarTime: body.seminarTime,
                 seminarVenue: body.seminarVenue,
-                status: "finalising",
+                status: "finalising_documents",
             })
             .where(
                 and(

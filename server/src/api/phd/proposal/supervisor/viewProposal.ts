@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/supervisor/viewProposal.ts
 import db from "@/config/db/index.ts";
 import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -35,8 +36,12 @@ router.get(
         });
         if (!proposal)
             throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
+        const isResubmission =
+            proposal.status === "supervisor_review" &&
+            proposal.updatedAt.getTime() !== proposal.createdAt.getTime();
         const response = {
             ...proposal,
+            isResubmission,
             appendixFileUrl: `${environment.SERVER_URL}/f/${proposal.appendixFileId}`,
             summaryFileUrl: `${environment.SERVER_URL}/f/${proposal.summaryFileId}`,
             outlineFileUrl: `${environment.SERVER_URL}/f/${proposal.outlineFileId}`,

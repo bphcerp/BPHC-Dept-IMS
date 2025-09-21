@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
+import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
 
 interface ProposalSemester {
   id: number;
@@ -29,24 +30,16 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: {
-    year: string;
-    semesterNumber: number;
-  };
+  semester: { year: string; semesterNumber: number };
 }
-
 interface Proposal {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: {
-    name: string;
-    email: string;
-  };
+  student: { name: string; email: string };
   proposalSemester: ProposalSemester | null;
 }
-
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -63,9 +56,7 @@ const DeadlinesCard = ({
     drcReviewDate: "DRC Review",
     dacReviewDate: "DAC Review",
   };
-
   const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
-
   return (
     <Card className="mb-6 bg-muted/30">
       <CardHeader>
@@ -91,13 +82,11 @@ const DeadlinesCard = ({
     </Card>
   );
 };
-
 const SupervisorProposal: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
-
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
@@ -107,13 +96,11 @@ const SupervisorProposal: React.FC = () => {
       return response.data;
     },
   });
-
   useEffect(() => {
     if (semesters && semesters.length > 0 && !selectedSemesterId) {
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
-
   const {
     data: proposals,
     isLoading,
@@ -129,9 +116,7 @@ const SupervisorProposal: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
-
   const semesterDeadlines = proposals?.[0]?.proposalSemester;
-
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -140,6 +125,7 @@ const SupervisorProposal: React.FC = () => {
           Review and manage PhD proposal submissions for your students.
         </p>
       </div>
+      <ProposalStatusTimeline />
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -155,14 +141,12 @@ const SupervisorProposal: React.FC = () => {
           />
         </CardContent>
       </Card>
-
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="facultyReviewDate"
         />
       )}
-
       <Card>
         <CardHeader>
           <CardTitle>Proposals</CardTitle>
@@ -235,5 +219,4 @@ const SupervisorProposal: React.FC = () => {
     </div>
   );
 };
-
 export default SupervisorProposal;

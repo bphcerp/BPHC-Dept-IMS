@@ -34,6 +34,8 @@ import { toast } from "sonner";
 import RequestSeminarDetailsDialog from "@/components/phd/proposal/RequestSeminarDetailsDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
+
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -207,14 +209,15 @@ const DrcProposalManagement: React.FC = () => {
   const openRequestDialog = () => {
     const selected =
       proposals?.filter(
-        (p) => selectedProposalIds.includes(p.id) && p.status === "dac_accepted"
+        (p) =>
+          selectedProposalIds.includes(p.id) && p.status === "seminar_pending"
       ) ?? [];
     if (selected.length > 0) {
       setProposalsForDialog(selected);
       setIsRequestDialogOpen(true);
     } else {
       toast.info(
-        "Please select proposals with 'DAC Accepted' status to request details."
+        "Please select proposals with 'Seminar Pending' status to request details."
       );
     }
   };
@@ -238,6 +241,7 @@ const DrcProposalManagement: React.FC = () => {
           Monitor and manage all PhD proposals for the selected semester.
         </p>
       </div>
+      <ProposalStatusTimeline />
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -261,10 +265,10 @@ const DrcProposalManagement: React.FC = () => {
       )}
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>Action Required for DAC Accepted Proposals</AlertTitle>
+        <AlertTitle>Action Required for Seminar Pending Proposals</AlertTitle>
         <AlertDescription>
-          To proceed with proposals marked as &apos;DAC ACCEPTED&apos;, please
-          select them from the table below and click the &apos;Request
+          To proceed with proposals marked as &apos;SEMINAR PENDING&apos;,
+          please select them from the table below and click the &apos;Request
           Details&apos; button. This will send a notification to the supervisor
           to provide seminar details.
         </AlertDescription>
@@ -282,35 +286,35 @@ const DrcProposalManagement: React.FC = () => {
               <Button
                 onClick={openRequestDialog}
                 disabled={
-                  getSelectedProposalsByStatus("dac_accepted").length === 0
+                  getSelectedProposalsByStatus("seminar_pending").length === 0
                 }
               >
-                <Send className="mr-2 h-4 w-4" /> Request Details (
-                {getSelectedProposalsByStatus("dac_accepted").length})
+                <Send className="mr-2 h-4 w-4" /> Request Details(
+                {getSelectedProposalsByStatus("seminar_pending").length})
               </Button>
               <Button
                 onClick={() =>
                   downloadPackagesMutation.mutate(selectedProposalIds)
                 }
                 disabled={
-                  getSelectedProposalsByStatus("finalising").length === 0 ||
-                  downloadPackagesMutation.isLoading
+                  getSelectedProposalsByStatus("finalising_documents")
+                    .length === 0 || downloadPackagesMutation.isLoading
                 }
               >
-                <Download className="mr-2 h-4 w-4" /> Download all forms (
-                {getSelectedProposalsByStatus("finalising").length})
+                <Download className="mr-2 h-4 w-4" /> Download Forms(
+                {getSelectedProposalsByStatus("finalising_documents").length})
               </Button>
               <Button
                 onClick={() =>
                   finalizeProposalsMutation.mutate(selectedProposalIds)
                 }
                 disabled={
-                  getSelectedProposalsByStatus("formalising").length === 0 ||
-                  finalizeProposalsMutation.isLoading
+                  getSelectedProposalsByStatus("finalising_documents")
+                    .length === 0 || finalizeProposalsMutation.isLoading
                 }
               >
-                <CheckCircle className="mr-2 h-4 w-4" /> Finalize (
-                {getSelectedProposalsByStatus("formalising").length})
+                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Complete(
+                {getSelectedProposalsByStatus("finalising_documents").length})
               </Button>
               <Button
                 onClick={() =>
@@ -321,7 +325,7 @@ const DrcProposalManagement: React.FC = () => {
                   downloadNoticeMutation.isLoading
                 }
               >
-                <Download className="mr-2 h-4 w-4" /> Sample Notice(
+                <Download className="mr-2 h-4 w-4" /> Generate Notice(
                 {selectedProposalIds.length})
               </Button>
             </div>
@@ -342,7 +346,8 @@ const DrcProposalManagement: React.FC = () => {
                     disabled={!proposals || proposals.length === 0}
                   />
                 </TableHead>
-                <TableHead>Student</TableHead> <TableHead>Title</TableHead>
+                <TableHead>Student</TableHead>
+                <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -382,9 +387,8 @@ const DrcProposalManagement: React.FC = () => {
                           handleSelectProposal(proposal.id, checked as boolean)
                         }
                         disabled={
-                          proposal.status !== "dac_accepted" &&
-                          proposal.status !== "finalising" &&
-                          proposal.status !== "formalising"
+                          proposal.status !== "seminar_pending" &&
+                          proposal.status !== "finalising_documents"
                         }
                       />
                     </TableCell>
@@ -412,7 +416,7 @@ const DrcProposalManagement: React.FC = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {proposal.status === "dac_accepted" && (
+                      {proposal.status === "seminar_pending" && (
                         <Button
                           variant="ghost"
                           size="icon"

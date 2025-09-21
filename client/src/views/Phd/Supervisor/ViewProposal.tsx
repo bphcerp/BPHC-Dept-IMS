@@ -17,30 +17,29 @@ import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReview
 import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm";
 import { phdSchemas } from "lib";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, AlertTriangle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DacReview {
   dacMember: { name: string | null; email: string };
   approved: boolean;
 }
-
 interface DacMember {
   dacMember: { name: string | null; email: string } | null;
   dacMemberEmail: string;
   dacMemberName: string | null;
 }
-
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
   coSupervisor: { name: string | null; email: string } | null;
 }
-
 interface Proposal {
   id: number;
   title: string;
   status: string;
   comments: string | null;
+  isResubmission: boolean;
   student: { email: string; name: string | null };
   dacMembers: DacMember[];
   dacReviews: DacReview[];
@@ -53,7 +52,6 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
   proposalSemester: { facultyReviewDate: string };
 }
-
 const SupervisorViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
@@ -168,7 +166,7 @@ const SupervisorViewProposal: React.FC = () => {
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 This proposal is not currently awaiting your review. Current
-                status:
+                status:{" "}
                 <strong>
                   {proposal.status.replace(/_/g, " ").toUpperCase()}
                 </strong>
@@ -184,16 +182,22 @@ const SupervisorViewProposal: React.FC = () => {
         );
     }
   };
+
   return (
     <div className="space-y-6">
       <BackButton />
       <Card>
         <CardHeader>
-          <CardTitle>{proposal.title}</CardTitle>
+          <CardTitle className="flex items-center gap-4">
+            {proposal.title}
+            {proposal.isResubmission && (
+              <Badge variant="outline">Resubmission</Badge>
+            )}
+          </CardTitle>
           <CardDescription>
             Submitted by: {proposal.student.name} ({proposal.student.email})
             <br />
-            Status:
+            Status:{" "}
             <Badge>{proposal.status.replace(/_/g, " ").toUpperCase()}</Badge>
           </CardDescription>
         </CardHeader>
@@ -211,6 +215,17 @@ const SupervisorViewProposal: React.FC = () => {
           </CardContent>
         )}
       </Card>
+      {proposal.comments && ["supervisor_review"].includes(proposal.status) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Feedback & Comments from Previous Stage</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-2">
+              {proposal.comments && <p>{proposal.comments}</p>}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
       <ProposalDocumentsViewer files={documentFiles} />
       {proposal.dacReviews && proposal.dacReviews.length > 0 && (
         <Card>

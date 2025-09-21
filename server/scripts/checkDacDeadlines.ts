@@ -1,6 +1,6 @@
 import db from "@/config/db/index.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { modules } from "lib";
@@ -9,7 +9,7 @@ async function checkDacDeadlines() {
     logger.info("Running job: checkDacDeadlines");
     const now = new Date();
     const overdueProposals = await db.query.phdProposals.findMany({
-        where: eq(phdProposals.status, "dac_review"),
+        where: eq(phdProposals.status, "dac_accepted"),
         with: { student: true, proposalSemester: true },
     });
     const proposalsToFlag = overdueProposals.filter(
@@ -19,6 +19,14 @@ async function checkDacDeadlines() {
         logger.info("No overdue DAC reviews found.");
         return;
     }
+    const proposalIdsToUpdate = proposalsToFlag.map((p) => p.id);
+    await db
+        .update(phdProposals)
+        .set({ status: "seminar_pending" })
+        .where(inArray(phdProposals.id, proposalIdsToUpdate));
+    logger.info(
+        `Updated ${proposalsToFlag.length}proposals to 'seminar_pending'.`
+    );
     const drcConveners = await getUsersWithPermission("phd:drc:proposal");
     if (drcConveners.length === 0) {
         logger.warn("No DRC conveners found to assign reminder To-Dos.");
@@ -31,7 +39,7 @@ async function checkDacDeadlines() {
                 assignedTo: drc.email,
                 createdBy: "system",
                 title: `DAC Review Overdue for ${proposal.student.name}`,
-                description: `The DAC review deadline for ${proposal.student.name}(${proposal.student.email}) has passed. Please follow up with the DAC members and then request seminar details from the supervisor.`,
+                description: `The DAC review deadline for ${proposal.student.name}(${proposal.student.email})has passed. The proposal status has been updated. Please follow up with the DAC members and then request seminar details from the supervisor.`,
                 module: modules[3],
                 completionEvent: `proposal:dac-deadline-passed:${proposal.id}`,
                 link: `/phd/drc-convenor/proposal-management/${proposal.id}`,
@@ -41,7 +49,7 @@ async function checkDacDeadlines() {
     if (todosToCreate.length > 0) {
         await createTodos(todosToCreate);
         logger.info(
-            `Created ${todosToCreate.length} To-Dos for overdue DAC reviews.`
+            `Created ${todosToCreate.length}To-Dos for overdue DAC reviews.`
         );
     } else {
         logger.info("No new To-Dos needed for overdue DAC reviews.");
