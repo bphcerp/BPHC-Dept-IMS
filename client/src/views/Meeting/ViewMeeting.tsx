@@ -49,7 +49,7 @@ const ViewMeeting: React.FC = () => {
   const updateSlotMutation = useMutation({
     mutationFn: (variables: { slotId: number; data: UpdateSlotFormData }) =>
       api.put(
-        `/meeting/update-slot/${meetingId}/slot/${variables.slotId}`,
+        `/meeting/update-details/${meetingId}/slot/${variables.slotId}`,
         variables.data
       ),
     onSuccess: () => {
