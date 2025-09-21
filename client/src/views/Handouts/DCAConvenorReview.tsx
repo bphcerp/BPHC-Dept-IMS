@@ -210,7 +210,7 @@ const DCAConvenorReview: React.FC = () => {
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
               />
-              {data.status === "review pending" ? (
+              {data.status === "reviewed" ? (
                 <div className="flex w-full justify-center space-x-4">
                   <Button
                     onClick={() => handleSubmit("approved")}
