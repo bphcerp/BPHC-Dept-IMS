@@ -10,8 +10,9 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/Auth";
 import { Combobox } from "@/components/ui/combobox";
-import { File, ExternalLink, Replace, Download, X } from "lucide-react";
+import { File, ExternalLink, Replace, Download, X, Info } from "lucide-react";
 import { z } from "zod";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface StudentProposalFormProps {
   onSuccess: () => void;
@@ -242,7 +243,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // (Existing validation logic remains the same)
     if (!proposalData?.proposalCycleId && !proposalData?.id) {
       toast.error("Please select a proposal submission cycle.");
       return;
@@ -306,7 +306,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     mutation.mutate(formData);
   };
 
-  // Static definitions for file fields
   const unconditionalFileFields = [
     { key: "appendixFile", label: "Appendix I", required: true },
     {
@@ -342,6 +341,17 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+      {proposalData?.id && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Resubmitting Proposal</AlertTitle>
+          <AlertDescription>
+            The form fields have been pre-filled with your previous submission.
+            Please review the details and upload any corrected documents below.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div>
         <Label htmlFor="title">Proposal Title</Label>
         <Input
@@ -352,7 +362,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         />
       </div>
 
-      {/* Unconditional file fields */}
       {unconditionalFileFields.map((field) => (
         <FileField
           key={field.key}
@@ -363,7 +372,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         />
       ))}
 
-      {/* Conditional field for Part-Time students */}
       {profileData?.phdType === "part-time" && (
         <FileField
           field={partTimeFileField}
@@ -453,7 +461,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         </div>
       </div>
 
-      {/* Conditional fields for Outside Co-Supervisor - APPEAR HERE NOW */}
       {hasOutsideCoSupervisor &&
         outsideSupervisorFileFields.map((field) => (
           <FileField

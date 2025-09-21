@@ -293,7 +293,7 @@ const DrcProposalManagement: React.FC = () => {
                   ]).length === 0
                 }
               >
-                <Send className="mr-2 h-4 w-4" /> Request Details(
+                <Send className="mr-2 h-4 w-4" /> Request Seminar Details(
                 {
                   getSelectedProposalsByStatus([
                     "seminar_pending",

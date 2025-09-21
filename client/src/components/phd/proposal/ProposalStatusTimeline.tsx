@@ -245,11 +245,8 @@ const ProposalStatusTimeline: React.FC<ProposalStatusTimelineProps> = ({
           {modalData?.roleSpecificDescription?.[role] && (
             <>
               <Separator />
-              <div className="space-y-2 rounded-lg border bg-blue-50/50 p-3 dark:bg-blue-900/20">
-                <h4 className="font-semibold text-blue-800 dark:text-blue-300">
-                  For Your Attention ({role})
-                </h4>
-                <p className="text-sm text-blue-700 dark:text-blue-400">
+              <div className="space-y-2 rounded-lg border bg-muted/50 p-3">
+                <p className="text-sm text-muted-foreground">
                   {modalData.roleSpecificDescription[role]}
                 </p>
               </div>
