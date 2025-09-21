@@ -11,9 +11,10 @@ import { meetingSchemas } from "lib";
 import { z } from "zod";
 
 type FinalizeFormData = z.infer<typeof meetingSchemas.finalizeMeetingSchema>;
-type UpdateDetailsFormData = z.infer<
-  typeof meetingSchemas.updateMeetingDetailsSchema
+type UpdateSlotFormData = z.infer<
+  typeof meetingSchemas.updateMeetingSlotSchema
 >;
+type AddInviteesFormData = z.infer<typeof meetingSchemas.addInviteesSchema>;
 
 const ViewMeeting: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,9 +46,12 @@ const ViewMeeting: React.FC = () => {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (variables: UpdateDetailsFormData) =>
-      api.put(`/meeting/update-details/${meetingId}`, variables),
+  const updateSlotMutation = useMutation({
+    mutationFn: (variables: { slotId: number; data: UpdateSlotFormData }) =>
+      api.put(
+        `/meeting/update-details/${meetingId}/slot/${variables.slotId}`,
+        variables.data
+      ),
     onSuccess: () => {
       toast.success("Meeting details have been updated!");
       void queryClient.invalidateQueries({ queryKey: ["meeting", meetingId] });
@@ -60,13 +64,24 @@ const ViewMeeting: React.FC = () => {
     },
   });
 
+  const addInviteesMutation = useMutation({
+    mutationFn: (variables: Omit<AddInviteesFormData, "meetingId">) =>
+      api.post("/meeting/add-invitees", { meetingId, ...variables }),
+    onSuccess: () => {
+      toast.success("New invitees have been added and notified.");
+      void queryClient.invalidateQueries({ queryKey: ["meeting", meetingId] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to add invitees.");
+    },
+  });
+
   if (isLoading)
     return (
       <div className="flex justify-center p-8">
         <LoadingSpinner />
       </div>
     );
-
   if (isError || !data)
     return (
       <p className="text-center text-destructive">
@@ -81,8 +96,10 @@ const ViewMeeting: React.FC = () => {
       meeting={data}
       onFinalize={finalizeMutation.mutate}
       isFinalizing={finalizeMutation.isLoading}
-      onUpdateDetails={updateMutation.mutate}
-      isUpdating={updateMutation.isLoading}
+      onUpdateSlot={updateSlotMutation.mutate}
+      isUpdating={updateSlotMutation.isLoading}
+      onAddInvitees={addInviteesMutation.mutate}
+      isAddingInvitees={addInviteesMutation.isLoading}
       isOrganizer={isOrganizer}
     />
   );

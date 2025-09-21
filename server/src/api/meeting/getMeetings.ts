@@ -18,8 +18,6 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res) => {
         const userEmail = req.user!.email;
-
-        // Subquery to get participant count for each meeting
         const participantCountsSq = db
             .select({
                 meetingId: meetingParticipants.meetingId,
@@ -31,7 +29,6 @@ router.get(
             .groupBy(meetingParticipants.meetingId)
             .as("participant_counts");
 
-        // Subquery to get response count for each meeting
         const responseCountsSq = db
             .select({
                 meetingId: meetingTimeSlots.meetingId,
@@ -47,13 +44,11 @@ router.get(
             .groupBy(meetingTimeSlots.meetingId)
             .as("response_counts");
 
-        // Query for meetings organized by the user
         const organizedMeetings = await db
             .select({
                 id: meetings.id,
                 title: meetings.title,
                 status: meetings.status,
-                finalizedTime: meetings.finalizedTime,
                 organizerEmail: meetings.organizerEmail,
                 participantCount:
                     sql<number>`coalesce(${participantCountsSq.count}, 0)`.mapWith(
@@ -82,13 +77,11 @@ router.get(
             )
             .orderBy(meetings.createdAt);
 
-        // Query for meetings the user is invited to
         const invitedMeetings = await db
             .select({
                 id: meetings.id,
                 title: meetings.title,
                 status: meetings.status,
-                finalizedTime: meetings.finalizedTime,
                 organizerEmail: meetings.organizerEmail,
                 participantCount:
                     sql<number>`coalesce(${participantCountsSq.count}, 0)`.mapWith(

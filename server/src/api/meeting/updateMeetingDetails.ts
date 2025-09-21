@@ -3,7 +3,7 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { meetings } from "@/config/db/schema/meeting.ts";
+import { meetings, finalizedMeetingSlots } from "@/config/db/schema/meeting.ts";
 import { meetingSchemas, modules } from "lib";
 import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
@@ -13,11 +13,12 @@ import { sendBulkEmails } from "@/lib/common/email.ts";
 const router = express.Router();
 
 router.put(
-    "/:id",
-    checkAccess("meeting:update"),
+    "/:meetingId/slot/:slotId",
+    checkAccess(), 
     asyncHandler(async (req, res) => {
-        const meetingId = parseInt(req.params.id, 10);
-        const body = meetingSchemas.updateMeetingDetailsSchema.parse(req.body);
+        const meetingId = parseInt(req.params.meetingId, 10);
+        const slotId = parseInt(req.params.slotId, 10);
+        const body = meetingSchemas.updateMeetingSlotSchema.parse(req.body);
         const organizerEmail = req.user!.email;
 
         const meeting = await db.query.meetings.findFirst({
@@ -25,15 +26,27 @@ router.put(
                 eq(meetings.id, meetingId),
                 eq(meetings.organizerEmail, organizerEmail)
             ),
-            with: {
-                participants: true,
-            },
+            with: { participants: true },
         });
 
         if (!meeting) {
             throw new HttpError(
                 HttpCode.FORBIDDEN,
                 "You are not the organizer of this meeting."
+            );
+        }
+
+        const slot = await db.query.finalizedMeetingSlots.findFirst({
+            where: and(
+                eq(finalizedMeetingSlots.id, slotId),
+                eq(finalizedMeetingSlots.meetingId, meetingId)
+            ),
+        });
+
+        if (!slot) {
+            throw new HttpError(
+                HttpCode.NOT_FOUND,
+                "Finalized slot not found for this meeting."
             );
         }
 
@@ -45,18 +58,17 @@ router.put(
         }
 
         await db
-            .update(meetings)
+            .update(finalizedMeetingSlots)
             .set({
                 venue: body.venue ?? null,
                 googleMeetLink: body.googleMeetLink ?? null,
             })
-            .where(eq(meetings.id, meetingId));
+            .where(eq(finalizedMeetingSlots.id, slotId));
 
         const allParticipants = [
             ...meeting.participants.map((p) => p.participantEmail),
             organizerEmail,
         ];
-
         const subject = `Meeting Details Updated: ${meeting.title}`;
         let locationDetails = "";
         if (body.venue) locationDetails += `New Venue: ${body.venue}\n`;
@@ -66,7 +78,7 @@ router.put(
 
         const description = `The details for the meeting "${
             meeting.title
-        }" scheduled for ${meeting.finalizedTime!.toLocaleString()} have been updated.\n\n${locationDetails}`;
+        }" scheduled for ${slot.startTime.toLocaleString()} have been updated.\n\n${locationDetails}`;
 
         await createNotifications(
             allParticipants.map((email) => ({
@@ -76,7 +88,6 @@ router.put(
                 module: modules[11],
             }))
         );
-
         await sendBulkEmails(
             allParticipants.map((email) => ({
                 to: email,
