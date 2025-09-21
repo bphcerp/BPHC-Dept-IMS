@@ -30,6 +30,9 @@ router.get(
                         },
                     },
                 },
+                finalizedSlots: {
+                    orderBy: (slots, { asc }) => [asc(slots.createdAt)],
+                },
             },
         });
 
@@ -47,6 +50,15 @@ router.get(
                 "You do not have access to this meeting."
             );
         }
+
+        const finalizationTime = meeting.finalizedSlots[0]?.createdAt;
+        const classifiedParticipants = meeting.participants.map((p) => ({
+            ...p,
+            type:
+                finalizationTime && p.createdAt > finalizationTime
+                    ? "other"
+                    : "initial",
+        }));
 
         const augmentedTimeSlots = meeting.timeSlots.map((slot) => {
             const availableCount = slot.availability.filter(
@@ -67,7 +79,12 @@ router.get(
             };
         });
 
-        const response = { ...meeting, timeSlots: augmentedTimeSlots };
+        const response = {
+            ...meeting,
+            participants: classifiedParticipants, 
+            timeSlots: augmentedTimeSlots,
+        };
+
         res.status(200).json({ meeting: response });
     })
 );

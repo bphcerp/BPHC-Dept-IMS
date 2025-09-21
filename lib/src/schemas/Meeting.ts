@@ -33,23 +33,25 @@ export const createMeetingSchema = createMeetingObjectSchema.refine(
 
 export { createMeetingObjectSchema };
 
-const finalizeMeetingObjectSchema = z.object({
-    meetingId: z.number().int(),
-    finalTimeSlotId: z.number().int(),
-    venue: z.string().trim().optional(),
-    googleMeetLink: z.string().trim().optional(),
-});
-
-export const finalizeMeetingSchema = finalizeMeetingObjectSchema.refine(
-    (data) => !!data.venue || !!data.googleMeetLink,
-    {
+const finalizedSlotSchema = z
+    .object({
+        timeSlotId: z.number().int(),
+        venue: z.string().trim().optional(),
+        googleMeetLink: z.string().trim().url("Must be a valid URL").optional(),
+    })
+    .refine((data) => !!data.venue || !!data.googleMeetLink, {
         message: "Either a venue or a Google Meet link must be provided.",
         path: ["venue"],
-    }
-);
-export { finalizeMeetingObjectSchema };
+    });
 
-export const updateMeetingDetailsSchema = z
+export const finalizeMeetingSchema = z.object({
+    meetingId: z.number().int(),
+    finalSlots: z
+        .array(finalizedSlotSchema)
+        .min(1, "At least one slot must be finalized."),
+});
+
+export const updateMeetingSlotSchema = z
     .object({
         venue: z.string().trim().optional(),
         googleMeetLink: z.string().url("Must be a valid URL").trim().optional(),
@@ -73,4 +75,11 @@ export const submitAvailabilitySchema = z.object({
 
 export const remindMeetingSchema = z.object({
     meetingId: z.number().int(),
+});
+
+export const addInviteesSchema = z.object({
+    meetingId: z.number().int(),
+    participants: z
+        .array(z.string().email())
+        .min(1, "At least one participant must be selected."),
 });

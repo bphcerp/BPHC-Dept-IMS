@@ -3,9 +3,13 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { meetings, meetingTimeSlots } from "@/config/db/schema/meeting.ts";
+import {
+    meetings,
+    meetingTimeSlots,
+    finalizedMeetingSlots,
+} from "@/config/db/schema/meeting.ts";
 import { meetingSchemas, modules } from "lib";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
@@ -28,9 +32,7 @@ router.post(
                 eq(meetings.id, body.meetingId),
                 eq(meetings.organizerEmail, organizerEmail)
             ),
-            with: {
-                participants: true,
-            },
+            with: { participants: true },
         });
 
         if (!meeting) {
@@ -46,50 +48,79 @@ router.post(
             );
         }
 
-        const finalSlot = await db.query.meetingTimeSlots.findFirst({
-            where: and(
-                eq(meetingTimeSlots.id, body.finalTimeSlotId),
-                eq(meetingTimeSlots.meetingId, body.meetingId)
-            ),
-        });
+        const timeSlotIds = body.finalSlots.map((s) => s.timeSlotId);
+        const requestedTimeSlots = await db
+            .select()
+            .from(meetingTimeSlots)
+            .where(
+                and(
+                    eq(meetingTimeSlots.meetingId, body.meetingId),
+                    inArray(meetingTimeSlots.id, timeSlotIds)
+                )
+            );
 
-        if (!finalSlot) {
+        if (requestedTimeSlots.length !== timeSlotIds.length) {
             throw new HttpError(
                 HttpCode.NOT_FOUND,
-                "The selected time slot does not belong to this meeting."
+                "One or more selected time slots do not belong to this meeting."
             );
         }
 
-        await db
-            .update(meetings)
-            .set({
-                finalizedTime: finalSlot.startTime,
-                venue: body.venue ?? null,
-                googleMeetLink: body.googleMeetLink ?? null,
-                status: "scheduled",
-            })
-            .where(eq(meetings.id, body.meetingId));
+        await db.transaction(async (tx) => {
+            await tx
+                .update(meetings)
+                .set({ status: "scheduled" })
+                .where(eq(meetings.id, body.meetingId));
 
-        const meetingEndTime = new Date(
-            finalSlot.startTime.getTime() + meeting.duration * 60000
-        );
-        await schedulePreMeetingReminder(meeting.id, finalSlot.startTime);
-        await scheduleCompletionJob(meeting.id, meetingEndTime);
+            for (const finalSlot of body.finalSlots) {
+                const originalSlot = requestedTimeSlots.find(
+                    (ts) => ts.id === finalSlot.timeSlotId
+                )!;
+                const meetingEndTime = new Date(
+                    originalSlot.startTime.getTime() + meeting.duration * 60000
+                );
+
+                const [newFinalizedSlot] = await tx
+                    .insert(finalizedMeetingSlots)
+                    .values({
+                        meetingId: body.meetingId,
+                        startTime: originalSlot.startTime,
+                        endTime: meetingEndTime,
+                        venue: finalSlot.venue ?? null,
+                        googleMeetLink: finalSlot.googleMeetLink ?? null,
+                    })
+                    .returning();
+
+                await schedulePreMeetingReminder(
+                    newFinalizedSlot.id,
+                    originalSlot.startTime
+                );
+                await scheduleCompletionJob(
+                    newFinalizedSlot.id,
+                    meetingEndTime
+                );
+            }
+        });
 
         const allParticipants = meeting.participants.map(
             (p) => p.participantEmail
         );
         const subject = `Meeting Finalized: ${meeting.title}`;
 
-        let locationDetails = "";
-        if (body.venue) locationDetails += `Venue: ${body.venue}\n`;
-        if (body.googleMeetLink) {
-            locationDetails += `Google Meet: ${body.googleMeetLink}\n`;
-        }
+        const finalizedSlotsDetails = body.finalSlots
+            .map((fs, index) => {
+                const originalSlot = requestedTimeSlots.find(
+                    (ts) => ts.id === fs.timeSlotId
+                )!;
+                let details = `Meet ${index + 1}: ${originalSlot.startTime.toLocaleString()}`;
+                if (fs.venue) details += `\nVenue: ${fs.venue}`;
+                if (fs.googleMeetLink)
+                    details += `\nGoogle Meet: ${fs.googleMeetLink}`;
+                return details;
+            })
+            .join("\n\n");
 
-        const description = `The meeting "${
-            meeting.title
-        }" has been scheduled for ${finalSlot.startTime.toLocaleString()}.\n\n${locationDetails}`;
+        const description = `The meeting "${meeting.title}" has been scheduled. Please find the finalized option(s) below:\n\n${finalizedSlotsDetails}`;
 
         await createNotifications(
             allParticipants.map((email) => ({
@@ -99,7 +130,6 @@ router.post(
                 module: modules[11],
             }))
         );
-
         await sendBulkEmails(
             allParticipants.map((email) => ({
                 to: email,

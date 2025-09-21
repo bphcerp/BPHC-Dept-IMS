@@ -14,7 +14,6 @@ export const meetingAvailabilityStatusEnum = pgEnum(
     "meeting_availability_status",
     ["available", "unavailable"]
 );
-
 export const meetingStatusEnum = pgEnum("meeting_status", [
     "pending_responses",
     "awaiting_finalization",
@@ -32,10 +31,21 @@ export const meetings = pgTable("meetings", {
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
     deadline: timestamp("deadline", { withTimezone: true }).notNull(),
-    finalizedTime: timestamp("finalized_time", { withTimezone: true }),
+    status: meetingStatusEnum("status").default("pending_responses").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+});
+
+export const finalizedMeetingSlots = pgTable("finalized_meeting_slots", {
+    id: serial("id").primaryKey(),
+    meetingId: integer("meeting_id")
+        .notNull()
+        .references(() => meetings.id, { onDelete: "cascade" }),
+    startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+    endTime: timestamp("end_time", { withTimezone: true }).notNull(),
     venue: text("venue"),
     googleMeetLink: text("google_meet_link"),
-    status: meetingStatusEnum("status").default("pending_responses").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
@@ -51,8 +61,10 @@ export const meetingParticipants = pgTable(
         participantEmail: text("participant_email")
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
     },
-    // FIX: Change from an object to an array
     (table) => [unique().on(table.meetingId, table.participantEmail)]
 );
 
@@ -77,6 +89,5 @@ export const meetingAvailability = pgTable(
             .references(() => users.email, { onDelete: "cascade" }),
         availability: meetingAvailabilityStatusEnum("availability").notNull(),
     },
-    // FIX: Change from an object to an array
     (table) => [unique().on(table.timeSlotId, table.participantEmail)]
 );

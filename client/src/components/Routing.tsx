@@ -203,7 +203,7 @@ const Routing = () => {
       requiredPermissions: wilpModulePermissions,
     },
     {
-      title: "Meeting",
+      title: "Scheduler", //this is meeting everywhere, except for this title
       icon: <Calendar />,
       url: "/meeting",
       requiredPermissions: meetingModulePermissions,

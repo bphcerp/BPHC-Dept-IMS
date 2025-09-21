@@ -24,8 +24,6 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   deadline,
 }) => {
   const deadlineDate = new Date(deadline);
-
-  // Set initial selected date to the day after the deadline
   const getInitialDate = () => {
     const nextDay = new Date(deadlineDate);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -38,7 +36,6 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 
   const timeSlotsForDay = useMemo(() => {
     if (!selectedDate) return [];
-
     const slots: Date[] = [];
     const isSameDayAsDeadline =
       selectedDate.getFullYear() === deadlineDate.getFullYear() &&
@@ -46,37 +43,34 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
       selectedDate.getDate() === deadlineDate.getDate();
 
     if (isSameDayAsDeadline) {
-      // Start 30 minutes after the deadline
       const start = new Date(deadlineDate.getTime() + 30 * 60000);
       let currentHour = start.getHours();
       let currentMinute = start.getMinutes() >= 30 ? 30 : 0;
-
-      // Adjust if starting minute is not a 30-min interval start
       if (start.getMinutes() > 0 && start.getMinutes() < 30) {
         currentMinute = 30;
       } else if (start.getMinutes() > 30) {
         currentHour += 1;
         currentMinute = 0;
       }
-
-      const endHour = 18; // 6 PM
-      for (let hour = currentHour; hour < endHour; hour++) {
+      const endHour = 18;
+      for (let hour = currentHour; hour <= endHour; hour++) {
         for (
           let minute = hour === currentHour ? currentMinute : 0;
           minute < 60;
           minute += 30
         ) {
+          if (hour === endHour && minute > 0) continue;
           const slot = new Date(selectedDate);
           slot.setHours(hour, minute, 0, 0);
           slots.push(slot);
         }
       }
     } else {
-      // Regular day from 8 AM to 6 PM
       const startHour = 8;
       const endHour = 18;
-      for (let hour = startHour; hour < endHour; hour++) {
+      for (let hour = startHour; hour <= endHour; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
+          if (hour === endHour && minute > 0) continue;
           const slot = new Date(selectedDate);
           slot.setHours(hour, minute, 0, 0);
           slots.push(slot);

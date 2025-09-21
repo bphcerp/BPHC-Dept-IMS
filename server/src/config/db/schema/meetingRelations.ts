@@ -5,6 +5,7 @@ import {
     meetingParticipants,
     meetingTimeSlots,
     meetingAvailability,
+    finalizedMeetingSlots,
 } from "./meeting.ts";
 import { users } from "./admin.ts";
 
@@ -15,7 +16,18 @@ export const meetingsRelations = relations(meetings, ({ one, many }) => ({
     }),
     participants: many(meetingParticipants),
     timeSlots: many(meetingTimeSlots),
+    finalizedSlots: many(finalizedMeetingSlots),
 }));
+
+export const finalizedMeetingSlotsRelations = relations(
+    finalizedMeetingSlots,
+    ({ one }) => ({
+        meeting: one(meetings, {
+            fields: [finalizedMeetingSlots.meetingId],
+            references: [meetings.id],
+        }),
+    })
+);
 
 export const meetingParticipantsRelations = relations(
     meetingParticipants,
