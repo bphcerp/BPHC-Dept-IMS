@@ -9,6 +9,7 @@ import getAllUsers from "./getAllUsers.ts";
 import remindMeeting from "./remindMeeting.ts";
 import deleteMeeting from "./deleteMeeting.ts";
 import updateMeetingDetails from "./updateMeetingDetails.ts";
+import addInvitees from "./addInvitees.ts";
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.use("/all-users", getAllUsers);
 router.use("/remind", remindMeeting);
 router.use("/delete", deleteMeeting);
 router.use("/update-details", updateMeetingDetails);
+router.use("/add-invitees", addInvitees);
 
 export default router;

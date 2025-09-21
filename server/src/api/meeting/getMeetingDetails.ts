@@ -30,6 +30,7 @@ router.get(
                         },
                     },
                 },
+                finalizedSlots: true,
             },
         });
 
@@ -67,7 +68,11 @@ router.get(
             };
         });
 
-        const response = { ...meeting, timeSlots: augmentedTimeSlots };
+        const response = {
+            ...meeting,
+            timeSlots: augmentedTimeSlots,
+        };
+
         res.status(200).json({ meeting: response });
     })
 );

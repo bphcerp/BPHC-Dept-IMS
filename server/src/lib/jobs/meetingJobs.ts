@@ -3,18 +3,23 @@ import { Queue, Worker } from "bullmq";
 import { redisConfig } from "@/config/redis.ts";
 import logger from "@/config/logger.ts";
 import db from "@/config/db/index.ts";
-import { meetings } from "@/config/db/schema/meeting.ts";
-import { eq } from "drizzle-orm";
+import { meetings, finalizedMeetingSlots } from "@/config/db/schema/meeting.ts";
+import { eq, and } from "drizzle-orm";
 import { createNotifications, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail, sendBulkEmails } from "@/lib/common/email.ts";
 import { modules } from "lib";
 
 const QUEUE_NAME = "meetingQueue";
 
-interface JobData {
-    type: "deadline" | "reminder" | "completion";
+interface DeadlineJobData {
+    type: "deadline";
     meetingId: number;
 }
+interface SlotJobData {
+    type: "reminder" | "completion";
+    finalizedSlotId: number;
+}
+type JobData = DeadlineJobData | SlotJobData;
 
 export const meetingQueue = new Queue<JobData>(QUEUE_NAME, {
     connection: redisConfig,
@@ -25,10 +30,10 @@ export const meetingQueue = new Queue<JobData>(QUEUE_NAME, {
             delay: 10000,
         },
         removeOnComplete: {
-            age: 3600 * 24, // keep for 1 day
+            age: 3600 * 24,
         },
         removeOnFail: {
-            age: 3600 * 24 * 7, // keep for 7 days
+            age: 3600 * 24 * 7,
         },
     },
 });
@@ -36,61 +41,64 @@ export const meetingQueue = new Queue<JobData>(QUEUE_NAME, {
 const meetingWorker = new Worker<JobData>(
     QUEUE_NAME,
     async (job) => {
-        const { type, meetingId } = job.data;
-        const meeting = await db.query.meetings.findFirst({
-            where: eq(meetings.id, meetingId),
-            with: { participants: true },
-        });
+        const { type } = job.data;
 
-        if (
-            !meeting ||
-            meeting.status === "cancelled" ||
-            meeting.status === "completed"
-        ) {
-            logger.info(
-                `Job ${job.id} for meeting ${meetingId} skipped (meeting cancelled, completed, or not found).`
-            );
+        if (type === "deadline") {
+            const { meetingId } = job.data;
+            const meeting = await db.query.meetings.findFirst({
+                where: eq(meetings.id, meetingId),
+            });
+            if (!meeting || meeting.status !== "pending_responses") {
+                logger.info(
+                    `Deadline job ${job.id} for meeting ${meetingId} skipped (not pending responses).`
+                );
+                return;
+            }
+            await db
+                .update(meetings)
+                .set({ status: "awaiting_finalization" })
+                .where(eq(meetings.id, meetingId));
+            const subject = `Response deadline reached for: ${meeting.title}`;
+            const content = `The response deadline for the meeting "${meeting.title}" has passed. Please finalize the meeting time.`;
+            await createNotifications([
+                {
+                    userEmail: meeting.organizerEmail,
+                    title: subject,
+                    content,
+                    module: modules[11],
+                },
+            ]);
+            await sendEmail({
+                to: meeting.organizerEmail,
+                subject,
+                text: content,
+            });
             return;
         }
 
+        // Logic for reminder and completion jobs
+        const { finalizedSlotId } = job.data;
+        const slot = await db.query.finalizedMeetingSlots.findFirst({
+            where: eq(finalizedMeetingSlots.id, finalizedSlotId),
+            with: { meeting: { with: { participants: true } } },
+        });
+        if (!slot || !slot.meeting || slot.meeting.status === "cancelled") {
+            logger.info(
+                `Job ${job.id} for finalized slot ${finalizedSlotId} skipped (slot/meeting not found or cancelled).`
+            );
+            return;
+        }
+        const { meeting } = slot;
+
         switch (type) {
-            case "deadline":
-                if (meeting.status === "pending_responses") {
-                    await db
-                        .update(meetings)
-                        .set({ status: "awaiting_finalization" })
-                        .where(eq(meetings.id, meetingId));
-
-                    const subject = `Response deadline reached for: ${meeting.title}`;
-                    const content = `The response deadline for the meeting "${meeting.title}" has passed. Please finalize the meeting time.`;
-
-                    await createNotifications([
-                        {
-                            userEmail: meeting.organizerEmail,
-                            title: subject,
-                            content,
-                            module: modules[11],
-                        },
-                    ]);
-                    await sendEmail({
-                        to: meeting.organizerEmail,
-                        subject,
-                        text: content,
-                    });
-                }
-                break;
             case "reminder":
-                if (meeting.status === "scheduled" && meeting.finalizedTime) {
+                if (meeting.status === "scheduled") {
                     const allAttendees = [
                         meeting.organizerEmail,
                         ...meeting.participants.map((p) => p.participantEmail),
                     ];
-
                     const subject = `Reminder: Meeting starting soon - ${meeting.title}`;
-                    const description = `This is a reminder that the meeting "${
-                        meeting.title
-                    }" is scheduled to start in 15 minutes at ${meeting.finalizedTime.toLocaleTimeString()}.`;
-
+                    const description = `This is a reminder that the meeting "${meeting.title}" is scheduled to start in 15 minutes at ${slot.startTime.toLocaleTimeString()}.`;
                     await sendBulkEmails(
                         allAttendees.map((email) => ({
                             to: email,
@@ -102,14 +110,29 @@ const meetingWorker = new Worker<JobData>(
                 break;
             case "completion":
                 if (meeting.status === "scheduled") {
-                    await db
-                        .update(meetings)
-                        .set({ status: "completed" })
-                        .where(eq(meetings.id, meetingId));
+                    // Remove the day-of todo for this specific slot
                     await completeTodo({
                         module: modules[11],
-                        completionEvent: `meeting:finalized:${meetingId}`,
+                        completionEvent: `meeting:day-of:${finalizedSlotId}`,
                     });
+
+                    // Check if all slots for this meeting are done, then mark meeting as completed.
+                    const remainingSlots = await db
+                        .select({ id: finalizedMeetingSlots.id })
+                        .from(finalizedMeetingSlots)
+                        .where(
+                            and(
+                                eq(finalizedMeetingSlots.meetingId, meeting.id),
+                                eq(finalizedMeetingSlots.endTime, slot.endTime)
+                            )
+                        );
+
+                    if (remainingSlots.length === 0) {
+                        await db
+                            .update(meetings)
+                            .set({ status: "completed" })
+                            .where(eq(meetings.id, meeting.id));
+                    }
                 }
                 break;
         }
@@ -133,25 +156,29 @@ export async function scheduleDeadlineJob(meetingId: number, deadline: Date) {
 }
 
 export async function schedulePreMeetingReminder(
-    meetingId: number,
+    finalizedSlotId: number,
     startTime: Date
 ) {
-    const delay = startTime.getTime() - Date.now() - 15 * 60 * 1000; // 15 minutes before
+    const delay = startTime.getTime() - Date.now() - 15 * 60 * 1000;
     if (delay > 0) {
         await meetingQueue.add(
             "reminderJob",
-            { type: "reminder", meetingId },
+            { type: "reminder", finalizedSlotId },
             { delay }
         );
     }
 }
 
-export async function scheduleCompletionJob(meetingId: number, endTime: Date) {
-    const delay = endTime.getTime() - Date.now() + 60 * 60 * 1000; // 1 hour after
+export async function scheduleCompletionJob(
+    finalizedSlotId: number,
+    endTime: Date
+) {
+    // Job runs 1 hour after the meeting ends
+    const delay = endTime.getTime() - Date.now() + 60 * 60 * 1000;
     if (delay > 0) {
         await meetingQueue.add(
             "completionJob",
-            { type: "completion", meetingId },
+            { type: "completion", finalizedSlotId },
             { delay }
         );
     }
