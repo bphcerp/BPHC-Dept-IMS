@@ -16,6 +16,7 @@ import approveSubmissionRouter from "./approveSubmission.ts"
 import rejectSubmissionRouter from "./rejectSubmission.ts"
 import saveReviewRouter from "./saveReview.ts"
 import sendReminders from "./sendReminders.ts"
+import downloadReviewPdfRouter from "./downloadReviewPdf.ts"
 
 const router = express.Router();
 
@@ -36,5 +37,6 @@ router.use("/assignIc", assignICRouter);
 router.use("/updateIc", updateIcRouter);
 router.use("/updateFaculty", updateFacultyRouter);
 router.use("/sendReminders", sendReminders);
+router.use("/downloadReviewPdf", downloadReviewPdfRouter);
 
 export default router;

@@ -293,6 +293,9 @@ importers:
 
   server:
     dependencies:
+      '@types/jszip':
+        specifier: ^3.4.1
+        version: 3.4.1
       any-date-parser:
         specifier: ^2.0.3
         version: 2.0.3
@@ -2705,6 +2708,10 @@ packages:
 
   '@types/jsonwebtoken@9.0.9':
     resolution: {integrity: sha512-uoe+GxEuHbvy12OUQct2X9JenKM3qAscquYymuQN4fMWG9DBQtykrQEFcAbVACF7qaLw9BePSodUL0kquqBJpQ==}
+
+  '@types/jszip@3.4.1':
+    resolution: {integrity: sha512-TezXjmf3lj+zQ651r6hPqvSScqBLvyPI9FxdXBqpEwBijNGQ2NXpaFW/7joGzveYkKQUil7iiDHLo6LV71Pc0A==}
+    deprecated: This is a stub types definition. jszip provides its own type definitions, so you do not need this installed.
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -9179,6 +9186,10 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 22.13.10
+
+  '@types/jszip@3.4.1':
+    dependencies:
+      jszip: 3.10.1
 
   '@types/mdast@4.0.4':
     dependencies:
