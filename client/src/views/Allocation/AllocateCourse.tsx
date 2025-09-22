@@ -25,16 +25,24 @@ import { toast } from "sonner";
 const AllocateCourse = () => {
   const { id: code } = useParams();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [sections, setSections] = useState<SectionClient[]>([]);
+
   const [lecturePrefs, setLecturePrefs] = useState<PreferredFaculty[]>([]);
   const [tutorialPrefs, setTutorialPrefs] = useState<PreferredFaculty[]>([]);
   const [practicalPrefs, setPracticalPrefs] = useState<PreferredFaculty[]>([]);
-  const [IC, setIC] = useState<string>("");
+  const [sections, setSections] = useState<SectionClient[]>(() => {
+    const lsections = localStorage.getItem(`sections-${code}`);
+    return lsections ? (JSON.parse(lsections) as SectionClient[]) : [];
+  });
+  const [IC, setIC] = useState<string>(() => {
+    return localStorage.getItem(`ic-${code}`) ?? "";
+  });
+
   const [lecturesSections, setLectureSections] = useState<SectionClient[]>([]);
   const [tutorialSections, setTutorialSections] = useState<SectionClient[]>([]);
   const [practicalSections, setPracticalSections] = useState<SectionClient[]>(
     []
   );
+
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: [`course code ${code}`],
     queryFn: async () => {
@@ -49,6 +57,7 @@ const AllocateCourse = () => {
       }
     },
   });
+
   const { data: preferredFaculties, isLoading: isLoadingFaculty } = useQuery({
     queryKey: [`preferred faculty ${code}`],
     queryFn: async () => {
@@ -58,22 +67,30 @@ const AllocateCourse = () => {
         );
         return res.data;
       } catch (error) {
-        toast.error(((error as AxiosError).response?.data as string) ?? "Failed to faculty with preference");
+        toast.error(
+          ((error as AxiosError).response?.data as string) ??
+            "Failed to get faculty with preference"
+        );
         throw error;
       }
     },
   });
+
   const allocationMutation = useMutation({
     mutationFn: async (data: CourseAllocateType) => {
       await api.post("/allocation/allocation/create", data);
     },
     onSuccess: () => {
       toast.success("Course allocated Successfully");
+      localStorage.removeItem(`sections-${code}`);
+      localStorage.removeItem(`ic-${code}`);
+      setSections([]);
     },
     onError: () => {
       toast.error("An error occurred");
     },
   });
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const lectures = lecturesSections.map((el, i) => {
@@ -97,6 +114,7 @@ const AllocateCourse = () => {
         instructors: el.instructors.map((ins) => ins[0]),
       };
     });
+
     const data = {
       courseCode: code ?? "",
       ic: IC,
@@ -104,6 +122,7 @@ const AllocateCourse = () => {
     };
     allocationMutation.mutate(data);
   };
+
   const mp = useMemo(() => {
     const map = new Map<string, string>();
     if (!preferredFaculties) return map;
@@ -115,6 +134,7 @@ const AllocateCourse = () => {
     }
     return map;
   }, [preferredFaculties]);
+
   useEffect(() => {
     if (!preferredFaculties) return;
     setLecturePrefs(
@@ -133,15 +153,25 @@ const AllocateCourse = () => {
       )
     );
   }, [preferredFaculties]);
+
   useEffect(() => {
     setLectureSections(sections.filter((el) => el.type == "LECTURE"));
     setPracticalSections(sections.filter((el) => el.type == "PRACTICAL"));
     setTutorialSections(sections.filter((el) => el.type == "TUTORIAL"));
   }, [sections]);
 
+  useEffect(() => {
+    localStorage.setItem(`sections-${code}`, JSON.stringify(sections));
+  }, [sections, code]);
+
+  useEffect(() => {
+    if (IC.length > 0) localStorage.setItem(`ic-${code}`, IC);
+  }, [IC, code]);
+
   const handleAddClick = () => {
     setIsDialogOpen(true);
   };
+
   if (isLoadingCourse || isLoadingFaculty)
     return (
       <div className="mx-auto flex h-screen items-center justify-center">
@@ -160,7 +190,6 @@ const AllocateCourse = () => {
           <div> L - {courseData?.lectureUnits}</div>
           <div> P - {courseData?.practicalUnits}</div>
           <div>
-            {" "}
             T -{" "}
             {(courseData?.totalUnits ?? 0) -
               (courseData?.practicalUnits ?? 0) -
@@ -172,7 +201,7 @@ const AllocateCourse = () => {
           {courseData?.offeredAs}
         </div>
       </div>
-      <form onSubmit={(e) => onSubmit(e)} className="flex flex-col gap-2 pt-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-2 pt-4">
         <div className="mx-auto flex items-center gap-4">
           <Label className="text-md pt-2 font-semibold">
             Instructor Incharge
@@ -193,15 +222,15 @@ const AllocateCourse = () => {
           </div>
         </div>
         <div className="mt-2 flex flex-col gap-2">
-          {lecturesSections.map((el, i) => {
-            return <AddSectionCard section={el} number={i + 1} key={i} />;
-          })}
-          {tutorialSections.map((el, i) => {
-            return <AddSectionCard section={el} number={i + 1} key={i} />;
-          })}
-          {practicalSections.map((el, i) => {
-            return <AddSectionCard section={el} number={i + 1} key={i} />;
-          })}
+          {lecturesSections.map((el, i) => (
+            <AddSectionCard section={el} number={i + 1} key={i} />
+          ))}
+          {tutorialSections.map((el, i) => (
+            <AddSectionCard section={el} number={i + 1} key={i} />
+          ))}
+          {practicalSections.map((el, i) => (
+            <AddSectionCard section={el} number={i + 1} key={i} />
+          ))}
         </div>
         <div className="mx-auto mt-2 flex gap-2">
           <Button type="button" onClick={handleAddClick}>
