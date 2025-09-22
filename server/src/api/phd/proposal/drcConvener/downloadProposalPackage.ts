@@ -18,6 +18,7 @@ const Docxtemplater = require("docxtemplater");
 const PizZip = require("pizzip");
 const ImageModule = require("docxtemplater-image-module-free");
 const execAsync = promisify(exec);
+
 const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
     const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir} ${docxPath}`;
     try {
@@ -36,6 +37,10 @@ const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
     }
 };
 const router = express.Router();
+
+const CHECKED_XML = `<w:sym w:font="Wingdings" w:char="F0FE"/>`;
+const UNCHECKED_XML = `<w:sym w:font="Wingdings" w:char="F0A8"/>`;
+
 router.post(
     "/",
     checkAccess(),
@@ -76,10 +81,7 @@ router.post(
         const tempDir = path.resolve("./temp");
         await fs.mkdir(tempDir, { recursive: true });
 
-        const dacTemplatePath = path.join(
-            import.meta.dirname,
-            "./dac.docx"
-        );
+        const dacTemplatePath = path.join(import.meta.dirname, "./dac.docx");
         const dacTemplateContent = await fs.readFile(dacTemplatePath);
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
@@ -88,11 +90,9 @@ router.post(
             : null;
         try {
             for (const proposal of proposalsToPackage) {
-                const studentFolderName =
-                    `${proposal.student.name || proposal.student.email}`.replace(
-                        /[\/\\?%*:|"<>]/g,
-                        "-"
-                    );
+                const studentFolderName = `${
+                    proposal.student.name || proposal.student.email
+                }`.replace(/[\/\\?%*:|"<>]/g, "-");
                 const studentFolder = zip.folder(studentFolderName);
                 if (!studentFolder)
                     throw new Error("Could not create student folder in zip.");
@@ -140,6 +140,11 @@ router.post(
                                   .catch(() => null)
                             : null;
                         const templateData = {
+                            date: new Date().toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                            }),
                             department_name:
                                 environment.DEPARTMENT_NAME ||
                                 "_______________",
@@ -152,48 +157,185 @@ router.post(
                             supervisor_name: proposal.supervisor.name,
                             drc_signature: drcSignatureBuffer,
                             dac_signature: dacSignatureBuffer,
-                            q1a: formData.q1a,
-                            q1b: formData.q1b,
-                            q1c: formData.q1c,
-                            q1d_product: formData.q1d === "product",
-                            q1d_process: formData.q1d === "process",
-                            q1d_frontier: formData.q1d === "frontier",
-                            q2a: formData.q2a,
-                            q2b: formData.q2b,
-                            q2c: formData.q2c,
-                            q2d_improve: formData.q2d === "improve",
-                            q2d_academic: formData.q2d === "academic",
-                            q2d_industry: formData.q2d === "industry",
-                            q3a: formData.q3a,
-                            q3b: formData.q3b,
-                            q3c: formData.q3c,
-                            q4a: formData.q4a,
-                            q4b: formData.q4b,
-                            q4c: formData.q4c,
-                            q4d: formData.q4d,
-                            q4e: formData.q4e,
-                            q4f: formData.q4f,
-                            q4g: formData.q4g,
-                            q5a: formData.q5a,
-                            q5b: formData.q5b,
-                            q5c: formData.q5c,
-                            q6_accepted: formData.q6 === "accepted",
-                            q6_minor: formData.q6 === "minor",
-                            q6_revision: formData.q6 === "revision",
+                            q1a_yes_xml: formData.q1a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1a_no_xml: !formData.q1a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1b_yes_xml: formData.q1b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1b_no_xml: !formData.q1b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1c_yes_xml: formData.q1c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1c_no_xml: !formData.q1c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2a_yes_xml: formData.q2a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2a_no_xml: !formData.q2a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2b_yes_xml: formData.q2b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2b_no_xml: !formData.q2b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2c_yes_xml: formData.q2c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q2c_no_xml: !formData.q2c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3a_yes_xml: formData.q3a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3a_no_xml: !formData.q3a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3b_yes_xml: formData.q3b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3b_no_xml: !formData.q3b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3c_yes_xml: formData.q3c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q3c_no_xml: !formData.q3c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4a_yes_xml: formData.q4a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4a_no_xml: !formData.q4a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4b_yes_xml: formData.q4b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4b_no_xml: !formData.q4b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4c_yes_xml: formData.q4c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4c_no_xml: !formData.q4c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4d_yes_xml: formData.q4d
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4d_no_xml: !formData.q4d
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4e_yes_xml: formData.q4e
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4e_no_xml: !formData.q4e
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4f_yes_xml: formData.q4f
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4f_no_xml: !formData.q4f
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4g_yes_xml: formData.q4g
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q4g_no_xml: !formData.q4g
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5a_yes_xml: formData.q5a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5a_no_xml: !formData.q5a
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5b_yes_xml: formData.q5b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5b_no_xml: !formData.q5b
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5c_yes_xml: formData.q5c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q5c_no_xml: !formData.q5c
+                                ? CHECKED_XML
+                                : UNCHECKED_XML,
+                            q1d_product_xml:
+                                formData.q1d === "product"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q1d_process_xml:
+                                formData.q1d === "process"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q1d_frontier_xml:
+                                formData.q1d === "frontier"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q2d_improve_xml:
+                                formData.q2d === "improve"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q2d_academic_xml:
+                                formData.q2d === "academic"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q2d_industry_xml:
+                                formData.q2d === "industry"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q6_accepted_xml:
+                                formData.q6 === "accepted"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q6_minor_xml:
+                                formData.q6 === "minor"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
+                            q6_revision_xml:
+                                formData.q6 === "revision"
+                                    ? CHECKED_XML
+                                    : UNCHECKED_XML,
                             q7_reasons: formData.q7_reasons,
                             q8_comments: formData.q8_comments || "",
                         };
+
                         const imageModule = new ImageModule({
                             centered: false,
                             getImage: (tag: string) => tag,
                             getSize: () => [150, 40],
                         });
+
                         const zip = new PizZip(dacTemplateContent);
                         const doc = new Docxtemplater(zip, {
                             paragraphLoop: true,
                             linebreaks: true,
                             modules: [imageModule],
+                            parser: (tag: string) => {
+                                if (tag === "@") {
+                                    return {
+                                        get(scope: any) {
+                                            return scope;
+                                        },
+                                        type: "raw",
+                                        module: "openxml",
+                                    };
+                                }
+                                return null;
+                            },
                         });
+
                         doc.render(templateData);
                         const buf = doc
                             .getZip()

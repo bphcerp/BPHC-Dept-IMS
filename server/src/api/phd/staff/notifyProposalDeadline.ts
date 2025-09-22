@@ -1,8 +1,7 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
-import { modules, phdSchemas } from "lib";
-import { createNotifications } from "@/lib/todos/index.ts";
+import { phdSchemas } from "lib";
 import db from "@/config/db/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 
@@ -26,20 +25,11 @@ router.post(
         const allUsers = [...allPhdStudents, ...allFaculty];
 
         if (allUsers.length > 0) {
-            await createNotifications(
-                allUsers.map((user) => ({
-                    userEmail: user.email,
-                    module: modules[3], 
-                    title: subject,
-                    content: body,
-                }))
-            );
-
             await sendBulkEmails(
                 allUsers.map((user) => ({
                     to: user.email,
                     subject: subject,
-                    text: body,
+                    text: body, 
                 }))
             );
         }
