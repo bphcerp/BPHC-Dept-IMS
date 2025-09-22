@@ -7,7 +7,7 @@ import {
 } from "./allocationFormBuilder.ts";
 
 import { users } from "./admin.ts";
-import { course } from "./allocation.ts";
+import { course, semester } from "./allocation.ts";
 
 export const allocationFormTemplateRelations = relations(
     allocationFormTemplate,
@@ -32,6 +32,10 @@ export const allocationFormRelations = relations(
         createdBy: one(users, {
             fields: [allocationForm.createdByEmail],
             references: [users.email],
+        }),
+        semester: one(semester, {
+            fields: [allocationForm.id],
+            references: [semester.formId],
         }),
     })
 );

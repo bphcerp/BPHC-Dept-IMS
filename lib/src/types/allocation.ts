@@ -4,11 +4,13 @@ import {
     allocationSectionSchema,
     courseAllocateSchema,
     courseCodeSchema,
+    allocationStatusEnum,
     courseSchema,
     masterAllocationSchema,
     semesterSchema,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
+import { AllocationForm } from "./allocationFormBuilder.ts";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -28,10 +30,30 @@ export type Course = NewCourse & {
     updatedAt: Date;
 };
 
-export type NewSemester = z.infer<typeof semesterSchema>;
+export type SemesterAllocationStatusEnumType = z.infer<
+    typeof allocationStatusEnum
+>;
+export const semesterStatusMap: Record<
+    SemesterAllocationStatusEnumType,
+    string
+> = {
+    completed: "Completed",
+    notStarted: "Not Started",
+    ongoing: "Ongoing",
+    suspended: "Suspended",
+};
+
+export type NewSemester = Omit<
+    z.infer<typeof semesterSchema>,
+    "startDate" | "endDate"
+> & {
+    startDate: string;
+    endDate: string;
+};
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
     id: string;
+    form: AllocationForm
     createdAt: Date;
     updatedAt: Date;
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;
@@ -68,4 +90,20 @@ export type CourseAllocateType = z.infer<typeof courseAllocateSchema>;
 export type SectionClient = {
     type: "LECTURE" | "TUTORIAL" | "PRACTICAL";
     instructors: [string, string][];
+};
+
+export type TTDDepartment = {
+    id: string;
+    name: string;
+    hodName: string;
+    hodPsrn: string;
+    dcaConvener: {
+        name: string;
+        psrn: string;
+    };
+    delegated: {
+        _id: string;
+        psrn: string;
+        name: string;
+    };
 };

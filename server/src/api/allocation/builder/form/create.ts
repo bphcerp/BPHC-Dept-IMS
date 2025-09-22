@@ -2,7 +2,6 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import {
   allocationForm,
-  allocationFormTemplateField,
 } from "@/config/db/schema/allocationFormBuilder.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";

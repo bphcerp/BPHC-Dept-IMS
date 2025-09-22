@@ -88,11 +88,13 @@ export type AllocationFormTemplateList = Omit<
 };
 
 export type AllocationForm = NewAllocationForm & {
-    id: string;
-    template: AllocationFormTemplate;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy: Pick<MemberDetailsResponse, "name" | "email">;
+	id: string;
+	template: AllocationFormTemplate;
+	publishedDate: Date | null
+	allocationDeadline: Date | null
+	createdAt: Date;
+	updatedAt: Date;
+	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>
 };
 
 // Use this for the form/getAll endpoint

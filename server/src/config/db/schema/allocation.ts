@@ -5,9 +5,11 @@ import {
     timestamp,
     pgEnum,
     uuid,
+    unique,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
+import { allocationForm } from "./allocationFormBuilder.ts";
 
 export const sectionTypeEnum = pgEnum("section_type_enum", [
     "LECTURE",
@@ -107,29 +109,37 @@ export const course = pgTable("allocation_course", {
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
-export const semester = pgTable("allocation_semester", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
-    year: integer("year").notNull(),
-    oddEven: oddEven("odd_even").notNull(),
+export const semester = pgTable(
+    "allocation_semester",
+    {
+        id: uuid("id")
+            .primaryKey()
+            .$defaultFn(() => uuidv4()),
+        year: integer("year").notNull(),
+        oddEven: oddEven("odd_even").notNull(),
+        formId: uuid("form_id").references(() => allocationForm.id, {
+            onDelete: "restrict",
+        }),
 
-    startDate: timestamp("start_date").notNull(),
-    endDate: timestamp("end_date").notNull(),
-    allocationDeadline: timestamp("allocation_deadline"),
+        startDate: timestamp("start_date").notNull(),
+        endDate: timestamp("end_date").notNull(),
 
-    noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
-    noOfDisciplineCoursesPerInstructor: integer(
-        "no_of_discipline_courses_per_instructor"
-    ),
+        noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
+        noOfDisciplineCoursesPerInstructor: integer(
+            "no_of_discipline_courses_per_instructor"
+        ),
 
-    hodAtStartOfSemEmail: text("hod_at_start").references(() => users.email),
-    dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
-        () => users.email
-    ),
-    allocationStatus: allocationStatus("allocation_status"),
+        hodAtStartOfSemEmail: text("hod_at_start").references(
+            () => users.email
+        ),
+        dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
+            () => users.email
+        ),
+        allocationStatus: allocationStatus("allocation_status"),
 
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
+        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    },
+    (table) => [unique().on(table.year, table.oddEven)]
+);

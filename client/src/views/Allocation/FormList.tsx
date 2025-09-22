@@ -67,11 +67,6 @@ const columns: ColumnDef<AllocationForm>[] = [
               View Responses
             </Link>
           </Button>
-          <Button asChild>
-            <Link to={`/allocation/forms/${row.original.id}/submit`}>
-              Submit Response
-            </Link>
-          </Button>
         </div>
       );
     },
@@ -120,12 +115,9 @@ const FormList = () => {
     } as NewAllocationForm,
   });
 
-  const onSubmit = async (data: NewAllocationForm, publish: boolean) => {
+  const onSubmit = async (data: NewAllocationForm) => {
     api
-      .post("/allocation/builder/form/create", {
-        ...data,
-        isPublished: publish,
-      })
+      .post("/allocation/builder/form/create", data)
       .then(() => {
         toast.success("Form created successfully!");
         fetchForms();
@@ -231,17 +223,9 @@ const FormList = () => {
                         <Button
                           type="button"
                           variant="secondary"
-                          onClick={handleSubmit((data) =>
-                            onSubmit(data, false)
-                          )}
+                          onClick={handleSubmit(onSubmit)}
                         >
                           Create
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={handleSubmit((data) => onSubmit(data, true))}
-                        >
-                          Create & Publish
                         </Button>
                       </div>
                     </div>

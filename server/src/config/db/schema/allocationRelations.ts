@@ -4,6 +4,7 @@ import { course } from "./allocation.ts";
 import { semester } from "./allocation.ts";
 import { users } from "./admin.ts";
 import { masterAllocation, allocationSection } from "./allocation.ts";
+import { allocationForm } from "./allocationFormBuilder.ts";
 
 export const allocationRelations = relations(allocation, ({ one }) => ({
     course: one(course, {
@@ -28,6 +29,10 @@ export const semesterRelations = relations(semester, ({ one }) => ({
     hodAtStartOfSem: one(users, {
         fields: [semester.hodAtStartOfSemEmail],
         references: [users.email],
+    }),
+    form: one(allocationForm, {
+        fields: [semester.formId],
+        references: [allocationForm.id],
     }),
 }));
 

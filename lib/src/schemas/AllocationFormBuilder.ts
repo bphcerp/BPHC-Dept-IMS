@@ -68,9 +68,15 @@ export const allocationFormSchema = z.object({
     templateId: z.string().uuid(),
     title: z.string(),
     description: z.string(),
+    // allocationDeadline: z.date().optional(),
     // createdAt: z.date().optional(),
     // updatedAt: z.date().optional(),
-    isPublished: z.boolean().optional(),
+    // publishedDate: z.coerce.date().optional(),
+});
+
+
+export const allocationFormPublishSchema = z.object({
+    allocationDeadline: z.coerce.date().optional(),
 });
 
 export const updateAllocationFormSchema = allocationFormSchema
