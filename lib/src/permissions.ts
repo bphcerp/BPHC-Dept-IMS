@@ -343,6 +343,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/delete": "allocation:semester:write",
     "/allocation/semester/update": "allocation:semester:write",
 
+    "/allocation/allocation/getPreferredFaculty": "allocation:write",
+    "/allocation/allocation/create": "allocation:write",
+
     "/allocation/builder/template/create": "allocation:builder:template:write",
     "/allocation/builder/template/get": "allocation:builder:template:read",
     "/allocation/builder/template/getAll": "allocation:builder:template:read",

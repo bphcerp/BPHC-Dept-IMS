@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import api from "@/lib/axios-instance";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import {
   Course,
   CourseAllocateType,
@@ -57,7 +58,7 @@ const AllocateCourse = () => {
         );
         return res.data;
       } catch (error) {
-        toast.error("Failed to faculty with preference");
+        toast.error(((error as AxiosError).response?.data as string) ?? "Failed to faculty with preference");
         throw error;
       }
     },

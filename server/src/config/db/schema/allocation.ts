@@ -35,7 +35,7 @@ export const masterAllocation = pgTable("allocation_master_allocation", {
         .$defaultFn(() => uuidv4()),
 
     semesterId: uuid("semester_id").references(() => semester.id, {
-        onDelete: "cascade",
+        onDelete: "restrict",
     }),
 
     ic: text("instructor_email")
@@ -66,7 +66,7 @@ export const allocationSectionInstructors = pgTable(
             .references(() => allocationSection.id, { onDelete: "cascade" }),
         instructorEmail: text("instructor_email")
             .notNull()
-            .references(() => users.email, { onDelete: "cascade" }),
+            .references(() => users.email, { onDelete: "set default" }),
     }
 );
 
