@@ -56,7 +56,7 @@ export const sectionRelations = relations(
     ({ many, one }) => ({
         instructors: many(allocationSectionInstructors),
         sections: one(masterAllocation, {
-            fields: [allocationSection.id],
+            fields: [allocationSection.masterId],
             references: [masterAllocation.id],
         }),
     })

@@ -1,6 +1,7 @@
 import AddSectionDialog from "@/components/allocation/AddSectionDialog";
 import AddSectionCard from "@/components/allocation/AllocationSectionCard";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -10,9 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import api from "@/lib/axios-instance";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import {
+  AllocationType,
   Course,
   CourseAllocateType,
   SectionClient,
@@ -42,6 +44,21 @@ const AllocateCourse = () => {
   const [practicalSections, setPracticalSections] = useState<SectionClient[]>(
     []
   );
+  const queryClient = useQueryClient();
+  const { data: allocationData, isLoading: isLoadingAllocation } = useQuery({
+    queryKey: [`allocation ${code}`],
+    queryFn: async () => {
+      try {
+        const res = await api.get<AllocationType>(
+          `/allocation/allocation/get?code=${code}`
+        );
+        return res.data;
+      } catch (error) {
+        toast.error("Failed to fetch courses");
+        throw error;
+      }
+    },
+  });
 
   const { data: courseData, isLoading: isLoadingCourse } = useQuery({
     queryKey: [`course code ${code}`],
@@ -84,6 +101,7 @@ const AllocateCourse = () => {
       toast.success("Course allocated Successfully");
       localStorage.removeItem(`sections-${code}`);
       localStorage.removeItem(`ic-${code}`);
+      void queryClient.invalidateQueries([`allocation ${code}`]);
       setSections([]);
     },
     onError: () => {
@@ -172,13 +190,13 @@ const AllocateCourse = () => {
     setIsDialogOpen(true);
   };
 
-  if (isLoadingCourse || isLoadingFaculty)
+  if (isLoadingCourse || isLoadingFaculty || isLoadingAllocation)
     return (
       <div className="mx-auto flex h-screen items-center justify-center">
         Loading...
       </div>
     );
-
+  console.log(allocationData);
   return (
     <div className="container mx-auto flex flex-col px-6 py-10">
       <div className="mx-auto pb-8 text-2xl font-bold">{courseData?.name}</div>
@@ -201,44 +219,77 @@ const AllocateCourse = () => {
           {courseData?.offeredAs}
         </div>
       </div>
-      <form onSubmit={onSubmit} className="flex flex-col gap-2 pt-4">
-        <div className="mx-auto flex items-center gap-4">
-          <Label className="text-md pt-2 font-semibold">
-            Instructor Incharge
-          </Label>
-          <div className="flex gap-2">
-            <Select onValueChange={setIC} value={IC}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select IC..." />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from(mp.entries()).map(([email, name], i) => (
-                  <SelectItem key={i} value={email}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {allocationData ? (
+        <div className="flex flex-col gap-2 pt-4">
+          <div className="mx-auto flex items-center gap-4">
+            <Label className="text-md font-semibold">
+              Instructor Incharge :
+            </Label>
+            <div>{allocationData.ic.name}</div>
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            {allocationData.sections.map((section, i) => (
+              <Card className="pt-4" key={i}>
+                <CardContent className="flex flex-col gap-2">
+                  <CardTitle>{section.type + " " + section.number}</CardTitle>
+                  <div className="flex gap-2">
+                    <div className="text-md font-medium uppercase">
+                      Instructors :{" "}
+                    </div>
+                    {section.instructors.map((el, ind) => (
+                      <>
+                        {ind == 0 ? "" : " ,"}
+                        <div key={ind} className="text-base">
+                          {el.instructor?.name}
+                        </div>
+                      </>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-        <div className="mt-2 flex flex-col gap-2">
-          {lecturesSections.map((el, i) => (
-            <AddSectionCard section={el} number={i + 1} key={i} />
-          ))}
-          {tutorialSections.map((el, i) => (
-            <AddSectionCard section={el} number={i + 1} key={i} />
-          ))}
-          {practicalSections.map((el, i) => (
-            <AddSectionCard section={el} number={i + 1} key={i} />
-          ))}
-        </div>
-        <div className="mx-auto mt-2 flex gap-2">
-          <Button type="button" onClick={handleAddClick}>
-            Add Section
-          </Button>
-          <Button type="submit">Finish Allocation</Button>
-        </div>
-      </form>
+      ) : (
+        <form onSubmit={onSubmit} className="flex flex-col gap-2 pt-4">
+          <div className="mx-auto flex items-center gap-4">
+            <Label className="text-md pt-2 font-semibold">
+              Instructor Incharge
+            </Label>
+            <div className="flex gap-2">
+              <Select onValueChange={setIC} value={IC}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select IC..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from(mp.entries()).map(([email, name], i) => (
+                    <SelectItem key={i} value={email}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            {lecturesSections.map((el, i) => (
+              <AddSectionCard section={el} number={i + 1} key={i} />
+            ))}
+            {tutorialSections.map((el, i) => (
+              <AddSectionCard section={el} number={i + 1} key={i} />
+            ))}
+            {practicalSections.map((el, i) => (
+              <AddSectionCard section={el} number={i + 1} key={i} />
+            ))}
+          </div>
+          <div className="mx-auto mt-2 flex gap-2">
+            <Button type="button" onClick={handleAddClick}>
+              Add Section
+            </Button>
+            <Button type="submit">Finish Allocation</Button>
+          </div>
+        </form>
+      )}
 
       <AddSectionDialog
         isDialogOpen={isDialogOpen}

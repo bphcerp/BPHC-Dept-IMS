@@ -11,7 +11,10 @@ import {
     semesterTypeEnum,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
-import { AllocationForm, AllocationFormTemplatePreferenceFieldType } from "./allocationFormBuilder.ts";
+import {
+    AllocationForm,
+    AllocationFormTemplatePreferenceFieldType,
+} from "./allocationFormBuilder.ts";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -34,9 +37,7 @@ export type Course = NewCourse & {
 export type SemesterAllocationStatusEnumType = z.infer<
     typeof allocationStatusEnum
 >;
-export type SemesterTypeEnumType = z.infer<
-    typeof semesterTypeEnum
->;
+export type SemesterTypeEnumType = z.infer<typeof semesterTypeEnum>;
 export const semesterStatusMap: Record<
     SemesterAllocationStatusEnumType,
     string
@@ -47,10 +48,7 @@ export const semesterStatusMap: Record<
     suspended: "Suspended",
 };
 
-export const semesterTypeMap: Record<
-    SemesterTypeEnumType,
-    string
-> = {
+export const semesterTypeMap: Record<SemesterTypeEnumType, string> = {
     "1": "ODD",
     "2": "EVEN",
     "3": "SUMMER",
@@ -66,7 +64,7 @@ export type NewSemester = Omit<
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
     id: string;
-    form: AllocationForm
+    form: AllocationForm;
     createdAt: Date;
     updatedAt: Date;
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;
@@ -101,7 +99,8 @@ export type TTDCourse = {
 export type CourseAllocateType = z.infer<typeof courseAllocateSchema>;
 
 export type SectionClient = {
-    type: AllocationFormTemplatePreferenceFieldType
+    type: AllocationFormTemplatePreferenceFieldType;
+    number?: string;
     instructors: [string, string][];
 };
 
@@ -119,4 +118,16 @@ export type TTDDepartment = {
         psrn: string;
         name: string;
     };
+};
+
+export type AllocationType = {
+    ic: MemberDetailsResponse;
+    sections: {
+        type: AllocationFormTemplatePreferenceFieldType;
+        number: string;
+        instructors: {
+            instructor: MemberDetailsResponse;
+        }[];
+    }[];
+    courseCode: string;
 };

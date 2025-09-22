@@ -6,18 +6,23 @@ import { courseCodeSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 const router = express.Router();
 
 router.get(
-    "/:code",
+    "/",
     asyncHandler(async (req, res, _next) => {
-        const { code } = courseCodeSchema.parse(req.params);
+        const { code } = courseCodeSchema.parse(req.query);
 
-        const allocations = db.query.masterAllocation.findFirst({
+        const allocations = await db.query.masterAllocation.findFirst({
             where: (master, { eq }) => eq(master.courseCode, code),
             with: {
                 sections: {
                     with: {
-                        instructors: true,
+                        instructors: {
+                            with: {
+                                instructor: true,
+                            },
+                        },
                     },
                 },
+                ic: true,
             },
         });
 
