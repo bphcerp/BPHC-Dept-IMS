@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import ConfirmEndTestingPopup from "@/components/admin/ConfirmEndTestingPopup";
+import { forceRefreshToken } from "@/lib/axios-helper";
 
 const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -36,10 +37,15 @@ const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
       });
   }
 
-  const update = () => {
-    // todo: update the jwts for new permissions
+  const update = async () => {
+    const isTokenRefreshed = await forceRefreshToken();
+    if (!isTokenRefreshed) {
+      toast.error("Failed to refresh tokens");
+      return;
+    }
     updateStatus();
     updatePopup();
+    window.location.reload();
   };
 
   return (
@@ -107,9 +113,9 @@ const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
                   inTestingMode
                     ? () => handleEdit(roles, update)
                     : () => {
-                        handleStart(roles, () => {
-                          update();
+                        handleStart(roles, async () => {
                           navigate("/");
+                          update();
                         });
                       }
                 }
