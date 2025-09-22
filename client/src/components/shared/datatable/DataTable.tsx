@@ -111,7 +111,7 @@ export function DataTable<T>({
   additionalButtons,
   isTableHeaderFixed,
   tableElementRefProp,
-  mainSearchColumn
+  mainSearchColumn,
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -496,6 +496,8 @@ export function DataTable<T>({
     table.reset()
   };
 
+  const camelToTitle = (str: string) => str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
+
   const handleExport = (selected: boolean) => {
     // Export function just returns the ids of the rows and visible columns, data fetching and excel
     // generation is handled by the backend
@@ -510,7 +512,6 @@ export function DataTable<T>({
       )
       .filter((columnId) => columnId !== "S.No");
     exportFunction!(itemIds, columnsVisible);
-    
   };
 
   return (
@@ -600,23 +601,25 @@ export function DataTable<T>({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {mainSearchColumn && (
+              <Input
+                placeholder={`Search ${String(camelToTitle(mainSearchColumn.toString()))}..`}
+                className="w-128"
+                value={
+                  table
+                    .getColumn(String(mainSearchColumn))
+                    ?.getFilterValue() as string
+                }
+                onChange={(event) =>
+                  table
+                    .getColumn(String(mainSearchColumn))
+                    ?.setFilterValue(event.target.value)
+                }
+              />
+            )}
           </div>
           <div className="flex justify-center space-x-2">
             {additionalButtons}
-          </div>
-          <div className="px-5">
-              {
-              mainSearchColumn ?
-              (
-                <Input
-                  placeholder={`Search ${String(mainSearchColumn)}..`}
-                  className="w-128"
-                  value={table.getColumn(String(mainSearchColumn))?.getFilterValue() as string}
-                  onChange={(event) => table.getColumn(String(mainSearchColumn))?.setFilterValue(event.target.value)}
-                />
-              ) :
-              undefined
-              }
           </div>
         </div>
       </div>
@@ -634,7 +637,7 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (checkbox for select all) */}
                 <TableHead
-                  className="sticky left-0 w-2 z-3"
+                  className="z-[3] sticky left-0 w-2"
                   style={{ backgroundColor: HEADER_COLOR }}
                 >
                   <Checkbox

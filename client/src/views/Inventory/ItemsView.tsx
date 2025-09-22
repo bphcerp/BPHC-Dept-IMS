@@ -345,17 +345,23 @@ export const ItemsView = () => {
           columns={columns}
           setSelected={setSelectedItems}
           initialState={{
+            sorting: [
+              {
+                id: "lab.name",
+                desc: false,
+              },
+              {
+                id: "createdAt",
+                desc: true,
+              },
+            ],
             columnPinning: {
-              left: [
-                "S.No",
-                "equipmentID",
-                "itemName",
-                "itemCategory",
-              ],
+              left: ["S.No", "equipmentID", "itemName", "itemCategory"],
             },
           }}
           isTableHeaderFixed={true}
           tableElementRefProp={tableElementRef}
+          mainSearchColumn="itemName"
           additionalButtons={
             <>
               {selectedItems.length ? (
