@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const sectionTypeEnum = z.enum(["Lecture", "Tutorial", "Practical"]);
 export const degreeTypeEnum = z.enum(["FD", "HD"]);
-export const oddEvenEnum = z.enum(["odd", "even"]);
+export const semesterTypeEnum = z.enum(["1", "2", "3"]);
 export const courseTypeEnum = z.enum(["CDC", "Elective"]);
 export const allocationStatusEnum = z.enum([
     "notStarted",
@@ -56,7 +56,7 @@ export const semesterFormLinkSchema = z.object({
 export const semesterSchema = z.object({
     id: z.string().uuid().optional(),
     year: z.number().int(),
-    oddEven: oddEvenEnum,
+    semesterType: semesterTypeEnum,
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
     noOfElectivesPerInstructor: z.number().int().min(0),

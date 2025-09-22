@@ -102,7 +102,7 @@ const CoursesPage = () => {
 
   const handleSyncCourses = async () => {
     try {
-      await api.post(`/allocation/course/sync/1`);
+      await api.post(`/allocation/course/sync`);
       toast.success("Courses synced with TTD successfully!");
       await fetchCourses()
     } catch (error) {

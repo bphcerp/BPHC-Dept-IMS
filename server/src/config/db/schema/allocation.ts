@@ -19,7 +19,8 @@ export const sectionTypeEnum = pgEnum("section_type_enum", [
 
 export const degreeTypeEnum = pgEnum("degree_type_enum", ["FD", "HD"]);
 
-export const oddEven = pgEnum("odd_even_enum", ["odd", "even"]);
+// 3 is for summer term
+export const semesterTypeEnum = pgEnum("semester_type_enum", ["1", "2", "3"]);
 export const courseTypeEnum = pgEnum("course_type_enum", ["CDC", "Elective"]);
 
 export const allocationStatus = pgEnum("allocation_status", [
@@ -117,7 +118,7 @@ export const semester = pgTable(
             .primaryKey()
             .$defaultFn(() => uuidv4()),
         year: integer("year").notNull(),
-        oddEven: oddEven("odd_even").notNull(),
+        semesterType: semesterTypeEnum("semester_type").notNull(),
         formId: uuid("form_id").references(() => allocationForm.id, {
             onDelete: "restrict",
         }),
@@ -142,5 +143,5 @@ export const semester = pgTable(
 
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     },
-    (table) => [unique().on(table.year, table.oddEven)]
+    (table) => [unique().on(table.year, table.semesterType)]
 );
