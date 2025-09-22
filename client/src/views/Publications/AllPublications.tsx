@@ -399,7 +399,7 @@ const AllPublications = () => {
                               key={pub.citationId}
                             >
                               <span className="font-medium">[{globalIndex}]</span>{" "}
-                              <a href={pub.link??undefined} target="_blank">
+                              <a href={pub.link??undefined} target="_blank" rel="noreferrer">
                                 {pub.authorNames.replace(/,?\s*\.\.\.$/, "").trim()}
                                 {", "} &quot;{pub.title}
                                 ,&quot; <em>{pub.journal}</em>

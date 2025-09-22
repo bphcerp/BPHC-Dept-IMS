@@ -275,7 +275,7 @@ export function DataTable<T>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
     onColumnFiltersChange: (updater) => {
-      let newFilters =
+      const newFilters =
         typeof updater === "function"
           ? updater(table.getState().columnFilters)
           : updater;
@@ -293,7 +293,7 @@ export function DataTable<T>({
       setSearchParams(params);
     },
     onSortingChange: (updater) => {
-      let newSorting =
+      const newSorting =
         typeof updater === "function"
           ? updater(table.getState().sorting)
           : updater;

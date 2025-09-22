@@ -114,7 +114,7 @@ const DeleteItemConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
                 onClick={handleNext}
                 disabled={!!safetyTimeout}
               >
-                {!!safetyTimeout
+                {safetyTimeout
                   ? `Wait (${safetyTimeout / 1000}s)`
                   : "Yes, Delete"}
               </Button>

@@ -300,7 +300,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
 
     Object.keys(files).forEach((key) => {
       if (files[key]) {
-        formData.append(key, files[key] as File);
+        formData.append(key, files[key]);
       }
     });
     mutation.mutate(formData);

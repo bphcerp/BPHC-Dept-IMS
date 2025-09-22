@@ -341,7 +341,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                         )}
                       </div>
                       <div className="text-sm">
-                        {renderValue(key, value as any)}
+                        {renderValue(key, value)}
                       </div>
                     </div>
                   );
