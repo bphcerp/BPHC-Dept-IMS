@@ -105,7 +105,7 @@ export async function handleEnd(callback: () => Promise<void>) {
   }
 }
 
-function TestingPopup({ updatePage }: { updatePage: () => void }) {
+function TestingPopup() {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -132,8 +132,7 @@ function TestingPopup({ updatePage }: { updatePage: () => void }) {
     if (!isTokenRefreshed) {
       console.log("Failed to refresh tokens");
     }
-    updateStatus();
-    updatePage();
+    await updateStatus();
     window.location.reload();
   };
 

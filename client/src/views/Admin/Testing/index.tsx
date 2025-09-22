@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import ConfirmEndTestingPopup from "@/components/admin/ConfirmEndTestingPopup";
 import { forceRefreshToken } from "@/lib/axios-helper";
 
-const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
+const TestingView = () => {
   const [roles, setRoles] = useState<string[]>([]);
   const [inTestingMode, setInTestingMode] = useState<boolean | null>(null);
   const [isConfirmEndOpen, setIsConfirmEndOpen] = useState(false);
@@ -37,14 +37,13 @@ const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
       });
   }
 
-  const update = async () => {
+  const update = async (status: boolean = true) => {
     const isTokenRefreshed = await forceRefreshToken();
     if (!isTokenRefreshed) {
       toast.error("Failed to refresh tokens");
       return;
     }
-    updateStatus();
-    updatePopup();
+    if (status) await updateStatus();
     window.location.reload();
   };
 
@@ -115,7 +114,7 @@ const TestingView = ({ updatePopup }: { updatePopup: () => void }) => {
                     : () => {
                         handleStart(roles, async () => {
                           navigate("/");
-                          update();
+                          update(false); // avoids updating status as we are navigating away
                         });
                       }
                 }
