@@ -19,8 +19,8 @@ export const phdProposalStatuses = [
     "dac_review",
     "dac_revert",
     "dac_accepted",
-    "finalising",
-    "formalising",
+    "seminar_pending",
+    "finalising_documents",
     "completed",
 ] as const;
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =

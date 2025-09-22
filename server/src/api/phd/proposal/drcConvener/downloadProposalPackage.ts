@@ -76,10 +76,7 @@ router.post(
         const tempDir = path.resolve("./temp");
         await fs.mkdir(tempDir, { recursive: true });
 
-        const dacTemplatePath = path.join(
-            import.meta.dirname,
-            "./dac.docx"
-        );
+        const dacTemplatePath = path.join(import.meta.dirname, "./dac.docx");
         const dacTemplateContent = await fs.readFile(dacTemplatePath);
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
@@ -221,7 +218,7 @@ router.post(
             }
             await db
                 .update(phdProposals)
-                .set({ status: "formalising" })
+                .set({ status: "finalising_documents" })
                 .where(
                     inArray(
                         phdProposals.id,

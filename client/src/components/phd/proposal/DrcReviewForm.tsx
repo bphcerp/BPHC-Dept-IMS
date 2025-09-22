@@ -16,9 +16,8 @@ import {
 import { toast } from "sonner";
 
 interface DacMember {
-  dacMemberEmail: string; // This is always present
+  dacMemberEmail: string;
   dacMember: {
-    // This can be null for external members
     name: string | null;
     email: string;
   } | null;
@@ -43,7 +42,6 @@ export const DrcReviewForm: React.FC<DrcReviewFormProps> = ({
   const isDeadlinePassed = new Date(deadline) < new Date();
 
   useEffect(() => {
-    // MODIFIED: Filter for valid members before setting initial state
     const validInitialMembers = suggestedDacMembers
       .filter((m) => m && m.dacMemberEmail)
       .map((m) => m.dacMemberEmail);
@@ -116,16 +114,12 @@ export const DrcReviewForm: React.FC<DrcReviewFormProps> = ({
             two to proceed.
           </p>
           <div className="mt-2 space-y-2 rounded-md border p-4">
-            {/* MODIFIED: Safely map over members, handling nulls and external users */}
             {suggestedDacMembers.map((member) => {
               if (!member?.dacMemberEmail) {
                 return null;
               }
               const email = member.dacMemberEmail;
               const name = member.dacMember?.name ?? email;
-              const label = member.dacMember
-                ? `${name} (${email})`
-                : `${name} (External, ask the admin to add this user, before continuing)`;
 
               return (
                 <div key={email} className="flex items-center space-x-2">
@@ -137,7 +131,19 @@ export const DrcReviewForm: React.FC<DrcReviewFormProps> = ({
                     }
                     disabled={isDeadlinePassed}
                   />
-                  <Label htmlFor={email}>{label}</Label>
+                  <Label htmlFor={email}>
+                    {member.dacMember ? (
+                      `${name} (${email})`
+                    ) : (
+                      <>
+                        {`${name} `}
+                        <span className="font-bold">
+                          (External, ask the admin to add this user, before
+                          continuing)
+                        </span>
+                      </>
+                    )}
+                  </Label>
                 </div>
               );
             })}

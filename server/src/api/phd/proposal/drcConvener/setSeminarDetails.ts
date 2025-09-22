@@ -6,7 +6,6 @@ import { phdProposals } from "@/config/db/schema/phd.ts";
 import { phdSchemas } from "lib";
 import { eq, and } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-
 const router = express.Router();
 export default router.post(
     "/:id",
@@ -23,7 +22,7 @@ export default router.post(
                 seminarDate: new Date(body.seminarDate),
                 seminarTime: body.seminarTime,
                 seminarVenue: body.seminarVenue,
-                status: "finalising",
+                status: "finalising_documents",
             })
             .where(
                 and(

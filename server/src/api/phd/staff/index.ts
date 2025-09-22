@@ -12,6 +12,7 @@ import emailTemplatesRouter from "./emailTemplates/index.ts";
 import getLatestProposalSem from "./getLatestProposalSem.ts"; 
 import updateProposalDeadline from "./updateProposalDeadline.ts"; 
 import proposalDeadlines from "./proposalDeadlines.ts"; 
+import notifyProposalDeadline from "./notifyProposalDeadline.ts";
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ router.use("/emailTemplates", emailTemplatesRouter);
 router.use("/getLatestProposalSem", getLatestProposalSem); 
 router.use("/updateProposalDeadline", updateProposalDeadline); 
 router.use("/proposalDeadlines", proposalDeadlines); 
+router.use("/notifyProposalDeadline", notifyProposalDeadline);
 
 export default router;

@@ -169,6 +169,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
     "/phd/staff/getLatestProposalSem": "phd:staff:manage-email-templates",
     "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
+    "/phd/staff/notifyProposalDeadline": "phd:staff:manage-email-templates",
     "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
     "/phd/proposal/getProposalSemesters": "phd:proposal",
     "/phd/proposal/getFacultyList": "phd:proposal",

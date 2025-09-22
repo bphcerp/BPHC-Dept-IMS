@@ -42,7 +42,7 @@ const defaultTemplates = [
     {
         name: "new_exam_announcement",
         subject: "New PhD Qualifying Exam Announced: {{examName}}",
-        body: `Dear All,\n\nA new PhD Qualifying Exam "**{{examName}}**" has been scheduled for the **{{semesterYear}} Sem {{semesterNumber}}** semester.\n\nKey dates are as follows:\n- **Registration Deadline:** {{submissionDeadline}}\n- **Exam Period:** From {{examStartDate}} to {{examEndDate}}\n- **Viva Date:** {{vivaDate}}\n\nEligible students are requested to register before the deadline.\n\nBest regards,\nPhD Department Office`,
+        body: `Dear All,\n\nA new PhD Qualifying Exam "**{{examName}}**" has been scheduled for the **{{semesterYear}} Sem {{semesterNumber}}** semester.\n\nKey dates are as follows:\n- **Registration Deadline: **{{submissionDeadline}}\n- **Exam Period:** From {{examStartDate}} to {{examEndDate}}\n- **Viva Date:** {{vivaDate}}\n\nEligible students are requested to register before the deadline.\n\nBest regards,\nPhD Department Office`,
         description:
             "Sent to all users when a new qualifying exam is created by staff.",
     },
@@ -61,6 +61,14 @@ const defaultTemplates = [
         body: `Dear {{supervisorName}},\n\nThis is a friendly reminder to please set the seminar details for your student, **{{studentName}}**, whose proposal was recently approved by the DAC.\n\nSetting these details is required to proceed with the seminar notice.\n\nYou can set the details here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
         description:
             "Sent as a reminder to a supervisor if they have not set the seminar details.",
+    },
+    {
+        name: "proposal_deadlines_announcement",
+        subject:
+            "PhD Proposal Deadlines Announced for {{semesterYear}} Sem {{semesterNumber}}",
+        body: `Dear BITS Community,\n\nPlease note the PhD Proposal deadlines for the **{{semesterYear}}Sem{{semesterNumber}}** have been announced.\n\n- **Student Submission Deadline:**{{studentSubmissionDate}}\n- **Supervisor Review Deadline:**{{facultyReviewDate}}\n- **DRC Review Deadline:**{{drcReviewDate}}\n- **DAC Review Deadline:**{{dacReviewDate}}\n\nPlease plan your submissions and reviews accordingly.`,
+        description:
+            "Sent to all users when new proposal deadlines are created by staff.",
     },
 ];
 

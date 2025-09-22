@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
+import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
 
 interface ProposalSemester {
   id: number;
@@ -29,24 +30,16 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: {
-    year: string;
-    semesterNumber: number;
-  };
+  semester: { year: string; semesterNumber: number };
 }
-
 interface Proposal {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: {
-    name: string;
-    email: string;
-  };
+  student: { name: string; email: string };
   proposalSemester: ProposalSemester | null;
 }
-
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -91,7 +84,6 @@ const DeadlinesCard = ({
     </Card>
   );
 };
-
 const DacProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
@@ -108,7 +100,6 @@ const DacProposalManagement: React.FC = () => {
     },
   });
 
-  // Effect to auto-select the latest semester on initial load
   useEffect(() => {
     if (semesters && semesters.length > 0 && !selectedSemesterId) {
       setSelectedSemesterId(semesters[0].id);
@@ -128,7 +119,7 @@ const DacProposalManagement: React.FC = () => {
       );
       return response.data;
     },
-    enabled: !!selectedSemesterId, // Only fetch proposals when a semester is selected
+    enabled: !!selectedSemesterId,
   });
 
   const semesterDeadlines = proposals?.[0]?.proposalSemester;
@@ -141,7 +132,7 @@ const DacProposalManagement: React.FC = () => {
           Review PhD proposals assigned to you as a DAC member.
         </p>
       </div>
-
+      <ProposalStatusTimeline role="dac" />
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -157,14 +148,12 @@ const DacProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
-
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="dacReviewDate"
         />
       )}
-
       <Card>
         <CardHeader>
           <CardTitle>Awaiting Your Review</CardTitle>
@@ -237,5 +226,4 @@ const DacProposalManagement: React.FC = () => {
     </div>
   );
 };
-
 export default DacProposalManagement;
