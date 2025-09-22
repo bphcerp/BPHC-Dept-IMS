@@ -28,17 +28,17 @@ import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 
 const RegisterNewSemester = () => {
-  const form = useForm<NewSemester>({
+  const form = useForm({
     resolver: zodResolver(semesterSchema),
     defaultValues: {
-      oddEven: "odd",
+      semesterType: "1",
       allocationStatus: "notStarted",
       year: new Date().getFullYear(),
       noOfDisciplineCoursesPerInstructor: 3,
       noOfElectivesPerInstructor: 3,
       startDate: "",
       endDate: "",
-    },
+    } as NewSemester,
   });
 
   const navigate = useNavigate()
@@ -83,7 +83,7 @@ const RegisterNewSemester = () => {
             />
             <FormField
               control={form.control}
-              name="oddEven"
+              name="semesterType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Semester Type</FormLabel>
@@ -93,8 +93,9 @@ const RegisterNewSemester = () => {
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="odd">Odd</SelectItem>
-                        <SelectItem value="even">Even</SelectItem>
+                        <SelectItem value="1">Odd</SelectItem>
+                        <SelectItem value="2">Even</SelectItem>
+                        <SelectItem value="3">Summer</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>

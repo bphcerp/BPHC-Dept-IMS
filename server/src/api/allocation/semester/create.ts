@@ -20,7 +20,7 @@ router.post(
         const parsed = semesterSchema.parse(req.body);
 
         const { data: deptInfo } = await axios<TTDDepartment>(
-            `${environment.TTD_API_URL}/${parsed.oddEven === "even" ? 2 : 1}/departments/${environment.TTD_DEPARTMENT_NAME}`
+            `${environment.TTD_API_URL}/${parsed.semesterType}/departments/${environment.TTD_DEPARTMENT_NAME}`
         );
 
         const hodAtStartOfSemEmail = (

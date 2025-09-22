@@ -6,27 +6,36 @@ import express from "express";
 
 const router = express.Router();
 
-router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (_req, res, next) => {
-    const semesterData = await db.query.semester.findFirst({
-      orderBy: (semester, { desc, asc }) => [desc(semester.year), asc(semester.oddEven)],
-      with:{
-        dcaConvenerAtStartOfSem: true,
-        hodAtStartOfSem: true,
-        form: true
-      }
+export const getLatestSemester = async () =>
+    await db.query.semester.findFirst({
+        orderBy: (semester, { desc }) => [
+            desc(semester.year),
+            desc(semester.semesterType),
+        ],
+        with: {
+            dcaConvenerAtStartOfSem: true,
+            hodAtStartOfSem: true,
+            form: true,
+        },
     });
 
-    if (!semesterData) {
-      return next(
-        new HttpError(HttpCode.NOT_FOUND, "No semesters found in the database")
-      );
-    }
+router.get(
+    "/",
+    checkAccess(),
+    asyncHandler(async (_req, res, next) => {
+        const semesterData = await getLatestSemester();
 
-    res.status(200).json(semesterData);
-  })
+        if (!semesterData) {
+            return next(
+                new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "No semesters found in the database"
+                )
+            );
+        }
+
+        res.status(200).json(semesterData);
+    })
 );
 
 export default router;

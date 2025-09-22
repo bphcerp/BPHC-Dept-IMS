@@ -1,5 +1,5 @@
 import { DataTable } from "@/components/shared/datatable/DataTable";
-import { Semester, semesterStatusMap } from "../../../../lib/src/types/allocation.ts";
+import { Semester, semesterStatusMap, semesterTypeMap } from "../../../../lib/src/types/allocation.ts";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -19,8 +19,9 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorFn: (row) => row.oddEven.toUpperCase(),
+    accessorKey: "semesterType",
     header: "Semester",
+    cell: ( { row } ) => semesterTypeMap[row.original.semesterType],
     meta: {
       filterType: "dropdown",
     },
@@ -105,7 +106,7 @@ const SemesterList = () => {
         columns={columns}
         data={semesters}
         additionalButtons={
-          <Button>
+          semesters.some(semester => semester.allocationStatus === 'ongoing') ? <></> : <Button>
             <Link to="new">New Semester</Link>
           </Button>
         }

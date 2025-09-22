@@ -8,6 +8,7 @@ import {
     courseSchema,
     masterAllocationSchema,
     semesterSchema,
+    semesterTypeEnum,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import { AllocationForm, AllocationFormTemplatePreferenceFieldType } from "./allocationFormBuilder.ts";
@@ -33,6 +34,9 @@ export type Course = NewCourse & {
 export type SemesterAllocationStatusEnumType = z.infer<
     typeof allocationStatusEnum
 >;
+export type SemesterTypeEnumType = z.infer<
+    typeof semesterTypeEnum
+>;
 export const semesterStatusMap: Record<
     SemesterAllocationStatusEnumType,
     string
@@ -41,6 +45,15 @@ export const semesterStatusMap: Record<
     notStarted: "Not Started",
     ongoing: "Ongoing",
     suspended: "Suspended",
+};
+
+export const semesterTypeMap: Record<
+    SemesterTypeEnumType,
+    string
+> = {
+    "1": "ODD",
+    "2": "EVEN",
+    "3": "SUMMER",
 };
 
 export type NewSemester = Omit<

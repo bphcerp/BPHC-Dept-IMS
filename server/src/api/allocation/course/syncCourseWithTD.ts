@@ -9,50 +9,45 @@ import { TTDCourse } from "../../../../../lib/src/types/allocation.ts";
 import environment from "@/config/environment.ts";
 import axios from "axios";
 import { sql } from "drizzle-orm";
+import { getLatestSemester } from "../semester/getLatest.ts";
 
 const router = Router();
 
 router.post(
-    "/:semester",
-    checkAccess('allocation:courses:sync'),
-    asyncHandler(async (req, res, next) => {
-            const { semester } = req.params;
+    "/",
+    checkAccess(),
+    asyncHandler(async (_req, res, next) => {
+            
+            const latestSemester = await getLatestSemester()
 
-            if (!semester) {
+            if (!latestSemester) {
                 return next(
                     new HttpError(
                         HttpCode.BAD_REQUEST,
-                        "Semester number is required."
-                    )
-                );
-            }
-
-            const parsedSemester = parseInt(semester);
-
-            if (parsedSemester < 1 || parsedSemester > 3) {
-                return next(
-                    new HttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Semester number must be between 1 and 3."
+                        "There is no current semester set"
                     )
                 );
             }
 
             // Fetch all the course data from TTD API
             const { data: courses } = await axios.get(
-                `${environment.TTD_API_URL}/${parsedSemester}/courses?deptCode=${environment.DEPARTMENT_NAME}`
+                `${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`
             );
+
+            console.log(`${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`)
 
             const mappedCourses = courses.map((courseData: TTDCourse) => {
                 return courseSchema.parse({
-                    code: `${courseData.deptCode} ${courseData.courseCode}`,
+                    // Either the data from TTD is wrong, or the WILP courses have a different format. Because of this, more than
+                    // 1 course will have WILP has the courseCode violating the primary key constraint. This is a work-around for now.
+                    code: courseData.courseCode === 'WILP' ? courseData.name : `${courseData.deptCode} ${courseData.courseCode}`,
                     name: courseData.name,
                     lectureUnits: courseData.lectureUnits,
                     practicalUnits: courseData.labUnits,
                     totalUnits: courseData.totalUnits,
                     offeredAs: courseData.offeredAs === 'C' ? 'CDC' : 'Elective',
                     offeredTo: courseData.offeredTo,
-                    offeredAlsoBy: courseData.offeredBy.filter((dept) => dept !== environment.DEPARTMENT_NAME),
+                    offeredAlsoBy: courseData.offeredBy.filter((dept) => dept !== environment.TTD_DEPARTMENT_NAME),
                 });
             });
 

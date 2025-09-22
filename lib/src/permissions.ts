@@ -111,10 +111,9 @@ export const allPermissions = {
     "allocation:settings:start": "Start a new course load allocation",
     "allocation:settings:end": "End the current course load allocation",
 
-    "allocation:courses:write": "Create or Modify a new course",
-    "allocation:courses:bulk-add": "Create or Modify a new course",
-    "allocation:courses:view": "View all existing courses",
-    "allocation:courses:sync": "Sync all courses of the department from TTD",
+  "allocation:courses:write": "Create or Modify a new course",
+  "allocation:courses:view": "View all existing courses",
+  "allocation:courses:sync": "Sync all courses of the department from TTD",
 
     "allocation:write": "Have read and write access to the allocation module",
     "allocation:view": "Have readonly access to the allocation module",
@@ -329,10 +328,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/allocation/delete": "allocation:write",
     "/allocation/allocation/update": "allocation:write",
 
-    "/allocation/course/create": "allocation:courses:write",
-    "/allocation/course/delete": "allocation:courses:write",
-    "/allocation/course/update": "allocation:courses:write",
-    "/allocation/course/getCourseByCode": "allocation:courses:view",
+  "/allocation/course/create": "allocation:courses:write",
+  "/allocation/course/delete": "allocation:courses:write",
+  "/allocation/course/sync": "allocation:courses:sync",
+  "/allocation/course/update": "allocation:courses:write",
 
     "/allocation/coursePreferences/delete": "allocation:preference:write",
     "/allocation/coursePreferences/update": "allocation:preference:write",

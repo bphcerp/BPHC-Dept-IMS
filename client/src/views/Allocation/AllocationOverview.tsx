@@ -20,7 +20,7 @@ import {
 import api from "@/lib/axios-instance";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Semester } from "../../../../lib/src/types/allocation";
+import { Semester, semesterTypeMap } from "../../../../lib/src/types/allocation";
 import { AllocationForm } from "../../../../lib/src/types/allocationFormBuilder";
 import { useState } from "react";
 
@@ -278,7 +278,7 @@ export const AllocationOverview = () => {
         <div className="grid grid-cols-2 gap-4 text-base font-medium text-muted-foreground md:grid-cols-3">
           <div>
             <span>Semester:</span>{" "}
-            <span>{latestSemester.oddEven === "even" ? 2 : 1}</span>
+            <span>{semesterTypeMap[latestSemester.semesterType]}</span>
           </div>
           <div>
             <span>Academic Year:</span>{" "}
