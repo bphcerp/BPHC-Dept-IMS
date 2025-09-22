@@ -195,7 +195,7 @@ export const FacultyHandouts: React.FC = () => {
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
-                          onClick={() => navigate(`/qpReview/FacultyReview/`)}
+                          onClick={() => navigate(`/qpReview/ficSubmission/seeReview/${course.id}`)}
                         >
                           Details
                         </Button>

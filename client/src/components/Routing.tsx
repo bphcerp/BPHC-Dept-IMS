@@ -285,7 +285,8 @@ const Routing = () => {
               element={<Navigate to="/qpReview/ficSubmission" replace={true} />}
             />
             <Route path="ficSubmission" element={<FicSubmissionView />} />
-            <Route path="dcarequests/review/:id" element={<DcaReview />} />
+            <Route path="ficSubmission/seeReview/:id" element={<DcaReview />} />
+            <Route path="dcarequests/seeReview/:id" element={<DcaReview />} />
             <Route path="dcarequests" element={<DCARequestsView />} />
             <Route path="facultyReview" element={<ReviewPage />} />
             <Route path="facultyReview/:course" element={<FacultyReview />} />

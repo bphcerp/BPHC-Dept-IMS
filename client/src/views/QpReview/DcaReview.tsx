@@ -14,7 +14,6 @@ import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { ChevronLeft } from "lucide-react";
 
-
 interface ReviewCriteria {
   length: string;
   remarks: string;
@@ -24,27 +23,33 @@ interface ReviewCriteria {
   mixOfQuestions: string;
 }
 
-
 interface ReviewData {
   Compre: ReviewCriteria;
   MidSem: ReviewCriteria;
   Others: ReviewCriteria;
 }
 
+interface ApiResponse {
+  success: boolean;
+  data: {
+    courseName: string;
+    courseCode: string;
+    review: ReviewData;
+  };
+}
 
 export default function DcaReview() {
   const email = "f20240500@hyderabad.bits-pilani.ac.in";
   const { id } = useParams();
   const navigate = useNavigate();
 
-
-  const { data: reviewData, isLoading, isError } = useQuery({
+  const { data: apiData, isLoading, isError } = useQuery({
     queryKey: [`qp-reviews-${id}`],
     queryFn: async () => {
       try {
         const response = await api.get(`/qp/getReviews/${email}/${id}`);
         console.log("Fetched reviews:", response.data);
-        return response.data.data as ReviewData;
+        return response.data as ApiResponse;
       } catch (error) {
         console.error("Error fetching reviews:", error);
         toast.error("Failed to fetch reviews");
@@ -53,11 +58,9 @@ export default function DcaReview() {
     },
   });
 
-
   const goBack = () => {
     navigate("/qpReview/dcarequests");
   };
-
 
   if (isLoading)
     return (
@@ -66,7 +69,6 @@ export default function DcaReview() {
       </div>
     );
 
-
   if (isError)
     return (
       <div className="flex h-screen items-center justify-center text-red-500">
@@ -74,6 +76,38 @@ export default function DcaReview() {
       </div>
     );
 
+  // Extract data from nested structure
+  const reviewData = apiData?.data?.review;
+  const courseName = apiData?.data?.courseName;
+  const courseCode = apiData?.data?.courseCode;
+
+  // Helper function to validate and display scores
+  const getScoreDisplay = (score: string) => {
+    const numScore = parseInt(score);
+    // Handle invalid scores (like "33") by showing them with a warning
+    if (isNaN(numScore) || numScore > 10) {
+      return { value: score, isInvalid: true };
+    }
+    return { value: score, isInvalid: false };
+  };
+
+  // Helper function to get color class for scores
+  const getScoreColorClass = (score: string) => {
+    const scoreData = getScoreDisplay(score);
+    
+    if (scoreData.isInvalid) {
+      return 'bg-orange-100 text-orange-800 border border-orange-300';
+    }
+    
+    const numScore = parseInt(score);
+    if (numScore >= 7) {
+      return 'bg-green-100 text-green-800';
+    } else if (numScore >= 4) {
+      return 'bg-yellow-100 text-yellow-800';
+    } else {
+      return 'bg-red-100 text-red-800';
+    }
+  };
 
   // Create table data from review data
   const tableData = reviewData ? [
@@ -109,7 +143,6 @@ export default function DcaReview() {
     }
   ] : [];
 
-
   return (
     <div className="w-full px-4">
       <div className="px-2 py-6">
@@ -128,12 +161,20 @@ export default function DcaReview() {
           <h1 className="text-3xl font-bold text-primary">
             Question Paper Review Details
           </h1>
+          {courseName && (
+            <p className="text-lg text-gray-600 mt-2">
+              Course: {courseName} ({courseCode})
+            </p>
+          )}
+          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Rating Scale:</strong> All scores are rated on a scale of 0-10, where <strong>10 represents the best</strong> and <strong>0 represents the worst</strong> performance.
+            </p>
+          </div>
         </div>
       </div>
 
-
       <hr className="my-1 border-gray-300" />
-
 
       <div className="w-full overflow-x-auto bg-white shadow">
         <div className="inline-block min-w-full align-middle">
@@ -160,58 +201,43 @@ export default function DcaReview() {
                       {review.examType}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        parseInt(review.length) >= 4 
-                          ? 'bg-green-100 text-green-800' 
-                          : parseInt(review.length) >= 3 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.length)}`}>
                         {review.length}
+                        {getScoreDisplay(review.length).isInvalid && (
+                          <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        parseInt(review.language) >= 4 
-                          ? 'bg-green-100 text-green-800' 
-                          : parseInt(review.language) >= 3 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.language)}`}>
                         {review.language}
+                        {getScoreDisplay(review.language).isInvalid && (
+                          <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        parseInt(review.solution) >= 4 
-                          ? 'bg-green-100 text-green-800' 
-                          : parseInt(review.solution) >= 3 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.solution)}`}>
                         {review.solution}
+                        {getScoreDisplay(review.solution).isInvalid && (
+                          <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        parseInt(review.coverLearning) >= 4 
-                          ? 'bg-green-100 text-green-800' 
-                          : parseInt(review.coverLearning) >= 3 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.coverLearning)}`}>
                         {review.coverLearning}
+                        {getScoreDisplay(review.coverLearning).isInvalid && (
+                          <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        parseInt(review.mixOfQuestions) >= 4 
-                          ? 'bg-green-100 text-green-800' 
-                          : parseInt(review.mixOfQuestions) >= 3 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.mixOfQuestions)}`}>
                         {review.mixOfQuestions}
+                        {getScoreDisplay(review.mixOfQuestions).isInvalid && (
+                          <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2 max-w-xs">
