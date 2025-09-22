@@ -14,10 +14,11 @@ import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Mail, Download } from "lucide-react";
 import { AssignICDialog } from "@/components/qp_review/updateICDialog";
 import { AssignDCADialog } from "@/components/qp_review/assignDCADialog";
 import { CreateRequestDialog } from "@/components/qp_review/createRequestDialog";
+import SendReminderDialog from "@/components/qp_review/SendRemindersDialog";
 import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +27,7 @@ interface QPDCAcon {
   reviewerEmail: string;
   id: string;
   courseName: string;
+  icEmail: string | null;
   courseCode: string;
   category: string;
   requestType: string;
@@ -39,7 +41,7 @@ interface CreateRequestData {
   icEmail: string;
   courseName: string;
   courseCode: string;
-  requestType: ("Mid Sem" | "Comprehensive")[];
+  requestType: ("Mid Sem" | "Comprehensive" | "Both")[];
   category: "HD" | "FD";
 }
 
@@ -47,7 +49,6 @@ export const DCAConvenercourses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  // ADD THIS MISSING STATE
   const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<string[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>([]);
 
@@ -61,7 +62,6 @@ export const DCAConvenercourses: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // ... (all your mutation definitions remain the same)
   const updateICMutation = useMutation({
     mutationFn: async ({
       id,
@@ -72,14 +72,11 @@ export const DCAConvenercourses: React.FC = () => {
       icEmail: string;
       sendEmail: boolean;
     }) => {
-      const response = await api.post<{ success: boolean }>(
-        "/qp/updateIc",
-        {
-          id: id.toString(),
-          icEmail,
-          sendEmail,
-        }
-      );
+      const response = await api.post<{ success: boolean }>("/qp/updateIc", {
+        id: id.toString(),
+        icEmail,
+        sendEmail,
+      });
       return response.data;
     },
     onSuccess: async () => {
@@ -160,13 +157,16 @@ export const DCAConvenercourses: React.FC = () => {
 
   const createRequestMutation = useMutation({
     mutationFn: async (data: CreateRequestData) => {
-      const response = await api.post<{ success: boolean }>("/qp/createRequest", {
-        icEmail: data.icEmail,
-        courseName: data.courseName,
-        courseCode: data.courseCode,
-        requestType: data.requestType,
-        category: data.category,
-      });
+      const response = await api.post<{ success: boolean }>(
+        "/qp/createRequest",
+        {
+          icEmail: data.icEmail,
+          courseName: data.courseName,
+          courseCode: data.courseCode,
+          requestType: data.requestType,
+          category: data.category,
+        }
+      );
       return response.data;
     },
     onSuccess: async () => {
@@ -177,6 +177,36 @@ export const DCAConvenercourses: React.FC = () => {
     },
     onError: () => {
       toast.error("Failed to create request");
+    },
+  });
+
+  const sendRemindersMutation = useMutation({
+    mutationFn: async (reminderData: {
+      selectedCourseIds: string[];
+      recipientCount: number;
+      courses: Array<{
+        id: string;
+        courseName: string;
+        courseCode: string;
+        icEmail: string | null;
+        reviewerEmail: string;
+        reviewerName: string | null;
+        status: string;
+        requestType: string;
+      }>;
+    }) => {
+      const response = await api.post<{ success: boolean }>(
+        "/qp/sendReminders",
+        reminderData
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      toast.success(`Email reminders sent successfully to ${variables.recipientCount} recipients`);
+    },
+    onError: (error) => {
+      console.error("Send reminders error:", error);
+      toast.error("Failed to send email reminders");
     },
   });
 
@@ -200,25 +230,22 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
-  // UPDATED useEffect to include request type filtering
   useEffect(() => {
     if (!courses) return;
 
-    localStorage.setItem("courses DCA CONVENOR", JSON.stringify(courses));
+    localStorage.setItem("QP DCA CONVENOR", JSON.stringify(courses));
 
     let results = courses;
-    
+
     // Search filter
     if (searchQuery) {
       results = results.filter(
         (course) =>
-          course.courseName
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
+          course.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     // Apply all filters
     results = results.filter((course) => {
       const matchesCategory =
@@ -229,19 +256,23 @@ export const DCAConvenercourses: React.FC = () => {
         activeStatusFilters.length > 0
           ? activeStatusFilters.includes(course.status)
           : true;
-      // ADD REQUEST TYPE FILTER LOGIC
       const matchesRequestType =
         activeRequestTypeFilters.length > 0
           ? activeRequestTypeFilters.includes(course.requestType)
           : true;
-      
+
       return matchesCategory && matchesStatus && matchesRequestType;
     });
 
     setFilteredCourses(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, activeRequestTypeFilters, courses]);
+  }, [
+    searchQuery,
+    activeCategoryFilters,
+    activeStatusFilters,
+    activeRequestTypeFilters,
+    courses,
+  ]);
 
-  // ... (all your handler functions remain the same)
   const handlePencilClick = (courseId: string, isReviewer: boolean) => {
     setCurrentcourseId(courseId);
     setIsBulkAssign(false);
@@ -299,6 +330,83 @@ export const DCAConvenercourses: React.FC = () => {
     createRequestMutation.mutate(data);
   };
 
+  // UPDATED: Handle send reminders - include both IC and reviewer emails
+  const handleSendReminders = async () => {
+    const selectedCoursesData = filteredCourses.filter(course => 
+      selectedcourses.includes(course.id)
+    );
+    
+    // Filter courses that can receive reminders (either IC or reviewer email exists based on status)
+    const validCourses = selectedCoursesData.filter(course => {
+      // For not submitted - need IC email
+      if (course.status === 'notsubmitted') {
+        return course.icEmail;
+      }
+      // For submitted/pending review - need reviewer email
+      if (course.status === 'review pending') {
+        return course.reviewerEmail;
+      }
+      return false;
+    });
+    
+    const reminderData = {
+      selectedCourseIds: selectedcourses,
+      recipientCount: validCourses.length,
+      courses: validCourses.map(course => ({
+        id: course.id,
+        courseName: course.courseName,
+        icEmail: course.icEmail,
+        courseCode: course.courseCode,
+        reviewerEmail: course.reviewerEmail,
+        reviewerName: course.reviewerName,
+        status: course.status,
+        requestType: course.requestType
+      }))
+    };
+    
+    sendRemindersMutation.mutate(reminderData);
+  };
+
+  const handleDownloadReviews = async () => {
+    const selectedCoursesData = filteredCourses.filter(course => 
+      selectedcourses.includes(course.id)
+    );
+
+    // Filter only reviewed courses
+    const reviewedCourses = selectedCoursesData.filter(course => 
+      course.status === 'reviewed'
+    );
+
+    if (reviewedCourses.length === 0) {
+      toast.warning("No completed reviews found in selected courses");
+      return;
+    }
+
+    try {
+      const response = await api.post('/qp/downloadReviews', {
+        selectedCourseIds: reviewedCourses.map(c => c.id)
+      }, {
+        responseType: 'blob'
+      });
+
+      // Create download link
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `reviews_${new Date().toISOString().slice(0, 10)}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success(`Downloaded ${reviewedCourses.length} review(s) successfully`);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download reviews');
+    }
+  };
+
   const handleSelectcourse = (courseId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedcourses((prev) => [...prev, courseId]);
@@ -325,6 +433,28 @@ export const DCAConvenercourses: React.FC = () => {
     setIsBulkAssign(true);
     setIsReviewerDialogOpen(true);
   };
+
+  // Calculate recipients - UPDATED to include both IC emails and reviewer emails
+  const recipientCount = filteredCourses.filter(course => {
+    if (!selectedcourses.includes(course.id)) return false;
+    
+    // For not submitted status - check IC email
+    if (course.status === 'notsubmitted') {
+      return course.icEmail;
+    }
+    
+    // For submitted/pending review status - check reviewer email
+    if (course.status === 'review pending') {
+      return course.reviewerEmail;
+    }
+    
+    return false;
+  }).length;
+
+  // Calculate reviewable courses count
+  const reviewableCoursesCount = filteredCourses.filter(course =>
+    selectedcourses.includes(course.id) && course.status === 'reviewed'
+  ).length;
 
   const isAllSelected =
     filteredCourses.length > 0 &&
@@ -364,18 +494,51 @@ export const DCAConvenercourses: React.FC = () => {
                 Create Request
               </Button>
               {selectedcourses.length > 0 && (
-                <Button
-                  variant="default"
-                  className="bg-primary text-white"
-                  onClick={handleBulkAssignReviewer}
-                >
-                  Assign Reviewer ({selectedcourses.length})
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    className="bg-primary text-white"
+                    onClick={handleBulkAssignReviewer}
+                  >
+                    Assign Reviewer ({selectedcourses.length})
+                  </Button>
+
+                  <SendReminderDialog
+                    trigger={
+                      <Button 
+                        className="flex items-center gap-2"
+                        disabled={sendRemindersMutation.isPending}
+                      >
+                        <Mail className="h-4 w-4" />
+                        {sendRemindersMutation.isPending 
+                          ? `Sending... (${selectedcourses.length})`
+                          : `Send Reminders (${selectedcourses.length})`
+                        }
+                      </Button>
+                    }
+                    onConfirm={handleSendReminders}
+                    recipientCount={recipientCount}
+                    disabled={recipientCount === 0 || sendRemindersMutation.isPending}
+                  />
+
+                  <Button 
+                    onClick={handleDownloadReviews}
+                    className="flex items-center gap-2"
+                    variant={reviewableCoursesCount > 0 ? "default" : "outline"}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Reviews ({selectedcourses.length})
+                    {reviewableCoursesCount > 0 && (
+                      <span className="ml-1 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+                        {reviewableCoursesCount} ready
+                      </span>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
           <div className="ml-4">
-            {/* UPDATED QpFilterBar with all required props */}
             <QpFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -392,7 +555,6 @@ export const DCAConvenercourses: React.FC = () => {
 
       <hr className="my-1 border-gray-300" />
 
-      {/* Rest of your table JSX remains exactly the same */}
       <div className="w-full overflow-x-auto bg-white shadow">
         <div className="inline-block min-w-full align-middle">
           <Table className="min-w-full">
@@ -412,7 +574,9 @@ export const DCAConvenercourses: React.FC = () => {
                   Course Name
                 </TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
-                <TableHead className="px-4 py-2 text-left">Request Type</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Request Type
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Instructor Email
                 </TableHead>
@@ -479,8 +643,12 @@ export const DCAConvenercourses: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-2 uppercase">
-                      <span className={`whitespace-nowrap text-ellipsis ${STATUS_COLORS[course.status]}`}>
-                        {course.status === "notsubmitted"? "NOT SUBMITTED" : course.status}
+                      <span
+                        className={`text-ellipsis whitespace-nowrap ${STATUS_COLORS[course.status]}`}
+                      >
+                        {course.status === "notsubmitted"
+                          ? "NOT SUBMITTED"
+                          : course.status}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
@@ -495,7 +663,7 @@ export const DCAConvenercourses: React.FC = () => {
                           className="hover:bg-primary hover:text-white"
                           onClick={() =>
                             navigate(
-                              `/qpReview/dcarequests/review/${course.id}`
+                              `/qpReview/dcarequests/seeReview/${course.id}`
                             )
                           }
                         >

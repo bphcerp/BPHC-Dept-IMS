@@ -252,11 +252,11 @@ async function sendReminderEmails(reminderData: ReminderEmailData): Promise<void
     try {
         // Separate courses by status type
         const documentsNotSubmitted = reminderData.courses.filter(course => 
-            course.status === 'notsubmitted' || course.status === 'pending_documents'
+            course.status === 'notsubmitted' 
         );
         
         const reviewsNotSubmitted = reminderData.courses.filter(course => 
-            course.status === 'submitted' || course.status === 'pending_review'
+            course.status === 'review pending'
         );
 
         const emailPromises: Promise<any>[] = [];
@@ -393,10 +393,9 @@ router.post(
         try {
             const reminderData: ReminderEmailData = req.body;
 
-            console.log("Received reminder data:", reminderData);
-
             // Validate request data
             if (!reminderData.courses || reminderData.courses.length === 0) {
+                console.log("No courses provided for reminders");
                 return res.status(400).json({
                     success: false,
                     message: "No courses provided for reminder emails",
@@ -405,16 +404,17 @@ router.post(
 
             // Separate courses by type
             const documentsNotSubmitted = reminderData.courses.filter(course => 
-                (course.status === 'notsubmitted' ) && course.icEmail
+                (course.status === 'notsubmitted') && course.icEmail
             );
             
             const reviewsNotSubmitted = reminderData.courses.filter(course => 
-                (course.status === 'review pending') && course.reviewerEmail
+                (course.status === 'review pending' ) && course.reviewerEmail
             );
 
             const totalValidCourses = documentsNotSubmitted.length + reviewsNotSubmitted.length;
 
             if (totalValidCourses === 0) {
+                console.log("No valid courses found for reminders 2");
                 return res.status(400).json({
                     success: false,
                     message: "No valid courses found for reminders",
