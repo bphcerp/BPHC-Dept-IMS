@@ -21,7 +21,7 @@ export async function handleStart(
   callback: () => Promise<void>
 ) {
   if (!roles.length) {
-    toast.error("Please select atleast 1 role");
+    toast.error("Please select at least 1 role");
     return;
   }
 
@@ -54,7 +54,7 @@ export async function handleEdit(
   callback: () => Promise<void>
 ) {
   if (!roles.length) {
-    toast.error("Please select atleast 1 role");
+    toast.error("Please select at least 1 role");
     return;
   }
 
@@ -154,7 +154,7 @@ function TestingPopup() {
                       setIsConfirmEndOpen(false);
                     }}
                   >
-                    <X className="s-4" />
+                    <X className="size-4" />
                   </div>
                 </div>
 

@@ -12,7 +12,7 @@ function ConfirmEndTestingPopup({
 }) {
   return value ? (
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
-      <Card className="relative w-[28] space-y-4 rounded-lg px-2 pt-6">
+      <Card className="relative space-y-4 rounded-lg px-2 pt-6">
         <CardContent className="flex flex-col items-start justify-start gap-8">
           <div className="flex flex-col gap-2">
             <h1 className="text-lg font-bold">

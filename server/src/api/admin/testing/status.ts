@@ -24,7 +24,7 @@ router.get(
             return;
         }
 
-        var parsedRoles: string[] = [];
+        let parsedRoles: string[] = [];
         if (data[0].inTestingMode) {
             const roleIds = data[0].roles;
             const rolesData = await db
