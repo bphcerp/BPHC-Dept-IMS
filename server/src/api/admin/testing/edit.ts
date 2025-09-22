@@ -1,7 +1,6 @@
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
-import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { roles, users } from "@/config/db/schema/admin.ts";
 import { eq, inArray } from "drizzle-orm";
@@ -11,7 +10,6 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin:tester"),
     asyncHandler(async (req, res) => {
         assert(req.user);
 
@@ -19,7 +17,7 @@ router.post(
 
         // check if user is in testing mode
         const data = await db
-            .select({ inTestingMode: users.inTestingMode })
+            .select({ inTestingMode: users.inTestingMode, roles: users.roles })
             .from(users)
             .where(eq(users.email, req.user.email));
         if (!data.length) {
@@ -41,13 +39,21 @@ router.post(
             return;
         }
 
+        if (
+            data[0].roles.length === roleIDs.length &&
+            roleIDs.map((r) => r.id).every((id) => data[0].roles.includes(id))
+        ) {
+            res.status(400).json({ message: "No changes in roles" });
+            return;
+        }
+
         // assign new testing roles
         const updateUser = await db
             .update(users)
             .set({
                 roles: roleIDs.map((r) => r.id),
             })
-            .where(eq(users.email, req.user.email));    
+            .where(eq(users.email, req.user.email));
         if (!updateUser || !updateUser.rowCount) {
             res.status(500).json({ message: "Failed to update user roles" });
             return;

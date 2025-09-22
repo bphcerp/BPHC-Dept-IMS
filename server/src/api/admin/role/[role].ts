@@ -12,7 +12,6 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess(),
     asyncHandler(async (req, res, _) => {
         const { q: searchQuery } = adminSchemas.roleSearchQuerySchema.parse(
             req.query
