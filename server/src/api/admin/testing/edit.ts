@@ -1,7 +1,6 @@
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
-import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { roles, users } from "@/config/db/schema/admin.ts";
 import { eq, inArray } from "drizzle-orm";
@@ -11,7 +10,6 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("admin:tester"),
     asyncHandler(async (req, res) => {
         assert(req.user);
 
