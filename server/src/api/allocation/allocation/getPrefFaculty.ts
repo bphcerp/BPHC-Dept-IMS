@@ -4,6 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { courseCodeSchema } from "node_modules/lib/src/schemas/Allocation.ts";
+import { getLatestSemester } from "../semester/getLatest.ts";
 
 const router = express.Router();
 
@@ -13,9 +14,7 @@ router.get(
     asyncHandler(async (req, res, next) => {
         const { code } = courseCodeSchema.parse(req.query);
 
-        const currentAllocationSemester = await db.query.semester.findFirst({
-            where: (semester, { eq }) => eq(semester.allocationStatus, "ongoing")
-        })
+        const currentAllocationSemester = await getLatestSemester()
         
         if (!currentAllocationSemester) return next(new HttpError(HttpCode.BAD_REQUEST, "There is no semester whose allocation is ongoing currently"))
 
