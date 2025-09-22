@@ -9,7 +9,7 @@ const router = Router();
 
 router.get(
     "/:code",
-    // checkAccess(),
+    checkAccess("allocation:courses:view"),
     asyncHandler(async (req, res) => {
         const { code } = req.params;
 

@@ -125,7 +125,7 @@ export const allPermissions = {
     "allocation:form:close": "Close a form for allocation data retrieval",
     "allocation:form:view": "View allocation data retrieval form",
 
-  "allocation:data:export": "Export allocation data",
+    "allocation:data:export": "Export allocation data",
 
     "allocation:semester:read": "View the semester details",
     "allocation:semester:write": "Create or Modify a semester",
@@ -337,11 +337,11 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/coursePreferences/delete": "allocation:preference:write",
     "/allocation/coursePreferences/update": "allocation:preference:write",
 
-  "/allocation/semester/create": "allocation:semester:write",
-  "/allocation/semester/get": "allocation:semester:read",
-  "/allocation/semester/getLatest": "allocation:semester:read",
-  "/allocation/semester/delete": "allocation:semester:write",
-  "/allocation/semester/update": "allocation:semester:write",
+    "/allocation/semester/create": "allocation:semester:write",
+    "/allocation/semester/get": "allocation:semester:read",
+    "/allocation/semester/getLatest": "allocation:semester:read",
+    "/allocation/semester/delete": "allocation:semester:write",
+    "/allocation/semester/update": "allocation:semester:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
     "/allocation/builder/template/get": "allocation:builder:template:read",

@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
     "/:id",
-    // checkAccess(),
+    checkAccess("allocation:form:publish"),
     asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { allocationDeadline } = allocationFormPublishSchema.parse(

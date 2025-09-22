@@ -10,7 +10,7 @@ import {
     semesterSchema,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
-import { AllocationForm } from "./allocationFormBuilder.ts";
+import { AllocationForm, AllocationFormTemplatePreferenceFieldType } from "./allocationFormBuilder.ts";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -88,7 +88,7 @@ export type TTDCourse = {
 export type CourseAllocateType = z.infer<typeof courseAllocateSchema>;
 
 export type SectionClient = {
-    type: "LECTURE" | "TUTORIAL" | "PRACTICAL";
+    type: AllocationFormTemplatePreferenceFieldType
     instructors: [string, string][];
 };
 
