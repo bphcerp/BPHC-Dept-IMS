@@ -34,11 +34,13 @@ import {
 import NotifyProposalDeadlineDialog, {
   type ViewData,
 } from "./NotifyProposalDeadlineDialog";
+
 interface Semester {
   id: number;
   year: string;
   semesterNumber: number;
 }
+
 interface ProposalDeadline {
   id: number;
   studentSubmissionDate: string;
@@ -46,6 +48,7 @@ interface ProposalDeadline {
   drcReviewDate: string;
   dacReviewDate: string;
 }
+
 const DeadlineForm = ({
   currentSemesterId,
   onSuccess,
@@ -87,7 +90,7 @@ const DeadlineForm = ({
     ) => api.post("/phd/staff/updateProposalDeadline", newDeadlines),
     onSuccess: (response) => {
       toast.success(
-        `Deadlines ${deadlineToEdit ? "updated" : "created"}successfully!`
+        `Deadlines ${deadlineToEdit ? "updated" : "created"} successfully!`
       );
       void queryClient.invalidateQueries({
         queryKey: ["proposal-deadlines", currentSemesterId],
@@ -100,6 +103,7 @@ const DeadlineForm = ({
       );
     },
   });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (Object.values(deadlines).some((date) => !date)) {
@@ -112,6 +116,7 @@ const DeadlineForm = ({
       ...deadlines,
     });
   };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeadlines((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
@@ -271,7 +276,7 @@ const StaffProposalDeadline: React.FC = () => {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
-                    {editingDeadline ? "Edit" : "Create"}Deadline Cycle
+                    {editingDeadline ? "Edit" : "Create"} Deadline Cycle
                   </DialogTitle>
                 </DialogHeader>
                 <DeadlineForm

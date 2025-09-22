@@ -39,7 +39,7 @@ async function checkDacDeadlines() {
                 assignedTo: drc.email,
                 createdBy: "system",
                 title: `DAC Review Overdue for ${proposal.student.name}`,
-                description: `The DAC review deadline for ${proposal.student.name}(${proposal.student.email})has passed. The proposal status has been updated. Please follow up with the DAC members and then request seminar details from the supervisor.`,
+                description: `The DAC review deadline for ${proposal.student.name} (${proposal.student.email})has passed. The proposal status has been updated. Please follow up with the DAC members and then request seminar details from the supervisor.`,
                 module: modules[3],
                 completionEvent: `proposal:dac-deadline-passed:${proposal.id}`,
                 link: `/phd/drc-convenor/proposal-management/${proposal.id}`,
@@ -49,7 +49,7 @@ async function checkDacDeadlines() {
     if (todosToCreate.length > 0) {
         await createTodos(todosToCreate);
         logger.info(
-            `Created ${todosToCreate.length}To-Dos for overdue DAC reviews.`
+            `Created ${todosToCreate.length} To-Dos for overdue DAC reviews.`
         );
     } else {
         logger.info("No new To-Dos needed for overdue DAC reviews.");

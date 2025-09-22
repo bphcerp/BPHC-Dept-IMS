@@ -226,7 +226,7 @@ const StudentProposal: React.FC = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
           <AlertDescription>
-            Since you haven&apos;t passed your qualifying exam yet, you are not
+            Since you have not passed your qualifying exam yet, you are not
             allowed to fill the form.
           </AlertDescription>
         </Alert>

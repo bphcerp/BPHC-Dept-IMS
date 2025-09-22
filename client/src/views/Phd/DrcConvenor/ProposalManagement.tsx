@@ -268,9 +268,9 @@ const DrcProposalManagement: React.FC = () => {
         <Info className="h-4 w-4" />
         <AlertTitle>Action Required for Proposals</AlertTitle>
         <AlertDescription>
-          To proceed with proposals marked as &apos;DAC ACCEPTED&apos; or
-          &apos;SEMINAR PENDING&apos;, please select them from the table below
-          and click the &apos;Request Details&apos; button. This will send a
+          To proceed with proposals marked as DAC ACCEPTED or
+          SEMINAR PENDING, please select them from the table below
+          and click the Request Seminar Details button. This will send a
           notification to the supervisor to provide seminar details.
         </AlertDescription>
       </Alert>

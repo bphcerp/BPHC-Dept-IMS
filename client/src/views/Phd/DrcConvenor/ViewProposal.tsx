@@ -100,11 +100,11 @@ const DrcViewProposal: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p>
-                This proposal is currently at the{" "}
+                This proposal is currently at the 
                 <strong>
                   {proposal.status.replace(/_/g, " ").toUpperCase()}
-                </strong>{" "}
-                stage and does not require your direct action on this page.
+                </strong>
+                 stage and does not require your direct action on this page.
                 Please use the main dashboard for bulk actions.
               </p>
             </CardContent>

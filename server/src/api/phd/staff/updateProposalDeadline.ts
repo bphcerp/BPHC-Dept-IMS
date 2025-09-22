@@ -46,7 +46,7 @@ export default router.post(
                 .returning();
         }
         res.status(200).json({
-            message: `Proposal deadlines ${id ? "updated" : "created"}successfully`,
+            message: `Proposal deadlines ${id ? "updated" : "created"} successfully`,
             deadline: result[0],
         });
     })

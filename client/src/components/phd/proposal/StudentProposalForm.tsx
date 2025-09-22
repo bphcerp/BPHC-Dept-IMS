@@ -323,7 +323,8 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const partTimeFileField = {
     key: "placeOfResearchFile",
     label: "Format for Place of Research Work",
-    required: true,
+    required: profileData?.phdType === "part-time",
+    condition: profileData?.phdType === "part-time",
   };
 
   const outsideSupervisorFileFields = [

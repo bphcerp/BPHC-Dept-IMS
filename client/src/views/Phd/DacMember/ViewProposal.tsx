@@ -105,7 +105,7 @@ const DacViewProposal: React.FC = () => {
             <br />
             Supervisor: {proposal.supervisor.name} ({proposal.supervisor.email})
             <br />
-            Status:{" "}
+            Status:
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}
             </Badge>
@@ -119,7 +119,7 @@ const DacViewProposal: React.FC = () => {
                 <li key={index}>
                   {coSup.coSupervisor?.name ??
                     coSup.coSupervisorName ??
-                    "External"}{" "}
+                    "External"}
                   ({coSup.coSupervisorEmail})
                 </li>
               ))}
@@ -145,7 +145,7 @@ const DacViewProposal: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p>
-              Your Decision:{" "}
+              Your Decision:
               <strong
                 className={
                   proposal.currentUserReview.approved
