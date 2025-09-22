@@ -45,10 +45,6 @@ router.post("/", async (req, res) => {
             });
         }
 
-        // mark as reviewed if new review added OR old one exists
-        // if (updateFields.review || request.review) {
-        //     updateFields.status = "reviewed"; // ✅ schema column
-        // }
 
         // guard against empty updates
         if (Object.keys(updateFields).length === 0) {

@@ -289,6 +289,7 @@ const Routing = () => {
             <Route path="dcarequests/seeReview/:id" element={<DcaReview />} />
             <Route path="dcarequests" element={<DCARequestsView />} />
             <Route path="facultyReview" element={<ReviewPage />} />
+            <Route path="facultyReview/seeReview/:id" element={<DcaReview />} />
             <Route path="facultyReview/:course" element={<FacultyReview />} />
           </Route>
         )}

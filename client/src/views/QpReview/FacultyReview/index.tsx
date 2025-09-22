@@ -149,6 +149,7 @@ export const DCAMemberHandouts: React.FC = () => {
                 <TableHead className="px-4 py-2 text-left">Course Code</TableHead>
                 <TableHead className="px-4 py-2 text-left">Course Name</TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">Request Type</TableHead>
                 <TableHead className="px-4 py-2 text-left">IC Name</TableHead>
                 <TableHead className="px-4 py-2 text-left">Status</TableHead>
                 <TableHead className="px-4 py-2 text-left">Submitted On</TableHead>
@@ -165,6 +166,7 @@ export const DCAMemberHandouts: React.FC = () => {
                     <TableCell className="px-4 py-2">{course.courseCode}</TableCell>
                     <TableCell className="px-4 py-2">{course.courseName}</TableCell>
                     <TableCell className="px-4 py-2">{course.category}</TableCell>
+                    <TableCell className="px-4 py-2">{course.requestType}</TableCell>
                     <TableCell className="px-4 py-2">{course.professorName}</TableCell>
                     <TableCell className="px-4 py-2 uppercase">
                       <span className={STATUS_COLORS[course.status]}>
@@ -184,7 +186,7 @@ export const DCAMemberHandouts: React.FC = () => {
                         >
                           None
                         </Button>
-                      ) : (
+                      ) : course.status === "review pending" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
@@ -194,9 +196,17 @@ export const DCAMemberHandouts: React.FC = () => {
                             })
                           }
                         >
-                          {course.status === "review pending" ? "Review" : "Details"}
-                        </Button>
-                      )}
+                         Review
+                        </Button >
+                      ) : ( <Button
+                      variant="outline"
+                          className="hover:bg-primary hover:text-white"
+                          onClick={() => {
+                            navigate(`/qpReview/facultyReview/seeReview/${course.id}`)
+                          }}
+                      >
+                        Details
+                      </Button> )}
                     </TableCell>
                   </TableRow>
                 ))

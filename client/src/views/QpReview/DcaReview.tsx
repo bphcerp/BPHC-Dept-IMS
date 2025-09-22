@@ -15,18 +15,18 @@ import { toast } from "sonner";
 import { ChevronLeft } from "lucide-react";
 
 interface ReviewCriteria {
-  length: string;
-  remarks: string;
-  language: string;
-  solution: string;
-  coverLearning: string;
-  mixOfQuestions: string;
+  length?: string;
+  remarks?: string;
+  language?: string;
+  solution?: string;
+  coverLearning?: string;
+  mixOfQuestions?: string;
 }
 
 interface ReviewData {
-  Compre: ReviewCriteria;
-  MidSem: ReviewCriteria;
-  Others: ReviewCriteria;
+  Compre?: ReviewCriteria;
+  MidSem?: ReviewCriteria;
+  Others?: ReviewCriteria;
 }
 
 interface ApiResponse {
@@ -59,7 +59,7 @@ export default function DcaReview() {
   });
 
   const goBack = () => {
-    navigate("/qpReview/dcarequests");
+    navigate(-1);
   };
 
   if (isLoading)
@@ -82,24 +82,32 @@ export default function DcaReview() {
   const courseCode = apiData?.data?.courseCode;
 
   // Helper function to validate and display scores
-  const getScoreDisplay = (score: string) => {
+  const getScoreDisplay = (score: string | undefined) => {
+    if (!score || score.trim() === '') {
+      return { value: 'N/A', isInvalid: false, isEmpty: true };
+    }
+    
     const numScore = parseInt(score);
     // Handle invalid scores (like "33") by showing them with a warning
     if (isNaN(numScore) || numScore > 10) {
-      return { value: score, isInvalid: true };
+      return { value: score, isInvalid: true, isEmpty: false };
     }
-    return { value: score, isInvalid: false };
+    return { value: score, isInvalid: false, isEmpty: false };
   };
 
   // Helper function to get color class for scores
-  const getScoreColorClass = (score: string) => {
+  const getScoreColorClass = (score: string | undefined) => {
     const scoreData = getScoreDisplay(score);
+    
+    if (scoreData.isEmpty) {
+      return 'bg-gray-100 text-gray-500';
+    }
     
     if (scoreData.isInvalid) {
       return 'bg-orange-100 text-orange-800 border border-orange-300';
     }
     
-    const numScore = parseInt(score);
+    const numScore = parseInt(score!);
     if (numScore >= 7) {
       return 'bg-green-100 text-green-800';
     } else if (numScore >= 4) {
@@ -109,19 +117,18 @@ export default function DcaReview() {
     }
   };
 
-  // Create table data from review data
+  // Helper function to format remarks with line breaks
+  const formatRemarks = (remarks: string | undefined) => {
+    if (!remarks || remarks.trim() === '') {
+      return 'No remarks';
+    }
+    return remarks.trim();
+  };
+
+  // Create table data from review data - only include sections that exist
   const tableData = reviewData ? [
-    {
-      examType: "Comprehensive Exam",
-      examTypeKey: "Compre",
-      length: reviewData.Compre.length,
-      language: reviewData.Compre.language,
-      solution: reviewData.Compre.solution,
-      coverLearning: reviewData.Compre.coverLearning,
-      mixOfQuestions: reviewData.Compre.mixOfQuestions,
-      remarks: reviewData.Compre.remarks || "No remarks"
-    },
-    {
+    // Only include sections that exist in the API response
+    ...(reviewData.MidSem ? [{
       examType: "Mid Semester",
       examTypeKey: "MidSem",
       length: reviewData.MidSem.length,
@@ -129,9 +136,21 @@ export default function DcaReview() {
       solution: reviewData.MidSem.solution,
       coverLearning: reviewData.MidSem.coverLearning,
       mixOfQuestions: reviewData.MidSem.mixOfQuestions,
-      remarks: reviewData.MidSem.remarks || "No remarks"
-    },
-    {
+      remarks: formatRemarks(reviewData.MidSem.remarks)
+    }] : []),
+    
+    ...(reviewData.Compre ? [{
+      examType: "Comprehensive Exam",
+      examTypeKey: "Compre",
+      length: reviewData.Compre.length,
+      language: reviewData.Compre.language,
+      solution: reviewData.Compre.solution,
+      coverLearning: reviewData.Compre.coverLearning,
+      mixOfQuestions: reviewData.Compre.mixOfQuestions,
+      remarks: formatRemarks(reviewData.Compre.remarks)
+    }] : []),
+    
+    ...(reviewData.Others ? [{
       examType: "Other Evaluations",
       examTypeKey: "Others",
       length: reviewData.Others.length,
@@ -139,8 +158,8 @@ export default function DcaReview() {
       solution: reviewData.Others.solution,
       coverLearning: reviewData.Others.coverLearning,
       mixOfQuestions: reviewData.Others.mixOfQuestions,
-      remarks: reviewData.Others.remarks || "No remarks"
-    }
+      remarks: formatRemarks(reviewData.Others.remarks)
+    }] : [])
   ] : [];
 
   return (
@@ -171,6 +190,15 @@ export default function DcaReview() {
               <strong>Rating Scale:</strong> All scores are rated on a scale of 0-10, where <strong>10 represents the best</strong> and <strong>0 represents the worst</strong> performance.
             </p>
           </div>
+          
+          {/* Show which sections are available */}
+          <div className="mt-2 p-2 bg-gray-50 rounded border">
+            <p className="text-xs text-gray-600">
+              <strong>Available Reviews:</strong> {
+                Object.keys(reviewData || {}).join(', ') || 'None'
+              }
+            </p>
+          </div>
         </div>
       </div>
 
@@ -191,10 +219,10 @@ export default function DcaReview() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-300">
-              {tableData.length ? (
+              {tableData.length > 0 ? (
                 tableData.map((review, index) => (
                   <TableRow
-                    key={index}
+                    key={`${review.examTypeKey}-${index}`}
                     className="odd:bg-white even:bg-gray-100"
                   >
                     <TableCell className="px-4 py-2 font-medium">
@@ -202,7 +230,7 @@ export default function DcaReview() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.length)}`}>
-                        {review.length}
+                        {getScoreDisplay(review.length).value}
                         {getScoreDisplay(review.length).isInvalid && (
                           <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
                         )}
@@ -210,7 +238,7 @@ export default function DcaReview() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.language)}`}>
-                        {review.language}
+                        {getScoreDisplay(review.language).value}
                         {getScoreDisplay(review.language).isInvalid && (
                           <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
                         )}
@@ -218,7 +246,7 @@ export default function DcaReview() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.solution)}`}>
-                        {review.solution}
+                        {getScoreDisplay(review.solution).value}
                         {getScoreDisplay(review.solution).isInvalid && (
                           <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
                         )}
@@ -226,7 +254,7 @@ export default function DcaReview() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.coverLearning)}`}>
-                        {review.coverLearning}
+                        {getScoreDisplay(review.coverLearning).value}
                         {getScoreDisplay(review.coverLearning).isInvalid && (
                           <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
                         )}
@@ -234,14 +262,14 @@ export default function DcaReview() {
                     </TableCell>
                     <TableCell className="px-4 py-2">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getScoreColorClass(review.mixOfQuestions)}`}>
-                        {review.mixOfQuestions}
+                        {getScoreDisplay(review.mixOfQuestions).value}
                         {getScoreDisplay(review.mixOfQuestions).isInvalid && (
                           <span className="ml-1" title="Invalid score (should be 0-10)">⚠️</span>
                         )}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2 max-w-xs">
-                      <div className="truncate" title={review.remarks}>
+                      <div className="whitespace-pre-line" title={review.remarks}>
                         {review.remarks}
                       </div>
                     </TableCell>
@@ -249,7 +277,7 @@ export default function DcaReview() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="px-4 py-2 text-center">
+                  <TableCell colSpan={7} className="px-4 py-2 text-center text-gray-500">
                     No review data found
                   </TableCell>
                 </TableRow>
