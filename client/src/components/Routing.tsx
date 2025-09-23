@@ -102,6 +102,7 @@ import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 import FormList from "@/views/Allocation/FormList";
 import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
+import AllocateCourse from "@/views/Allocation/AllocateCourse";
 import SemesterList from "@/views/Allocation/SemesterList";
 
 const adminModulePermissions = [
@@ -660,6 +661,8 @@ const Routing = () => {
                 />
               </>
             )}
+
+            <Route path="allocate/:id" element={<AllocateCourse />} />
 
             {checkAccessAnyOne([
               "allocation:courses:read",

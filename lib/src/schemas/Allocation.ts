@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const sectionTypeEnum = z.enum(["Lecture", "Tutorial", "Practical"]);
+export const sectionTypeEnum = z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]);
 export const degreeTypeEnum = z.enum(["FD", "HD"]);
 export const semesterTypeEnum = z.enum(["1", "2", "3"]);
 export const courseTypeEnum = z.enum(["CDC", "Elective"]);
@@ -51,7 +51,7 @@ export const deleteCourseSchema = z.object({
 
 export const semesterFormLinkSchema = z.object({
     formId: z.string().uuid(),
-})
+});
 
 export const semesterSchema = z.object({
     id: z.string().uuid().optional(),
@@ -79,7 +79,6 @@ export const deleteSemesterSchema = z.object({
 export const allocationSectionSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
-    credits: z.number().int(),
     type: sectionTypeEnum,
     masterId: z.string().uuid(),
 });
@@ -89,4 +88,20 @@ export const masterAllocationSchema = z.object({
     semesterId: z.string().uuid(),
     ic: z.string().email(),
     courseCode: z.string(),
+});
+
+export const courseCodeSchema = z.object({
+    code: z.string().nonempty(),
+});
+
+export const courseAllocateSchema = z.object({
+    courseCode: z.string().nonempty(),
+    ic: z.string().email().nonempty(),
+    sections: z.array(
+        z.object({
+            number: z.coerce.number(),
+            type: z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]),
+            instructors: z.array(z.string().email().nonempty()),
+        })
+    ),
 });

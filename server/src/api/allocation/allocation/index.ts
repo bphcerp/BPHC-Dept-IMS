@@ -1,10 +1,12 @@
 import { Router } from "express";
-import updateAllocation from "./update.ts";
-import deleteAllocation from "./delete.ts";
+import getPrefFacultyRouter from "./getPrefFaculty.ts";
+import createRouter from "./create.ts";
+import getRouter from "./get.ts";
 
 const router = Router();
 
-router.use("/update", updateAllocation);
-router.use("/delete", deleteAllocation);
+router.use("/getPreferredFaculty", getPrefFacultyRouter);
+router.use("/create", createRouter);
+router.use("/get", getRouter);
 
 export default router;

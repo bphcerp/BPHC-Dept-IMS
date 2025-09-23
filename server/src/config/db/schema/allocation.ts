@@ -12,9 +12,9 @@ import { v4 as uuidv4 } from "uuid";
 import { allocationForm } from "./allocationFormBuilder.ts";
 
 export const sectionTypeEnum = pgEnum("section_type_enum", [
-    "Lecture",
-    "Tutorial",
-    "Practical",
+    "LECTURE",
+    "TUTORIAL",
+    "PRACTICAL",
 ]);
 
 export const degreeTypeEnum = pgEnum("degree_type_enum", ["FD", "HD"]);
@@ -36,7 +36,7 @@ export const masterAllocation = pgTable("allocation_master_allocation", {
         .$defaultFn(() => uuidv4()),
 
     semesterId: uuid("semester_id").references(() => semester.id, {
-        onDelete: "cascade",
+        onDelete: "restrict",
     }),
 
     ic: text("instructor_email")
@@ -53,7 +53,6 @@ export const allocationSection = pgTable("allocation_section", {
         .primaryKey()
         .$defaultFn(() => uuidv4()),
     number: integer("section_name").notNull(),
-    credits: integer("credits").notNull(),
     type: sectionTypeEnum("section_type").notNull(),
     masterId: uuid("master_id")
         .notNull()
@@ -68,7 +67,7 @@ export const allocationSectionInstructors = pgTable(
             .references(() => allocationSection.id, { onDelete: "cascade" }),
         instructorEmail: text("instructor_email")
             .notNull()
-            .references(() => users.email, { onDelete: "cascade" }),
+            .references(() => users.email, { onDelete: "set default" }),
     }
 );
 
