@@ -127,6 +127,11 @@ export const phdAdminRelations = relations(phd, ({ one, many }) => ({
     proposals: many(phdProposals, {
         relationName: "studentProposals",
     }),
+    supervisor: one(faculty, {
+        fields: [phd.supervisorEmail],
+        references: [faculty.email],
+        relationName: "phdSupervisor",
+    }),
 }));
 
 export const staffAdminRelations = relations(staff, ({ one }) => ({
