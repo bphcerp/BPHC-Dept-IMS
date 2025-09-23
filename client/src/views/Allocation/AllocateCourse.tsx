@@ -235,7 +235,7 @@ const AllocateCourse = () => {
             <div>{allocationData.ic.name}</div>
           </div>
           {allocationData.sections.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 divide divide-x-2">
+            <div className="divide grid grid-cols-3 gap-4 divide-x-2">
               <div className="px-2">
                 <h2 className="text-lg font-semibold">Lecture Sections</h2>
                 {allocationData.sections
@@ -329,16 +329,25 @@ const AllocateCourse = () => {
               </Select>
             </div>
           </div>
-          <div className="mt-2 flex flex-col gap-2">
-            {lecturesSections.map((el, i) => (
-              <AddSectionCard section={el} number={i + 1} key={i} />
-            ))}
-            {tutorialSections.map((el, i) => (
-              <AddSectionCard section={el} number={i + 1} key={i} />
-            ))}
-            {practicalSections.map((el, i) => (
-              <AddSectionCard section={el} number={i + 1} key={i} />
-            ))}
+          <div className="divide grid grid-cols-3 gap-4 divide-x-2">
+            <div className="px-2">
+              <h2 className="text-lg font-semibold">Lecture Sections</h2>
+              {lecturesSections.map((el, i) => (
+                <AddSectionCard section={el} number={i + 1} key={i} />
+              ))}
+            </div>
+            <div className="px-2">
+              <h2 className="text-lg font-semibold">Tutorial Sections</h2>
+              {tutorialSections.map((el, i) => (
+                <AddSectionCard section={el} number={i + 1} key={i} />
+              ))}
+            </div>
+            <div className="px-2">
+              <h2 className="text-lg font-semibold">Practical Sections</h2>
+              {practicalSections.map((el, i) => (
+                <AddSectionCard section={el} number={i + 1} key={i} />
+              ))}
+            </div>
           </div>
           <div className="mx-auto mt-2 flex gap-2">
             <Button type="button" onClick={handleAddClick}>

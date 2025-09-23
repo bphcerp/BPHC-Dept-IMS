@@ -123,7 +123,7 @@ const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
             <PopoverTrigger
               disabled={
                 !fetchAllFaculty &&
-                !fetchAllFaculty &&
+                !fetchAllPhD &&
                 !currentPrefs.length &&
                 !instructors.length
               }
