@@ -10,6 +10,7 @@ const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = allocationFormResponseSchema.parse(req.body);
 
@@ -21,16 +22,22 @@ router.post(
             return next(new HttpError(HttpCode.BAD_REQUEST, "Form not found"));
         }
 
-        const formResponseExists = await db.query.allocationFormResponse.findFirst({
-            where: (fr, { and, eq }) =>
-                and(
-                    eq(fr.formId, parsed.formId),
-                    eq(fr.submittedByEmail, req.user!.email)
-                ),
-        });
+        const formResponseExists =
+            await db.query.allocationFormResponse.findFirst({
+                where: (fr, { and, eq }) =>
+                    and(
+                        eq(fr.formId, parsed.formId),
+                        eq(fr.submittedByEmail, req.user!.email)
+                    ),
+            });
 
         if (formResponseExists) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "You have already submitted a response for this form"));
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "You have already submitted a response for this form"
+                )
+            );
         }
 
         await db.transaction(async (tx) => {
@@ -39,13 +46,15 @@ router.post(
                     formId: parsed.formId,
                     submittedAt: new Date(),
                     submittedByEmail: req.user!.email,
-                    ...field
+                    ...field,
                 })
             );
             await Promise.all(insertPromises);
         });
 
-        res.status(201).send({ message: "Form response registered successfully"});
+        res.status(201).send({
+            message: "Form response registered successfully",
+        });
     })
 );
 

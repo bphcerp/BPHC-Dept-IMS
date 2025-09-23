@@ -1,15 +1,12 @@
 import express from "express";
-import registerResponseRouter from "./registerResponse.ts";
-import viewResponseByIdRouter from "./viewResponseById.ts";
-import getResponsesByFormIdRouter from "./getResponsesByFormId.ts";
-
+import registerResponseRouter from "./register.ts";
+import viewResponseByIdRouter from "./view.ts";
+import getResponsesByFormIdRouter from "./get.ts";
 
 const router = express.Router();
 
 router.use("/register", registerResponseRouter);
-router.use("/view/:id", viewResponseByIdRouter);
-router.use("/get/:id", getResponsesByFormIdRouter);
-
-
+router.use("/view", viewResponseByIdRouter);
+router.use("/get", getResponsesByFormIdRouter);
 
 export default router;

@@ -10,23 +10,26 @@ import { semesterFormLinkSchema } from "node_modules/lib/src/schemas/Allocation.
 const router = express.Router();
 
 router.post(
-  "/:semesterId",
-//   checkAccess(),
-  asyncHandler(async (req, res, next) => {
+    "/:semesterId",
+    checkAccess(),
+    asyncHandler(async (req, res, next) => {
+        const { formId } = semesterFormLinkSchema.parse(req.body);
+        const { semesterId } = req.params;
 
-    const { formId } = semesterFormLinkSchema.parse(req.body)
-    const { semesterId } = req.params
+        const form = db.query.allocationForm.findFirst({
+            where: (form, { eq }) => eq(form.id, formId),
+        });
 
-    const form = db.query.allocationForm.findFirst({
-        where: (form, { eq }) => eq(form.id, formId)
+        if (!form)
+            return next(new HttpError(HttpCode.NOT_FOUND, "Form not found"));
+
+        await db
+            .update(semester)
+            .set({ formId })
+            .where(eq(semester.id, semesterId));
+
+        res.send("Successfully linked form");
     })
-
-    if (!form) return next(new HttpError(HttpCode.NOT_FOUND, "Form not found"))
-
-    await db.update(semester).set({ formId }).where(eq(semester.id, semesterId))
-
-    res.send("Successfully linked form")    
-  })
 );
 
 export default router;

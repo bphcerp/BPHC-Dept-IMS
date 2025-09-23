@@ -7,7 +7,8 @@ import express from "express";
 const router = express.Router();
 
 router.get(
-    "/",
+    "/:id",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const responseId = req.params.id;
 

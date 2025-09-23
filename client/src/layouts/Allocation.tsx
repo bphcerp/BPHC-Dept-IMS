@@ -1,5 +1,13 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { BookIcon, ClipboardCheckIcon, ClockArrowDownIcon, DatabaseIcon, FrameIcon, MessageSquareReplyIcon, SendIcon, SquareStackIcon, UserRoundIcon } from "lucide-react";
+import {
+  BookIcon,
+  ClipboardCheckIcon,
+  ClockArrowDownIcon,
+  DatabaseIcon,
+  FrameIcon,
+  SendIcon,
+  UserRoundIcon,
+} from "lucide-react";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
@@ -9,27 +17,27 @@ const AllocationLayout = () => {
         items={[
           // This section should be visible to all users with allocation write permissions
           {
-            title: 'Admin Control',
+            title: "Admin Control",
             items: [
               {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
                 url: "/allocation/ongoing",
-                requiredPermissions: ["allocation:write"]
+                requiredPermissions: ["allocation:write"],
               },
               {
                 title: "Courses",
                 icon: <DatabaseIcon />,
                 url: "/allocation/courses",
-                requiredPermissions: ["allocation:courses:read"]
+                requiredPermissions: ["allocation:courses:read"],
               },
               {
                 title: "Semesters",
                 icon: <BookIcon />,
                 url: "/allocation/semesters",
-                requiredPermissions: ["allocation:semesters:read"]
+                requiredPermissions: ["allocation:semesters:read"],
               },
-            ]
+            ],
           },
           {
             title: "Course Allocation",
@@ -38,13 +46,13 @@ const AllocationLayout = () => {
                 title: "Your Allocations",
                 icon: <UserRoundIcon />,
                 url: "/allocation/personal",
-                requiredPermissions: ["allocation:view"]
+                requiredPermissions: ["allocation:view"],
               },
               {
                 title: "Submit Your Preferences",
                 icon: <SendIcon />,
                 url: "/allocation/submit",
-                requiredPermissions: ["allocation:form:view"]
+                requiredPermissions: ["allocation:form:view"],
               },
             ],
           },
@@ -55,16 +63,16 @@ const AllocationLayout = () => {
                 title: "Templates",
                 icon: <FrameIcon />,
                 url: "/allocation/templates",
-                requiredPermissions: ["allocation:write"]
+                requiredPermissions: ["allocation:write"],
               },
               {
                 title: "Forms",
                 icon: <ClipboardCheckIcon />,
                 url: "/allocation/forms",
-                requiredPermissions: ["allocation:write"]
+                requiredPermissions: ["allocation:write"],
               },
-            ]
-          }
+            ],
+          },
         ]}
       />
       <div className="w-full overflow-y-auto">
