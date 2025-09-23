@@ -12,6 +12,7 @@ import profileRouter from "./profile/index.ts";
 import projectRouter from "./project/index.ts";
 import patentRouter from "./patent/index.ts";
 import wilpProjectRouter from "./wilpProject/index.ts";
+import gradesRouter from "./grades/index.ts";
 import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
@@ -65,5 +66,6 @@ router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
+router.use("/grades", gradesRouter);
 
 export default router;
