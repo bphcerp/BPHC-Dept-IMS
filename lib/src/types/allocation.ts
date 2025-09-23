@@ -4,11 +4,11 @@ import {
     allocationSectionSchema,
     courseAllocateSchema,
     courseCodeSchema,
-    allocationStatusEnum,
+    allocationStatuses,
     courseSchema,
     masterAllocationSchema,
     semesterSchema,
-    semesterTypeEnum,
+    semesterTypes,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import {
@@ -34,10 +34,9 @@ export type Course = NewCourse & {
     updatedAt: Date;
 };
 
-export type SemesterAllocationStatusEnumType = z.infer<
-    typeof allocationStatusEnum
->;
-export type SemesterTypeEnumType = z.infer<typeof semesterTypeEnum>;
+export type SemesterAllocationStatusEnumType =
+    (typeof allocationStatuses)[number];
+export type SemesterTypeEnumType = (typeof semesterTypes)[number];
 export const semesterStatusMap: Record<
     SemesterAllocationStatusEnumType,
     string

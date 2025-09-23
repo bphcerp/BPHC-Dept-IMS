@@ -1,15 +1,21 @@
 import { z } from "zod";
 
-export const sectionTypeEnum = z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]);
-export const degreeTypeEnum = z.enum(["FD", "HD"]);
-export const semesterTypeEnum = z.enum(["1", "2", "3"]);
-export const courseTypeEnum = z.enum(["CDC", "Elective"]);
-export const allocationStatusEnum = z.enum([
+export const sectionTypes = ["LECTURE", "TUTORIAL", "PRACTICAL"] as const;
+export const degreeTypes = ["FD", "HD"] as const;
+export const semesterTypes = ["1", "2", "3"] as const; // 3 is for summer term
+export const courseTypes = ["CDC", "Elective"] as const;
+export const allocationStatuses = [
     "notStarted",
     "ongoing",
     "completed",
     "suspended",
-]);
+] as const;
+
+export const sectionTypeEnum = z.enum(sectionTypes);
+export const degreeTypeEnum = z.enum(degreeTypes);
+export const semesterTypeEnum = z.enum(semesterTypes);
+export const courseTypeEnum = z.enum(courseTypes);
+export const allocationStatusEnum = z.enum(allocationStatuses);
 
 // ------------------------ NOTE ------------------------
 // The commented fields are automatically managed by the api and are not required in the schema.

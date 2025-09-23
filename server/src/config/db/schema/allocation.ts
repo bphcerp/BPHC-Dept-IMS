@@ -6,58 +6,69 @@ import {
     pgEnum,
     uuid,
     unique,
+    index,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 import { allocationForm } from "./allocationFormBuilder.ts";
+import { allocationSchemas } from "lib";
 
-export const sectionTypeEnum = pgEnum("section_type_enum", [
-    "LECTURE",
-    "TUTORIAL",
-    "PRACTICAL",
-]);
+const {
+    allocationStatuses,
+    courseTypes,
+    degreeTypes,
+    sectionTypes,
+    semesterTypes,
+} = allocationSchemas;
 
-export const degreeTypeEnum = pgEnum("degree_type_enum", ["FD", "HD"]);
+export const sectionTypeEnum = pgEnum("section_type_enum", sectionTypes);
 
-// 3 is for summer term
-export const semesterTypeEnum = pgEnum("semester_type_enum", ["1", "2", "3"]);
-export const courseTypeEnum = pgEnum("course_type_enum", ["CDC", "Elective"]);
+export const degreeTypeEnum = pgEnum("degree_type_enum", degreeTypes);
 
-export const allocationStatus = pgEnum("allocation_status", [
-    "notStarted",
-    "ongoing",
-    "completed",
-    "suspended",
-]);
+export const semesterTypeEnum = pgEnum("semester_type_enum", semesterTypes);
+export const courseTypeEnum = pgEnum("course_type_enum", courseTypes);
 
-export const masterAllocation = pgTable("allocation_master_allocation", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
+export const allocationStatus = pgEnum("allocation_status", allocationStatuses);
 
-    semesterId: uuid("semester_id").references(() => semester.id, {
-        onDelete: "restrict",
-    }),
+export const masterAllocation = pgTable(
+    "allocation_master_allocation",
+    {
+        id: uuid("id")
+            .primaryKey()
+            .$defaultFn(() => uuidv4()),
 
-    ic: text("instructor_email")
-        .notNull()
-        .references(() => users.email),
+        semesterId: uuid("semester_id").references(() => semester.id, {
+            onDelete: "restrict",
+        }),
 
-    courseCode: text("course_code")
-        .notNull()
-        .references(() => course.code),
-});
+        ic: text("instructor_email")
+            .notNull()
+            .references(() => users.email),
 
-export const allocationSection = pgTable("allocation_section", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
-    number: integer("section_name").notNull(),
-    type: sectionTypeEnum("section_type").notNull(),
-    masterId: uuid("master_id")
-        .notNull()
-        .references(() => masterAllocation.id, { onDelete: "cascade" }),
-});
+        courseCode: text("course_code")
+            .notNull()
+            .references(() => course.code),
+    },
+    (table) => [unique().on(table.semesterId, table.ic, table.courseCode)]
+);
+
+export const allocationSection = pgTable(
+    "allocation_section",
+    {
+        id: uuid("id")
+            .primaryKey()
+            .$defaultFn(() => uuidv4()),
+        number: integer("section_name").notNull(),
+        type: sectionTypeEnum("section_type").notNull(),
+        masterId: uuid("master_id")
+            .notNull()
+            .references(() => masterAllocation.id, { onDelete: "cascade" }),
+    },
+    (table) => [
+        unique().on(table.masterId, table.number, table.type),
+        index().on(table.masterId),
+    ]
+);
 
 export const allocationSectionInstructors = pgTable(
     "allocation_section_instructors",
@@ -68,7 +79,12 @@ export const allocationSectionInstructors = pgTable(
         instructorEmail: text("instructor_email")
             .notNull()
             .references(() => users.email, { onDelete: "set default" }),
-    }
+    },
+    (table) => [
+        unique().on(table.sectionId, table.instructorEmail),
+        index().on(table.sectionId),
+        index().on(table.instructorEmail),
+    ]
 );
 
 export const allocation = pgTable("allocation_allocation_result", {
