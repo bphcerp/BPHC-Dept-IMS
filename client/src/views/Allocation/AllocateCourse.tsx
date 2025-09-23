@@ -104,13 +104,21 @@ const AllocateCourse = () => {
       void queryClient.invalidateQueries([`allocation ${code}`]);
       setSections([]);
     },
-    onError: () => {
-      toast.error("An error occurred");
+    onError: (error) => {
+      toast.error(
+        ((error as AxiosError).response?.data as string) ?? "An error occurred"
+      );
     },
   });
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!IC) {
+      toast.warning("IC not selected");
+      return;
+    }
+
     const lectures = lecturesSections.map((el, i) => {
       return {
         type: el.type,
@@ -196,7 +204,6 @@ const AllocateCourse = () => {
         Loading...
       </div>
     );
-  console.log(allocationData);
   return (
     <div className="container mx-auto flex flex-col px-6 py-10">
       <div className="mx-auto pb-8 text-2xl font-bold">{courseData?.name}</div>
@@ -227,28 +234,79 @@ const AllocateCourse = () => {
             </Label>
             <div>{allocationData.ic.name}</div>
           </div>
-          <div className="mt-2 flex flex-col gap-2">
-            {allocationData.sections.map((section, i) => (
-              <Card className="pt-4" key={i}>
-                <CardContent className="flex flex-col gap-2">
-                  <CardTitle>{section.type + " " + section.number}</CardTitle>
-                  <div className="flex gap-2">
-                    <div className="text-md font-medium uppercase">
-                      Instructors :{" "}
-                    </div>
-                    {section.instructors.map((el, ind) => (
-                      <>
-                        {ind == 0 ? "" : " ,"}
-                        <div key={ind} className="text-base">
-                          {el.instructor?.name}
+          {allocationData.sections.length > 0 && (
+            <div className="grid grid-cols-3 gap-4 divide divide-x-2">
+              <div className="px-2">
+                <h2 className="text-lg font-semibold">Lecture Sections</h2>
+                {allocationData.sections
+                  .filter((section) => section.type === "LECTURE")
+                  .map((section, i) => (
+                    <Card className="pt-4" key={i}>
+                      <CardContent className="flex flex-col gap-2">
+                        <CardTitle>
+                          {section.type + " " + section.number}
+                        </CardTitle>
+                        <div className="flex flex-col">
+                          <ol className="list-decimal px-6">
+                            {section.instructors.map((el, ind) => (
+                              <li key={ind} className="text-base">
+                                {el.instructor?.name}
+                              </li>
+                            ))}
+                          </ol>
                         </div>
-                      </>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+              <div className="px-2">
+                <h2 className="text-lg font-semibold">Tutorial Sections</h2>
+                {allocationData.sections
+                  .filter((section) => section.type === "TUTORIAL")
+                  .map((section, i) => (
+                    <Card className="pt-4" key={i}>
+                      <CardContent className="flex flex-col gap-2">
+                        <CardTitle>
+                          {section.type + " " + section.number}
+                        </CardTitle>
+                        <div className="flex flex-col">
+                          <ol className="list-decimal px-6">
+                            {section.instructors.map((el, ind) => (
+                              <li key={ind} className="text-base">
+                                {el.instructor?.name}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+              <div className="px-2">
+                <h2 className="text-lg font-semibold">Practical Sections</h2>
+                {allocationData.sections
+                  .filter((section) => section.type === "PRACTICAL")
+                  .map((section, i) => (
+                    <Card className="pt-4" key={i}>
+                      <CardContent className="flex flex-col gap-2">
+                        <CardTitle>
+                          {section.type + " " + section.number}
+                        </CardTitle>
+                        <div className="flex flex-col">
+                          <ol className="list-decimal px-6">
+                            {section.instructors.map((el, ind) => (
+                              <li key={ind} className="text-base">
+                                {el.instructor?.name}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <form onSubmit={onSubmit} className="flex flex-col gap-2 pt-4">

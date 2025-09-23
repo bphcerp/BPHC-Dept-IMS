@@ -20,7 +20,10 @@ import {
 import api from "@/lib/axios-instance";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Semester, semesterTypeMap } from "../../../../lib/src/types/allocation";
+import {
+  Semester,
+  semesterTypeMap,
+} from "../../../../lib/src/types/allocation";
 import { AllocationForm } from "../../../../lib/src/types/allocationFormBuilder";
 import { useState } from "react";
 
@@ -49,8 +52,8 @@ export const AllocationOverview = () => {
       api.post(`/allocation/semester/linkForm/${latestSemester?.id}`, {
         formId,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] })
     },
   });
 
@@ -59,8 +62,8 @@ export const AllocationOverview = () => {
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
         allocationDeadline,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
       setIsPublishDialogOpen(false); // Close dialog on success
     },
   });
@@ -73,7 +76,7 @@ export const AllocationOverview = () => {
     defaultValues: {
       formId: "",
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: ({ value }) => {
       if (value.formId) {
         linkFormMutation.mutate(value);
       }
@@ -88,7 +91,7 @@ export const AllocationOverview = () => {
     defaultValues: {
       allocationDeadline: "",
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: ({ value }) => {
       if (value.allocationDeadline && latestSemester?.form?.id) {
         publishFormMutation.mutate({
           allocationDeadline: value.allocationDeadline,
@@ -140,12 +143,11 @@ export const AllocationOverview = () => {
                     onSubmit={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handlePublishFormSubmit();
+                      void handlePublishFormSubmit();
                     }}
                   >
-                    <PublishFormField
-                      name="allocationDeadline"
-                      children={(field) => (
+                    <PublishFormField name="allocationDeadline">
+                      {(field) => (
                         <div className="flex items-center space-x-3">
                           <Label htmlFor={field.name}>
                             Allocation Form Deadline
@@ -160,7 +162,7 @@ export const AllocationOverview = () => {
                           />
                         </div>
                       )}
-                    />
+                    </PublishFormField>
                   </form>
                   <DialogFooter>
                     <PublishFormSubscribe
@@ -168,7 +170,8 @@ export const AllocationOverview = () => {
                         state.values.allocationDeadline,
                         state.isValid,
                       ]}
-                      children={([allocationDeadline, isValid]) => (
+                    >
+                      {([allocationDeadline, isValid]) => (
                         <Button
                           type="submit"
                           form="publish-form"
@@ -183,7 +186,7 @@ export const AllocationOverview = () => {
                             : "Publish & Notify"}
                         </Button>
                       )}
-                    />
+                    </PublishFormSubscribe>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -216,23 +219,21 @@ export const AllocationOverview = () => {
               onSubmit={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleLinkFormSubmit();
+                void handleLinkFormSubmit();
               }}
               className="flex flex-col items-center justify-center space-y-4 rounded-lg border-2 border-y-primary p-12 text-center"
             >
               <p className="text-lg text-primary">No Form Linked</p>
               <div className="flex items-center space-x-2">
-                <LinkFormSubscribe
-                  selector={(state) => state.values.formId}
-                  children={(formId) => (
+                <LinkFormSubscribe selector={(state) => state.values.formId}>
+                  {(formId) => (
                     <Button type="submit" disabled={!formId}>
                       {linkFormMutation.isLoading ? "Linking..." : "Link Form"}
                     </Button>
                   )}
-                />
-                <LinkFormField
-                  name="formId"
-                  children={(field) => (
+                </LinkFormSubscribe>
+                <LinkFormField name="formId">
+                  {(field) => (
                     <Select
                       onValueChange={field.handleChange}
                       value={field.state.value}
@@ -259,7 +260,7 @@ export const AllocationOverview = () => {
                       </SelectContent>
                     </Select>
                   )}
-                />
+                </LinkFormField>
               </div>
             </form>
           </div>
@@ -299,9 +300,13 @@ export const AllocationOverview = () => {
           <div>
             <span>Allocation Form Deadline:</span>{" "}
             <span>
-              {latestSemester.form?.allocationDeadline ? new Date(latestSemester.form?.allocationDeadline).toLocaleString(
-                  "en-IN"
-                ) : <span className="text-secondary">Not Set</span>}
+              {latestSemester.form?.allocationDeadline ? (
+                new Date(
+                  latestSemester.form?.allocationDeadline
+                ).toLocaleString("en-IN")
+              ) : (
+                <span className="text-secondary">Not Set</span>
+              )}
             </span>
           </div>
           <div className="col-span-2 md:col-span-3">
