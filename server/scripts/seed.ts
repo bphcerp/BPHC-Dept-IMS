@@ -110,12 +110,10 @@ const seedData = async (email?: string) => {
             .onConflictDoNothing();
     }
 
-    for (const template of defaultTemplates) {
-        await db
-            .insert(phdEmailTemplates)
-            .values(template)
-            .onConflictDoNothing({ target: phdEmailTemplates.name });
-    }
+    await db
+        .insert(phdEmailTemplates)
+        .values(defaultTemplates)
+        .onConflictDoNothing({ target: phdEmailTemplates.name });
 };
 
 const args = process.argv.slice(2);
