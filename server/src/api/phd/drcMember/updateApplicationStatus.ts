@@ -5,8 +5,9 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdExamApplications } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
-import { phdSchemas } from "lib";
+import { modules, phdSchemas } from "lib";
 import { sendEmail } from "@/lib/common/email.ts";
+import { createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -77,6 +78,21 @@ export default router.patch(
                 })
                 .where(eq(phdExamApplications.id, applicationId));
             if (status === "resubmit") {
+                await createTodos(
+                    [
+                        {
+                            assignedTo: existingApplication.student.email,
+                            createdBy: req.user!.email,
+                            title: "Action Required: PhD Qualification Exam",
+                            description:
+                                "The DRC has requested revisions for your Qualification Exam application. Please review comments and resubmit.",
+                            module: modules[4],
+                            completionEvent: `student-resubmit:${applicationId}`,
+                            link: "/phd/phd-student/qualifying-exams",
+                        },
+                    ],
+                    tx
+                );
                 await sendEmail({
                     from: req.user?.email,
                     to: existingApplication.student.email,

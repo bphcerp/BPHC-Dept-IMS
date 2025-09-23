@@ -10,6 +10,7 @@ import { phdSchemas, modules } from "lib";
 import multer from "multer";
 import { eq, and } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
+import { completeTodo } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 type FileField = (typeof phdSchemas.fileFieldNames)[number];
@@ -137,6 +138,14 @@ router.post(
                                 existingApplication.mastersReportFileId,
                         })
                         .where(eq(phdExamApplications.id, body.applicationId!));
+                    await completeTodo(
+                        {
+                            module: modules[4],
+                            completionEvent: `student-resubmit:${existingApplication.id}`,
+                            assignedTo: userEmail,
+                        },
+                        tx
+                    );
                 });
                 res.status(200).json({
                     success: true,
