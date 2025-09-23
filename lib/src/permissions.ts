@@ -8,6 +8,7 @@ export const allPermissions = {
     "admin:role:read": "Read operations on roles",
     "admin:role:update": "Update operations on roles",
     "admin:role:delete": "Delete operations on roles",
+    "admin:tester": "Allows user to enter testing mode",
 
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
@@ -36,11 +37,17 @@ export const allPermissions = {
     "phd:drc:qe": "DRC Member operations on qualifying exams",
     "phd:supervisor:suggest-examiners":
         "Suggest examiners for qualifying exams",
-
+    "phd:drc:qe-timetable": "Manage PhD qualifying exam timetables",
     "phd:student:proposal": "PhD scholar proposal operations",
     "phd:drc:proposal": "DRC Convener operations on proposals",
     "phd:faculty:proposal": "Faculty operations on proposals",
+    "phd:dac:proposal": "DAC Member operations on proposals",
+    "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    //meeting
+    "meeting:use": "Access and use the meeting module",
+
+    //handout
     "handout:faculty:submit": "Submit handout for review",
     "handout:dca-convenor:assignreviewer":
         "Assign reviewer to handout as DCA convenor",
@@ -67,6 +74,7 @@ export const allPermissions = {
     "publications:view": "View author's own publications",
     "publications:all": "View all publications",
     "publications:export": "Export Publications",
+    "publications:upload": "Upload Researgence Data",
 
     "inventory:write": "Admin can edit the data of the inventory module",
     "inventory:read":
@@ -111,6 +119,10 @@ export const allPermissions = {
     "grades:supervisor:view": "Supervisors can view their students and grades",
     "grades:supervisor:save": "Supervisors can save/update student grades",
     "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
+    "phd:examiner:qe": "View and respond to examiner assignments",
+
+    // ANALYTICS
+    "analytics:publications": "View publications analytics",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -132,6 +144,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/admin/role/delete": "admin:role:delete",
 
     "/admin/permission/all": "admin:role:read",
+
+    "/admin/testing": "admin:tester",
 
     // Conference
 
@@ -162,10 +176,19 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/staff/deleteSubArea": "phd:staff:manage-subareas",
 
     "/phd/staff/emailTemplates": "phd:staff:manage-email-templates",
+    "/phd/staff/getLatestProposalSem": "phd:staff:manage-email-templates",
+    "/phd/staff/proposalDeadlines": "phd:staff:manage-email-templates",
+    "/phd/staff/notifyProposalDeadline": "phd:staff:manage-email-templates",
+    "/phd/staff/updateProposalDeadline": "phd:staff:manage-email-templates",
+    "/phd/proposal/getProposalSemesters": "phd:proposal",
+    "/phd/proposal/getFacultyList": "phd:proposal",
 
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/getProposalEligibility": "phd:student:proposal",
+    "/phd/student/getProposalDeadlines": "phd:student:proposal",
+    "/phd/student/getProfileDetails": "phd:student:proposal",
 
     "/phd/drcMember/getAvailableExams": "phd:drc:qe",
     "/phd/drcMember/updateApplicationStatus": "phd:drc:qe",
@@ -181,24 +204,62 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/drcMember/updateQpSubmissionStatus": "phd:drc:qe",
     "/phd/drcMember/notifyExaminer": "phd:drc:qe",
 
+    "/phd/drcMember/timetable": "phd:drc:qe-timetable",
+    "/phd/drcMember/optimizeTimetable": "phd:drc:qe-timetable",
+    "/phd/drcMember/generateTimetablePdf": "phd:drc:qe-timetable",
+
+    "/phd/examiner/assignments": "phd:examiner:qe",
+    "/phd/examiner/acceptAssignment": "phd:examiner:qe",
+    "/phd/examiner/rejectAssignment": "phd:examiner:qe",
+
+    "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/finalizeDac": "phd:drc:proposal",
+    "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
+    "/phd/proposal/dacMember/viewProposal": "phd:dac:proposal",
+    "/phd/proposal/dacMember/submitReview": "phd:dac:proposal",
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getFacultyList": "phd:supervisor:suggest-examiners",
 
     "/phd/proposal/student/getProposals": "phd:student:proposal",
+    "/phd/proposal/student/resubmit": "phd:student:proposal",
     "/phd/proposal/student/submitProposal": "phd:student:proposal",
+    "/phd/proposal/student/view": "phd:student:proposal",
 
     "/phd/proposal/supervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/supervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/getFacultyList": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/approve": "phd:faculty:proposal",
+
+    "/phd/proposal/drcConvener/finalizeProposals": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalPackage": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
+
+    //meeting
+    "/meeting/create": "meeting:use",
+    "/meeting/all": "meeting:use",
+    "/meeting/details": "meeting:use",
+    "/meeting/respond": "meeting:use",
+    "/meeting/finalize": "meeting:use",
+    "/meeting/all-users": "meeting:use",
+    "/meeting/add-invitees": "meeting:use",
+    "/meeting/remind": "meeting:use",
+    "/meeting/delete": "meeting:use",
+    "/meeting/update-details": "meeting:use",
 
     //Handout
     "/handout/faculty/submit": "handout:faculty:submit",
@@ -227,6 +288,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/publications/updatePublications": "publications:all",
     "/publications/edit": "publications:all",
     "/publications/export": "publications:export",
+    "/publications/upload": "publications:upload",
 
     // Inventory
     "/inventory/labs/get": "inventory:read",
@@ -293,4 +355,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+    
+    // Analytics
+    "/analytics/publications": "analytics:publications",
 } as const;

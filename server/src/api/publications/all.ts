@@ -5,81 +5,114 @@ import db from "@/config/db/index.ts";
 import {
     authorPublicationsTable,
     publicationsTable,
+    researgencePublications,
 } from "@/config/db/schema/publications.ts";
-import { eq, inArray } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import type { publicationsSchemas } from "lib";
 
 const router = express.Router();
 
 router.get(
+    "/validated/",
+    checkAccess(),
+    asyncHandler(async (_req, res) => {
+        const data: publicationsSchemas.ValidatedResponse = {
+            validated: (
+                await db
+                    .select()
+                    .from(researgencePublications)
+                    .innerJoin(
+                        publicationsTable,
+                        eq(
+                            researgencePublications.publicationTitle,
+                            publicationsTable.title
+                        )
+                    )
+            ).map((row) => row.researgence),
+
+            nonValidated: (
+                await db
+                    .select()
+                    .from(publicationsTable)
+                    .leftJoin(
+                        researgencePublications,
+                        eq(
+                            researgencePublications.publicationTitle,
+                            publicationsTable.title
+                        )
+                    )
+                    .where(isNull(researgencePublications.authors))
+            ).map((row) => row.publications),
+        };
+        res.status(200).json(data);
+    })
+);
+
+router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res) => {
-        const authoredCitationIds = await db
-            .select({ citationId: authorPublicationsTable.citationId })
-            .from(authorPublicationsTable);
+        const response: publicationsSchemas.PublicationResponse = await db
+            .select()
+            .from(publicationsTable);
+        res.status(200).json(response);
+    })
+);
 
-        const citationIds = authoredCitationIds.map(
-            (entry) => entry.citationId
-        );
-
-        let data: publicationsSchemas.PublicationResponse = {
-            publications: [],
-        };
-
-        if (citationIds.length !== 0) {
-            const allData = await db
-                .select({
-                    publication: publicationsTable,
-                    authorId: authorPublicationsTable.authorId,
-                    authorName: authorPublicationsTable.authorName,
-                    status: authorPublicationsTable.status,
-                    comments: authorPublicationsTable.comments,
-                })
-                .from(authorPublicationsTable)
-                .innerJoin(
-                    publicationsTable,
-                    eq(
-                        authorPublicationsTable.citationId,
-                        publicationsTable.citationId
-                    )
+router.get(
+    "/meta/",
+    checkAccess(),
+    asyncHandler(async (_req, res) => {
+        const allData = await db
+            .select({
+                publication: publicationsTable,
+                authorId: authorPublicationsTable.authorId,
+                authorName: authorPublicationsTable.authorName,
+                status: authorPublicationsTable.status,
+                comments: authorPublicationsTable.comments,
+            })
+            .from(authorPublicationsTable)
+            .innerJoin(
+                publicationsTable,
+                eq(
+                    authorPublicationsTable.citationId,
+                    publicationsTable.citationId
                 )
-                .where(
-                    inArray(authorPublicationsTable.citationId, citationIds)
-                );
+            );
 
-            const publicationsMap = new Map<
-                string,
-                publicationsSchemas.PublicationWithCoAuthors
-            >();
+        if (!allData.length) {
+            res.status(200).json([]);
+            return;
+        }
 
-            for (const row of allData as publicationsSchemas.PublicationRow[]) {
-                const pub = row.publication;
-                const coAuthor: publicationsSchemas.CoAuthor = {
+        const publicationsMap = new Map<
+            string,
+            publicationsSchemas.PublicationWithMeta
+        >();
+
+        for (const row of allData) {
+            const pub = row.publication;
+            const coAuthor: publicationsSchemas.CoAuthor = {
+                authorId: row.authorId,
+                authorName: row.authorName,
+            };
+            if (!publicationsMap.has(pub.citationId)) {
+                publicationsMap.set(pub.citationId, {
+                    ...pub,
+                    status: row.status ?? null,
+                    comments: row.comments ?? null,
+                    coAuthors: [coAuthor],
+                });
+            } else {
+                publicationsMap.get(pub.citationId)!.coAuthors.push({
                     authorId: row.authorId,
                     authorName: row.authorName,
-                };
-
-                if (!publicationsMap.has(pub.citationId)) {
-                    publicationsMap.set(pub.citationId, {
-                        ...pub,
-                        status: row.status ?? null,
-                        comments: row.comments ?? null,
-                        coAuthors: [coAuthor],
-                    });
-                } else {
-                    publicationsMap
-                        .get(pub.citationId)!
-                        .coAuthors.push(coAuthor);
-                }
+                });
             }
-
-            const response = {
-                publications: Array.from(publicationsMap.values()),
-            };
-
-            data = response;
         }
+
+        const data: publicationsSchemas.PublicationWithMetaResponse =
+            Array.from(publicationsMap.values());
         res.status(200).json(data);
     })
 );

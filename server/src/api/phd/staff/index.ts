@@ -9,6 +9,10 @@ import insertSubArea from "./insertSubArea.ts";
 import deleteSubArea from "./deleteSubArea.ts";
 import notifyDeadline from "./notifyDeadline.ts";
 import emailTemplatesRouter from "./emailTemplates/index.ts";
+import getLatestProposalSem from "./getLatestProposalSem.ts"; 
+import updateProposalDeadline from "./updateProposalDeadline.ts"; 
+import proposalDeadlines from "./proposalDeadlines.ts"; 
+import notifyProposalDeadline from "./notifyProposalDeadline.ts";
 
 const router = express.Router();
 
@@ -16,14 +20,15 @@ router.use("/getAllSem", getAllSem);
 router.use("/updateSem", updateSem);
 router.use("/deleteSem", deleteSem);
 router.use("/getLatestSem", getLatestSem);
-
 router.use("/qualifyingExams", qualifyingExams);
 router.use("/updateQualifyingExam", updateQualifyingExam);
-
 router.use("/insertSubArea", insertSubArea);
 router.use("/deleteSubArea", deleteSubArea);
-
 router.use("/notifyDeadline", notifyDeadline);
 router.use("/emailTemplates", emailTemplatesRouter);
+router.use("/getLatestProposalSem", getLatestProposalSem); 
+router.use("/updateProposalDeadline", updateProposalDeadline); 
+router.use("/proposalDeadlines", proposalDeadlines); 
+router.use("/notifyProposalDeadline", notifyProposalDeadline);
 
 export default router;

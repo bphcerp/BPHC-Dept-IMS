@@ -1,0 +1,20 @@
+name: Redeploy Staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  eee-staging:
+    runs-on: eee-ims
+    steps:
+      - name: clone repo and update
+        run: |
+          cd /home/ubuntu
+          cd bphcerp/staging
+          git pull
+          docker compose --profile prod up --build -d
+          docker compose exec server-prod pnpm db:migrate
+          docker compose exec server-prod pnpm db:seed

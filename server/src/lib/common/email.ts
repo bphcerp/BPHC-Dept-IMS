@@ -45,9 +45,24 @@ const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
             logger.debug(`Email data: ${JSON.stringify(job.data)}`);
             return;
         }
+
+        const mailOptions = { ...job.data };
+
+        const footerText =
+            "\n\n---\nThis is an auto-generated email from ims. Please do not reply.";
+        const footerHtml =
+            "<br><br><hr><p><i>This is an auto-generated email from ims. Please do not reply.</i></p>";
+
+        if (mailOptions.text) {
+            mailOptions.text = `${mailOptions.text}${footerText}`;
+        }
+        if (mailOptions.html && typeof mailOptions.html === "string") {
+            mailOptions.html = `${mailOptions.html}${footerHtml}`;
+        }
+
         return await transporter.sendMail({
             from: environment.BPHCERP_EMAIL,
-            ...job.data,
+            ...mailOptions,
         });
     },
     {

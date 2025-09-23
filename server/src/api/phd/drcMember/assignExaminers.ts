@@ -73,8 +73,8 @@ export default router.post(
             );
         }
 
-        await db.transaction(async (tx) => {
-            await tx
+        try {
+            await db
                 .insert(phdExaminerAssignments)
                 .values([
                     {
@@ -93,9 +93,21 @@ export default router.post(
                         phdExaminerAssignments.applicationId,
                         phdExaminerAssignments.qualifyingArea,
                     ],
-                    set: { examinerEmail: sql`excluded.examiner_email` },
+                    set: {
+                        examinerEmail: sql`excluded.examiner_email`,
+                        hasAccepted: null,
+                        notifiedAt: null,
+                        qpSubmitted: false,
+                    },
                 });
-        });
+        } catch (e) {
+            if ((e as { code: string }).code === "23503")
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "One of the examiners does not exist"
+                );
+            throw e;
+        }
 
         res.status(200).json({
             success: true,

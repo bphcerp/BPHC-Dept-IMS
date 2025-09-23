@@ -8,10 +8,11 @@ import fs from "fs";
 import {
     publicationsTable,
     authorPublicationsTable,
+    researgencePublications,
 } from "@/config/db/schema/publications.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
 import db from "@/config/db/index.ts";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { createNotifications } from "@/lib/todos/index.ts";
 import environment from "@/config/environment.ts";
 
@@ -118,15 +119,35 @@ const getPublicationsFromAuthor = async (
 
             try {
                 // Check if publication already exists
-                const existingPub = await db
+                const [existingPub] = await db
                     .select()
                     .from(publicationsTable)
                     .where(
                         eq(publicationsTable.citationId, publication.citationId)
                     );
 
-                if (existingPub.length === 0) {
-                    // Publication doesn't exist, insert it
+                if (!existingPub) {
+                    // Publication doesn't exist, insert it and update with researgence data
+
+                    const [inReseargence] = await db
+                    .select()
+                    .from(researgencePublications)
+                    .where(
+                        eq( sql`lower(${publication.title})`, sql`lower(${researgencePublications.publicationTitle})`)
+                    );
+
+                    if(inReseargence) {
+                        Object.assign(publication, {
+                            type: inReseargence.type,
+                            journal: inReseargence.sourcePublication,
+                            volume: inReseargence.volNo,
+                            issue: inReseargence.issNo,
+                            month: inReseargence.month,
+                            year: inReseargence.year.toString(),
+                            link: inReseargence.link,
+                            authorNames: inReseargence.authors,
+                        })
+                    }
                     await db.insert(publicationsTable).values(publication);
                     newPublications++;
                     if (ENABLE_LOG_CONSOLE)
@@ -135,7 +156,7 @@ const getPublicationsFromAuthor = async (
                         );
                 } else {
                     // Publication exists, only update if citation count changed
-                    const currentCitations = existingPub[0].citations;
+                    const currentCitations = existingPub.citations;
                     if (currentCitations !== publication.citations) {
                         await db
                             .update(publicationsTable)

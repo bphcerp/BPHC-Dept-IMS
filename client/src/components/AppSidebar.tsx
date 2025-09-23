@@ -18,7 +18,7 @@ import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { DEPARTMENT_NAME, LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { ArrowLeftIcon, Users, LogOut } from "lucide-react";
+import { ArrowLeftIcon, Users, LogOut, BookMarked } from "lucide-react";
 import { toast } from "sonner";
 
 export interface SidebarMenuItem {
@@ -115,7 +115,23 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
             ) : null;
           })}
         </SidebarContent>
+
         <SidebarFooter>
+          {/* Wiki Button */}
+          {authState && (
+            <SidebarMenuButton
+              asChild
+              tooltip="Help"
+              className="flex items-start gap-2 mb-1"
+            >
+              <Link to="/help">
+                <BookMarked className="h-5 w-5 shrink-0" />
+                {!isCollapsed && <span>Help</span>}
+              </Link>
+            </SidebarMenuButton>
+          )}
+
+          {/* View Contributors Button */}
           {!pathname.startsWith("/contributors") && (
             <SidebarMenuButton
               asChild

@@ -8,11 +8,12 @@ import {
   Clock,
   Mail,
   FileText,
+  Users,
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
-const NotionalSupervisorLayout = () => {
+const PhdLayout = () => {
   const items = [
     {
       title: "Supervisor",
@@ -30,20 +31,21 @@ const NotionalSupervisorLayout = () => {
           icon: <UserCheck />,
           url: "/phd/supervisor/examiner-suggestions",
           requiredPermissions: [
-            permissions["/phd/notionalSupervisor/updateSuggestedExaminer"],
+            permissions["/phd/supervisor/suggestExaminers"],
           ],
         },
       ],
     },
+
     {
-      title: "Co-Supervisor",
+      title: "DAC Member",
       items: [
         {
-          title: "Proposal Management",
-          icon: <FileText />,
-          url: "/phd/coSupervisor/proposals",
+          title: "Proposal Evaluation",
+          icon: <Users />,
+          url: "/phd/dac/proposals",
           requiredPermissions: [
-            permissions["/phd/proposal/coSupervisor/getProposals"],
+            permissions["/phd/proposal/dacMember/getProposals"],
           ],
         },
       ],
@@ -57,6 +59,14 @@ const NotionalSupervisorLayout = () => {
           url: "/phd/drc-convenor/qualifying-exam-management",
           requiredPermissions: [
             permissions["/phd/drcMember/getAvailableExams"],
+          ],
+        },
+        {
+          title: "Proposal Management",
+          icon: <FileText />,
+          url: "/phd/drc-convenor/proposal-management",
+          requiredPermissions: [
+            permissions["/phd/proposal/drcConvener/getProposals"],
           ],
         },
       ],
@@ -102,7 +112,7 @@ const NotionalSupervisorLayout = () => {
           icon: <FileSpreadsheet />,
           url: "/phd/staff/update-subareas",
           requiredPermissions: [
-            permissions["/phd/staff/updateSubAreas"],
+            permissions["/phd/staff/insertSubArea"],
             permissions["/phd/staff/deleteSubArea"],
           ],
         },
@@ -114,14 +124,26 @@ const NotionalSupervisorLayout = () => {
         },
       ],
     },
+    {
+      title: "Examiner",
+      items: [
+        {
+          title: "Assignments",
+          icon: <ClipboardCheck />,
+          url: "/phd/examiner/assignments",
+          requiredPermissions: [permissions["/phd/examiner/assignments"]],
+        },
+      ],
+    },
   ];
-
   return (
     <>
       <AppSidebar items={items} />
-      <Outlet />
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <Outlet />
+      </div>
     </>
   );
 };
 
-export default NotionalSupervisorLayout;
+export default PhdLayout;

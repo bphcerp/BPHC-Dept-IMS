@@ -50,6 +50,9 @@ export default router.get(
             vivaDate: app.exam.vivaDate,
             createdAt: app.createdAt,
             files: {
+                applicationForm: app.applicationFormFileId
+                    ? `${environment.SERVER_URL}/f/${app.applicationFormFileId}`
+                    : null,
                 qualifyingArea1Syllabus: app.qualifyingArea1SyllabusFileId
                     ? `${environment.SERVER_URL}/f/${app.qualifyingArea1SyllabusFileId}`
                     : null,

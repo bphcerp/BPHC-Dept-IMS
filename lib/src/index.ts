@@ -11,6 +11,8 @@ import * as projectSchemas from "./schemas/Project.ts";
 import * as patentSchemas from "./schemas/Patent.ts";
 import * as wilpProjectSchemas from "./schemas/WilpProject.ts";
 import * as profileSchemas from "./schemas/Profile.ts";
+import * as meetingSchemas from "./schemas/Meeting.ts";
+import * as analyticsSchemas from "./schemas/Analytics.ts";
 import { modules } from "./schemas/Form.ts";
 import * as authTypes from "./types/auth.ts";
 import * as authUtils from "./utils/auth.ts";
@@ -34,5 +36,7 @@ export {
     authUtils,
     permissions,
     allPermissions,
-    profileSchemas
+    profileSchemas,
+    meetingSchemas,
+    analyticsSchemas,
 };

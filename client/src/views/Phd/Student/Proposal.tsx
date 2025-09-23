@@ -1,11 +1,15 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -20,28 +24,120 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  FileText,
+  Plus,
+  AlertTriangle,
+  CalendarCheck,
+  Info,
+  Clock,
+  Download,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { FileText, Plus } from "lucide-react";
-
+import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline.tsx";
+import { phdSchemas } from "lib";
+interface ProposalSemester {
+  id: number;
+  studentSubmissionDate: string;
+  facultyReviewDate: string;
+  drcReviewDate: string;
+  dacReviewDate: string;
+}
+interface DacFeedback {
+  approved: boolean;
+  comments: string;
+  feedbackFileUrl: string | null;
+}
+interface DacSummary {
+  label: string;
+  status: "Approved" | "Reverted";
+}
 interface Proposal {
   id: number;
   title: string;
-  status: string;
+  status: (typeof phdSchemas.phdProposalStatuses)[number];
   updatedAt: string;
   active: boolean;
+  comments?: string | null;
+  seminarDate?: string | null;
+  seminarTime?: string | null;
+  seminarVenue?: string | null;
+  proposalSemesterId: number;
+  dacFeedback?: DacFeedback[];
+  dacSummary?: DacSummary[];
 }
-
+const DeadlinesCard = ({
+  deadlines,
+  highlight,
+}: {
+  deadlines: ProposalSemester;
+  highlight: keyof Omit<ProposalSemester, "id" | "semesterId">;
+}) => {
+  const deadlineLabels: Record<
+    keyof Omit<ProposalSemester, "id" | "semesterId">,
+    string
+  > = {
+    studentSubmissionDate: "Your Submission",
+    facultyReviewDate: "Supervisor Review",
+    drcReviewDate: "DRC Review",
+    dacReviewDate: "DAC Review",
+  };
+  const deadlineToShow = { [highlight]: deadlineLabels[highlight] };
+  return (
+    <Card className="mb-6 bg-muted/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Clock className="h-4 w-4" /> Upcoming Deadline
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 gap-4 text-sm md:grid-cols-4">
+        {Object.entries(deadlineToShow).map(([key, label]) => (
+          <div
+            key={key}
+            className="rounded-lg border border-primary bg-primary/10 p-3 shadow-md transition-all"
+          >
+            <p className="font-semibold text-muted-foreground">{label}</p>
+            <p className="mt-1 font-medium">
+              {new Date(
+                deadlines[key as keyof ProposalSemester] as string
+              ).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+};
 const StudentProposal: React.FC = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [abstractFile, setAbstractFile] = useState<File | null>(null);
-  const [proposalFile, setProposalFile] = useState<File | null>(null);
-
-  const queryClient = useQueryClient();
-
-  const { data, isLoading, error } = useQuery({
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [proposalForForm, setProposalForForm] = useState<Proposal | null>(null);
+  const [selectedCycleId, setSelectedCycleId] = useState<string>("");
+  const { data: eligibility, isLoading: isLoadingEligibility } = useQuery({
+    queryKey: ["proposal-eligibility"],
+    queryFn: async () => {
+      const res = await api.get<{
+        isEligible: boolean;
+        qualificationDate: string | null;
+      }>("/phd/student/getProposalEligibility");
+      return res.data;
+    },
+  });
+  const { data: proposalData, refetch } = useQuery({
     queryKey: ["student-proposals"],
     queryFn: async () => {
       const response = await api.get<{
@@ -50,286 +146,309 @@ const StudentProposal: React.FC = () => {
       }>("/phd/proposal/student/getProposals");
       return response.data;
     },
-    refetchOnWindowFocus: false,
+    enabled: !!eligibility?.isEligible,
   });
-
-  const submitMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await api.post<{ submittedProposalId: number }>(
-        "/phd/proposal/student/submitProposal",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+  const { data: deadlineData } = useQuery({
+    queryKey: ["active-proposal-deadlines"],
+    queryFn: async () => {
+      const res = await api.get<{ deadlines: ProposalSemester[] }>(
+        "/phd/student/getProposalDeadlines"
       );
-      return response.data;
+      return res.data;
     },
-    onSuccess: (res) => {
-      toast.success(
-        "Proposal submitted successfully with ID " + res.submittedProposalId
-      );
-      setIsDialogOpen(false);
-      setTitle("");
-      setAbstractFile(null);
-      setProposalFile(null);
-      void queryClient.invalidateQueries({ queryKey: ["student-proposals"] });
+    enabled: !!eligibility?.isEligible,
+  });
+  const fetchProposalDetailsMutation = useMutation({
+    mutationFn: (proposalId: number) =>
+      api.get<Proposal>(`/phd/proposal/student/view/${proposalId}`),
+    onSuccess: (response) => {
+      setProposalForForm(response.data);
+      setIsFormOpen(true);
     },
-    onError: (err) => {
-      toast.error(
-        "Failed to submit proposal: " +
-          ((err as { response: { data: string } }).response?.data ??
-            "Unknown error")
-      );
+    onError: () => {
+      toast.error("Failed to fetch proposal details for editing.");
     },
   });
-
-  const handleSubmit = () => {
-    if (!title.trim() || !abstractFile || !proposalFile) {
-      toast.error("Please fill all fields and upload both files");
+  const openResubmitDialog = (proposal: Proposal) => {
+    fetchProposalDetailsMutation.mutate(proposal.id);
+  };
+  const handleFormSuccess = () => {
+    setIsFormOpen(false);
+    setProposalForForm(null);
+    void refetch();
+  };
+  const handleOpenNewProposalDialog = () => {
+    if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
+      toast.error("There are no active proposal submission cycles available.");
       return;
     }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("abstractFile", abstractFile);
-    formData.append("proposalFile", proposalFile);
-
-    submitMutation.mutate(formData);
+    if (deadlineData.deadlines.length === 1) {
+      setSelectedCycleId(deadlineData.deadlines[0].id.toString());
+    }
+    setProposalForForm(null);
+    setIsFormOpen(true);
   };
-
-  if (isLoading) {
+  if (isLoadingEligibility) {
     return (
-      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="flex h-64 items-center justify-center">
-          <LoadingSpinner className="h-10 w-10" />
-          <p className="ml-4 text-gray-500">Loading proposals...</p>
-        </div>
+      <div className="flex h-64 w-full items-center justify-center">
+        <LoadingSpinner />
+        <p className="ml-4 text-gray-500">Checking eligibility...</p>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <Card>
-            <CardContent className="p-12">
-              <div className="text-center">
-                <div className="mb-4 text-red-500">
-                  <svg
-                    className="mx-auto h-12 w-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="mb-2 text-lg font-medium text-gray-900">
-                  Error Loading Proposals
-                </h3>
-                <p className="text-gray-500">{(error as Error).message}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const { proposals = [], canApply = false } = data || {};
-
+  const currentDeadlines = deadlineData?.deadlines[0];
+  const isDeadlinePassed = currentDeadlines
+    ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
+    : true;
   return (
-    <div className="min-h-screen w-full bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">PhD Proposals</h1>
-            <p className="mt-2 text-gray-600">
-              Manage your PhD proposal submissions
-            </p>
-          </div>
-          {canApply && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Submit New Proposal
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Submit PhD Proposal</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Proposal Title</Label>
-                    <Input
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Enter proposal title"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="abstract">Abstract File (PDF)</Label>
-                    <Input
-                      id="abstract"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) =>
-                        setAbstractFile(e.target.files?.[0] || null)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="proposal">Proposal File (PDF)</Label>
-                    <Input
-                      id="proposal"
-                      type="file"
-                      accept=".pdf"
-                      onChange={(e) =>
-                        setProposalFile(e.target.files?.[0] || null)
-                      }
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={submitMutation.isLoading}
-                    >
-                      {submitMutation.isLoading ? "Submitting..." : "Submit"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">PhD Proposal</h1>
+          <p className="mt-2 text-gray-600">
+            Manage your PhD proposal submission.
+          </p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">
-              Your Proposals
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {proposals.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="font-medium text-gray-700">
-                      Title
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700">
-                      Status
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700">
-                      Last Updated
-                    </TableHead>
-                    <TableHead className="font-medium text-gray-700">
-                      Active
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {proposals.map((proposal) => (
-                    <TableRow key={proposal.id} className="hover:bg-gray-50">
-                      <TableCell className="text-gray-900">
-                        {proposal.title}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={
-                            proposal.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : proposal.status === "supervisor_review"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-blue-100 text-blue-800"
-                          }
-                        >
-                          {proposal.status.replace("_", " ").toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-gray-900">
-                        {new Date(proposal.updatedAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={proposal.active ? "default" : "secondary"}
-                        >
-                          {proposal.active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="py-8 text-center">
-                <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                <h3 className="mb-2 text-lg font-medium text-gray-900">
-                  No Proposals Yet
-                </h3>
-                <p className="text-gray-500">
-                  You haven&apos;t submitted any proposals yet.
-                </p>
-                {canApply && (
-                  <p className="mt-2 text-gray-500">
-                    Click &quot;Submit New Proposal&quot; to get started.
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {!canApply && proposals.length > 0 && (
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="mb-4 text-yellow-500">
-                  <svg
-                    className="mx-auto h-12 w-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="mb-2 text-lg font-medium text-gray-900">
-                  Cannot Submit New Proposal
-                </h3>
-                <p className="text-gray-500">
-                  You currently have an active proposal or are not eligible to
-                  submit a new one.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+        {eligibility?.isEligible && proposalData?.canApply && (
+          <Button
+            onClick={handleOpenNewProposalDialog}
+            disabled={isDeadlinePassed}
+            title={
+              isDeadlinePassed ? "The application deadline has passed." : ""
+            }
+          >
+            <Plus className="mr-2 h-4 w-4" /> Apply for Proposal
+          </Button>
         )}
       </div>
+      {!eligibility?.isEligible ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Not Eligible for Proposal Submission</AlertTitle>
+          <AlertDescription>
+            Since you have not passed your qualifying exam yet, you are not
+            allowed to fill the form.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <>
+          {eligibility.qualificationDate ? (
+            <Alert variant="default" className="border-green-200 bg-green-50">
+              <CalendarCheck className="h-4 w-4 text-green-700" />
+              <AlertTitle className="text-green-800">QE Passed!</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Congratulations! You passed your qualifying exam on:{" "}
+                <strong>
+                  {new Date(eligibility.qualificationDate).toLocaleDateString()}
+                </strong>
+                .
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Qualification Date Missing</AlertTitle>
+              <AlertDescription>
+                Your qualification date has not been set. Please contact the DRC
+                Convenor to get it updated.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
+      )}
+      
+      {eligibility?.isEligible && <ProposalStatusTimeline role="student"/> && currentDeadlines && (
+        <DeadlinesCard
+          deadlines={currentDeadlines}
+          highlight="studentSubmissionDate"
+        />
+      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Submissions</CardTitle>
+          <CardDescription>
+            A list of your past and current proposal submissions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!proposalData?.proposals ||
+              proposalData.proposals.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    <div className="py-8 text-center">
+                      <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-lg font-medium">
+                        No Proposals Submitted
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {proposalData?.canApply
+                          ? "Click the button above to start your application."
+                          : "You currently have an active proposal in progress."}
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                proposalData.proposals.map((p) => (
+                  <React.Fragment key={p.id}>
+                    <TableRow>
+                      <TableCell>{p.title}</TableCell>
+                      <TableCell>
+                        <Badge>
+                          {p.status.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(p.updatedAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {[
+                          "supervisor_revert",
+                          "drc_revert",
+                          "dac_revert",
+                        ].includes(p.status) && (
+                          <Button
+                            size="sm"
+                            onClick={() => openResubmitDialog(p)}
+                            disabled={fetchProposalDetailsMutation.isLoading}
+                          >
+                            {fetchProposalDetailsMutation.isLoading &&
+                            fetchProposalDetailsMutation.variables === p.id ? (
+                              <LoadingSpinner className="h-4 w-4" />
+                            ) : (
+                              "Resubmit"
+                            )}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {(p.comments || p.dacFeedback) &&
+                      [
+                        "supervisor_revert",
+                        "drc_revert",
+                        "dac_revert",
+                      ].includes(p.status) && (
+                        <TableRow>
+                          <TableCell colSpan={4}>
+                            <Alert variant="destructive">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTitle>Feedback & Comments</AlertTitle>
+                              <AlertDescription>
+                                <div className="space-y-2">
+                                  {p.comments && <p>{p.comments}</p>}
+                                  {p.dacFeedback?.map((feedback, index) => (
+                                    <div
+                                      key={index}
+                                      className="mt-2 border-t pt-2"
+                                    >
+                                      <p className="font-semibold">
+                                        Feedback from Committee Member:
+                                      </p>
+                                      <p className="whitespace-pre-wrap">
+                                        {feedback.comments}
+                                      </p>
+                                      {feedback.feedbackFileUrl && (
+                                        <Button
+                                          asChild
+                                          variant="link"
+                                          className="h-auto p-0"
+                                        >
+                                          <a
+                                            href={feedback.feedbackFileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            <Download className="mr-2 h-4 w-4" />
+                                            Download Feedback Document
+                                          </a>
+                                        </Button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </AlertDescription>
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    {p.seminarDate && (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertTitle>Seminar Details</AlertTitle>
+                            <AlertDescription>
+                              Your seminar is tentatively scheduled for{" "}
+                              <strong>
+                                {new Date(p.seminarDate).toLocaleDateString()}
+                              </strong>{" "}
+                              at <strong>{p.seminarTime}</strong> in{" "}
+                              <strong>{p.seminarVenue}</strong>.
+                            </AlertDescription>
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {proposalForForm
+                ? "Resubmit Proposal"
+                : "New Proposal Application"}
+            </DialogTitle>
+          </DialogHeader>
+          {!proposalForForm &&
+            deadlineData &&
+            deadlineData.deadlines.length > 1 && (
+              <div className="my-4 space-y-2">
+                <Label htmlFor="proposal-cycle">Select Submission Cycle</Label>
+                <Select
+                  value={selectedCycleId}
+                  onValueChange={setSelectedCycleId}
+                >
+                  <SelectTrigger id="proposal-cycle">
+                    <SelectValue placeholder="Select a deadline cycle..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deadlineData.deadlines.map((cycle) => (
+                      <SelectItem key={cycle.id} value={cycle.id.toString()}>
+                        Deadline:
+                        {new Date(
+                          cycle.studentSubmissionDate
+                        ).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          <StudentProposalForm
+            proposalData={
+              proposalForForm ?? { proposalCycleId: Number(selectedCycleId) }
+            }
+            onSuccess={handleFormSuccess}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
-
 export default StudentProposal;

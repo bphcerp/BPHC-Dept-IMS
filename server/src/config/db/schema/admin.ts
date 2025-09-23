@@ -1,10 +1,11 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { pgEnum, boolean } from "drizzle-orm/pg-core";
-import { adminSchemas } from "lib";
+import { adminSchemas, phdSchemas } from "lib";
 import { files } from "./form.ts";
 
 export const userType = pgEnum("user_type", adminSchemas.userTypes);
+export const phdTypeEnum = pgEnum("phd_type", phdSchemas.phdTypes);
 
 export const permissions = pgTable("permissions", {
     permission: text("permission").primaryKey(),
@@ -54,7 +55,12 @@ export const users = pgTable("users", {
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
+        testerRollbackRoles: integer("tester_rollback_roles")
+        .array()
+        .notNull()
+        .default(sql`'{}'::integer[]`),
     deactivated: boolean("deactivated").notNull().default(false),
+    inTestingMode: boolean("in_testing_mode").notNull().default(false),
     type: userType("type").notNull(),
 });
 
@@ -93,6 +99,7 @@ export const phd = pgTable("phd", {
         .primaryKey()
         .references(() => users.email, { onDelete: "cascade" }),
     department: text("department"),
+    phdType: phdTypeEnum("phd_type").default("full-time").notNull(),
     phone: text("phone"),
     profileFileId: integer("profile_file_id").references(() => files.id, {
         onDelete: "set null",
