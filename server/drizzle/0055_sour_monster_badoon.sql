@@ -1,0 +1,2 @@
+ALTER TABLE "phd_exam_applications" ADD COLUMN "application_form_file_id" integer;--> statement-breakpoint
+ALTER TABLE "phd_exam_applications" ADD CONSTRAINT "phd_exam_applications_application_form_file_id_files_id_fk" FOREIGN KEY ("application_form_file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;

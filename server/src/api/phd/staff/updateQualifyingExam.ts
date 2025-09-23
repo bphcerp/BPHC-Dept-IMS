@@ -27,15 +27,12 @@ export default router.post(
             submissionDeadline,
             vivaDate,
         } = parsed;
-
         const semester = await db.query.phdSemesters.findFirst({
             where: (table, { eq }) => eq(table.id, semesterId),
         });
-
         if (!semester) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Semester not found");
         }
-
         const exam = await db
             .insert(phdQualifyingExams)
             .values({
@@ -84,7 +81,7 @@ export default router.post(
                 allUsers.map((user) => ({
                     module: "PhD Qe Application",
                     title: subject,
-                    content: notificationContent,
+                    content: notificationContent, 
                     userEmail: user.email,
                 }))
             );

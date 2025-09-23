@@ -5,6 +5,7 @@ import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
 import handoutRouter from "./handout/index.ts";
 import conferenceRouter from "./conference/index.ts";
+import analyticsRouter from "./analytics/index.ts";
 import qpRouter from "./qp/index.ts";
 import fileRouter from "./file/index.ts";
 import publicationsRouter from "./publications/index.ts";
@@ -20,6 +21,8 @@ import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
 import readNotificationsRoute from "./readNotifications.ts";
 import publicProfileRouter from "./profile/[id].ts";
+import meetingRouter from "./meeting/index.ts";
+import { testingMiddleware } from "@/middleware/testing.ts";
 
 const favicon = Buffer.from(
     "AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA",
@@ -54,12 +57,15 @@ router.use("/f", fileRouter);
 router.use(authRouter);
 
 router.use("/admin", adminRouter);
+router.use(testingMiddleware);
+
 router.use("/phd", phdRouter);
 router.use("/handout", handoutRouter);
 router.use("/conference", conferenceRouter);
 router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
 router.use("/inventory", inventoryRouter);
+router.use("/analytics", analyticsRouter);
 router.use("/allocation", allocationRouter);
 router.use("/builder", builderRouter);
 router.use("/todos", todosRoute);
@@ -69,5 +75,6 @@ router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
+router.use("/meeting", meetingRouter);
 
 export default router;

@@ -35,13 +35,14 @@ const EditPublications = () => {
     isLoading: isLoadingPubs,
     isError: isPubsError,
   } = useQuery({
-    queryKey: ["publications/all"],
+    queryKey: ["publications", "edit"],
     queryFn: async () => {
       const response = await api.get<publicationsSchemas.PublicationWithMetaResponse>("/publications/all/meta");
       return response.data;
     },
     retry: false,
     refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const updatePublicationMutation = useMutation({
@@ -56,6 +57,7 @@ const EditPublications = () => {
     },
 
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["publications/edit"] });
       queryClient.invalidateQueries({ queryKey: ["publications/all"] });
       toast.success("Publication updated successfully");
     },

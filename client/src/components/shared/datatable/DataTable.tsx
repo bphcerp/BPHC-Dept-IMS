@@ -56,7 +56,6 @@ import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
 
-
 const HEADER_COLOR = "#E8E8F0"
 const ROW_COLOR_ODD = "#F7F7FB"
 const ROW_COLOR_EVEN = "white"
@@ -70,6 +69,7 @@ type BaseTableProps<T> =  {
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
+  mainSearchColumn? : keyof T;
 }
 
 type AltTableProps1<T> = {
@@ -111,6 +111,7 @@ export function DataTable<T>({
   additionalButtons,
   isTableHeaderFixed,
   tableElementRefProp,
+  mainSearchColumn,
 }: DataTableProps<T>) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
@@ -292,11 +293,11 @@ export function DataTable<T>({
       setSearchParams(params);
     },
     onSortingChange: (updater) => {
-      console.log("test");
       let newSorting =
         typeof updater === "function"
           ? updater(table.getState().sorting)
           : updater;
+
       const params = new URLSearchParams(searchParams);
       if (newSorting.length > 0) {
         const s = newSorting[0];
@@ -484,14 +485,18 @@ export function DataTable<T>({
   };
 
   const resetFiltersAndSorting = () => {
-    // table.reset() doesn't work
-    table.resetColumnFilters();
-    table.resetColumnVisibility();
-    table.resetGlobalFilter();
-    table.resetRowSelection();
-    table.resetSorting();
-    table.resetRowSelection();
+    const params = new URLSearchParams(searchParams);
+    [...params.keys()]
+      .filter((k) => k.startsWith("filter_"))
+      .forEach((k) => params.delete(k));
+    params.delete("sort");
+    setSearchParams(params);
+
+    // Reset table state
+    table.reset()
   };
+
+  const camelToTitle = (str: string) => str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
 
   const handleExport = (selected: boolean) => {
     // Export function just returns the ids of the rows and visible columns, data fetching and excel
@@ -507,7 +512,6 @@ export function DataTable<T>({
       )
       .filter((columnId) => columnId !== "S.No");
     exportFunction!(itemIds, columnsVisible);
-    
   };
 
   return (
@@ -597,6 +601,22 @@ export function DataTable<T>({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {mainSearchColumn && (
+              <Input
+                placeholder={`Search ${String(camelToTitle(mainSearchColumn.toString()))}..`}
+                className="w-128"
+                value={
+                  table
+                    .getColumn(String(mainSearchColumn))
+                    ?.getFilterValue() as string
+                }
+                onChange={(event) =>
+                  table
+                    .getColumn(String(mainSearchColumn))
+                    ?.setFilterValue(event.target.value)
+                }
+              />
+            )}
           </div>
           <div className="flex justify-center space-x-2">
             {additionalButtons}
@@ -617,7 +637,8 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (checkbox for select all) */}
                 <TableHead
-                  className="sticky left-0 w-2 z-30 bg-gray-200"
+                  className="z-[3] sticky left-0 w-2"
+                  style={{ backgroundColor: HEADER_COLOR }}
                 >
                   <Checkbox
                     checked={
@@ -673,7 +694,10 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (row checkbox) */}
                 <TableCell
-                  className={`sticky left-0 w-2 z-10 ${idx % 2 ? "bg-gray-200" : "bg-background"}`}
+                  className="sticky left-0 z-10 w-2"
+                  style={{
+                    backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_EVEN,
+                  }}
                 >
                   <Checkbox
                     checked={row.getIsSelected()}
@@ -694,7 +718,10 @@ export function DataTable<T>({
                         ? "text-center"
                         : ""
                     }`}
-                    style={{ ...getCommonPinningStyles(cell.column), backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_ODD}}
+                    style={{
+                      ...getCommonPinningStyles(cell.column),
+                      backgroundColor: idx % 2 ? ROW_COLOR_ODD : ROW_COLOR_EVEN,
+                    }}
                     title={
                       cell.getValue() &&
                       (cell.getValue() as any).toString().length > 20
@@ -726,14 +753,17 @@ export function DataTable<T>({
             {/* Sum row (sticky first column) */}
             {columns.some((column) => column.meta?.calculateSum) && (
               <TableRow>
-                <TableCell
-                  className="sticky w-2 left-0 z-10 opacity-100 bg-white"
-                >
+                <TableCell className="sticky left-0 z-10 w-2 bg-white opacity-100">
                   {/* empty cell for checkbox column */}
                 </TableCell>
                 {table.getVisibleLeafColumns().map((column) => (
-                  <TableCell key={column.id} className="font-bold"
-                    style={{ ...getCommonPinningStyles(column), backgroundColor: ROW_COLOR_EVEN }}
+                  <TableCell
+                    key={column.id}
+                    className="font-bold"
+                    style={{
+                      ...getCommonPinningStyles(column),
+                      backgroundColor: ROW_COLOR_EVEN,
+                    }}
                   >
                     {column.columnDef.meta?.calculateSum?.(
                       table.getRowModel().rows.map((row) => row.original)

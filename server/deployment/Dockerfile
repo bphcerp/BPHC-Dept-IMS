@@ -28,6 +28,7 @@ RUN apt update && apt install -y --no-install-recommends \
     fonts-noto-color-emoji \
     fonts-dejavu \
     fonts-freefont-ttf \
+    libreoffice \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

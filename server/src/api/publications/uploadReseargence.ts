@@ -2,11 +2,12 @@ import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { Router, Request, Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
 import { publicationsTable, researgencePublications } from "@/config/db/schema/publications.ts";
 import { publicationsSchemas } from "lib";
+import logger from "@/config/logger.ts";
 
 const router = Router();
 
@@ -89,6 +90,7 @@ router.post(
             matched: 0,
             successful: 0,
             failed: 0,
+            repeated: 0,
             errors: [] as string[],
         };
 
@@ -106,19 +108,20 @@ router.post(
                 let [existingPub] = await db
                     .select()
                     .from(researgencePublications)
-                    .where(eq(researgencePublications.publicationTitle, parsedRow.publicationTitle));
+                    .where(eq( sql`lower(${researgencePublications.publicationTitle})`, sql`lower(${parsedRow.publicationTitle})`));
+
                 if (existingPub) {
-                    results.failed++;
-                    results.errors.push(
-                        `Row ${i + 2}: Publication with title ${parsedRow.publicationTitle} already exists`
-                    );
-                    continue;
+                    results.repeated++;
+                    await db
+                        .update(researgencePublications)
+                        .set(parsedRow)
+                        .where(eq( sql`lower(${researgencePublications.publicationTitle})`, sql`lower(${parsedRow.publicationTitle})`))
                 }
 
                 let [matchedPub] = await db
                     .select()
                     .from(publicationsTable)
-                    .where(eq(publicationsTable.title, parsedRow.publicationTitle))
+                    .where(eq( sql`lower(${publicationsTable.title})`, sql`lower(${parsedRow.publicationTitle})`))
 
                 if(matchedPub) {
                     results.matched++;
@@ -136,19 +139,25 @@ router.post(
                     }).where(eq(publicationsTable.citationId, matchedPub.citationId))
                 }
 
+                if(existingPub) continue;
+
                 let [newEntry] = await db
                     .insert(researgencePublications)
                     .values(parsedRow)
                     .returning();
                 if (newEntry) results.successful++;
+                
             } catch (error) {
                 results.failed++;
                 results.errors.push(
                     `Row ${i + 2}: ${error instanceof Error ? error.message : "Unknown error"}`
                 );
+                logger.error(`Could not add publication : ${parsedRow.publicationTitle} due to an Unknown Error.`);
             }
         }
 
+        logger.info(`Updated ${results.repeated} duplicate publications.`);
+        logger.info("Data upload completed.");
         res.json({
             message: "Data upload completed",
             results,

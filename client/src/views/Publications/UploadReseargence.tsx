@@ -8,12 +8,14 @@ import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface UploadResults {
   successful: number;
   matched: number,
   failed: number;
   total: number;
+  repeated: number;
   errors: string[];
 }
 
@@ -26,6 +28,8 @@ interface ApiError {
 }
 
 export default function UploadReseargence() {
+   const queryClient = useQueryClient();
+  
   const { authState, checkAccess } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +46,7 @@ export default function UploadReseargence() {
       toast.error("Please select a file");
       return;
     }
+    setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
     try {
@@ -55,14 +60,22 @@ export default function UploadReseargence() {
       const fileInput = document.getElementById("file-upload-researgence") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
       if (responseData.results.successful > 0) {
-        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence Publications.`);
+        toast.success(`Successfully uploaded ${responseData.results.successful} Researgence publications.`);
       }
       if (responseData.results.matched > 0) {
-        toast.success(`Successfully matched and updated ${responseData.results.matched} Publications`);
+        toast.success(`Successfully matched and updated ${responseData.results.matched} publications`);
       }
       if (responseData.results.failed > 0) {
-        toast.error(`${responseData.results.failed} Researgence Publications failed to upload.`);
+        toast.error(`${responseData.results.failed} Researgence publications failed to upload.`);
       }
+      if( responseData.results.repeated > 0) {
+        toast.info(`${responseData.results.repeated} Researgence publications re-uploaded.`);
+      }
+
+      void queryClient.invalidateQueries({ queryKey: ["publications"] });
+
+      queryClient.refetchQueries({queryKey: ["publications"]})
+
     } catch (err) {
       const error = err as ApiError;
       const errorMessage = error?.response?.data?.error || "Upload failed";

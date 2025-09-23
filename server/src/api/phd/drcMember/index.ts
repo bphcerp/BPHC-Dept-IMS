@@ -15,6 +15,7 @@ import getTimetable from "./getTimetable.ts";
 import updateTimetable from "./updateTimetable.ts";
 import optimizeTimetable from "./optimizeTimetable.ts";
 import generateTimetablePdf from "./generateTimetablePdf.ts";
+import generateQEApplicationForm from "./generateQEApplicationForm.ts"
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.use("/updateApplicationStatus", updateApplicationStatus);
 router.use("/getAvailableExams", getAvailableExams);
 router.use("/getVerifiedApplications", getVerifiedApplications);
 router.use("/generateForms", generateForms);
+router.use("/generateApplicationForm", generateQEApplicationForm);
 router.use("/requestExaminerSuggestions", requestExaminerSuggestions);
 router.use("/assignExaminers", assignExaminers);
 router.use("/submitResult", submitResult);
