@@ -64,6 +64,7 @@ export const allocationSection = pgTable(
         masterId: uuid("master_id")
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
     },
     (table) => [index().on(table.masterId)]
 );
@@ -77,6 +78,7 @@ export const allocationSectionInstructors = pgTable(
         instructorEmail: text("instructor_email")
             .notNull()
             .references(() => users.email, { onDelete: "set default" }),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
     },
     (table) => [
         unique().on(table.sectionId, table.instructorEmail),

@@ -20,6 +20,7 @@ router.get(
                 ),
             with: {
                 sections: {
+                    orderBy: (section, { asc }) => asc(section.createdAt),
                     with: {
                         instructors: {
                             with: {
