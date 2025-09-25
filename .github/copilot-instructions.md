@@ -14,6 +14,7 @@ This is a **Student Information Management System (ERP)** for BITS Pilani Hydera
 ## Architecture & Project Layout
 
 ### Workspace Structure
+
 ```
 /
 ├── client/          # React frontend (Vite + TypeScript)
@@ -25,6 +26,7 @@ This is a **Student Information Management System (ERP)** for BITS Pilani Hydera
 ```
 
 ### Key Directories
+
 - **client/src/**: React components, views, hooks, utilities
   - `components/`: Reusable UI components (Radix UI + shadcn/ui)
   - `views/`: Page-level components
@@ -37,8 +39,9 @@ This is a **Student Information Management System (ERP)** for BITS Pilani Hydera
 - **lib/src/**: Shared schemas (Zod), types, permissions
 
 ### Database & Configuration
+
 - **Database**: PostgreSQL with Drizzle ORM
-- **Config Files**: 
+- **Config Files**:
   - `server/drizzle.config.ts` - Database configuration
   - `client/vite.config.ts` - Frontend build configuration
   - `client/tailwind.config.js` - Styling configuration
@@ -47,12 +50,14 @@ This is a **Student Information Management System (ERP)** for BITS Pilani Hydera
 ## Build & Development Instructions
 
 ### Prerequisites
+
 - **Node.js**: 22+ (server requirement, though 20+ works with warnings)
 - **pnpm**: 9.15.3+ (package manager)
 - **PostgreSQL**: 15+ (for database)
 - **Redis**: Latest (for caching/sessions)
 
 ### Initial Setup
+
 ```bash
 # 1. Clone and install dependencies (ALWAYS run this first)
 pnpm install
@@ -68,6 +73,7 @@ pnpm --filter server db:seed      # Seed initial data
 ```
 
 ### Build Commands (Validated)
+
 ```bash
 # Build server (TypeScript compilation) - ~10-15 seconds
 pnpm --filter server run build
@@ -77,11 +83,12 @@ pnpm --filter client run build
 ```
 
 ### Development Commands
+
 ```bash
 # Start client dev server (port 5173)
 pnpm --filter client run dev
 
-# Start server (port 9000) 
+# Start server (port 9000)
 pnpm --filter server run start
 
 # Docker development (includes database + Redis)
@@ -91,6 +98,7 @@ docker compose --profile prod up --build -d
 ```
 
 ### Linting & Code Quality
+
 ```bash
 # Lint client (EXPECT 600+ errors currently - not blocking)
 pnpm --filter client run lint
@@ -102,6 +110,7 @@ pnpm --filter client run format
 **⚠️ IMPORTANT**: The codebase currently has 600+ ESLint errors. These are existing issues and should not block your changes. Only fix linting errors directly related to your modifications.
 
 ### Database Operations
+
 ```bash
 # Database schema changes
 pnpm --filter server db:generate   # Generate migration files
@@ -118,22 +127,26 @@ pnpm --filter server db:seed [email]  # Seed database (optional email for dev us
 ## Continuous Integration
 
 ### GitHub Workflows
+
 - **CI Workflow** (`.github/workflows/ci.yml`): Runs on PRs to main/production
   - TypeScript compilation for both client and server
   - Runs on `eee-ims` runner (custom)
   - Uses pnpm for dependency management
-- **Production Deployment** (`.github/workflows/deploy-production.yml`): 
+- **Production Deployment** (`.github/workflows/deploy-production.yml`):
   - Deploys to production on push to `production` branch
   - Uses Docker Compose with `--profile prod`
   - Runs database migrations and seeding automatically
 
 ### Deployment Architecture
+
 - **EEE Department**: Deployed on `eee-ims` runner
-- **Mechanical Department**: Deployed on `mech-ims` runner  
+- **Mechanical Department**: Deployed on `mech-ims` runner
 - **Production**: Uses Docker containers with nginx reverse proxy
 
 ### Pre-commit Validation
+
 To ensure your changes pass CI:
+
 ```bash
 # Test what CI will run
 pnpm install
@@ -144,17 +157,21 @@ pnpm --filter client run build
 ## Common Issues & Solutions
 
 ### Node.js Version Warning
+
 **Issue**: "Unsupported engine: wanted: {"node":">=22.0.0"}"
 **Solution**: This is a warning only. Node 20+ works but 22+ is preferred for production.
 
 ### Build Failures
+
 **Issue**: TypeScript compilation errors
-**Solution**: 
+**Solution**:
+
 - Always run `pnpm install` first after pulling changes
 - Check if new environment variables are needed in `.env`
 - Ensure all workspaces build: server first, then client
 
 ### Environment Variables
+
 - **Required for development**: Database credentials, Google OAuth, department settings
 - **Client variables**: Must be prefixed with `VITE_`
 - **Missing variables**: Check `.env.example` for complete list
@@ -162,7 +179,9 @@ pnpm --filter client run build
 - **Key services**: PostgreSQL, Redis, Google OAuth, SERP API
 
 ### Package Manager Requirements
+
 **⚠️ CRITICAL**: This project uses pnpm workspaces. Do NOT use npm or yarn:
+
 ```bash
 # ✅ Correct
 pnpm install
@@ -174,8 +193,10 @@ yarn install
 ```
 
 ### Database Issues
+
 **Issue**: Database connection errors
 **Solution**:
+
 1. Ensure PostgreSQL is running (or use Docker)
 2. Verify database credentials in `.env`
 3. Run migrations: `pnpm --filter server db:push`
@@ -183,17 +204,20 @@ yarn install
 ## Development Guidelines
 
 ### Code Structure
+
 - **API routes**: Follow RESTful patterns in `server/src/api/`
 - **Components**: Use Radix UI primitives with shadcn/ui styling
 - **Database**: Use Drizzle ORM, schemas in `server/src/config/db/schema/`
 - **Types**: Define in `lib/src/` for shared types
 
 ### Key Dependencies
+
 - **Frontend**: React 18, Vite, TailwindCSS, Radix UI, React Query, React Hook Form
 - **Backend**: Express, Drizzle ORM, Zod validation, JWT auth, PostgreSQL
 - **Shared**: TypeScript, Zod schemas, ESLint, Prettier
 
 ### Testing Strategy
+
 - No formal test suite currently implemented
 - Manual testing required
 - Always test both client and server builds before committing
@@ -201,6 +225,7 @@ yarn install
 ## Quick Reference
 
 ### Essential Commands
+
 ```bash
 # Fresh setup
 pnpm install && cp .env.example .env
@@ -217,11 +242,35 @@ pnpm --filter server db:push && pnpm --filter server db:seed
 ```
 
 ### File Structure Priority
+
 1. **Configuration**: `pnpm-workspace.yaml`, `package.json` files, `.env.example`
 2. **Database**: `server/src/config/db/schema/*`, `server/drizzle.config.ts`
 3. **API**: `server/src/api/*` (organized by feature)
 4. **Frontend**: `client/src/components/*`, `client/src/views/*`
 5. **Shared**: `lib/src/*` (schemas, types, permissions)
+
+### How to import shared types/schemas
+
+The code inside lib cannot be imported directly from `lib/src/*`.
+instead, all the schemas and types are grouped and exported from lib.
+e.g. to import admin schemas, use:
+
+```ts
+import { adminSchemas } from "lib";
+```
+
+all the exported types and schemas are defined in `lib/src/index.ts`.
+
+### Client side api errors
+
+Error toasts in failed mutations using axios should be displayed as:
+
+```ts
+toast.error(
+  (error as { response: { data: string } })?.response?.data ||
+    "An error occurred"
+);
+```
 
 ---
 

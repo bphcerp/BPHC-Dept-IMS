@@ -37,6 +37,12 @@ const AllocationLayout = () => {
                 url: "/allocation/semesters",
                 requiredPermissions: ["allocation:semesters:read"],
               },
+              {
+                title: "Allocation",
+                icon: <ClipboardCheckIcon />,
+                url: "/allocation/allocate",
+                requiredPermissions: ["allocation:write"],
+              },
             ],
           },
           {

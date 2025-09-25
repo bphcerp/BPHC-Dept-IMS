@@ -98,16 +98,33 @@ export const masterAllocationSchema = z.object({
 
 export const courseCodeSchema = z.object({
     code: z.string().nonempty(),
+    semesterId: z.string().uuid(),
 });
 
 export const courseAllocateSchema = z.object({
+    semesterId: z.string().uuid(),
     courseCode: z.string().nonempty(),
     ic: z.string().email().nonempty(),
     sections: z.array(
         z.object({
-            number: z.coerce.number(),
-            type: z.enum(["LECTURE", "TUTORIAL", "PRACTICAL"]),
+            type: z.enum(sectionTypes),
             instructors: z.array(z.string().email().nonempty()),
         })
     ),
 });
+
+export const addSectionBodySchema = z.object({
+    masterId: z.string().uuid(),
+    sectionType: z.enum(sectionTypes),
+});
+
+export const removeSectionsBodySchema = z.object({
+    sectionId: z.union([z.array(z.string().uuid()), z.string().uuid()]),
+});
+
+export const assignInstructorBodySchema = z.object({
+    sectionId: z.string().uuid(),
+    instructorEmail: z.string().email(),
+});
+
+export const dismissInstructorBodySchema = assignInstructorBodySchema;

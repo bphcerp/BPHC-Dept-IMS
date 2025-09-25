@@ -21,6 +21,8 @@ import * as authTypes from "./types/auth.ts";
 import * as authUtils from "./utils/auth.ts";
 import { allPermissions, permissions } from "./permissions.ts";
 
+import * as allocationTypes from "./types/allocation.ts";
+
 export {
     adminSchemas,
     formSchemas,
@@ -37,6 +39,7 @@ export {
     phdSchemas,
     allocationSchemas,
     allocationFormBuilderSchemas,
+    allocationTypes,
     authTypes,
     authUtils,
     permissions,

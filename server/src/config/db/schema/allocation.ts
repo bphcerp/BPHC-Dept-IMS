@@ -37,9 +37,11 @@ export const masterAllocation = pgTable(
             .primaryKey()
             .$defaultFn(() => uuidv4()),
 
-        semesterId: uuid("semester_id").references(() => semester.id, {
-            onDelete: "restrict",
-        }),
+        semesterId: uuid("semester_id")
+            .notNull()
+            .references(() => semester.id, {
+                onDelete: "restrict",
+            }),
 
         ic: text("instructor_email")
             .notNull()
@@ -49,7 +51,7 @@ export const masterAllocation = pgTable(
             .notNull()
             .references(() => course.code),
     },
-    (table) => [unique().on(table.semesterId, table.ic, table.courseCode)]
+    (table) => [unique().on(table.semesterId, table.courseCode)]
 );
 
 export const allocationSection = pgTable(
@@ -58,16 +60,12 @@ export const allocationSection = pgTable(
         id: uuid("id")
             .primaryKey()
             .$defaultFn(() => uuidv4()),
-        number: integer("section_name").notNull(),
         type: sectionTypeEnum("section_type").notNull(),
         masterId: uuid("master_id")
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
     },
-    (table) => [
-        unique().on(table.masterId, table.number, table.type),
-        index().on(table.masterId),
-    ]
+    (table) => [index().on(table.masterId)]
 );
 
 export const allocationSectionInstructors = pgTable(
@@ -86,29 +84,6 @@ export const allocationSectionInstructors = pgTable(
         index().on(table.instructorEmail),
     ]
 );
-
-export const allocation = pgTable("allocation_allocation_result", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
-    instructorEmail: text("instructor_email")
-        .notNull()
-        .references(() => users.email),
-
-    semesterId: uuid("semester_id")
-        .notNull()
-        .references(() => semester.id),
-
-    courseCode: text("course_code")
-        .notNull()
-        .references(() => course.code),
-
-    sectionType: sectionTypeEnum("section_type").notNull(),
-
-    noOfSections: integer("no_of_sections").notNull(),
-    allocatedOn: timestamp("allocated_on", { withTimezone: true }).defaultNow(),
-    updatedOn: timestamp("updated_on", { withTimezone: true }).defaultNow(),
-});
 
 export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),

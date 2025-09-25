@@ -9,6 +9,7 @@ import {
     masterAllocationSchema,
     semesterSchema,
     semesterTypes,
+    sectionTypes,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import {
@@ -130,3 +131,23 @@ export type AllocationType = {
     }[];
     courseCode: string;
 };
+
+export type AllocationResponse = {
+    id: string;
+    semesterId: string;
+    ic: {
+        email: string;
+        name: string | null;
+    };
+    courseCode: string;
+    sections: {
+        id: string;
+        name: string;
+        type: (typeof sectionTypes)[number];
+        masterId: string;
+        instructors: {
+            name: string | null;
+            email: string;
+        }[];
+    }[];
+} | null;

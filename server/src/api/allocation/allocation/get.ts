@@ -1,23 +1,45 @@
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { courseCodeSchema } from "node_modules/lib/src/schemas/Allocation.ts";
+import { allocationSchemas } from "lib";
 
 const router = express.Router();
 
 router.get(
     "/",
     asyncHandler(async (req, res, _next) => {
-        const { code } = courseCodeSchema.parse(req.query);
+        const { code, semesterId } = allocationSchemas.courseCodeSchema.parse(
+            req.query
+        );
 
-        const allocations = await db.query.masterAllocation.findFirst({
-            where: (master, { eq }) => eq(master.courseCode, code),
+        const allocation = await db.query.masterAllocation.findFirst({
+            where: (master, { and, eq }) =>
+                and(
+                    eq(master.courseCode, code),
+                    eq(master.semesterId, semesterId)
+                ),
             with: {
                 sections: {
                     with: {
                         instructors: {
                             with: {
-                                instructor: true,
+                                instructor: {
+                                    columns: { email: true },
+                                    with: {
+                                        faculty: {
+                                            columns: {
+                                                name: true,
+                                                email: true,
+                                            },
+                                        },
+                                        staff: {
+                                            columns: {
+                                                name: true,
+                                                email: true,
+                                            },
+                                        },
+                                    },
+                                },
                             },
                         },
                     },
@@ -26,7 +48,28 @@ router.get(
             },
         });
 
-        res.status(200).json(allocations);
+        res.status(200).json(
+            allocation
+                ? {
+                      ...allocation,
+                      sections: allocation.sections.map((s) => ({
+                          ...s,
+                          instructors: s.instructors.map((i) => {
+                              const { email, ...rest } = i.instructor;
+                              const instructor = Object.values(rest).filter(
+                                  (v) => !!v
+                              )[0];
+                              return instructor
+                                  ? {
+                                        email: instructor.email,
+                                        name: instructor.name,
+                                    }
+                                  : { email, name: "Not found" };
+                          }),
+                      })),
+                  }
+                : undefined
+        );
     })
 );
 

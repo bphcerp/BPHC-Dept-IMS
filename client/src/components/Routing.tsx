@@ -114,6 +114,7 @@ import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
 import AllocateCourse from "@/views/Allocation/AllocateCourse";
 import SemesterList from "@/views/Allocation/SemesterList";
+import Allocate from "@/views/Allocation/Allocation";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -753,6 +754,9 @@ const Routing = () => {
                 </>
               )}
 
+              {checkAccess("allocation:write") && (
+                <Route path="allocate" element={<Allocate />} />
+              )}
               <Route path="allocate/:id" element={<AllocateCourse />} />
 
               {checkAccessAnyOne([
