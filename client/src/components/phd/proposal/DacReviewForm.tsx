@@ -1,5 +1,5 @@
 // client/src/components/phd/proposal/DacReviewForm.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, Controller, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { phdSchemas } from "lib";
@@ -7,17 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { DacReviewFormData } from "../../../../../lib/src/schemas/Phd";
 
 interface DacReviewFormProps {
   onSubmit: (formData: FormData) => void;
   isSubmitting: boolean;
   deadline: string;
+  hasReviewed: boolean;
+  existingReview: {
+    approved: boolean;
+    comments: string;
+    reviewForm: { formData: DacReviewFormData } | null;
+  } | null;
 }
 
 const FormBooleanRadioGroup = ({
@@ -97,25 +111,76 @@ const FormEnumRadioGroup = ({
   </div>
 );
 
+const FormEnumCheckboxGroup = ({
+  control,
+  name,
+  items,
+  error,
+  disabled,
+}: {
+  control: Control<any>;
+  name: string;
+  items: { value: string; label: string }[];
+  error?: { message?: string };
+  disabled: boolean;
+}) => (
+  <div>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <div className="flex flex-col space-y-1">
+          {items.map((item) => (
+            <div key={item.value} className="flex items-center space-x-3">
+              <Checkbox
+                id={`${name}-${item.value}`}
+                checked={field.value?.includes(item.value)}
+                onCheckedChange={(checked) => {
+                  const currentValues = field.value || [];
+                  if (checked) {
+                    field.onChange([...currentValues, item.value]);
+                  } else {
+                    field.onChange(
+                      currentValues.filter((v: string) => v !== item.value)
+                    );
+                  }
+                }}
+                disabled={disabled}
+              />
+              <Label htmlFor={`${name}-${item.value}`}>{item.label}</Label>
+            </div>
+          ))}
+        </div>
+      )}
+    />
+    {error && <p className="mt-1 text-xs text-destructive">{error.message}</p>}
+  </div>
+);
+
 export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   onSubmit,
   isSubmitting,
   deadline,
+  existingReview,
+  hasReviewed,
 }) => {
   const isDeadlinePassed = new Date(deadline) < new Date();
   const {
     control,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<phdSchemas.DacReviewFormData>({
     resolver: zodResolver(phdSchemas.dacReviewFormSchema),
     defaultValues: {
       q1a: false,
       q1b: false,
       q1c: false,
+      q1d: [],
       q2a: false,
       q2b: false,
       q2c: false,
+      q2d: [],
       q3a: false,
       q3b: false,
       q3c: false,
@@ -133,10 +198,18 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
       q8_comments: "",
     },
   });
+
   const [finalDecision, setFinalDecision] = useState<
     "approved" | "reverted" | null
   >(null);
   const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (existingReview?.reviewForm?.formData) {
+      reset(existingReview.reviewForm.formData);
+      setFinalDecision(existingReview.approved ? "approved" : "reverted");
+    }
+  }, [existingReview, reset]);
 
   const onFormSubmit = (data: phdSchemas.DacReviewFormData) => {
     if (!finalDecision) {
@@ -160,19 +233,24 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
     <Card>
       <CardHeader>
         <CardTitle>DAC Review & Evaluation</CardTitle>
+        <CardDescription>
+          {hasReviewed
+            ? "You can edit and resubmit your review until the deadline."
+            : "Please fill out the form to submit your review."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
           <AlertTitle>Note for Reviewers</AlertTitle>
           <AlertDescription>
-            If you choose to revert the proposal, only your final comment(number 8) and
-            any optional feedback document will be shared with the student. The
-            detailed evaluation form is for internal records only.
+            If you choose to revert the proposal, only your final comment
+            (number 8) and any optional feedback document will be shared with
+            the student. The detailed evaluation form is for internal records
+            only.
           </AlertDescription>
         </Alert>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               1. Proposed Topic of Research
@@ -199,8 +277,10 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
             <div>
-              <Label>d) Does the proposed topic aim at:</Label>
-              <FormEnumRadioGroup
+              <Label>
+                d) Does the proposed topic aim at (select all that apply):
+              </Label>
+              <FormEnumCheckboxGroup
                 control={control}
                 name="q1d"
                 items={[
@@ -222,7 +302,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               2. Objective of the proposed research
@@ -249,8 +328,8 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
             <div>
-              <Label>d) The outcome of the work:</Label>
-              <FormEnumRadioGroup
+              <Label>d) The outcome of the work (select all that apply):</Label>
+              <FormEnumCheckboxGroup
                 control={control}
                 name="q2d"
                 items={[
@@ -272,7 +351,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               3. Background of the Proposed Research
@@ -299,7 +377,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">4. Methodology</h3>
             <FormBooleanRadioGroup
@@ -352,7 +429,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">5. Literature References</h3>
             <FormBooleanRadioGroup
@@ -377,7 +453,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">6. Overall Comments</h3>
             <FormEnumRadioGroup
@@ -392,7 +467,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
-          {}
           <div className="space-y-4 rounded-md border p-4">
             <div className="space-y-2">
               <Label htmlFor="q7_reasons" className="font-semibold">
@@ -424,6 +498,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
+
           <div>
             <Label>Optional Feedback Document (PDF)</Label>
             <FileUploader
@@ -433,12 +508,14 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
+
           <div className="space-y-2 rounded-md border p-4">
             <Label className="text-lg font-semibold">Final Decision</Label>
             <RadioGroup
               onValueChange={(val: "approved" | "reverted") =>
                 setFinalDecision(val)
               }
+              value={finalDecision ?? ""}
               className="mt-2 flex gap-4"
               disabled={isDeadlinePassed}
             >
@@ -452,12 +529,19 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               </div>
             </RadioGroup>
           </div>
+
           <Button
             type="submit"
             disabled={isSubmitting || isDeadlinePassed}
             title={isDeadlinePassed ? "The deadline for review has passed" : ""}
           >
-            {isSubmitting ? <LoadingSpinner /> : "Submit Review"}
+            {isSubmitting ? (
+              <LoadingSpinner />
+            ) : hasReviewed ? (
+              "Update Review"
+            ) : (
+              "Submit Review"
+            )}
           </Button>
           {isDeadlinePassed && (
             <p className="mt-4 text-center text-sm text-destructive">

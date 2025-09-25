@@ -225,6 +225,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/getAvailableSlots": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
@@ -235,10 +238,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
-    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/seminarSlots": "phd:drc:proposal",
 
     //meeting
     "/meeting/create": "meeting:use",

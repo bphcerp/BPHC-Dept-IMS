@@ -50,6 +50,7 @@ import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
 import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
+import SeminarScheduling from "@/views/Phd/DrcConvenor/SeminarScheduling";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -135,7 +136,8 @@ const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
 );
 const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("meeting:")
-);const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
+);
+const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("analytics:")
 );
 
@@ -433,6 +435,10 @@ const Routing = () => {
                     <Route
                       path="proposal-management/:id"
                       element={<DrcViewProposal />}
+                    />
+                    <Route
+                      path="seminar-scheduling"
+                      element={<SeminarScheduling />}
                     />
                   </>
                 )}

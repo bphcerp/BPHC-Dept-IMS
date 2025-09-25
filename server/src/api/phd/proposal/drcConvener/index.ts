@@ -7,6 +7,7 @@ import finalizeProposals from './finalizeProposals.ts';
 import downloadProposalNotice from './downloadProposalNotice.ts';
 import requestSeminarDetails from './requestSeminarDetails.ts';
 import remindSeminarDetails from './remindSeminarDetails.ts';
+import seminarSlots from './seminarSlots.ts';
 
 const router = express.Router();
 
@@ -18,4 +19,5 @@ router.use("/remindSeminarDetails", remindSeminarDetails);
 router.use("/downloadProposalPackage", downloadProposalPackage);
 router.use('/finalizeProposals', finalizeProposals);
 router.use('/downloadProposalNotice', downloadProposalNotice);
+router.use('/seminarSlots', seminarSlots);
 export default router;

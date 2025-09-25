@@ -1,3 +1,4 @@
+// server/src/config/db/schema/phdRelations.ts
 import { relations } from "drizzle-orm";
 import {
     phdCourses,
@@ -13,6 +14,7 @@ import {
     phdProposalDacReviews,
     phdProposalSemesters,
     phdProposalDacReviewForms,
+    phdSeminarSlots, // Added
 } from "./phd.ts";
 import { faculty, phd } from "./admin.ts";
 import { files } from "./form.ts";
@@ -184,6 +186,12 @@ export const phdProposalsRelations = relations(
         dacReviews: many(phdProposalDacReviews, {
             relationName: "proposalDacReviews",
         }),
+        bookedSeminarSlot: one(phdSeminarSlots, {
+            // Added
+            fields: [phdProposals.id],
+            references: [phdSeminarSlots.bookedByProposalId],
+            relationName: "bookedSlotForProposal",
+        }),
     })
 );
 
@@ -267,6 +275,22 @@ export const phdProposalDacReviewFormsRelations = relations(
             fields: [phdProposalDacReviewForms.reviewId],
             references: [phdProposalDacReviews.id],
             relationName: "dacReviewForm",
+        }),
+    })
+);
+
+export const phdSeminarSlotsRelations = relations(
+    phdSeminarSlots,
+    ({ one }) => ({
+        proposal: one(phdProposals, {
+            fields: [phdSeminarSlots.bookedByProposalId],
+            references: [phdProposals.id],
+            relationName: "bookedSlotForProposal",
+        }),
+        drcConvener: one(faculty, {
+            fields: [phdSeminarSlots.drcConvenerEmail],
+            references: [faculty.email],
+            relationName: "seminarSlotsCreatedBy",
         }),
     })
 );

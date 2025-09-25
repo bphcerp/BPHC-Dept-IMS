@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/student/submitProposal.ts
 import db from "@/config/db/index.ts";
 import {
     phdProposals,
@@ -39,70 +40,89 @@ router.post(
             hasOutsideCoSupervisor,
             declaration,
             proposalCycleId,
+            submissionType,
             internalCoSupervisors,
             externalCoSupervisors,
         } = phdSchemas.phdProposalSubmissionSchema.parse(req.body);
+
         const student = await db.query.phd.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
         });
         assert(student, "PhD student record not found");
+
         const supervisorEmail = student.supervisorEmail;
         if (!supervisorEmail || !supervisorEmail.trim().length)
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "Supervisor not assigned"
             );
+
+        if (submissionType === "final" && !declaration) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "You must accept the declaration to submit."
+            );
+        }
+
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
             where: eq(phdProposalSemesters.id, proposalCycleId),
         });
+
         if (!activeDeadline) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "The selected submission cycle was not found."
             );
         }
+
         if (new Date(activeDeadline.studentSubmissionDate) < new Date()) {
             throw new HttpError(
                 HttpCode.FORBIDDEN,
                 "The submission deadline for this cycle has passed."
             );
         }
+
         const proposalSemesterId = activeDeadline.id;
         if (Array.isArray(req.files))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid files");
+
         const uploadedFiles = req.files as Record<
             (typeof phdSchemas.phdProposalFileFieldNames)[number],
             Express.Multer.File[]
         >;
-        if (
-            !uploadedFiles?.appendixFile ||
-            !uploadedFiles?.summaryFile ||
-            !uploadedFiles?.outlineFile
-        ) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "Missing required proposal documents."
-            );
+
+        if (submissionType === "final") {
+            if (
+                !uploadedFiles?.appendixFile ||
+                !uploadedFiles?.summaryFile ||
+                !uploadedFiles?.outlineFile
+            ) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Missing required proposal documents."
+                );
+            }
+            if (
+                student.phdType === "part-time" &&
+                !uploadedFiles?.placeOfResearchFile
+            ) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Part-time students must upload the 'Place of Research' document."
+                );
+            }
+            if (
+                hasOutsideCoSupervisor &&
+                (!uploadedFiles?.outsideCoSupervisorFormatFile ||
+                    !uploadedFiles?.outsideSupervisorBiodataFile)
+            ) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Documents for outside co-supervisor are required."
+                );
+            }
         }
-        if (
-            student.phdType === "part-time" &&
-            !uploadedFiles?.placeOfResearchFile
-        ) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "Part-time students must upload the 'Place of Research' document."
-            );
-        }
-        if (
-            hasOutsideCoSupervisor &&
-            (!uploadedFiles?.outsideCoSupervisorFormatFile ||
-                !uploadedFiles?.outsideSupervisorBiodataFile)
-        ) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "Documents for outside co-supervisor are required."
-            );
-        }
+
         let submittedProposalId: number = -1;
         await db.transaction(async (tx) => {
             const insertedFileIds: Partial<
@@ -136,6 +156,7 @@ router.post(
                     ] = file.id;
                 });
             }
+
             const [proposal] = await tx
                 .insert(phdProposals)
                 .values({
@@ -145,6 +166,10 @@ router.post(
                     proposalSemesterId,
                     hasOutsideCoSupervisor,
                     declaration,
+                    status:
+                        submissionType === "draft"
+                            ? "draft"
+                            : "supervisor_review",
                     appendixFileId: insertedFileIds.appendixFile!,
                     summaryFileId: insertedFileIds.summaryFile!,
                     outlineFileId: insertedFileIds.outlineFile!,
@@ -155,12 +180,14 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile,
                 })
                 .returning();
+
             if (!proposal)
                 throw new HttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
                     "Failed to create proposal"
                 );
             submittedProposalId = proposal.id;
+
             const coSupervisorsToInsert = [];
             if (internalCoSupervisors) {
                 coSupervisorsToInsert.push(
@@ -185,26 +212,31 @@ router.post(
                     .values(coSupervisorsToInsert);
             }
         });
-        await createTodos([
-            {
-                assignedTo: supervisorEmail,
-                createdBy: req.user!.email,
-                title: `PhD Proposal Review Required for ${student.name}`,
-                description: `Please review the new PhD proposal submitted by your student, ${student.name}.`,
-                module: modules[3],
-                completionEvent: `proposal:supervisor-review:${submittedProposalId}`,
-                link: `/phd/supervisor/proposal/${submittedProposalId}`,
-                deadline: activeDeadline.facultyReviewDate,
-            },
-        ]);
-        await sendEmail({
-            to: supervisorEmail,
-            subject: `PhD Proposal Submitted for Review by ${student.name}`,
-            text: `Dear Supervisor,\n\nYour student, ${student.name}, has submitted their PhD research proposal titled "${title}" for your review.\n\nPlease log in to the portal to view the details and take action.\n\nThank you.`,
-        });
+
+        if (submissionType === "final") {
+            await createTodos([
+                {
+                    assignedTo: supervisorEmail,
+                    createdBy: req.user!.email,
+                    title: `PhD Proposal Review Required for ${student.name}`,
+                    description: `Please review the new PhD proposal submitted by your student, ${student.name}.`,
+                    module: modules[3],
+                    completionEvent: `proposal:supervisor-review:${submittedProposalId}`,
+                    link: `/phd/supervisor/proposal/${submittedProposalId}`,
+                    deadline: activeDeadline.facultyReviewDate,
+                },
+            ]);
+
+            await sendEmail({
+                to: supervisorEmail,
+                subject: `PhD Proposal Submitted for Review by ${student.name}`,
+                text: `Dear Supervisor,\n\nYour student, ${student.name}, has submitted their PhD research proposal titled "${title}" for your review.\n\nPlease log in to the portal to view the details and take action.\n\nThank you.`,
+            });
+        }
+
         res.status(200).send({
             success: true,
-            message: "Proposal submitted successfully.",
+            message: `Proposal ${submissionType === "draft" ? "saved as draft" : "submitted successfully"}.`,
         });
     })
 );

@@ -1,5 +1,6 @@
+// client/src/views/Phd/Supervisor/ViewProposal.tsx
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -14,9 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReviewForm";
-import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm";
-import { phdSchemas } from "lib";
-import { toast } from "sonner";
+import SeminarSlotSelector from "@/components/phd/proposal/SeminarSlotSelector";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -52,10 +51,12 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
   proposalSemester: { facultyReviewDate: string };
 }
+
 const SupervisorViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
   const queryClient = useQueryClient();
+
   const {
     data: proposal,
     isLoading,
@@ -70,24 +71,6 @@ const SupervisorViewProposal: React.FC = () => {
       return response.data;
     },
     enabled: !!id,
-  });
-
-  const setSeminarDetailsMutation = useMutation({
-    mutationFn: (data: phdSchemas.SetSeminarDetailsBody) =>
-      api.post(
-        `/phd/proposal/supervisor/setSeminarDetails/${proposalId}`,
-        data
-      ),
-    onSuccess: () => {
-      toast.success("Seminar details saved successfully!");
-      void refetch();
-    },
-    onError: (error) => {
-      toast.error(
-        (error as { response: { data: string } })?.response?.data ||
-          "Failed to save seminar details."
-      );
-    },
   });
 
   if (isLoading)
@@ -151,11 +134,9 @@ const SupervisorViewProposal: React.FC = () => {
           </Card>
         );
       case "dac_accepted":
+      case "seminar_pending":
         return (
-          <SeminarDetailsForm
-            onSubmit={setSeminarDetailsMutation.mutate}
-            isSubmitting={setSeminarDetailsMutation.isLoading}
-          />
+          <SeminarSlotSelector proposalId={proposalId} onSuccess={refetch} />
         );
       default:
         return (
@@ -261,4 +242,5 @@ const SupervisorViewProposal: React.FC = () => {
     </div>
   );
 };
+
 export default SupervisorViewProposal;
