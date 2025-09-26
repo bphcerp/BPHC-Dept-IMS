@@ -1,5 +1,5 @@
 // client/src/components/phd/proposal/DacReviewForm.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm, Controller, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { phdSchemas } from "lib";
@@ -165,14 +165,26 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   hasReviewed,
 }) => {
   const isDeadlinePassed = new Date(deadline) < new Date();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<phdSchemas.DacReviewFormData>({
-    resolver: zodResolver(phdSchemas.dacReviewFormSchema),
-    defaultValues: {
+
+  const memoizedDefaultValues = useMemo(() => {
+    if (existingReview?.reviewForm?.formData) {
+      const formData = existingReview.reviewForm.formData;
+      return {
+        ...formData,
+        q1d: Array.isArray(formData.q1d)
+          ? formData.q1d
+          : formData.q1d
+            ? [formData.q1d]
+            : [],
+        q2d: Array.isArray(formData.q2d)
+          ? formData.q2d
+          : formData.q2d
+            ? [formData.q2d]
+            : [],
+      };
+    }
+    // With the schema fixed, no type assertions are needed here.
+    return {
       q1a: false,
       q1b: false,
       q1c: false,
@@ -194,9 +206,19 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
       q5a: false,
       q5b: false,
       q5c: false,
+      q6: "accepted",
       q7_reasons: "",
       q8_comments: "",
-    },
+    };
+  }, [existingReview]);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<phdSchemas.DacReviewFormData>({
+    resolver: zodResolver(phdSchemas.dacReviewFormSchema),
+    values: memoizedDefaultValues as unknown as phdSchemas.DacReviewFormData,
   });
 
   const [finalDecision, setFinalDecision] = useState<
@@ -205,11 +227,10 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (existingReview?.reviewForm?.formData) {
-      reset(existingReview.reviewForm.formData);
+    if (existingReview) {
       setFinalDecision(existingReview.approved ? "approved" : "reverted");
     }
-  }, [existingReview, reset]);
+  }, [existingReview]);
 
   const onFormSubmit = (data: phdSchemas.DacReviewFormData) => {
     if (!finalDecision) {
@@ -235,7 +256,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
         <CardTitle>DAC Review & Evaluation</CardTitle>
         <CardDescription>
           {hasReviewed
-            ? "You can edit and resubmit your review until the deadline."
+            ? "Your previous review is pre-filled. You can now update and resubmit it."
             : "Please fill out the form to submit your review."}
         </CardDescription>
       </CardHeader>
@@ -498,7 +519,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
-
           <div>
             <Label>Optional Feedback Document (PDF)</Label>
             <FileUploader
@@ -508,7 +528,6 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               disabled={isDeadlinePassed}
             />
           </div>
-
           <div className="space-y-2 rounded-md border p-4">
             <Label className="text-lg font-semibold">Final Decision</Label>
             <RadioGroup
@@ -529,19 +548,12 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               </div>
             </RadioGroup>
           </div>
-
           <Button
             type="submit"
             disabled={isSubmitting || isDeadlinePassed}
             title={isDeadlinePassed ? "The deadline for review has passed" : ""}
           >
-            {isSubmitting ? (
-              <LoadingSpinner />
-            ) : hasReviewed ? (
-              "Update Review"
-            ) : (
-              "Submit Review"
-            )}
+            {isSubmitting ? <LoadingSpinner /> : "Submit Review"}
           </Button>
           {isDeadlinePassed && (
             <p className="mt-4 text-center text-sm text-destructive">

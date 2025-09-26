@@ -101,7 +101,7 @@ const DacViewProposal: React.FC = () => {
     },
   ].filter((file) => file.url);
 
-  const canReview = proposal.status === "dac_review";
+  // const canReview = proposal.status === "dac_review";
   const hasReviewed = !!proposal.currentUserReview;
 
   return (
@@ -139,7 +139,7 @@ const DacViewProposal: React.FC = () => {
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
 
-      {canReview && (
+      {proposal.status === "dac_review" && !proposal.currentUserReview && (
         <DacReviewForm
           onSubmit={submitReviewMutation.mutate}
           isSubmitting={submitReviewMutation.isLoading}
@@ -149,12 +149,11 @@ const DacViewProposal: React.FC = () => {
         />
       )}
 
-      {!canReview && hasReviewed && proposal.currentUserReview && (
+      {proposal.currentUserReview && (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" /> You Have Reviewed This
-              Proposal
+              <CheckCircle className="h-5 w-5" /> You Have Submitted Your Review
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -180,7 +179,7 @@ const DacViewProposal: React.FC = () => {
         </Card>
       )}
 
-      {!canReview && !hasReviewed && (
+      {proposal.status !== "dac_review" && !proposal.currentUserReview && (
         <Card>
           <CardHeader>
             <CardTitle>Review Status</CardTitle>
