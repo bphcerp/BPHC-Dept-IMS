@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router-dom";
-import { AllocationForm, NewAllocationFormClientResponse } from "../../../../lib/src/types/allocationFormBuilder";
+import { AllocationForm, AllocationFormUserCheck, NewAllocationFormClientResponse } from "../../../../lib/src/types/allocationFormBuilder";
 import { FormTemplateFieldComponent } from "@/components/allocation/FormTemplateFieldComponent";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
@@ -32,9 +32,10 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
   useEffect(() => {
     const fetchFormDetails = async () => {
       await api
-        .get(`/allocation/builder/form/get/${id}`)
+        .get<AllocationFormUserCheck>(`/allocation/builder/form/get/${id}?checkUserResponse=true`)
         .then(({ data }) => {
           setForm(data);
+          if (data.userAlreadyResponded) toast.warning("You've already responded to this form")
           if (!preview) {
             const defaultValues: { [key: string]: any } = {};
             data.template.fields.forEach((field: any) => {

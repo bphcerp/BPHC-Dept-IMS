@@ -63,16 +63,19 @@ export type NewSemester = Omit<
     endDate: string;
 };
 export type UpdateSemester = Partial<NewSemester>;
-export type Semester = NewSemester & {
+
+export type SemesterMinimal = NewSemester & {
     id: string;
+    formId: string
+    createdAt: Date;
+    updatedAt: Date;
+};
+
+export type Semester = SemesterMinimal & {
     form: AllocationForm & {
         responses: AllocationFormResponse[]
     };
-    createdAt: Date;
-    updatedAt: Date;
-    dcaConvenerAtStartOfSem: MemberDetailsResponse | null;
-    hodAtStartOfSem: MemberDetailsResponse | null;
-};
+}
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;
 export type AllocationSection = z.infer<typeof allocationSectionSchema>;

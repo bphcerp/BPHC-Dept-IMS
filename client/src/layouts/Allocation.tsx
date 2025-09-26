@@ -1,4 +1,6 @@
 import { AppSidebar } from "@/components/AppSidebar";
+import api from "@/lib/axios-instance";
+import { useQuery } from "@tanstack/react-query";
 import {
   BookIcon,
   ClipboardCheckIcon,
@@ -8,9 +10,18 @@ import {
   SendIcon,
   UserRoundIcon,
 } from "lucide-react";
+import { SemesterMinimal } from "node_modules/lib/src/types/allocation";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
+  const { data: currentSemester } = useQuery({
+    queryKey: ["allocation", "semester", "latest"],
+    queryFn: () =>
+      api
+        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
+        .then(({ data }) => data),
+  });
+
   return (
     <>
       <AppSidebar
@@ -54,12 +65,16 @@ const AllocationLayout = () => {
                 url: "/allocation/personal",
                 requiredPermissions: ["allocation:view"],
               },
-              {
-                title: "Submit Your Preferences",
-                icon: <SendIcon />,
-                url: "/allocation/submit",
-                requiredPermissions: ["allocation:form:view"],
-              },
+              ...(currentSemester?.formId
+                ? [
+                    {
+                      title: "Submit Your Preferences",
+                      icon: <SendIcon />,
+                      url: `/allocation/forms/${currentSemester.formId}/submit`,
+                      requiredPermissions: ["allocation:form:view"],
+                    },
+                  ]
+                : []),
             ],
           },
           {

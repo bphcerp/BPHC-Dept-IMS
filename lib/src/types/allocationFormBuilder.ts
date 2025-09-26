@@ -95,7 +95,11 @@ export type AllocationForm = NewAllocationForm & {
 	createdAt: Date;
 	updatedAt: Date;
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>
-};
+}
+
+export type AllocationFormUserCheck = AllocationForm & {
+    userAlreadyResponded: boolean
+}
 
 // Use this for the form/getAll endpoint
 export type AllocationFormList = NewAllocationForm & {

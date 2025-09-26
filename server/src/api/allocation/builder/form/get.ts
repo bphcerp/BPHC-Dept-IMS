@@ -10,6 +10,7 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res, next) => {
         const { id } = req.params;
+        const { checkUserResponse } = req.query;
 
         const form = await db.query.allocationForm.findFirst({
             columns: {
@@ -25,7 +26,7 @@ router.get(
                     columns: {
                         name: true,
                         email: true,
-                    }
+                    },
                 },
             },
             where: (form, { eq }) => eq(form.id, id),
@@ -34,7 +35,22 @@ router.get(
         if (!form)
             return next(new HttpError(HttpCode.NOT_FOUND, "Form not found"));
 
-        res.status(200).json(form);
+        let userAlreadyResponded;
+
+        if (checkUserResponse === "true")
+            userAlreadyResponded =
+                await db.query.allocationFormResponse.findFirst({
+                    where: (formResponse, { eq, and }) =>
+                        and(
+                            eq(formResponse.formId, form.id),
+                            eq(formResponse.submittedByEmail, req.user!.email)
+                        ),
+                });
+
+        res.status(200).json(checkUserResponse ? {
+            form,
+            userAlreadyResponded,
+        }: form);
     })
 );
 

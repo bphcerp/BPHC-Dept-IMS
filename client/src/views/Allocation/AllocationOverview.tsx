@@ -101,10 +101,10 @@ export const AllocationOverview = () => {
   });
 
   const calculateTimeLeft = useCallback(() => {
-    if (!latestSemester) return;
+    if (!latestSemester?.form?.allocationDeadline) return;
 
     const now = new Date().getTime();
-    const end = new Date(latestSemester.endDate).getTime();
+    const end = new Date(latestSemester.form.allocationDeadline).getTime();
     const distance = end - now;
 
     if (distance <= 0) return "00:00:00";
@@ -228,23 +228,69 @@ export const AllocationOverview = () => {
       <section className="allocationStatsPanel">
         <h2 className="mb-2 text-xl font-semibold text-primary">Stats</h2>
         {latestSemester.form ? (
-          <div className="grid h-36 grid-cols-3 gap-8">
-            <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-primary">
-              <span>Time Remaining</span>
-              <span className="text-4xl font-extrabold">{timeLeft}</span>
-              <span className="text-xs text-muted-foreground">DD:HH:MM</span>
+          latestSemester.form.publishedDate ? (
+            <div className="grid h-auto grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Time Remaining */}
+              <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
+                <span className="text-sm text-gray-500">Time Remaining</span>
+                <span className="mt-2 text-5xl font-extrabold text-primary">
+                  {timeLeft ?? "--:--:--"}
+                </span>
+                <span className="mt-1 text-xs text-muted-foreground">
+                  DD:HH:MM
+                </span>
+              </div>
+
+              {/* Responses + Pending */}
+              <div className="flex w-full flex-col rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
+                <span className="text-center text-sm text-gray-500">
+                  Submission Overview
+                </span>
+
+                <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-extrabold text-green-600">
+                      {latestSemester.form.responses.length}
+                    </span>
+                    <span className="text-xs text-gray-500">Responded</span>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <span className="text-3xl font-extrabold text-red-600">
+                      5
+                    </span>
+                    <span className="text-xs text-gray-500">Pending</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 max-h-32 overflow-y-auto">
+                  {latestSemester.form.responses.length ? (
+                    <ol className="list-decimal space-y-1 px-5 text-sm">
+                      {latestSemester.form.responses.map(
+                        ({ submittedBy: { name } }, idx) => (
+                          <li key={idx} className="text-gray-700">
+                            {name}
+                          </li>
+                        )
+                      )}
+                    </ol>
+                  ) : (
+                    <span className="mt-2 block text-center text-gray-400">
+                      No responses yet
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-center p-2 space-y-2 rounded-xl border border-primary">
-              <span>Responses</span>
-             <ol className="list-decimal px-5">
-               {latestSemester.form.responses.map(({ submittedBy: { name }  }, idx) => <li key={idx}>{name}</li> )}
-             </ol>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="rounded-xl border border-primary/30 bg-white p-8 text-center shadow-md">
+                <p className="text-lg font-medium text-gray-600">
+                  Form Not Published Yet
+                </p>
+              </div>
             </div>
-            <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-primary">
-              <span>Pending</span>
-              <span className="text-4xl font-extrabold text-red-600">5</span>
-            </div>
-          </div>
+          )
         ) : (
           <div className="flex h-36 items-center justify-center">
             <form
@@ -341,7 +387,7 @@ export const AllocationOverview = () => {
               )}
             </span>
           </div>
-          <div className="col-span-2 md:col-span-3">
+          <div>
             <span>HoD:</span>{" "}
             <span>
               {latestSemester.hodAtStartOfSem?.name ?? (
@@ -349,7 +395,7 @@ export const AllocationOverview = () => {
               )}
             </span>
           </div>
-          <div className="col-span-2 md:col-span-3">
+          <div>
             <span>DCA Convener:</span>{" "}
             <span>
               {latestSemester.dcaConvenerAtStartOfSem?.name ?? (
