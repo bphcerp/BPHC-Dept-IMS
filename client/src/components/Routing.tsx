@@ -51,6 +51,11 @@ import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
 import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
 import SeminarScheduling from "@/views/Phd/DrcConvenor/SeminarScheduling";
+import MyStudents from "@/views/Phd/Supervisor/MyStudents";
+import DrcConvenerPhdRequestsDashboard from "@/views/Phd/DrcConvenor/PhdRequestsDashboard";
+import DrcMemberPhdRequestsDashboard from "@/views/Phd/DrcMember/PhdRequestsDashboard";
+import HodPhdRequestsDashboard from "@/views/Phd/Hod/PhdRequestsDashboard";
+import ViewPhdRequest from "@/views/Phd/Phd/ViewPhdRequest";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -453,10 +458,10 @@ const Routing = () => {
                         path="proposal-management/:id"
                         element={<DrcViewProposal />}
                       />
-                    <Route
-                      path="seminar-scheduling"
-                      element={<SeminarScheduling />}
-                    />
+                      <Route
+                        path="seminar-scheduling"
+                        element={<SeminarScheduling />}
+                      />
                     </>
                   )}
                 </Route>
@@ -502,6 +507,63 @@ const Routing = () => {
                 <Route path="examiner" element={<Outlet />}>
                   <Route path="assignments" element={<ExaminerAssignments />} />
                 </Route>
+              )}
+              {checkAccess("phd-request:supervisor:view") && (
+                <Route path="supervisor/my-students" element={<MyStudents />} />
+              )}
+              {/* The route for viewing a specific request can be shared */}
+              {checkAccess("phd-request:supervisor:view") && (
+                <Route
+                  path="supervisor/requests/:id"
+                  element={<ViewPhdRequest />}
+                />
+              )}
+
+              {/* DRC Convener PhD Request Routes */}
+              {checkAccess("phd-request:drc-convener:view") && (
+                <Route
+                  path="drc-convener/requests"
+                  element={<DrcConvenerPhdRequestsDashboard />}
+                />
+              )}
+              {checkAccess("phd-request:drc-convener:view") && (
+                <Route
+                  path="drc-convener/requests/:id"
+                  element={<ViewPhdRequest />}
+                />
+              )}
+
+              {/* DRC Member PhD Request Routes */}
+              {checkAccess("phd-request:drc-member:view") && (
+                <Route
+                  path="drc-member/requests"
+                  element={<DrcMemberPhdRequestsDashboard />}
+                />
+              )}
+              {checkAccess("phd-request:drc-member:view") && (
+                <Route
+                  path="drc-member/requests/:id"
+                  element={<ViewPhdRequest />}
+                />
+              )}
+
+              {/* HOD PhD Request Routes */}
+              {checkAccess("phd-request:hod:view") && (
+                <Route
+                  path="hod/requests"
+                  element={<HodPhdRequestsDashboard />}
+                />
+              )}
+              {checkAccess("phd-request:hod:view") && (
+                <Route path="hod/requests/:id" element={<ViewPhdRequest />} />
+              )}
+
+              {/* Student PhD Request Route (generic view) */}
+              {checkAccess("phd-request:student:submit-final-thesis") && (
+                <Route
+                  path="student/requests/:id"
+                  element={<ViewPhdRequest />}
+                />
               )}
             </Route>
           )}

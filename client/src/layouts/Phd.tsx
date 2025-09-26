@@ -9,6 +9,8 @@ import {
   Mail,
   FileText,
   Users,
+  FileCheck2, 
+  UserCog, 
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -33,6 +35,12 @@ const PhdLayout = () => {
           requiredPermissions: [
             permissions["/phd/supervisor/suggestExaminers"],
           ],
+        },
+        {
+          title: "My Students & Requests",
+          icon: <Users />,
+          url: "/phd/supervisor/my-students",
+          requiredPermissions: ["phd-request:supervisor:view"],
         },
       ],
     },
@@ -68,6 +76,34 @@ const PhdLayout = () => {
           requiredPermissions: [
             permissions["/phd/proposal/drcConvener/getProposals"],
           ],
+        },
+        {
+          title: "PhD Requests",
+          icon: <FileSpreadsheet />,
+          url: "/phd/drc-convener/requests",
+          requiredPermissions: ["phd-request:drc-convener:view"],
+        },
+      ],
+    },
+    {
+      title: "DRC Member", 
+      items: [
+        {
+          title: "Assigned PhD Requests",
+          icon: <FileCheck2 />,
+          url: "/phd/drc-member/requests",
+          requiredPermissions: ["phd-request:drc-member:view"],
+        },
+      ],
+    },
+    {
+      title: "HOD",
+      items: [
+        {
+          title: "PhD Requests Approval",
+          icon: <UserCog />,
+          url: "/phd/hod/requests",
+          requiredPermissions: ["phd-request:hod:view"],
         },
       ],
     },

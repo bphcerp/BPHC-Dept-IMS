@@ -44,6 +44,17 @@ export const allPermissions = {
     "phd:dac:proposal": "DAC Member operations on proposals",
     "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    // phd requests
+    "phd-request:supervisor:view":
+        "View and review PhD requests for their students",
+    "phd-request:student:submit-final-thesis":
+        "Allow student to submit final thesis documents",
+    "phd-request:drc-convener:view":
+        "View and review all PhD requests for review",
+    "phd-request:drc-member:view": "View and review assigned PhD requests",
+    "phd-request:hod:view": "View and review PhD requests for final approval",
+    "phd-request:common": "All common phd request permissions",
+
     //meeting
     "meeting:use": "Access and use the meeting module",
 
@@ -243,6 +254,26 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/remindSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/requestSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/seminarSlots": "phd:drc:proposal",
+
+    // PhD Requests
+    "/phd/request/supervisor/create": "phd-request:supervisor:view",
+    "/phd/request/supervisor/resubmit": "phd-request:supervisor:view",
+    "/phd/request/supervisor/requests": "phd-request:supervisor:view",
+    "/phd/request/supervisor/my-students-status": "phd-request:supervisor:view",
+    "/phd/request/supervisor/review-final-thesis": "phd-request:supervisor:view",
+
+    "/phd/request/student/submit-final-thesis":"phd-request:student:submit-final-thesis",
+
+    "/phd/request/drc-convener/requests": "phd-request:drc-convener:view",
+    "/phd/request/drc-convener/review": "phd-request:drc-convener:view",
+
+    "/phd/request/drc-member/requests": "phd-request:drc-member:view",
+    "/phd/request/drc-member/review": "phd-request:drc-member:view",
+
+    "/phd/request/hod/requests": "phd-request:hod:view",
+    "/phd/request/hod/review": "phd-request:hod:view",
+    
+    "/phd/request/details": "phd-request:common",
 
     //meeting
     "/meeting/create": "meeting:use",
