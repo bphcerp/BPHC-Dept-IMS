@@ -15,7 +15,15 @@ export const getLatestSemester = async () =>
         with: {
             dcaConvenerAtStartOfSem: true,
             hodAtStartOfSem: true,
-            form: true,
+            form: {
+                with: {
+                    responses: {
+                        with: {
+                            submittedBy: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
@@ -31,6 +39,20 @@ router.get(
                     HttpCode.NOT_FOUND,
                     "No semesters found in the database"
                 )
+            );
+        }
+
+        if (semesterData.form) {
+            const seenEmails = new Set<string>();
+
+            semesterData.form.responses = semesterData.form.responses.filter(
+                (response) => {
+                    const email = response.submittedBy?.email;
+                    if (!email) return false;
+                    if (seenEmails.has(email)) return false;
+                    seenEmails.add(email);
+                    return true;
+                }
             );
         }
 
