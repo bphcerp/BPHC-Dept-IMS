@@ -25,7 +25,7 @@ import {
   semesterTypeMap,
 } from "../../../../lib/src/types/allocation";
 import { AllocationForm } from "../../../../lib/src/types/allocationFormBuilder";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
@@ -53,7 +53,7 @@ export const AllocationOverview = () => {
         formId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] })
+      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
     },
   });
 
@@ -99,6 +99,35 @@ export const AllocationOverview = () => {
       }
     },
   });
+
+  const calculateTimeLeft = useCallback(() => {
+    if (!latestSemester) return;
+
+    const now = new Date().getTime();
+    const end = new Date(latestSemester.endDate).getTime();
+    const distance = end - now;
+
+    if (distance <= 0) return "00:00:00";
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+    const pad = (num: number) => String(num).padStart(2, "0");
+    return `${pad(days)}:${pad(hours)}:${pad(minutes)}`;
+  }, [latestSemester]);
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [calculateTimeLeft]);
 
   const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
@@ -202,11 +231,14 @@ export const AllocationOverview = () => {
           <div className="grid h-36 grid-cols-3 gap-8">
             <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-primary">
               <span>Time Remaining</span>
-              <span className="text-4xl font-extrabold">02:15:00</span>
+              <span className="text-4xl font-extrabold">{timeLeft}</span>
+              <span className="text-xs text-muted-foreground">DD:HH:MM</span>
             </div>
-            <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-primary">
+            <div className="flex flex-col items-center p-2 space-y-2 rounded-xl border border-primary">
               <span>Responses</span>
-              <span className="text-4xl font-extrabold text-green-600">12</span>
+             <ol className="list-decimal px-5">
+               {latestSemester.form.responses.map(({ submittedBy: { name }  }, idx) => <li key={idx}>{name}</li> )}
+             </ol>
             </div>
             <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-primary">
               <span>Pending</span>

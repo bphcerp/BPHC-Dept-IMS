@@ -14,6 +14,7 @@ import {
 import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import {
     AllocationForm,
+    AllocationFormResponse,
     AllocationFormTemplatePreferenceFieldType,
 } from "./allocationFormBuilder.ts";
 
@@ -64,7 +65,9 @@ export type NewSemester = Omit<
 export type UpdateSemester = Partial<NewSemester>;
 export type Semester = NewSemester & {
     id: string;
-    form: AllocationForm;
+    form: AllocationForm & {
+        responses: AllocationFormResponse[]
+    };
     createdAt: Date;
     updatedAt: Date;
     dcaConvenerAtStartOfSem: MemberDetailsResponse | null;
