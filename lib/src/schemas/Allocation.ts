@@ -98,11 +98,11 @@ export const masterAllocationSchema = z.object({
 
 export const courseCodeSchema = z.object({
     code: z.string().nonempty(),
-    semesterId: z.string().uuid(),
+    semesterId: z.string().uuid().optional(),
 });
 
 export const courseAllocateSchema = z.object({
-    semesterId: z.string().uuid(),
+    semesterId: z.string().uuid().optional(),
     courseCode: z.string().nonempty(),
     ic: z.string().email().nonempty(),
     sections: z.array(

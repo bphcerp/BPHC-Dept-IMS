@@ -1,7 +1,7 @@
 import AddSectionDialog from "@/components/allocation/AddSectionDialog";
+import AllocationSectionCard from "@/components/allocation/AllocationSectionCard";
 import AddSectionCard from "@/components/allocation/AllocationSectionCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,7 +14,7 @@ import api from "@/lib/axios-instance";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import {
-  AllocationType,
+  AllocationResponse,
   Course,
   CourseAllocateType,
   SectionClient,
@@ -49,7 +49,7 @@ const AllocateCourse = () => {
     queryKey: [`allocation ${code}`],
     queryFn: async () => {
       try {
-        const res = await api.get<AllocationType>(
+        const res = await api.get<AllocationResponse>(
           `/allocation/allocation/get?code=${code}`
         );
         return res.data;
@@ -241,22 +241,10 @@ const AllocateCourse = () => {
                 {allocationData.sections
                   .filter((section) => section.type === "LECTURE")
                   .map((section, i) => (
-                    <Card className="pt-4" key={i}>
-                      <CardContent className="flex flex-col gap-2">
-                        <CardTitle>
-                          {section.type + " " + section.number}
-                        </CardTitle>
-                        <div className="flex flex-col">
-                          <ol className="list-decimal px-6">
-                            {section.instructors.map((el, ind) => (
-                              <li key={ind} className="text-base">
-                                {el.instructor?.name}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <AllocationSectionCard
+                      allocatedSection={section}
+                      number={i + 1}
+                    />
                   ))}
               </div>
               <div className="px-2">
@@ -264,22 +252,10 @@ const AllocateCourse = () => {
                 {allocationData.sections
                   .filter((section) => section.type === "TUTORIAL")
                   .map((section, i) => (
-                    <Card className="pt-4" key={i}>
-                      <CardContent className="flex flex-col gap-2">
-                        <CardTitle>
-                          {section.type + " " + section.number}
-                        </CardTitle>
-                        <div className="flex flex-col">
-                          <ol className="list-decimal px-6">
-                            {section.instructors.map((el, ind) => (
-                              <li key={ind} className="text-base">
-                                {el.instructor?.name}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <AllocationSectionCard
+                      allocatedSection={section}
+                      number={i + 1}
+                    />
                   ))}
               </div>
               <div className="px-2">
@@ -287,22 +263,10 @@ const AllocateCourse = () => {
                 {allocationData.sections
                   .filter((section) => section.type === "PRACTICAL")
                   .map((section, i) => (
-                    <Card className="pt-4" key={i}>
-                      <CardContent className="flex flex-col gap-2">
-                        <CardTitle>
-                          {section.type + " " + section.number}
-                        </CardTitle>
-                        <div className="flex flex-col">
-                          <ol className="list-decimal px-6">
-                            {section.instructors.map((el, ind) => (
-                              <li key={ind} className="text-base">
-                                {el.instructor?.name}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <AllocationSectionCard
+                      allocatedSection={section}
+                      number={i + 1}
+                    />
                   ))}
               </div>
             </div>

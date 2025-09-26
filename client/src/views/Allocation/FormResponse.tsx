@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import { fieldTypes } from "./FormTemplateView";
+import NotFoundPage from "@/layouts/404";
 
 const FormResponse = ({ preview = true }: { preview?: boolean }) => {
   const [form, setForm] = useState<AllocationForm | null>(null);
@@ -67,6 +68,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
     fetchCourses();
   }, [id, preview]);
 
+
   const onSubmit = async (data: any) => {
     const responses: NewAllocationFormClientResponse[] = [];
     form?.template.fields.forEach((field) => {
@@ -101,6 +103,8 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
       toast.error((error as AxiosError).response?.data as string ?? "Failed to submit form response.");
     }
   };
+
+  if (form && !form.publishedDate) return <NotFoundPage />
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 md:p-6">

@@ -22,6 +22,10 @@ router.post(
             return next(new HttpError(HttpCode.BAD_REQUEST, "Form not found"));
         }
 
+        if (!form.publishedDate) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Form not published"));
+        }
+
         const formResponseExists =
             await db.query.allocationFormResponse.findFirst({
                 where: (fr, { and, eq }) =>
