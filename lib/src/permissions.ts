@@ -167,6 +167,7 @@ export const allPermissions = {
     "qp:faculty:get-files": "Get files uploaded for a request",
     "qp:dca:create-request": "Create a new question paper review request",
     "qp:dca:get-all-requests": "Get all requests",
+    "qp:dca:get-all-courses": "Get all courses",
 
 } as const;
 
@@ -394,6 +395,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/qp/getAllFICSubmissions": "qp:fic:get-all",
     "/qp/getAllDcaMemberRequests": "qp:dca:get-all-requests",
     "/qp/getReviews": "qp:get:review",
+    "/qp/getAllCourses": "qp:dca:get-all-courses",
     "/qp/updateIc": "qp:dca-convenor:update-ic",
     "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
     "/qp/sendReminders": "qp:dca-convenor:reminder",
