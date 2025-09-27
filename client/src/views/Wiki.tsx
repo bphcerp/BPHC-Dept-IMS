@@ -28,7 +28,7 @@ import { Link } from "react-router-dom";
 
 const modules = [
   {
-    title: "Modules",
+    title: "Help",
     items: [
       { title: "Admin", icon: <Computer />, doc: "/app-docs/main.pdf" },
       {

@@ -112,6 +112,13 @@ export const allPermissions = {
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
 
+    // Grade Management module permissions
+    "grades:upload": "Upload Excel files for grade management",
+    "grades:manage": "Manage and input student grades",
+    "grades:export": "Export graded Excel files",
+    "grades:supervisor:view": "Supervisors can view their students and grades",
+    "grades:supervisor:save": "Supervisors can save/update student grades",
+    "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
     "phd:examiner:qe": "View and respond to examiner assignments",
 
     // ANALYTICS
@@ -375,6 +382,14 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/mail": "wilp:project:mail",
     "/wilpProject/stats": "wilp:project:stats",
 
+    // Grade Management
+    "/grades/upload": "grades:upload",
+    "/grades/manage": "grades:manage",
+    "/grades/export": "grades:export",
+    "/grades/supervisor": "grades:supervisor:view",
+    "/grades/supervisor/save": "grades:supervisor:save",
+    "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+    
     // Analytics
     "/analytics/publications": "analytics:publications",
 
