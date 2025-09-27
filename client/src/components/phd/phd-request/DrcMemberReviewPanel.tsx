@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/DrcMemberReviewPanel.tsx
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -29,7 +28,7 @@ export const DrcMemberReviewPanel: React.FC<DrcMemberReviewPanelProps> = ({
 
   const mutation = useMutation({
     mutationFn: (data: phdRequestSchemas.ReviewerBody) => {
-      return api.post(`/phd/request/drc-member/review/${request.id}`, data);
+      return api.post(`/phd-request/drc-member/review/${request.id}`, data);
     },
     onSuccess: () => {
       toast.success("Review submitted successfully.");
@@ -41,10 +40,7 @@ export const DrcMemberReviewPanel: React.FC<DrcMemberReviewPanelProps> = ({
   });
 
   const handleSubmit = (approved: boolean) => {
-    if (!approved && !comments.trim()) {
-      return toast.error("Comments are required to revert a request.");
-    }
-    mutation.mutate({ approved, comments: comments || "Approved" });
+    mutation.mutate({ approved, comments });
   };
 
   return (

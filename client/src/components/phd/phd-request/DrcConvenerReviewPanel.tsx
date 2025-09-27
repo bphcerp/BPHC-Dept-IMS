@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/DrcConvenerReviewPanel.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -13,16 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Combobox } from "@/components/ui/combobox"; // Assuming a multi-select combobox
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-
-interface FacultyMember {
-  value: string; // email
-  label: string; // name (email)
-}
 
 interface DrcConvenerReviewPanelProps {
   request: { id: number; status: string };
@@ -36,10 +30,10 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
   const [comments, setComments] = useState("");
   const [selectedDrcMembers, setSelectedDrcMembers] = useState<string[]>([]);
 
-  const { data: facultyList = [] } = useQuery<FacultyMember[]>({
+  const { data: facultyList = [] } = useQuery<ComboboxOption[]>({
     queryKey: ["facultyList"],
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList"); // Re-using existing endpoint
+      const res = await api.get("/phd/proposal/getFacultyList");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -50,7 +44,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
   const mutation = useMutation({
     mutationFn: (data: phdRequestSchemas.DrcConvenerReviewBody) => {
       return api.post(
-        `/phd/request/drc-convener/review/${request.id}`,
+        `/phd-request/drc-convener/review/${request.id}`,
         data
       );
     },
@@ -74,6 +68,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
         "Please select at least one DRC member to forward for review."
       );
     }
+
     mutation.mutate({
       comments,
       action,
@@ -109,6 +104,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             placeholder="Provide comments for reversion or internal notes for approval..."
           />
         </div>
+
         {request.status === "supervisor_submitted" && (
           <div className="space-y-2">
             <Label>Assign DRC Members for Review (Optional)</Label>
@@ -125,6 +121,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             </p>
           </div>
         )}
+
         <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
           <Button
             variant="destructive"
@@ -133,6 +130,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
           >
             Revert to Supervisor
           </Button>
+
           {request.status === "supervisor_submitted" && (
             <Button
               onClick={() =>
@@ -149,6 +147,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
                 : "Forward to HOD"}
             </Button>
           )}
+
           {request.status === "drc_convener_review" && (
             <Button
               onClick={() => handleSubmit("approve")}

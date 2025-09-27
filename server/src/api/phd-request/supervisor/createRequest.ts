@@ -1,4 +1,3 @@
-// server/src/api/phd-request/supervisor/createRequest.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -25,6 +24,7 @@ router.post(
     asyncHandler(async (req, res) => {
         const { studentEmail, requestType, comments } =
             phdRequestSchemas.createRequestSchema.parse(req.body);
+
         const supervisorEmail = req.user!.email;
         const uploadedFiles = req.files as Express.Multer.File[];
 
@@ -58,7 +58,7 @@ router.post(
                     semesterId: latestSemester.id,
                     requestType,
                     status: "supervisor_submitted",
-                    comments: comments, // Using the comments variable
+                    comments: comments,
                 })
                 .returning({ id: phdRequests.id });
 
@@ -69,9 +69,8 @@ router.post(
                 mimetype: file.mimetype,
                 size: file.size,
                 fieldName: file.fieldname,
-                module: modules[2], // PhD Module
+                module: modules[2], // PhD Progress Module
             }));
-
             const insertedFiles = await tx
                 .insert(files)
                 .values(fileInserts)
@@ -81,10 +80,9 @@ router.post(
                 requestId: newRequest.id,
                 fileId: file.id,
                 uploadedByEmail: supervisorEmail,
-                documentType: requestType, // Simplified, could be more granular
+                documentType: requestType,
                 isPrivate: false,
             }));
-
             await tx.insert(phdRequestDocuments).values(documentInserts);
 
             return newRequest.id;

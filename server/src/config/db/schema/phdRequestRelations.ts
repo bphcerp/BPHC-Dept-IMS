@@ -1,4 +1,3 @@
-// server/src/config/db/schema/phdRequestRelations.ts
 import { relations } from "drizzle-orm";
 import {
     phdRequests,
@@ -6,7 +5,7 @@ import {
     phdRequestReviews,
     phdRequestDrcAssignments,
 } from "./phdRequest.ts";
-import { phd, faculty } from "./admin.ts";
+import { phd, faculty, users } from "./admin.ts";
 import { phdSemesters } from "./phd.ts";
 import { files } from "./form.ts";
 
@@ -14,6 +13,7 @@ export const phdRequestsRelations = relations(phdRequests, ({ one, many }) => ({
     student: one(phd, {
         fields: [phdRequests.studentEmail],
         references: [phd.email],
+        relationName: "studentRequests",
     }),
     supervisor: one(faculty, {
         fields: [phdRequests.supervisorEmail],
@@ -39,9 +39,9 @@ export const phdRequestDocumentsRelations = relations(
             fields: [phdRequestDocuments.fileId],
             references: [files.id],
         }),
-        uploader: one(faculty, {
+        uploader: one(users, {
             fields: [phdRequestDocuments.uploadedByEmail],
-            references: [faculty.email],
+            references: [users.email],
         }),
     })
 );
@@ -53,9 +53,9 @@ export const phdRequestReviewsRelations = relations(
             fields: [phdRequestReviews.requestId],
             references: [phdRequests.id],
         }),
-        reviewer: one(faculty, {
+        reviewer: one(users, {
             fields: [phdRequestReviews.reviewerEmail],
-            references: [faculty.email],
+            references: [users.email],
         }),
     })
 );

@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/HodReviewPanel.tsx
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -29,7 +28,7 @@ export const HodReviewPanel: React.FC<HodReviewPanelProps> = ({
 
   const mutation = useMutation({
     mutationFn: (data: phdRequestSchemas.ReviewerBody) => {
-      return api.post(`/phd/request/hod/review/${request.id}`, data);
+      return api.post(`/phd-request/hod/review/${request.id}`, data);
     },
     onSuccess: () => {
       toast.success("Final decision submitted successfully.");
@@ -43,10 +42,7 @@ export const HodReviewPanel: React.FC<HodReviewPanelProps> = ({
   });
 
   const handleSubmit = (approved: boolean) => {
-    if (!approved && !comments.trim()) {
-      return toast.error("Comments are required to revert a request.");
-    }
-    mutation.mutate({ approved, comments: comments || "Approved by HOD" });
+    mutation.mutate({ approved, comments });
   };
 
   return (

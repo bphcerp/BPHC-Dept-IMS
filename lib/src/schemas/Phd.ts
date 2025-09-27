@@ -1,4 +1,3 @@
-// lib/src/schemas/Phd.ts
 import z from "zod";
 
 const optionalString = z
@@ -16,7 +15,7 @@ export const phdExamApplicationStatuses = [
 ] as const;
 
 export const phdProposalStatuses = [
-    "draft", // Added
+    "draft",
     "deleted",
     "supervisor_review",
     "supervisor_revert",
@@ -357,7 +356,6 @@ export const setSeminarDetailsSchema = z.object({
 });
 export type SetSeminarDetailsBody = z.infer<typeof setSeminarDetailsSchema>;
 
-// New schemas for seminar scheduling
 export const createSeminarSlotsSchema = z.object({
     slots: z
         .array(
@@ -385,8 +383,8 @@ export const uploadProposalSchema = z.object({
     coSupervisor1: z.string().email(),
     coSupervisor2: z.string().email(),
 });
-export type uploadProposalBody = z.infer<typeof uploadProposalSchema>;
 
+export type uploadProposalBody = z.infer<typeof uploadProposalSchema>;
 export const updatePhdGradeBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
@@ -497,7 +495,6 @@ export const editCoSupervisorsBodySchema = z
         "Specify either add or remove"
     );
 export type EditCoSupervisorsBody = z.infer<typeof editCoSupervisorsBodySchema>;
-
 export const editDacMembersBodySchema = editCoSupervisorsBodySchema;
 export type EditDacMembersBody = z.infer<typeof editDacMembersBodySchema>;
 
@@ -586,7 +583,6 @@ export interface QualifyingExamApplication {
         mastersReport: string | null;
     };
 }
-
 export interface VerifiedApplication {
     id: number;
     examId: number;
@@ -641,7 +637,6 @@ export interface QualifyingExamApplicationsResponse {
     };
     applications: Array<QualifyingExamApplication>;
 }
-
 const timetableSlotItemSchema = z.object({
     id: z.number(),
     examId: z.number(),

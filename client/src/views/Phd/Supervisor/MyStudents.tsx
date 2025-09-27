@@ -1,6 +1,5 @@
-// client/src/views/Phd/Supervisor/MyStudents.tsx
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
   Card,
@@ -24,7 +23,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -39,15 +37,23 @@ import { toast } from "sonner";
 import { phdRequestSchemas } from "lib";
 import { SupervisorRequestForm } from "@/components/phd/phd-request/SupervisorRequestForm";
 import { UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 
-// This interface would be defined based on a new or modified backend endpoint
 interface StudentStatus {
   email: string;
   name: string | null;
   idNumber: string | null;
-  currentStatus: string; // e.g., "Proposal - DAC Review", "Request - Pre-submission Approved"
+  currentStatus: string;
   canInitiateRequest: boolean;
 }
+
+const postProposalRequestOrder: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
+  [
+    "pre_submission",
+    "draft_notice",
+    "thesis_submission",
+    "final_thesis_submission",
+  ];
 
 const MyStudents: React.FC = () => {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -59,12 +65,36 @@ const MyStudents: React.FC = () => {
   const { data: students = [], isLoading } = useQuery<StudentStatus[]>({
     queryKey: ["supervisor-my-students"],
     queryFn: async () => {
-      // NOTE: This endpoint would need to be created on the backend to aggregate student statuses
-      // For now, we'll assume it exists and returns the StudentStatus[] payload.
-      const res = await api.get("/phd/request/supervisor/my-students-status");
+      const res = await api.get("/phd-request/supervisor/my-students");
       return res.data;
     },
   });
+
+  const availableRequests = useMemo(() => {
+    if (!selectedStudent) return [];
+
+    const status = selectedStudent.currentStatus.toLowerCase();
+
+    const anytimeRequests = phdRequestSchemas.phdRequestTypes.filter(
+      (type) =>
+        !postProposalRequestOrder.includes(type) && type !== "change_of_title"
+    );
+
+    let availablePostProposal: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
+      [];
+
+    if (status.includes("proposal: completed")) {
+      availablePostProposal.push("pre_submission");
+    } else if (status.includes("request: pre submission - completed")) {
+      availablePostProposal.push("draft_notice");
+    } else if (status.includes("request: draft notice - completed")) {
+      availablePostProposal.push("change_of_title", "thesis_submission");
+    } else if (status.includes("request: thesis submission - completed")) {
+      availablePostProposal.push("final_thesis_submission");
+    }
+
+    return [...availablePostProposal, ...anytimeRequests];
+  }, [selectedStudent]);
 
   const handleOpenDialog = (student: StudentStatus) => {
     if (student.canInitiateRequest) {
@@ -95,7 +125,7 @@ const MyStudents: React.FC = () => {
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>
           <CardDescription>
-            A summary of your students' progress.
+            A summary of your students' progress and available actions.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -130,15 +160,32 @@ const MyStudents: React.FC = () => {
                     <TableCell>{student.idNumber || "N/A"}</TableCell>
                     <TableCell>{student.currentStatus}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDialog(student)}
-                        disabled={!student.canInitiateRequest}
-                      >
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Initiate Request
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        {student.currentStatus.toLowerCase().includes("qe") && (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to="/phd/supervisor/examiner-suggestions">
+                              Suggest Examiners
+                            </Link>
+                          </Button>
+                        )}
+                        {student.currentStatus
+                          .toLowerCase()
+                          .includes("proposal") && (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to="/phd/supervisor/proposals">
+                              View Proposal
+                            </Link>
+                          </Button>
+                        )}
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleOpenDialog(student)}
+                          disabled={!student.canInitiateRequest}
+                        >
+                          <UserPlus className="mr-2 h-4 w-4" /> Initiate Request
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -149,13 +196,14 @@ const MyStudents: React.FC = () => {
       </Card>
 
       <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Initiate New Request for {selectedStudent?.name}
             </DialogTitle>
             <DialogDescription>
-              Select the type of request you want to start.
+              Select the type of request you want to start. Available options
+              are based on the student's current progress.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -168,7 +216,7 @@ const MyStudents: React.FC = () => {
                 <SelectValue placeholder="Select a request type..." />
               </SelectTrigger>
               <SelectContent>
-                {phdRequestSchemas.phdRequestTypes.map((type) => (
+                {availableRequests.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type
                       .replace(/_/g, " ")

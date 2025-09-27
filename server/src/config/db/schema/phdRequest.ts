@@ -1,4 +1,3 @@
-// server/src/config/db/schema/phdRequest.ts
 import {
     pgTable,
     serial,
@@ -9,7 +8,7 @@ import {
     boolean,
     unique,
 } from "drizzle-orm/pg-core";
-import { phd, faculty } from "./admin.ts";
+import { phd, faculty, users } from "./admin.ts";
 import { phdSemesters } from "./phd.ts";
 import { files } from "./form.ts";
 import { phdRequestSchemas } from "lib";
@@ -18,10 +17,12 @@ export const phdRequestTypeEnum = pgEnum(
     "phd_request_type",
     phdRequestSchemas.phdRequestTypes
 );
+
 export const phdRequestStatusEnum = pgEnum(
     "phd_request_status",
     phdRequestSchemas.phdRequestStatuses
 );
+
 export const drcAssignmentStatusEnum = pgEnum("drc_assignment_status", [
     "pending",
     "approved",
@@ -41,7 +42,7 @@ export const phdRequests = pgTable("phd_requests", {
         .references(() => phdSemesters.id, { onDelete: "restrict" }),
     requestType: phdRequestTypeEnum("request_type").notNull(),
     status: phdRequestStatusEnum("status").notNull(),
-    comments: text("comments"), // Added comments field
+    comments: text("comments"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
@@ -61,7 +62,7 @@ export const phdRequestDocuments = pgTable("phd_request_documents", {
         .references(() => files.id, { onDelete: "cascade" }),
     uploadedByEmail: text("uploaded_by_email")
         .notNull()
-        .references(() => faculty.email, { onDelete: "cascade" }),
+        .references(() => users.email, { onDelete: "cascade" }),
     documentType: text("document_type").notNull(),
     isPrivate: boolean("is_private").default(false).notNull(),
 });
@@ -73,9 +74,9 @@ export const phdRequestReviews = pgTable("phd_request_reviews", {
         .references(() => phdRequests.id, { onDelete: "cascade" }),
     reviewerEmail: text("reviewer_email")
         .notNull()
-        .references(() => faculty.email, { onDelete: "cascade" }),
+        .references(() => users.email, { onDelete: "cascade" }),
     approved: boolean("approved").notNull(),
-    comments: text("comments").notNull(),
+    comments: text("comments"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),

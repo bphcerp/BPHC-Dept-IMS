@@ -1,4 +1,3 @@
-// server/src/api/phd-request/drcConvener/reviewRequest.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -37,7 +36,6 @@ router.post(
             if (!request)
                 throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
 
-            // Log the convener's action as a review
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: convenerEmail,
@@ -45,7 +43,6 @@ router.post(
                 comments: body.comments || `Action: ${body.action}`,
             });
 
-            // Complete the current To-do for the convener
             await completeTodo(
                 {
                     module: modules[2],
@@ -70,7 +67,7 @@ router.post(
                                 description: `Your request for '${request.student.name}' has been reverted. Comments: ${body.comments}`,
                                 module: modules[2],
                                 completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                                link: `/phd/requests/${requestId}`, // Generic link
+                                link: `/phd/supervisor/requests/${requestId}`,
                             },
                         ],
                         tx
@@ -91,17 +88,20 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "drc_member_review" })
                         .where(eq(phdRequests.id, requestId));
+
                     await tx
                         .delete(phdRequestDrcAssignments)
                         .where(
                             eq(phdRequestDrcAssignments.requestId, requestId)
                         );
+
                     await tx.insert(phdRequestDrcAssignments).values(
                         body.assignedDrcMembers.map((email) => ({
                             requestId,
                             drcMemberEmail: email,
                         }))
                     );
+
                     await createTodos(
                         body.assignedDrcMembers.map((email) => ({
                             assignedTo: email,
@@ -118,12 +118,12 @@ router.post(
                     break;
 
                 case "forward_to_hod":
-                case "approve": // 'approve' is the action after DRC members have approved
+                case "approve":
                     await tx
                         .update(phdRequests)
                         .set({ status: "hod_review" })
                         .where(eq(phdRequests.id, requestId));
-                    // Assuming HOD has a specific permission
+
                     const hods = await getUsersWithPermission(
                         "phd-request:hod:view",
                         tx

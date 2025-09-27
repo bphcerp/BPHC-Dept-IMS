@@ -3,7 +3,7 @@ import * as adminRelations from "./schema/adminRelations.ts";
 import * as admin from "./schema/admin.ts";
 import * as phdRelations from "./schema/phdRelations.ts";
 import * as phd from "./schema/phd.ts";
-import * as phdRequestsRelations from "./schema/phdRequestRelations.ts";
+import * as phdRequestRelations from "./schema/phdRequestRelations.ts";
 import * as phdRequests from "./schema/phdRequest.ts";
 import * as conference from "./schema/conference.ts";
 import * as conferenceRelations from "./schema/conferenceRelations.ts";
@@ -22,7 +22,7 @@ import * as inventoryRelations from "./schema/inventoryRelations.ts";
 import * as projectRelations from "./schema/projectRelations.ts";
 import * as project from "./schema/project.ts";
 import * as wilpProject from "./schema/wilpProject.ts";
-import * as meeting from "./schema/meeting.ts"; 
+import * as meeting from "./schema/meeting.ts";
 import * as meetingRelations from "./schema/meetingRelations.ts";
 
 import env from "../environment.ts";
@@ -65,7 +65,7 @@ const db = drizzle(pool, {
         ...meeting,
         ...meetingRelations,
         ...phdRequests,
-        ...phdRequestsRelations,
+        ...phdRequestRelations,
     },
 });
 

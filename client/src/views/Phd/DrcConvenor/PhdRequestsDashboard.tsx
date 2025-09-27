@@ -1,4 +1,3 @@
-// client/src/views/Phd/DrcConvener/PhdRequestsDashboard.tsx
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -27,16 +26,23 @@ interface RequestItem {
   requestType: string;
   status: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
-  supervisor: { name: string | null; email: string };
+  student: {
+    name: string | null;
+    email: string;
+  };
+  supervisor: {
+    name: string | null;
+    email: string;
+  };
 }
 
-const PhdRequestsDashboard: React.FC = () => {
+const DrcConvenerPhdRequestsDashboard: React.FC = () => {
   const navigate = useNavigate();
+
   const { data: requests = [], isLoading } = useQuery<RequestItem[]>({
     queryKey: ["drc-convener-requests"],
     queryFn: async () => {
-      const res = await api.get("/phd/request/drc-convener/requests");
+      const res = await api.get("/phd-request/drc-convener/requests");
       return res.data;
     },
   });
@@ -90,9 +96,7 @@ const PhdRequestsDashboard: React.FC = () => {
                 requests.map((req) => (
                   <TableRow
                     key={req.id}
-                    onClick={() =>
-                      navigate(`/phd/drc-convener/requests/${req.id}`)
-                    }
+                    onClick={() => navigate(`/phd/requests/${req.id}`)}
                     className="cursor-pointer hover:bg-muted/50"
                   >
                     <TableCell className="font-medium">
@@ -125,4 +129,4 @@ const PhdRequestsDashboard: React.FC = () => {
   );
 };
 
-export default PhdRequestsDashboard;
+export default DrcConvenerPhdRequestsDashboard;

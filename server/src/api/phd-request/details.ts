@@ -1,18 +1,15 @@
-// server/src/api/phd-request/details.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
-import { phdRequests } from "@/config/db/schema/phdRequest.ts";
-import { eq } from "drizzle-orm";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { eq } from "drizzle-orm";
+import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 
 const router = express.Router();
 
+
 router.get(
     "/:id",
-    checkAccess(), 
     asyncHandler(async (req, res) => {
         const requestId = parseInt(req.params.id);
         if (isNaN(requestId)) {
@@ -26,14 +23,25 @@ router.get(
                 supervisor: { columns: { name: true, email: true } },
                 documents: {
                     with: {
-                        file: { columns: { id: true, originalName: true } },
+                        file: {
+                            columns: { originalName: true, id: true },
+                        },
                     },
+                    // Hide private documents from the student
+                    where: (cols, { eq }) =>
+                        req.user?.email === "student_email_placeholder"
+                            ? eq(cols.isPrivate, false)
+                            : undefined,
                 },
                 reviews: {
-                    with: { reviewer: { columns: { name: true } } },
-                    orderBy: (r, { asc }) => [asc(r.createdAt)],
+                    with: {
+                        reviewer: { columns: { name: true } },
+                    },
+                    orderBy: (cols, { desc }) => [desc(cols.createdAt)],
                 },
-                drcAssignments: true,
+                drcAssignments: {
+                    columns: { drcMemberEmail: true, status: true },
+                },
             },
         });
 
@@ -41,30 +49,10 @@ router.get(
             throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
         }
 
-        // Authorization Check
-        const userEmail = req.user!.email;
-        const isStudent = userEmail === request.student.email;
-        const isSupervisor = userEmail === request.supervisor.email;
-        const isAssignedDrc = request.drcAssignments.some(
-            (a) => a.drcMemberEmail === userEmail
-        );
-        const isDrcConvener = (
-            await getUsersWithPermission("phd-request:drc-convener:view")
-        ).some((u) => u.email === userEmail);
-        const isHod = (
-            await getUsersWithPermission("phd-request:hod:view")
-        ).some((u) => u.email === userEmail);
-
-        if (
-            !isStudent &&
-            !isSupervisor &&
-            !isAssignedDrc &&
-            !isDrcConvener &&
-            !isHod
-        ) {
-            throw new HttpError(
-                HttpCode.FORBIDDEN,
-                "You do not have permission to view this request."
+        // Replace placeholder with actual student email if needed for privacy filter
+        if (req.user?.email === request.studentEmail) {
+            request.documents = request.documents.filter(
+                (doc) => !doc.isPrivate
             );
         }
 

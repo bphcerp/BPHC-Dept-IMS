@@ -1,4 +1,3 @@
-// server/src/api/phd-request/supervisor/resubmitRequest.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -31,6 +30,7 @@ router.post(
         const { comments } = phdRequestSchemas.createRequestSchema
             .omit({ studentEmail: true, requestType: true })
             .parse(req.body);
+
         const supervisorEmail = req.user!.email;
         const uploadedFiles = req.files as Express.Multer.File[];
 
@@ -52,6 +52,7 @@ router.post(
                     "reverted_by_drc_member",
                     "reverted_by_hod",
                 ];
+
             if (!revertableStatuses.includes(request.status)) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
@@ -59,7 +60,6 @@ router.post(
                 );
             }
 
-            // Handle new file uploads if any
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const fileInserts = uploadedFiles.map((file) => ({
                     userEmail: supervisorEmail,
@@ -84,7 +84,6 @@ router.post(
                 await tx.insert(phdRequestDocuments).values(documentInserts);
             }
 
-            // Find out who reverted it to send the To-do back to them
             const lastReview = await tx.query.phdRequestReviews.findFirst({
                 where: eq(phdRequestReviews.requestId, requestId),
                 orderBy: [desc(phdRequestReviews.createdAt)],
@@ -97,11 +96,10 @@ router.post(
                 );
             }
 
-            // Update status and complete supervisor's "resubmit" To-do
             await tx
                 .update(phdRequests)
                 .set({
-                    status: "supervisor_submitted", // Always goes back to the start of the review chain
+                    status: "supervisor_submitted",
                     comments: comments,
                 })
                 .where(eq(phdRequests.id, requestId));
@@ -115,11 +113,11 @@ router.post(
                 tx
             );
 
-            // Re-assign To-do to DRC Convener
             const drcConveners = await getUsersWithPermission(
                 "phd-request:drc-convener:view",
                 tx
             );
+
             if (drcConveners.length > 0) {
                 await createTodos(
                     drcConveners.map((convener) => ({

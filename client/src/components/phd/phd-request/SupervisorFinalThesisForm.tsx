@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/SupervisorFinalThesisForm.tsx
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -15,23 +14,23 @@ import { Label } from "@/components/ui/label";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { RequestDetailsCard } from "./RequestDetailsCard"; // To show student's submission
+import { RequestDetailsCard } from "./RequestDetailsCard";
 
 interface SupervisorFinalThesisFormProps {
-  request: any; // Use the full detailed request type here
+  request: any;
   onSuccess: () => void;
 }
 
 const SUPERVISOR_DOCS = [
-  { id: "examiner_list", label: "Approved List of Examiners", required: true },
+  { id: "examinerList", label: "Approved List of Examiners", required: true },
   {
-    id: "examiner_info",
+    id: "examinerInfoFormat",
     label: "Format for Information of Examiners",
     required: true,
   },
 ];
 
-export const SupervisorFinalThesisForm: React.FC<
+export const SupervisorFinalThesisReviewForm: React.FC<
   SupervisorFinalThesisFormProps
 > = ({ request, onSuccess }) => {
   const [files, setFiles] = useState<Record<string, File[]>>({});
@@ -39,9 +38,8 @@ export const SupervisorFinalThesisForm: React.FC<
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
-      // NOTE: This endpoint needs to be created on the backend
       return api.post(
-        `/phd/request/supervisor/review-final-thesis/${request.id}`,
+        `/phd-request/supervisor/review-final-thesis/${request.id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -75,10 +73,11 @@ export const SupervisorFinalThesisForm: React.FC<
           );
         }
         if (uploadedFile) {
-          formData.append(doc.id, uploadedFile);
+          formData.append("documents", uploadedFile, uploadedFile.name);
         }
       }
     }
+
     mutation.mutate(formData);
   };
 
@@ -97,17 +96,21 @@ export const SupervisorFinalThesisForm: React.FC<
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* This shows the student's submission details, hiding any private supervisor docs from previous rounds */}
-          <RequestDetailsCard request={request} hidePrivateDocs={true} />
+          <RequestDetailsCard
+            request={{
+              ...request,
+              documents: request.documents.filter((d: any) => !d.isPrivate),
+            }}
+          />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Your Action & Confidential Documents</CardTitle>
+          <CardTitle>Your Action & Documents</CardTitle>
           <CardDescription>
-            Approve the submission and upload your documents, or revert with
-            comments for the student to revise.
+            Approve the submission and upload your confidential documents, or
+            revert with comments for the student to revise.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -123,10 +126,12 @@ export const SupervisorFinalThesisForm: React.FC<
                   onValueChange={(fileList) =>
                     handleFileChange(doc.id, fileList)
                   }
+                  maxFileCount={1}
+                  maxSize={4 * 1024 * 1024}
                   accept={{ "application/pdf": [] }}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  This document will not be visible to the student.
+                  These documents will not be visible to the student.
                 </p>
               </div>
             ))}

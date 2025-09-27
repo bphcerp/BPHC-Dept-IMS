@@ -1,13 +1,14 @@
-// lib/src/schemas/PhdRequest.ts
 import { z } from "zod";
 
+// All post-proposal and anytime requests are defined here.
 export const phdRequestTypes = [
-    // Post-Proposal Sequential
+    // Post-Proposal Sequential Flow
     "pre_submission",
     "draft_notice",
     "change_of_title",
     "thesis_submission",
     "final_thesis_submission",
+
     // Anytime Requests
     "jrf_recruitment",
     "jrf_to_phd_conversion",
@@ -34,14 +35,14 @@ export const phdRequestStatuses = [
     "reverted_by_drc_convener",
     "reverted_by_drc_member",
     "reverted_by_hod",
-    "student_review", // For final thesis submission
-    "supervisor_review_final_thesis", // For final thesis submission
+    // Specific statuses for the final thesis workflow
+    "student_review",
+    "supervisor_review_final_thesis",
 ] as const;
 
 export const phdRequestTypeEnum = z.enum(phdRequestTypes);
 export const phdRequestStatusEnum = z.enum(phdRequestStatuses);
 
-// Supervisor creates a request
 export const createRequestSchema = z.object({
     studentEmail: z.string().email(),
     requestType: phdRequestTypeEnum,
@@ -49,7 +50,6 @@ export const createRequestSchema = z.object({
 });
 export type CreateRequestBody = z.infer<typeof createRequestSchema>;
 
-// DRC Convener reviews a request
 export const drcConvenerReviewSchema = z.object({
     comments: z.string().optional(),
     assignedDrcMembers: z.array(z.string().email()).max(8).optional(),
@@ -57,24 +57,39 @@ export const drcConvenerReviewSchema = z.object({
 });
 export type DrcConvenerReviewBody = z.infer<typeof drcConvenerReviewSchema>;
 
-// DRC Member / HOD submits their review
-export const reviewerSchema = z.object({
-    comments: z.string().trim().min(1, "Comments are required to revert."),
-    approved: z.boolean(),
-});
+export const reviewerSchema = z
+    .object({
+        approved: z.boolean(),
+        comments: z.string().trim().optional(),
+    })
+    .refine(
+        (data) => data.approved || (data.comments && data.comments.length > 0),
+        {
+            message: "Comments are required to revert a request.",
+            path: ["comments"],
+        }
+    );
 export type ReviewerBody = z.infer<typeof reviewerSchema>;
 
-// Student's Final Thesis Submission
 export const studentFinalThesisSchema = z.object({
     comments: z.string().optional(),
 });
 export type StudentFinalThesisBody = z.infer<typeof studentFinalThesisSchema>;
 
-// Supervisor's Final Thesis Submission Review
-export const supervisorFinalThesisReviewSchema = z.object({
-    comments: z.string().optional(),
-    action: z.enum(["approve", "revert"]),
-});
+export const supervisorFinalThesisReviewSchema = z
+    .object({
+        comments: z.string().optional(),
+        action: z.enum(["approve", "revert"]),
+    })
+    .refine(
+        (data) =>
+            data.action === "approve" ||
+            (data.comments && data.comments.length > 0),
+        {
+            message: "Comments are required to revert to the student.",
+            path: ["comments"],
+        }
+    );
 export type SupervisorFinalThesisReviewBody = z.infer<
     typeof supervisorFinalThesisReviewSchema
 >;

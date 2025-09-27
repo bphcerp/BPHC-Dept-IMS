@@ -1,4 +1,3 @@
-// server/src/api/phd-request/index.ts
 import express from "express";
 import supervisorRouter from "./supervisor/index.ts";
 import studentRouter from "./student/index.ts";

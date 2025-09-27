@@ -6,7 +6,7 @@ import supervisorRouter from "./supervisor/index.ts";
 import examinerRouter from "./examiner/index.ts";
 import proposalRouter from "./proposal/index.ts";
 import getSubAreas from "./getSubAreas.ts";
-import phdRequestRouter from "../phd-request/index.ts";
+
 const router = express.Router();
 
 router.use("/student", studentRouter);
@@ -16,6 +16,6 @@ router.use("/supervisor", supervisorRouter);
 router.use("/proposal", proposalRouter);
 router.use("/getSubAreas", getSubAreas);
 router.use("/examiner", examinerRouter);
-router.use("/request", phdRequestRouter);
+
 
 export default router;

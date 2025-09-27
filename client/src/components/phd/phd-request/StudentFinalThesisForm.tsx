@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/StudentFinalThesisForm.tsx
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -15,76 +14,46 @@ import { Label } from "@/components/ui/label";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface StudentFinalThesisFormProps {
-  request: { id: number };
+  request: {
+    id: number;
+    reviews: { approved: boolean; comments: string | null }[];
+  };
   onSuccess: () => void;
 }
 
 const FINAL_THESIS_DOCS = [
+  { id: "thesisTemplate", label: "Thesis Template", required: true },
+  { id: "synopsisTemplate", label: "Synopsis Template", required: true },
   {
-    id: "thesis_template",
-    label: "Thesis Template",
-    required: true,
-    href: "#",
-  },
-  {
-    id: "synopsis_template",
-    label: "Synopsis Template",
-    required: true,
-    href: "#",
-  },
-  {
-    id: "anti_plagiarism_report",
+    id: "antiPlagiarismReport",
     label: "Anti-Plagiarism Digital Report",
     required: true,
-    href: "#",
   },
+  { id: "plagiarismReceipt", label: "Plagiarism Receipt", required: true },
+  { id: "thesisFeeReceipt", label: "Thesis Fee Receipt (SWD)", required: true },
   {
-    id: "plagiarism_receipt",
-    label: "Plagiarism Receipt",
+    id: "titleApprovalForm",
+    label: "Title Approval Form Copy",
     required: true,
-    href: "#",
   },
+  { id: "dacCommentsCopy", label: "DAC Comments Copy", required: true },
+  { id: "evaluationForms", label: "Evaluation Forms", required: true },
   {
-    id: "thesis_fee_receipt",
-    label: "Thesis Fee Receipt (from SWD)",
-    required: true,
-    href: "#",
-  },
-  {
-    id: "title_approval_form",
-    label: "Title Approval Form Copy (if title changed)",
-    required: false,
-    href: "#",
-  },
-  {
-    id: "dac_comments_copy",
-    label: "DAC Comments Copy (from Pre-Submission)",
-    required: false,
-    href: "#",
-  },
-  {
-    id: "evaluation_forms",
-    label: "Evaluation Forms for the semester",
-    required: true,
-    href: "#",
-  },
-  {
-    id: "pre_submission_notice",
+    id: "preSubmissionNotice",
     label: "Pre-Submission Seminar Notice",
     required: true,
-    href: "#",
   },
   {
-    id: "supervisor_consent_form",
+    id: "supervisorConsent",
     label: "Consent form by Supervisor",
     required: true,
-    href: "#",
   },
-  { id: "thesis_form_1", label: "Thesis Form 1", required: true, href: "#" },
-  { id: "thesis_form_2", label: "Thesis Form 2", required: true, href: "#" },
+  { id: "thesisForm1", label: "Thesis Form 1", required: true },
+  { id: "thesisForm2", label: "Thesis Form 2", required: true },
 ];
 
 export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
@@ -94,10 +63,13 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [comments, setComments] = useState("");
 
+  const lastReview = request.reviews.length > 0 ? request.reviews[0] : null;
+  const isReverted = lastReview && !lastReview.approved;
+
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
       return api.post(
-        `/phd/request/student/submit-final-thesis/${request.id}`,
+        `/phd-request/student/submit-final-thesis/${request.id}`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -119,7 +91,6 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
 
   const handleSubmit = () => {
     const formData = new FormData();
-    let fileCount = 0;
 
     for (const doc of FINAL_THESIS_DOCS) {
       const uploadedFile = files[doc.id]?.[0];
@@ -127,14 +98,10 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         return toast.error(`Please upload the required document: ${doc.label}`);
       }
       if (uploadedFile) {
-        formData.append(doc.id, uploadedFile);
-        fileCount++;
+        formData.append("documents", uploadedFile, uploadedFile.name);
       }
     }
 
-    if (fileCount === 0) {
-      return toast.error("You must upload at least one document.");
-    }
     formData.append("comments", comments);
     mutation.mutate(formData);
   };
@@ -149,35 +116,32 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* This alert can be conditionally rendered based on request status */}
-        {/* <Alert variant="destructive">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Action Required</AlertTitle>
-                    <AlertDescription>
-                        Your submission was reverted. Please review comments and re-upload corrected documents.
-                    </AlertDescription>
-                </Alert> */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {isReverted && (
+          <Alert variant="destructive">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Action Required</AlertTitle>
+            <AlertDescription>
+              Your submission has been reverted. Please review your supervisor's
+              comments, make the necessary corrections, and re-upload the
+              corrected documents.
+              <p className="mt-2 font-semibold">
+                Comments: {lastReview.comments}
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FINAL_THESIS_DOCS.map((doc) => (
             <div key={doc.id}>
-              <div className="mb-1 flex items-center gap-2">
-                <Label htmlFor={doc.id}>
-                  {doc.label}
-                  {doc.required && <span className="text-destructive">*</span>}
-                </Label>
-                <a
-                  href={doc.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Download Template"
-                  className="text-primary hover:underline"
-                >
-                  <Download className="h-4 w-4" />
-                </a>
-              </div>
+              <Label>
+                {doc.label}
+                {doc.required && <span className="text-destructive">*</span>}
+              </Label>
               <FileUploader
                 value={files[doc.id] || []}
                 onValueChange={(fileList) => handleFileChange(doc.id, fileList)}
+                maxFileCount={1}
+                maxSize={10 * 1024 * 1024}
                 accept={{ "application/pdf": [] }}
               />
             </div>

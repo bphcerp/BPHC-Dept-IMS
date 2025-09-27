@@ -1,4 +1,3 @@
-// client/src/views/Phd/DrcMember/PhdRequestsDashboard.tsx
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -21,21 +20,27 @@ import {
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { FileCheck2 } from "lucide-react";
 
-// Assuming a similar interface to the DRC Convener dashboard
 interface RequestItem {
   id: number;
   requestType: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
-  supervisor: { name: string | null; email: string };
+  student: {
+    name: string | null;
+    email: string;
+  };
+  supervisor: {
+    name: string | null;
+    email: string;
+  };
 }
 
 const DrcMemberPhdRequestsDashboard: React.FC = () => {
   const navigate = useNavigate();
+
   const { data: requests = [], isLoading } = useQuery<RequestItem[]>({
     queryKey: ["drc-member-requests"],
     queryFn: async () => {
-      const res = await api.get("/phd/request/drc-member/requests");
+      const res = await api.get("/phd-request/drc-member/requests");
       return res.data;
     },
   });
@@ -88,9 +93,7 @@ const DrcMemberPhdRequestsDashboard: React.FC = () => {
                 requests.map((req) => (
                   <TableRow
                     key={req.id}
-                    onClick={() =>
-                      navigate(`/phd/drc-member/requests/${req.id}`)
-                    }
+                    onClick={() => navigate(`/phd/requests/${req.id}`)}
                     className="cursor-pointer hover:bg-muted/50"
                   >
                     <TableCell className="font-medium">

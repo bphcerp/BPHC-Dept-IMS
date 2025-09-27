@@ -1,7 +1,6 @@
-// client/src/views/Phd/ViewPhdRequest.tsx
 import React from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -12,9 +11,9 @@ import { DrcConvenerReviewPanel } from "@/components/phd/phd-request/DrcConvener
 import { DrcMemberReviewPanel } from "@/components/phd/phd-request/DrcMemberReviewPanel";
 import { HodReviewPanel } from "@/components/phd/phd-request/HodReviewPanel";
 import { StudentFinalThesisForm } from "@/components/phd/phd-request/StudentFinalThesisForm";
-import { SupervisorFinalThesisForm } from "@/components/phd/phd-request/SupervisorFinalThesisForm";
+import { SupervisorFinalThesisReviewForm } from "@/components/phd/phd-request/SupervisorFinalThesisForm";
 
-// A comprehensive type for the detailed request view
+// Define a comprehensive type for the request details
 interface PhdRequestDetails {
   id: number;
   requestType: string;
@@ -25,12 +24,13 @@ interface PhdRequestDetails {
   documents: Array<{
     id: number;
     documentType: string;
+    isPrivate: boolean;
     file: { originalName: string; id: number };
   }>;
   reviews: Array<{
     reviewer: { name: string };
     approved: boolean;
-    comments: string;
+    comments: string | null;
     createdAt: string;
   }>;
   drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
@@ -39,88 +39,110 @@ interface PhdRequestDetails {
 const ViewPhdRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { authState, checkAccess } = useAuth();
+  const queryClient = useQueryClient();
+
   const queryKey = ["phd-request-details", id];
 
   const {
     data: request,
     isLoading,
     isError,
-    refetch,
   } = useQuery<PhdRequestDetails>({
     queryKey,
     queryFn: async () => {
-      // This endpoint needs to be created, joining all related tables
-      const res = await api.get(`/phd/request/details/${id}`);
+      const res = await api.get(`/phd-request/details/${id}`);
       return res.data;
     },
     enabled: !!id,
   });
 
-  const renderActionPanel = () => {
-    if (!request) return null;
+  const handleSuccess = async () => {
+    await queryClient.invalidateQueries({ queryKey });
+    // Invalidate dashboard queries to reflect changes
+    await queryClient.invalidateQueries({
+      queryKey: ["drc-convener-requests"],
+    });
+    await queryClient.invalidateQueries({ queryKey: ["drc-member-requests"] });
+    await queryClient.invalidateQueries({ queryKey: ["hod-requests"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["supervisor-my-students"],
+    });
+  };
 
-    // DRC Convener
+  const renderActionPanel = () => {
+    if (!request || !authState) return null;
+
     if (
-      checkAccess("phd-request:drc-convener:view") &&
+      checkAccess("phd-request:drc-convener:review") &&
       ["supervisor_submitted", "drc_convener_review"].includes(request.status)
     ) {
-      return <DrcConvenerReviewPanel request={request} onSuccess={refetch} />;
+      return (
+        <DrcConvenerReviewPanel request={request} onSuccess={handleSuccess} />
+      );
     }
-    // DRC Member
+
     if (
-      checkAccess("phd-request:drc-member:view") &&
+      checkAccess("phd-request:drc-member:review") &&
       request.status === "drc_member_review"
     ) {
-      return <DrcMemberReviewPanel request={request} onSuccess={refetch} />;
+      return (
+        <DrcMemberReviewPanel request={request} onSuccess={handleSuccess} />
+      );
     }
-    // HOD
+
     if (
-      checkAccess("phd-request:hod:view") &&
+      checkAccess("phd-request:hod:review") &&
       request.status === "hod_review"
     ) {
-      return <HodReviewPanel request={request} onSuccess={refetch} />;
+      return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
     }
-    // Student (Final Thesis)
+
     if (
-      request.student.email === authState?.email &&
+      request.student.email === authState.email &&
       request.status === "student_review"
     ) {
-      return <StudentFinalThesisForm request={request} onSuccess={refetch} />;
+      return (
+        <StudentFinalThesisForm request={request} onSuccess={handleSuccess} />
+      );
     }
-    // Supervisor (Final Thesis)
+
     if (
-      request.supervisor.email === authState?.email &&
+      request.supervisor.email === authState.email &&
       request.status === "supervisor_review_final_thesis"
     ) {
       return (
-        <SupervisorFinalThesisForm request={request} onSuccess={refetch} />
+        <SupervisorFinalThesisReviewForm
+          request={request}
+          onSuccess={handleSuccess}
+        />
       );
     }
 
     return null;
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <LoadingSpinner />
       </div>
     );
-  if (isError || !request)
+  }
+
+  if (isError || !request) {
     return (
       <div className="p-8 text-center text-destructive">
         Failed to load request details.
       </div>
     );
+  }
 
   return (
     <div className="space-y-6">
       <BackButton />
       <RequestDetailsCard request={request} />
-      <RequestStatusStepper
-        reviews={request.reviews}
-        currentStatus={request.status}
-      />
+      {/* The `currentStatus` prop is removed here as it's not needed by the component */}
+      <RequestStatusStepper reviews={request.reviews} />
       <div className="mt-6">{renderActionPanel()}</div>
     </div>
   );

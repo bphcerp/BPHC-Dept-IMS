@@ -1,4 +1,3 @@
-// server/src/api/phd-request/hod/index.ts
 import express from "express";
 import getRequestsRouter from "./getRequests.ts";
 import submitReviewRouter from "./submitReview.ts";

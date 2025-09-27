@@ -9,8 +9,9 @@ import {
   Mail,
   FileText,
   Users,
-  FileCheck2, 
-  UserCog, 
+  FileCheck2,
+  UserCog,
+  Briefcase,
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -20,6 +21,12 @@ const PhdLayout = () => {
     {
       title: "Supervisor",
       items: [
+        {
+          title: "My Students & Requests",
+          icon: <Users />,
+          url: "/phd/supervisor/my-students",
+          requiredPermissions: ["phd-request:supervisor:view"],
+        },
         {
           title: "Proposal Management",
           icon: <FileText />,
@@ -36,15 +43,8 @@ const PhdLayout = () => {
             permissions["/phd/supervisor/suggestExaminers"],
           ],
         },
-        {
-          title: "My Students & Requests",
-          icon: <Users />,
-          url: "/phd/supervisor/my-students",
-          requiredPermissions: ["phd-request:supervisor:view"],
-        },
       ],
     },
-
     {
       title: "DAC Member",
       items: [
@@ -62,6 +62,12 @@ const PhdLayout = () => {
       title: "DRC Convenor",
       items: [
         {
+          title: "PhD Requests",
+          icon: <Briefcase />,
+          url: "/phd/drc-convener/requests",
+          requiredPermissions: ["phd-request:drc-convener:view"],
+        },
+        {
           title: "Qualifying Exam Management",
           icon: <FileQuestion />,
           url: "/phd/drc-convenor/qualifying-exam-management",
@@ -77,16 +83,10 @@ const PhdLayout = () => {
             permissions["/phd/proposal/drcConvener/getProposals"],
           ],
         },
-        {
-          title: "PhD Requests",
-          icon: <FileSpreadsheet />,
-          url: "/phd/drc-convener/requests",
-          requiredPermissions: ["phd-request:drc-convener:view"],
-        },
       ],
     },
     {
-      title: "DRC Member", 
+      title: "DRC Member",
       items: [
         {
           title: "Assigned PhD Requests",
@@ -110,6 +110,12 @@ const PhdLayout = () => {
     {
       title: "PhD Scholar",
       items: [
+        {
+          title: "My PhD Requests",
+          icon: <Briefcase />,
+          url: "/phd/requests",
+          requiredPermissions: ["phd-request:student:submit-final-thesis"],
+        },
         {
           title: "Proposal Management",
           icon: <FileText />,
@@ -172,6 +178,7 @@ const PhdLayout = () => {
       ],
     },
   ];
+
   return (
     <>
       <AppSidebar items={items} />

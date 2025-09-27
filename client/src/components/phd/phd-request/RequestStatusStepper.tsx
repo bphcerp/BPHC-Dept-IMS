@@ -1,41 +1,29 @@
-// client/src/components/phd/phd-request/RequestStatusStepper.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Review {
   reviewer: { name: string };
   approved: boolean;
-  comments: string;
+  comments: string | null;
   createdAt: string;
 }
 
 interface RequestStatusStepperProps {
   reviews: Review[];
-  currentStatus: string;
 }
 
 export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
   reviews,
-  currentStatus,
 }) => {
-  const isCompleted =
-    currentStatus === "completed" || currentStatus.startsWith("reverted");
-  const formatTitle = (text: string) =>
-    text.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Request History</CardTitle>
       </CardHeader>
       <CardContent>
-        {reviews.length === 0 && isCompleted ? (
-          <p className="text-muted-foreground">
-            This request was processed without any review steps.
-          </p>
-        ) : reviews.length === 0 ? (
+        {reviews.length === 0 ? (
           <p className="text-muted-foreground">
             No review history yet. The request is pending initial review.
           </p>
@@ -73,24 +61,13 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
                 <time className="mb-2 block text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
                   Reviewed on {new Date(review.createdAt).toLocaleString()}
                 </time>
-                <p className="rounded-md border bg-muted/50 p-3 text-base font-normal text-gray-600 dark:text-gray-400">
-                  {review.comments}
-                </p>
+                {review.comments && (
+                  <p className="rounded-md border bg-muted/50 p-3 text-base font-normal text-gray-600 dark:text-gray-400">
+                    {review.comments}
+                  </p>
+                )}
               </li>
             ))}
-            {!isCompleted && (
-              <li className="ml-6">
-                <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 ring-8 ring-white dark:bg-blue-900 dark:ring-gray-900">
-                  <Clock className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                </span>
-                <h3 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                  Current Status
-                </h3>
-                <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-                  {formatTitle(currentStatus)}
-                </p>
-              </li>
-            )}
           </ol>
         )}
       </CardContent>

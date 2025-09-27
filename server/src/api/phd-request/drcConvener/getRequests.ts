@@ -1,4 +1,3 @@
-// server/src/api/phd-request/drcConvener/getRequests.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -20,10 +19,16 @@ router.get(
             where: inArray(phdRequests.status, statusesForReview),
             with: {
                 student: {
-                    columns: { name: true, email: true },
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
                 },
                 supervisor: {
-                    columns: { name: true, email: true },
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
                 },
             },
             orderBy: [desc(phdRequests.updatedAt)],

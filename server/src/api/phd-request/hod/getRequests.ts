@@ -1,4 +1,3 @@
-// server/src/api/phd-request/hod/getRequests.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -15,8 +14,18 @@ router.get(
         const requests = await db.query.phdRequests.findMany({
             where: eq(phdRequests.status, "hod_review"),
             with: {
-                student: { columns: { name: true, email: true } },
-                supervisor: { columns: { name: true, email: true } },
+                student: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
+                supervisor: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
             },
             orderBy: [desc(phdRequests.updatedAt)],
         });

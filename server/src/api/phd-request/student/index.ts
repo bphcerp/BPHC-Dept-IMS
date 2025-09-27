@@ -1,4 +1,3 @@
-// server/src/api/phd-request/student/index.ts
 import express from "express";
 import submitFinalThesisRouter from "./submitFinalThesis.ts";
 

@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/RequestDetailsCard.tsx
 import React from "react";
 import {
   Card,
@@ -22,27 +21,19 @@ interface PhdRequestDetails {
   documents: Array<{
     id: number;
     documentType: string;
-    isPrivate?: boolean;
     file: { originalName: string; id: number };
   }>;
 }
 
 interface RequestDetailsCardProps {
   request: PhdRequestDetails;
-  // Prop to conditionally hide private documents (for student view)
-  hidePrivateDocs?: boolean;
 }
 
 export const RequestDetailsCard: React.FC<RequestDetailsCardProps> = ({
   request,
-  hidePrivateDocs = false,
 }) => {
   const formatTitle = (text: string) =>
     text.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-
-  const visibleDocuments = hidePrivateDocs
-    ? request.documents.filter((doc) => !doc.isPrivate)
-    : request.documents;
 
   return (
     <Card>
@@ -82,8 +73,8 @@ export const RequestDetailsCard: React.FC<RequestDetailsCardProps> = ({
         <div>
           <h4 className="mb-2 text-sm font-semibold">Submitted Documents</h4>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-            {visibleDocuments.length > 0 ? (
-              visibleDocuments.map((doc) => (
+            {request.documents.length > 0 ? (
+              request.documents.map((doc) => (
                 <a
                   key={doc.id}
                   href={`${BASE_API_URL}/f/${doc.file.id}`}

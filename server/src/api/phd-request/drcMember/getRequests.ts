@@ -1,4 +1,3 @@
-// server/src/api/phd-request/drcMember/getRequests.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -32,7 +31,6 @@ router.get(
         }
 
         const requestIds = assignments.map((a) => a.requestId);
-
         const requests = await db.query.phdRequests.findMany({
             where: inArray(phdRequests.id, requestIds),
             with: {

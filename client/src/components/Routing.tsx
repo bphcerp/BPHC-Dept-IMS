@@ -55,7 +55,7 @@ import MyStudents from "@/views/Phd/Supervisor/MyStudents";
 import DrcConvenerPhdRequestsDashboard from "@/views/Phd/DrcConvenor/PhdRequestsDashboard";
 import DrcMemberPhdRequestsDashboard from "@/views/Phd/DrcMember/PhdRequestsDashboard";
 import HodPhdRequestsDashboard from "@/views/Phd/Hod/PhdRequestsDashboard";
-import ViewPhdRequest from "@/views/Phd/Phd/ViewPhdRequest";
+import ViewPhdRequest from "@/views/Phd/Common/ViewPhdRequest";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -508,63 +508,43 @@ const Routing = () => {
                   <Route path="assignments" element={<ExaminerAssignments />} />
                 </Route>
               )}
+              {/* Supervisor Routes */}
               {checkAccess("phd-request:supervisor:view") && (
                 <Route path="supervisor/my-students" element={<MyStudents />} />
               )}
-              {/* The route for viewing a specific request can be shared */}
-              {checkAccess("phd-request:supervisor:view") && (
-                <Route
-                  path="supervisor/requests/:id"
-                  element={<ViewPhdRequest />}
-                />
-              )}
 
-              {/* DRC Convener PhD Request Routes */}
+              {/* DRC Convener Routes */}
               {checkAccess("phd-request:drc-convener:view") && (
                 <Route
                   path="drc-convener/requests"
                   element={<DrcConvenerPhdRequestsDashboard />}
                 />
               )}
-              {checkAccess("phd-request:drc-convener:view") && (
-                <Route
-                  path="drc-convener/requests/:id"
-                  element={<ViewPhdRequest />}
-                />
-              )}
 
-              {/* DRC Member PhD Request Routes */}
+              {/* DRC Member Routes */}
               {checkAccess("phd-request:drc-member:view") && (
                 <Route
                   path="drc-member/requests"
                   element={<DrcMemberPhdRequestsDashboard />}
                 />
               )}
-              {checkAccess("phd-request:drc-member:view") && (
-                <Route
-                  path="drc-member/requests/:id"
-                  element={<ViewPhdRequest />}
-                />
-              )}
 
-              {/* HOD PhD Request Routes */}
+              {/* HOD Routes */}
               {checkAccess("phd-request:hod:view") && (
                 <Route
                   path="hod/requests"
                   element={<HodPhdRequestsDashboard />}
                 />
               )}
-              {checkAccess("phd-request:hod:view") && (
-                <Route path="hod/requests/:id" element={<ViewPhdRequest />} />
-              )}
 
-              {/* Student PhD Request Route (generic view) */}
-              {checkAccess("phd-request:student:submit-final-thesis") && (
-                <Route
-                  path="student/requests/:id"
-                  element={<ViewPhdRequest />}
-                />
-              )}
+              {/* Universal Request Viewer Route for all roles */}
+              {checkAccessAnyOne([
+                "phd-request:supervisor:view",
+                "phd-request:drc-convener:view",
+                "phd-request:drc-member:view",
+                "phd-request:hod:view",
+                "phd-request:student:submit-final-thesis", // Use a relevant permission for student view
+              ]) && <Route path="requests/:id" element={<ViewPhdRequest />} />}
             </Route>
           )}
           {checkAccessAnyOne(publicationsPermissions) && (

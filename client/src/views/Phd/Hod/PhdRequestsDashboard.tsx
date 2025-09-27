@@ -1,4 +1,3 @@
-// client/src/views/Phd/Hod/PhdRequestsDashboard.tsx
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -25,8 +24,14 @@ interface RequestItem {
   id: number;
   requestType: string;
   updatedAt: string;
-  student: { name: string | null; email: string };
-  supervisor: { name: string | null; email: string };
+  student: {
+    name: string | null;
+    email: string;
+  };
+  supervisor: {
+    name: string | null;
+    email: string;
+  };
 }
 
 const HodPhdRequestsDashboard: React.FC = () => {
@@ -34,7 +39,7 @@ const HodPhdRequestsDashboard: React.FC = () => {
   const { data: requests = [], isLoading } = useQuery<RequestItem[]>({
     queryKey: ["hod-requests"],
     queryFn: async () => {
-      const res = await api.get("/phd/request/hod/requests");
+      const res = await api.get("/phd-request/hod/requests");
       return res.data;
     },
   });
@@ -88,7 +93,7 @@ const HodPhdRequestsDashboard: React.FC = () => {
                 requests.map((req) => (
                   <TableRow
                     key={req.id}
-                    onClick={() => navigate(`/phd/hod/requests/${req.id}`)}
+                    onClick={() => navigate(`/phd/requests/${req.id}`)}
                     className="cursor-pointer hover:bg-muted/50"
                   >
                     <TableCell className="font-medium">

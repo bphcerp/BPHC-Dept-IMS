@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/SupervisorRequestForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,12 +32,14 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
         requestType: true,
       })
     ),
-    defaultValues: { comments: "" },
+    defaultValues: {
+      comments: "",
+    },
   });
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
-      return api.post("/phd/request/supervisor/create", formData, {
+      return api.post("/phd-request/supervisor/create", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
     },
@@ -59,7 +60,6 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
       toast.error("Please upload at least one required document.");
       return;
     }
-
     const formData = new FormData();
     formData.append("studentEmail", studentEmail);
     formData.append("requestType", requestType);
@@ -69,7 +69,6 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
     files.forEach((file) => {
       formData.append("documents", file);
     });
-
     mutation.mutate(formData);
   };
 
@@ -80,12 +79,15 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
         <FileUploader
           value={files}
           onValueChange={setFiles}
+          maxFileCount={5}
+          maxSize={2 * 1024 * 1024}
           accept={{ "application/pdf": [] }}
         />
         <p className="mt-1 text-sm text-muted-foreground">
-          Upload all necessary forms/documents as PDF.
+          Upload all necessary forms/documents as PDF (max 5 files, 2MB each).
         </p>
       </div>
+
       <div>
         <Label htmlFor="comments">Comments (Optional)</Label>
         <Textarea
@@ -94,6 +96,7 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
           {...form.register("comments")}
         />
       </div>
+
       <div className="flex justify-end">
         <Button type="submit" disabled={mutation.isLoading}>
           {mutation.isLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}

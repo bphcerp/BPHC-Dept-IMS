@@ -1,4 +1,3 @@
-// server/src/api/phd-request/hod/submitReview.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -26,7 +25,6 @@ router.post(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
         const { approved, comments } = phdRequestSchemas.reviewerSchema.parse(
             req.body
         );
@@ -48,14 +46,13 @@ router.post(
                 );
             }
 
-            await tx
-                .insert(phdRequestReviews)
-                .values({
-                    requestId,
-                    reviewerEmail: hodEmail,
-                    approved,
-                    comments,
-                });
+            await tx.insert(phdRequestReviews).values({
+                requestId,
+                reviewerEmail: hodEmail,
+                approved,
+                comments,
+            });
+
             await completeTodo(
                 {
                     module: modules[2],
@@ -70,6 +67,7 @@ router.post(
                     .update(phdRequests)
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
+
                 await createNotifications(
                     [
                         {
@@ -93,6 +91,7 @@ router.post(
                     .update(phdRequests)
                     .set({ status: "reverted_by_hod" })
                     .where(eq(phdRequests.id, requestId));
+
                 await createTodos(
                     [
                         {
@@ -102,7 +101,7 @@ router.post(
                             description: `Your request for '${request.student.name}' has been reverted by the HOD. Comments: ${comments}`,
                             module: modules[2],
                             completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                            link: `/phd/requests/${requestId}`,
+                            link: `/phd/supervisor/requests/${requestId}`,
                         },
                     ],
                     tx

@@ -1,4 +1,3 @@
-// server/src/api/phd-request/drcMember/submitReview.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -73,10 +72,12 @@ router.post(
                     where: eq(phdRequests.id, requestId),
                     with: { student: true },
                 });
+
                 await tx
                     .update(phdRequests)
                     .set({ status: "reverted_by_drc_member" })
                     .where(eq(phdRequests.id, requestId));
+
                 if (request) {
                     await createTodos(
                         [
@@ -87,7 +88,7 @@ router.post(
                                 description: `Your request for '${request.student.name}' was reverted. Comments: ${comments}`,
                                 module: modules[2],
                                 completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                                link: `/phd/requests/${requestId}`,
+                                link: `/phd/supervisor/requests/${requestId}`,
                             },
                         ],
                         tx
@@ -111,10 +112,12 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "drc_convener_review" })
                         .where(eq(phdRequests.id, requestId));
+
                     const drcConveners = await getUsersWithPermission(
                         "phd-request:drc-convener:view",
                         tx
                     );
+
                     if (drcConveners.length > 0) {
                         await createTodos(
                             drcConveners.map((c) => ({
