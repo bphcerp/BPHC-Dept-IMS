@@ -98,6 +98,10 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import GradesLayout from "@/layouts/Grades";
+import UploadExcel from "@/views/Grades/UploadExcel";
+import ManageGrades from "@/views/Grades/ManageGrades";
+import SupervisorGradesView from "@/views/Grades/Supervisor";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
@@ -135,6 +139,8 @@ const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
+const gradesModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("grades:"));
 const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("meeting:")
 );
@@ -205,6 +211,11 @@ const Routing = () => {
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
     },
+    {
+      title: "Grade Management",
+      icon: <FileText />,
+      url: "/grades",
+      requiredPermissions: gradesModulePermissions,},
     {
       title: "Scheduler", //this is meeting everywhere, except for this title
       icon: <Calendar />,
@@ -676,6 +687,23 @@ const Routing = () => {
               )}
             </Route>
           )}
+          {checkAccessAnyOne(gradesModulePermissions) && (
+          <Route path="/grades" element={<GradesLayout />}>
+            <Route
+              index
+              element={<Navigate to="/grades/upload" replace={true} />}
+            />
+            {checkAccess(permissions["/grades/upload"]) && (
+              <Route path="upload" element={<UploadExcel />} />
+            )}
+            {checkAccess(permissions["/grades/manage"]) && (
+              <Route path="manage" element={<ManageGrades />} />
+            )}
+            {checkAccess(permissions["/grades/supervisor"]) && (
+              <Route path="supervisor" element={<SupervisorGradesView />} />
+            )}
+          </Route>
+        )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
