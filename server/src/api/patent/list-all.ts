@@ -35,7 +35,7 @@ router.get(
         updatedAt: true,
       },
     });
-    
+
     res.json(result);
   })
 );

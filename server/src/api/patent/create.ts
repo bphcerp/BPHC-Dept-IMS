@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import db from "@/config/db/index.ts";
-import { patents } from "@/config/db/schema/patents.ts";
+import { patents, patentInventors } from "@/config/db/schema/patents.ts";
 import { patentSchemas } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -13,15 +13,30 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     console.log("Received patent data:", req.body);
     console.log("Schema keys:", Object.keys(patentSchemas.patentSchema.shape));
-    
+
     try {
       const validatedData = patentSchemas.patentSchema.parse(req.body);
       console.log("Validated data:", validatedData);
-      
+
+      const patentId = crypto.randomUUID();
+
       const newPatent = await db.insert(patents).values({
         ...validatedData,
-        id: crypto.randomUUID(),
+        id: patentId,
       }).returning();
+
+      if (validatedData.inventors && validatedData.inventors.length > 0) {
+        const inventorRecords = validatedData.inventors.map(inventor => ({
+          patentId: patentId,
+          name: inventor.name,
+          email: inventor.email || null,
+          department: validatedData.department,
+          campus: validatedData.campus,
+          affiliation: null, // Can be added later if needed
+        }));
+
+        await db.insert(patentInventors).values(inventorRecords);
+      }
 
       res.status(201).json({
         success: true,
