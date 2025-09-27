@@ -106,6 +106,8 @@ import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
+import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
+import PatentDefaultRedirect from "./PatentDefaultRedirect";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -598,7 +600,7 @@ const Routing = () => {
             <Route path="/project" element={<ProjectLayout />}>
               <Route
                 index
-                element={<Navigate to="/project/add" replace={true} />}
+                element={<ProjectDefaultRedirect />}
               />
               {checkAccess(permissions["/project/create"]) && (
                 <Route path="add" element={<AddProject />} />
@@ -621,7 +623,7 @@ const Routing = () => {
             <Route path="/patent" element={<PatentLayout />}>
               <Route
                 index
-                element={<Navigate to="/patent/add" replace={true} />}
+                element={<PatentDefaultRedirect />}
               />
               {checkAccess(permissions["/patent/create"]) && (
                 <Route path="add" element={<AddPatent />} />

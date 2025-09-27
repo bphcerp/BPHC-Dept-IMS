@@ -58,11 +58,11 @@ const validateProjectRow = (row: any): ProjectRow | null => {
   }
 
   const convertDateFormat = (dateStr: string | number): string => {
-    
+
     if (typeof dateStr === 'number') {
       const excelEpoch = new Date(1900, 0, 1);
       const date = new Date(excelEpoch.getTime() + (dateStr - 2) * 24 * 60 * 60 * 1000);
-      
+
       if (isNaN(date.getTime())) {
         return String(dateStr);
       }
@@ -70,7 +70,7 @@ const validateProjectRow = (row: any): ProjectRow | null => {
       const converted = date.toISOString().split('T')[0];
       return converted;
     }
-    
+
     const stringDate = String(dateStr);
     const parts = stringDate.split('-');
     if (parts.length === 3) {
@@ -79,12 +79,12 @@ const validateProjectRow = (row: any): ProjectRow | null => {
       }
       if (parts[0].length === 2) {
         const converted = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        
+
         const date = new Date(converted);
         if (isNaN(date.getTime())) {
           return stringDate;
         }
-        
+
         return converted;
       }
     }
@@ -114,9 +114,9 @@ const validateProjectRow = (row: any): ProjectRow | null => {
     fundingAgency: row.fundingAgency.toString().trim(),
     fundingAgencyNature: row.fundingAgencyNature || "public_sector",
     sanctionedAmount: Number(row.sanctionedAmount),
-    capexAmount: row.capexAmount ? Number(row.capexAmount) : undefined,
-    opexAmount: row.opexAmount ? Number(row.opexAmount) : undefined,
-    manpowerAmount: row.manpowerAmount ? Number(row.manpowerAmount) : undefined,
+    capexAmount: row.capexAmount !== undefined && row.capexAmount !== null && row.capexAmount !== '' ? Number(row.capexAmount) : undefined,
+    opexAmount: row.opexAmount !== undefined && row.opexAmount !== null && row.opexAmount !== '' ? Number(row.opexAmount) : undefined,
+    manpowerAmount: row.manpowerAmount !== undefined && row.manpowerAmount !== null && row.manpowerAmount !== '' ? Number(row.manpowerAmount) : undefined,
     approvalDate: convertDateFormat(row.approvalDate.toString().trim()),
     startDate: convertDateFormat(row.startDate.toString().trim()),
     endDate: convertDateFormat(row.endDate.toString().trim()),
