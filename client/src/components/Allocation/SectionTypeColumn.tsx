@@ -12,29 +12,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-
-import { Label } from "@/components/ui/label";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 
@@ -43,6 +21,7 @@ interface SectionTypeColumnProps {
   selectedCourse: allocationTypes.Course;
   allocationData: allocationTypes.AllocationResponse;
   isLoading: boolean;
+  onAssignInstructor: (sectionId: string) => void;
 }
 
 const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
@@ -50,26 +29,11 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
   selectedCourse,
   allocationData,
   isLoading,
+  onAssignInstructor,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
-    useState(false);
-  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
-  const [instructorSearchOpen, setInstructorSearchOpen] = useState(false);
-  const [instructorSearchValue, setInstructorSearchValue] = useState("");
 
   const queryClient = useQueryClient();
-
-  // Fetch instructor list
-  const { data: instructors = [] } = useQuery({
-    queryKey: ["instructor-list"],
-    queryFn: async () => {
-      const response = await api.get<{ email: string; name: string | null }[]>(
-        "/allocation/allocation/getInstructorList"
-      );
-      return response.data;
-    },
-  });
 
   // Add section mutation
   const addSectionMutation = useMutation({
@@ -111,30 +75,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     },
   });
 
-  // Assign instructor mutation
-  const assignInstructorMutation = useMutation({
-    mutationFn: async (data: {
-      sectionId: string;
-      instructorEmail: string;
-    }) => {
-      await api.put("/allocation/allocation/section/assignInstructor", data);
-    },
-    onSuccess: () => {
-      toast.success("Instructor assigned successfully");
-      void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
-      });
-      setIsAssignInstructorDialogOpen(false);
-      setSelectedSectionId("");
-    },
-    onError: (error) => {
-      toast.error(
-        (error as { response: { data: string } })?.response?.data ||
-          "Failed to assign instructor"
-      );
-    },
-  });
-
   // Dismiss instructor mutation
   const dismissInstructorMutation = useMutation({
     mutationFn: async (data: {
@@ -170,15 +110,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
 
   const handleRemoveSection = (sectionId: string) => {
     removeSectionMutation.mutate(sectionId);
-  };
-
-  const handleAssignInstructor = (instructorEmail: string) => {
-    if (selectedSectionId) {
-      assignInstructorMutation.mutate({
-        sectionId: selectedSectionId,
-        instructorEmail,
-      });
-    }
   };
 
   const handleDismissInstructor = (
@@ -221,30 +152,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     const letter = sectionType.charAt(0);
     return `${letter}${index + 1}`;
   };
-
-  const filteredInstructors = instructors.filter((instructor) => {
-    const matchesSearch =
-      instructor.name
-        ?.toLowerCase()
-        .includes(instructorSearchValue.toLowerCase()) ||
-      instructor.email
-        .toLowerCase()
-        .includes(instructorSearchValue.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (selectedSectionId) {
-      const selectedSection = allocationData?.sections?.find(
-        (section) => section.id === selectedSectionId
-      );
-      const assignedEmails =
-        selectedSection?.instructors?.map((inst) => inst.email) || [];
-
-      return !assignedEmails.includes(instructor.email);
-    }
-
-    return true;
-  });
 
   return (
     <div
@@ -346,10 +253,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                           </div>
                           <div className="flex gap-1">
                             <Button
-                              onClick={() => {
-                                setSelectedSectionId(section.id);
-                                setIsAssignInstructorDialogOpen(true);
-                              }}
+                              onClick={() => onAssignInstructor(section.id)}
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0"
@@ -447,73 +351,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
           </ScrollArea>
         </div>
       )}
-
-      {/* Assign Instructor Dialog */}
-      <Dialog
-        open={isAssignInstructorDialogOpen}
-        onOpenChange={setIsAssignInstructorDialogOpen}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Assign Instructor</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Select Instructor</Label>
-              <Popover
-                open={instructorSearchOpen}
-                onOpenChange={setInstructorSearchOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={instructorSearchOpen}
-                    className="w-full justify-between"
-                  >
-                    Select instructor...
-                    <ChevronRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput
-                      placeholder="Search instructors..."
-                      value={instructorSearchValue}
-                      onValueChange={setInstructorSearchValue}
-                    />
-                    <CommandEmpty>No instructor found.</CommandEmpty>
-                    <CommandList>
-                      <CommandGroup>
-                        {filteredInstructors.map((instructor) => (
-                          <CommandItem
-                            key={instructor.email}
-                            value={instructor.email}
-                            onSelect={() => {
-                              handleAssignInstructor(instructor.email);
-                              setInstructorSearchOpen(false);
-                            }}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {instructor.name || instructor.email}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {instructor.email}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -8,6 +8,7 @@ import { allocationTypes, allocationSchemas } from "lib";
 import CoursesColumn from "@/components/Allocation/CoursesColumn";
 import SectionTypeColumn from "@/components/Allocation/SectionTypeColumn";
 import AllocationHeader from "@/components/Allocation/AllocationHeader";
+import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 
 const Allocation = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,6 +16,13 @@ const Allocation = () => {
     useState<allocationTypes.Semester | null>(null);
   const [selectedCourse, setSelectedCourse] =
     useState<allocationTypes.Course | null>(null);
+
+  // Dialog state for assign instructor
+  const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
+    useState(false);
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+
+  const queryClient = useQueryClient();
 
   const { isLoading: semesterLoading, isError: semesterError } = useQuery({
     queryKey: ["allocation", "semester", "latest"],
@@ -62,16 +70,6 @@ const Allocation = () => {
     }
   }, [searchParams, courses, selectedCourse]);
 
-  const handleCourseSelect = (course: allocationTypes.Course | null) => {
-    setSelectedCourse(course);
-
-    if (course) {
-      setSearchParams({ course: course.code });
-    } else {
-      setSearchParams({});
-    }
-  };
-
   const {
     data: allocationData,
     isLoading: allocationLoading,
@@ -93,6 +91,80 @@ const Allocation = () => {
     },
     enabled: !!selectedCourse && !!currentSemester,
   });
+
+  // Handle deep link support for assign instructor dialog
+  useEffect(() => {
+    const sectionId = searchParams.get("assignSection");
+    if (sectionId && allocationData?.sections) {
+      const section = allocationData.sections.find((s) => s.id === sectionId);
+      if (section) {
+        setSelectedSectionId(sectionId);
+        setIsAssignInstructorDialogOpen(true);
+      }
+    }
+  }, [searchParams, allocationData]);
+
+  // Assign instructor mutation
+  const assignInstructorMutation = useMutation({
+    mutationFn: async (data: {
+      sectionId: string;
+      instructorEmail: string;
+    }) => {
+      await api.put("/allocation/allocation/section/assignInstructor", data);
+    },
+    onSuccess: () => {
+      toast.success("Instructor assigned successfully");
+      void queryClient.invalidateQueries({
+        queryKey: ["allocation", selectedCourse?.code],
+      });
+      setIsAssignInstructorDialogOpen(false);
+      setSelectedSectionId("");
+    },
+    onError: (error) => {
+      toast.error(
+        (error as { response: { data: string } })?.response?.data ||
+          "Failed to assign instructor"
+      );
+    },
+  });
+
+  const handleCourseSelect = (course: allocationTypes.Course | null) => {
+    setSelectedCourse(course);
+
+    if (course) {
+      setSearchParams({ course: course.code });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  const handleAssignInstructor = (instructorEmail: string) => {
+    if (selectedSectionId) {
+      assignInstructorMutation.mutate({
+        sectionId: selectedSectionId,
+        instructorEmail,
+      });
+    }
+  };
+
+  const handleOpenAssignDialog = (sectionId: string) => {
+    setSelectedSectionId(sectionId);
+    setIsAssignInstructorDialogOpen(true);
+
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("assignSection", sectionId);
+    setSearchParams(newParams);
+  };
+
+  const handleCloseAssignDialog = (open: boolean) => {
+    setIsAssignInstructorDialogOpen(open);
+    if (!open) {
+      setSelectedSectionId("");
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("assignSection");
+      setSearchParams(newParams);
+    }
+  };
 
   const handleCreateAllocation = () => {
     void refetchAllocation();
@@ -194,6 +266,7 @@ const Allocation = () => {
                     selectedCourse={selectedCourse}
                     allocationData={allocationData}
                     isLoading={allocationLoading}
+                    onAssignInstructor={handleOpenAssignDialog}
                   />
                 ))}
               </div>
@@ -226,6 +299,16 @@ const Allocation = () => {
           </div>
         )}
       </div>
+
+      {/* Assign Instructor Dialog */}
+      <AssignInstructorDialog
+        isOpen={isAssignInstructorDialogOpen}
+        onOpenChange={handleCloseAssignDialog}
+        selectedSectionId={selectedSectionId}
+        allocationData={allocationData || null}
+        onAssignInstructor={handleAssignInstructor}
+        isAssigning={assignInstructorMutation.isLoading}
+      />
     </div>
   );
 };
