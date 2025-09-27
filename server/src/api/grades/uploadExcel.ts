@@ -105,24 +105,18 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
                 return { ...h, name: `${base} (${seen[base]})` };
             });
 
-            console.log(`Looking for grades in rows ${i + 1} to ${Math.min(i + 100, jsonData.length)}`);
-
             for (let j = i + 1; j < Math.min(i + 300, jsonData.length); j++) {
                 const dataRow = jsonData[j] as any[];
                 if (!dataRow) continue;
 
                 if (dataRow.every(cell => !cell || cell.toString().trim() === '')) continue;
 
-                console.log(`Row ${j}:`, dataRow.slice(0, 10));
-
                 columnHeaders.forEach((header, headerIndex) => {
                     if (header.type === 'grade') {
                         const cell = dataRow[headerIndex];
-                        console.log(`Grade column "${header.name}" at index ${headerIndex}:`, cell);
 
                         if (cell) {
                             const gradeValue = cell.toString().trim();
-                            console.log(`Grade value: "${gradeValue}"`);
 
                             if (gradeValue &&
                                 gradeValue.length <= 10 &&
@@ -135,16 +129,11 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
                                 !gradeValue.toLowerCase().includes('emplid') &&
                                 !gradeValue.toLowerCase().includes('campus')) {
                                 gradeOptions.add(gradeValue);
-                                console.log(`Added grade: "${gradeValue}"`);
                             }
                         }
                     }
                 });
             }
-
-            console.log(`Sheet: ${sheetName || 'Unknown'}, Headers:`, columnHeaders.map(h => h.name));
-            console.log(`Grade columns:`, columnHeaders.filter(h => h.type === 'grade').map(h => h.name));
-            console.log(`Extracted grades:`, Array.from(gradeOptions).sort());
 
             return {
                 headerRow: i,
@@ -244,9 +233,6 @@ function parseStudentData(
             } else if (header.type === 'grade') {
                 const gradeValue = cellValue?.toString().trim() || undefined;
                 student[header.name] = gradeValue;
-                if (gradeValue) {
-                    console.log(`Student grade "${header.name}": "${gradeValue}"`);
-                }
             } else {
                 const textValue = cellValue?.toString().trim() || undefined;
                 student[header.name] = textValue;
@@ -270,12 +256,6 @@ function parseStudentData(
         if (hasAnyData && !looksLikeHeader) {
             students.push(student);
         }
-    }
-
-    console.log(`Parsed ${students.length} students from sheet`);
-    if (students.length > 0) {
-        console.log(`First student data:`, students[0]);
-        console.log(`Available fields:`, Object.keys(students[0]));
     }
     return students;
 }
@@ -332,7 +312,6 @@ router.post(
             });
 
         } catch (error) {
-            console.error("Error processing Excel file:", error);
             return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "Error processing Excel file"));
         }
     })
