@@ -94,7 +94,6 @@ router.post(
             res.send(excelBuffer);
 
         } catch (error) {
-            console.error("Error exporting Excel file:", error);
             if (error instanceof z.ZodError) {
                 return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid data format"));
             }
