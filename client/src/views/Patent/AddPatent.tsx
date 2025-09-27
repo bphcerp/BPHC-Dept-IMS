@@ -112,7 +112,7 @@ export default function AddPatent() {
 
   const fetchInventorDetails = async (email: string, index: number) => {
     if (!email || !email.includes("@")) return;
-    
+
     setInventorLoading(index);
     try {
       const response = await api.get(`/project/faculty/by-email?email=${encodeURIComponent(email)}`);
@@ -131,7 +131,7 @@ export default function AddPatent() {
       } else {
         setFormData(prev => ({
           ...prev,
-          inventors: prev.inventors.map((inv, idx) => 
+          inventors: prev.inventors.map((inv, idx) =>
             idx === index ? {
               ...inv,
               name: "",
@@ -142,7 +142,7 @@ export default function AddPatent() {
     } catch {
       setFormData(prev => ({
         ...prev,
-        inventors: prev.inventors.map((inv, idx) => 
+        inventors: prev.inventors.map((inv, idx) =>
           idx === index ? {
             ...inv,
             name: "",
@@ -175,7 +175,7 @@ export default function AddPatent() {
   const handleInventorChange = (index: number, field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      inventors: prev.inventors.map((inv, idx) => 
+      inventors: prev.inventors.map((inv, idx) =>
         idx === index ? { ...inv, [field]: value } : inv
       )
     }));
@@ -241,7 +241,7 @@ export default function AddPatent() {
       console.log("Data keys:", Object.keys(submitData));
       console.log("Schema keys:", Object.keys(patentSchemas.patentSchema.shape));
       console.log("Schema shape:", patentSchemas.patentSchema.shape);
-      
+
       let validatedData;
       try {
         validatedData = patentSchemas.patentSchema.parse(submitData);
@@ -250,10 +250,10 @@ export default function AddPatent() {
         console.error("Client-side validation error:", validationError);
         throw validationError;
       }
-      
+
       const response = await api.post("/patent/create", validatedData);
       console.log("API response:", response.data);
-      
+
       toast.success("Patent created successfully!");
       setSuccess(true);
       setTimeout(() => {
@@ -261,11 +261,15 @@ export default function AddPatent() {
       }, 2000);
     } catch (err: unknown) {
       console.error("Error creating patent:", err);
-      
+
       if (err && typeof err === 'object' && 'response' in err) {
-        const apiError = err as { response?: { data?: { error?: string } } };
+        const apiError = err as { response?: { data?: { error?: string; message?: string } } };
         console.error("API error response:", apiError.response);
-        if (apiError.response?.data?.error) {
+        if (apiError.response?.data?.message) {
+          const errorMessage = apiError.response.data.message;
+          setError(errorMessage);
+          toast.error(errorMessage);
+        } else if (apiError.response?.data?.error) {
           const errorMessage = apiError.response.data.error;
           setError(errorMessage);
           toast.error(errorMessage);
@@ -293,10 +297,10 @@ export default function AddPatent() {
           });
         }
         setFieldErrors(errors);
-        
+
         // Show specific validation errors in toast
         const errorMessages = Object.values(errors).slice(0, 3); // Show first 3 errors
-        const errorText = errorMessages.length > 0 
+        const errorText = errorMessages.length > 0
           ? `Validation errors: ${errorMessages.join(', ')}`
           : "Please correct the validation errors";
         toast.error(errorText);
@@ -438,8 +442,8 @@ export default function AddPatent() {
                       <Users className="h-5 w-5" />
                       Inventors
                     </CardTitle>
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={addInventor}
                       className="flex items-center gap-2"
                     >
@@ -461,9 +465,9 @@ export default function AddPatent() {
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-lg font-medium text-gray-900">Inventor #{idx + 1}</h4>
                             {formData.inventors.length > 1 && (
-                              <Button 
-                                type="button" 
-                                variant="destructive" 
+                              <Button
+                                type="button"
+                                variant="destructive"
                                 size="sm"
                                 onClick={() => removeInventor(idx)}
                                 className="flex items-center gap-2"
@@ -473,35 +477,35 @@ export default function AddPatent() {
                               </Button>
                             )}
                           </div>
-                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-lg border">
-                             <div>
-                               <Label htmlFor={`inventor-${idx}-email`}>Email Address</Label>
-                               <div className="relative">
-                                 <Input
-                                   id={`inventor-${idx}-email`}
-                                   type="email"
-                                   value={inventor.email}
-                                   onChange={(e) => handleInventorChange(idx, "email", e.target.value)}
-                                   placeholder="Enter email address"
-                                 />
-                                 {inventorLoading === idx && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
-                               </div>
-                               <p className="text-xs text-gray-500 mt-1">Optional - will auto-fill name</p>
-                             </div>
-                             <div>
-                               <Label htmlFor={`inventor-${idx}-name`}>Full Name *</Label>
-                               <Input
-                                 id={`inventor-${idx}-name`}
-                                 value={inventor.name}
-                                 onChange={(e) => handleInventorChange(idx, "name", e.target.value)}
-                                 placeholder="Enter full name"
-                                 className={fieldErrors[`inventors.${idx}.name`] ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
-                               />
-                               {fieldErrors[`inventors.${idx}.name`] && (
-                                 <p className="text-sm text-red-500 mt-1">{fieldErrors[`inventors.${idx}.name`]}</p>
-                               )}
-                             </div>
-                           </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-lg border">
+                            <div>
+                              <Label htmlFor={`inventor-${idx}-email`}>Email Address</Label>
+                              <div className="relative">
+                                <Input
+                                  id={`inventor-${idx}-email`}
+                                  type="email"
+                                  value={inventor.email}
+                                  onChange={(e) => handleInventorChange(idx, "email", e.target.value)}
+                                  placeholder="Enter email address"
+                                />
+                                {inventorLoading === idx && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Optional - will auto-fill name</p>
+                            </div>
+                            <div>
+                              <Label htmlFor={`inventor-${idx}-name`}>Full Name *</Label>
+                              <Input
+                                id={`inventor-${idx}-name`}
+                                value={inventor.name}
+                                onChange={(e) => handleInventorChange(idx, "name", e.target.value)}
+                                placeholder="Enter full name"
+                                className={fieldErrors[`inventors.${idx}.name`] ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                              />
+                              {fieldErrors[`inventors.${idx}.name`] && (
+                                <p className="text-sm text-red-500 mt-1">{fieldErrors[`inventors.${idx}.name`]}</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -4,6 +4,7 @@ import { patents, patentInventors } from "@/config/db/schema/patents.ts";
 import { patentSchemas } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -17,6 +18,20 @@ router.post(
     try {
       const validatedData = patentSchemas.patentSchema.parse(req.body);
       console.log("Validated data:", validatedData);
+
+      const existingPatent = await db
+        .select()
+        .from(patents)
+        .where(eq(patents.applicationNumber, validatedData.applicationNumber));
+
+      if (existingPatent.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: "Duplicate patent",
+          message: `A patent with application number "${validatedData.applicationNumber}" already exists.`
+        });
+        return;
+      }
 
       const patentId = crypto.randomUUID();
 
