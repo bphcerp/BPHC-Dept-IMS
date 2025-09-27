@@ -144,6 +144,30 @@ export const allPermissions = {
     "wilp:project:deselect": "Remove selected WILP projects",
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
+
+    // qp review module permissions
+     "qp:faculty:submit": "Submit paper for review",
+    "qp:dca-convenor:assignreviewer":
+        "Assign reviewer to handout as DCA convenor",
+    "qp:faculty:get-all-handouts": "View all handouts as faculty member",
+    "qp:dca:get-all-handouts": "View all handouts as DCA member",
+    "qp:faculty:review": "Review handouts as reviewer",
+    "qp:get:review": "view review details",
+    "qp:fic:get-all": "View question paper requests as FIC member",
+    "qp:dca-convenor:reminder":
+        "Send reminder notifications as DCA convenor",
+    "qp:dca-convenor:update-reviewer":
+        "Update handout reviewer as DCA convenor",
+    "qp:dca-convenor:update-ic":
+        "Update in-charge details as DCA convenor",
+    "qp:dca-convenor:download-review":
+        "Download review of papers as DCA convenor",
+    "qp:dca-convenor:get-all-faculty":
+        "View all faculty members as DCA convenor",
+    "qp:faculty:get-files": "Get files uploaded for a request",
+    "qp:dca:create-request": "Create a new question paper review request",
+    "qp:dca:get-all-requests": "Get all requests",
+
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -359,4 +383,19 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/deselect": "wilp:project:deselect",
     "/wilpProject/mail": "wilp:project:mail",
     "/wilpProject/stats": "wilp:project:stats",
+
+    // qp review module
+    "/qp/uploadDocument": "qp:faculty:submit",
+    "/qp/getFilesByRequestId": "qp:faculty:get-files",
+    "/qp/submitReview": "qp:faculty:review",
+    "/qp/saveReview": "qp:faculty:review",
+    "/qp/assignFaculty": "qp:dca-convenor:assignreviewer",
+    "/qp/createRequest" : "qp:dca:create-request",
+    "/qp/getAllFICSubmissions": "qp:fic:get-all",
+    "/qp/getAllDcaMemberRequests": "qp:dca:get-all-requests",
+    "/qp/getReviews": "qp:get:review",
+    "/qp/updateIc": "qp:dca-convenor:update-ic",
+    "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
+    "/qp/sendReminders": "qp:dca-convenor:reminder",
+    "/qp/downloadReviewPdf": "qp:dca-convenor:download-review",
 } as const;

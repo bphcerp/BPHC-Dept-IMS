@@ -6,6 +6,7 @@ import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { users } from "@/config/db/schema/admin.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { eq } from "drizzle-orm";
+import { sendEmail } from "@/lib/common/email.ts";
 
 const router = express.Router();
 

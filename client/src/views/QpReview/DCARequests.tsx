@@ -102,6 +102,7 @@ export const DCAConvenercourses: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
+      console.log("Updating reviewer:", { id, reviewerEmail, sendEmail });
       const response = await api.post<{ success: boolean }>(
         "/qp/assignFaculty",
         {
@@ -315,7 +316,7 @@ export const DCAConvenercourses: React.FC = () => {
       });
     } else {
       if (!currentcourseId) {
-        toast.error("No course selected");
+        toast.error("No course selected");  
         return;
       }
 
