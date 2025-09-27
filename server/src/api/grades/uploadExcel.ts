@@ -135,6 +135,8 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
                 });
             }
 
+            logger.debug(sheetName);
+
             return {
                 headerRow: i,
                 dataStartRow: i + 1,
