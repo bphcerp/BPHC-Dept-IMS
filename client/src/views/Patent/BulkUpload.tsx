@@ -66,7 +66,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
       setFile(null);
       const fileInput = document.getElementById("file-upload") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
-      
+
       if (responseData.results.successful > 0) {
         toast.success(`Successfully uploaded ${responseData.results.successful} patents`);
       }
@@ -87,6 +87,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
       {
         applicationNumber: "2024XXXXXXX001",
         inventorsName: "Dr. John Smith, Prof. Jane Doe, Dr. Robert Johnson",
+        inventorsEmail: "john.smith@university.edu, jane.doe@university.edu, robert.johnson@university.edu",
         department: "EEE",
         title: "Novel Algorithm for Machine Learning Applications in Data Processing",
         campus: "Hyderabad",
@@ -108,6 +109,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
       {
         applicationNumber: "2024XXXXXXX002",
         inventorsName: "Dr. Sarah Wilson, Dr. Michael Brown",
+        inventorsEmail: "sarah.wilson@university.edu, michael.brown@university.edu",
         department: "EEE",
         title: "Advanced Sensor Technology for Environmental Monitoring Systems",
         campus: "Hyderabad",
@@ -129,7 +131,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
     ];
 
     const columns = [
-      'applicationNumber', 'inventorsName', 'department', 'title', 'campus',
+      'applicationNumber', 'inventorsName', 'inventorsEmail', 'department', 'title', 'campus',
       'filingDate', 'applicationPublicationDate', 'grantedDate', 'filingFY',
       'filingAY', 'publishedAY', 'publishedFY', 'grantedFY', 'grantedAY',
       'grantedCY', 'status', 'grantedPatentCertificateLink',
@@ -146,7 +148,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
 
     const csvContent = [
       columns.join(','),
-      ...templateData.map(row => 
+      ...templateData.map(row =>
         columns.map(col => escapeCSV(row[col as keyof typeof row] ?? '')).join(',')
       )
     ].join('\n');
@@ -239,12 +241,13 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
               <p className="text-sm text-muted-foreground">
                 Download the template file to see the required format and column headers.
               </p>
-              
+
               <div className="space-y-2">
                 <h4 className="font-medium">Required Columns:</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• applicationNumber (<span className="text-red-600">required</span>)</li>
                   <li>• inventorsName (<span className="text-red-600">required</span>, comma-separated names)</li>
+                  <li>• inventorsEmail (<span className="text-blue-600">recommended</span>, comma-separated emails in same order as names)</li>
                   <li>• department (<span className="text-red-600">required</span>)</li>
                   <li>• title (<span className="text-red-600">required</span>)</li>
                   <li>• campus (<span className="text-red-600">required</span>)</li>
@@ -254,8 +257,8 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
                   <li>• status (<span className="text-red-600">required</span>, Pending/Filed/Granted/Abandoned/Rejected)</li>
                 </ul>
                 <p className="text-xs text-blue-600 mt-2">
-                  <strong>Note:</strong> inventorsName should contain comma-separated inventor names. 
-                  The system will automatically convert this to the new inventors structure with name and email fields.
+                  <strong>Note:</strong> inventorsName should contain comma-separated inventor names.
+                  Include inventorsEmail column with comma-separated emails in the same order as names
                 </p>
               </div>
 
