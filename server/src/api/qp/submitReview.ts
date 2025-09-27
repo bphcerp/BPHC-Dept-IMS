@@ -3,10 +3,11 @@ import db from "@/config/db/index.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { eq } from "drizzle-orm";
 import { qpSchemas } from "lib";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/",checkAccess(), async (req, res) => {
     try {
         const parsed = qpSchemas.submitQpReviewSchema.safeParse(req.body);
 

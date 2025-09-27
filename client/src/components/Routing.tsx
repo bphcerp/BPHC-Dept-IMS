@@ -89,39 +89,48 @@ import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
 import DcaReview from "@/views/QpReview/DcaReview";
 
+
 const adminModulePermissions = [
   permissions["/admin/member/search"],
   permissions["/admin/member/details"],
   permissions["/admin/role"],
 ];
 
+
 const phdModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("phd:")
 );
+
 
 const conferenceModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("conference:"));
 
+
 const qpReviewModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("qp:")
 );
+
 
 const courseHandoutsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("handout:")
 );
 
+
 const publicationsPermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("publications:")
 );
+
 
 const inventoryModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("inventory:")
 );
 
+
 const projectModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("project:")
 );
+
 
 const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("patent:")
@@ -130,8 +139,10 @@ const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
 
+
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
+
 
   const modules = [
     {
@@ -196,6 +207,7 @@ const Routing = () => {
     },
   ];
 
+
   return (
     <BrowserRouter
       // react-router future version flags, prevents console warnings
@@ -225,7 +237,9 @@ const Routing = () => {
         <Route path="/contributors" element={<ContributorsPage />} />
         {!authState && <Route path="*" element={<Navigate to="/" />} />}
 
+
         {authState && <Route path="/profile" element={<ProfilePage />} />}
+
 
         {checkAccessAnyOne(adminModulePermissions) && (
           <Route path="/admin" element={<AdminLayout />}>
@@ -247,6 +261,7 @@ const Routing = () => {
             )}
           </Route>
         )}
+
 
         {checkAccessAnyOne(conferenceModulePermissions) && (
           <Route path="/conference" element={<ConferenceLayout />}>
@@ -278,21 +293,43 @@ const Routing = () => {
           </Route>
         )}
 
+
         {checkAccessAnyOne(qpReviewModulePermissions) && (
           <Route path="/qpReview" element={<QpReviewLayout />}>
             <Route
               index
               element={<Navigate to="/qpReview/ficSubmission" replace={true} />}
             />
-            <Route path="ficSubmission" element={<FicSubmissionView />} />
-            <Route path="ficSubmission/seeReview/:id" element={<DcaReview />} />
-            <Route path="dcarequests/seeReview/:id" element={<DcaReview />} />
-            <Route path="dcarequests" element={<DCARequestsView />} />
-            <Route path="facultyReview" element={<ReviewPage />} />
-            <Route path="facultyReview/seeReview/:id" element={<DcaReview />} />
-            <Route path="facultyReview/:course" element={<FacultyReview />} />
+            
+            {/* FIC Submission Routes */}
+            {checkAccess(permissions["/qp/getAllFICSubmissions"]) && (
+              <Route path="ficSubmission" element={<FicSubmissionView />} />
+            )}
+            {checkAccess(permissions["/qp/getReviews"]) && (
+              <Route path="ficSubmission/seeReview/:id" element={<DcaReview />} />
+            )}
+            
+            {/* DCA Requests Routes */}
+            {checkAccess(permissions["/qp/getAllDcaMemberRequests"]) && (
+              <Route path="dcarequests" element={<DCARequestsView />} />
+            )}
+            {checkAccess(permissions["/qp/getReviews"]) && (
+              <Route path="dcarequests/seeReview/:id" element={<DcaReview />} />
+            )}
+            
+            {/* Faculty Review Routes */}
+            {checkAccess(permissions["/qp/submitReview"]) && (
+              <Route path="facultyReview" element={<ReviewPage />} />
+            )}
+            {checkAccess(permissions["/qp/getReviews"]) && (
+              <Route path="facultyReview/seeReview/:id" element={<DcaReview />} />
+            )}
+            {checkAccess(permissions["/qp/submitReview"]) && (
+              <Route path="facultyReview/:course" element={<FacultyReview />} />
+            )}
           </Route>
         )}
+
 
         {checkAccessAnyOne(courseHandoutsPermissions) && (
           <Route path="/handout" element={<HandoutLayout />}>
@@ -350,6 +387,7 @@ const Routing = () => {
           </Route>
         )}
 
+
         {checkAccessAnyOne(phdModulePermissions) && (
           <Route path="/phd" element={<PhdLayout />}>
             {checkAccess(
@@ -380,6 +418,7 @@ const Routing = () => {
               <Route path="phd-student" element={<Outlet />}>
                 <Route path="form-deadline" element={<FormDeadline />} />
                 <Route path="my-profile" element={<Profile />} />
+
 
                 <Route
                   path="proposal-submission"
@@ -430,6 +469,7 @@ const Routing = () => {
           </Route>
         )}
 
+
         {checkAccessAnyOne(publicationsPermissions) && (
           <Route path="/publications" element={<PublicationsLayout />}>
             <Route
@@ -448,30 +488,6 @@ const Routing = () => {
           </Route>
         )}
 
-        {checkAccessAnyOne(inventoryModulePermissions) && (
-          <Route path="/inventory" element={<InventoryLayout />}>
-            <Route
-              index
-              element={<Navigate to="/inventory/items" replace={true} />}
-            />
-            <Route path="items" element={<ItemsView />} />
-            {checkAccessAnyOne(
-              Object.keys(permissions).filter((perm) =>
-                perm.startsWith("inventory:stats")
-              )
-            ) && <Route path="stats" element={<Stats />} />}
-            {checkAccess("inventory:write") && (
-              <>
-                <Route path="items/add-item" element={<AddInventoryItem />} />
-                <Route path="items/add-item/excel" element={<BulkAddView />} />
-              </>
-            )}
-            <Route path="stats" element={<></>} />
-            {checkAccess("inventory:write") && (
-              <Route path="settings" element={<Settings />} />
-            )}
-          </Route>
-        )}
 
         {checkAccessAnyOne(inventoryModulePermissions) && (
           <Route path="/inventory" element={<InventoryLayout />}>
@@ -497,6 +513,33 @@ const Routing = () => {
             )}
           </Route>
         )}
+
+
+        {checkAccessAnyOne(inventoryModulePermissions) && (
+          <Route path="/inventory" element={<InventoryLayout />}>
+            <Route
+              index
+              element={<Navigate to="/inventory/items" replace={true} />}
+            />
+            <Route path="items" element={<ItemsView />} />
+            {checkAccessAnyOne(
+              Object.keys(permissions).filter((perm) =>
+                perm.startsWith("inventory:stats")
+              )
+            ) && <Route path="stats" element={<Stats />} />}
+            {checkAccess("inventory:write") && (
+              <>
+                <Route path="items/add-item" element={<AddInventoryItem />} />
+                <Route path="items/add-item/excel" element={<BulkAddView />} />
+              </>
+            )}
+            <Route path="stats" element={<></>} />
+            {checkAccess("inventory:write") && (
+              <Route path="settings" element={<Settings />} />
+            )}
+          </Route>
+        )}
+
 
         {checkAccessAnyOne(projectModulePermissions) && (
           <Route path="/project" element={<ProjectLayout />}>
@@ -521,6 +564,7 @@ const Routing = () => {
             )}
           </Route>
         )}
+
 
         {checkAccessAnyOne(patentModulePermissions) && (
           <Route path="/patent" element={<PatentLayout />}>
@@ -575,10 +619,12 @@ const Routing = () => {
           </Route>
         )}
 
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
 };
+
 
 export default Routing;

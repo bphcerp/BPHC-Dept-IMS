@@ -13,8 +13,11 @@
     import saveReviewRouter from "./saveReview.ts"
     import sendReminders from "./sendReminders.ts"
     import downloadReviewPdfRouter from "./downloadReviewPdf.ts"
+    import { authMiddleware } from "@/middleware/auth.ts";
 
     const router = express.Router();
+
+    router.use(authMiddleware);
 
     router.use("/uploadDocuments", uploadDocumentsRouter);
     router.use("/getFilesByRequestId/", getFilesByRequestIdRouter);

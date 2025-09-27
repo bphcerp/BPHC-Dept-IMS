@@ -1,10 +1,11 @@
 import { asyncHandler } from '@/middleware/routeHandler.ts';
 import express from 'express';
 import { generateSingleReviewPDF, generateReviewsZip, generateMultipleReviewsPDF } from './functions/creteReviewPdf.ts';
+import { checkAccess } from '@/middleware/auth.ts';
 
 const router = express.Router();
 
-router.post("/", asyncHandler(async (req, res) => {
+router.post("/", checkAccess(), asyncHandler(async (req, res) => {
     try {
         console.log("Received request body with", req.body?.length || 0, "items");
         

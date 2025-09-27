@@ -2,13 +2,14 @@ import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
-// import { checkAccess } from "@/middleware/auth.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 const router = express.Router();
 
 router.get(
     "/",
-    // checkAccess(),
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
+        console.log(req.user);
         assert(req.user);
         const courses = (
             await db.query.qpReviewRequests.findMany({

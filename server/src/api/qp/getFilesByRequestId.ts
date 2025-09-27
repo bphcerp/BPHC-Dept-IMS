@@ -5,11 +5,13 @@ import { qpSchemas } from "lib";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { eq, and } from "drizzle-orm";
 import environment from "@/config/environment.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/:requestId",
+    checkAccess(),
     asyncHandler(async (req, res: any) => {
         const parsed = qpSchemas.requestIdSchema.parse({
         requestId: Number(req.params.requestId),

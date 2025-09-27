@@ -3,6 +3,7 @@ import { fileFields, files } from "@/config/db/schema/form.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import { eq } from "drizzle-orm";
@@ -20,6 +21,7 @@ const uploadDocumentsSchema = z.object({
 
 router.post(
   "/",
+  checkAccess(),
   asyncHandler(async (req, res, next) =>
     pdfUpload.single("file")(req, res, (err) => {
       if (err instanceof multer.MulterError)

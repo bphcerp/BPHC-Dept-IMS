@@ -2,6 +2,7 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { createLogger } from "winston";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 const logger = createLogger();
@@ -389,6 +390,7 @@ BITS Pilani Hyderabad Campus
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req: any, res: any) => {
         try {
             const reminderData: ReminderEmailData = req.body;

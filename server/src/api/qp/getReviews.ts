@@ -2,6 +2,7 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { eq } from "drizzle-orm";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
@@ -9,7 +10,7 @@ const router = express.Router();
  * GET /api/qp/:email/:requestId
  * Fetch review data for a given requestId and reviewer email
  */
-router.get("/:email/:requestId", async (req, res) => {
+router.get("/:email/:requestId",checkAccess(), async (req, res) => {
     try {
         const { email, requestId } = req.params;
 
