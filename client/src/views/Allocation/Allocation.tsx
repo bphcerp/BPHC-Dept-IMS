@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import SectionTypeColumn from "@/components/Allocation/SectionTypeColumn";
 import AllocationHeader from "@/components/Allocation/AllocationHeader";
 
 const Allocation = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentSemester, setCurrentSemester] =
     useState<allocationTypes.Semester | null>(null);
   const [selectedCourse, setSelectedCourse] =
@@ -47,6 +49,28 @@ const Allocation = () => {
       toast.error("Failed to fetch courses");
     },
   });
+
+  useEffect(() => {
+    const courseCode = searchParams.get("course");
+    if (courseCode && courses.length > 0 && !selectedCourse) {
+      const courseFromUrl = courses.find(
+        (course) => course.code === courseCode
+      );
+      if (courseFromUrl) {
+        setSelectedCourse(courseFromUrl);
+      }
+    }
+  }, [searchParams, courses, selectedCourse]);
+
+  const handleCourseSelect = (course: allocationTypes.Course | null) => {
+    setSelectedCourse(course);
+
+    if (course) {
+      setSearchParams({ course: course.code });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   const {
     data: allocationData,
@@ -145,7 +169,7 @@ const Allocation = () => {
             isLoading={coursesLoading}
             semesterId={currentSemester.id}
             selectedCourse={selectedCourse}
-            onCourseSelect={setSelectedCourse}
+            onCourseSelect={handleCourseSelect}
           />
         </div>
 
