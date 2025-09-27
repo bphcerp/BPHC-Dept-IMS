@@ -23,8 +23,18 @@ export const getLatestSemester = async () => {
             desc(semester.semesterType),
         ],
         with: {
-            dcaConvenerAtStartOfSem: true,
-            hodAtStartOfSem: true,
+            dcaConvenerAtStartOfSem: {
+                columns: {
+                    email: true,
+                    name: true,
+                },
+            },
+            hodAtStartOfSem: {
+                columns: {
+                    email: true,
+                    name: true,
+                },
+            },
             form: {
                 with: {
                     responses: {

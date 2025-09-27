@@ -390,7 +390,10 @@ export const AllocationOverview = () => {
           <div>
             <span>HoD:</span>{" "}
             <span>
-              {latestSemester.hodAtStartOfSem?.name ?? (
+              {latestSemester.hodAtStartOfSem ? (
+                (latestSemester.hodAtStartOfSem.name ??
+                latestSemester.hodAtStartOfSem.email)
+              ) : (
                 <span className="text-secondary">Not Set</span>
               )}
             </span>
@@ -398,7 +401,10 @@ export const AllocationOverview = () => {
           <div>
             <span>DCA Convener:</span>{" "}
             <span>
-              {latestSemester.dcaConvenerAtStartOfSem?.name ?? (
+              {latestSemester.dcaConvenerAtStartOfSem ? (
+                (latestSemester.dcaConvenerAtStartOfSem.name ??
+                latestSemester.dcaConvenerAtStartOfSem.email)
+              ) : (
                 <span className="text-secondary">Not Set</span>
               )}
             </span>
