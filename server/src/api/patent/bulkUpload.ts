@@ -3,7 +3,7 @@ import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import XLSX from "xlsx";
 import db from "@/config/db/index.ts";
-import { patents } from "@/config/db/schema/patents.ts";
+import { patents, patentInventors } from "@/config/db/schema/patents.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
 
@@ -12,7 +12,8 @@ const router = Router();
 interface PatentRow {
   applicationNumber: string;
   inventorsName: string;
-  inventors?: string; 
+  inventorsEmail?: string;
+  inventors?: string;
   department: string;
   title: string;
   campus: string;
@@ -37,9 +38,9 @@ const validatePatentRow = (row: any): PatentRow | null => {
     return null;
   }
 
-  if (!row.applicationNumber || !row.inventorsName || !row.department || 
-      !row.title || !row.campus || !row.filingDate || !row.filingFY || 
-      !row.filingAY || !row.status) {
+  if (!row.applicationNumber || !row.inventorsName || !row.department ||
+    !row.title || !row.campus || !row.filingDate || !row.filingFY ||
+    !row.filingAY || !row.status) {
     return null;
   }
 
@@ -51,38 +52,44 @@ const validatePatentRow = (row: any): PatentRow | null => {
     if (typeof dateStr === 'number') {
       const excelEpoch = new Date(1900, 0, 1);
       const date = new Date(excelEpoch.getTime() + (dateStr - 2) * 24 * 60 * 60 * 1000);
-      
+
       if (isNaN(date.getTime())) {
         return String(dateStr);
       }
-      
+
       const converted = date.toISOString().split('T')[0];
       return converted;
     }
-    
+
     const stringDate = String(dateStr);
     const parts = stringDate.split('/');
     if (parts.length === 3) {
       if (parts[0].length === 2) {
         const converted = `${parts[2]}-${parts[1]}-${parts[0]}`;
-        
+
         const date = new Date(converted);
         if (isNaN(date.getTime())) {
           return stringDate;
         }
-        
+
         return converted;
       }
     }
     return stringDate;
   };
 
-  // Convert inventorsName to inventors JSON format
+  // Convert inventorsName and inventorsEmail to inventors JSON format
   const inventorsName = row.inventorsName.toString().trim();
-  const inventorsArray = inventorsName.split(',').map((name: string) => ({
-    name: name.trim(),
-    email: ""
+  const inventorsEmail = row.inventorsEmail ? row.inventorsEmail.toString().trim() : "";
+
+  const nameArray = inventorsName.split(',').map((name: string) => name.trim());
+  const emailArray = inventorsEmail ? inventorsEmail.split(',').map((email: string) => email.trim()) : [];
+
+  const inventorsArray = nameArray.map((name: string, index: number) => ({
+    name: name,
+    email: emailArray[index] || ""
   }));
+
 
   return {
     applicationNumber: row.applicationNumber.toString().trim(),
@@ -152,16 +159,19 @@ router.post(
           .select()
           .from(patents)
           .where(eq(patents.applicationNumber, validatedRow.applicationNumber));
-        
+
         if (duplicate.length > 0) {
           results.failed++;
           results.errors.push(`Row ${i + 2}: Duplicate patent (application number already exists)`);
           continue;
         }
 
+        const patentId = crypto.randomUUID();
+
         await db
           .insert(patents)
           .values({
+            id: patentId,
             applicationNumber: validatedRow.applicationNumber,
             inventorsName: validatedRow.inventorsName,
             inventors: validatedRow.inventors,
@@ -183,6 +193,28 @@ router.post(
             applicationPublicationLink: validatedRow.applicationPublicationLink,
             form01Link: validatedRow.form01Link,
           });
+
+        // Insert inventors into patentInventors table if inventors data is provided
+        if (validatedRow.inventors) {
+          try {
+            const inventorsArray = JSON.parse(validatedRow.inventors);
+
+            if (Array.isArray(inventorsArray) && inventorsArray.length > 0) {
+              const inventorRecords = inventorsArray.map(inventor => ({
+                patentId: patentId,
+                name: inventor.name || '',
+                email: inventor.email || null,
+                department: validatedRow.department,
+                campus: validatedRow.campus,
+                affiliation: null,
+              }));
+
+              await db.insert(patentInventors).values(inventorRecords);
+            }
+          } catch (parseError) {
+            console.error(`Error parsing inventors JSON for patent ${validatedRow.applicationNumber}:`, parseError);
+          }
+        }
 
         results.successful++;
       } catch (error) {

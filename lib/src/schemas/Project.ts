@@ -23,9 +23,15 @@ export const projectSchema = z.object({
   fundingAgency: z.string().min(1, "Funding Agency is required"),
   fundingAgencyNature: z.enum(["public_sector", "private_industry"]),
   sanctionedAmount: z.string().min(1, "Sanctioned Amount is required"),
-  capexAmount: z.string().optional(),
-  opexAmount: z.string().optional(),
-  manpowerAmount: z.string().optional(),
+  capexAmount: z.string().optional().refine((val) => val === undefined || val === "" || !isNaN(Number(val)), {
+    message: "CAPEX Amount must be a valid number"
+  }),
+  opexAmount: z.string().optional().refine((val) => val === undefined || val === "" || !isNaN(Number(val)), {
+    message: "OPEX Amount must be a valid number"
+  }),
+  manpowerAmount: z.string().optional().refine((val) => val === undefined || val === "" || !isNaN(Number(val)), {
+    message: "Manpower Amount must be a valid number"
+  }),
   approvalDate: z.string().min(1, "Approval Date is required"),
   startDate: z.string().min(1, "Start Date is required"),
   endDate: z.string().min(1, "End Date is required"),
