@@ -50,7 +50,7 @@ router.post(
 
         if (
             form.allocationDeadline &&
-            Date.now() >= new Date(form.allocationDeadline).getTime()
+            Date.now() > new Date(form.allocationDeadline).getTime()
         ) {
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "Form Deadline is Over")

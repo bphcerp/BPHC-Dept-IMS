@@ -4,7 +4,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router-dom";
-import { AllocationForm, AllocationFormUserCheck, NewAllocationFormClientResponse } from "../../../../lib/src/types/allocationFormBuilder";
+import {
+  AllocationForm,
+  AllocationFormUserCheck,
+  NewAllocationFormClientResponse,
+} from "../../../../lib/src/types/allocationFormBuilder";
 import { FormTemplateFieldComponent } from "@/components/allocation/FormTemplateFieldComponent";
 import { toast } from "sonner";
 import { useForm, FormProvider } from "react-hook-form";
@@ -32,19 +36,25 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
   useEffect(() => {
     const fetchFormDetails = async () => {
       await api
-        .get<AllocationFormUserCheck>(`/allocation/builder/form/get/${id}?checkUserResponse=true`)
+        .get<AllocationFormUserCheck>(
+          `/allocation/builder/form/get/${id}?checkUserResponse=true`
+        )
         .then(({ data }) => {
           setForm(data);
-          if (data.userAlreadyResponded) toast.warning("You've already responded to this form")
+          if (data.userAlreadyResponded)
+            toast.warning("You've already responded to this form");
           if (!preview) {
             const defaultValues: { [key: string]: any } = {};
             data.template.fields.forEach((field: any) => {
               if (field.type === "TEACHING_ALLOCATION") {
-                defaultValues[`${field.id}_teachingAllocation`] = field.value || "";
+                defaultValues[`${field.id}_teachingAllocation`] =
+                  field.value || "";
               } else if (field.type === "PREFERENCE") {
                 for (let i = 0; i < (field.preferenceCount || 1); i++) {
-                  defaultValues[`${field.id}_preference_${i}`] = field.preferences?.[i]?.courseCode || "";
-                  defaultValues[`${field.id}_courseAgain_${i}`] = field.preferences?.[i]?.takenConsecutively || false;
+                  defaultValues[`${field.id}_preference_${i}`] =
+                    field.preferences?.[i]?.courseCode || "";
+                  defaultValues[`${field.id}_courseAgain_${i}`] =
+                    field.preferences?.[i]?.takenConsecutively || false;
                 }
               }
             });
@@ -69,14 +79,15 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
     fetchCourses();
   }, [id, preview]);
 
-
   const onSubmit = async (data: any) => {
     const responses: NewAllocationFormClientResponse[] = [];
     form?.template.fields.forEach((field) => {
       if (field.type === "TEACHING_ALLOCATION") {
         responses.push({
           templateFieldId: field.id,
-          teachingAllocation: parseFloat(data[`${field.id}_teachingAllocation`]),
+          teachingAllocation: parseFloat(
+            data[`${field.id}_teachingAllocation`]
+          ),
         });
       } else if (field.type === "PREFERENCE") {
         for (let i = 0; i < (field.preferenceCount || 1); i++) {
@@ -101,11 +112,25 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
       navigate(-1);
     } catch (error) {
       console.error("Error submitting form response:", error);
-      toast.error((error as AxiosError).response?.data as string ?? "Failed to submit form response.");
+      toast.error(
+        ((error as AxiosError).response?.data as string) ??
+          "Failed to submit form response."
+      );
     }
   };
-
-  if (form && !form.publishedDate) return <NotFoundPage />
+  if (
+    form &&
+    form.allocationDeadline &&
+    Date.now() > new Date(form.allocationDeadline).getTime()
+  )
+    return (
+      <div className="mx-auto flex max-w-4xl items-center justify-center py-10">
+        <div className="font=bold text-2xl">
+          Form is not currently accepting responses
+        </div>
+      </div>
+    );
+  if (form && !form.publishedDate) return <NotFoundPage />;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 md:p-6">
@@ -159,7 +184,10 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
             </form>
           ) : (
             <FormProvider {...methods}>
-              <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={methods.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 {form.template.fields.map((field) => (
                   <Card key={field.id} className="border-border">
                     <CardHeader className="gap-4 bg-muted/50 p-4">
