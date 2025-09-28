@@ -27,6 +27,7 @@ export const patentSchema = z.object({
   applicationPublicationLink: z.string().optional(),
   form01Link: z.string().optional(),
 });
+export const patentUpdateSchema = patentSchema.partial();
 
 export type Inventor = {
   name: string;

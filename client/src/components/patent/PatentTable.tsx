@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -18,12 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Check, X, Pen, ChevronDown, ArrowUp, ArrowDown, Download } from "lucide-react";
+import { Check, X, Pen, ChevronDown, ArrowUp, ArrowDown, Download, Calendar as CalendarIcon } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { useCallback } from "react";
 
 export type Patent = patentSchemas.Patent;
 
@@ -36,12 +34,157 @@ interface PatentTableProps {
   onEditSave?: (id: string, changes: Partial<Patent>) => Promise<void>;
 }
 
+type EditableInputCellProps = {
+  readonly value: string | number | undefined;
+  readonly onChange: (value: string | number) => void;
+  readonly autoFocus?: boolean;
+  readonly type?: 'text' | 'number' | 'date';
+  readonly className?: string;
+  readonly onFocus?: () => void;
+};
+
+function EditableInputCell({ value, onChange, autoFocus, type = 'text', className, onFocus }: EditableInputCellProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
+  return (
+    <Input
+      ref={inputRef}
+      type={type}
+      value={value ?? ''}
+      onChange={e => {
+        if (type === 'number') {
+          onChange(e.target.value === '' ? '' : Number(e.target.value));
+        } else {
+          onChange(e.target.value);
+        }
+      }}
+      className={className}
+      onFocus={onFocus}
+    />
+  );
+}
+
+type EditableCellProps = {
+  readonly isEditing: boolean;
+  readonly isFieldEditing: boolean;
+  readonly value: string;
+  readonly editValue: string | undefined;
+  readonly onEditChange: (val: string | number) => void;
+  readonly onFieldClick: () => void;
+  readonly className?: string;
+  readonly type?: 'text' | 'date';
+  readonly displayValue?: string;
+};
+
+function EditableCell({
+  isEditing,
+  isFieldEditing,
+  value,
+  editValue,
+  onEditChange,
+  onFieldClick,
+  className = "w-full",
+  type = 'text',
+  displayValue
+}: EditableCellProps) {
+  if (isEditing && isFieldEditing) {
+    return (
+      <EditableInputCell
+        value={editValue ?? value}
+        onChange={onEditChange}
+        autoFocus={true}
+        type={type}
+        className={className}
+        onFocus={() => onFieldClick()}
+      />
+    );
+  } else if (isEditing) {
+    return (
+      <button
+        onClick={onFieldClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFieldClick();
+          }
+        }}
+        className={`cursor-pointer hover:bg-gray-100 p-1 rounded ${className}`}
+        type="button"
+      >
+        {displayValue ?? editValue ?? value}
+      </button>
+    );
+  }
+  return <div className={className}>{displayValue ?? value}</div>;
+}
+
+type EditableSelectCellProps = {
+  readonly isEditing: boolean;
+  readonly isFieldEditing: boolean;
+  readonly value: string;
+  readonly editValue: string | undefined;
+  readonly onEditChange: (val: string) => void;
+  readonly onFieldClick: () => void;
+  readonly options: readonly { value: string; label: string }[];
+};
+
+function EditableSelectCell({
+  isEditing,
+  isFieldEditing,
+  value,
+  editValue,
+  onEditChange,
+  onFieldClick,
+  options
+}: EditableSelectCellProps) {
+  if (isEditing && isFieldEditing) {
+    return (
+      <select
+        value={editValue ?? value}
+        onChange={(e) => onEditChange(e.target.value)}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+        autoFocus
+        onFocus={() => onFieldClick()}
+      >
+        {options.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  } else if (isEditing) {
+    return (
+      <button
+        onClick={onFieldClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onFieldClick();
+          }
+        }}
+        className="cursor-pointer hover:bg-gray-100 p-1 rounded"
+        type="button"
+      >
+        {editValue ?? value}
+      </button>
+    );
+  }
+  return <div>{value}</div>;
+}
+
 const PatentTable = ({ patents, loading, error, onRowClick, editable = false, onEditSave }: PatentTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<Patent>>({});
+  const [initialEditState, setInitialEditState] = useState<Partial<Patent> | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const formatDate = (dateString: string | undefined) => {
@@ -54,17 +197,41 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
   };
 
 
-  const handleSave = useCallback(async () => {
-    if (editingId && onEditSave) {
-      await onEditSave(editingId, editValues);
-      setEditingId(null);
-      setEditValues({});
+  const handleEditChange = useCallback(<K extends keyof Patent>(key: K, value: Patent[K]) => {
+    setEditValues(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleSave = useCallback(async (id: string) => {
+    if (!onEditSave || !initialEditState) return;
+    const changes: Record<string, string | number | boolean | undefined> = {};
+    (Object.keys(editValues) as (keyof Patent)[]).forEach((key) => {
+      const value = editValues[key];
+      if (
+        value !== initialEditState[key] &&
+        (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || value === undefined)
+      ) {
+        changes[key] = value;
+      }
+    });
+    if (Object.keys(changes).length > 0) {
+      try {
+        await onEditSave(id, changes);
+      } catch {
+        alert('Failed to save changes. Please try again.');
+        return;
+      }
     }
-  }, [editingId, onEditSave, editValues]);
+    setEditingId(null);
+    setEditingField(null);
+    setEditValues({});
+    setInitialEditState(null);
+  }, [onEditSave, initialEditState, editValues]);
 
   const handleCancel = () => {
     setEditingId(null);
+    setEditingField(null);
     setEditValues({});
+    setInitialEditState(null);
   };
 
   const isWithinRangeDate = (row: Row<Patent>, columnId: string, value: [Date, Date]) => {
@@ -167,41 +334,201 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
       {
         accessorKey: "applicationNumber",
         header: "Application Number",
-        cell: ({ row }) => <div>{row.getValue("applicationNumber")}</div>,
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-applicationNumber`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("applicationNumber");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.applicationNumber}
+              onEditChange={(val) => handleEditChange('applicationNumber', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full"
+            />
+          );
+        },
       },
       {
         accessorKey: "inventorsName",
         header: "Inventors Name",
-        cell: ({ row }) => (
-          <div className="max-w-[200px] truncate">{row.getValue("inventorsName")}</div>
-        ),
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-inventorsName`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("inventorsName");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.inventorsName}
+              onEditChange={(val) => handleEditChange('inventorsName', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full max-w-[200px]"
+            />
+          );
+        },
       },
       {
         accessorKey: "department",
         header: "Department",
-        cell: ({ row }) => <div>{row.getValue("department")}</div>,
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-department`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("department");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.department}
+              onEditChange={(val) => handleEditChange('department', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full"
+            />
+          );
+        },
       },
       {
         accessorKey: "title",
         header: "Title",
-        cell: ({ row }) => (
-          <div className="max-w-[300px] truncate">{row.getValue("title")}</div>
-        ),
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-title`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("title");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.title}
+              onEditChange={(val) => handleEditChange('title', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full max-w-[300px]"
+            />
+          );
+        },
       },
       {
         accessorKey: "campus",
         header: "Campus",
-        cell: ({ row }) => <div>{row.getValue("campus")}</div>,
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-campus`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("campus");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.campus}
+              onEditChange={(val) => handleEditChange('campus', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full"
+            />
+          );
+        },
       },
       {
         accessorKey: "filingDate",
         header: "Filing Date",
-        cell: ({ row }) => <div>{formatDate(row.getValue("filingDate"))}</div>,
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-filingDate`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("filingDate");
+
+          return (
+            <EditableCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.filingDate}
+              onEditChange={(val) => handleEditChange('filingDate', val as string)}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              className="w-full"
+              type="date"
+              displayValue={formatDate(editValues.filingDate ?? (String(value)))}
+            />
+          );
+        },
       },
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => <div>{row.getValue("status")}</div>,
+        cell: ({ row }) => {
+          const isEditing = editingId === row.original.id;
+          const fieldKey = `${row.original.id}-status`;
+          const isFieldEditing = editingField === fieldKey;
+          const value = row.getValue("status");
+
+          const statusOptions = [
+            { value: "Pending", label: "Pending" },
+            { value: "Filed", label: "Filed" },
+            { value: "Granted", label: "Granted" },
+            { value: "Abandoned", label: "Abandoned" },
+            { value: "Rejected", label: "Rejected" }
+          ] as const;
+
+          return (
+            <EditableSelectCell
+              isEditing={isEditing}
+              isFieldEditing={isFieldEditing}
+              value={String(value)}
+              editValue={editValues.status}
+              onEditChange={(val) => handleEditChange('status', val as "Pending" | "Filed" | "Granted" | "Abandoned" | "Rejected")}
+              onFieldClick={() => {
+                setEditingField(fieldKey);
+                if (!initialEditState) {
+                  setInitialEditState({ ...row.original });
+                }
+              }}
+              options={statusOptions}
+            />
+          );
+        },
       },
       ...(editable ? [{
         id: "actions",
@@ -212,7 +539,7 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
             <div className="flex space-x-2">
               {isEditing ? (
                 <>
-                  <Button size="sm" onClick={() => void handleSave()}>
+                  <Button size="sm" onClick={() => void handleSave(row.original.id)}>
                     <Check className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleCancel}>
@@ -220,7 +547,10 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
                   </Button>
                 </>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => setEditingId(row.original.id)}>
+                <Button size="sm" variant="outline" onClick={() => {
+                  setEditingId(row.original.id);
+                  setInitialEditState({ ...row.original });
+                }}>
                   <Pen className="h-4 w-4" />
                 </Button>
               )}
@@ -229,7 +559,7 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
         },
       }] : []),
     ],
-    [editable, editingId, handleSave]
+    [editable, editingId, editingField, handleSave, editValues, handleEditChange, initialEditState]
   );
 
   const table = useReactTable({
@@ -304,19 +634,32 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
                       {header.isPlaceholder ? null : (
                         <>
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getCanSort() && (
-                            header.column.getIsSorted() === 'asc' ? (
-                              <ArrowUp className="w-5 h-5 text-primary transition-opacity duration-200 opacity-100" />
-                            ) : header.column.getIsSorted() === 'desc' ? (
-                              <ArrowDown className="w-5 h-5 text-primary transition-opacity duration-200 opacity-100" />
-                            ) : (
-                              <ArrowUp className="w-5 h-5 transition-opacity duration-200 opacity-0 group-hover:opacity-40" />
-                            )
-                          )}
+                          {header.column.getCanSort() && (() => {
+                            const sortDirection = header.column.getIsSorted();
+                            if (sortDirection === 'asc') {
+                              return <ArrowUp className="w-5 h-5 text-primary transition-opacity duration-200 opacity-100" />;
+                            }
+                            if (sortDirection === 'desc') {
+                              return <ArrowDown className="w-5 h-5 text-primary transition-opacity duration-200 opacity-100" />;
+                            }
+                            return <ArrowUp className="w-5 h-5 transition-opacity duration-200 opacity-0 group-hover:opacity-40" />;
+                          })()}
                         </>
                       )}
                     </div>
-                    <div className="mt-1" onClick={e => e.stopPropagation()}>{renderFilter(header.column)}</div>
+                    <button
+                      className="mt-1"
+                      onClick={e => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      type="button"
+                    >
+                      {renderFilter(header.column)}
+                    </button>
                   </TableHead>
                 ))}
               </TableRow>
@@ -374,7 +717,12 @@ const PatentTable = ({ patents, loading, error, onRowClick, editable = false, on
   );
 }
 
-function DateInputWithCalendar({ value, onChange }: { value: string, onChange: (date: string) => void }) {
+type DateInputWithCalendarProps = {
+  readonly value: string;
+  readonly onChange: (date: string) => void;
+};
+
+function DateInputWithCalendar({ value, onChange }: DateInputWithCalendarProps) {
   const [open, setOpen] = useState(false);
   const selectedDate = value ? new Date(value) : undefined;
   return (
