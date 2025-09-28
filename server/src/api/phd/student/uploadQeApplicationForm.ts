@@ -99,7 +99,8 @@ router.post(
 
         if (existingApplication) {
             if (
-                existingApplication.status === "resubmit" &&
+                (existingApplication.status === "resubmit" ||
+                    existingApplication.status === "draft") &&
                 body.applicationId === existingApplication.id
             ) {
                 await db.transaction(async (tx) => {
@@ -113,8 +114,14 @@ router.post(
                         .set({
                             qualifyingArea1: body.qualifyingArea1,
                             qualifyingArea2: body.qualifyingArea2,
-                            status: "applied",
-                            comments: null,
+                            status:
+                                existingApplication.status === "resubmit"
+                                    ? "applied"
+                                    : "draft", // Keep as draft for draft applications
+                            comments:
+                                existingApplication.status === "resubmit"
+                                    ? null
+                                    : existingApplication.comments,
                             applicationFormFileId:
                                 newFileIds.applicationForm ??
                                 existingApplication.applicationFormFileId,
@@ -138,18 +145,22 @@ router.post(
                                 existingApplication.mastersReportFileId,
                         })
                         .where(eq(phdExamApplications.id, body.applicationId!));
-                    await completeTodo(
-                        {
-                            module: modules[4],
-                            completionEvent: `student-resubmit:${existingApplication.id}`,
-                            assignedTo: userEmail,
-                        },
-                        tx
-                    );
+                    if (existingApplication.status === "resubmit")
+                        await completeTodo(
+                            {
+                                module: modules[4],
+                                completionEvent: `student-resubmit:${existingApplication.id}`,
+                                assignedTo: userEmail,
+                            },
+                            tx
+                        );
                 });
                 res.status(200).json({
                     success: true,
-                    message: "Application resubmitted successfully",
+                    message:
+                        existingApplication.status === "resubmit"
+                            ? "Application resubmitted successfully"
+                            : "Application updated successfully",
                 });
             } else {
                 throw new HttpError(
@@ -182,6 +193,7 @@ router.post(
                     studentEmail: userEmail,
                     qualifyingArea1: body.qualifyingArea1,
                     qualifyingArea2: body.qualifyingArea2,
+                    status: "draft", // Set initial status to draft
                     applicationFormFileId: insertedFileIds.applicationForm,
                     qualifyingArea1SyllabusFileId:
                         insertedFileIds.qualifyingArea1Syllabus,
@@ -191,13 +203,12 @@ router.post(
                     twelfthReportFileId: insertedFileIds.twelfthReport,
                     undergradReportFileId: insertedFileIds.undergradReport,
                     mastersReportFileId: insertedFileIds.mastersReport,
-                    status: "applied",
                     attemptNumber: studentProfile.qeAttemptCount + 1,
                 });
             });
             res.status(200).json({
                 success: true,
-                message: "Application submitted successfully",
+                message: "Application saved as draft successfully",
             });
         }
     })

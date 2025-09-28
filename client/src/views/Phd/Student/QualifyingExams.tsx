@@ -33,7 +33,7 @@ interface ApplicationStatus {
   id: number;
   examId: number;
   examName: string;
-  status: "applied" | "verified" | "resubmit";
+  status: "draft" | "applied" | "verified" | "resubmit";
   qualifyingArea1: string;
   qualifyingArea2: string;
   comments?: string;
@@ -100,6 +100,12 @@ const QualifyingExams = () => {
 
   const getStatusBadge = (status: ApplicationStatus["status"]) => {
     switch (status) {
+      case "draft":
+        return (
+          <Badge variant="outline" className="border-gray-400 text-gray-600">
+            Draft
+          </Badge>
+        );
       case "applied":
         return <Badge className="bg-blue-100 text-blue-800">Applied</Badge>;
       case "verified":
@@ -115,7 +121,7 @@ const QualifyingExams = () => {
     const existingApplication = applicationsData?.applications?.find(
       (app) => app.examId === exam.id
     );
-    if (existingApplication) {
+    if (existingApplication && existingApplication.status !== "draft") {
       toast.error("You have already submitted an application for this exam");
       return;
     }
@@ -143,6 +149,55 @@ const QualifyingExams = () => {
     setSelectedExam(examForResubmission);
     setSelectedApplicationForEdit(application);
     setShowApplicationDialog(true);
+  };
+
+  const handleEditDraftClick = (application: ApplicationStatus) => {
+    // Check if deadline has passed
+    if (new Date(application.submissionDeadline) < new Date()) {
+      toast.error("The deadline for editing has passed.");
+      return;
+    }
+
+    // Create exam object for the form
+    const examForEdit: QualifyingExam = {
+      id: application.examId,
+      examName: application.examName,
+      submissionDeadline: application.submissionDeadline,
+      examStartDate: application.examStartDate,
+      examEndDate: application.examEndDate,
+      vivaDate: application.vivaDate,
+      semester: application.semester,
+    };
+    setSelectedExam(examForEdit);
+    setSelectedApplicationForEdit(application);
+    setShowApplicationDialog(true);
+  };
+
+  const handleFinalSubmitClick = async (application: ApplicationStatus) => {
+    // Check if deadline has passed
+    if (new Date(application.submissionDeadline) < new Date()) {
+      toast.error("The submission deadline has passed.");
+      return;
+    }
+
+    try {
+      const response = await api.post<{
+        success: boolean;
+        message: string;
+      }>("/phd/student/finalSubmitQeApplication", {
+        applicationId: application.id,
+      });
+
+      if (response.data.success) {
+        toast.success("Application submitted successfully!");
+        void refetchApplications();
+      }
+    } catch (error) {
+      toast.error(
+        (error as { response?: { data?: string } }).response?.data ||
+          "Failed to submit application"
+      );
+    }
   };
 
   const handleApplicationSuccess = () => {
@@ -186,9 +241,14 @@ const QualifyingExams = () => {
                 {examsData.exams.map((exam) => {
                   const isDeadlinePassed =
                     new Date(exam.submissionDeadline) < new Date();
-                  const hasApplied = applicationsData?.applications?.some(
-                    (app) => app.examId === exam.id
-                  );
+                  const existingApplication =
+                    applicationsData?.applications?.find(
+                      (app) => app.examId === exam.id
+                    );
+                  const hasApplied =
+                    existingApplication &&
+                    existingApplication.status !== "draft";
+                  const hasDraft = existingApplication?.status === "draft";
                   return (
                     <div
                       key={exam.id}
@@ -203,6 +263,14 @@ const QualifyingExams = () => {
                             {hasApplied && (
                               <Badge className="bg-green-100 text-green-800">
                                 Applied
+                              </Badge>
+                            )}
+                            {hasDraft && (
+                              <Badge
+                                variant="outline"
+                                className="border-gray-400 text-gray-600"
+                              >
+                                Draft Saved
                               </Badge>
                             )}
                             {isDeadlinePassed && (
@@ -260,7 +328,13 @@ const QualifyingExams = () => {
                         </div>
                         <div className="ml-6">
                           <Button
-                            onClick={() => handleApplyClick(exam)}
+                            onClick={() => {
+                              if (hasDraft && existingApplication) {
+                                handleEditDraftClick(existingApplication);
+                              } else {
+                                handleApplyClick(exam);
+                              }
+                            }}
                             disabled={isDeadlinePassed || hasApplied}
                             className={
                               isDeadlinePassed || hasApplied
@@ -268,7 +342,11 @@ const QualifyingExams = () => {
                                 : ""
                             }
                           >
-                            {hasApplied ? "Already Applied" : "Apply"}
+                            {hasApplied
+                              ? "Already Applied"
+                              : hasDraft
+                                ? "Continue Draft"
+                                : "Apply"}
                           </Button>
                         </div>
                       </div>
@@ -376,6 +454,28 @@ const QualifyingExams = () => {
                                 </div>
                               )}
                             </div>
+                          ) : application.status === "draft" ? (
+                            <div className="flex flex-col items-start gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleEditDraftClick(application)
+                                }
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Draft
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  void handleFinalSubmitClick(application)
+                                }
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Final Submit
+                              </Button>
+                            </div>
                           ) : (
                             "-"
                           )}
@@ -401,12 +501,14 @@ const QualifyingExams = () => {
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedApplicationForEdit
+              {selectedApplicationForEdit?.status === "resubmit"
                 ? `Resubmit Application for ${selectedExam?.examName}`
-                : `Apply for ${selectedExam?.examName}`}
+                : selectedApplicationForEdit?.status === "draft"
+                  ? `Edit Draft Application for ${selectedExam?.examName}`
+                  : `Apply for ${selectedExam?.examName}`}
             </DialogTitle>
             {/* DRC comments */}
-            {selectedApplicationForEdit ? (
+            {selectedApplicationForEdit?.status === "resubmit" ? (
               <DialogDescription>
                 <div className="flex items-start rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-600">
                   <AlertCircle className="mr-2 h-5 w-5 flex-shrink-0" />
