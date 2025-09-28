@@ -13,6 +13,17 @@ import { phdRequestSchemas } from "lib";
 
 const router = express.Router();
 
+const anytimeRequests = phdRequestSchemas.phdRequestTypes.filter(
+    (type) =>
+        ![
+            "pre_submission",
+            "draft_notice",
+            "change_of_title",
+            "thesis_submission",
+            "final_thesis_submission",
+        ].includes(type)
+);
+
 router.get(
     "/",
     checkAccess("phd-request:supervisor:view"),
@@ -26,9 +37,9 @@ router.get(
                     orderBy: [desc(phdProposals.createdAt)],
                     limit: 1,
                 },
+                // Fetch all requests to determine the correct state
                 requests: {
                     orderBy: [desc(phdRequests.createdAt)],
-                    limit: 1,
                     with: {
                         reviews: {
                             orderBy: [desc(phdRequestReviews.createdAt)],
@@ -45,13 +56,14 @@ router.get(
 
         const studentStatuses = students.map((student) => {
             let currentStatus = "No Activity";
-            let canInitiateRequest = false;
             let canResubmitRequest = false;
             let reversionComments: string | null = null;
             let requestId: number | null = null;
+            let availableRequestTypes: string[] = [];
 
             const latestProposal = student.proposals[0];
-            const latestRequest = student.requests[0];
+            const allRequests = student.requests;
+            const latestRequest = allRequests[0];
 
             const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
                 [
@@ -60,10 +72,19 @@ router.get(
                     "reverted_by_hod",
                 ];
 
-            if (latestRequest) {
+            const activeRequest = allRequests.find(
+                (req) =>
+                    !revertableStatuses.includes(req.status) &&
+                    req.status !== "completed"
+            );
+
+            if (activeRequest) {
+                currentStatus = `Request: ${activeRequest.requestType.replace(/_/g, " ")} - ${activeRequest.status.replace(/_/g, " ")}`;
+                requestId = activeRequest.id;
+            } else if (latestRequest) {
+                // No active, check latest for reverted or completed status
                 requestId = latestRequest.id;
                 currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-
                 if (revertableStatuses.includes(latestRequest.status)) {
                     canResubmitRequest = true;
                     reversionComments =
@@ -82,38 +103,28 @@ router.get(
                 currentStatus = "Awaiting QE Application";
             }
 
-            const completedRequestStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
-                ["completed"];
+            // Determine available request types only if no request is active
+            if (!activeRequest && latestProposal?.status === "completed") {
+                const completedTypes = new Set(
+                    allRequests
+                        .filter((r) => r.status === "completed")
+                        .map((r) => r.requestType)
+                );
 
-            // Default eligibility for new requests
-            if (latestProposal?.status === "completed") {
-                if (
-                    !latestRequest ||
-                    completedRequestStatuses.includes(latestRequest.status)
-                ) {
-                    canInitiateRequest = true;
+                availableRequestTypes.push(...anytimeRequests);
+
+                if (!completedTypes.has("pre_submission")) {
+                    availableRequestTypes.push("pre_submission");
+                } else if (!completedTypes.has("draft_notice")) {
+                    availableRequestTypes.push("draft_notice");
+                } else if (!completedTypes.has("thesis_submission")) {
+                    availableRequestTypes.push(
+                        "thesis_submission",
+                        "change_of_title"
+                    );
+                } else if (!completedTypes.has("final_thesis_submission")) {
+                    availableRequestTypes.push("final_thesis_submission");
                 }
-            }
-
-            // Override for final thesis submission: can only be initiated after thesis_submission is complete.
-            if (
-                latestRequest?.requestType === "thesis_submission" &&
-                latestRequest.status === "completed"
-            ) {
-                canInitiateRequest = true;
-            } else if (
-                latestRequest &&
-                latestRequest.requestType !== "thesis_submission" &&
-                latestRequest.status === "completed"
-            ) {
-                // can still initiate other requests
-                canInitiateRequest = true;
-            } else if (
-                latestRequest &&
-                !completedRequestStatuses.includes(latestRequest.status)
-            ) {
-                // if there's any active request, cannot initiate a new one
-                canInitiateRequest = false;
             }
 
             return {
@@ -121,10 +132,10 @@ router.get(
                 name: student.name,
                 idNumber: student.idNumber,
                 currentStatus,
-                canInitiateRequest,
                 canResubmitRequest,
                 reversionComments,
                 requestId,
+                availableRequestTypes,
             };
         });
         res.status(200).json(studentStatuses);

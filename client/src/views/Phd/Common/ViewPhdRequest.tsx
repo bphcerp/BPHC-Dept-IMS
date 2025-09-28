@@ -111,9 +111,11 @@ const ViewPhdRequest: React.FC = () => {
       request.student.email === authState.email &&
       request.status === "student_review"
     ) {
-      return (
-        <StudentFinalThesisForm request={request} onSuccess={handleSuccess} />
-      );
+      if (request.requestType === "final_thesis_submission") {
+        return (
+          <StudentFinalThesisForm request={request} onSuccess={handleSuccess} />
+        );
+      }
     }
     if (
       request.supervisor.email === authState.email &&

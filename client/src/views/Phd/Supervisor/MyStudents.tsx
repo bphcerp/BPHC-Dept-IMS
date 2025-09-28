@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
@@ -41,6 +41,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -49,19 +50,11 @@ interface StudentStatus {
   name: string | null;
   idNumber: string | null;
   currentStatus: string;
-  canInitiateRequest: boolean;
   canResubmitRequest: boolean;
   reversionComments: string | null;
   requestId: number | null;
+  availableRequestTypes: string[];
 }
-
-const postProposalRequestOrder: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
-  [
-    "pre_submission",
-    "draft_notice",
-    "thesis_submission",
-    "final_thesis_submission",
-  ];
 
 const MyStudents: React.FC = () => {
   const navigate = useNavigate();
@@ -79,38 +72,13 @@ const MyStudents: React.FC = () => {
     },
   });
 
-  const availableRequests = useMemo(() => {
-    if (!selectedStudent) return [];
-    const status = selectedStudent.currentStatus.toLowerCase();
-
-    // Requests that can be initiated anytime after proposal completion
-    const anytimeRequests = phdRequestSchemas.phdRequestTypes.filter(
-      (type) => !postProposalRequestOrder.includes(type)
-    );
-
-    let availablePostProposal: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
-      [];
-
-    if (status.includes("proposal: completed")) {
-      availablePostProposal.push("pre_submission");
-    } else if (status.includes("request: pre submission - completed")) {
-      availablePostProposal.push("draft_notice");
-    } else if (status.includes("request: draft notice - completed")) {
-      availablePostProposal.push("change_of_title", "thesis_submission");
-    } else if (status.includes("request: thesis submission - completed")) {
-      availablePostProposal.push("final_thesis_submission");
-    }
-
-    return [...availablePostProposal, ...anytimeRequests];
-  }, [selectedStudent]);
-
   const handleOpenDialog = (student: StudentStatus) => {
-    if (student.canInitiateRequest) {
+    if (student.availableRequestTypes.length > 0) {
       setSelectedStudent(student);
       setIsRequestDialogOpen(true);
     } else {
       toast.info(
-        "This student already has an active request or is not eligible for a new one."
+        "This student already has an active request or is not eligible for a new one at this time."
       );
     }
   };
@@ -180,16 +148,18 @@ const MyStudents: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span>{student.currentStatus}</span>
                         {student.reversionComments && (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <MessageCircleWarning className="h-4 w-4 text-destructive" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">
-                                {student.reversionComments}
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <MessageCircleWarning className="h-4 w-4 text-destructive" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  {student.reversionComments}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     </TableCell>
@@ -226,7 +196,7 @@ const MyStudents: React.FC = () => {
                           variant="default"
                           size="sm"
                           onClick={() => handleOpenDialog(student)}
-                          disabled={!student.canInitiateRequest}
+                          disabled={student.availableRequestTypes.length === 0}
                         >
                           <UserPlus className="mr-2 h-4 w-4" />
                           Initiate Request
@@ -261,7 +231,7 @@ const MyStudents: React.FC = () => {
                 <SelectValue placeholder="Select a request type..." />
               </SelectTrigger>
               <SelectContent>
-                {availableRequests.map((type) => (
+                {selectedStudent?.availableRequestTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type
                       .replace(/_/g, " ")

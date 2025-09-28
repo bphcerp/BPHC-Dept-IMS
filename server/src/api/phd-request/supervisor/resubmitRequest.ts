@@ -12,9 +12,10 @@ import {
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import fs from "fs/promises";
 
 const router = express.Router();
 
@@ -33,6 +34,8 @@ router.post(
 
         const supervisorEmail = req.user!.email;
         const uploadedFiles = req.files as Express.Multer.File[];
+
+        const oldFilePaths: string[] = [];
 
         await db.transaction(async (tx) => {
             const request = await tx.query.phdRequests.findFirst({
@@ -59,7 +62,31 @@ router.post(
                 );
             }
 
+            // If new files are uploaded, delete the old ones.
             if (uploadedFiles && uploadedFiles.length > 0) {
+                const oldDocs = await tx.query.phdRequestDocuments.findMany({
+                    where: eq(phdRequestDocuments.requestId, requestId),
+                    columns: { fileId: true },
+                });
+
+                if (oldDocs.length > 0) {
+                    const oldFileIds = oldDocs.map((doc) => doc.fileId);
+                    const oldFileRecords = await tx
+                        .select({ path: files.filePath })
+                        .from(files)
+                        .where(inArray(files.id, oldFileIds));
+                    oldFileRecords.forEach((file) =>
+                        oldFilePaths.push(file.path)
+                    );
+
+                    // Delete old document associations and file records
+                    await tx
+                        .delete(phdRequestDocuments)
+                        .where(eq(phdRequestDocuments.requestId, requestId));
+                    await tx.delete(files).where(inArray(files.id, oldFileIds));
+                }
+
+                // Insert new files
                 const fileInserts = uploadedFiles.map((file) => ({
                     userEmail: supervisorEmail,
                     filePath: file.path,
@@ -126,6 +153,15 @@ router.post(
                 );
             }
         });
+
+        // After transaction succeeds, delete old files from disk
+        for (const path of oldFilePaths) {
+            try {
+                await fs.unlink(path);
+            } catch (err) {
+                console.error(`Failed to delete old file: ${path}`, err);
+            }
+        }
 
         res.status(200).json({
             success: true,

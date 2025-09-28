@@ -87,7 +87,8 @@ export const SupervisorResubmitForm: React.FC<SupervisorResubmitFormProps> = ({
               accept={{ "application/pdf": [] }}
             />
             <p className="mt-1 text-sm text-muted-foreground">
-              Upload any new documents if required (max 5 files, 2MB each).
+              Uploading new files will replace all previous documents for this
+              request.
             </p>
           </div>
           <div>

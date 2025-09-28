@@ -13,11 +13,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { phdRequestSchemas } from "lib";
 
 interface PhdRequestDetails {
   id: number;
   requestType: string;
-  status: string;
+  status: (typeof phdRequestSchemas.phdRequestStatuses)[number];
   comments: string | null;
   createdAt: string;
   student: { name: string; email: string };
