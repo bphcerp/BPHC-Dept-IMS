@@ -5,6 +5,8 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { allocationFormResponseSchema } from "node_modules/lib/src/schemas/AllocationFormBuilder.ts";
+import { completeTodo } from "@/lib/todos/index.ts";
+import assert from "assert";
 
 const router = express.Router();
 
@@ -12,8 +14,8 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
+        assert(req.user);
         const parsed = allocationFormResponseSchema.parse(req.body);
-
         const form = await db.query.allocationForm.findFirst({
             where: (f, { eq }) => eq(f.id, parsed.formId),
         });
@@ -23,7 +25,9 @@ router.post(
         }
 
         if (!form.publishedDate) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Form not published"));
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Form not published")
+            );
         }
 
         const formResponseExists =
@@ -54,6 +58,10 @@ router.post(
                 })
             );
             await Promise.all(insertPromises);
+            await completeTodo({
+                module: "Course Allocation",
+                completionEvent: `preference submission by ${req.user!.email}`,
+            });
         });
 
         res.status(201).send({

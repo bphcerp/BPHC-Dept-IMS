@@ -8,6 +8,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Dialog as UIDialog,
+  DialogContent as UIDialogContent,
+  DialogHeader as UIDialogHeader,
+  DialogTitle as UIDialogTitle,
+} from "@/components/ui/dialog";
+import { useCallback, useEffect, useState, lazy, Suspense } from "react";
+
+const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,11 +34,25 @@ import {
   semesterTypeMap,
 } from "../../../../lib/src/types/allocation";
 import { AllocationForm } from "../../../../lib/src/types/allocationFormBuilder";
-import { useCallback, useEffect, useState } from "react";
+import { useTheme } from "@/hooks/use-theme";
+import { DEPARTMENT_NAME_FULL, FRONTEND_URL } from "@/lib/constants";
 
+const DEFAULT_EMAIL_BODY = `Dear Professor/Mr./Ms.,
+
+Please fill your course preferences for the upcoming semester. Ignore this email if you have alread filled your preferences.
+
+You may access the portal using the following link: ${FRONTEND_URL}
+
+Best regards,  
+Team IMS  
+${DEPARTMENT_NAME_FULL ?? ""}  
+BPHC.
+`;
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const editorTheme = useTheme();
 
   const { data: latestSemester, isLoading } = useQuery({
     queryKey: ["latest-semester"],
@@ -58,9 +81,16 @@ export const AllocationOverview = () => {
   });
 
   const publishFormMutation = useMutation({
-    mutationFn: ({ allocationDeadline }: { allocationDeadline: string }) =>
+    mutationFn: ({
+      allocationDeadline,
+      emailBody,
+    }: {
+      allocationDeadline: string;
+      emailBody: string;
+    }) =>
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
         allocationDeadline,
+        emailBody,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
@@ -90,11 +120,13 @@ export const AllocationOverview = () => {
   } = useForm({
     defaultValues: {
       allocationDeadline: "",
+      emailBody: DEFAULT_EMAIL_BODY,
     },
     onSubmit: ({ value }) => {
       if (value.allocationDeadline && latestSemester?.form?.id) {
         publishFormMutation.mutate({
           allocationDeadline: value.allocationDeadline,
+          emailBody: value.emailBody,
         });
       }
     },
@@ -192,8 +224,73 @@ export const AllocationOverview = () => {
                         </div>
                       )}
                     </PublishFormField>
+                    {previewOpen && (
+                      <UIDialog
+                        open={previewOpen}
+                        modal
+                        onOpenChange={(open) => {
+                          setPreviewOpen(open);
+                        }}
+                      >
+                        <UIDialogContent className="w-screen max-w-full">
+                          <UIDialogHeader>
+                            <UIDialogTitle>Edit Email</UIDialogTitle>
+                          </UIDialogHeader>
+                          <div className="py-2" data-color-mode={editorTheme}>
+                            <PublishFormField name="emailBody">
+                              {(field) => (
+                                <div className="relative h-full">
+                                  <Suspense
+                                    fallback={
+                                      <div className="w-full text-center">
+                                        Loading editor...
+                                      </div>
+                                    }
+                                  >
+                                    <MDEditor
+                                      value={field.state.value}
+                                      onChange={(val) =>
+                                        field.handleChange(val ?? "")
+                                      }
+                                      height={400}
+                                      preview="live"
+                                      commandsFilter={(command) =>
+                                        command.name !== "fullscreen"
+                                          ? command
+                                          : false
+                                      }
+                                    />
+                                  </Suspense>
+                                </div>
+                              )}
+                            </PublishFormField>
+                          </div>
+                          <Button
+                            className="mt-2"
+                            onClick={() => setPreviewOpen(false)}
+                          >
+                            Done
+                          </Button>
+                          <style>
+                            {`
+                      .wmde-markdown ul { list-style-type: disc; margin-left: 1.5rem; }
+                      .wmde-markdown ol { list-style-type: decimal; margin-left: 1.5rem; }
+                    `}
+                          </style>
+                        </UIDialogContent>
+                      </UIDialog>
+                    )}
                   </form>
                   <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (!previewOpen) setPreviewOpen(true);
+                      }}
+                    >
+                      Preview Email
+                    </Button>
                     <PublishFormSubscribe
                       selector={(state) => [
                         state.values.allocationDeadline,

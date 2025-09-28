@@ -17,7 +17,7 @@ export const allocationFormResponsesClientSchema = z.object({
     courseCode: z.string().optional(),
     preference: z.number().int().optional(),
     takenConsecutively: z.boolean().optional(),
-})
+});
 
 export const allocationFormResponseSchema = z.object({
     formId: z.string().uuid(),
@@ -74,9 +74,9 @@ export const allocationFormSchema = z.object({
     // publishedDate: z.coerce.date().optional(),
 });
 
-
 export const allocationFormPublishSchema = z.object({
     allocationDeadline: z.coerce.date().optional(),
+    emailBody: z.string().email(),
 });
 
 export const updateAllocationFormSchema = allocationFormSchema
