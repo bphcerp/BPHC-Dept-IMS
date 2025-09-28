@@ -130,5 +130,9 @@ export const assignInstructorBodySchema = z.object({
 export const dismissInstructorBodySchema = assignInstructorBodySchema;
 
 export const getLatestSemesterQuerySchema = z.object({
-    minimal: z.coerce.boolean().optional()
-})
+    minimal: z.coerce.boolean().optional(),
+});
+
+export const getInstructorDetailsQuerySchema = z.object({
+    email: z.string().email(),
+});

@@ -156,12 +156,72 @@ export type AllocationResponse = {
     courseCode: string;
     sections: {
         id: string;
-        name: string;
         type: (typeof sectionTypes)[number];
         masterId: string;
+        createdAt: string;
         instructors: {
             name: string | null;
             email: string;
         }[];
     }[];
 } | null;
+
+export type InstructorAllocationSection = {
+    id: string;
+    type: (typeof sectionTypes)[number];
+    masterId: string;
+    createdAt: Date;
+    instructors: {
+        sectionId: string;
+        instructorEmail: string;
+        createdAt: Date;
+        instructor: {
+            email: string;
+            name: string | null;
+            phone: string | null;
+            designation: string | null;
+            department: string | null;
+        };
+    }[];
+};
+
+export type InstructorAllocationMaster = {
+    id: string;
+    semesterId: string;
+    ic: string;
+    courseCode: string;
+    course: {
+        code: string;
+        name: string;
+        lectureUnits: number;
+        practicalUnits: number;
+        totalUnits: number | null;
+        offeredAs: "CDC" | "Elective";
+        offeredTo: "FD" | "HD";
+        offeredAlsoBy: string[] | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+    };
+    sections: Record<
+        (typeof sectionTypes)[number],
+        InstructorAllocationSection[]
+    >;
+};
+
+export type InstructorAllocationSections = Record<
+    (typeof sectionTypes)[number],
+    {
+        type: (typeof sectionTypes)[number];
+        createdAt: Date;
+        master: {
+            id: string;
+            courseCode: string;
+            ic: string;
+        };
+    }[]
+>;
+
+export type InstructorAllocationDetails = {
+    allAllocationsOfCoursesAllocatedToUser: InstructorAllocationMaster[];
+    userAllocatedSections: InstructorAllocationSections;
+};

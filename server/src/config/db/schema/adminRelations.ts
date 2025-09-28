@@ -21,6 +21,7 @@ import {
     phdProposalDacMembers,
     phdProposals,
 } from "./phd.ts";
+import { allocationSectionInstructors } from "./allocation.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, {
@@ -83,6 +84,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     reviewers: many(courseHandoutRequests, {
         relationName: "reviewer",
     }),
+    courseAllocationSections: many(allocationSectionInstructors),
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
