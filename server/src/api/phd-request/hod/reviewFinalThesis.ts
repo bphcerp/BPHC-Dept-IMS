@@ -48,6 +48,7 @@ router.post(
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: hodEmail,
+                reviewerRole: "HOD",
                 approved: body.action === "approve",
                 comments: body.comments || `Action: ${body.action}`,
             });

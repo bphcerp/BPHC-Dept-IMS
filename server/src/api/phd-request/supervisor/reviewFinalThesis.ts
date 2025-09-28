@@ -80,7 +80,6 @@ router.post(
                     .insert(files)
                     .values(fileInserts)
                     .returning();
-
                 const documentInserts = insertedFiles.map((file) => ({
                     requestId,
                     fileId: file.id,
@@ -93,6 +92,7 @@ router.post(
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: supervisorEmail,
+                    reviewerRole: "SUPERVISOR",
                     approved: true,
                     comments: comments || "Approved by Supervisor",
                     status_at_review: request.status,
@@ -112,7 +112,7 @@ router.post(
                         assignedTo: convener.email,
                         createdBy: supervisorEmail,
                         title: `Final Thesis review for ${request.student.name}`,
-                        description: `The final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.`,
+                        description: `The final thesis submission for ${request.student.name}has been approved by the supervisor and requires DRC review.`,
                         module: modules[2],
                         completionEvent: `phd-request:drc-convener-review:${requestId}`,
                         link: `/phd/requests/${requestId}`,
@@ -122,15 +122,16 @@ router.post(
                         drcConveners.map((convener) => ({
                             to: convener.email,
                             subject: `Final Thesis review for ${request.student.name}`,
-                            text: `Dear DRC Convener,\n\nThe final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                            text: `Dear DRC Convener,\n\nThe final thesis submission for ${request.student.name}has been approved by the supervisor and requires DRC review.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
                         }))
                     );
                 }
             } else {
-                // Revert
+                // Revert action
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: supervisorEmail,
+                    reviewerRole: "SUPERVISOR",
                     approved: false,
                     comments: comments || "Reverted by Supervisor",
                     status_at_review: request.status,

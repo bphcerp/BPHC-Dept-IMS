@@ -13,16 +13,19 @@ import { phdRequestSchemas } from "lib";
 
 const router = express.Router();
 
-const anytimeRequests = phdRequestSchemas.phdRequestTypes.filter(
-    (type) =>
-        ![
-            "pre_submission",
-            "draft_notice",
-            "change_of_title",
-            "thesis_submission",
-            "final_thesis_submission",
-        ].includes(type)
-);
+
+const postProposalRequests = [
+	"pre_submission", "draft_notice", "change_of_title", 
+	"thesis_submission", "final_thesis_submission"
+] as const;
+
+const anytimeRequests = [
+	"jrf_recruitment", "jrf_to_phd_conversion", "project_fellow_conversion",
+	"manage_co_supervisor", "stipend_payment", "international_travel_grant",
+	"rp_grades", "change_of_workplace", "semester_drop",
+	"thesis_submission_extension", "endorsements", "phd_aspire_application",
+	"not_registered_student",
+] as const;
 
 router.get(
     "/",
@@ -64,12 +67,9 @@ router.get(
             const allRequests = student.requests;
             const latestRequest = allRequests[0];
 
-            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
-                [
-                    "reverted_by_drc_convener",
-                    "reverted_by_drc_member",
-                    "reverted_by_hod",
-                ];
+            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] = [
+				"reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"
+			];
 
             const activeRequest = allRequests.find(
                 (req) =>
@@ -80,49 +80,45 @@ router.get(
             if (activeRequest) {
                 currentStatus = `Request: ${activeRequest.requestType.replace(/_/g, " ")} - ${activeRequest.status.replace(/_/g, " ")}`;
                 requestId = activeRequest.id;
-            } else if (latestRequest) {
-                // No active, check latest for reverted or completed status
-                requestId = latestRequest.id;
-                currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-                if (revertableStatuses.includes(latestRequest.status)) {
-                    canResubmitRequest = true;
-                    reversionComments =
-                        latestRequest.reviews[0]?.comments ||
-                        "No comments provided.";
-                }
-            } else if (latestProposal) {
-                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-            } else if (student.qeApplications.length > 0) {
-                const lastAttempt = student.qeApplications[0];
-                currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
-                if (lastAttempt.result) {
-                    currentStatus += ` (${lastAttempt.result})`;
-                }
+                availableRequestTypes = []; 
             } else {
-                currentStatus = "Awaiting QE Application";
-            }
+                availableRequestTypes = [...anytimeRequests];
 
-            // Determine available request types only if no request is active and proposal is complete
-            if (!activeRequest && latestProposal?.status === "completed") {
-                const completedTypes = new Set(
-                    allRequests
-                        .filter((r) => r.status === "completed")
-                        .map((r) => r.requestType)
-                );
+                if (latestProposal?.status === "completed") {
+                    const completedTypes = new Set(
+                        allRequests
+                            .filter((r) => r.status === "completed")
+                            .map((r) => r.requestType)
+                    );
 
-                const currentAvailable = new Set(anytimeRequests);
-
-                if (!completedTypes.has("pre_submission")) {
-                    currentAvailable.add("pre_submission");
-                } else if (!completedTypes.has("draft_notice")) {
-                    currentAvailable.add("draft_notice");
-                } else if (!completedTypes.has("thesis_submission")) {
-                    currentAvailable.add("thesis_submission");
-                    currentAvailable.add("change_of_title");
-                } else if (!completedTypes.has("final_thesis_submission")) {
-                    currentAvailable.add("final_thesis_submission");
+                    for (const type of postProposalRequests) {
+                        if (!completedTypes.has(type)) {
+                            availableRequestTypes.push(type);
+                            break; 
+                        }
+                    }
                 }
-                availableRequestTypes = Array.from(currentAvailable);
+
+                if (latestRequest) {
+                    requestId = latestRequest.id;
+                    currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+                    if (revertableStatuses.includes(latestRequest.status)) {
+                        canResubmitRequest = true;
+                        reversionComments =
+                            latestRequest.reviews[0]?.comments ||
+                            "No comments provided.";
+                    }
+                } else if (latestProposal) {
+                    currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
+                } else if (student.qeApplications.length > 0) {
+                    const lastAttempt = student.qeApplications[0];
+                    currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
+                    if (lastAttempt.result) {
+                        currentStatus += ` (${lastAttempt.result})`;
+                    }
+                } else {
+                    currentStatus = "Awaiting QE Application";
+                }
             }
 
             return {
@@ -136,6 +132,7 @@ router.get(
                 availableRequestTypes,
             };
         });
+
         res.status(200).json(studentStatuses);
     })
 );

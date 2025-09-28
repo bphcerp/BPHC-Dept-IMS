@@ -25,7 +25,6 @@ router.post(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
         const body = phdRequestSchemas.drcConvenerReviewSchema.parse(req.body);
         const convenerEmail = req.user!.email;
 
@@ -40,6 +39,7 @@ router.post(
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: convenerEmail,
+                reviewerRole: "DRC_CONVENER",
                 approved: body.action !== "revert",
                 comments: body.comments || `Action: ${body.action}`,
                 status_at_review: request.status,
@@ -60,7 +60,6 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "reverted_by_drc_convener" })
                         .where(eq(phdRequests.id, requestId));
-
                     const revertTodos = [
                         {
                             assignedTo: request.supervisorEmail,
@@ -96,13 +95,11 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "drc_member_review" })
                         .where(eq(phdRequests.id, requestId));
-
                     await tx
                         .delete(phdRequestDrcAssignments)
                         .where(
                             eq(phdRequestDrcAssignments.requestId, requestId)
                         );
-
                     await tx.insert(phdRequestDrcAssignments).values(
                         body.assignedDrcMembers.map((email) => ({
                             requestId,
@@ -135,7 +132,6 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "hod_review" })
                         .where(eq(phdRequests.id, requestId));
-
                     const hods = await getUsersWithPermission(
                         "phd-request:hod:view",
                         tx
@@ -162,6 +158,7 @@ router.post(
                     break;
             }
         });
+
         res.status(200).json({
             success: true,
             message: `Request action '${body.action}' processed successfully.`,

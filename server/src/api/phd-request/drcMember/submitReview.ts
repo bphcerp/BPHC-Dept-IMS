@@ -60,6 +60,7 @@ router.post(
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail,
+                reviewerRole: "DRC_MEMBER",
                 approved,
                 comments,
                 status_at_review: request.status,
@@ -93,11 +94,11 @@ router.post(
                     .update(phdRequests)
                     .set({ status: "drc_convener_review" })
                     .where(eq(phdRequests.id, requestId));
-
                 const drcConveners = await getUsersWithPermission(
                     "phd-request:drc-convener:view",
                     tx
                 );
+
                 if (drcConveners.length > 0) {
                     const studentRequest = await tx.query.phdRequests.findFirst(
                         {
@@ -107,7 +108,6 @@ router.post(
                     );
                     const studentName =
                         studentRequest?.student.name || "a student";
-
                     await createTodos(
                         drcConveners.map((c) => ({
                             assignedTo: c.email,

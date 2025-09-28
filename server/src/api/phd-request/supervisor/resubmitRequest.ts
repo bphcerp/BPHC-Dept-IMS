@@ -8,6 +8,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import {
     phdRequests,
     phdRequestDocuments,
+    phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
@@ -31,10 +32,8 @@ router.post(
         const { comments } = phdRequestSchemas.createRequestSchema
             .omit({ studentEmail: true, requestType: true })
             .parse(req.body);
-
         const supervisorEmail = req.user!.email;
         const uploadedFiles = req.files as Express.Multer.File[];
-
         const oldFilePaths: string[] = [];
 
         await db.transaction(async (tx) => {
@@ -62,7 +61,6 @@ router.post(
                 );
             }
 
-            // If new files are uploaded, delete the old ones.
             if (uploadedFiles && uploadedFiles.length > 0) {
                 const oldDocs = await tx.query.phdRequestDocuments.findMany({
                     where: eq(phdRequestDocuments.requestId, requestId),
@@ -80,7 +78,6 @@ router.post(
                             oldFilePaths.push(file.path)
                         );
 
-                        // Delete old document associations and file records
                         await tx
                             .delete(phdRequestDocuments)
                             .where(
@@ -92,7 +89,6 @@ router.post(
                     }
                 }
 
-                // Insert new files
                 const fileInserts = uploadedFiles.map((file) => ({
                     userEmail: supervisorEmail,
                     filePath: file.path,
@@ -116,6 +112,15 @@ router.post(
                 await tx.insert(phdRequestDocuments).values(documentInserts);
             }
 
+            await tx.insert(phdRequestReviews).values({
+                requestId: requestId,
+                reviewerEmail: supervisorEmail,
+                reviewerRole: "SUPERVISOR",
+                approved: true,
+                comments: comments || "Request resubmitted with corrections.",
+                status_at_review: request.status,
+            });
+
             await tx
                 .update(phdRequests)
                 .set({
@@ -137,30 +142,35 @@ router.post(
                 "phd-request:drc-convener:view",
                 tx
             );
-
             if (drcConveners.length > 0) {
                 const todos = drcConveners.map((convener) => ({
                     assignedTo: convener.email,
                     createdBy: supervisorEmail,
                     title: `Resubmitted PhD Request from ${request.student.name || request.studentEmail}`,
-                    description: `A previously reverted '${request.requestType.replace(/_/g, " ")}' request has been resubmitted.`,
+                    description: `A previously reverted '${request.requestType.replace(
+                        /_/g,
+                        " "
+                    )}' request has been resubmitted.`,
                     module: modules[2],
                     completionEvent: `phd-request:drc-convener-review:${requestId}`,
                     link: `/phd/requests/${requestId}`,
                 }));
                 await createTodos(todos, tx);
-
                 await sendBulkEmails(
                     drcConveners.map((convener) => ({
                         to: convener.email,
                         subject: `Resubmitted PhD Request from ${request.student.name || request.studentEmail}`,
-                        text: `Dear DRC Convener,\n\nA previously reverted '${request.requestType.replace(/_/g, " ")}' request has been resubmitted by the supervisor.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        text: `Dear DRC Convener,\n\nA previously reverted '${request.requestType.replace(
+                            /_/g,
+                            " "
+                        )}' request has been resubmitted by the supervisor.\n\nPlease review it here: ${
+                            environment.FRONTEND_URL
+                        }/phd/requests/${requestId}`,
                     }))
                 );
             }
         });
 
-        // After transaction succeeds, delete old files from disk
         for (const path of oldFilePaths) {
             try {
                 await fs.unlink(path);

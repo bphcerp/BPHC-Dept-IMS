@@ -51,6 +51,7 @@ router.post(
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: hodEmail,
+                reviewerRole: "HOD",
                 approved,
                 comments,
                 status_at_review: request.status,

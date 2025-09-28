@@ -42,6 +42,7 @@ router.post(
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: convenerEmail,
+                reviewerRole: "DRC_CONVENER",
                 approved: body.action !== "revert",
                 comments: body.comments || `Action: ${body.action}`,
             });
@@ -103,14 +104,12 @@ router.post(
                 await tx
                     .delete(phdRequestDrcAssignments)
                     .where(eq(phdRequestDrcAssignments.requestId, requestId));
-                await tx
-                    .insert(phdRequestDrcAssignments)
-                    .values(
-                        body.assignedDrcMembers.map((email) => ({
-                            requestId,
-                            drcMemberEmail: email,
-                        }))
-                    );
+                await tx.insert(phdRequestDrcAssignments).values(
+                    body.assignedDrcMembers.map((email) => ({
+                        requestId,
+                        drcMemberEmail: email,
+                    }))
+                );
 
                 await createTodos(
                     body.assignedDrcMembers.map((email) => ({

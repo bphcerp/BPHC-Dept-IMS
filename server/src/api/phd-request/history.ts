@@ -6,7 +6,6 @@ import { eq, desc } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { authUtils } from "lib";
-import { getAccess } from "@/lib/auth/index.ts";
 
 const router = express.Router();
 
@@ -61,9 +60,7 @@ router.get(
                 },
                 reviews: {
                     with: {
-                        reviewer: {
-                            columns: { name: true, email: true, roles: true },
-                        },
+                        reviewer: { columns: { name: true, email: true } },
                     },
                     orderBy: (cols, { desc }) => [desc(cols.createdAt)],
                 },
@@ -79,48 +76,63 @@ router.get(
             );
         }
 
-        const finalRequests = await Promise.all(
-            requests.map(async (request) => {
-                const augmentedReviews = await Promise.all(
-                    request.reviews.map(async (review) => {
-                        let reviewerDisplayName =
-                            review.reviewer.name || review.reviewer.email;
-                        const reviewer = review.reviewer;
+        const isPrivilegedViewer = isDrcConvener || isHod;
 
-                        if (reviewer.email === request.supervisorEmail) {
-                            reviewerDisplayName = "Supervisor";
-                        } else if (
-                            request.drcAssignments.some(
-                                (a) => a.drcMemberEmail === reviewer.email
-                            )
+        const finalRequests = requests.map((request) => {
+            const augmentedReviews = request.reviews.map((review) => {
+                let roleTitle = "";
+                const reviewer = review.reviewer;
+                const actionText = review.approved
+                    ? "Approved by"
+                    : "Reverted by";
+
+                switch (review.reviewerRole) {
+                    case "HOD":
+                        roleTitle = "HOD";
+                        break;
+                    case "DRC_CONVENER":
+                        roleTitle = "DRC Convener";
+                        break;
+                    case "DRC_MEMBER":
+                        const index = request.drcAssignments.findIndex(
+                            (a) => a.drcMemberEmail === reviewer.email
+                        );
+                        roleTitle =
+                            `DRC Member ${index >= 0 ? index + 1 : ""}`.trim();
+                        break;
+                    case "SUPERVISOR":
+                        if (
+                            review.status_at_review ===
+                                "supervisor_submitted" ||
+                            review.comments ===
+                                "Request resubmitted with corrections."
                         ) {
-                            const index = request.drcAssignments.findIndex(
-                                (a) => a.drcMemberEmail === reviewer.email
-                            );
-                            reviewerDisplayName =
-                                `DRC Member ${index >= 0 ? index + 1 : ""}`.trim();
-                        } else {
-                            const permissions = await getAccess(reviewer.roles);
-                            if (
-                                permissions.allowed.includes(
-                                    "phd-request:hod:review"
-                                )
-                            ) {
-                                reviewerDisplayName = `HOD (${reviewer.name})`;
-                            } else if (
-                                permissions.allowed.includes(
-                                    "phd-request:drc-convener:review"
-                                )
-                            ) {
-                                reviewerDisplayName = `DRC Convener (${reviewer.name})`;
-                            }
+                            return {
+                                ...review,
+                                reviewerDisplayName: "Submitted by Supervisor",
+                            };
                         }
-                        return { ...review, reviewerDisplayName };
-                    })
-                );
-                return { ...request, reviews: augmentedReviews };
-            })
-        );
+                        roleTitle = "Supervisor";
+                        break;
+                    case "STUDENT":
+                        roleTitle = "Student";
+                        break;
+                    default:
+                        roleTitle = review.reviewerRole; // Fallback
+                        break;
+                }
+
+                const nameSuffix =
+                    isPrivilegedViewer &&
+                    (roleTitle === "HOD" || roleTitle === "DRC Convener")
+                        ? ` (${reviewer.name || reviewer.email})`
+                        : "";
+
+                const reviewerDisplayName = `${actionText} ${roleTitle}${nameSuffix}`;
+                return { ...review, reviewerDisplayName };
+            });
+            return { ...request, reviews: augmentedReviews };
+        });
 
         res.status(200).json(finalRequests);
     })

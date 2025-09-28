@@ -49,6 +49,7 @@ router.post(
                 ),
                 with: { supervisor: true },
             });
+
             if (!request) {
                 throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
             }
@@ -101,7 +102,8 @@ router.post(
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: studentEmail,
-                    approved: true,
+                    reviewerRole: "STUDENT",
+                    approved: true, // A student submission is an approval to move forward
                     comments: `Student submission comments: ${comments}`,
                     status_at_review: request.status,
                 });
@@ -123,8 +125,8 @@ router.post(
                     link: `/phd/requests/${requestId}`,
                 },
             ];
-
             await createTodos(todos, tx);
+
             await sendBulkEmails([
                 {
                     to: request.supervisorEmail,

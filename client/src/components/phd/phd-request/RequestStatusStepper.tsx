@@ -4,7 +4,10 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Review {
-  reviewer: { name: string; email: string };
+  reviewer: {
+    name: string;
+    email: string;
+  };
   approved: boolean;
   comments: string | null;
   createdAt: string;
@@ -13,8 +16,12 @@ interface Review {
 
 interface RequestStatusStepperProps {
   reviews: Review[];
-  // The 'request' prop which was causing issues is no longer needed here.
-  request: { drcAssignments: { drcMemberEmail: string; status: string }[] };
+  request: {
+    drcAssignments: {
+      drcMemberEmail: string;
+      status: string;
+    }[];
+  };
 }
 
 export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({

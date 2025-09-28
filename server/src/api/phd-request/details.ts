@@ -4,7 +4,7 @@ import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { eq } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
-import { getAccess } from "@/lib/auth/index.ts";
+import { authUtils } from "lib";
 
 const router = express.Router();
 
@@ -25,16 +25,10 @@ router.get(
                     with: {
                         file: { columns: { originalName: true, id: true } },
                     },
-                    where: (cols, { eq }) =>
-                        req.user?.email === "student_email_placeholder"
-                            ? eq(cols.isPrivate, false)
-                            : undefined,
                 },
                 reviews: {
                     with: {
-                        reviewer: {
-                            columns: { name: true, email: true, roles: true },
-                        },
+                        reviewer: { columns: { name: true, email: true } },
                     },
                     orderBy: (cols, { desc }) => [desc(cols.createdAt)],
                 },
@@ -48,42 +42,68 @@ router.get(
             throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
         }
 
-        // Augment reviews with a definitive display name from the backend
-        const augmentedReviews = await Promise.all(
-            request.reviews.map(async (review) => {
-                let reviewerDisplayName =
-                    review.reviewer.name || review.reviewer.email;
-                const reviewer = review.reviewer;
+        const isPrivilegedViewer =
+            req.user &&
+            (authUtils.checkAccess(
+                "phd-request:hod:view",
+                req.user.permissions
+            ) ||
+                authUtils.checkAccess(
+                    "phd-request:drc-convener:view",
+                    req.user.permissions
+                ));
 
-                if (reviewer.email === request.supervisorEmail) {
-                    reviewerDisplayName = "Supervisor";
-                } else if (
-                    request.drcAssignments.some(
-                        (a) => a.drcMemberEmail === reviewer.email
-                    )
-                ) {
+        const augmentedReviews = request.reviews.map((review) => {
+            let roleTitle = "";
+            const reviewer = review.reviewer;
+            const actionText = review.approved ? "Approved by" : "Reverted by";
+
+            switch (review.reviewerRole) {
+                case "HOD":
+                    roleTitle = "HOD";
+                    break;
+                case "DRC_CONVENER":
+                    roleTitle = "DRC Convener";
+                    break;
+                case "DRC_MEMBER":
                     const index = request.drcAssignments.findIndex(
                         (a) => a.drcMemberEmail === reviewer.email
                     );
-                    reviewerDisplayName =
+                    roleTitle =
                         `DRC Member ${index >= 0 ? index + 1 : ""}`.trim();
-                } else {
-                    const permissions = await getAccess(reviewer.roles);
+                    break;
+                case "SUPERVISOR":
+                    // Handle special display for initial submission vs. other actions
                     if (
-                        permissions.allowed.includes("phd-request:hod:review")
+                        review.status_at_review === "supervisor_submitted" ||
+                        review.comments ===
+                            "Request resubmitted with corrections."
                     ) {
-                        reviewerDisplayName = `HOD (${reviewer.name})`;
-                    } else if (
-                        permissions.allowed.includes(
-                            "phd-request:drc-convener:review"
-                        )
-                    ) {
-                        reviewerDisplayName = `DRC Convener (${reviewer.name})`;
+                        return {
+                            ...review,
+                            reviewerDisplayName: "Submitted by Supervisor",
+                        };
                     }
-                }
-                return { ...review, reviewerDisplayName };
-            })
-        );
+                    roleTitle = "Supervisor";
+                    break;
+                case "STUDENT":
+                    roleTitle = "Student";
+                    break;
+                default:
+                    roleTitle = review.reviewerRole; // Fallback to the stored role
+                    break;
+            }
+
+            const nameSuffix =
+                isPrivilegedViewer &&
+                (roleTitle === "HOD" || roleTitle === "DRC Convener")
+                    ? ` (${reviewer.name || reviewer.email})`
+                    : "";
+
+            const reviewerDisplayName = `${actionText} ${roleTitle}${nameSuffix}`;
+
+            return { ...review, reviewerDisplayName };
+        });
 
         const finalRequest = { ...request, reviews: augmentedReviews };
 

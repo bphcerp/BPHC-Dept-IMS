@@ -8,6 +8,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import {
     phdRequests,
     phdRequestDocuments,
+    phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos } from "@/lib/todos/index.ts";
@@ -42,7 +43,6 @@ router.post(
             );
         }
 
-        // Special workflow for Final Thesis Submission
         if (requestType === "final_thesis_submission") {
             const [newRequest] = await db
                 .insert(phdRequests)
@@ -51,11 +51,10 @@ router.post(
                     supervisorEmail,
                     semesterId: latestSemester.id,
                     requestType,
-                    status: "student_review", // Goes directly to student
+                    status: "student_review",
                     comments: comments,
                 })
                 .returning({ id: phdRequests.id });
-
             const studentTodo = [
                 {
                     assignedTo: studentEmail,
@@ -67,7 +66,6 @@ router.post(
                     link: `/phd/requests/${newRequest.id}`,
                 },
             ];
-
             await createTodos(studentTodo);
             await sendBulkEmails([
                 {
@@ -76,16 +74,15 @@ router.post(
                     text: `Dear Student,\n\nYour supervisor has initiated the final thesis submission process. Please upload the required documents in the portal.\n\nView the request here: ${environment.FRONTEND_URL}/phd/requests/${newRequest.id}`,
                 },
             ]);
-
             res.status(201).json({
                 success: true,
                 message:
                     "Request initiated and sent to student for document submission.",
                 requestId: newRequest.id,
             });
+            return;
         }
 
-        // Default workflow for all other requests
         if (!uploadedFiles || uploadedFiles.length === 0) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -105,6 +102,16 @@ router.post(
                     comments: comments,
                 })
                 .returning({ id: phdRequests.id });
+
+            // Add a review entry for the submission itself to create a history record
+            await tx.insert(phdRequestReviews).values({
+                requestId: newRequest.id,
+                reviewerEmail: supervisorEmail,
+                reviewerRole: "SUPERVISOR",
+                approved: true,
+                comments: comments || "Request submitted.",
+                status_at_review: "supervisor_submitted",
+            });
 
             const fileInserts = uploadedFiles.map((file) => ({
                 userEmail: supervisorEmail,
@@ -150,14 +157,17 @@ router.post(
                 completionEvent: `phd-request:drc-convener-review:${newRequestId}`,
                 link: `/phd/requests/${newRequestId}`,
             }));
-
             await createTodos(convenerTodos);
-
             await sendBulkEmails(
                 drcConveners.map((convener) => ({
                     to: convener.email,
                     subject: `New PhD Request from ${student?.name || studentEmail}`,
-                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(/_/g, " ")}' has been submitted for student ${student?.name || studentEmail}.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
+                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(
+                        /_/g,
+                        " "
+                    )}' has been submitted for student ${
+                        student?.name || studentEmail
+                    }.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
                 }))
             );
         }

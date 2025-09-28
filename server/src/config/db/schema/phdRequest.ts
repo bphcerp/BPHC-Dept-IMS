@@ -73,6 +73,7 @@ export const phdRequestReviews = pgTable("phd_request_reviews", {
     reviewerEmail: text("reviewer_email")
         .notNull()
         .references(() => users.email, { onDelete: "cascade" }),
+    reviewerRole: text("reviewer_role").notNull(), // Stores the role context at the time of review
     approved: boolean("approved").notNull(),
     comments: text("comments"),
     createdAt: timestamp("created_at", { withTimezone: true })
