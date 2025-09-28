@@ -37,7 +37,7 @@ router.post("/",checkAccess(), async (req, res) => {
         const updateFields: Record<string, any> = {};
 
         // reviewer check
-        if (request.reviewerEmail === email) {
+        if (request.reviewerEmail === req.user?.email) {
             updateFields.review = review; // ✅ matches schema column
         } else {
             return res.status(403).json({

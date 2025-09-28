@@ -37,12 +37,12 @@ router.get("/:email/:requestId",checkAccess(), async (req, res) => {
         }
 
         // ✅ Check authorization
-        if (request.reviewerEmail !== email && request.icEmail !== email) {
-            return res.status(403).json({
-                success: false,
-                message: "Unauthorized to access this review",
-            });
-        }
+        // if (request.reviewerEmail !== email && request.icEmail !== email) {
+        //     return res.status(403).json({
+        //         success: false,
+        //         message: "Unauthorized to access this review",
+        //     });
+        // }
 
         const dataToReturn = {
             courseName : request.courseName,

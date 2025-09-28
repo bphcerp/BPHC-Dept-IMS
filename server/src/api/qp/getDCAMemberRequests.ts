@@ -9,7 +9,6 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, _next) => {
-        console.log(req.user);
         assert(req.user);
         const courses = (
             await db.query.qpReviewRequests.findMany({
