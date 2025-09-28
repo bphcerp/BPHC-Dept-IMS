@@ -414,6 +414,13 @@
       "when": 1758961413657,
       "tag": "0058_nice_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1759087584645,
+      "tag": "0059_perfect_butterfly",
+      "breakpoints": true
     }
   ]
 }
