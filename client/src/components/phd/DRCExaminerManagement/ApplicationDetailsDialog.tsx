@@ -90,6 +90,7 @@ export const ApplicationDetailsDialog: React.FC<
   };
 
   const statusBadgeVariant = {
+    draft: "default",
     applied: "default",
     verified: "default",
     resubmit: "destructive",
