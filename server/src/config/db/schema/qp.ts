@@ -31,7 +31,6 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     }),
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
-    previousSubmissionId: integer("previous_submission_id"),
     midSemQpFilePath: integer("midSem_qp_file_path").references(() => fileFields.id, {
         onDelete: "set null",
     }),
@@ -44,8 +43,6 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
         onDelete: "set null",
     }),
     review: jsonb("review"),
-    ficDeadline: timestamp("fic_deadline", { withTimezone: true }),
-    reviewDeadline: timestamp("review_deadline", { withTimezone: true }),
     documentsUploaded: boolean("documents_uploaded").notNull().default(false),
     status: qpStatusEnum("status").notNull().default("notsubmitted"),
     createdAt: timestamp("created_at", { withTimezone: true })

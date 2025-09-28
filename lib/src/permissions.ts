@@ -386,7 +386,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/stats": "wilp:project:stats",
 
     // qp review module
-    "/qp/uploadDocument": "qp:faculty:submit",
+    "/qp/uploadDocuments": "qp:faculty:submit",
     "/qp/getFilesByRequestId": "qp:faculty:get-files",
     "/qp/submitReview": "qp:faculty:review",
     "/qp/saveReview": "qp:faculty:review",
