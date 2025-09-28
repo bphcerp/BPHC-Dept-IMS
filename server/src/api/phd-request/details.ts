@@ -73,7 +73,6 @@ router.get(
                         `DRC Member ${index >= 0 ? index + 1 : ""}`.trim();
                     break;
                 case "SUPERVISOR":
-                    // Handle special display for initial submission vs. other actions
                     if (
                         review.status_at_review === "supervisor_submitted" ||
                         review.comments ===
@@ -90,15 +89,13 @@ router.get(
                     roleTitle = "Student";
                     break;
                 default:
-                    roleTitle = review.reviewerRole; // Fallback to the stored role
+                    roleTitle = review.reviewerRole; // Fallback
                     break;
             }
 
-            const nameSuffix =
-                isPrivilegedViewer &&
-                (roleTitle === "HOD" || roleTitle === "DRC Convener")
-                    ? ` (${reviewer.name || reviewer.email})`
-                    : "";
+            const nameSuffix = isPrivilegedViewer
+                ? ` (${reviewer.name || reviewer.email})`
+                : "";
 
             const reviewerDisplayName = `${actionText} ${roleTitle}${nameSuffix}`;
 

@@ -13,7 +13,6 @@ import { phdRequestSchemas } from "lib";
 
 const router = express.Router();
 
-
 const postProposalRequests = [
 	"pre_submission", "draft_notice", "change_of_title", 
 	"thesis_submission", "final_thesis_submission"
@@ -61,64 +60,52 @@ router.get(
             let canResubmitRequest = false;
             let reversionComments: string | null = null;
             let requestId: number | null = null;
-            let availableRequestTypes: string[] = [];
 
             const latestProposal = student.proposals[0];
             const allRequests = student.requests;
             const latestRequest = allRequests[0];
 
+
             const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] = [
 				"reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"
 			];
 
-            const activeRequest = allRequests.find(
-                (req) =>
-                    !revertableStatuses.includes(req.status) &&
-                    req.status !== "completed"
-            );
+            let availableRequestTypes: string[] = [...anytimeRequests];
 
-            if (activeRequest) {
-                currentStatus = `Request: ${activeRequest.requestType.replace(/_/g, " ")} - ${activeRequest.status.replace(/_/g, " ")}`;
-                requestId = activeRequest.id;
-                availableRequestTypes = []; 
+            if (latestProposal?.status === "completed") {
+                const completedTypes = new Set(
+                    allRequests
+                        .filter((r) => r.status === "completed")
+                        .map((r) => r.requestType)
+                );
+
+                for (const type of postProposalRequests) {
+                    if (!completedTypes.has(type)) {
+                        availableRequestTypes.push(type);
+                        break;
+                    }
+                }
+            }
+
+            if (latestRequest) {
+                requestId = latestRequest.id;
+                currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+                if (revertableStatuses.includes(latestRequest.status)) {
+                    canResubmitRequest = true;
+                    reversionComments =
+                        latestRequest.reviews[0]?.comments ||
+                        "No comments provided.";
+                }
+            } else if (latestProposal) {
+                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
+            } else if (student.qeApplications.length > 0) {
+                const lastAttempt = student.qeApplications[0];
+                currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
+                if (lastAttempt.result) {
+                    currentStatus += ` (${lastAttempt.result})`;
+                }
             } else {
-                availableRequestTypes = [...anytimeRequests];
-
-                if (latestProposal?.status === "completed") {
-                    const completedTypes = new Set(
-                        allRequests
-                            .filter((r) => r.status === "completed")
-                            .map((r) => r.requestType)
-                    );
-
-                    for (const type of postProposalRequests) {
-                        if (!completedTypes.has(type)) {
-                            availableRequestTypes.push(type);
-                            break; 
-                        }
-                    }
-                }
-
-                if (latestRequest) {
-                    requestId = latestRequest.id;
-                    currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-                    if (revertableStatuses.includes(latestRequest.status)) {
-                        canResubmitRequest = true;
-                        reversionComments =
-                            latestRequest.reviews[0]?.comments ||
-                            "No comments provided.";
-                    }
-                } else if (latestProposal) {
-                    currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-                } else if (student.qeApplications.length > 0) {
-                    const lastAttempt = student.qeApplications[0];
-                    currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
-                    if (lastAttempt.result) {
-                        currentStatus += ` (${lastAttempt.result})`;
-                    }
-                } else {
-                    currentStatus = "Awaiting QE Application";
-                }
+                currentStatus = "Awaiting QE Application";
             }
 
             return {

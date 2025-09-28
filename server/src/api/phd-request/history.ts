@@ -122,11 +122,9 @@ router.get(
                         break;
                 }
 
-                const nameSuffix =
-                    isPrivilegedViewer &&
-                    (roleTitle === "HOD" || roleTitle === "DRC Convener")
-                        ? ` (${reviewer.name || reviewer.email})`
-                        : "";
+                const nameSuffix = isPrivilegedViewer
+                    ? ` (${reviewer.name || reviewer.email})`
+                    : "";
 
                 const reviewerDisplayName = `${actionText} ${roleTitle}${nameSuffix}`;
                 return { ...review, reviewerDisplayName };
