@@ -5,7 +5,9 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
 import { phdExamApplications } from "@/config/db/schema/phd.ts";
 import { eq } from "drizzle-orm";
-import { phdSchemas } from "lib";
+import { modules, phdSchemas } from "lib";
+import { sendEmail } from "@/lib/common/email.ts";
+import { createTodos } from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -34,6 +36,22 @@ export default router.patch(
                     id: true,
                     status: true,
                 },
+                with: {
+                    student: {
+                        columns: {
+                            name: true,
+                            email: true,
+                        },
+                        with: {
+                            supervisor: {
+                                columns: {
+                                    name: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    },
+                },
             });
 
         if (!existingApplication) {
@@ -51,13 +69,47 @@ export default router.patch(
             );
         }
 
-        await db
-            .update(phdExamApplications)
-            .set({
-                status,
-                comments: comments,
-            })
-            .where(eq(phdExamApplications.id, applicationId));
+        await db.transaction(async (tx) => {
+            await tx
+                .update(phdExamApplications)
+                .set({
+                    status,
+                    comments: comments,
+                })
+                .where(eq(phdExamApplications.id, applicationId));
+            if (status === "resubmit") {
+                await createTodos(
+                    [
+                        {
+                            assignedTo: existingApplication.student.email,
+                            createdBy: req.user!.email,
+                            title: "Action Required: PhD Qualification Exam",
+                            description:
+                                "The DRC has requested revisions for your Qualification Exam application. Please review comments and resubmit.",
+                            module: modules[4],
+                            completionEvent: `student-resubmit:${applicationId}`,
+                            link: "/phd/phd-student/qualifying-exams",
+                        },
+                    ],
+                    tx
+                );
+                await sendEmail({
+                    from: req.user?.email,
+                    to: existingApplication.student.email,
+                    subject:
+                        "Action Required: Qualifying Exam Application Revisions Needed",
+                    html: `<p>Dear ${existingApplication.student.name ?? "Student"},</p><p>The DRC has reviewed your application and requires revisions. Comments: <blockquote>${comments}</blockquote></p><p>Please log in to resubmit.</p>`,
+                });
+                if (existingApplication.student.supervisor)
+                    await sendEmail({
+                        from: req.user?.email,
+                        to: existingApplication.student.supervisor.email,
+                        subject:
+                            "Notification: Student's Qualifying Exam Application Requires Revisions",
+                        html: `<p>Dear ${existingApplication.student.supervisor?.name ?? "Faculty"},</p><p>This is to inform you that a PhD student under your supervision, ${existingApplication.student.name ?? existingApplication.student.email}, needs to revise their Qualifying Exam application as per DRC's decision. Comments: <blockquote>${comments}</blockquote></p>`,
+                    });
+            }
+        });
 
         res.status(200).send();
     })

@@ -186,6 +186,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/finalSubmitQeApplication": "phd:student:qe",
     "/phd/student/getProposalEligibility": "phd:student:proposal",
     "/phd/student/getProposalDeadlines": "phd:student:proposal",
     "/phd/student/getProfileDetails": "phd:student:proposal",
@@ -355,7 +356,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
-    
+
     // Analytics
     "/analytics/publications": "analytics:publications",
 } as const;

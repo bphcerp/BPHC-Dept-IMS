@@ -26,7 +26,7 @@ export const phdEmailTemplates = pgTable("phd_email_templates", {
         .notNull(),
 });
 export const phdExamApplicationStatus = pgEnum(
-    "phd_exam_application_status",
+    "phd_exam_application_status_enum",
     phdSchemas.phdExamApplicationStatuses
 );
 export const phdProposalStatus = pgEnum(
@@ -128,7 +128,7 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     studentEmail: text("student_email")
         .notNull()
         .references(() => phd.email, { onDelete: "cascade" }),
-    status: phdExamApplicationStatus("status").notNull().default("applied"),
+    status: phdExamApplicationStatus("status").notNull().default("draft"),
     comments: text("comments"),
     qualifyingArea1: text("qualifying_area_1").notNull(),
     qualifyingArea2: text("qualifying_area_2").notNull(),
@@ -385,12 +385,18 @@ export const phdSupervisorGrades = pgTable(
         compreGrade: text("compre_grade"),
         midsemMarks: integer("midsem_marks"),
         endsemMarks: integer("endsem_marks"),
-        midsemDocFileId: integer("midsem_doc_file_id").references(() => files.id, {
-            onDelete: "set null",
-        }),
-        endsemDocFileId: integer("endsem_doc_file_id").references(() => files.id, {
-            onDelete: "set null",
-        }),
+        midsemDocFileId: integer("midsem_doc_file_id").references(
+            () => files.id,
+            {
+                onDelete: "set null",
+            }
+        ),
+        endsemDocFileId: integer("endsem_doc_file_id").references(
+            () => files.id,
+            {
+                onDelete: "set null",
+            }
+        ),
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .$onUpdate(() => new Date())
