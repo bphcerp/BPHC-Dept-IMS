@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { phdRequestSchemas } from "lib";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface PhdRequestDetails {
   id: number;
@@ -69,6 +71,9 @@ const StudentHistory: React.FC = () => {
     );
   }
 
+  const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+    ["reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"];
+
   return (
     <div className="space-y-6">
       <BackButton />
@@ -81,7 +86,12 @@ const StudentHistory: React.FC = () => {
       </div>
 
       {requests.length > 0 ? (
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full"
+          defaultValue="item-0"
+        >
           {requests.map((request, index) => (
             <AccordionItem value={`item-${index}`} key={request.id}>
               <AccordionTrigger>
@@ -104,6 +114,16 @@ const StudentHistory: React.FC = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 border-t pt-4">
+                  {revertableStatuses.includes(request.status) && (
+                    <div className="flex justify-end">
+                      <Button variant="destructive" size="sm" asChild>
+                        <Link to={`/phd/requests/${request.id}`}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Resubmit Request
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                   <RequestDetailsCard request={request} />
                   <RequestStatusStepper reviews={request.reviews} />
                 </div>

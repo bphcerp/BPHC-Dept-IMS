@@ -37,7 +37,6 @@ router.get(
                     orderBy: [desc(phdProposals.createdAt)],
                     limit: 1,
                 },
-                // Fetch all requests to determine the correct state
                 requests: {
                     orderBy: [desc(phdRequests.createdAt)],
                     with: {
@@ -103,7 +102,7 @@ router.get(
                 currentStatus = "Awaiting QE Application";
             }
 
-            // Determine available request types only if no request is active
+            // Determine available request types only if no request is active and proposal is complete
             if (!activeRequest && latestProposal?.status === "completed") {
                 const completedTypes = new Set(
                     allRequests
@@ -111,20 +110,19 @@ router.get(
                         .map((r) => r.requestType)
                 );
 
-                availableRequestTypes.push(...anytimeRequests);
+                const currentAvailable = new Set(anytimeRequests);
 
                 if (!completedTypes.has("pre_submission")) {
-                    availableRequestTypes.push("pre_submission");
+                    currentAvailable.add("pre_submission");
                 } else if (!completedTypes.has("draft_notice")) {
-                    availableRequestTypes.push("draft_notice");
+                    currentAvailable.add("draft_notice");
                 } else if (!completedTypes.has("thesis_submission")) {
-                    availableRequestTypes.push(
-                        "thesis_submission",
-                        "change_of_title"
-                    );
+                    currentAvailable.add("thesis_submission");
+                    currentAvailable.add("change_of_title");
                 } else if (!completedTypes.has("final_thesis_submission")) {
-                    availableRequestTypes.push("final_thesis_submission");
+                    currentAvailable.add("final_thesis_submission");
                 }
+                availableRequestTypes = Array.from(currentAvailable);
             }
 
             return {

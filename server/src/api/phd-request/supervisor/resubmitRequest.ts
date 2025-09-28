@@ -71,19 +71,25 @@ router.post(
 
                 if (oldDocs.length > 0) {
                     const oldFileIds = oldDocs.map((doc) => doc.fileId);
-                    const oldFileRecords = await tx
-                        .select({ path: files.filePath })
-                        .from(files)
-                        .where(inArray(files.id, oldFileIds));
-                    oldFileRecords.forEach((file) =>
-                        oldFilePaths.push(file.path)
-                    );
+                    if (oldFileIds.length > 0) {
+                        const oldFileRecords = await tx
+                            .select({ path: files.filePath })
+                            .from(files)
+                            .where(inArray(files.id, oldFileIds));
+                        oldFileRecords.forEach((file) =>
+                            oldFilePaths.push(file.path)
+                        );
 
-                    // Delete old document associations and file records
-                    await tx
-                        .delete(phdRequestDocuments)
-                        .where(eq(phdRequestDocuments.requestId, requestId));
-                    await tx.delete(files).where(inArray(files.id, oldFileIds));
+                        // Delete old document associations and file records
+                        await tx
+                            .delete(phdRequestDocuments)
+                            .where(
+                                eq(phdRequestDocuments.requestId, requestId)
+                            );
+                        await tx
+                            .delete(files)
+                            .where(inArray(files.id, oldFileIds));
+                    }
                 }
 
                 // Insert new files

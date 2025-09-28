@@ -68,92 +68,56 @@ router.post(
                 tx
             );
 
-            if (!approved) {
-                const request = await tx.query.phdRequests.findFirst({
-                    where: eq(phdRequests.id, requestId),
-                    with: { student: true, supervisor: true },
+            // Check if all members have reviewed
+            const allAssignments =
+                await tx.query.phdRequestDrcAssignments.findMany({
+                    where: eq(phdRequestDrcAssignments.requestId, requestId),
                 });
 
+            const allReviewed = allAssignments.every(
+                (a) => a.status !== "pending"
+            );
+
+            // If all members have reviewed, send it back to the convener
+            if (allReviewed) {
                 await tx
                     .update(phdRequests)
-                    .set({ status: "reverted_by_drc_member" })
+                    .set({ status: "drc_convener_review" })
                     .where(eq(phdRequests.id, requestId));
 
-                if (request) {
-                    await createTodos(
-                        [
-                            {
-                                assignedTo: request.supervisorEmail,
-                                createdBy: reviewerEmail,
-                                title: `PhD Request Reverted by DRC Member`,
-                                description: `Your request for '${request.student.name}' was reverted. Comments: ${comments}`,
-                                module: modules[2],
-                                completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                                link: `/phd/requests/${requestId}`,
-                            },
-                        ],
-                        tx
-                    );
-                    await sendBulkEmails([
-                        {
-                            to: request.supervisorEmail,
-                            subject: `PhD Request Reverted by DRC Member`,
-                            text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by a DRC Member.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
-                        },
-                    ]);
-                }
-            } else {
-                const allAssignments =
-                    await tx.query.phdRequestDrcAssignments.findMany({
-                        where: eq(
-                            phdRequestDrcAssignments.requestId,
-                            requestId
-                        ),
-                    });
-
-                const allApproved = allAssignments.every(
-                    (a) => a.status === "approved"
+                const drcConveners = await getUsersWithPermission(
+                    "phd-request:drc-convener:view",
+                    tx
                 );
+                if (drcConveners.length > 0) {
+                    const studentRequest = await tx.query.phdRequests.findFirst(
+                        {
+                            where: eq(phdRequests.id, requestId),
+                            with: { student: { columns: { name: true } } },
+                        }
+                    );
+                    const studentName =
+                        studentRequest?.student.name || "a student";
 
-                if (allApproved) {
-                    await tx
-                        .update(phdRequests)
-                        .set({ status: "drc_convener_review" })
-                        .where(eq(phdRequests.id, requestId));
-
-                    const drcConveners = await getUsersWithPermission(
-                        "phd-request:drc-convener:view",
+                    await createTodos(
+                        drcConveners.map((c) => ({
+                            assignedTo: c.email,
+                            createdBy: "system",
+                            title: `DRC Review Complete for ${studentName}`,
+                            description: `All assigned DRC members have submitted their feedback for the request for ${studentName}. Please provide the final decision.`,
+                            module: modules[2],
+                            completionEvent: `phd-request:drc-convener-review:${requestId}`,
+                            link: `/phd/requests/${requestId}`,
+                        })),
                         tx
                     );
-                    if (drcConveners.length > 0) {
-                        const studentRequest =
-                            await tx.query.phdRequests.findFirst({
-                                where: eq(phdRequests.id, requestId),
-                                with: { student: { columns: { name: true } } },
-                            });
-                        const studentName =
-                            studentRequest?.student.name || "a student";
-
-                        await createTodos(
-                            drcConveners.map((c) => ({
-                                assignedTo: c.email,
-                                createdBy: "system",
-                                title: `PhD Request Ready for Final DRC Approval`,
-                                description: `All assigned DRC members have approved the request for ${studentName}. Please provide final approval.`,
-                                module: modules[2],
-                                completionEvent: `phd-request:drc-convener-review:${requestId}`,
-                                link: `/phd/requests/${requestId}`,
-                            })),
-                            tx
-                        );
-                        await sendBulkEmails(
-                            drcConveners.map((c) => ({
-                                to: c.email,
-                                subject: `PhD Request Ready for Final DRC Approval`,
-                                text: `Dear DRC Convener,\n\nAll assigned DRC members have approved the request for student '${studentName}'. Please provide final approval.\n\nView here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
-                            }))
-                        );
-                    }
+                    await sendBulkEmails(
+                        drcConveners.map((c) => ({
+                            to: c.email,
+                            subject: `DRC Review Complete for ${studentName}`,
+                            text: `Dear DRC Convener,\n\nAll assigned DRC members have submitted their feedback for the request for student '${studentName}'. Your final decision is now required.\n\nView here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        }))
+                    );
                 }
             }
         });
