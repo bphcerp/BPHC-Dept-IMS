@@ -48,6 +48,15 @@ router.post(
             );
         }
 
+        if (
+            form.allocationDeadline &&
+            Date.now() >= new Date(form.allocationDeadline).getTime()
+        ) {
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Form Deadline is Over")
+            );
+        }
+
         await db.transaction(async (tx) => {
             const insertPromises = parsed.response.map((field) =>
                 tx.insert(allocationFormResponse).values({
