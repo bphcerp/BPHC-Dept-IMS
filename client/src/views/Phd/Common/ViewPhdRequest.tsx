@@ -13,6 +13,8 @@ import { HodReviewPanel } from "@/components/phd/phd-request/HodReviewPanel";
 import { StudentFinalThesisForm } from "@/components/phd/phd-request/StudentFinalThesisForm";
 import { SupervisorFinalThesisReviewForm } from "@/components/phd/phd-request/SupervisorFinalThesisForm";
 import { SupervisorResubmitForm } from "@/components/phd/phd-request/SupervisorResubmitForm";
+import { DrcConvenerFinalThesisForm } from "@/components/phd/phd-request/DrcConvenerFinalThesisForm";
+import { HodFinalThesisForm } from "@/components/phd/phd-request/HodFinalThesisForm";
 import { phdRequestSchemas } from "lib";
 
 interface PhdRequestDetails {
@@ -29,10 +31,12 @@ interface PhdRequestDetails {
     file: { originalName: string; id: number };
   }>;
   reviews: Array<{
-    reviewer: { name: string };
+    reviewer: { name: string; email: string };
     approved: boolean;
     comments: string | null;
     createdAt: string;
+    status_at_review: string | null;
+    reviewerDisplayName: string; // This line was missing or incorrect
   }>;
   drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
 }
@@ -85,14 +89,50 @@ const ViewPhdRequest: React.FC = () => {
         />
       );
     }
-    if (
-      checkAccess("phd-request:drc-convener:review") &&
-      ["supervisor_submitted", "drc_convener_review"].includes(request.status)
-    ) {
-      return (
-        <DrcConvenerReviewPanel request={request} onSuccess={handleSuccess} />
-      );
+
+    // Final Thesis Submission specific forms
+    if (request.requestType === "final_thesis_submission") {
+      if (
+        checkAccess("phd-request:drc-convener:review") &&
+        [
+          "supervisor_review_final_thesis",
+          "drc_convener_review",
+          "drc_member_review",
+        ].includes(request.status)
+      ) {
+        return (
+          <DrcConvenerFinalThesisForm
+            request={request}
+            onSuccess={handleSuccess}
+          />
+        );
+      }
+      if (
+        checkAccess("phd-request:hod:review") &&
+        request.status === "hod_review"
+      ) {
+        return (
+          <HodFinalThesisForm request={request} onSuccess={handleSuccess} />
+        );
+      }
+    } else {
+      // Generic forms for other requests
+      if (
+        checkAccess("phd-request:drc-convener:review") &&
+        ["supervisor_submitted", "drc_convener_review"].includes(request.status)
+      ) {
+        return (
+          <DrcConvenerReviewPanel request={request} onSuccess={handleSuccess} />
+        );
+      }
+      if (
+        checkAccess("phd-request:hod:review") &&
+        request.status === "hod_review"
+      ) {
+        return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
+      }
     }
+
     if (
       checkAccess("phd-request:drc-member:review") &&
       request.status === "drc_member_review"
@@ -100,12 +140,6 @@ const ViewPhdRequest: React.FC = () => {
       return (
         <DrcMemberReviewPanel request={request} onSuccess={handleSuccess} />
       );
-    }
-    if (
-      checkAccess("phd-request:hod:review") &&
-      request.status === "hod_review"
-    ) {
-      return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
     }
     if (
       request.student.email === authState.email &&
@@ -152,7 +186,7 @@ const ViewPhdRequest: React.FC = () => {
     <div className="space-y-6">
       <BackButton />
       <RequestDetailsCard request={request} />
-      <RequestStatusStepper reviews={request.reviews} />
+      <RequestStatusStepper reviews={request.reviews} request={request} />
       <div className="mt-6">{renderActionPanel()}</div>
     </div>
   );

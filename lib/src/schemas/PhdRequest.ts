@@ -1,15 +1,11 @@
 import { z } from "zod";
 
-// All post-proposal and anytime requests are defined here.
 export const phdRequestTypes = [
-    // Post-Proposal Sequential Flow
     "pre_submission",
     "draft_notice",
     "change_of_title",
     "thesis_submission",
     "final_thesis_submission",
-
-    // Anytime Requests
     "jrf_recruitment",
     "jrf_to_phd_conversion",
     "project_fellow_conversion",
@@ -35,7 +31,6 @@ export const phdRequestStatuses = [
     "reverted_by_drc_convener",
     "reverted_by_drc_member",
     "reverted_by_hod",
-    // Specific statuses for the final thesis workflow
     "student_review",
     "supervisor_review_final_thesis",
 ] as const;
@@ -92,4 +87,44 @@ export const supervisorFinalThesisReviewSchema = z
     );
 export type SupervisorFinalThesisReviewBody = z.infer<
     typeof supervisorFinalThesisReviewSchema
+>;
+
+export const finalThesisReviewerSchema = z.discriminatedUnion("action", [
+    z.object({
+        action: z.literal("approve"),
+        comments: z.string().optional(),
+    }),
+    z.object({
+        action: z.literal("revert"),
+        comments: z.string().min(1, "Comments are required for reverting."),
+        revertTo: z.enum(["student", "supervisor"], {
+            required_error: "Please specify who to revert to.",
+        }),
+    }),
+    z.object({
+        action: z.literal("forward_to_drc"),
+        comments: z.string().optional(),
+        assignedDrcMembers: z
+            .array(z.string().email())
+            .min(1, "At least one DRC member must be selected."),
+    }),
+]);
+export type FinalThesisReviewerBody = z.infer<typeof finalThesisReviewerSchema>;
+
+// New specific schema for HOD to avoid .omit() on a discriminated union
+export const hodFinalThesisReviewerSchema = z.discriminatedUnion("action", [
+    z.object({
+        action: z.literal("approve"),
+        comments: z.string().optional(),
+    }),
+    z.object({
+        action: z.literal("revert"),
+        comments: z.string().min(1, "Comments are required for reverting."),
+        revertTo: z.enum(["student", "supervisor"], {
+            required_error: "Please specify who to revert to.",
+        }),
+    }),
+]);
+export type HodFinalThesisReviewerBody = z.infer<
+    typeof hodFinalThesisReviewerSchema
 >;

@@ -31,24 +31,33 @@ export const DrcMemberReviewPanel: React.FC<DrcMemberReviewPanelProps> = ({
       return api.post(`/phd-request/drc-member/review/${request.id}`, data);
     },
     onSuccess: () => {
-      toast.success("Review submitted successfully.");
+      toast.success("Feedback submitted successfully to the DRC Convener.");
       onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to submit review.");
+      toast.error(
+        error.response?.data?.message || "Failed to submit feedback."
+      );
     },
   });
 
   const handleSubmit = (approved: boolean) => {
+    if (!approved && !comments.trim()) {
+      toast.error(
+        "Comments are mandatory if you are not recommending approval."
+      );
+      return;
+    }
     mutation.mutate({ approved, comments });
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Review</CardTitle>
+        <CardTitle>Your Feedback</CardTitle>
         <CardDescription>
-          Approve the request or revert it with comments.
+          Your recommendation and comments will be forwarded to the DRC Convener
+          for the final decision.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -58,22 +67,22 @@ export const DrcMemberReviewPanel: React.FC<DrcMemberReviewPanelProps> = ({
             id="comments"
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-            placeholder="Comments are mandatory if you revert the request..."
+            placeholder="Your comments are required if you do not recommend approval."
           />
         </div>
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button
-            variant="destructive"
+            variant="outline"
             onClick={() => handleSubmit(false)}
             disabled={mutation.isLoading}
           >
-            Revert
+            Forward with Comments
           </Button>
           <Button
             onClick={() => handleSubmit(true)}
             disabled={mutation.isLoading}
           >
-            Approve
+            Recommend Approval
           </Button>
         </div>
         {mutation.isLoading && (

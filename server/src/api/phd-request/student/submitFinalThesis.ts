@@ -101,8 +101,9 @@ router.post(
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: studentEmail,
-                    approved: true, // student submission is an approval action
+                    approved: true,
                     comments: `Student submission comments: ${comments}`,
+                    status_at_review: request.status,
                 });
             }
 

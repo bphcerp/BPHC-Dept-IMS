@@ -43,10 +43,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
 
   const mutation = useMutation({
     mutationFn: (data: phdRequestSchemas.DrcConvenerReviewBody) => {
-      return api.post(
-        `/phd-request/drc-convener/review/${request.id}`,
-        data
-      );
+      return api.post(`/phd-request/drc-convener/review/${request.id}`, data);
     },
     onSuccess: () => {
       toast.success("Action submitted successfully.");
@@ -68,7 +65,6 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
         "Please select at least one DRC member to forward for review."
       );
     }
-
     mutation.mutate({
       comments,
       action,
@@ -88,10 +84,10 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
         {request.status === "drc_convener_review" && (
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertTitle>Final Approval Step</AlertTitle>
+            <AlertTitle>Final Decision Required</AlertTitle>
             <AlertDescription>
-              All assigned DRC members have approved this request. Please
-              provide your final approval to forward it to the HOD.
+              The DRC member review is complete. Please review their feedback in
+              the history below and make a final decision to approve or revert.
             </AlertDescription>
           </Alert>
         )}
@@ -104,7 +100,6 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             placeholder="Provide comments for reversion or internal notes for approval..."
           />
         </div>
-
         {request.status === "supervisor_submitted" && (
           <div className="space-y-2">
             <Label>Assign DRC Members for Review (Optional)</Label>
@@ -121,7 +116,6 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             </p>
           </div>
         )}
-
         <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
           <Button
             variant="destructive"
@@ -130,7 +124,6 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
           >
             Revert to Supervisor
           </Button>
-
           {request.status === "supervisor_submitted" && (
             <Button
               onClick={() =>
@@ -147,7 +140,6 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
                 : "Forward to HOD"}
             </Button>
           )}
-
           {request.status === "drc_convener_review" && (
             <Button
               onClick={() => handleSubmit("approve")}

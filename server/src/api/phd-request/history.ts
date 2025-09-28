@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { authUtils } from "lib";
+import { getAccess } from "@/lib/auth/index.ts";
 
 const router = express.Router();
 
@@ -22,12 +23,10 @@ router.get(
             );
         }
 
-        // Authorization Check
         const studentData = await db.query.phd.findFirst({
             where: eq(phd.email, studentEmail),
             columns: { supervisorEmail: true },
         });
-
         if (!studentData) {
             throw new HttpError(HttpCode.NOT_FOUND, "Student not found.");
         }
@@ -57,17 +56,18 @@ router.get(
                 supervisor: { columns: { name: true, email: true } },
                 documents: {
                     with: {
-                        file: {
-                            columns: { originalName: true, id: true },
-                        },
+                        file: { columns: { originalName: true, id: true } },
                     },
                 },
                 reviews: {
                     with: {
-                        reviewer: { columns: { name: true } },
+                        reviewer: {
+                            columns: { name: true, email: true, roles: true },
+                        },
                     },
                     orderBy: (cols, { desc }) => [desc(cols.createdAt)],
                 },
+                drcAssignments: { columns: { drcMemberEmail: true } },
             },
             orderBy: [desc(phdRequests.createdAt)],
         });
@@ -79,7 +79,50 @@ router.get(
             );
         }
 
-        res.status(200).json(requests);
+        const finalRequests = await Promise.all(
+            requests.map(async (request) => {
+                const augmentedReviews = await Promise.all(
+                    request.reviews.map(async (review) => {
+                        let reviewerDisplayName =
+                            review.reviewer.name || review.reviewer.email;
+                        const reviewer = review.reviewer;
+
+                        if (reviewer.email === request.supervisorEmail) {
+                            reviewerDisplayName = "Supervisor";
+                        } else if (
+                            request.drcAssignments.some(
+                                (a) => a.drcMemberEmail === reviewer.email
+                            )
+                        ) {
+                            const index = request.drcAssignments.findIndex(
+                                (a) => a.drcMemberEmail === reviewer.email
+                            );
+                            reviewerDisplayName =
+                                `DRC Member ${index >= 0 ? index + 1 : ""}`.trim();
+                        } else {
+                            const permissions = await getAccess(reviewer.roles);
+                            if (
+                                permissions.allowed.includes(
+                                    "phd-request:hod:review"
+                                )
+                            ) {
+                                reviewerDisplayName = `HOD (${reviewer.name})`;
+                            } else if (
+                                permissions.allowed.includes(
+                                    "phd-request:drc-convener:review"
+                                )
+                            ) {
+                                reviewerDisplayName = `DRC Convener (${reviewer.name})`;
+                            }
+                        }
+                        return { ...review, reviewerDisplayName };
+                    })
+                );
+                return { ...request, reviews: augmentedReviews };
+            })
+        );
+
+        res.status(200).json(finalRequests);
     })
 );
 

@@ -17,12 +17,10 @@ export const phdRequestTypeEnum = pgEnum(
     "phd_request_type",
     phdRequestSchemas.phdRequestTypes
 );
-
 export const phdRequestStatusEnum = pgEnum(
     "phd_request_status",
     phdRequestSchemas.phdRequestStatuses
 );
-
 export const drcAssignmentStatusEnum = pgEnum("drc_assignment_status", [
     "pending",
     "approved",
@@ -80,6 +78,7 @@ export const phdRequestReviews = pgTable("phd_request_reviews", {
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
+    status_at_review: text("status_at_review"),
 });
 
 export const phdRequestDrcAssignments = pgTable(

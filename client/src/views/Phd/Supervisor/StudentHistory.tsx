@@ -32,11 +32,14 @@ interface PhdRequestDetails {
     file: { originalName: string; id: number };
   }>;
   reviews: Array<{
-    reviewer: { name: string };
+    reviewer: { name: string; email: string };
     approved: boolean;
     comments: string | null;
     createdAt: string;
+    status_at_review: string | null;
+    reviewerDisplayName: string; // This line was missing or incorrect
   }>;
+  drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
 }
 
 const StudentHistory: React.FC = () => {
@@ -125,7 +128,10 @@ const StudentHistory: React.FC = () => {
                     </div>
                   )}
                   <RequestDetailsCard request={request} />
-                  <RequestStatusStepper reviews={request.reviews} />
+                  <RequestStatusStepper
+                    reviews={request.reviews}
+                    request={request}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>

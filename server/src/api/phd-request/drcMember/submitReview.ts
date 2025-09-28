@@ -31,6 +31,13 @@ router.post(
         const reviewerEmail = req.user!.email;
 
         await db.transaction(async (tx) => {
+            const request = await tx.query.phdRequests.findFirst({
+                where: eq(phdRequests.id, requestId),
+            });
+            if (!request) {
+                throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
+            }
+
             const assignment =
                 await tx.query.phdRequestDrcAssignments.findFirst({
                     where: and(
@@ -50,9 +57,13 @@ router.post(
                 );
             }
 
-            await tx
-                .insert(phdRequestReviews)
-                .values({ requestId, reviewerEmail, approved, comments });
+            await tx.insert(phdRequestReviews).values({
+                requestId,
+                reviewerEmail,
+                approved,
+                comments,
+                status_at_review: request.status,
+            });
 
             await tx
                 .update(phdRequestDrcAssignments)
@@ -68,7 +79,6 @@ router.post(
                 tx
             );
 
-            // Check if all members have reviewed
             const allAssignments =
                 await tx.query.phdRequestDrcAssignments.findMany({
                     where: eq(phdRequestDrcAssignments.requestId, requestId),
@@ -78,7 +88,6 @@ router.post(
                 (a) => a.status !== "pending"
             );
 
-            // If all members have reviewed, send it back to the convener
             if (allReviewed) {
                 await tx
                     .update(phdRequests)

@@ -42,6 +42,7 @@ router.post(
                 reviewerEmail: convenerEmail,
                 approved: body.action !== "revert",
                 comments: body.comments || `Action: ${body.action}`,
+                status_at_review: request.status,
             });
 
             await completeTodo(

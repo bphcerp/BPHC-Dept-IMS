@@ -4,14 +4,17 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Review {
-  reviewer: { name: string };
+  reviewer: { name: string; email: string };
   approved: boolean;
   comments: string | null;
   createdAt: string;
+  reviewerDisplayName: string;
 }
 
 interface RequestStatusStepperProps {
   reviews: Review[];
+  // The 'request' prop which was causing issues is no longer needed here.
+  request: { drcAssignments: { drcMemberEmail: string; status: string }[] };
 }
 
 export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
@@ -45,11 +48,11 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
                     <XCircle className="h-4 w-4 text-red-500 dark:text-red-400" />
                   )}
                 </span>
-                <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900 dark:text-white">
-                  {review.reviewer.name}
+                <h3 className="mb-1 flex flex-wrap items-center text-lg font-semibold text-gray-900 dark:text-white">
+                  {review.reviewerDisplayName}
                   <span
                     className={cn(
-                      "ml-3 rounded px-2.5 py-0.5 text-sm font-medium",
+                      "ml-3 mt-1 rounded px-2.5 py-0.5 text-sm font-medium sm:mt-0",
                       review.approved
                         ? "bg-green-100 text-green-800"
                         : "bg-red-100 text-red-800"

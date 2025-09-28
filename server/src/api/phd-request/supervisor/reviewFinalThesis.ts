@@ -95,6 +95,7 @@ router.post(
                     reviewerEmail: supervisorEmail,
                     approved: true,
                     comments: comments || "Approved by Supervisor",
+                    status_at_review: request.status,
                 });
 
                 await tx
@@ -132,6 +133,7 @@ router.post(
                     reviewerEmail: supervisorEmail,
                     approved: false,
                     comments: comments || "Reverted by Supervisor",
+                    status_at_review: request.status,
                 });
 
                 await tx

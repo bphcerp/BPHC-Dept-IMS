@@ -53,6 +53,7 @@ router.post(
                 reviewerEmail: hodEmail,
                 approved,
                 comments,
+                status_at_review: request.status,
             });
 
             await completeTodo(
