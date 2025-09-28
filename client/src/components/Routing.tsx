@@ -55,6 +55,7 @@ import MyStudents from "@/views/Phd/Supervisor/MyStudents";
 import DrcConvenerPhdRequestsDashboard from "@/views/Phd/DrcConvenor/PhdRequestsDashboard";
 import DrcMemberPhdRequestsDashboard from "@/views/Phd/DrcMember/PhdRequestsDashboard";
 import HodPhdRequestsDashboard from "@/views/Phd/Hod/PhdRequestsDashboard";
+import StudentHistory from "@/views/Phd/Supervisor/StudentHistory";
 import ViewPhdRequest from "@/views/Phd/Common/ViewPhdRequest";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
@@ -501,6 +502,10 @@ const Routing = () => {
                       element={<ExaminerSuggestions />}
                     />
                   )}
+                  <Route
+                    path="student-history/:studentEmail"
+                    element={<StudentHistory />}
+                  />
                 </Route>
               )}
               {checkAccess(permissions["/phd/examiner/assignments"]) && (

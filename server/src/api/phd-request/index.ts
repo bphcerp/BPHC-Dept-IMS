@@ -5,6 +5,7 @@ import drcConvenerRouter from "./drcConvener/index.ts";
 import drcMemberRouter from "./drcMember/index.ts";
 import hodRouter from "./hod/index.ts";
 import detailsRouter from "./details.ts";
+import historyRouter from "./history.ts";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.use("/drc-convener", drcConvenerRouter);
 router.use("/drc-member", drcMemberRouter);
 router.use("/hod", hodRouter);
 router.use("/details", detailsRouter);
+router.use("/history", historyRouter);
 
 export default router;

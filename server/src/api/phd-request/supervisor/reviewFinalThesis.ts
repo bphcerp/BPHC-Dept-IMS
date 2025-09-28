@@ -14,19 +14,20 @@ import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { eq, and } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
 router.post(
     "/:id",
-    checkAccess(), 
-    pdfUpload.array("documents", 2), 
+    checkAccess(),
+    pdfUpload.array("documents", 2),
     asyncHandler(async (req, res) => {
         const requestId = parseInt(req.params.id);
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
         const { comments, action } =
             phdRequestSchemas.supervisorFinalThesisReviewSchema.parse(req.body);
         const supervisorEmail = req.user!.email;
@@ -65,7 +66,7 @@ router.post(
                         "Supervisor report and final examination panel documents are required for approval."
                     );
                 }
-                // Insert private documents
+
                 const fileInserts = uploadedFiles.map((file) => ({
                     userEmail: supervisorEmail,
                     filePath: file.path,
@@ -79,78 +80,85 @@ router.post(
                     .insert(files)
                     .values(fileInserts)
                     .returning();
+
                 const documentInserts = insertedFiles.map((file) => ({
                     requestId,
                     fileId: file.id,
                     uploadedByEmail: supervisorEmail,
                     documentType: "final_thesis_supervisor_document",
-                    isPrivate: true, // Mark as private
+                    isPrivate: true,
                 }));
                 await tx.insert(phdRequestDocuments).values(documentInserts);
 
-                // Log review and update status
-                await tx
-                    .insert(phdRequestReviews)
-                    .values({
-                        requestId,
-                        reviewerEmail: supervisorEmail,
-                        approved: true,
-                        comments: comments || "Approved by Supervisor",
-                    });
+                await tx.insert(phdRequestReviews).values({
+                    requestId,
+                    reviewerEmail: supervisorEmail,
+                    approved: true,
+                    comments: comments || "Approved by Supervisor",
+                });
+
                 await tx
                     .update(phdRequests)
                     .set({ status: "drc_convener_review" })
                     .where(eq(phdRequests.id, requestId));
 
-                // Create To-Do for DRC Convener
                 const drcConveners = await getUsersWithPermission(
                     "phd-request:drc-convener:view",
                     tx
                 );
                 if (drcConveners.length > 0) {
-                    await createTodos(
+                    const todos = drcConveners.map((convener) => ({
+                        assignedTo: convener.email,
+                        createdBy: supervisorEmail,
+                        title: `Final Thesis review for ${request.student.name}`,
+                        description: `The final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.`,
+                        module: modules[2],
+                        completionEvent: `phd-request:drc-convener-review:${requestId}`,
+                        link: `/phd/requests/${requestId}`,
+                    }));
+                    await createTodos(todos, tx);
+                    await sendBulkEmails(
                         drcConveners.map((convener) => ({
-                            assignedTo: convener.email,
-                            createdBy: supervisorEmail,
-                            title: `Final Thesis review for ${request.student.name}`,
-                            description: `The final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.`,
-                            module: modules[2],
-                            completionEvent: `phd-request:drc-convener-review:${requestId}`,
-                            link: `/phd/drc-convener/requests/${requestId}`,
-                        })),
-                        tx
+                            to: convener.email,
+                            subject: `Final Thesis review for ${request.student.name}`,
+                            text: `Dear DRC Convener,\n\nThe final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        }))
                     );
                 }
             } else {
-                // action === 'revert'
-                await tx
-                    .insert(phdRequestReviews)
-                    .values({
-                        requestId,
-                        reviewerEmail: supervisorEmail,
-                        approved: false,
-                        comments: comments || "Reverted by Supervisor",
-                    });
+                // Revert
+                await tx.insert(phdRequestReviews).values({
+                    requestId,
+                    reviewerEmail: supervisorEmail,
+                    approved: false,
+                    comments: comments || "Reverted by Supervisor",
+                });
+
                 await tx
                     .update(phdRequests)
                     .set({ status: "student_review" })
                     .where(eq(phdRequests.id, requestId));
 
-                // Create To-Do for Student
-                await createTodos(
-                    [
-                        {
-                            assignedTo: request.studentEmail,
-                            createdBy: supervisorEmail,
-                            title: `Action Required: Final Thesis Reverted`,
-                            description: `Your final thesis submission has been reverted by your supervisor. Please review the comments and resubmit. Comments: ${comments}`,
-                            module: modules[2],
-                            completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
-                            link: `/phd/student/requests/${requestId}`,
-                        },
-                    ],
-                    tx
-                );
+                const todos = [
+                    {
+                        assignedTo: request.studentEmail,
+                        createdBy: supervisorEmail,
+                        title: `Action Required: Final Thesis Reverted`,
+                        description: `Your final thesis submission has been reverted by your supervisor. Please review the comments and resubmit. Comments: ${comments}`,
+                        module: modules[2],
+                        completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
+                        link: `/phd/requests/${requestId}`,
+                    },
+                ];
+                await createTodos(todos, tx);
+                await sendBulkEmails([
+                    {
+                        to: request.studentEmail,
+                        subject:
+                            "Action Required: Final Thesis Submission Reverted",
+                        text: `Dear Student,\n\nYour final thesis submission has been reverted by your supervisor. Please review the comments, make the necessary corrections, and resubmit.\n\nComments: ${comments}\n\nView the request here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    },
+                ]);
             }
         });
 

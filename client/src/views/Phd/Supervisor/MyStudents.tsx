@@ -36,8 +36,13 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { phdRequestSchemas } from "lib";
 import { SupervisorRequestForm } from "@/components/phd/phd-request/SupervisorRequestForm";
-import { UserPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { UserPlus, MessageCircleWarning, Edit } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface StudentStatus {
   email: string;
@@ -45,6 +50,9 @@ interface StudentStatus {
   idNumber: string | null;
   currentStatus: string;
   canInitiateRequest: boolean;
+  canResubmitRequest: boolean;
+  reversionComments: string | null;
+  requestId: number | null;
 }
 
 const postProposalRequestOrder: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
@@ -56,6 +64,7 @@ const postProposalRequestOrder: (typeof phdRequestSchemas.phdRequestTypes)[numbe
   ];
 
 const MyStudents: React.FC = () => {
+  const navigate = useNavigate();
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentStatus | null>(
     null
@@ -72,12 +81,11 @@ const MyStudents: React.FC = () => {
 
   const availableRequests = useMemo(() => {
     if (!selectedStudent) return [];
-
     const status = selectedStudent.currentStatus.toLowerCase();
 
+    // Requests that can be initiated anytime after proposal completion
     const anytimeRequests = phdRequestSchemas.phdRequestTypes.filter(
-      (type) =>
-        !postProposalRequestOrder.includes(type) && type !== "change_of_title"
+      (type) => !postProposalRequestOrder.includes(type)
     );
 
     let availablePostProposal: (typeof phdRequestSchemas.phdRequestTypes)[number][] =
@@ -121,11 +129,13 @@ const MyStudents: React.FC = () => {
           View the status of your PhD students and initiate new requests.
         </p>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>
           <CardDescription>
-            A summary of your students' progress and available actions.
+            A summary of your students' progress and available actions. Click on
+            a student to view their full request history.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -153,14 +163,41 @@ const MyStudents: React.FC = () => {
                 </TableRow>
               ) : (
                 students.map((student) => (
-                  <TableRow key={student.email}>
+                  <TableRow
+                    key={student.email}
+                    onClick={() =>
+                      navigate(
+                        `/phd/supervisor/student-history/${student.email}`
+                      )
+                    }
+                    className="cursor-pointer"
+                  >
                     <TableCell className="font-medium">
                       {student.name || student.email}
                     </TableCell>
                     <TableCell>{student.idNumber || "N/A"}</TableCell>
-                    <TableCell>{student.currentStatus}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span>{student.currentStatus}</span>
+                        {student.reversionComments && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <MessageCircleWarning className="h-4 w-4 text-destructive" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">
+                                {student.reversionComments}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div
+                        className="flex justify-end gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {student.currentStatus.toLowerCase().includes("qe") && (
                           <Button variant="outline" size="sm" asChild>
                             <Link to="/phd/supervisor/examiner-suggestions">
@@ -177,13 +214,22 @@ const MyStudents: React.FC = () => {
                             </Link>
                           </Button>
                         )}
+                        {student.canResubmitRequest && student.requestId && (
+                          <Button variant="destructive" size="sm" asChild>
+                            <Link to={`/phd/requests/${student.requestId}`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Resubmit Request
+                            </Link>
+                          </Button>
+                        )}
                         <Button
                           variant="default"
                           size="sm"
                           onClick={() => handleOpenDialog(student)}
                           disabled={!student.canInitiateRequest}
                         >
-                          <UserPlus className="mr-2 h-4 w-4" /> Initiate Request
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Initiate Request
                         </Button>
                       </div>
                     </TableCell>
@@ -194,7 +240,6 @@ const MyStudents: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-
       <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>

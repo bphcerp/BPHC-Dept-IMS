@@ -12,12 +12,13 @@ import { DrcMemberReviewPanel } from "@/components/phd/phd-request/DrcMemberRevi
 import { HodReviewPanel } from "@/components/phd/phd-request/HodReviewPanel";
 import { StudentFinalThesisForm } from "@/components/phd/phd-request/StudentFinalThesisForm";
 import { SupervisorFinalThesisReviewForm } from "@/components/phd/phd-request/SupervisorFinalThesisForm";
+import { SupervisorResubmitForm } from "@/components/phd/phd-request/SupervisorResubmitForm";
+import { phdRequestSchemas } from "lib";
 
-// Define a comprehensive type for the request details
 interface PhdRequestDetails {
   id: number;
   requestType: string;
-  status: string;
+  status: (typeof phdRequestSchemas.phdRequestStatuses)[number];
   comments: string | null;
   student: { name: string; email: string };
   supervisor: { name: string; email: string };
@@ -40,7 +41,6 @@ const ViewPhdRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { authState, checkAccess } = useAuth();
   const queryClient = useQueryClient();
-
   const queryKey = ["phd-request-details", id];
 
   const {
@@ -58,7 +58,6 @@ const ViewPhdRequest: React.FC = () => {
 
   const handleSuccess = async () => {
     await queryClient.invalidateQueries({ queryKey });
-    // Invalidate dashboard queries to reflect changes
     await queryClient.invalidateQueries({
       queryKey: ["drc-convener-requests"],
     });
@@ -72,6 +71,20 @@ const ViewPhdRequest: React.FC = () => {
   const renderActionPanel = () => {
     if (!request || !authState) return null;
 
+    const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+      ["reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"];
+
+    if (
+      authState.email === request.supervisor.email &&
+      revertableStatuses.includes(request.status)
+    ) {
+      return (
+        <SupervisorResubmitForm
+          requestId={request.id}
+          onSuccess={handleSuccess}
+        />
+      );
+    }
     if (
       checkAccess("phd-request:drc-convener:review") &&
       ["supervisor_submitted", "drc_convener_review"].includes(request.status)
@@ -80,7 +93,6 @@ const ViewPhdRequest: React.FC = () => {
         <DrcConvenerReviewPanel request={request} onSuccess={handleSuccess} />
       );
     }
-
     if (
       checkAccess("phd-request:drc-member:review") &&
       request.status === "drc_member_review"
@@ -89,14 +101,12 @@ const ViewPhdRequest: React.FC = () => {
         <DrcMemberReviewPanel request={request} onSuccess={handleSuccess} />
       );
     }
-
     if (
       checkAccess("phd-request:hod:review") &&
       request.status === "hod_review"
     ) {
       return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
     }
-
     if (
       request.student.email === authState.email &&
       request.status === "student_review"
@@ -105,7 +115,6 @@ const ViewPhdRequest: React.FC = () => {
         <StudentFinalThesisForm request={request} onSuccess={handleSuccess} />
       );
     }
-
     if (
       request.supervisor.email === authState.email &&
       request.status === "supervisor_review_final_thesis"
@@ -141,7 +150,6 @@ const ViewPhdRequest: React.FC = () => {
     <div className="space-y-6">
       <BackButton />
       <RequestDetailsCard request={request} />
-      {/* The `currentStatus` prop is removed here as it's not needed by the component */}
       <RequestStatusStepper reviews={request.reviews} />
       <div className="mt-6">{renderActionPanel()}</div>
     </div>

@@ -4,7 +4,10 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { eq, desc } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
-import { phdRequests } from "@/config/db/schema/phdRequest.ts";
+import {
+    phdRequests,
+    phdRequestReviews,
+} from "@/config/db/schema/phdRequest.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { phdRequestSchemas } from "lib";
 
@@ -26,6 +29,12 @@ router.get(
                 requests: {
                     orderBy: [desc(phdRequests.createdAt)],
                     limit: 1,
+                    with: {
+                        reviews: {
+                            orderBy: [desc(phdRequestReviews.createdAt)],
+                            limit: 1,
+                        },
+                    },
                 },
                 qeApplications: {
                     orderBy: (cols, { desc }) => [desc(cols.createdAt)],
@@ -37,12 +46,30 @@ router.get(
         const studentStatuses = students.map((student) => {
             let currentStatus = "No Activity";
             let canInitiateRequest = false;
+            let canResubmitRequest = false;
+            let reversionComments: string | null = null;
+            let requestId: number | null = null;
+
             const latestProposal = student.proposals[0];
             const latestRequest = student.requests[0];
 
-            // Determine current status based on a hierarchy: Request -> Proposal -> QE
+            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+                [
+                    "reverted_by_drc_convener",
+                    "reverted_by_drc_member",
+                    "reverted_by_hod",
+                ];
+
             if (latestRequest) {
+                requestId = latestRequest.id;
                 currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+
+                if (revertableStatuses.includes(latestRequest.status)) {
+                    canResubmitRequest = true;
+                    reversionComments =
+                        latestRequest.reviews[0]?.comments ||
+                        "No comments provided.";
+                }
             } else if (latestProposal) {
                 currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
             } else if (student.qeApplications.length > 0) {
@@ -58,6 +85,7 @@ router.get(
             const completedRequestStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
                 ["completed"];
 
+            // Default eligibility for new requests
             if (latestProposal?.status === "completed") {
                 if (
                     !latestRequest ||
@@ -67,15 +95,38 @@ router.get(
                 }
             }
 
+            // Override for final thesis submission: can only be initiated after thesis_submission is complete.
+            if (
+                latestRequest?.requestType === "thesis_submission" &&
+                latestRequest.status === "completed"
+            ) {
+                canInitiateRequest = true;
+            } else if (
+                latestRequest &&
+                latestRequest.requestType !== "thesis_submission" &&
+                latestRequest.status === "completed"
+            ) {
+                // can still initiate other requests
+                canInitiateRequest = true;
+            } else if (
+                latestRequest &&
+                !completedRequestStatuses.includes(latestRequest.status)
+            ) {
+                // if there's any active request, cannot initiate a new one
+                canInitiateRequest = false;
+            }
+
             return {
                 email: student.email,
                 name: student.name,
                 idNumber: student.idNumber,
                 currentStatus,
                 canInitiateRequest,
+                canResubmitRequest,
+                reversionComments,
+                requestId,
             };
         });
-
         res.status(200).json(studentStatuses);
     })
 );

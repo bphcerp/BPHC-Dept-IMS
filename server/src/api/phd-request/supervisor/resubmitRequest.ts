@@ -8,12 +8,13 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import {
     phdRequests,
     phdRequestDocuments,
-    phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -26,7 +27,6 @@ router.post(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
         const { comments } = phdRequestSchemas.createRequestSchema
             .omit({ studentEmail: true, requestType: true })
             .parse(req.body);
@@ -52,7 +52,6 @@ router.post(
                     "reverted_by_drc_member",
                     "reverted_by_hod",
                 ];
-
             if (!revertableStatuses.includes(request.status)) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
@@ -84,18 +83,6 @@ router.post(
                 await tx.insert(phdRequestDocuments).values(documentInserts);
             }
 
-            const lastReview = await tx.query.phdRequestReviews.findFirst({
-                where: eq(phdRequestReviews.requestId, requestId),
-                orderBy: [desc(phdRequestReviews.createdAt)],
-            });
-
-            if (!lastReview) {
-                throw new HttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Could not find the reverting review."
-                );
-            }
-
             await tx
                 .update(phdRequests)
                 .set({
@@ -119,17 +106,23 @@ router.post(
             );
 
             if (drcConveners.length > 0) {
-                await createTodos(
+                const todos = drcConveners.map((convener) => ({
+                    assignedTo: convener.email,
+                    createdBy: supervisorEmail,
+                    title: `Resubmitted PhD Request from ${request.student.name || request.studentEmail}`,
+                    description: `A previously reverted '${request.requestType.replace(/_/g, " ")}' request has been resubmitted.`,
+                    module: modules[2],
+                    completionEvent: `phd-request:drc-convener-review:${requestId}`,
+                    link: `/phd/requests/${requestId}`,
+                }));
+                await createTodos(todos, tx);
+
+                await sendBulkEmails(
                     drcConveners.map((convener) => ({
-                        assignedTo: convener.email,
-                        createdBy: supervisorEmail,
-                        title: `Resubmitted PhD Request from ${request.student.name || request.studentEmail}`,
-                        description: `A previously reverted '${request.requestType.replace(/_/g, " ")}' request has been resubmitted.`,
-                        module: modules[2],
-                        completionEvent: `phd-request:drc-convener-review:${requestId}`,
-                        link: `/phd/drc-convener/requests/${requestId}`,
-                    })),
-                    tx
+                        to: convener.email,
+                        subject: `Resubmitted PhD Request from ${request.student.name || request.studentEmail}`,
+                        text: `Dear DRC Convener,\n\nA previously reverted '${request.requestType.replace(/_/g, " ")}' request has been resubmitted by the supervisor.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    }))
                 );
             }
         });

@@ -14,6 +14,8 @@ import {
     createNotifications,
 } from "@/lib/todos/index.ts";
 import { eq, and } from "drizzle-orm";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -36,7 +38,7 @@ router.post(
                     eq(phdRequests.id, requestId),
                     eq(phdRequests.status, "hod_review")
                 ),
-                with: { student: true },
+                with: { student: true, supervisor: true },
             });
 
             if (!request) {
@@ -68,24 +70,34 @@ router.post(
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
 
-                await createNotifications(
-                    [
-                        {
-                            userEmail: request.studentEmail,
-                            title: `Your PhD Request has been Approved`,
-                            content: `Your '${request.requestType.replace(/_/g, " ")}' request has been approved by the HOD.`,
-                            module: modules[2],
-                        },
-                        {
-                            userEmail: request.supervisorEmail,
-                            title: `PhD Request for ${request.student.name} Approved`,
-                            content: `The '${request.requestType.replace(/_/g, " ")}' request for your student has been approved by the HOD.`,
-                            module: modules[2],
-                        },
-                    ],
-                    false,
-                    tx
-                );
+                const notificationsToCreate = [
+                    {
+                        userEmail: request.studentEmail,
+                        title: `Your PhD Request has been Approved`,
+                        content: `Your '${request.requestType.replace(/_/g, " ")}' request has been approved by the HOD.`,
+                        module: modules[2],
+                    },
+                    {
+                        userEmail: request.supervisorEmail,
+                        title: `PhD Request for ${request.student.name} Approved`,
+                        content: `The '${request.requestType.replace(/_/g, " ")}' request for your student has been approved by the HOD.`,
+                        module: modules[2],
+                    },
+                ];
+                await createNotifications(notificationsToCreate, false, tx);
+
+                await sendBulkEmails([
+                    {
+                        to: request.studentEmail,
+                        subject: `Your PhD Request has been Approved`,
+                        text: `Dear ${request.student.name},\n\nYour PhD request for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
+                    },
+                    {
+                        to: request.supervisorEmail,
+                        subject: `PhD Request for ${request.student.name} Approved`,
+                        text: `Dear ${request.supervisor.name},\n\nThe PhD request for your student, ${request.student.name}, for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
+                    },
+                ]);
             } else {
                 await tx
                     .update(phdRequests)
@@ -101,11 +113,18 @@ router.post(
                             description: `Your request for '${request.student.name}' has been reverted by the HOD. Comments: ${comments}`,
                             module: modules[2],
                             completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                            link: `/phd/supervisor/requests/${requestId}`,
+                            link: `/phd/requests/${requestId}`,
                         },
                     ],
                     tx
                 );
+                await sendBulkEmails([
+                    {
+                        to: request.supervisorEmail,
+                        subject: `PhD Request Reverted by HOD`,
+                        text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by the HOD.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    },
+                ]);
             }
         });
 

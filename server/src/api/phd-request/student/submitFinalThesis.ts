@@ -14,13 +14,15 @@ import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { eq, and } from "drizzle-orm";
 import { users } from "@/config/db/schema/admin.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
 router.post(
     "/:id",
     checkAccess(),
-    pdfUpload.array("documents", 12), // Student uploads up to 12 documents
+    pdfUpload.array("documents", 12),
     asyncHandler(async (req, res) => {
         const requestId = parseInt(req.params.id);
         if (isNaN(requestId)) {
@@ -45,12 +47,11 @@ router.post(
                     eq(phdRequests.id, requestId),
                     eq(phdRequests.studentEmail, studentEmail)
                 ),
+                with: { supervisor: true },
             });
-
             if (!request) {
                 throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
             }
-
             if (request.status !== "student_review") {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
@@ -61,7 +62,7 @@ router.post(
             await completeTodo(
                 {
                     module: modules[2],
-                    completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
+                    completionEvent: `phd-request:student-submit-final-thesis:${requestId}`,
                     assignedTo: studentEmail,
                 },
                 tx
@@ -100,7 +101,7 @@ router.post(
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: studentEmail,
-                    approved: true, // Student submission is an approval of their own work
+                    approved: true, // student submission is an approval action
                     comments: `Student submission comments: ${comments}`,
                 });
             }
@@ -110,20 +111,26 @@ router.post(
                 .set({ status: "supervisor_review_final_thesis" })
                 .where(eq(phdRequests.id, requestId));
 
-            await createTodos(
-                [
-                    {
-                        assignedTo: request.supervisorEmail,
-                        createdBy: studentEmail,
-                        title: `Final Thesis Submitted by ${studentName}`,
-                        description: `Please review the final thesis documents submitted by your student.`,
-                        module: modules[2],
-                        completionEvent: `phd-request:supervisor-review-final-thesis:${requestId}`,
-                        link: `/phd/supervisor/requests/${requestId}`,
-                    },
-                ],
-                tx
-            );
+            const todos = [
+                {
+                    assignedTo: request.supervisorEmail,
+                    createdBy: studentEmail,
+                    title: `Final Thesis Submitted by ${studentName}`,
+                    description: `Please review the final thesis documents submitted by your student.`,
+                    module: modules[2],
+                    completionEvent: `phd-request:supervisor-review-final-thesis:${requestId}`,
+                    link: `/phd/requests/${requestId}`,
+                },
+            ];
+
+            await createTodos(todos, tx);
+            await sendBulkEmails([
+                {
+                    to: request.supervisorEmail,
+                    subject: `Final Thesis Submitted by ${studentName}`,
+                    text: `Dear ${request.supervisor.name},\n\nYour student, ${studentName}, has submitted their final thesis documents for review.\n\nPlease review the submission here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                },
+            ]);
         });
 
         res.status(200).json({

@@ -12,6 +12,8 @@ import {
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { eq, and } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -23,7 +25,6 @@ router.post(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
         const { approved, comments } = phdRequestSchemas.reviewerSchema.parse(
             req.body
         );
@@ -70,7 +71,7 @@ router.post(
             if (!approved) {
                 const request = await tx.query.phdRequests.findFirst({
                     where: eq(phdRequests.id, requestId),
-                    with: { student: true },
+                    with: { student: true, supervisor: true },
                 });
 
                 await tx
@@ -88,11 +89,18 @@ router.post(
                                 description: `Your request for '${request.student.name}' was reverted. Comments: ${comments}`,
                                 module: modules[2],
                                 completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                                link: `/phd/supervisor/requests/${requestId}`,
+                                link: `/phd/requests/${requestId}`,
                             },
                         ],
                         tx
                     );
+                    await sendBulkEmails([
+                        {
+                            to: request.supervisorEmail,
+                            subject: `PhD Request Reverted by DRC Member`,
+                            text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by a DRC Member.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        },
+                    ]);
                 }
             } else {
                 const allAssignments =
@@ -117,19 +125,33 @@ router.post(
                         "phd-request:drc-convener:view",
                         tx
                     );
-
                     if (drcConveners.length > 0) {
+                        const studentRequest =
+                            await tx.query.phdRequests.findFirst({
+                                where: eq(phdRequests.id, requestId),
+                                with: { student: { columns: { name: true } } },
+                            });
+                        const studentName =
+                            studentRequest?.student.name || "a student";
+
                         await createTodos(
                             drcConveners.map((c) => ({
                                 assignedTo: c.email,
                                 createdBy: "system",
                                 title: `PhD Request Ready for Final DRC Approval`,
-                                description: `All assigned DRC members have approved the request. Please provide final approval.`,
+                                description: `All assigned DRC members have approved the request for ${studentName}. Please provide final approval.`,
                                 module: modules[2],
                                 completionEvent: `phd-request:drc-convener-review:${requestId}`,
-                                link: `/phd/drc-convener/requests/${requestId}`,
+                                link: `/phd/requests/${requestId}`,
                             })),
                             tx
+                        );
+                        await sendBulkEmails(
+                            drcConveners.map((c) => ({
+                                to: c.email,
+                                subject: `PhD Request Ready for Final DRC Approval`,
+                                text: `Dear DRC Convener,\n\nAll assigned DRC members have approved the request for student '${studentName}'. Please provide final approval.\n\nView here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                            }))
                         );
                     }
                 }

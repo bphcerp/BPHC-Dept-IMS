@@ -12,6 +12,8 @@ import {
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { eq } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -30,9 +32,8 @@ router.post(
         await db.transaction(async (tx) => {
             const request = await tx.query.phdRequests.findFirst({
                 where: eq(phdRequests.id, requestId),
-                with: { student: true },
+                with: { student: true, supervisor: true },
             });
-
             if (!request)
                 throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
 
@@ -58,20 +59,26 @@ router.post(
                         .update(phdRequests)
                         .set({ status: "reverted_by_drc_convener" })
                         .where(eq(phdRequests.id, requestId));
-                    await createTodos(
-                        [
-                            {
-                                assignedTo: request.supervisorEmail,
-                                createdBy: convenerEmail,
-                                title: `PhD Request Reverted by DRC Convener`,
-                                description: `Your request for '${request.student.name}' has been reverted. Comments: ${body.comments}`,
-                                module: modules[2],
-                                completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
-                                link: `/phd/supervisor/requests/${requestId}`,
-                            },
-                        ],
-                        tx
-                    );
+
+                    const revertTodos = [
+                        {
+                            assignedTo: request.supervisorEmail,
+                            createdBy: convenerEmail,
+                            title: `PhD Request Reverted by DRC Convener`,
+                            description: `Your request for '${request.student.name}' has been reverted. Comments: ${body.comments}`,
+                            module: modules[2],
+                            completionEvent: `phd-request:supervisor-resubmit:${requestId}`,
+                            link: `/phd/requests/${requestId}`,
+                        },
+                    ];
+                    await createTodos(revertTodos, tx);
+                    await sendBulkEmails([
+                        {
+                            to: request.supervisorEmail,
+                            subject: `PhD Request Reverted by DRC Convener`,
+                            text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by the DRC Convener.\n\nComments: ${body.comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        },
+                    ]);
                     break;
 
                 case "forward_to_drc":
@@ -102,18 +109,22 @@ router.post(
                         }))
                     );
 
-                    await createTodos(
+                    const drcTodos = body.assignedDrcMembers.map((email) => ({
+                        assignedTo: email,
+                        createdBy: convenerEmail,
+                        title: `PhD Request Review for ${request.student.name}`,
+                        description: "Please review the assigned PhD request.",
+                        module: modules[2],
+                        completionEvent: `phd-request:drc-member-review:${requestId}`,
+                        link: `/phd/requests/${requestId}`,
+                    }));
+                    await createTodos(drcTodos, tx);
+                    await sendBulkEmails(
                         body.assignedDrcMembers.map((email) => ({
-                            assignedTo: email,
-                            createdBy: convenerEmail,
-                            title: `PhD Request Review for ${request.student.name}`,
-                            description:
-                                "Please review the assigned PhD request.",
-                            module: modules[2],
-                            completionEvent: `phd-request:drc-member-review:${requestId}`,
-                            link: `/phd/drc-member/requests/${requestId}`,
-                        })),
-                        tx
+                            to: email,
+                            subject: `PhD Request Review for ${request.student.name}`,
+                            text: `Dear DRC Member,\n\nYou have been assigned to review a PhD request for '${request.student.name}'.\n\nPlease review the request here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        }))
                     );
                     break;
 
@@ -129,23 +140,27 @@ router.post(
                         tx
                     );
                     if (hods.length > 0) {
-                        await createTodos(
+                        const hodTodos = hods.map((hod) => ({
+                            assignedTo: hod.email,
+                            createdBy: convenerEmail,
+                            title: `PhD Request Approval for ${request.student.name}`,
+                            description: `A PhD request is awaiting your final approval.`,
+                            module: modules[2],
+                            completionEvent: `phd-request:hod-review:${requestId}`,
+                            link: `/phd/requests/${requestId}`,
+                        }));
+                        await createTodos(hodTodos, tx);
+                        await sendBulkEmails(
                             hods.map((hod) => ({
-                                assignedTo: hod.email,
-                                createdBy: convenerEmail,
-                                title: `PhD Request Approval for ${request.student.name}`,
-                                description: `A PhD request is awaiting your final approval.`,
-                                module: modules[2],
-                                completionEvent: `phd-request:hod-review:${requestId}`,
-                                link: `/phd/hod/requests/${requestId}`,
-                            })),
-                            tx
+                                to: hod.email,
+                                subject: `PhD Request Approval for ${request.student.name}`,
+                                text: `Dear HOD,\n\nA PhD request for '${request.student.name}' is awaiting your final approval.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                            }))
                         );
                     }
                     break;
             }
         });
-
         res.status(200).json({
             success: true,
             message: `Request action '${body.action}' processed successfully.`,

@@ -14,6 +14,8 @@ import { createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { eq } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -24,16 +26,8 @@ router.post(
     asyncHandler(async (req, res) => {
         const { studentEmail, requestType, comments } =
             phdRequestSchemas.createRequestSchema.parse(req.body);
-
         const supervisorEmail = req.user!.email;
         const uploadedFiles = req.files as Express.Multer.File[];
-
-        if (!uploadedFiles || uploadedFiles.length === 0) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "At least one document is required."
-            );
-        }
 
         const latestSemester = await db.query.phdSemesters.findFirst({
             orderBy: (table, { desc }) => [
@@ -41,11 +35,61 @@ router.post(
                 desc(table.semesterNumber),
             ],
         });
-
         if (!latestSemester) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "No active semester found."
+            );
+        }
+
+        // Special workflow for Final Thesis Submission
+        if (requestType === "final_thesis_submission") {
+            const [newRequest] = await db
+                .insert(phdRequests)
+                .values({
+                    studentEmail,
+                    supervisorEmail,
+                    semesterId: latestSemester.id,
+                    requestType,
+                    status: "student_review", // Goes directly to student
+                    comments: comments,
+                })
+                .returning({ id: phdRequests.id });
+
+            const studentTodo = [
+                {
+                    assignedTo: studentEmail,
+                    createdBy: supervisorEmail,
+                    title: `Action Required: Submit Final Thesis Documents`,
+                    description: `Your supervisor has initiated the final thesis submission process. Please upload all required documents.`,
+                    module: modules[2],
+                    completionEvent: `phd-request:student-submit-final-thesis:${newRequest.id}`,
+                    link: `/phd/requests/${newRequest.id}`,
+                },
+            ];
+
+            await createTodos(studentTodo);
+            await sendBulkEmails([
+                {
+                    to: studentEmail,
+                    subject: "Action Required: Submit Final Thesis Documents",
+                    text: `Dear Student,\n\nYour supervisor has initiated the final thesis submission process. Please upload the required documents in the portal.\n\nView the request here: ${environment.FRONTEND_URL}/phd/requests/${newRequest.id}`,
+                },
+            ]);
+
+            res.status(201).json({
+                success: true,
+                message:
+                    "Request initiated and sent to student for document submission.",
+                requestId: newRequest.id,
+            });
+        }
+
+        // Default workflow for all other requests
+        if (!uploadedFiles || uploadedFiles.length === 0) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "At least one document is required."
             );
         }
 
@@ -69,7 +113,7 @@ router.post(
                 mimetype: file.mimetype,
                 size: file.size,
                 fieldName: file.fieldname,
-                module: modules[2], // PhD Progress Module
+                module: modules[2],
             }));
             const insertedFiles = await tx
                 .insert(files)
@@ -97,15 +141,23 @@ router.post(
         });
 
         if (drcConveners.length > 0) {
-            await createTodos(
+            const convenerTodos = drcConveners.map((convener) => ({
+                assignedTo: convener.email,
+                createdBy: supervisorEmail,
+                title: `New PhD Request from ${student?.name || studentEmail}`,
+                description: `A new '${requestType.replace(/_/g, " ")}' request has been submitted by the supervisor.`,
+                module: modules[2],
+                completionEvent: `phd-request:drc-convener-review:${newRequestId}`,
+                link: `/phd/requests/${newRequestId}`,
+            }));
+
+            await createTodos(convenerTodos);
+
+            await sendBulkEmails(
                 drcConveners.map((convener) => ({
-                    assignedTo: convener.email,
-                    createdBy: supervisorEmail,
-                    title: `New PhD Request from ${student?.name || studentEmail}`,
-                    description: `A new '${requestType.replace(/_/g, " ")}' request has been submitted by the supervisor.`,
-                    module: modules[2],
-                    completionEvent: `phd-request:drc-convener-review:${newRequestId}`,
-                    link: `/phd/drc-convener/requests/${newRequestId}`,
+                    to: convener.email,
+                    subject: `New PhD Request from ${student?.name || studentEmail}`,
+                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(/_/g, " ")}' has been submitted for student ${student?.name || studentEmail}.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
                 }))
             );
         }
