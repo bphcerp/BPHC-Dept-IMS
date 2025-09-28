@@ -95,6 +95,7 @@ export const assignReviewerBodySchema = z.object({
             message: "Invalid handout id",
         }),
     reviewerEmail: z.string().email(),
+    sendEmail: z.boolean().default(false),
 });
 
 export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;

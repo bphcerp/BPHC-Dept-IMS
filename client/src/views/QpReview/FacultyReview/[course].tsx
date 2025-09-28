@@ -207,6 +207,13 @@ export default function FacultyReview() {
     }
   };
 
+  // Handle key press to prevent form submission on Enter
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
   // Save Review (draft) - uses the same endpoint but different messaging
   const handleSave = async () => {
     setSaving(true);
@@ -346,7 +353,7 @@ export default function FacultyReview() {
                 Showing evaluation for: {sectionsToShow.filter(s => s !== "Others").join(", ") || "General review"}
               </p>
               
-              {/* Rating Instructions - Larger font */}
+              {/* Rating Instructions */}
               <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -365,54 +372,33 @@ export default function FacultyReview() {
             
             <div className="p-4 h-full overflow-auto">
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Vertical Table Layout - Criteria as rows, sections as columns */}
                 <div className="overflow-x-auto rounded-md border">
                   <Table className="text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead 
-                          className="w-24 font-medium text-sm"
-                          style={{ 
-                            whiteSpace: 'normal', 
-                            wordWrap: 'break-word'
-                          }}
-                        >
-                          Component
+                        <TableHead className="w-1/2 font-medium text-sm">
+                          Evaluation Criteria
                         </TableHead>
-                        {FIELDS.map((field) => (
+                        {sectionsToShow.map((section) => (
                           <TableHead
-                            key={field.key}
-                            className="text-center font-medium text-sm min-w-36"
-                            title={field.label}
-                            style={{ 
-                              whiteSpace: 'normal', 
-                              wordWrap: 'break-word',
-                              lineHeight: '1.3'
-                            }}
+                            key={section}
+                            className="text-center font-medium text-sm min-w-24"
                           >
-                            <div className="text-sm leading-tight">
-                              {field.label}
-                            </div>
+                            {section}
                           </TableHead>
                         ))}
-                        <TableHead 
-                          className="text-center font-medium text-sm"
-                          style={{ 
-                            whiteSpace: 'normal', 
-                            wordWrap: 'break-word'
-                          }}
-                        >
-                          Remarks
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sectionsToShow.map((section) => (
-                        <TableRow key={section}>
+                      {/* Each field becomes a row */}
+                      {FIELDS.map((field) => (
+                        <TableRow key={field.key}>
                           <TableCell className="font-medium text-sm bg-gray-50 p-3">
-                            {section}
+                            {field.label}
                           </TableCell>
-                          {FIELDS.map((field) => (
-                            <TableCell key={field.key} className="p-2">
+                          {sectionsToShow.map((section) => (
+                            <TableCell key={section} className="p-2">
                               <Input
                                 type="text"
                                 inputMode="numeric"
@@ -426,6 +412,7 @@ export default function FacultyReview() {
                                     e.target.value
                                   )
                                 }
+                                onKeyPress={handleKeyPress}
                                 placeholder="0-10"
                                 min="0"
                                 max="10"
@@ -434,7 +421,16 @@ export default function FacultyReview() {
                               />
                             </TableCell>
                           ))}
-                          <TableCell className="p-2">
+                        </TableRow>
+                      ))}
+                      
+                      {/* Remarks row */}
+                      <TableRow>
+                        <TableCell className="font-medium text-sm bg-gray-50 p-3">
+                          Remarks
+                        </TableCell>
+                        {sectionsToShow.map((section) => (
+                          <TableCell key={section} className="p-2">
                             <Input
                               type="text"
                               value={formData[section]?.remarks || ""}
@@ -442,10 +438,11 @@ export default function FacultyReview() {
                               placeholder="Click to add"
                               className="cursor-pointer hover:bg-gray-100 text-sm h-10"
                               onClick={() => openRemarksModal(section)}
+                              onKeyPress={handleKeyPress}
                             />
                           </TableCell>
-                        </TableRow>
-                      ))}
+                        ))}
+                      </TableRow>
                     </TableBody>
                   </Table>
                 </div>

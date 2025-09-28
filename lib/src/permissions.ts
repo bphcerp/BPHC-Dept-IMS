@@ -387,7 +387,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     // qp review module
     "/qp/uploadDocuments": "qp:faculty:submit",
-    "/qp/getFilesByRequestId": "qp:faculty:get-files",
+    "/qp/getFilesByRequestID": "qp:faculty:get-files",
     "/qp/submitReview": "qp:faculty:review",
     "/qp/saveReview": "qp:faculty:review",
     "/qp/assignFaculty": "qp:dca-convenor:assignreviewer",
