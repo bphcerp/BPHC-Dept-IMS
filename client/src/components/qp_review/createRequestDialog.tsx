@@ -94,7 +94,10 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={() => void form.handleSubmit(handleSubmit)()}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="icEmail"
@@ -170,7 +173,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
               name="requestType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Request Type</FormLabel> 
+                  <FormLabel>Request Type</FormLabel>
                   <FormControl>
                     <RadioGroup
                       value={field.value}

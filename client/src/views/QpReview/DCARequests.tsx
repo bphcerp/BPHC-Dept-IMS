@@ -21,6 +21,7 @@ import SendReminderDialog from "@/components/qp_review/SendRemindersDialog";
 import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
+import { isAxiosError } from "axios";
 
 const STATUS_COLORS: Record<string, string> = {
   "review pending": "text-yellow-600 bg-yellow-100 p-3",
@@ -46,20 +47,25 @@ interface CreateRequestData {
   icEmail: string;
   courseName: string;
   courseCode: string;
-  requestType: ("Mid Sem" | "Comprehensive" | "Both")[];
+  requestType: "Mid Sem" | "Comprehensive" | "Both";
   category: "HD" | "FD";
 }
 
 export const DCAConvenercourses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>([]);
+  const [activeCategoryFilters, setActiveCategoryFilters] = useState<string[]>(
+    []
+  );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<string[]>([]);
+  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<
+    string[]
+  >([]);
   const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>([]);
 
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
-  const [isCreateRequestDialogOpen, setIsCreateRequestDialogOpen] = useState(false);
+  const [isCreateRequestDialogOpen, setIsCreateRequestDialogOpen] =
+    useState(false);
   const [currentcourseId, setCurrentcourseId] = useState<string | null>(null);
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
@@ -209,8 +215,10 @@ export const DCAConvenercourses: React.FC = () => {
       );
       return response.data;
     },
-    onSuccess: (data, variables) => {
-      toast.success(`Email reminders sent successfully to ${variables.recipientCount} recipients`);
+    onSuccess: (_data, variables) => {
+      toast.success(
+        `Email reminders sent successfully to ${variables.recipientCount} recipients`
+      );
     },
     onError: (error) => {
       console.error("Send reminders error:", error);
@@ -321,7 +329,7 @@ export const DCAConvenercourses: React.FC = () => {
       });
     } else {
       if (!currentcourseId) {
-        toast.error("No course selected");  
+        toast.error("No course selected");
         return;
       }
 
@@ -339,25 +347,25 @@ export const DCAConvenercourses: React.FC = () => {
     createRequestMutation.mutate(data);
   };
 
-  const handleSendReminders = async () => {
-    const selectedCoursesData = filteredCourses.filter(course => 
+  const handleSendReminders = () => {
+    const selectedCoursesData = filteredCourses.filter((course) =>
       selectedcourses.includes(course.id)
     );
-    
-    const validCourses = selectedCoursesData.filter(course => {
-      if (course.status === 'notsubmitted') {
+
+    const validCourses = selectedCoursesData.filter((course) => {
+      if (course.status === "notsubmitted") {
         return course.icEmail;
       }
-      if (course.status === 'review pending') {
+      if (course.status === "review pending") {
         return course.reviewerEmail;
       }
       return false;
     });
-    
+
     const reminderData = {
       selectedCourseIds: selectedcourses,
       recipientCount: validCourses.length,
-      courses: validCourses.map(course => ({
+      courses: validCourses.map((course) => ({
         id: course.id,
         courseName: course.courseName,
         icEmail: course.icEmail,
@@ -365,22 +373,22 @@ export const DCAConvenercourses: React.FC = () => {
         reviewerEmail: course.reviewerEmail,
         reviewerName: course.reviewerName,
         status: course.status,
-        requestType: course.requestType
-      }))
+        requestType: course.requestType,
+      })),
     };
-    
+
     sendRemindersMutation.mutate(reminderData);
   };
 
   // UPDATED: Enhanced download function for ZIP/PDF handling
   const handleDownloadReviews = async () => {
-    const selectedCoursesData = filteredCourses.filter(course => 
+    const selectedCoursesData = filteredCourses.filter((course) =>
       selectedcourses.includes(course.id)
     );
 
     // Filter only reviewed courses
-    const reviewedCourses = selectedCoursesData.filter(course => 
-      course.status === 'reviewed'
+    const reviewedCourses = selectedCoursesData.filter(
+      (course) => course.status === "reviewed"
     );
 
     if (reviewedCourses.length === 0) {
@@ -393,21 +401,29 @@ export const DCAConvenercourses: React.FC = () => {
 
     try {
       // Show appropriate loading message
-      const loadingMessage = reviewedCourses.length === 1 
-        ? "Generating PDF report..." 
-        : `Creating ZIP with ${reviewedCourses.length} individual PDF reports...`;
-      
+      const loadingMessage =
+        reviewedCourses.length === 1
+          ? "Generating PDF report..."
+          : `Creating ZIP with ${reviewedCourses.length} individual PDF reports...`;
+
       toast.loading(loadingMessage, { id: "pdf-generation" });
 
       // Make API call with proper configuration
-      const response = await api.post('/qp/downloadReviewPdf', reviewedCourses, {
-        responseType: 'blob',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': reviewedCourses.length === 1 ? 'application/pdf' : 'application/zip'
-        },
-        timeout: 90000 // 1.5 minutes for zip generation
-      });
+      const response = await api.post(
+        "/qp/downloadReviewPdf",
+        reviewedCourses,
+        {
+          responseType: "blob",
+          headers: {
+            "Content-Type": "application/json",
+            Accept:
+              reviewedCourses.length === 1
+                ? "application/pdf"
+                : "application/zip",
+          },
+          timeout: 90000, // 1.5 minutes for zip generation
+        }
+      );
 
       console.log("File response received:", response);
 
@@ -416,73 +432,85 @@ export const DCAConvenercourses: React.FC = () => {
 
       // Determine file type and create appropriate blob
       const isZip = reviewedCourses.length > 1;
-      const mimeType = isZip ? 'application/zip' : 'application/pdf';
-      const fileExtension = isZip ? 'zip' : 'pdf';
-      
+      const mimeType = isZip ? "application/zip" : "application/pdf";
+      const fileExtension = isZip ? "zip" : "pdf";
+
       const blob = new Blob([response.data], { type: mimeType });
 
       // Create download URL
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      
+
       // Generate appropriate filename
-      const timestamp = new Date().toISOString().split('T')[0];
+      const timestamp = new Date().toISOString().split("T")[0];
       let filename: string;
-      
+
       if (reviewedCourses.length === 1) {
         const course = reviewedCourses[0];
-        const cleanCourseName = course.courseName.replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanCourseName = course.courseName.replace(/[^a-zA-Z0-9]/g, "_");
         filename = `${course.courseCode}-${cleanCourseName}-Review.${fileExtension}`;
       } else {
         filename = `reviews-${reviewedCourses.length}-courses-${timestamp}.${fileExtension}`;
       }
-      
+
       link.download = filename;
-      link.style.display = 'none';
+      link.style.display = "none";
 
       // Download the file
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
       // Success feedback
-      const successMessage = reviewedCourses.length === 1
-        ? `Successfully downloaded review PDF for ${reviewedCourses[0].courseCode}`
-        : `Successfully downloaded ZIP containing ${reviewedCourses.length} individual review PDFs`;
-      
+      const successMessage =
+        reviewedCourses.length === 1
+          ? `Successfully downloaded review PDF for ${reviewedCourses[0].courseCode}`
+          : `Successfully downloaded ZIP containing ${reviewedCourses.length} individual review PDFs`;
+
       toast.success(successMessage, { duration: 5000 });
 
       // Clear selection after successful download
       setSelectedcourses([]);
-
     } catch (error) {
       console.error("Download reviews error:", error);
-      
+
       // Dismiss loading toast
       toast.dismiss("pdf-generation");
-      
+
       // Handle errors with specific messages
-      if (error.response) {
+      if (isAxiosError(error) && error.response) {
         const status = error.response.status;
         if (status === 400) {
-          toast.error("Invalid request data. Please check selected courses and try again.");
+          toast.error(
+            "Invalid request data. Please check selected courses and try again."
+          );
         } else if (status === 500) {
-          toast.error("Server error occurred while generating files. Please try again later.");
+          toast.error(
+            "Server error occurred while generating files. Please try again later."
+          );
         } else if (status === 413) {
           toast.error("Request too large. Try selecting fewer courses.");
         } else {
-          toast.error(`Failed to download files (HTTP ${status}). Please contact support.`);
+          toast.error(
+            `Failed to download files (HTTP ${status}). Please contact support.`
+          );
         }
-      } else if (error.request) {
-        toast.error("Network error. Please check your internet connection and try again.");
-      } else if (error.code === 'ECONNABORTED') {
-        toast.error("Request timed out. The file generation is taking too long. Try selecting fewer courses.");
+      } else if (isAxiosError(error) && error.request) {
+        toast.error(
+          "Network error. Please check your internet connection and try again."
+        );
+      } else if (isAxiosError(error) && error.code === "ECONNABORTED") {
+        toast.error(
+          "Request timed out. The file generation is taking too long. Try selecting fewer courses."
+        );
       } else {
-        toast.error("Failed to download files. Please try again or contact support.");
+        toast.error(
+          "Failed to download files. Please try again or contact support."
+        );
       }
     } finally {
       setIsDownloading(false);
@@ -517,23 +545,24 @@ export const DCAConvenercourses: React.FC = () => {
   };
 
   // Calculate recipients
-  const recipientCount = filteredCourses.filter(course => {
+  const recipientCount = filteredCourses.filter((course) => {
     if (!selectedcourses.includes(course.id)) return false;
-    
-    if (course.status === 'notsubmitted') {
+
+    if (course.status === "notsubmitted") {
       return course.icEmail;
     }
-    
-    if (course.status === 'review pending') {
+
+    if (course.status === "review pending") {
       return course.reviewerEmail;
     }
-    
+
     return false;
   }).length;
 
   // Calculate reviewable courses count
-  const reviewableCoursesCount = filteredCourses.filter(course =>
-    selectedcourses.includes(course.id) && course.status === 'reviewed'
+  const reviewableCoursesCount = filteredCourses.filter(
+    (course) =>
+      selectedcourses.includes(course.id) && course.status === "reviewed"
   ).length;
 
   const isAllSelected =
@@ -585,39 +614,45 @@ export const DCAConvenercourses: React.FC = () => {
 
                   <SendReminderDialog
                     trigger={
-                      <Button 
+                      <Button
                         className="flex items-center gap-2"
-                        disabled={sendRemindersMutation.isPending}
+                        disabled={sendRemindersMutation.isLoading}
                       >
                         <Mail className="h-4 w-4" />
-                        {sendRemindersMutation.isPending 
+                        {sendRemindersMutation.isLoading
                           ? `Sending... (${selectedcourses.length})`
-                          : `Send Reminders (${selectedcourses.length})`
-                        }
+                          : `Send Reminders (${selectedcourses.length})`}
                       </Button>
                     }
                     onConfirm={handleSendReminders}
                     recipientCount={recipientCount}
-                    disabled={recipientCount === 0 || sendRemindersMutation.isPending}
+                    disabled={
+                      recipientCount === 0 || sendRemindersMutation.isLoading
+                    }
                   />
 
                   {/* UPDATED: Enhanced download button */}
-                  <Button 
-                    onClick={handleDownloadReviews}
+                  <Button
+                    onClick={() => void handleDownloadReviews()}
                     className="flex items-center gap-2"
                     variant={reviewableCoursesCount > 0 ? "default" : "outline"}
                     disabled={isDownloading || reviewableCoursesCount === 0}
                   >
-                    <Download className={`h-4 w-4 ${isDownloading ? 'animate-spin' : ''}`} />
-                    {isDownloading 
-                      ? (reviewableCoursesCount === 1 ? "Generating PDF..." : "Creating ZIP...")
-                      : (reviewableCoursesCount === 1 
-                          ? `Download PDF (1)` 
-                          : `Download ZIP (${selectedcourses.length})`)
-                    }
+                    <Download
+                      className={`h-4 w-4 ${isDownloading ? "animate-spin" : ""}`}
+                    />
+                    {isDownloading
+                      ? reviewableCoursesCount === 1
+                        ? "Generating PDF..."
+                        : "Creating ZIP..."
+                      : reviewableCoursesCount === 1
+                        ? `Download PDF (1)`
+                        : `Download ZIP (${selectedcourses.length})`}
                     {reviewableCoursesCount > 0 && !isDownloading && (
-                      <span className="ml-1 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
-                        {reviewableCoursesCount === 1 ? "1 PDF" : `${reviewableCoursesCount} PDFs`}
+                      <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
+                        {reviewableCoursesCount === 1
+                          ? "1 PDF"
+                          : `${reviewableCoursesCount} PDFs`}
                       </span>
                     )}
                   </Button>
@@ -797,7 +832,7 @@ export const DCAConvenercourses: React.FC = () => {
         isOpen={isCreateRequestDialogOpen}
         setIsOpen={setIsCreateRequestDialogOpen}
         onSubmit={handleCreateRequest}
-        isLoading={createRequestMutation.isPending}
+        isLoading={createRequestMutation.isLoading}
       />
     </div>
   );

@@ -25,7 +25,7 @@ const tabItems = [
   { value: "compreSol", label: "Compre Solutions" },
 ];
 
-const ALL_SECTIONS = ["MidSem", "Compre", "Others"];
+// const ALL_SECTIONS = ["MidSem", "Compre", "Others"];
 const FIELDS = [
   { key: "language", label: "Language is simple and clear" },
   {
