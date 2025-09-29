@@ -161,7 +161,7 @@ router.post(
                         courseDetails
                     ),
                     text: `
-Dear ${ "Reviewer"},
+Dear ${"Reviewer"},
 
 You have been assigned as a reviewer for a question paper review request.
 
@@ -208,7 +208,7 @@ BITS Pilani Hyderabad Campus
             data: {
                 reviewRequest: updatedRequest[0],
                 emailSent: emailSent,
-                emailError: emailError ? emailError.message : null,
+                emailError: emailError ? (emailError as Error).message : null,
             },
         });
     })

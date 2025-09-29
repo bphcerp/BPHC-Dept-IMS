@@ -17,11 +17,12 @@ router.post(
 
         if (!parsed.success) {
             logger.debug("Validation errors:", parsed.error.errors);
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Invalid request data",
                 errors: parsed.error.errors,
             });
+            return;
         }
 
         const { requestId, review } = parsed.data;
@@ -32,10 +33,11 @@ router.post(
         });
 
         if (!request) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: "Review request not found",
             });
+            return;
         }
 
         const updateFields: Record<string, any> = {};
@@ -44,10 +46,11 @@ router.post(
         if (request.reviewerEmail === req.user?.email) {
             updateFields.review = review; // ✅ matches schema column
         } else {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 message: "Unauthorized to submit review",
             });
+            return;
         }
 
         // mark as reviewed if new review added OR old one exists
@@ -57,10 +60,11 @@ router.post(
 
         // guard against empty updates
         if (Object.keys(updateFields).length === 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "No valid fields to update",
             });
+            return;
         }
 
         const updateResult = await db
@@ -72,11 +76,12 @@ router.post(
             throw new Error("Failed to update review record");
         }
 
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
             message: "Review submitted successfully",
             data: { requestId, updatedFields: Object.keys(updateFields) },
         });
+        return;
     })
 );
 

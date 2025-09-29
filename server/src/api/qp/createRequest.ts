@@ -18,10 +18,11 @@ const createRequestSchema = z.object({
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res, next) => {
+    asyncHandler(async (req, res) => {
         const result = createRequestSchema.safeParse(req.body);
         if (!result.success) {
-            return res.status(400).json({ errors: result.error.errors });
+            res.status(400).json({ errors: result.error.errors });
+            return;
         }
 
         const createdRequest = await db.insert(qpReviewRequests).values({
@@ -33,7 +34,8 @@ router.post(
         });
 
         if (!createdRequest) {
-            return res.status(500).json({ message: "Failed to create request" });
+            res.status(500).json({ message: "Failed to create request" });
+            return;
         }
 
         res.status(200).json({
@@ -44,4 +46,4 @@ router.post(
     })
 );
 
-export default router
+export default router;

@@ -1,95 +1,96 @@
-import htmlPdf from 'html-pdf-node';
-import JSZip from 'jszip';
+import logger from "@/config/logger.ts";
+import htmlPdf from "html-pdf-node";
+import JSZip from "jszip";
 
 interface ReviewCriteria {
-  length?: string;
-  remarks?: string;
-  language?: string;
-  solution?: string;
-  coverLearning?: string;
-  mixOfQuestions?: string;
+    length?: string;
+    remarks?: string;
+    language?: string;
+    solution?: string;
+    coverLearning?: string;
+    mixOfQuestions?: string;
 }
 
 interface ReviewData {
-  Compre?: ReviewCriteria;
-  MidSem?: ReviewCriteria;
-  Others?: ReviewCriteria;
+    Compre?: ReviewCriteria;
+    MidSem?: ReviewCriteria;
+    Others?: ReviewCriteria;
 }
 
 interface ReviewRequest {
-  id: number;
-  icEmail: string;
-  reviewerEmail: string;
-  courseName: string;
-  courseCode: string;
-  review: ReviewData;
-  status: string;
-  createdAt: string;
-  submittedOn: string;
-  requestType: string;
-  category: string;
-  ic: {
-    faculty: {
-      name: string;
-      email: string;
-      department?: string;
-      designation?: string;
+    id: number;
+    icEmail: string;
+    reviewerEmail: string;
+    courseName: string;
+    courseCode: string;
+    review: ReviewData;
+    status: string;
+    createdAt: string;
+    submittedOn: string;
+    requestType: string;
+    category: string;
+    ic: {
+        faculty: {
+            name: string;
+            email: string;
+            department?: string;
+            designation?: string;
+        };
     };
-  };
-  reviewer: {
-    faculty: {
-      name: string;
-      email: string;
-      department?: string;
-      designation?: string;
+    reviewer: {
+        faculty: {
+            name: string;
+            email: string;
+            department?: string;
+            designation?: string;
+        };
     };
-  };
-  reviewerName: string;
-  professorName: string;
+    reviewerName: string;
+    professorName: string;
 }
 
 // Helper functions
 const getScoreColor = (score: string | undefined): string => {
-  if (!score || score.trim() === '') return '#6B7280'; // gray
-  
-  const numScore = parseInt(score);
-  if (isNaN(numScore) || numScore > 10) return '#F59E0B'; // orange for invalid
-  if (numScore >= 7) return '#10B981'; // green
-  if (numScore >= 4) return '#F59E0B'; // yellow
-  return '#EF4444'; // red
+    if (!score || score.trim() === "") return "#6B7280"; // gray
+
+    const numScore = parseInt(score);
+    if (isNaN(numScore) || numScore > 10) return "#F59E0B"; // orange for invalid
+    if (numScore >= 7) return "#10B981"; // green
+    if (numScore >= 4) return "#F59E0B"; // yellow
+    return "#EF4444"; // red
 };
 
 const formatScore = (score: string | undefined): string => {
-  if (!score || score.trim() === '') return 'N/A';
-  return score;
+    if (!score || score.trim() === "") return "N/A";
+    return score;
 };
 
 const formatRemarks = (remarks: string | undefined): string => {
-  if (!remarks || remarks.trim() === '') return 'No remarks provided';
-  return remarks.replace(/\n/g, '<br>');
+    if (!remarks || remarks.trim() === "") return "No remarks provided";
+    return remarks.replace(/\n/g, "<br>");
 };
 
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+    return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
 };
 
 const generateTableRows = (review: ReviewData): string => {
-  const sections = [
-    { key: 'MidSem', label: 'Mid Semester Exam' },
-    { key: 'Compre', label: 'Comprehensive Exam' },
-    { key: 'Others', label: 'Other Evaluations' }
-  ];
+    const sections = [
+        { key: "MidSem", label: "Mid Semester Exam" },
+        { key: "Compre", label: "Comprehensive Exam" },
+        { key: "Others", label: "Other Evaluations" },
+    ];
 
-  return sections
-    .filter(section => review[section.key as keyof ReviewData])
-    .map(section => {
-      const sectionData = review[section.key as keyof ReviewData]!;
-      
-      return `
+    return sections
+        .filter((section) => review[section.key as keyof ReviewData])
+        .map((section) => {
+            const sectionData = review[section.key as keyof ReviewData]!;
+
+            return `
         <tr>
           <td class="exam-type">${section.label}</td>
           <td class="score-cell">
@@ -120,12 +121,12 @@ const generateTableRows = (review: ReviewData): string => {
           <td class="remarks-cell">${formatRemarks(sectionData.remarks)}</td>
         </tr>
       `;
-    })
-    .join('');
+        })
+        .join("");
 };
 
 const getCommonStyles = (): string => {
-  return `
+    return `
     <style>
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -330,7 +331,7 @@ const getCommonStyles = (): string => {
 };
 
 const generateReviewSection = (request: ReviewRequest): string => {
-  return `
+    return `
     <div class="review-section">
 
       <!-- Course Details with FIC -->
@@ -399,7 +400,7 @@ const generateReviewSection = (request: ReviewRequest): string => {
         </div>
         
         <div class="available-sections">
-          <strong>Evaluated Sections:</strong> ${Object.keys(request.review).join(', ')}
+          <strong>Evaluated Sections:</strong> ${Object.keys(request.review).join(", ")}
         </div>
         
         <div class="table-container">
@@ -426,50 +427,67 @@ const generateReviewSection = (request: ReviewRequest): string => {
 };
 
 // Function to calculate average score for a review
-const calculateAverageScore = (review: ReviewData): string => {
-  const allScores: number[] = [];
-  
-  Object.values(review).forEach(section => {
-    if (section) {
-      Object.entries(section).forEach(([key, value]) => {
-        if (key !== 'remarks' && value && value.trim() !== '') {
-          const score = parseInt(value);
-          if (!isNaN(score) && score <= 10) {
-            allScores.push(score);
-          }
-        }
-      });
-    }
-  });
-  
-  if (allScores.length === 0) return 'N/A';
-  const average = allScores.reduce((a, b) => a + b, 0) / allScores.length;
-  return average.toFixed(1);
-};
+// const calculateAverageScore = (review: ReviewData): string => {
+//     const allScores: number[] = [];
 
-const getOverallScoreColor = (avgScore: string): string => {
-  if (avgScore === 'N/A') return '#6B7280';
-  const score = parseFloat(avgScore);
-  if (score >= 7) return '#10B981';
-  if (score >= 4) return '#F59E0B';
-  return '#EF4444';
-};
+//     Object.values(review).forEach((section) => {
+//         if (section) {
+//             Object.entries(section).forEach(([key, value]) => {
+//                 if (
+//                     key !== "remarks" &&
+//                     value &&
+//                     (typeof value === "string" ? value.trim() : value) !== ""
+//                 ) {
+//                     const score = parseInt(value as string);
+//                     if (!isNaN(score) && score <= 10) {
+//                         allScores.push(score);
+//                     }
+//                 }
+//             });
+//         }
+//     });
+
+//     if (allScores.length === 0) return "N/A";
+//     const average = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+//     return average.toFixed(1);
+// };
+
+// const getOverallScoreColor = (avgScore: string): string => {
+//     if (avgScore === "N/A") return "#6B7280";
+//     const score = parseFloat(avgScore);
+//     if (score >= 7) return "#10B981";
+//     if (score >= 4) return "#F59E0B";
+//     return "#EF4444";
+// };
 
 // Function to generate summary table with all courses showing detailed ratings
-export async function generateSummaryReviewPDF(reviewRequests: ReviewRequest[]): Promise<Buffer> {
-  const generateDetailedSummaryTableRows = (reviews: ReviewRequest[]): string => {
-    return reviews.map((request, index) => {
-      const evaluatedSections = Object.keys(request.review);
-      
-      // Generate rows for each evaluated section
-      const sectionRows = evaluatedSections.map((sectionKey, sectionIndex) => {
-        const sectionData = request.review[sectionKey as keyof ReviewData];
-        const sectionLabel = sectionKey === 'MidSem' ? 'Mid Semester' : 
-                           sectionKey === 'Compre' ? 'Comprehensive' : 'Others';
-        
-        return `
+export async function generateSummaryReviewPDF(
+    reviewRequests: ReviewRequest[]
+): Promise<Buffer> {
+    const generateDetailedSummaryTableRows = (
+        reviews: ReviewRequest[]
+    ): string => {
+        return reviews
+            .map((request, index) => {
+                const evaluatedSections = Object.keys(request.review);
+
+                // Generate rows for each evaluated section
+                const sectionRows = evaluatedSections
+                    .map((sectionKey, sectionIndex) => {
+                        const sectionData =
+                            request.review[sectionKey as keyof ReviewData];
+                        const sectionLabel =
+                            sectionKey === "MidSem"
+                                ? "Mid Semester"
+                                : sectionKey === "Compre"
+                                  ? "Comprehensive"
+                                  : "Others";
+
+                        return `
           <tr>
-            ${sectionIndex === 0 ? `
+            ${
+                sectionIndex === 0
+                    ? `
               <td class="index-cell" rowspan="${evaluatedSections.length}">${index + 1}</td>
               <td class="course-info" rowspan="${evaluatedSections.length}">
                 <div class="course-code">${request.courseCode}</div>
@@ -481,7 +499,9 @@ export async function generateSummaryReviewPDF(reviewRequests: ReviewRequest[]):
                 <span class="status-badge status-${request.status.toLowerCase()}">${request.status}</span>
               </td>
               <td class="date-cell" rowspan="${evaluatedSections.length}">${formatDate(request.submittedOn)}</td>
-            ` : ''}
+            `
+                    : ""
+            }
             <td class="exam-type-summary">${sectionLabel}</td>
             <td class="score-cell">
               <span class="score-badge" style="background-color: ${getScoreColor(sectionData?.length)}20; color: ${getScoreColor(sectionData?.length)}; border: 1px solid ${getScoreColor(sectionData?.length)}40;">
@@ -511,16 +531,18 @@ export async function generateSummaryReviewPDF(reviewRequests: ReviewRequest[]):
             <td class="remarks-cell-summary">${formatRemarks(sectionData?.remarks)}</td>
           </tr>
         `;
-      }).join('');
-      
-      return sectionRows;
-    }).join('');
-  };
+                    })
+                    .join("");
 
-  const getSummaryStyles = (): string => {
-    return `
+                return sectionRows;
+            })
+            .join("");
+    };
+
+    const getSummaryStyles = (): string => {
+        return `
       <style>
-        ${getCommonStyles().replace('<style>', '').replace('</style>', '')}
+        ${getCommonStyles().replace("<style>", "").replace("</style>", "")}
         
         .summary-stats {
           display: flex;
@@ -725,17 +747,26 @@ export async function generateSummaryReviewPDF(reviewRequests: ReviewRequest[]):
         }
       </style>
     `;
-  };
+    };
 
-  const totalReviews = reviewRequests.length;
-  const reviewedCount = reviewRequests.filter(r => r.status.toLowerCase() === 'reviewed').length;
-  const pendingCount = totalReviews - reviewedCount;
-  const reviewsWithScores = reviewRequests.filter(req => calculateAverageScore(req.review) !== 'N/A');
-  const avgOverallScore = reviewsWithScores.length > 0 
-    ? reviewsWithScores.reduce((acc, req) => acc + parseFloat(calculateAverageScore(req.review)), 0) / reviewsWithScores.length
-    : 0;
+    const totalReviews = reviewRequests.length;
+    const reviewedCount = reviewRequests.filter(
+        (r) => r.status.toLowerCase() === "reviewed"
+    ).length;
+    const pendingCount = totalReviews - reviewedCount;
+    // const reviewsWithScores = reviewRequests.filter(
+    //     (req) => calculateAverageScore(req.review) !== "N/A"
+    // );
+    // const avgOverallScore =
+    //     reviewsWithScores.length > 0
+    //         ? reviewsWithScores.reduce(
+    //               (acc, req) =>
+    //                   acc + parseFloat(calculateAverageScore(req.review)),
+    //               0
+    //           ) / reviewsWithScores.length
+    //         : 0;
 
-  const htmlContent = `
+    const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -799,30 +830,35 @@ export async function generateSummaryReviewPDF(reviewRequests: ReviewRequest[]):
     </html>
   `;
 
-  const options = {
-    format: 'A4' as const,
-    orientation: 'landscape' as const,
-    border: {
-      top: '8mm',
-      right: '8mm',
-      bottom: '8mm',
-      left: '8mm'
-    }
-  };
+    const options = {
+        format: "A4" as const,
+        orientation: "landscape" as const,
+        border: {
+            top: "8mm",
+            right: "8mm",
+            bottom: "8mm",
+            left: "8mm",
+        },
+    };
 
-  try {
-    const file = { content: htmlContent };
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
-    return pdfBuffer;
-  } catch (error) {
-    console.error('Error generating summary PDF:', error);
-    throw new Error('Failed to generate summary PDF');
-  }
+    try {
+        const file = { content: htmlContent };
+        const pdfBuffer = await (htmlPdf.generatePdf(
+            file,
+            options
+        ) as unknown as Promise<Buffer>);
+        return pdfBuffer;
+    } catch (error) {
+        console.error("Error generating summary PDF:", error);
+        throw new Error("Failed to generate summary PDF");
+    }
 }
 
 // Function to generate individual PDF for a single course
-export async function generateSingleReviewPDF(reviewRequest: ReviewRequest): Promise<Buffer> {
-  const htmlContent = `
+export async function generateSingleReviewPDF(
+    reviewRequest: ReviewRequest
+): Promise<Buffer> {
+    const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -845,87 +881,112 @@ export async function generateSingleReviewPDF(reviewRequest: ReviewRequest): Pro
     </html>
   `;
 
-  const options = {
-    format: 'A4' as const,
-    border: {
-      top: '10mm',
-      right: '10mm',
-      bottom: '10mm',
-      left: '10mm'
-    }
-  };
+    const options = {
+        format: "A4" as const,
+        border: {
+            top: "10mm",
+            right: "10mm",
+            bottom: "10mm",
+            left: "10mm",
+        },
+    };
 
-  try {
-    const file = { content: htmlContent };
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
-    return pdfBuffer;
-  } catch (error) {
-    console.error(`Error generating single PDF for ${reviewRequest.courseCode}:`, error);
-    throw new Error(`Failed to generate PDF for ${reviewRequest.courseCode}`);
-  }
+    try {
+        const file = { content: htmlContent };
+        const pdfBuffer = await (htmlPdf.generatePdf(
+            file,
+            options
+        ) as unknown as Promise<Buffer>);
+        return pdfBuffer;
+    } catch (error) {
+        console.error(
+            `Error generating single PDF for ${reviewRequest.courseCode}:`,
+            error
+        );
+        throw new Error(
+            `Failed to generate PDF for ${reviewRequest.courseCode}`
+        );
+    }
 }
 
 // Function to create zip with multiple individual PDFs + summary
-export async function generateReviewsZip(reviewRequests: ReviewRequest[]): Promise<Buffer> {
-  const zip = new JSZip();
-  
-  // Generate summary PDF first
-  try {
-    const summaryPdfBuffer = await generateSummaryReviewPDF(reviewRequests);
-    const timestamp = new Date().toISOString().split('T')[0];
-    zip.file(`00-SUMMARY-All-Courses-${timestamp}.pdf`, summaryPdfBuffer);
-  } catch (error) {
-    console.error('Failed to generate summary PDF:', error);
-    const errorContent = `Failed to generate summary PDF\n\nError: ${error.message}\n\nTimestamp: ${new Date().toISOString()}`;
-    zip.file('ERROR-Summary.txt', errorContent);
-  }
-  
-  // Generate individual PDFs for each course
-  const promises = reviewRequests.map(async (request, index) => {
-    try {
-      
-      const pdfBuffer = await generateSingleReviewPDF(request);
-      const cleanCourseName = request.courseName.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `${String(index + 1).padStart(2, '0')}-${request.courseCode}-${cleanCourseName}-Review.pdf`;
-      
-      zip.file(filename, pdfBuffer);
-      return { success: true, courseCode: request.courseCode };
-    } catch (error) {
-      console.error(`Failed to generate PDF for ${request.courseCode}:`, error);
-      
-      // Add error file instead
-      const errorContent = `Failed to generate review PDF for ${request.courseCode} - ${request.courseName}\n\nError: ${error.message}\n\nTimestamp: ${new Date().toISOString()}`;
-      zip.file(`ERROR-${request.courseCode}.txt`, errorContent);
-      return { success: false, courseCode: request.courseCode, error: error.message };
-    }
-  });
+export async function generateReviewsZip(
+    reviewRequests: ReviewRequest[]
+): Promise<Buffer> {
+    const zip = new JSZip();
 
-  // Wait for all PDFs to be generated
-  const results = await Promise.all(promises);
-  
-  // Log results
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
-  
-  // Generate the zip file
-  try {
-    const zipBuffer = await zip.generateAsync({
-      type: 'nodebuffer',
-      compression: 'DEFLATE',
-      compressionOptions: { level: 6 }
+    // Generate summary PDF first
+    try {
+        const summaryPdfBuffer = await generateSummaryReviewPDF(reviewRequests);
+        const timestamp = new Date().toISOString().split("T")[0];
+        zip.file(`00-SUMMARY-All-Courses-${timestamp}.pdf`, summaryPdfBuffer);
+    } catch (error) {
+        console.error("Failed to generate summary PDF:", error);
+        const errorContent = `Failed to generate summary PDF\n\nError: ${(error as Error).message}\n\nTimestamp: ${new Date().toISOString()}`;
+        zip.file("ERROR-Summary.txt", errorContent);
+    }
+
+    // Generate individual PDFs for each course
+    const promises = reviewRequests.map(async (request, index) => {
+        try {
+            const pdfBuffer = await generateSingleReviewPDF(request);
+            const cleanCourseName = request.courseName.replace(
+                /[^a-zA-Z0-9]/g,
+                "_"
+            );
+            const filename = `${String(index + 1).padStart(2, "0")}-${request.courseCode}-${cleanCourseName}-Review.pdf`;
+
+            zip.file(filename, pdfBuffer);
+            return { success: true, courseCode: request.courseCode };
+        } catch (error) {
+            console.error(
+                `Failed to generate PDF for ${request.courseCode}:`,
+                error
+            );
+
+            // Add error file instead
+            const errorContent = `Failed to generate review PDF for ${request.courseCode} - ${request.courseName}\n\nError: ${(error as Error).message}\n\nTimestamp: ${new Date().toISOString()}`;
+            zip.file(`ERROR-${request.courseCode}.txt`, errorContent);
+            return {
+                success: false,
+                courseCode: request.courseCode,
+                error: (error as Error).message,
+            };
+        }
     });
-    
-    return zipBuffer;
-  } catch (error) {
-    console.error('Error creating zip file:', error);
-    throw new Error('Failed to create zip archive');
-  }
+
+    // Wait for all PDFs to be generated
+    const results = await Promise.all(promises);
+
+    // Log results
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    logger.debug(
+        `QP review: PDF Generation Summary: ${successful} succeeded, ${failed} failed.`
+    );
+
+    // Generate the zip file
+    try {
+        const zipBuffer = await zip.generateAsync({
+            type: "nodebuffer",
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 },
+        });
+
+        return zipBuffer;
+    } catch (error) {
+        console.error("Error creating zip file:", error);
+        throw new Error("Failed to create zip archive");
+    }
 }
 
 // Keep the original function for backward compatibility
-export async function generateMultipleReviewsPDF(reviewRequests: ReviewRequest[]): Promise<Buffer> {
-  // This generates a single PDF with all reviews
-  const htmlContent = `
+export async function generateMultipleReviewsPDF(
+    reviewRequests: ReviewRequest[]
+): Promise<Buffer> {
+    // This generates a single PDF with all reviews
+    const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -939,7 +1000,7 @@ export async function generateMultipleReviewsPDF(reviewRequests: ReviewRequest[]
         <div class="summary-info">Total Reviews: ${reviewRequests.length}</div>
       </div>
       
-      ${reviewRequests.map((request, index) => generateReviewSection(request)).join('')}
+      ${reviewRequests.map((request) => generateReviewSection(request)).join("")}
       
       <div class="footer">
         <p>This comprehensive review report was generated automatically from the question paper evaluation system.</p>
@@ -950,22 +1011,25 @@ export async function generateMultipleReviewsPDF(reviewRequests: ReviewRequest[]
     </html>
   `;
 
-  const options = {
-    format: 'A4' as const,
-    border: {
-      top: '10mm',
-      right: '10mm',
-      bottom: '10mm',
-      left: '10mm'
-    }
-  };
+    const options = {
+        format: "A4" as const,
+        border: {
+            top: "10mm",
+            right: "10mm",
+            bottom: "10mm",
+            left: "10mm",
+        },
+    };
 
-  try {
-    const file = { content: htmlContent };
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
-    return pdfBuffer;
-  } catch (error) {
-    console.error('Error generating multiple reviews PDF:', error);
-    throw new Error('Failed to generate PDF report');
-  }
+    try {
+        const file = { content: htmlContent };
+        const pdfBuffer = await (htmlPdf.generatePdf(
+            file,
+            options
+        ) as unknown as Promise<Buffer>);
+        return pdfBuffer;
+    } catch (error) {
+        console.error("Error generating multiple reviews PDF:", error);
+        throw new Error("Failed to generate PDF report");
+    }
 }

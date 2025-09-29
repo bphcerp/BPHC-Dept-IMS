@@ -14,17 +14,19 @@ router.post(
     asyncHandler(async (req, res) => {
         // Validate that request body is an array of review objects
         if (!Array.isArray(req.body)) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Request body must be an array of review objects",
             });
+            return;
         }
 
         if (req.body.length === 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "No review data provided",
             });
+            return;
         }
 
         // Validate required fields in each review object
@@ -41,11 +43,12 @@ router.post(
         );
 
         if (!isValidData) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message:
                     "Invalid review data structure. Missing required fields.",
             });
+            return;
         }
 
         const reviewRequests = req.body;
