@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/axios-instance";
 import { Laboratory } from "node_modules/lib/src/types/inventory";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/datatable/DataTable";
 import { useQuery } from "@tanstack/react-query";
 
 export interface StatData {
@@ -68,7 +68,7 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
     {
       accessorKey: "lab.name",
       header: "Lab Name",
-      meta: { tailwindWidthString: "min-w-32" },
+      meta: { tailwindWidthString: "min-w-32", filterType: 'search' },
     },
     ...(years.map((year) => ({
       accessorKey: year.toString(),
@@ -106,7 +106,9 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"lab_name" as keyof LabStatsPerYear}
+      initialState={{
+        columnPinning: { left: ["lab_name"] },
+      }}
     />
   ) : null;
 };

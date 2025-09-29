@@ -3,93 +3,90 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import db from "@/config/db/index.ts";
-import { phdSemesters, phdQualifyingExams } from "@/config/db/schema/phd.ts";
-import { users } from "@/config/db/schema/admin.ts";
-import { eq, and, gt } from "drizzle-orm";
-import assert from "assert";
-import { phdSchemas } from "lib";
+import { phdProposalSemesters } from "@/config/db/schema/phd.ts";
+import { phdSchemas, modules } from "lib";
+import { eq } from "drizzle-orm";
+import z from "zod";
 import { createNotifications } from "@/lib/todos/index.ts";
 
 const router = express.Router();
+const updateProposalDeadlineSchemaWithId =
+    phdSchemas.updateProposalDeadlineSchema.extend({
+        id: z.number().int().positive().optional(),
+    });
 
 export default router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        assert(req.body);
-        assert(req.user, "User should be defined");
+        const parsed = updateProposalDeadlineSchemaWithId.parse(req.body);
+        const { id, semesterId, ...deadlines } = parsed;
 
-        const parsed = phdSchemas.updateProposalDeadlineSchema.parse(req.body);
-        const { semesterId, deadline } = parsed;
-
-        // Fetch semester info
-        const semester = await db
-            .select()
-            .from(phdSemesters)
-            .where(eq(phdSemesters.id, semesterId))
-            .limit(1);
-
-        if (semester.length === 0) {
-            throw new HttpError(HttpCode.NOT_FOUND, "Semester not found");
-        }
-
-        const examName = "Thesis Proposal";
-
-        // Check for existing active proposals
-        const existingActiveProposals = await db
-            .select()
-            .from(phdQualifyingExams)
-            .where(
-                and(
-                    eq(phdQualifyingExams.semesterId, semesterId),
-                    eq(phdQualifyingExams.examName, examName),
-                    gt(phdQualifyingExams.deadline, new Date())
-                )
-            );
-
-        if (existingActiveProposals.length > 0) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "An active proposal deadline already exists for this semester. Please cancel the existing deadline first."
-            );
-        }
-
-        // Create new proposal deadline
-        const deadlineDate = new Date(deadline);
-        const newProposal = await db
-            .insert(phdQualifyingExams)
-            .values({
-                semesterId,
-                examName,
-                deadline: deadlineDate,
-            })
-            .returning();
-
-        // Fetch all users to notify
-        const allUsers = await db.select({ email: users.email }).from(users);
-
-        // Format date for notification
-        const formattedDate = deadlineDate.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
+        const semester = await db.query.phdSemesters.findFirst({
+            where: (table, { eq }) => eq(table.id, semesterId),
         });
+        if (!semester) {
+            throw new HttpError(HttpCode.BAD_REQUEST, "Semester not found");
+        }
 
-        // Create notifications for all users
-        await createNotifications(
-            allUsers.map((user) => ({
-                module: "PhD Proposal",
-                title: "New PhD Thesis Proposal Deadline",
-                content: `A new PhD thesis proposal deadline has been set for ${formattedDate} for the ${semester[0].year} Semester ${semester[0].semesterNumber}.`,
-                userEmail: user.email,
-            }))
-        );
+        const dataToUpsert = {
+            semesterId,
+            studentSubmissionDate: new Date(deadlines.studentSubmissionDate),
+            facultyReviewDate: new Date(deadlines.facultyReviewDate),
+            drcReviewDate: new Date(deadlines.drcReviewDate),
+            dacReviewDate: new Date(deadlines.dacReviewDate),
+        };
 
-        res.status(201).json({
-            success: true,
-            message:
-                "Proposal deadline created successfully and notifications sent",
-            proposal: newProposal[0],
+        let result: (typeof phdProposalSemesters.$inferSelect)[];
+
+        if (id) {
+            result = await db
+                .update(phdProposalSemesters)
+                .set(dataToUpsert)
+                .where(eq(phdProposalSemesters.id, id))
+                .returning();
+        } else {
+            result = await db
+                .insert(phdProposalSemesters)
+                .values(dataToUpsert)
+                .returning();
+        }
+
+        // --- Automatically create in-app notifications ---
+        const allPhdStudents = await db.query.phd.findMany({
+            columns: { email: true },
+        });
+        const allFaculty = await db.query.faculty.findMany({
+            columns: { email: true },
+        });
+        const allUsers = [...allPhdStudents, ...allFaculty];
+
+        const subject = id
+            ? "PhD Proposal Deadline Updated"
+            : "New PhD Proposal Deadline Announced";
+        const body = `Please note the PhD Proposal deadlines for the ${
+            semester.year
+        } Semester ${semester.semesterNumber} have been ${
+            id ? "updated" : "announced"
+        }.\n- Student Submission: ${dataToUpsert.studentSubmissionDate.toLocaleString()}\n- Supervisor Review: ${dataToUpsert.facultyReviewDate.toLocaleString()}\n- DRC Review: ${dataToUpsert.drcReviewDate.toLocaleString()}\n- DAC Review: ${dataToUpsert.dacReviewDate.toLocaleString()}`;
+
+        if (allUsers.length > 0) {
+            await createNotifications(
+                allUsers.map((user) => ({
+                    userEmail: user.email,
+                    module: modules[3], // PhD Proposal Module
+                    title: subject,
+                    content: body,
+                }))
+            );
+        }
+        // --- End of notification logic ---
+
+        res.status(200).json({
+            message: `Proposal deadlines ${
+                id ? "updated" : "created"
+            } successfully. In-app notifications sent.`,
+            deadline: result[0],
         });
     })
 );

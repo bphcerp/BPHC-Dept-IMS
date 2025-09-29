@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { vendors } from "@/config/db/schema/inventory.ts";
+import { vendorCategories, vendors } from "@/config/db/schema/inventory.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -25,8 +25,8 @@ router.post(
             );
         }
 
-        if (req.body.categories) {
-            const vendorCategories = req.body.categories.map(
+        if (req.body.categories.length) {
+            const vendorCategoriesNew = req.body.categories.map(
                 (categoryId: string) => ({
                     vendorId: newVendor[0].id,
                     categoryId,
@@ -35,7 +35,7 @@ router.post(
 
             const vendorCategoriesParsed = z
                 .array(vendorCategorySchema)
-                .parse(vendorCategories);
+                .parse(vendorCategoriesNew);
 
             await db.insert(vendorCategories).values(vendorCategoriesParsed);
         }

@@ -16,7 +16,7 @@ router.patch(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const parsed = publicationsSchemas.PublicationSchema.parse(
+        const parsed = publicationsSchemas.PublicationWithMetaSchema.parse(
             req.body.publication
         );
 
@@ -27,6 +27,7 @@ router.patch(
                 title: parsed.title,
                 type: parsed.type,
                 journal: parsed.journal,
+                month: parsed.month,
                 year: parsed.year,
                 volume: parsed.volume,
                 issue: parsed.issue,
@@ -40,8 +41,8 @@ router.patch(
         await db
             .update(authorPublicationsTable)
             .set({
-                status: null,
-                comments: null,
+                status: parsed.status,
+                comments: parsed.comments,
             })
             .where(eq(authorPublicationsTable.citationId, parsed.citationId));
 

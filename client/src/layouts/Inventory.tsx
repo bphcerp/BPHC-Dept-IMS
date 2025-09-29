@@ -32,7 +32,7 @@ const InventoryLayout = () => {
           },
         ]}
       />
-      <div className="w-full overflow-y-auto">
+      <div className="w-full overflow-y-auto h-screen">
         <Outlet />
       </div>
     </>

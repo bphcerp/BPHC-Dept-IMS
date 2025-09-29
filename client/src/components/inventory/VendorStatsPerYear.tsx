@@ -2,7 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/axios-instance";
 import { Vendor } from "node_modules/lib/src/types/inventory";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/datatable/DataTable";
 import { useQuery } from "@tanstack/react-query";
 
 export interface StatData {
@@ -71,7 +71,7 @@ const VendorStatsPerYear: FunctionComponent<VendorStatsPerYearProps> = ({
     {
       accessorKey: "vendor.name",
       header: "Vendor Name",
-      meta: { tailwindWidthString: "min-w-44" },
+      meta: { tailwindWidthString: "min-w-44", filterType: 'search' },
     },
     ...(years.map((year) => ({
       accessorKey: year.toString(),
@@ -109,7 +109,6 @@ const VendorStatsPerYear: FunctionComponent<VendorStatsPerYearProps> = ({
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"vendor_name" as keyof VendorStatsPerYear}
       initialState={{
         columnPinning: { left: ["vendor_name"] },
       }}

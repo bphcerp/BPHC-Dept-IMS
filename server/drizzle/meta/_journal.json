@@ -295,6 +295,132 @@
       "when": 1754889084679,
       "tag": "0041_lyrical_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1755116106219,
+      "tag": "0042_yummy_captain_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1756217215110,
+      "tag": "0043_youthful_ender_wiggin",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1756716249306,
+      "tag": "0044_fine_landau",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1757064676160,
+      "tag": "0045_productive_outlaw_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1757295077545,
+      "tag": "0046_unknown_mindworm",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1757327370912,
+      "tag": "0047_silent_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1757456473859,
+      "tag": "0048_fixed_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1757674208168,
+      "tag": "0049_nebulous_fenris",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1757809338971,
+      "tag": "0050_nervous_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1757913539760,
+      "tag": "0051_flaky_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1757914004187,
+      "tag": "0052_marvelous_excalibur",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1757915562222,
+      "tag": "0053_flippant_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1757943774828,
+      "tag": "0054_wooden_thundra",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1757946569684,
+      "tag": "0055_sour_monster_badoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1758491999167,
+      "tag": "0056_stale_wallflower",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1758536524826,
+      "tag": "0057_curious_the_santerians",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1758961413657,
+      "tag": "0058_nice_wrecker",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1759087584645,
+      "tag": "0059_perfect_butterfly",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { StatData } from "./LabStatsPerYear";
 import api from "@/lib/axios-instance";
 import { Laboratory, Category } from "node_modules/lib/src/types/inventory";
-import { DataTable } from "./DataTable";
+import { DataTable } from "../shared/datatable/DataTable";
 import { useQuery } from "@tanstack/react-query";
 
 interface LabStatsPerCategory {
@@ -78,7 +78,7 @@ const LabStatsPerCategory: FunctionComponent<LabStatsPerCategoryProps> = ({
     {
       accessorKey: "lab.name",
       header: "Lab Name",
-      meta: { tailwindWidthString: "min-w-32" },
+      meta: { tailwindWidthString: "min-w-32", filterType: 'search' },
     },
     ...(categories.map((category) => ({
       accessorKey: category.id,
@@ -117,7 +117,6 @@ const LabStatsPerCategory: FunctionComponent<LabStatsPerCategoryProps> = ({
     <DataTable
       data={tableData}
       columns={columns}
-      mainSearchColumn={"lab_name" as keyof LabStatsPerCategory}
       initialState={{
         columnPinning: { left: ["lab_name"] },
       }}

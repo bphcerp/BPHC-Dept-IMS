@@ -33,8 +33,6 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState<UploadResults | null>(null);
-  const [reminder, setReminder] = useState("");
-  const [deadline, setDeadline] = useState("");
   const [minProjects, setMinProjects] = useState(1);
   const [maxProjects, setMaxProjects] = useState(2);
   const [settingRange, setSettingRange] = useState(false);
@@ -52,16 +50,11 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
       toast.error("Please select a file");
       return;
     }
-    if (!reminder || !deadline) {
-      toast.error("Please provide both reminder and deadline dates");
-      return;
-    }
+
     setUploading(true);
     setResults(null);
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("reminder", reminder);
-    formData.append("deadline", deadline);
     try {
       const response = await api.post("/wilpProject/upload", formData, {
         headers: {
@@ -210,22 +203,6 @@ export default function BulkUploadWilp({ onBack }: BulkUploadWilpProps) {
                 <p className="text-sm text-muted-foreground">
                   Supported formats: .xlsx, .xls, .csv (Max size: 5MB)
                 </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reminder-date">Reminder Date (ISO format)</Label>
-                <Input
-                  id="reminder-date"
-                  type="date"
-                  value={reminder}
-                  onChange={e => setReminder(e.target.value)}
-                />
-                <Label htmlFor="deadline-date">Deadline Date (ISO format)</Label>
-                <Input
-                  id="deadline-date"
-                  type="date"
-                  value={deadline}
-                  onChange={e => setDeadline(e.target.value)}
-                />
               </div>
               {file && (
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">

@@ -35,7 +35,7 @@ const emailQueue = new Queue(QUEUE_NAME, {
     prefix: QUEUE_NAME,
 });
 
-const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
+const emailWorker = new Worker<SendMailOptions>(
     QUEUE_NAME,
     async (job) => {
         if (!environment.PROD) {
@@ -45,9 +45,27 @@ const emailWorker = new Worker<Omit<SendMailOptions, "from">>(
             logger.debug(`Email data: ${JSON.stringify(job.data)}`);
             return;
         }
+
+        const { from, ...mailOptions } = { ...job.data };
+
+        const footerText =
+            "\n\n---\nThis is an auto-generated email from ims. Please do not reply." +
+            (from ? `\nSent by: ${from}` : "");
+        const footerHtml =
+            "<br><br><hr><p><i>This is an auto-generated email from ims. Please do not reply.</i>" +
+            (from ? `<br /><i>Sent by: ${from}</i>` : "") +
+            "</p>";
+
+        if (mailOptions.text) {
+            mailOptions.text = `${mailOptions.text}${footerText}`;
+        }
+        if (mailOptions.html && typeof mailOptions.html === "string") {
+            mailOptions.html = `${mailOptions.html}${footerHtml}`;
+        }
+
         return await transporter.sendMail({
             from: environment.BPHCERP_EMAIL,
-            ...job.data,
+            ...mailOptions,
         });
     },
     {
@@ -61,11 +79,11 @@ emailWorker.on("failed", (job, err) => {
     logger.error(`Email job failed: ${job?.id}`, err);
 });
 
-export async function sendEmail(emailData: Omit<SendMailOptions, "from">) {
+export async function sendEmail(emailData: SendMailOptions) {
     return await emailQueue.add(JOB_NAME, emailData);
 }
 
-export async function sendBulkEmails(emails: Omit<SendMailOptions, "from">[]) {
+export async function sendBulkEmails(emails: SendMailOptions[]) {
     if (!emails.length) return [];
     const jobs = emails.map((emailData) => ({
         name: JOB_NAME,

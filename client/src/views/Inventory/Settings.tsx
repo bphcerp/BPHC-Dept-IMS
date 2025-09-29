@@ -3,14 +3,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnDef } from "@tanstack/react-table";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
-import { TableFilterType, DataTable } from "@/components/inventory/DataTable";
+import { TableFilterType, DataTable } from "@/components/shared/datatable/DataTable";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import AddInventoryCategoryDialog from "@/components/inventory/AddInventoryCategoryDialog";
 import AddLabDialog from "@/components/inventory/AddLabDialog";
 import AddVendorCategoryDialog from "@/components/inventory/AddVendorCategoryDialog";
 import AddVendorDialog from "@/components/inventory/AddVendorDialog";
-import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 import {
   Select,
   SelectContent,
@@ -27,6 +26,7 @@ import {
   NewVendorRequest,
   NewCategoryRequest,
 } from "node_modules/lib/src/types/inventory";
+import DeleteConfirmationDialog from "@/components/inventory/DeleteConfirmationDialog";
 
 const labColumns: ColumnDef<Laboratory>[] = [
   {
@@ -49,7 +49,7 @@ const labColumns: ColumnDef<Laboratory>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { tailwindWidthString: "min-w-28" },
+    meta: { tailwindWidthString: "min-w-28", filterType: 'search' },
   },
   {
     accessorKey: "code",
@@ -83,7 +83,7 @@ const categoryColumns: ColumnDef<Category>[] = [
     cell: ({ getValue }) => new Date(getValue() as string).toLocaleString(),
     enableColumnFilter: false,
   },
-  { accessorKey: "name", header: "Name" },
+  { accessorKey: "name", header: "Name", meta: { filterType: 'search' } },
   {
     accessorKey: "code",
     header: "Code",
@@ -117,7 +117,7 @@ const vendorColumns: ColumnDef<Vendor>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { tailwindWidthString: "min-w-52" },
+    meta: { tailwindWidthString: "min-w-52", filterType: 'search' },
   },
   { accessorKey: "address", header: "Address" },
   { accessorKey: "pocName", header: "POC Name" },
@@ -409,28 +409,24 @@ const Settings = () => {
               <DataTable<Laboratory>
                 data={data as Laboratory[]}
                 columns={labColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               />
             ) : selectedOption === "Vendors" ? (
               <DataTable<Vendor>
                 data={data as Vendor[]}
                 columns={vendorColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             ) : selectedOption === "VendorCategory" ? (
               <DataTable<Category>
                 data={data as Category[]}
                 columns={categoryColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             ) : (
               <DataTable<Category>
                 data={data as Category[]}
                 columns={categoryColumns}
-                mainSearchColumn="name"
                 setSelected={setSelected as any}
               /> // Vendor table
             )

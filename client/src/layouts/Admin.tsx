@@ -23,6 +23,12 @@ const AdminLayout = () => {
                 url: "/admin/roles",
                 requiredPermissions: [permissions["/admin/role"]],
               },
+              {
+                title: "Testing",
+                icon: <PersonIcon />,
+                url: "/admin/testing",
+                requiredPermissions: [permissions["/admin/testing"]],
+              },
             ],
           },
         ]}
