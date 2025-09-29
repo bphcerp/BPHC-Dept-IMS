@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
@@ -22,6 +21,12 @@ import SendReminderDialog from "@/components/qp_review/SendRemindersDialog";
 import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
+
+const STATUS_COLORS: Record<string, string> = {
+  "review pending": "text-yellow-600 bg-yellow-100 p-3",
+  reviewed: "text-green-600 bg-green-100 p-3",
+  notsubmitted: "text-red-600 bg-red-100 p-3 ",
+};
 
 interface QPDCAcon {
   reviewerEmail: string;

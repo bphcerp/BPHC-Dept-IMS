@@ -47,8 +47,7 @@ export default function DcaReview() {
     queryKey: [`qp-reviews-${id}`],
     queryFn: async () => {
       try {
-        const response = await api.get(`/qp/getReviews/${email}/${id}`);
-        console.log("Fetched reviews:", response.data);
+        const response = await api.get(`/qp/getReviews/${id}`);
         return response.data as ApiResponse;
       } catch (error) {
         console.error("Error fetching reviews:", error);

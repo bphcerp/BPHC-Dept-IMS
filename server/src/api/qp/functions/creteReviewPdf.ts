@@ -871,11 +871,9 @@ export async function generateReviewsZip(reviewRequests: ReviewRequest[]): Promi
   
   // Generate summary PDF first
   try {
-    console.log('Generating summary PDF...');
     const summaryPdfBuffer = await generateSummaryReviewPDF(reviewRequests);
     const timestamp = new Date().toISOString().split('T')[0];
     zip.file(`00-SUMMARY-All-Courses-${timestamp}.pdf`, summaryPdfBuffer);
-    console.log('Summary PDF generated successfully');
   } catch (error) {
     console.error('Failed to generate summary PDF:', error);
     const errorContent = `Failed to generate summary PDF\n\nError: ${error.message}\n\nTimestamp: ${new Date().toISOString()}`;
@@ -885,7 +883,6 @@ export async function generateReviewsZip(reviewRequests: ReviewRequest[]): Promi
   // Generate individual PDFs for each course
   const promises = reviewRequests.map(async (request, index) => {
     try {
-      console.log(`Generating PDF for ${request.courseCode}... (${index + 1}/${reviewRequests.length})`);
       
       const pdfBuffer = await generateSingleReviewPDF(request);
       const cleanCourseName = request.courseName.replace(/[^a-zA-Z0-9]/g, '_');
@@ -909,7 +906,6 @@ export async function generateReviewsZip(reviewRequests: ReviewRequest[]): Promi
   // Log results
   const successful = results.filter(r => r.success).length;
   const failed = results.filter(r => !r.success).length;
-  console.log(`PDF Generation Results: ${successful} individual PDFs successful, ${failed} failed`);
   
   // Generate the zip file
   try {
@@ -919,8 +915,6 @@ export async function generateReviewsZip(reviewRequests: ReviewRequest[]): Promi
       compressionOptions: { level: 6 }
     });
     
-    console.log(`ZIP file generated successfully. Size: ${zipBuffer.length} bytes`);
-    console.log(`Contents: 1 summary PDF + ${successful} individual PDFs${failed > 0 ? ` + ${failed} error files` : ''}`);
     return zipBuffer;
   } catch (error) {
     console.error('Error creating zip file:', error);

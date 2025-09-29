@@ -59,7 +59,7 @@ const reviewFieldSchema = z.object({
 
 export const submitQpReviewSchema = z.object({
     requestId: z.number().int().positive("Invalid request ID"),
-    email: z.string().email("Invalid email format"),
+    email: z.string().email("Invalid email format").optional(),
     review: z.record(z.string(), reviewFieldSchema),
 });
 

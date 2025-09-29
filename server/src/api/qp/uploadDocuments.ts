@@ -34,7 +34,6 @@ router.post(
       return next(new HttpError(HttpCode.BAD_REQUEST, "No File Uploaded"));
     }
 
-    console.log(req.query);
     const { id, field } = uploadDocumentsSchema.parse(req.query);
 
     const fieldMap = {

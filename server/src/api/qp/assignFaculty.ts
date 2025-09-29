@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 // FIX: Import with a different name to avoid conflicts
 import { sendEmail as sendEmailFunction } from "@/lib/common/email.ts";
 import { checkAccess } from "@/middleware/auth.ts";
+import logger from "@/config/logger.ts";
 
 const router = express.Router();
 
@@ -50,10 +51,10 @@ function generateReviewerAssignmentTemplate(
 
                 <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin: 20px 0;">
                     <h3 style="margin: 0 0 10px 0; color: #1e40af;">Course Details</h3>
-                    ${courseDetails.courseCode ? `<p style="margin: 5px 0;"><strong>Course Code:</strong> ${courseDetails.courseCode}</p>` : ''}
-                    ${courseDetails.courseName ? `<p style="margin: 5px 0;"><strong>Course Name:</strong> ${courseDetails.courseName}</p>` : ''}
-                    ${courseDetails.requestType ? `<p style="margin: 5px 0;"><strong>Request Type:</strong> ${courseDetails.requestType}</p>` : ''}
-                    ${courseDetails.instructorName ? `<p style="margin: 5px 0;"><strong>Instructor:</strong> ${courseDetails.instructorName}</p>` : ''}
+                    ${courseDetails.courseCode ? `<p style="margin: 5px 0;"><strong>Course Code:</strong> ${courseDetails.courseCode}</p>` : ""}
+                    ${courseDetails.courseName ? `<p style="margin: 5px 0;"><strong>Course Name:</strong> ${courseDetails.courseName}</p>` : ""}
+                    ${courseDetails.requestType ? `<p style="margin: 5px 0;"><strong>Request Type:</strong> ${courseDetails.requestType}</p>` : ""}
+                    ${courseDetails.instructorName ? `<p style="margin: 5px 0;"><strong>Instructor:</strong> ${courseDetails.instructorName}</p>` : ""}
                 </div>
 
                 <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; border-left: 4px solid #1e40af; margin: 20px 0;">
@@ -97,132 +98,78 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        console.log("=== ASSIGN REVIEWER API CALLED ===");
-        console.log("Request body:", JSON.stringify(req.body, null, 2));
+        // Parse request body
+        const parsed = qpSchemas.assignReviewerBodySchema.parse(req.body);
+        const { id, reviewerEmail } = parsed;
 
-        try {
-            // Parse request body
-            const parsed = qpSchemas.assignReviewerBodySchema.parse(req.body);
-            const { id, reviewerEmail } = parsed;
-            
-            // Get sendEmail directly from req.body since it might not be in the schema
-            const sendEmailFromBody = req.body.sendEmail;
-            const sendEmail = parsed.sendEmail || sendEmailFromBody;
+        // Get sendEmail directly from req.body since it might not be in the schema
+        const sendEmailFromBody = req.body.sendEmail;
+        const sendEmail = parsed.sendEmail || sendEmailFromBody;
 
-            console.log("Parsed data:", {
-                id,
-                reviewerEmail,
-                sendEmail,
-                sendEmailType: typeof sendEmail,
-                sendEmailFromBody,
-                sendEmailFromBodyType: typeof sendEmailFromBody
-            });
+        // Check if reviewer exists
+        const reviewerExists = await db.query.users.findFirst({
+            where: eq(users.email, reviewerEmail),
+        });
 
-            // Check if reviewer exists
-            console.log("Checking if reviewer exists with email:", reviewerEmail);
-            const reviewerExists = await db.query.users.findFirst({
-                where: eq(users.email, reviewerEmail),
-            });
+        if (!reviewerExists) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "Reviewer does not exist")
+            );
+        }
 
-            console.log("Reviewer exists:", reviewerExists ? "Yes" : "No");
-            if (reviewerExists) {
-                console.log("Reviewer details:", {
-                    id: reviewerExists.id,
-                    name: reviewerExists.name,
-                    email: reviewerExists.email
-                });
-            }
+        // Get the review request with all details
+        const reviewRequest = await db.query.qpReviewRequests.findFirst({
+            where: eq(qpReviewRequests.id, Number(id)),
+        });
 
-            if (!reviewerExists) {
-                console.log("ERROR: Reviewer not found");
-                return next(
-                    new HttpError(HttpCode.NOT_FOUND, "Reviewer does not exist")
-                );
-            }
+        if (!reviewRequest) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "QP review request not found")
+            );
+        }
 
-            // Get the review request with all details
-            console.log("Fetching review request with ID:", id);
-            const reviewRequest = await db.query.qpReviewRequests.findFirst({
-                where: eq(qpReviewRequests.id, Number(id)),
-            });
+        // Update the review request with reviewer email
+        const updatedRequest = await db
+            .update(qpReviewRequests)
+            .set({
+                reviewerEmail: reviewerEmail,
+            })
+            .where(eq(qpReviewRequests.id, Number(id)))
+            .returning();
 
-            console.log("Review request found:", reviewRequest ? "Yes" : "No");
-            if (reviewRequest) {
-                console.log("Review request details:", {
-                    id: reviewRequest.id,
-                    courseName: reviewRequest.courseName || 'Not available',
-                    courseCode: reviewRequest.courseCode || 'Not available',
-                    requestType: reviewRequest.requestType || 'Not available',
-                    status: reviewRequest.status || 'Not available'
-                });
-            }
+        // Email notification logic
+        let emailSent = false;
+        let emailError = null;
 
-            if (!reviewRequest) {
-                console.log("ERROR: Review request not found");
-                return next(
-                    new HttpError(HttpCode.NOT_FOUND, "QP review request not found")
-                );
-            }
+        // Check both boolean true and string "true"
+        if (sendEmail === true || sendEmail === "true" || sendEmail === 1) {
+            try {
+                const courseDetails = {
+                    courseName: reviewRequest.courseName || undefined,
+                    courseCode: reviewRequest.courseCode || undefined,
+                    requestType: reviewRequest.requestType || undefined,
+                    instructorName: reviewRequest.icEmail || undefined,
+                };
 
-            // Update the review request with reviewer email
-            console.log("Updating review request with reviewer email:", reviewerEmail);
-            const updatedRequest = await db
-                .update(qpReviewRequests)
-                .set({
-                    reviewerEmail: reviewerEmail, 
-                })
-                .where(eq(qpReviewRequests.id, Number(id)))
-                .returning();
+                const emailSubject = `Question Paper Review Assignment${courseDetails.courseCode ? ` - ${courseDetails.courseCode}` : ""}`;
 
-            console.log("Review request updated successfully:", updatedRequest[0] ? "Yes" : "No");
-
-            // Email notification logic
-            console.log("=== EMAIL NOTIFICATION SECTION ===");
-            console.log("sendEmail value:", sendEmail);
-            console.log("sendEmail type:", typeof sendEmail);
-            console.log("sendEmail === true:", sendEmail === true);
-            console.log("sendEmail === 'true':", sendEmail === 'true');
-            console.log("Boolean(sendEmail):", Boolean(sendEmail));
-
-            // FIX: Add debugging for the function import
-            console.log("sendEmailFunction type:", typeof sendEmailFunction);
-            console.log("sendEmailFunction exists:", !!sendEmailFunction);
-
-            let emailSent = false;
-            let emailError = null;
-
-            // Check both boolean true and string "true"
-            if (sendEmail === true || sendEmail === "true" || sendEmail === 1) {
-                console.log("EMAIL CONDITION MET - Proceeding with email sending");
-                
-                try {
-                    console.log("Preparing course details for email...");
-                    const courseDetails = {
-                        courseName: reviewRequest.courseName || undefined,
-                        courseCode: reviewRequest.courseCode || undefined,
-                        requestType: reviewRequest.requestType || undefined,
-                        instructorName: reviewRequest.instructorName || undefined,
-                    };
-
-                    console.log("Course details prepared:", courseDetails);
-
-                    const emailSubject = `Question Paper Review Assignment${courseDetails.courseCode ? ` - ${courseDetails.courseCode}` : ''}`;
-                    console.log("Email subject:", emailSubject);
-
-                    const emailOptions = {
-                        to: reviewerEmail,
-                        subject: emailSubject,
-                        html: generateReviewerAssignmentTemplate(reviewerExists.name || null, courseDetails),
-                        text: `
-Dear ${reviewerExists.name || 'Reviewer'},
+                const emailOptions = {
+                    to: reviewerEmail,
+                    subject: emailSubject,
+                    html: generateReviewerAssignmentTemplate(
+                        "Dear Reviewer",
+                        courseDetails
+                    ),
+                    text: `
+Dear ${ "Reviewer"},
 
 You have been assigned as a reviewer for a question paper review request.
 
 Course Details:
-${courseDetails.courseCode ? `- Course Code: ${courseDetails.courseCode}` : ''}
-${courseDetails.courseName ? `- Course Name: ${courseDetails.courseName}` : ''}
-${courseDetails.requestType ? `- Request Type: ${courseDetails.requestType}` : ''}
-${courseDetails.instructorName ? `- Instructor: ${courseDetails.instructorName}` : ''}
+${courseDetails.courseCode ? `- Course Code: ${courseDetails.courseCode}` : ""}
+${courseDetails.courseName ? `- Course Name: ${courseDetails.courseName}` : ""}
+${courseDetails.requestType ? `- Request Type: ${courseDetails.requestType}` : ""}
+${courseDetails.instructorName ? `- Instructor: ${courseDetails.instructorName}` : ""}
 
 Please access the review portal to complete your assignment once the question papers are submitted by the instructor.
 
@@ -234,74 +181,36 @@ Best regards,
 DCA Convenor
 BITS Pilani Hyderabad Campus
                         `.trim(),
-                        priority: "normal" as const,
-                    };
+                    priority: "normal" as const,
+                };
 
-                    console.log("Email options prepared:");
-                    console.log("- To:", emailOptions.to);
-                    console.log("- Subject:", emailOptions.subject);
-                    console.log("- Priority:", emailOptions.priority);
-
-                    // FIX: Use the renamed import
-                    console.log("Calling sendEmailFunction...");
-                    const emailResult = await sendEmailFunction(emailOptions);
-                    console.log("sendEmailFunction completed");
-                    console.log("Email result:", emailResult);
-                    
-                    emailSent = true;
-                    console.log("✅ Assignment notification email sent successfully to:", reviewerEmail);
-                    
-                } catch (error) {
-                    emailError = error;
-                    console.error("❌ Error sending assignment notification email:");
-                    console.error("Error message:", error?.message);
-                    console.error("Error stack:", error?.stack);
-                    
-                    // Don't fail the main operation if email fails
-                    console.log("Continuing with API response despite email error...");
-                }
-            } else {
-                console.log("EMAIL CONDITION NOT MET");
-                console.log("sendEmail is:", sendEmail);
-                console.log("Email will not be sent");
+                await sendEmailFunction(emailOptions);
+                emailSent = true;
+            } catch (error) {
+                emailError = error;
+                logger.debug(
+                    "Error sending assignment notification email:",
+                    error
+                );
             }
-
-            // Prepare response
-            const responseMessage = emailSent 
-                ? "Reviewer assigned successfully and notification email sent"
-                : emailError 
-                    ? "Reviewer assigned successfully but email notification failed"
-                    : "Reviewer assigned successfully";
-
-            console.log("=== API RESPONSE ===");
-            console.log("Response message:", responseMessage);
-            console.log("Email sent:", emailSent);
-            console.log("Email error:", emailError ? "Yes" : "No");
-
-            res.status(200).json({
-                success: true,
-                message: responseMessage,
-                data: {
-                    reviewRequest: updatedRequest[0],
-                    emailSent: emailSent,
-                    emailError: emailError ? emailError.message : null
-                },
-            });
-
-        } catch (error) {
-            console.error("=== API ERROR ===");
-            console.error("Error type:", error.constructor.name);
-            console.error("Error message:", error.message);
-            console.error("Error stack:", error.stack);
-            
-            // If it's a validation error from zod
-            if (error.name === 'ZodError') {
-                console.error("Zod validation errors:", error.errors);
-                return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid request data", error.errors));
-            }
-            
-            return next(error);
         }
+
+        // Prepare response
+        const responseMessage = emailSent
+            ? "Reviewer assigned successfully and notification email sent"
+            : emailError
+              ? "Reviewer assigned successfully but email notification failed"
+              : "Reviewer assigned successfully";
+
+        res.status(200).json({
+            success: true,
+            message: responseMessage,
+            data: {
+                reviewRequest: updatedRequest[0],
+                emailSent: emailSent,
+                emailError: emailError ? emailError.message : null,
+            },
+        });
     })
 );
 

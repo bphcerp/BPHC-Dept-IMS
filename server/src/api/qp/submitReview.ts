@@ -4,15 +4,19 @@ import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { eq } from "drizzle-orm";
 import { qpSchemas } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
+import { asyncHandler } from "@/middleware/routeHandler.ts";
+import logger from "@/config/logger.ts";
 
 const router = express.Router();
 
-router.post("/",checkAccess(), async (req, res) => {
-    try {
+router.post(
+    "/",
+    checkAccess(),
+    asyncHandler(async (req, res) => {
         const parsed = qpSchemas.submitQpReviewSchema.safeParse(req.body);
 
         if (!parsed.success) {
-            console.log("Validation errors:", parsed.error.errors);
+            logger.debug("Validation errors:", parsed.error.errors);
             return res.status(400).json({
                 success: false,
                 message: "Invalid request data",
@@ -20,7 +24,7 @@ router.post("/",checkAccess(), async (req, res) => {
             });
         }
 
-        const { requestId, email, review } = parsed.data;
+        const { requestId, review } = parsed.data;
 
         // find request by ID
         const request = await db.query.qpReviewRequests.findFirst({
@@ -73,14 +77,7 @@ router.post("/",checkAccess(), async (req, res) => {
             message: "Review submitted successfully",
             data: { requestId, updatedFields: Object.keys(updateFields) },
         });
-    } catch (error) {
-        console.error("Review submission error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to submit review",
-            error: error instanceof Error ? error.message : "Unknown error",
-        });
-    }
-});
+    })
+);
 
 export default router;

@@ -19,11 +19,12 @@ export const handoutStatuses = [
 ];
 
 export const STATUS_COLORS: Record<string, string> = {
-  "review pending": "text-yellow-600 bg-yellow-100 p-3",
-  reviewed: "text-green-600 bg-green-100 p-3",
-  notsubmitted: "text-red-600 bg-red-100 p-3 ",
+  "review pending": "text-yellow-600",
+  approved: "text-green-600",
+  "revision requested": "text-red-600",
+  reviewed: "text-blue-600",
+  notsubmitted: "text-gray-600",
 };
-
 export interface DCAHandout {
   id: string;
   courseName: string;

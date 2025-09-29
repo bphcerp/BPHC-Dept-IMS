@@ -63,7 +63,6 @@ export default function FacultyReview() {
   
   const location = useLocation();
   const requestId = location.state?.requestId;
-  const email = "f20240500@hyderabad.bits-pilani.ac.in";
 
   // Determine which sections to show based on available files
   const getAvailableSections = () => {
@@ -119,8 +118,7 @@ export default function FacultyReview() {
         const availableSections = getAvailableSectionsFromFiles(filesResponse.data.data);
         
         // Fetch existing review data
-        const reviewResponse = await api.get(`/qp/getReviews/${email}/${requestId}`);
-        console.log("Review response:", reviewResponse.data);
+        const reviewResponse = await api.get(`/qp/getReviews/${requestId}`);
         
         if (reviewResponse.data.success && reviewResponse.data.data) {
           const responseData = reviewResponse.data.data;
@@ -166,7 +164,7 @@ export default function FacultyReview() {
     }
 
     fetchData();
-  }, [requestId, email]);
+  }, [requestId ]);
 
   // Helper function to determine sections from files data
   const getAvailableSectionsFromFiles = (filesData: Record<string, string | null>) => {
@@ -221,7 +219,7 @@ export default function FacultyReview() {
     try {
       const payload = {
         requestId: Number(requestId),
-        email,
+        email : "test@test.com", 
         review: formData,
       };
 
@@ -248,7 +246,7 @@ export default function FacultyReview() {
     try {
       const payload = {
         requestId: Number(requestId),
-        email,
+        email : "test@test.com", // Email is now optional and handled server-side
         review: formData,
       };
 

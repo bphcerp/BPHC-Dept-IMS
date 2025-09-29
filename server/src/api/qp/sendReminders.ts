@@ -249,28 +249,33 @@ function generateReviewerReminderTemplate(
 }
 
 // Function to send reminder emails based on status
-async function sendReminderEmails(reminderData: ReminderEmailData): Promise<void> {
+async function sendReminderEmails(
+    reminderData: ReminderEmailData
+): Promise<void> {
     try {
         // Separate courses by status type
-        const documentsNotSubmitted = reminderData.courses.filter(course => 
-            course.status === 'notsubmitted' 
+        const documentsNotSubmitted = reminderData.courses.filter(
+            (course) => course.status === "notsubmitted"
         );
-        
-        const reviewsNotSubmitted = reminderData.courses.filter(course => 
-            course.status === 'review pending'
+
+        const reviewsNotSubmitted = reminderData.courses.filter(
+            (course) => course.status === "review pending"
         );
 
         const emailPromises: Promise<any>[] = [];
 
         // Group courses for instructors (documents not submitted)
         if (documentsNotSubmitted.length > 0) {
-            const instructorGroups = new Map<string, Array<{
-                courseName: string;
-                courseCode: string;
-                status: string;
-                requestType: string;
-                instructorName: string | null;
-            }>>();
+            const instructorGroups = new Map<
+                string,
+                Array<{
+                    courseName: string;
+                    courseCode: string;
+                    status: string;
+                    requestType: string;
+                    instructorName: string | null;
+                }>
+            >();
 
             documentsNotSubmitted.forEach((course) => {
                 if (course.icEmail) {
@@ -321,13 +326,16 @@ BITS Pilani Hyderabad Campus
 
         // Group courses for reviewers (review not submitted)
         if (reviewsNotSubmitted.length > 0) {
-            const reviewerGroups = new Map<string, Array<{
-                courseName: string;
-                courseCode: string;
-                status: string;
-                requestType: string;
-                reviewerName: string | null;
-            }>>();
+            const reviewerGroups = new Map<
+                string,
+                Array<{
+                    courseName: string;
+                    courseCode: string;
+                    status: string;
+                    requestType: string;
+                    reviewerName: string | null;
+                }>
+            >();
 
             reviewsNotSubmitted.forEach((course) => {
                 if (course.reviewerEmail) {
@@ -353,7 +361,10 @@ BITS Pilani Hyderabad Campus
                     const emailOptions = {
                         to: reviewerEmail,
                         subject: `Reminder: Question Paper Review Pending (${courseCount} course${courseCount > 1 ? "s" : ""})`,
-                        html: generateReviewerReminderTemplate(reviewerName, courses),
+                        html: generateReviewerReminderTemplate(
+                            reviewerName,
+                            courses
+                        ),
                         text: `
 Dear ${reviewerName || "Reviewer"},
 
@@ -392,68 +403,61 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req: any, res: any) => {
-        try {
-            const reminderData: ReminderEmailData = req.body;
+        const reminderData: ReminderEmailData = req.body;
 
-            // Validate request data
-            if (!reminderData.courses || reminderData.courses.length === 0) {
-                console.log("No courses provided for reminders");
-                return res.status(400).json({
-                    success: false,
-                    message: "No courses provided for reminder emails",
-                });
-            }
-
-            // Separate courses by type
-            const documentsNotSubmitted = reminderData.courses.filter(course => 
-                (course.status === 'notsubmitted') && course.icEmail
-            );
-            
-            const reviewsNotSubmitted = reminderData.courses.filter(course => 
-                (course.status === 'review pending' ) && course.reviewerEmail
-            );
-
-            const totalValidCourses = documentsNotSubmitted.length + reviewsNotSubmitted.length;
-
-            if (totalValidCourses === 0) {
-                console.log("No valid courses found for reminders 2");
-                return res.status(400).json({
-                    success: false,
-                    message: "No valid courses found for reminders",
-                });
-            }
-
-            // Log the request data
-            console.log("Reminder request received:", {
-                selectedCourseIds: reminderData.selectedCourseIds,
-                totalCourses: reminderData.courses.length,
-                documentsNotSubmitted: documentsNotSubmitted.length,
-                reviewsNotSubmitted: reviewsNotSubmitted.length,
-                instructorEmails: documentsNotSubmitted.map(c => c.icEmail),
-                reviewerEmails: reviewsNotSubmitted.map(c => c.reviewerEmail),
-            });
-
-            // Send reminder emails
-            await sendReminderEmails(reminderData);
-
-            return res.status(200).json({
-                success: true,
-                message: `Reminder emails sent: ${documentsNotSubmitted.length} to instructors, ${reviewsNotSubmitted.length} to reviewers`,
-                data: {
-                    instructorReminders: documentsNotSubmitted.length,
-                    reviewerReminders: reviewsNotSubmitted.length,
-                    totalSent: totalValidCourses,
-                    courseIds: reminderData.selectedCourseIds,
-                },
-            });
-        } catch (error) {
-            logger.error("Error in send reminders endpoint:", error);
-            return res.status(500).json({
+        // Validate request data
+        if (!reminderData.courses || reminderData.courses.length === 0) {
+            logger.debug("No courses provided for reminders");
+            return res.status(400).json({
                 success: false,
-                message: "Failed to send reminder emails",
-                error: error instanceof Error ? error.message : "Unknown error",
+                message: "No courses provided for reminder emails",
             });
         }
+
+        // Separate courses by type
+        const documentsNotSubmitted = reminderData.courses.filter(
+            (course) => course.status === "notsubmitted" && course.icEmail
+        );
+
+        const reviewsNotSubmitted = reminderData.courses.filter(
+            (course) =>
+                course.status === "review pending" && course.reviewerEmail
+        );
+
+        const totalValidCourses =
+            documentsNotSubmitted.length + reviewsNotSubmitted.length;
+
+        if (totalValidCourses === 0) {
+            logger.debug("No valid courses found for reminders 2");
+            return res.status(400).json({
+                success: false,
+                message: "No valid courses found for reminders",
+            });
+        }
+
+        // Log the request data
+        logger.debug("Reminder request received:", {
+            selectedCourseIds: reminderData.selectedCourseIds,
+            totalCourses: reminderData.courses.length,
+            documentsNotSubmitted: documentsNotSubmitted.length,
+            reviewsNotSubmitted: reviewsNotSubmitted.length,
+            instructorEmails: documentsNotSubmitted.map((c) => c.icEmail),
+            reviewerEmails: reviewsNotSubmitted.map((c) => c.reviewerEmail),
+        });
+
+        // Send reminder emails
+        await sendReminderEmails(reminderData);
+
+        return res.status(200).json({
+            success: true,
+            message: `Reminder emails sent: ${documentsNotSubmitted.length} to instructors, ${reviewsNotSubmitted.length} to reviewers`,
+            data: {
+                instructorReminders: documentsNotSubmitted.length,
+                reviewerReminders: reviewsNotSubmitted.length,
+                totalSent: totalValidCourses,
+                courseIds: reminderData.selectedCourseIds,
+            },
+        });
     })
 );
 

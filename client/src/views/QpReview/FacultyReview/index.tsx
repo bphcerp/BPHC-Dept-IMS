@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
@@ -25,6 +24,12 @@ export interface DCAQpReview {
   status: string;
   requestType?: string; // Add this field if it exists in your API response
 }
+
+const STATUS_COLORS: Record<string, string> = {
+  "review pending": "text-yellow-600 bg-yellow-100 p-3",
+  reviewed: "text-green-600 bg-green-100 p-3",
+  notsubmitted: "text-red-600 bg-red-100 p-3 ",
+};
 
 export const DCAMemberHandouts: React.FC = () => {
   const navigate = useNavigate();
