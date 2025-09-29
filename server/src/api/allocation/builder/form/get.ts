@@ -47,10 +47,12 @@ router.get(
                         ),
                 });
 
-        res.status(200).json(checkUserResponse ? {
-            form,
-            userAlreadyResponded,
-        }: form);
+        res.status(200).json({
+            ...form,
+            ...( checkUserResponse === 'true' ? {
+                userAlreadyResponded
+            } : {} )
+        });
     })
 );
 

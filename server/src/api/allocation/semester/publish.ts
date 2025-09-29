@@ -62,7 +62,7 @@ router.post(
             const emails: Parameters<typeof sendBulkEmails>[0] = faculties.map(
                 (email) => ({
                     to: email,
-                    subject: "Course Preference Submission Reminder",
+                    subject: "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
                     html: emailBody,
                 })
             );

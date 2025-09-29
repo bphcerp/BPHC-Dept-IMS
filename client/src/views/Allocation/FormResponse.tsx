@@ -36,16 +36,16 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
   useEffect(() => {
     const fetchFormDetails = async () => {
       await api
-        .get<AllocationFormUserCheck>(
-          `/allocation/builder/form/get/${id}?checkUserResponse=true`
+        .get<AllocationFormUserCheck | AllocationForm>(
+          `/allocation/builder/form/get/${id}${preview ? "?checkUserResponse=true" : ""}`
         )
         .then(({ data }) => {
-          setForm(data);
-          if (data.userAlreadyResponded)
+          if ((data as AllocationFormUserCheck).userAlreadyResponded)
             toast.warning("You've already responded to this form");
+          setForm(data);
           if (!preview) {
             const defaultValues: { [key: string]: any } = {};
-            data.template.fields.forEach((field: any) => {
+            (data as AllocationForm).template.fields.forEach((field: any) => {
               if (field.type === "TEACHING_ALLOCATION") {
                 defaultValues[`${field.id}_teachingAllocation`] =
                   field.value || "";
@@ -118,6 +118,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
       );
     }
   };
+
   if (
     form &&
     form.allocationDeadline &&
@@ -130,11 +131,12 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
         </div>
       </div>
     );
-  if (form && !form.publishedDate) return <NotFoundPage />;
+
+  if (!preview && form && !form.publishedDate) return <NotFoundPage />;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 md:p-6">
-      {form && (
+      {form ? (
         <>
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight">{form.title}</h1>
@@ -144,7 +146,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
           <Separator />
 
           {preview ? (
-            <form className="space-y-6">
+            <div className="space-y-6">
               {form.template.fields.map((field) => (
                 <Card key={field.id} className="border-border">
                   <CardHeader className="gap-4 bg-muted/50 p-4">
@@ -176,12 +178,12 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
                       field={field}
                       create={false}
                       courses={courses}
-                      form={methods}
+                      form={undefined}
                     />
                   </CardContent>
                 </Card>
               ))}
-            </form>
+            </div>
           ) : (
             <FormProvider {...methods}>
               <form
@@ -215,6 +217,12 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
             </FormProvider>
           )}
         </>
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <div className="rounded-lg border-2 border-y-primary p-8 text-center">
+            <p className="text-lg text-primary">Loading...</p>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -124,6 +124,10 @@ const FormTemplateView = ({ create = true }) => {
   };
 
   const handleSaveTemplate = async () => {
+    if (!templateName || !templateDescription || !fields.length){
+      toast.warning("Please fill all required fields")
+      return
+    }
     try {
       const templateCreateData: NewAllocationFormTemplate = {
         name: templateName,

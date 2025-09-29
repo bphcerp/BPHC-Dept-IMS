@@ -10,7 +10,7 @@ import SectionTypeColumn from "@/components/Allocation/SectionTypeColumn";
 import AllocationHeader from "@/components/Allocation/AllocationHeader";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 
-const Allocation = () => {
+const AllocationModern = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentSemester, setCurrentSemester] =
     useState<allocationTypes.Semester | null>(null);
@@ -208,6 +208,36 @@ const Allocation = () => {
     );
   }
 
+  if (!currentSemester.form) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <h2 className="mb-2 text-lg font-semibold text-destructive">
+            Semester Form Not Linked
+          </h2>
+          <p className="text-muted-foreground">
+            Please publish link a form to the ongoing semester
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentSemester.form.publishedDate) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <h2 className="mb-2 text-lg font-semibold text-destructive">
+            Semester Form Not Published
+          </h2>
+          <p className="text-muted-foreground">
+            Please publish this semester's form
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}
@@ -273,7 +303,6 @@ const Allocation = () => {
             ) : (
               <div className="flex flex-1 items-center justify-center bg-muted/20">
                 <div className="text-center text-muted-foreground">
-                  <div className="mb-4 text-6xl">📋</div>
                   <h3 className="mb-2 text-lg font-medium">
                     Create Allocation
                   </h3>
@@ -289,7 +318,6 @@ const Allocation = () => {
         ) : (
           <div className="flex flex-1 items-center justify-center bg-muted/20">
             <div className="text-center text-muted-foreground">
-              <div className="mb-4 text-6xl">🎯</div>
               <h3 className="mb-2 text-lg font-medium">Select a Course</h3>
               <p className="text-sm">
                 Choose a course from the left panel to view and manage
@@ -313,4 +341,4 @@ const Allocation = () => {
   );
 };
 
-export default Allocation;
+export default AllocationModern;

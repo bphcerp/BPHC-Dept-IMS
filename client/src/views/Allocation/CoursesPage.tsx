@@ -64,6 +64,13 @@ const columns: ColumnDef<Course>[] = [
       filterType: 'dropdown'
     }
   },
+  {
+    accessorFn: (row) => row.fetchedFromTTD ? 'Yes' : 'No',
+    header: "Fetched From TTD?",
+    meta: {
+      filterType: 'dropdown'
+    }
+  },
 ];
 
 const CoursesPage = () => {
@@ -119,9 +126,10 @@ const CoursesPage = () => {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="mb-4 text-2xl font-bold"> Courses </h1>
         {checkAccessAnyOne(["allocation:write", "allocation:courses:sync"]) && (
-          <Button onClick={handleSyncCourses} variant='outline'>Sync Courses</Button>
+          <Button onClick={handleSyncCourses} variant='outline'>Sync Courses*</Button>
         )}
       </div>
+      <h4 className="text-sm text-muted-foreground italic">*All courses are fetched from the TimeTable Division.</h4>
       <DataTable
         idColumn="code"
         columns={columns}

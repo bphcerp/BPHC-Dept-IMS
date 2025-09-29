@@ -47,7 +47,7 @@ const columns: ColumnDef<AllocationForm>[] = [
     accessorKey: "template.name",
     header: "Template Used ",
     cell: ({ row }) => (
-      <Link to={`/allocation/templates/${row.original.template.id}`}>
+      <Link className="hover:underline text-primary" to={`/allocation/templates/${row.original.template.id}`}>
         {row.original.template.name}
       </Link>
     ),
@@ -60,7 +60,7 @@ const columns: ColumnDef<AllocationForm>[] = [
       return (
         <div className="flex flex-row gap-2">
           <Button asChild>
-            <Link to={`/allocation/forms/${row.original.id}`}> View </Link>
+            <Link to={`/allocation/forms/${row.original.id}/preview`}> View </Link>
           </Button>
           <Button asChild>
             <Link to={`/allocation/forms/${row.original.id}/responses`}>

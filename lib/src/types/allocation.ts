@@ -32,6 +32,7 @@ export type Allocation = NewAllocation & {
 export type NewCourse = z.infer<typeof courseSchema>;
 export type UpdateCourse = Partial<NewCourse>;
 export type Course = NewCourse & {
+    fetchedFromTTD: boolean
     createdAt: Date;
     updatedAt: Date;
 };
@@ -52,7 +53,7 @@ export const semesterStatusMap: Record<
 export const semesterTypeMap: Record<SemesterTypeEnumType, string> = {
     "1": "ODD",
     "2": "EVEN",
-    "3": "SUMMER",
+    "3": "SUMMER TERM",
 };
 
 export type NewSemester = Omit<

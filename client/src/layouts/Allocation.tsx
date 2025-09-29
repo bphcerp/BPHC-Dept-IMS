@@ -65,7 +65,7 @@ const AllocationLayout = () => {
                 url: "/allocation/personal",
                 requiredPermissions: ["allocation:view"],
               },
-              ...(currentSemester?.formId
+              ...(currentSemester?.allocationStatus === 'ongoing'
                 ? [
                     {
                       title: "Submit Your Preferences",

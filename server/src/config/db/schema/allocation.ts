@@ -7,6 +7,7 @@ import {
     uuid,
     unique,
     index,
+    boolean,
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
@@ -98,6 +99,7 @@ export const course = pgTable("allocation_course", {
     offeredAs: courseTypeEnum("offered_as").notNull(),
     offeredTo: degreeTypeEnum("offered_to").notNull(),
     offeredAlsoBy: text("offered_also_by").array(),
+    fetchedFromTTD: boolean('fetched_from_ttd').default(true),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

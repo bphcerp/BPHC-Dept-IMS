@@ -51,28 +51,35 @@ export const FormTemplateFieldComponent = ({
   switch (field.type) {
     case "TEACHING_ALLOCATION":
       return (
-        <div className="relative w-32">
-          {form ? (
-            <Input
-              {...form.register(`${field.id}_teachingAllocation`, {
-                required: true,
-              })}
-              disabled={create}
-              required
-              type="number"
-              placeholder="e.g., 50"
-            />
-          ) : (
-            <Input
-              value={field.value || ""}
-              disabled
-              type="number"
-              placeholder="e.g., 50"
-            />
+        <div>
+          <div className="relative w-32">
+            {form ? (
+              <Input
+                {...form.register(`${field.id}_teachingAllocation`, {
+                  required: true,
+                })}
+                disabled={create}
+                required
+                type="number"
+                placeholder="e.g., 50"
+              />
+            ) : (
+              <Input
+                value={field.value || ""}
+                disabled
+                type="number"
+                placeholder="e.g., 50"
+              />
+            )}
+            <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+              %
+            </span>
+          </div>
+          {(!form || create) && (
+            <span className="text-xs text-destructive">
+              This field will not be visible to non-faculty members
+            </span>
           )}
-          <span className="absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
-            %
-          </span>
         </div>
       );
 
@@ -178,10 +185,23 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
+          {( !form || create) && (
+            <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
+              {field.preferenceType === "LECTURE" ? (
+                <span className="text-destructive">
+                  This field ( Lecture ) will not be visible to non-faculty
+                  members
+                </span>
+              ) : (
+                <span className="text-success">
+                  This field will be visible to all members who have access to
+                  this form
+                </span>
+              )}
+              <p>The list of courses will be populated automatically.</p>
+            </div>
+          )}
           <div className="text-xs italic text-muted-foreground">
-            {create && (
-              <p>Note: The list of courses will be populated automatically.</p>
-            )}
             <p>
               {" "}
               Check the box if you have been the course's In-Charge more than 2

@@ -42,7 +42,7 @@ export const allocationForm = pgTable("allocation_form", {
         () => allocationFormTemplate.id,
         { onDelete: "cascade" }
     ),
-    title: text("title").notNull(),
+    title: text("title").notNull().unique(),
     description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
@@ -51,6 +51,7 @@ export const allocationForm = pgTable("allocation_form", {
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
     allocationDeadline: timestamp("allocation_deadline"),
+    emailString: text('email_string')
 });
 
 export const allocationFormResponse = pgTable("allocation_form_response", {

@@ -30,17 +30,16 @@ router.post(
             }
 
             // Fetch all the course data from TTD API
-            const { data: courses } = await axios.get(
+            const { data: courses } = await axios.get<TTDCourse[]>(
                 `${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`
             );
 
             console.log(`${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`)
 
-            const mappedCourses = courses.map((courseData: TTDCourse) => {
+            // Wilp courses are ignored they are not included in the allocation process.
+            const mappedCourses = courses.filter((course) => !course.name.toUpperCase().includes('WILP')).map((courseData) => {
                 return courseSchema.parse({
-                    // Either the data from TTD is wrong, or the WILP courses have a different format. Because of this, more than
-                    // 1 course will have WILP has the courseCode violating the primary key constraint. This is a work-around for now.
-                    code: courseData.courseCode === 'WILP' ? courseData.name : `${courseData.deptCode} ${courseData.courseCode}`,
+                    code: `${courseData.deptCode} ${courseData.courseCode}`,
                     name: courseData.name,
                     lectureUnits: courseData.lectureUnits,
                     practicalUnits: courseData.labUnits,
