@@ -421,6 +421,20 @@
       "when": 1759087584645,
       "tag": "0059_perfect_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1759153254656,
+      "tag": "0060_nice_randall",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1759153261961,
+      "tag": "0061_shiny_serpent_society",
+      "breakpoints": true
     }
   ]
 }

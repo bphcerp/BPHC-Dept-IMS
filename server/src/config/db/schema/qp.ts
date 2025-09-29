@@ -31,17 +31,28 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     }),
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
-    midSemQpFilePath: integer("midSem_qp_file_path").references(() => fileFields.id, {
-        onDelete: "set null",
-    }),
-    midSemSolFilePath: integer("midSem_sol_file_path").references(() => fileFields.id, {
-    }),
-    compreQpFilePath: integer("compre_qp_file_path").references(() => fileFields.id, {
-        onDelete: "set null",
-    }),
-    compreSolFilePath: integer("compre_sol_file_path").references(() => fileFields.id, {
-        onDelete: "set null",
-    }),
+    midSemQpFilePath: integer("midSem_qp_file_path").references(
+        () => fileFields.id,
+        {
+            onDelete: "set null",
+        }
+    ),
+    midSemSolFilePath: integer("midSem_sol_file_path").references(
+        () => fileFields.id,
+        {}
+    ),
+    compreQpFilePath: integer("compre_qp_file_path").references(
+        () => fileFields.id,
+        {
+            onDelete: "set null",
+        }
+    ),
+    compreSolFilePath: integer("compre_sol_file_path").references(
+        () => fileFields.id,
+        {
+            onDelete: "set null",
+        }
+    ),
     review: jsonb("review"),
     documentsUploaded: boolean("documents_uploaded").notNull().default(false),
     status: qpStatusEnum("status").notNull().default("notsubmitted"),
