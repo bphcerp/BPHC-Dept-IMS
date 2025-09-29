@@ -5,11 +5,13 @@ import { qpSchemas } from "lib";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { eq } from "drizzle-orm";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = qpSchemas.updateReviewerBodySchema.parse(req.body);
         

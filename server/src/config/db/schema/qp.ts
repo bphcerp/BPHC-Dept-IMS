@@ -19,6 +19,8 @@ export const qpStatusEnum = pgEnum(
 
 export const categoryEnum = pgEnum("category_enum", qpSchemas.categories);
 
+export const requestTypeEnum = pgEnum("type_enum", qpSchemas.requestTypes);
+
 export const qpReviewRequests = pgTable("qp_review_requests", {
     id: serial("id").primaryKey(),
     icEmail: text("ic_email").references(() => users.email, {
@@ -29,20 +31,17 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     }),
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
-    previousSubmissionId: integer("previous_submission_id"),
-    midSemFilePath: integer("mid_sem_file_path").references(
+    midSemQpFilePath: integer("midSem_qp_file_path").references(
         () => fileFields.id,
         {
             onDelete: "set null",
         }
     ),
-    midSemSolFilePath: integer("mid_sem_sol_file_path").references(
+    midSemSolFilePath: integer("midSem_sol_file_path").references(
         () => fileFields.id,
-        {
-            onDelete: "set null",
-        }
+        {}
     ),
-    compreFilePath: integer("compre_file_path").references(
+    compreQpFilePath: integer("compre_qp_file_path").references(
         () => fileFields.id,
         {
             onDelete: "set null",
@@ -55,12 +54,12 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
         }
     ),
     review: jsonb("review"),
-    ficDeadline: timestamp("fic_deadline", { withTimezone: true }),
-    reviewDeadline: timestamp("review_deadline", { withTimezone: true }),
     documentsUploaded: boolean("documents_uploaded").notNull().default(false),
     status: qpStatusEnum("status").notNull().default("notsubmitted"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
     category: categoryEnum("category").notNull(),
+    submittedOn: timestamp("submitted_on", { withTimezone: true }),
+    requestType: requestTypeEnum("request_type").notNull(),
 });

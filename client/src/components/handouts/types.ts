@@ -25,7 +25,6 @@ export const STATUS_COLORS: Record<string, string> = {
   reviewed: "text-blue-600",
   notsubmitted: "text-gray-600",
 };
-
 export interface DCAHandout {
   id: string;
   courseName: string;

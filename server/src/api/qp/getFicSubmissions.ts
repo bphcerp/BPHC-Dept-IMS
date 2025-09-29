@@ -2,10 +2,12 @@ import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import assert from "assert";
+import { checkAccess } from "@/middleware/auth.ts";
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
 

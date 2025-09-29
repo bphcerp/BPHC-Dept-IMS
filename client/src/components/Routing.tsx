@@ -108,6 +108,7 @@ import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
 import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
 import PatentDefaultRedirect from "./PatentDefaultRedirect";
+import DcaReview from "@/views/QpReview/DcaReview";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -142,7 +143,8 @@ const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
 const gradesModulePermissions: string[] = Object.keys(allPermissions).filter(
-  (permission) => permission.startsWith("grades:"));
+  (permission) => permission.startsWith("grades:")
+);
 const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("meeting:")
 );
@@ -217,7 +219,8 @@ const Routing = () => {
       title: "Grade Management",
       icon: <FileText />,
       url: "/grades",
-      requiredPermissions: gradesModulePermissions,},
+      requiredPermissions: gradesModulePermissions,
+    },
     {
       title: "Scheduler", //this is meeting everywhere, except for this title
       icon: <Calendar />,
@@ -332,10 +335,45 @@ const Routing = () => {
                   <Navigate to="/qpReview/ficSubmission" replace={true} />
                 }
               />
-              <Route path="ficSubmission" element={<FicSubmissionView />} />
-              <Route path="dcarequests" element={<DCARequestsView />} />
-              <Route path="facultyReview" element={<ReviewPage />} />
-              <Route path="facultyReview/:course" element={<FacultyReview />} />
+
+              {/* FIC Submission Routes */}
+              {checkAccess(permissions["/qp/getAllFICSubmissions"]) && (
+                <Route path="ficSubmission" element={<FicSubmissionView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="ficSubmission/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* DCA Requests Routes */}
+              {checkAccess(permissions["/qp/getAllDcaMemberRequests"]) && (
+                <Route path="dcarequests" element={<DCARequestsView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="dcarequests/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* Faculty Review Routes */}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route path="facultyReview" element={<ReviewPage />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="facultyReview/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route
+                  path="facultyReview/:course"
+                  element={<FacultyReview />}
+                />
+              )}
             </Route>
           )}
           {checkAccessAnyOne(courseHandoutsPermissions) && (
@@ -598,10 +636,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(projectModulePermissions) && (
             <Route path="/project" element={<ProjectLayout />}>
-              <Route
-                index
-                element={<ProjectDefaultRedirect />}
-              />
+              <Route index element={<ProjectDefaultRedirect />} />
               {checkAccess(permissions["/project/create"]) && (
                 <Route path="add" element={<AddProject />} />
               )}
@@ -621,10 +656,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(patentModulePermissions) && (
             <Route path="/patent" element={<PatentLayout />}>
-              <Route
-                index
-                element={<PatentDefaultRedirect />}
-              />
+              <Route index element={<PatentDefaultRedirect />} />
               {checkAccess(permissions["/patent/create"]) && (
                 <Route path="add" element={<AddPatent />} />
               )}
@@ -690,22 +722,22 @@ const Routing = () => {
             </Route>
           )}
           {checkAccessAnyOne(gradesModulePermissions) && (
-          <Route path="/grades" element={<GradesLayout />}>
-            <Route
-              index
-              element={<Navigate to="/grades/upload" replace={true} />}
-            />
-            {checkAccess(permissions["/grades/upload"]) && (
-              <Route path="upload" element={<UploadExcel />} />
-            )}
-            {checkAccess(permissions["/grades/manage"]) && (
-              <Route path="manage" element={<ManageGrades />} />
-            )}
-            {checkAccess(permissions["/grades/supervisor"]) && (
-              <Route path="supervisor" element={<SupervisorGradesView />} />
-            )}
-          </Route>
-        )}
+            <Route path="/grades" element={<GradesLayout />}>
+              <Route
+                index
+                element={<Navigate to="/grades/upload" replace={true} />}
+              />
+              {checkAccess(permissions["/grades/upload"]) && (
+                <Route path="upload" element={<UploadExcel />} />
+              )}
+              {checkAccess(permissions["/grades/manage"]) && (
+                <Route path="manage" element={<ManageGrades />} />
+              )}
+              {checkAccess(permissions["/grades/supervisor"]) && (
+                <Route path="supervisor" element={<SupervisorGradesView />} />
+              )}
+            </Route>
+          )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
