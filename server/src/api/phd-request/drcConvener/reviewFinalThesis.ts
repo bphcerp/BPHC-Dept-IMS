@@ -87,8 +87,7 @@ router.post(
                     });
                 }
                 if (
-                    body.revertTo === "supervisor" ||
-                    body.revertTo === "both"
+                    body.revertTo === "supervisor" 
                 ) {
                     todosToCreate.push({
                         assignedTo: request.supervisorEmail,

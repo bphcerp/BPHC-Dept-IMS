@@ -184,9 +184,10 @@ const MyStudents: React.FC = () => {
                             </Link>
                           </Button>
                         )}
+                        
                         {student.currentStatus
                           .toLowerCase()
-                          .includes("supervisor_review_final_thesis") && (
+                          .endsWith("supervisor review final thesis") && (
                           <Button variant="default" size="sm" asChild>
                             <Link to={`/phd/requests/${student.requestId}`}>
                               <FileCheck2 className="mr-2 h-4 w-4" />

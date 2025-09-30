@@ -12,10 +12,11 @@ import {
 } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm"; 
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import fs from "fs/promises"; 
 
 const router = express.Router();
 
@@ -66,6 +67,53 @@ router.post(
                         "Supervisor report and final examination panel documents are required for approval."
                     );
                 }
+
+                // *** START: Added file replacement logic ***
+                // Find any existing documents uploaded by this supervisor for this request.
+                const oldDocsToDelete =
+                    await tx.query.phdRequestDocuments.findMany({
+                        where: and(
+                            eq(phdRequestDocuments.requestId, requestId),
+                            eq(
+                                phdRequestDocuments.uploadedByEmail,
+                                supervisorEmail
+                            ),
+                            eq(
+                                phdRequestDocuments.documentType,
+                                "final_thesis_supervisor_document"
+                            )
+                        ),
+                        columns: { fileId: true },
+                    });
+
+                if (oldDocsToDelete.length > 0) {
+                    const oldFileIds = oldDocsToDelete.map((doc) => doc.fileId);
+                    const oldFileRecords = await tx
+                        .select({ path: files.filePath })
+                        .from(files)
+                        .where(inArray(files.id, oldFileIds));
+
+                    // Delete from the linking table first
+                    await tx
+                        .delete(phdRequestDocuments)
+                        .where(inArray(phdRequestDocuments.fileId, oldFileIds));
+
+                    // Delete from the main files table
+                    await tx.delete(files).where(inArray(files.id, oldFileIds));
+
+                    // Use fs.promises to delete the actual files from the server
+                    for (const fileRecord of oldFileRecords) {
+                        try {
+                            await fs.unlink(fileRecord.path);
+                        } catch (e) {
+                            console.error(
+                                `Failed to delete old supervisor file: ${fileRecord.path}`,
+                                e
+                            );
+                        }
+                    }
+                }
+                // *** END: Added file replacement logic ***
 
                 const fileInserts = uploadedFiles.map((file) => ({
                     userEmail: supervisorEmail,
