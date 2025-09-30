@@ -41,6 +41,7 @@ import {
   FRONTEND_URL,
 } from "@/lib/constants";
 import { Maximize2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
@@ -74,6 +75,26 @@ export const AllocationOverview = () => {
       await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
     },
   });
+
+  const remindMutation = useMutation({
+    mutationFn: () =>
+      api.post('/allocation/semester/remind').then(() => toast.success("Reminder successfully sent")).catch((e) => {
+        console.error("Error while sending reminder", e)
+        toast.error("Something went wrong")
+      }),
+  });
+
+  const endMutation = useMutation({
+    mutationFn: () =>
+      api.post('/allocation/semester/end').then(() => {
+        toast.success("Reminder successfully sent")
+        queryClient.invalidateQueries(['latest-semester'])
+      }).catch((e) => {
+        console.error("Error while sending reminder", e)
+        toast.error("Something went wrong")
+      }),
+  });
+
 
   const publishFormMutation = useMutation({
     mutationFn: ({
@@ -233,11 +254,7 @@ Hyderabad Campus<span>
                             name={field.name}
                             value={field.state.value}
                             onBlur={field.handleBlur}
-                            min={
-                              new Date(Date.now() + 86400000)
-                                .toISOString()
-                                .split("T")[0]
-                            }
+                            min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
                             onChange={(e) => {
                               field.handleChange(e.target.value);
                             }}
@@ -358,7 +375,10 @@ Hyderabad Campus<span>
               </Dialog>
             )}
           {latestSemester.allocationStatus === "ongoing" && (
-            <Button variant="secondary">Send Reminder</Button>
+            <>
+              <Button variant="secondary" onClick={() => remindMutation.mutate()}>Send Reminder</Button>
+              <Button variant="destructive" onClick={() => endMutation.mutate()}>End Responses Collection</Button>
+            </>
           )}
         </div>
       </header>

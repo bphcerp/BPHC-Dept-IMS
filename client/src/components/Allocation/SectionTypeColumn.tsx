@@ -122,19 +122,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     });
   };
 
-  const getSectionTypeIcon = () => {
-    switch (sectionType) {
-      case "LECTURE":
-        return "🎓";
-      case "TUTORIAL":
-        return "📝";
-      case "PRACTICAL":
-        return "🔬";
-      default:
-        return "📚";
-    }
-  };
-
   const getSectionTypeColor = () => {
     switch (sectionType) {
       case "LECTURE":
@@ -181,7 +168,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
         // Collapsed state - just show the icon and section type vertically
         <div className="flex h-full flex-col items-center justify-center p-1 pt-8">
           <div className="flex flex-col items-center gap-8">
-            <span className="text-xl">{getSectionTypeIcon()}</span>
             <div className="origin-center rotate-90 whitespace-nowrap text-xs font-medium tracking-wider">
               {sectionType}
             </div>
@@ -201,9 +187,16 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
           <div className="flex-shrink-0 border-b bg-background p-3 pr-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{getSectionTypeIcon()}</span>
                 <span className="font-medium">{sectionType}</span>
                 <Badge variant="secondary" className={getSectionTypeColor()}>
+                  {
+                    allocationData?.sections?.filter(
+                      (section) =>
+                        section.type === sectionType &&
+                        !!section.instructors.length
+                    ).length
+                  }{" "}
+                  /{" "}
                   {allocationData?.sections?.filter(
                     (s) => s.type === sectionType
                   )?.length || 0}

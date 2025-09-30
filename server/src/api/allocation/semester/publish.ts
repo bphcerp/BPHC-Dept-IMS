@@ -6,10 +6,11 @@ import { allocationForm } from "@/config/db/schema/allocationFormBuilder.ts";
 import { allocationFormPublishSchema } from "node_modules/lib/src/schemas/AllocationFormBuilder.ts";
 import { eq } from "drizzle-orm";
 import { semester } from "@/config/db/schema/allocation.ts";
-import { faculty } from "@/config/db/schema/admin.ts";
+import { faculty, phd } from "@/config/db/schema/admin.ts";
 import { createNotifications, createTodos } from "@/lib/todos/index.ts";
-import { sendBulkEmails } from "@/lib/common/email.ts";
+import { sendEmail } from "@/lib/common/email.ts";
 import assert from "assert";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -31,7 +32,11 @@ router.post(
 
             await tx
                 .update(allocationForm)
-                .set({ publishedDate: new Date(), allocationDeadline, emailBody })
+                .set({
+                    publishedDate: new Date(),
+                    allocationDeadline,
+                    emailBody,
+                })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
             return semesterUpdated;
         });
@@ -40,10 +45,14 @@ router.post(
             (el) => el.email
         );
 
-        const todos: Parameters<typeof createTodos>[0] = faculties.map(
+        const phds = (await db.select().from(phd)).map((el) => el.email);
+
+        const recipients = [...faculties, ...phds];
+
+        const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
                 module: "Course Allocation",
-                title: "Course Preference Submission Reminder",
+                title: "Course Preference Submission",
                 description: `Submit your course preferences for the upcoming semester`,
                 assignedTo: el,
                 link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
@@ -53,26 +62,34 @@ router.post(
         );
 
         const notifications: Parameters<typeof createNotifications>[0] =
-            faculties.map((el) => ({
+            recipients.map((el) => ({
                 module: "Course Allocation",
-                title: "Course Preference Submission Reminder",
+                title: "Course Preference Submission",
                 userEmail: el,
                 content: `Submit your course preferences for the upcoming semester`,
                 link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
             }));
 
-        const emails: Parameters<typeof sendBulkEmails>[0] = faculties.map(
-            (email) => ({
-                to: email,
-                subject:
-                    "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
-                html: emailBody,
-            })
-        );
+        const email: Parameters<typeof sendEmail>[0] = {
+            to: environment.DEPARTMENT_EMAIL,
+            bcc: recipients,
+            subject:
+                "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
+            html: emailBody,
+        };
 
         await createTodos(todos);
         await createNotifications(notifications);
-        await sendBulkEmails(emails);
+        const emailMsg = (await sendEmail(email)).returnvalue;
+
+        if (emailMsg.messageId) {
+            await db
+                .update(allocationForm)
+                .set({
+                    emailMsgId: emailMsg!.messageId,
+                })
+                .where(eq(allocationForm.id, semesterUpdated[0].formId!));
+        }
 
         res.send("Form published successfully");
     })

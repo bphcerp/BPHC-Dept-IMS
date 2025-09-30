@@ -271,7 +271,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                   ) : instructorDetails ? (
                     <div className="space-y-4">
                       {/* Current Allocations */}
-                      {Object.keys(instructorDetails.userAllocatedSections)
+                      {Object.keys(instructorDetails.userAllocatedSections ?? {})
                         .length > 0 && (
                         <Card>
                           <CardHeader>
@@ -317,8 +317,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                       )}
 
                       {/* Course Statistics */}
-                      {instructorDetails.allAllocationsOfCoursesAllocatedToUser
-                        .length > 0 && (
+                      {instructorDetails.allAllocationsOfCoursesAllocatedToUser?.length > 0 && (
                         <Card>
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -423,10 +422,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                         </Card>
                       )}
 
-                      {Object.keys(instructorDetails.userAllocatedSections)
+                      {Object.keys(instructorDetails.userAllocatedSections ?? {})
                         .length === 0 &&
-                        instructorDetails.allAllocationsOfCoursesAllocatedToUser
-                          .length === 0 && (
+                        instructorDetails.allAllocationsOfCoursesAllocatedToUser?.length === 0 && (
                           <Card>
                             <CardContent className="p-8 text-center">
                               <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />

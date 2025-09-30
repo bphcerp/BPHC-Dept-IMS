@@ -8,7 +8,7 @@ export const allocationStatuses = [
     "notStarted",
     "ongoing",
     "completed",
-    "suspended",
+    "inAllocation",
 ] as const;
 
 export const sectionTypeEnum = z.enum(sectionTypes);

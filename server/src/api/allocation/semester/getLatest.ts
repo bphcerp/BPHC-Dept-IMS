@@ -108,10 +108,10 @@ router.get(
                             email: true,
                             type: true,
                         },
-                        where: (user, { notInArray, and, ne }) =>
+                        where: (user, { notInArray, and, or, eq }) =>
                             and(
                                 notInArray(user.email, Array.from(seenEmails)),
-                                ne(user.type, "staff")
+                                or(eq(user.type, 'phd'), eq(user.type, 'faculty'))
                             ),
                     });
 

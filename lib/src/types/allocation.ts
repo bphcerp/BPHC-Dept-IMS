@@ -47,7 +47,7 @@ export const semesterStatusMap: Record<
     completed: "Completed",
     notStarted: "Not Started",
     ongoing: "Ongoing",
-    suspended: "Suspended",
+    inAllocation: "In Allocation",
 };
 
 export const semesterTypeMap: Record<SemesterTypeEnumType, string> = {
