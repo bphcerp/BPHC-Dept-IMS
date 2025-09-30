@@ -43,6 +43,7 @@ import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
+import FinalThesisDashboard from "@/views/Phd/Student/FinalThesisDashboard";
 import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal";
 import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
 import DacViewProposal from "@/views/Phd/DacMember/ViewProposal";
@@ -430,6 +431,10 @@ const Routing = () => {
                   <Route
                     path="qualifying-exams"
                     element={<QualifyingExams />}
+                  />
+                  <Route
+                    path="thesis-submission"
+                    element={<FinalThesisDashboard />}
                   />
                 </Route>
               )}

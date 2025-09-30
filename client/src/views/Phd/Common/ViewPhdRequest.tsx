@@ -36,7 +36,7 @@ interface PhdRequestDetails {
     comments: string | null;
     createdAt: string;
     status_at_review: string | null;
-    reviewerDisplayName: string; // This line was missing or incorrect
+    reviewerDisplayName: string;
   }>;
   drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
 }
@@ -45,6 +45,7 @@ const ViewPhdRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { authState, checkAccess } = useAuth();
   const queryClient = useQueryClient();
+
   const queryKey = ["phd-request-details", id];
 
   const {
@@ -75,95 +76,95 @@ const ViewPhdRequest: React.FC = () => {
   const renderActionPanel = () => {
     if (!request || !authState) return null;
 
-    const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
-      ["reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"];
+    const { status, student, supervisor, requestType, id: requestId } = request;
 
-    if (
-      authState.email === request.supervisor.email &&
-      revertableStatuses.includes(request.status)
-    ) {
-      return (
-        <SupervisorResubmitForm
-          requestId={request.id}
-          onSuccess={handleSuccess}
-        />
-      );
-    }
-
-    // Final Thesis Submission specific forms
-    if (request.requestType === "final_thesis_submission") {
-      if (
-        checkAccess("phd-request:drc-convener:review") &&
-        [
-          "supervisor_review_final_thesis",
-          "drc_convener_review",
-          "drc_member_review",
-        ].includes(request.status)
-      ) {
-        return (
-          <DrcConvenerFinalThesisForm
-            request={request}
-            onSuccess={handleSuccess}
-          />
-        );
-      }
-      if (
-        checkAccess("phd-request:hod:review") &&
-        request.status === "hod_review"
-      ) {
-        return (
-          <HodFinalThesisForm request={request} onSuccess={handleSuccess} />
-        );
-      }
-    } else {
-      // Generic forms for other requests
-      if (
-        checkAccess("phd-request:drc-convener:review") &&
-        ["supervisor_submitted", "drc_convener_review"].includes(request.status)
-      ) {
-        return (
-          <DrcConvenerReviewPanel request={request} onSuccess={handleSuccess} />
-        );
-      }
-      if (
-        checkAccess("phd-request:hod:review") &&
-        request.status === "hod_review"
-      ) {
-        return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
-      }
-    }
-
-    if (
-      checkAccess("phd-request:drc-member:review") &&
-      request.status === "drc_member_review"
-    ) {
-      return (
-        <DrcMemberReviewPanel request={request} onSuccess={handleSuccess} />
-      );
-    }
-    if (
-      request.student.email === authState.email &&
-      request.status === "student_review"
-    ) {
-      if (request.requestType === "final_thesis_submission") {
+    // 1. Handle Student's turn
+    if (authState.email === student.email && status === "student_review") {
+      if (requestType === "final_thesis_submission") {
         return (
           <StudentFinalThesisForm request={request} onSuccess={handleSuccess} />
         );
       }
     }
+
+    // 2. Handle Supervisor's turn
+    if (authState.email === supervisor.email) {
+      const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+        [
+          "reverted_by_drc_convener",
+          "reverted_by_drc_member",
+          "reverted_by_hod",
+        ];
+      if (revertableStatuses.includes(status)) {
+        return (
+          <SupervisorResubmitForm
+            requestId={requestId}
+            onSuccess={handleSuccess}
+          />
+        );
+      }
+      if (status === "supervisor_review_final_thesis") {
+        return (
+          <SupervisorFinalThesisReviewForm
+            request={request}
+            onSuccess={handleSuccess}
+          />
+        );
+      }
+    }
+
+    // 3. Handle DRC Convener's turn
+    if (checkAccess("phd-request:drc-convener:review")) {
+      if (requestType === "final_thesis_submission") {
+        if (
+          [
+            "drc_convener_review",
+            "drc_member_review",
+            "supervisor_submitted",
+          ].includes(status)
+        ) {
+          return (
+            <DrcConvenerFinalThesisForm
+              request={request}
+              onSuccess={handleSuccess}
+            />
+          );
+        }
+      } else {
+        // For other request types
+        if (["supervisor_submitted", "drc_convener_review"].includes(status)) {
+          return (
+            <DrcConvenerReviewPanel
+              request={request}
+              onSuccess={handleSuccess}
+            />
+          );
+        }
+      }
+    }
+
+    // 4. Handle DRC Member's turn
     if (
-      request.supervisor.email === authState.email &&
-      request.status === "supervisor_review_final_thesis"
+      checkAccess("phd-request:drc-member:review") &&
+      status === "drc_member_review"
     ) {
       return (
-        <SupervisorFinalThesisReviewForm
-          request={request}
-          onSuccess={handleSuccess}
-        />
+        <DrcMemberReviewPanel request={request} onSuccess={handleSuccess} />
       );
     }
 
-    return null;
+    // 5. Handle HOD's turn
+    if (checkAccess("phd-request:hod:review") && status === "hod_review") {
+      if (requestType === "final_thesis_submission") {
+        return (
+          <HodFinalThesisForm request={request} onSuccess={handleSuccess} />
+        );
+      } else {
+        return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
+      }
+    }
+
+    return null; // No action panel for the current user/status combination
   };
 
   if (isLoading) {

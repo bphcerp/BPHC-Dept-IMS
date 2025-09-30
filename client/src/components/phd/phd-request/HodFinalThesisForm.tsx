@@ -21,9 +21,9 @@ export const HodFinalThesisForm: React.FC<{
   onSuccess: () => void;
 }> = ({ request, onSuccess }) => {
   const [comments, setComments] = useState("");
-  const [revertTo, setRevertTo] = useState<"student" | "supervisor" | null>(
-    null
-  );
+  const [revertTo, setRevertTo] = useState<
+    "student" | "supervisor" | "both" | null
+  >(null);
   const [action, setAction] = useState<"approve" | "revert" | "">("");
 
   const mutation = useMutation({
@@ -48,14 +48,12 @@ export const HodFinalThesisForm: React.FC<{
       data.revertTo = revertTo;
     }
 
-    // Use the specific schema for parsing, which doesn't have the 'assignedDrcMembers' field
     const parseResult =
       phdRequestSchemas.hodFinalThesisReviewerSchema.safeParse(data);
     if (!parseResult.success) {
       toast.error(parseResult.error.errors[0].message);
       return;
     }
-
     mutation.mutate(parseResult.data);
   };
 
@@ -77,7 +75,6 @@ export const HodFinalThesisForm: React.FC<{
             placeholder="Comments are required if you revert the request."
           />
         </div>
-
         <div className="space-y-2">
           <Label>If Reverting, Revert To:</Label>
           <RadioGroup
@@ -92,9 +89,12 @@ export const HodFinalThesisForm: React.FC<{
               <RadioGroupItem value="supervisor" id="h_supervisor" />
               <Label htmlFor="h_supervisor">Supervisor</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="both" id="h_both" />
+              <Label htmlFor="h_both">Both Student and Supervisor</Label>
+            </div>
           </RadioGroup>
         </div>
-
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button
             variant="destructive"

@@ -13,18 +13,31 @@ import { phdRequestSchemas } from "lib";
 
 const router = express.Router();
 
-const postProposalRequests = [
-	"pre_submission", "draft_notice", "change_of_title", 
-	"thesis_submission", "final_thesis_submission"
-] as const;
+type PhdRequestType = (typeof phdRequestSchemas.phdRequestTypes)[number];
 
-const anytimeRequests = [
-	"jrf_recruitment", "jrf_to_phd_conversion", "project_fellow_conversion",
-	"manage_co_supervisor", "stipend_payment", "international_travel_grant",
-	"rp_grades", "change_of_workplace", "semester_drop",
-	"thesis_submission_extension", "endorsements", "phd_aspire_application",
-	"not_registered_student",
-] as const;
+// Define the sequence of requests that must be completed in order.
+const postProposalRequestSequence: (PhdRequestType | PhdRequestType[])[] = [
+    "pre_submission",
+    "draft_notice",
+    ["change_of_title", "thesis_submission"], // change_of_title is optional, thesis_submission can proceed
+    "final_thesis_submission",
+];
+
+const anytimeRequests: PhdRequestType[] = [
+    "jrf_recruitment",
+    "jrf_to_phd_conversion",
+    "project_fellow_conversion",
+    "manage_co_supervisor",
+    "stipend_payment",
+    "international_travel_grant",
+    "rp_grades",
+    "change_of_workplace",
+    "semester_drop",
+    "thesis_submission_extension",
+    "endorsements",
+    "phd_aspire_application",
+    "not_registered_student",
+];
 
 router.get(
     "/",
@@ -70,7 +83,9 @@ router.get(
 				"reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"
 			];
 
-            let availableRequestTypes: string[] = [...anytimeRequests];
+            const availableRequestTypes: PhdRequestType[] = [
+                ...anytimeRequests,
+            ];
 
             if (latestProposal?.status === "completed") {
                 const completedTypes = new Set(
@@ -79,15 +94,28 @@ router.get(
                         .map((r) => r.requestType)
                 );
 
-                for (const type of postProposalRequests) {
-                    if (!completedTypes.has(type)) {
-                        availableRequestTypes.push(type);
-                        break;
+                for (const step of postProposalRequestSequence) {
+                    const isStepArray = Array.isArray(step);
+                    const stepRequests = isStepArray ? step : [step];
+
+                    // If at least one request in the step is completed, the step is considered passed.
+                    const isStepCompleted = stepRequests.some((type) =>
+                        completedTypes.has(type)
+                    );
+
+                    if (!isStepCompleted) {
+                        // Add all requests from the current uncompleted step as available.
+                        availableRequestTypes.push(...stepRequests);
+                        break; // Stop after finding the first uncompleted step.
                     }
                 }
             }
 
-            if (latestRequest) {
+            // Determine current status string for display
+            if (
+                latestRequest &&
+                !["completed", "deleted"].includes(latestRequest.status)
+            ) {
                 requestId = latestRequest.id;
                 currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
                 if (revertableStatuses.includes(latestRequest.status)) {

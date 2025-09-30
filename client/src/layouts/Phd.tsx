@@ -111,9 +111,9 @@ const PhdLayout = () => {
       title: "PhD Scholar",
       items: [
         {
-          title: "My PhD Requests",
+          title: "Final Thesis Submission",
           icon: <Briefcase />,
-          url: "/phd/requests",
+          url: "/phd/student/thesis-submission",
           requiredPermissions: ["phd-request:student:submit-final-thesis"],
         },
         {

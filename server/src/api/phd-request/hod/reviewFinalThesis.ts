@@ -34,6 +34,7 @@ router.post(
                 where: eq(phdRequests.id, requestId),
                 with: { student: true, supervisor: true },
             });
+
             if (
                 !request ||
                 request.requestType !== "final_thesis_submission" ||
@@ -63,50 +64,69 @@ router.post(
             );
 
             if (body.action === "revert") {
-                const targetStatus =
-                    body.revertTo === "student"
-                        ? "student_review"
-                        : "supervisor_review_final_thesis";
-                const targetEmail =
-                    body.revertTo === "student"
-                        ? request.studentEmail
-                        : request.supervisorEmail;
-                const targetRole =
-                    body.revertTo === "student" ? "Student" : "Supervisor";
+                const todosToCreate = [];
+                const emailsToSend = [];
 
+                // Handle revert to student
+                if (body.revertTo === "student" || body.revertTo === "both") {
+                    todosToCreate.push({
+                        assignedTo: request.studentEmail,
+                        createdBy: hodEmail,
+                        title: `Action Required: Final Thesis Reverted by HOD`,
+                        description: `The final thesis submission was reverted. Comments: ${body.comments}`,
+                        module: modules[2],
+                        completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
+                        link: `/phd/requests/${requestId}`,
+                    });
+                    emailsToSend.push({
+                        to: request.studentEmail,
+                        subject: `Final Thesis Reverted by HOD`,
+                        text: `Dear Student,\n\nThe final thesis submission was reverted by the HOD.\nComments: ${body.comments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    });
+                }
+
+                // Handle revert to supervisor
+                if (
+                    body.revertTo === "supervisor" ||
+                    body.revertTo === "both"
+                ) {
+                    todosToCreate.push({
+                        assignedTo: request.supervisorEmail,
+                        createdBy: hodEmail,
+                        title: `Action Required: Final Thesis Reverted by HOD`,
+                        description: `The final thesis submission for ${request.student.name} was reverted. Comments: ${body.comments}`,
+                        module: modules[2],
+                        completionEvent: `phd-request:supervisor-resubmit-final-thesis:${requestId}`,
+                        link: `/phd/requests/${requestId}`,
+                    });
+                    emailsToSend.push({
+                        to: request.supervisorEmail,
+                        subject: `Final Thesis Reverted by HOD`,
+                        text: `Dear Supervisor,\n\nThe final thesis submission was reverted by the HOD.\nComments: ${body.comments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    });
+                }
+
+                // Set status based on primary actor
+                const targetStatus =
+                    body.revertTo === "supervisor"
+                        ? "supervisor_review_final_thesis"
+                        : "student_review";
                 await tx
                     .update(phdRequests)
                     .set({ status: targetStatus })
                     .where(eq(phdRequests.id, requestId));
 
-                await createTodos(
-                    [
-                        {
-                            assignedTo: targetEmail,
-                            createdBy: hodEmail,
-                            title: `Action Required: Final Thesis Reverted by HOD`,
-                            description: `The final thesis submission for ${request.student.name} was reverted. Comments: ${body.comments}`,
-                            module: modules[2],
-                            completionEvent: `phd-request:${body.revertTo}-resubmit-final-thesis:${requestId}`,
-                            link: `/phd/requests/${requestId}`,
-                        },
-                    ],
-                    tx
-                );
-
-                await sendBulkEmails([
-                    {
-                        to: targetEmail,
-                        subject: `Final Thesis Reverted by HOD`,
-                        text: `Dear ${targetRole},\n\nThe final thesis submission was reverted by the HOD.\nComments: ${body.comments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
-                    },
-                ]);
+                if (todosToCreate.length > 0) {
+                    await createTodos(todosToCreate, tx);
+                }
+                if (emailsToSend.length > 0) {
+                    await sendBulkEmails(emailsToSend);
+                }
             } else if (body.action === "approve") {
                 await tx
                     .update(phdRequests)
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
-
                 await createNotifications(
                     [
                         {
@@ -125,7 +145,6 @@ router.post(
                     false,
                     tx
                 );
-
                 await sendBulkEmails([
                     {
                         to: request.studentEmail,

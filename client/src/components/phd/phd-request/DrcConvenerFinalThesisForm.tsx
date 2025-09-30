@@ -26,9 +26,9 @@ export const DrcConvenerFinalThesisForm: React.FC<
   DrcConvenerFinalThesisFormProps
 > = ({ request, onSuccess }) => {
   const [comments, setComments] = useState("");
-  const [revertTo, setRevertTo] = useState<"student" | "supervisor" | null>(
-    null
-  );
+  const [revertTo, setRevertTo] = useState<
+    "student" | "supervisor" | "both" | null
+  >(null);
   const [selectedDrcMembers, setSelectedDrcMembers] = useState<string[]>([]);
   const [action, setAction] = useState<string>("");
 
@@ -79,7 +79,6 @@ export const DrcConvenerFinalThesisForm: React.FC<
       toast.error(parseResult.error.errors[0].message);
       return;
     }
-
     mutation.mutate(parseResult.data);
   };
 
@@ -101,7 +100,6 @@ export const DrcConvenerFinalThesisForm: React.FC<
             placeholder="Provide comments for reversion or internal notes for other actions."
           />
         </div>
-
         <div className="space-y-2">
           <Label>If Reverting, Revert To:</Label>
           <RadioGroup
@@ -120,9 +118,12 @@ export const DrcConvenerFinalThesisForm: React.FC<
                 Supervisor (for their document corrections)
               </Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="both" id="r_both" />
+              <Label htmlFor="r_both">Both Student and Supervisor</Label>
+            </div>
           </RadioGroup>
         </div>
-
         <div className="space-y-2">
           <Label>Forward to DRC Members for Review (Optional)</Label>
           <Combobox
@@ -138,7 +139,6 @@ export const DrcConvenerFinalThesisForm: React.FC<
             directly to the HOD.
           </p>
         </div>
-
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button
             variant="destructive"

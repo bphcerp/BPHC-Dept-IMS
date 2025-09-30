@@ -97,7 +97,7 @@ export const finalThesisReviewerSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("revert"),
         comments: z.string().min(1, "Comments are required for reverting."),
-        revertTo: z.enum(["student", "supervisor"], {
+        revertTo: z.enum(["student", "supervisor", "both"], {
             required_error: "Please specify who to revert to.",
         }),
     }),
@@ -111,7 +111,6 @@ export const finalThesisReviewerSchema = z.discriminatedUnion("action", [
 ]);
 export type FinalThesisReviewerBody = z.infer<typeof finalThesisReviewerSchema>;
 
-// New specific schema for HOD to avoid .omit() on a discriminated union
 export const hodFinalThesisReviewerSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("approve"),
@@ -120,7 +119,7 @@ export const hodFinalThesisReviewerSchema = z.discriminatedUnion("action", [
     z.object({
         action: z.literal("revert"),
         comments: z.string().min(1, "Comments are required for reverting."),
-        revertTo: z.enum(["student", "supervisor"], {
+        revertTo: z.enum(["student", "supervisor", "both"], {
             required_error: "Please specify who to revert to.",
         }),
     }),
