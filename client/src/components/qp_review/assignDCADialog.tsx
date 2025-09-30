@@ -69,10 +69,11 @@ export function AssignDCADialog({
     queryKey: ["faculties-list"],
     queryFn: async () => {
       try {
-        const response = await api.get<{ success: boolean; dca: Faculty[] }>(
-          "/handout/dcaconvenor/getAllDCAMember"
-        );
-        return response.data.dca;
+        const response = await api.get<{
+          success: boolean;
+          faculties: Faculty[];
+        }>("/handout/dcaconvenor/getAllFaculty");
+        return response.data.faculties;
       } catch (error) {
         toast.error("Failed to fetch faculty list");
         throw error;

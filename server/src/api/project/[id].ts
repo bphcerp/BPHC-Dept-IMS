@@ -67,7 +67,13 @@ router.patch(
     ];
     const update: Record<string, any> = {};
     for (const key of allowedFields) {
-      if (updateData[key] !== undefined) update[key] = updateData[key];
+      if (updateData[key] !== undefined) {
+        if (["capexAmount", "opexAmount", "manpowerAmount"].includes(key) && updateData[key] === "") {
+          update[key] = null;
+        } else {
+          update[key] = updateData[key];
+        }
+      }
     }
     if (Object.keys(update).length === 0) {
       res.status(400).json({ error: "No valid fields to update" });

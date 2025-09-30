@@ -5,11 +5,13 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { qpSchemas } from "lib";
 import { eq } from "drizzle-orm";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const parsed = qpSchemas.updateIcBodySchema.parse(req.body);
 

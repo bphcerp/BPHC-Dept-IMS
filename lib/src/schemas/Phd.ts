@@ -6,6 +6,7 @@ const optionalString = z
     .transform((val) => (val?.length ? val : null));
 export const phdTypes = ["part-time", "full-time"] as const;
 export const phdExamApplicationStatuses = [
+    "draft",
     "applied",
     "verified",
     "resubmit",

@@ -16,22 +16,22 @@ export const qpReviewRequestsRelations = relations(
             references: [users.email],
             relationName: "qpFaculty1",
         }),
-        midSemFilePath: one(fileFields, {
-            fields: [qpReviewRequests.midSemFilePath],
+        midSemQpFilePath: one(fileFields, {
+            fields: [qpReviewRequests.midSemQpFilePath],
             references: [fileFields.id],
             relationName: "qpMidSemFilePath",
         }),
-        midSemSolFile: one(fileFields, {
+        midSemSolFilePath: one(fileFields, {
             fields: [qpReviewRequests.midSemSolFilePath],
             references: [fileFields.id],
             relationName: "qpMidSemSolFile",
         }),
-        compreFile: one(fileFields, {
-            fields: [qpReviewRequests.compreFilePath],
+        compreQpFilePath: one(fileFields, {
+            fields: [qpReviewRequests.compreQpFilePath],
             references: [fileFields.id],
-            relationName: "qpCompreFile",
+            relationName: "qpCompreFilePath",
         }),
-        compreSolFile: one(fileFields, {
+        compreSolFilePath: one(fileFields, {
             fields: [qpReviewRequests.compreSolFilePath],
             references: [fileFields.id],
             relationName: "qpCompreSolFile",

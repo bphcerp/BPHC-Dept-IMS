@@ -110,6 +110,9 @@ import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
+import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
+import PatentDefaultRedirect from "./PatentDefaultRedirect";
+import DcaReview from "@/views/QpReview/DcaReview";
 import AllocationLayout from "@/layouts/Allocation";
 import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
 import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
@@ -355,10 +358,45 @@ const Routing = () => {
                   <Navigate to="/qpReview/ficSubmission" replace={true} />
                 }
               />
-              <Route path="ficSubmission" element={<FicSubmissionView />} />
-              <Route path="dcarequests" element={<DCARequestsView />} />
-              <Route path="facultyReview" element={<ReviewPage />} />
-              <Route path="facultyReview/:course" element={<FacultyReview />} />
+
+              {/* FIC Submission Routes */}
+              {checkAccess(permissions["/qp/getAllFICSubmissions"]) && (
+                <Route path="ficSubmission" element={<FicSubmissionView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="ficSubmission/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* DCA Requests Routes */}
+              {checkAccess(permissions["/qp/getAllDcaMemberRequests"]) && (
+                <Route path="dcarequests" element={<DCARequestsView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="dcarequests/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* Faculty Review Routes */}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route path="facultyReview" element={<ReviewPage />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="facultyReview/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route
+                  path="facultyReview/:course"
+                  element={<FacultyReview />}
+                />
+              )}
             </Route>
           )}
           {checkAccessAnyOne(courseHandoutsPermissions) && (
@@ -621,10 +659,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(projectModulePermissions) && (
             <Route path="/project" element={<ProjectLayout />}>
-              <Route
-                index
-                element={<Navigate to="/project/add" replace={true} />}
-              />
+              <Route index element={<ProjectDefaultRedirect />} />
               {checkAccess(permissions["/project/create"]) && (
                 <Route path="add" element={<AddProject />} />
               )}
@@ -644,10 +679,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(patentModulePermissions) && (
             <Route path="/patent" element={<PatentLayout />}>
-              <Route
-                index
-                element={<Navigate to="/patent/add" replace={true} />}
-              />
+              <Route index element={<PatentDefaultRedirect />} />
               {checkAccess(permissions["/patent/create"]) && (
                 <Route path="add" element={<AddPatent />} />
               )}

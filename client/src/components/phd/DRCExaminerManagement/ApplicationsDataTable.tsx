@@ -42,6 +42,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { phdSchemas } from "lib";
+import { cn } from "@/lib/utils";
 
 export interface QualifyingExamApplication
   extends phdSchemas.QualifyingExamApplication {
@@ -56,6 +57,7 @@ interface ApplicationsDataTableProps {
 }
 
 const statusBadgeVariant = {
+  draft: "default",
   applied: "default",
   verified: "default",
   resubmit: "destructive",
@@ -219,7 +221,10 @@ export function ApplicationsDataTable({
         );
       },
       cell: ({ row }) => (
-        <Badge variant={statusBadgeVariant[row.original.status]}>
+        <Badge
+          variant={statusBadgeVariant[row.original.status]}
+          className={cn(row.original.status === "verified" && "bg-green-600")}
+        >
           {row.original.status.charAt(0).toUpperCase() +
             row.original.status.slice(1)}
         </Badge>

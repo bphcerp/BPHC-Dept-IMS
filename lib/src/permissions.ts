@@ -124,6 +124,28 @@ export const allPermissions = {
     // ANALYTICS
     "analytics:publications": "View publications analytics",
 
+    // qp review module permissions
+    "qp:faculty:submit": "Submit paper for review",
+    "qp:dca-convenor:assignreviewer":
+        "Assign reviewer to handout as DCA convenor",
+    "qp:faculty:get-all-handouts": "View all handouts as faculty member",
+    "qp:dca:get-all-handouts": "View all handouts as DCA member",
+    "qp:faculty:review": "Review handouts as reviewer",
+    "qp:get:review": "view review details",
+    "qp:fic:get-all": "View question paper requests as FIC member",
+    "qp:dca-convenor:reminder": "Send reminder notifications as DCA convenor",
+    "qp:dca-convenor:update-reviewer":
+        "Update handout reviewer as DCA convenor",
+    "qp:dca-convenor:update-ic": "Update in-charge details as DCA convenor",
+    "qp:dca-convenor:download-review":
+        "Download review of papers as DCA convenor",
+    "qp:dca-convenor:get-all-faculty":
+        "View all faculty members as DCA convenor",
+    "qp:faculty:get-files": "Get files uploaded for a request",
+    "qp:dca:create-request": "Create a new question paper review request",
+    "qp:dca:get-all-requests": "Get all requests",
+    "qp:dca:get-all-courses": "Get all courses",
+
     // Course Load Allocation module permissions
     "allocation:settings:start": "Start a new course load allocation",
     "allocation:settings:end": "End the current course load allocation",
@@ -220,6 +242,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/finalSubmitQeApplication": "phd:student:qe",
     "/phd/student/getProposalEligibility": "phd:student:proposal",
     "/phd/student/getProposalDeadlines": "phd:student:proposal",
     "/phd/student/getProfileDetails": "phd:student:proposal",
@@ -389,9 +412,25 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
-    
+
     // Analytics
     "/analytics/publications": "analytics:publications",
+
+    // qp review module
+    "/qp/uploadDocuments": "qp:faculty:submit",
+    "/qp/getFilesByRequestID": "qp:faculty:get-files",
+    "/qp/submitReview": "qp:faculty:review",
+    "/qp/saveReview": "qp:faculty:review",
+    "/qp/assignFaculty": "qp:dca-convenor:assignreviewer",
+    "/qp/createRequest": "qp:dca:create-request",
+    "/qp/getAllFICSubmissions": "qp:fic:get-all",
+    "/qp/getAllDcaMemberRequests": "qp:fic:get-all",
+    "/qp/getReviews": "qp:get:review",
+    "/qp/getAllCourses": "qp:dca:get-all-requests",
+    "/qp/updateIc": "qp:dca-convenor:update-ic",
+    "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
+    "/qp/sendReminders": "qp:dca-convenor:reminder",
+    "/qp/downloadReviewPdf": "qp:dca-convenor:download-review",
 
     // Course Load Allocation
     "/allocation/allocation/delete": "allocation:write",

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { QualifyingExamApplication } from "./ApplicationsDataTable";
 import { phdSchemas } from "lib";
+import { toast } from "sonner";
 
 interface ApplicationDetailsDialogProps {
   application: QualifyingExamApplication | null;
@@ -53,6 +54,10 @@ export const ApplicationDetailsDialog: React.FC<
 
   const handleStatusUpdate = (status: "applied" | "verified" | "resubmit") => {
     if (!application) return;
+    if (status === "resubmit" && (!comments || comments.trim() === "")) {
+      toast.error("Comments are required when requesting resubmission");
+      return;
+    }
     setPendingAction(status);
     onStatusUpdate(application.id, status, comments || undefined);
   };
@@ -85,6 +90,7 @@ export const ApplicationDetailsDialog: React.FC<
   };
 
   const statusBadgeVariant = {
+    draft: "default",
     applied: "default",
     verified: "default",
     resubmit: "destructive",
