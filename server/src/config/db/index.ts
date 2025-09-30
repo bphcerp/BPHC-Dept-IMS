@@ -68,7 +68,7 @@ const db = drizzle(pool, {
         ...meeting,
         ...meetingRelations,
         ...phdRequests,
-        ...phdRequestRelations,,
+        ...phdRequestRelations,
         ...allocation,
         ...allocationRelations,
         ...allocationFormBuilder,
