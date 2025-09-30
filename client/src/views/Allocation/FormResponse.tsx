@@ -37,11 +37,13 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
     const fetchFormDetails = async () => {
       await api
         .get<AllocationFormUserCheck | AllocationForm>(
-          `/allocation/builder/form/get/${id}${preview ? "?checkUserResponse=true" : ""}`
+          `/allocation/builder/form/get/${id}${!preview ? "?checkUserResponse=true" : ""}`
         )
         .then(({ data }) => {
-          if ((data as AllocationFormUserCheck).userAlreadyResponded)
+          if ((data as AllocationFormUserCheck).userAlreadyResponded){
             toast.warning("You've already responded to this form");
+            setTimeout(() => navigate('/allocation'),2000)
+          }
           setForm(data);
           if (!preview) {
             const defaultValues: { [key: string]: any } = {};

@@ -51,7 +51,7 @@ export const allocationForm = pgTable("allocation_form", {
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
     allocationDeadline: timestamp("allocation_deadline"),
-    emailString: text('email_string')
+    emailBody: text('email_string')
 });
 
 export const allocationFormResponse = pgTable("allocation_form_response", {
@@ -88,7 +88,6 @@ export const allocationFormTemplateField = pgTable(
             { onDelete: "cascade" }
         ),
         label: text("label").notNull(),
-        order: integer("order"),
         preferenceCount: integer("preference_count"),
         preferenceType:
             allocationFormTemplatePreferenceFieldType("preference_type"),

@@ -120,10 +120,10 @@ export const semester = pgTable(
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
 
-        noOfElectivesPerInstructor: integer("no_of_electives_per_instructor"),
+        noOfElectivesPerInstructor: integer("no_of_electives_per_instructor").notNull(),
         noOfDisciplineCoursesPerInstructor: integer(
             "no_of_discipline_courses_per_instructor"
-        ),
+        ).notNull(),
 
         hodAtStartOfSemEmail: text("hod_at_start").references(
             () => users.email
@@ -131,7 +131,7 @@ export const semester = pgTable(
         dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
             () => users.email
         ),
-        allocationStatus: allocationStatus("allocation_status"),
+        allocationStatus: allocationStatus("allocation_status").default('notStarted').notNull(),
 
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 

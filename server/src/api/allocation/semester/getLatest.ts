@@ -52,9 +52,19 @@ router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        const { minimal } = getLatestSemesterQuerySchema.parse(req.query);
+        const { minimal, stats } = getLatestSemesterQuerySchema.parse(
+            req.query
+        );
 
         if (minimal) {
+            if (stats) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Response information cannot be included when minimal semester information is requested"
+                    )
+                );
+            }
             const semesterData = await getLatestSemesterMinimal();
             if (!semesterData) {
                 return next(
@@ -84,6 +94,41 @@ router.get(
                         seenEmails.add(email);
                         return true;
                     });
+
+                if (stats) {
+                    const notRespondedFaculty = await db.query.faculty.findMany(
+                        {
+                            columns: {
+                                name: true,
+                                email: true,
+                            },
+                            where: (faculty, { notInArray }) =>
+                                notInArray(
+                                    faculty.email,
+                                    Array.from(seenEmails)
+                                ),
+                        }
+                    );
+
+                    const notRespondedPhD = await db.query.phd.findMany({
+                        columns: {
+                            name: true,
+                            email: true,
+                        },
+                        where: (phd, { notInArray }) =>
+                            notInArray(phd.email, Array.from(seenEmails)),
+                    });
+
+                    const semesterDataWithStats = {
+                        ...semesterData,
+                        stats: {
+                            notRespondedFaculty,
+                            notRespondedPhD,
+                        },
+                    }
+                    res.status(200).json(semesterDataWithStats)
+                    return
+                }
             }
             res.status(200).json(semesterData);
         }

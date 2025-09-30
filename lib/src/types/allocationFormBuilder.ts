@@ -98,7 +98,7 @@ export type AllocationForm = NewAllocationForm & {
 }
 
 export type AllocationFormUserCheck = AllocationForm & {
-    userAlreadyResponded: boolean
+    userAlreadyResponded: string
 }
 
 // Use this for the form/getAll endpoint

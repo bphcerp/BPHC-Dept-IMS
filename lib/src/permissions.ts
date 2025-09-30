@@ -421,7 +421,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
     "/allocation/builder/form/get": "allocation:builder:form:read",
-    "/allocation/builder/form/getInfo": "allocation:builder:form:read",
     "/allocation/builder/form/getAll": "allocation:builder:form:read",
 
     "/allocation/builder/form/response/register":

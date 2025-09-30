@@ -15,11 +15,14 @@ router.get(
         const form = await db.query.allocationForm.findFirst({
             columns: {
                 templateId: false,
+                emailBody: false,
             },
             with: {
                 template: {
                     with: {
-                        fields: true,
+                        fields: {
+                            where: req.user?.userType === 'phd' ? (field, { not, and, eq } ) => and(not(eq(field.preferenceType, 'LECTURE')), not(eq(field.type, 'TEACHING_ALLOCATION'))) : undefined
+                        },
                     },
                 },
                 createdBy: {
@@ -39,13 +42,13 @@ router.get(
 
         if (checkUserResponse === "true")
             userAlreadyResponded =
-                await db.query.allocationFormResponse.findFirst({
+                (await db.query.allocationFormResponse.findFirst({
                     where: (formResponse, { eq, and }) =>
                         and(
                             eq(formResponse.formId, form.id),
                             eq(formResponse.submittedByEmail, req.user!.email)
                         ),
-                });
+                }))?.id
 
         res.status(200).json({
             ...form,

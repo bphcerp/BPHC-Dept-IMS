@@ -238,6 +238,21 @@ const AllocationModern = () => {
     );
   }
 
+  if (currentSemester.form.allocationDeadline && new Date(currentSemester.form.allocationDeadline) > new Date()) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="text-center">
+          <h2 className="mb-2 text-lg font-semibold text-destructive">
+            Semester's Form Is Still Active
+          </h2>
+          <p className="text-muted-foreground">
+            This page will be active once all the required responses are collected.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}

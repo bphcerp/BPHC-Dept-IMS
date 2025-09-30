@@ -12,6 +12,9 @@ router.get(
         const { checkNewSemesterValidity } = req.query;
 
         const forms = await db.query.allocationForm.findMany({
+            columns: {
+                emailBody: false
+            },
             with: {
                 createdBy: {
                     columns: {

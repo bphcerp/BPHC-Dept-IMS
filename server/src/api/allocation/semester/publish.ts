@@ -22,7 +22,7 @@ router.post(
         const { allocationDeadline, emailBody } =
             allocationFormPublishSchema.parse(req.body);
 
-        await db.transaction(async (tx) => {
+        const semesterUpdated = await db.transaction(async (tx) => {
             const semesterUpdated = await tx
                 .update(semester)
                 .set({ allocationStatus: "ongoing" })
@@ -31,46 +31,48 @@ router.post(
 
             await tx
                 .update(allocationForm)
-                .set({ publishedDate: new Date(), allocationDeadline })
+                .set({ publishedDate: new Date(), allocationDeadline, emailBody })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
-
-            const faculties = (await tx.select().from(faculty)).map(
-                (el) => el.email
-            );
-
-            const todos: Parameters<typeof createTodos>[0] = faculties.map(
-                (el) => ({
-                    module: "Course Allocation",
-                    title: "Course Preference Submission Reminder",
-                    description: `Submit your course preferences for the upcoming semester`,
-                    assignedTo: el,
-                    link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
-                    completionEvent: `preference submission by ${el}`,
-                    createdBy: req.user!.email,
-                })
-            );
-
-            const notifications: Parameters<typeof createNotifications>[0] =
-                faculties.map((el) => ({
-                    module: "Course Allocation",
-                    title: "Course Preference Submission Reminder",
-                    userEmail: el,
-                    content: `Submit your course preferences for the upcoming semester`,
-                    link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
-                }));
-
-            const emails: Parameters<typeof sendBulkEmails>[0] = faculties.map(
-                (email) => ({
-                    to: email,
-                    subject: "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
-                    html: emailBody,
-                })
-            );
-
-            await createTodos(todos);
-            await createNotifications(notifications);
-            await sendBulkEmails(emails);
+            return semesterUpdated;
         });
+
+        const faculties = (await db.select().from(faculty)).map(
+            (el) => el.email
+        );
+
+        const todos: Parameters<typeof createTodos>[0] = faculties.map(
+            (el) => ({
+                module: "Course Allocation",
+                title: "Course Preference Submission Reminder",
+                description: `Submit your course preferences for the upcoming semester`,
+                assignedTo: el,
+                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+                completionEvent: `preference submission by ${el}`,
+                createdBy: req.user!.email,
+            })
+        );
+
+        const notifications: Parameters<typeof createNotifications>[0] =
+            faculties.map((el) => ({
+                module: "Course Allocation",
+                title: "Course Preference Submission Reminder",
+                userEmail: el,
+                content: `Submit your course preferences for the upcoming semester`,
+                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+            }));
+
+        const emails: Parameters<typeof sendBulkEmails>[0] = faculties.map(
+            (email) => ({
+                to: email,
+                subject:
+                    "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
+                html: emailBody,
+            })
+        );
+
+        await createTodos(todos);
+        await createNotifications(notifications);
+        await sendBulkEmails(emails);
 
         res.send("Form published successfully");
     })

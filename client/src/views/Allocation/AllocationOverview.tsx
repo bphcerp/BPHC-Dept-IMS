@@ -14,7 +14,14 @@ import {
   DialogHeader as UIDialogHeader,
   DialogTitle as UIDialogTitle,
 } from "@/components/ui/dialog";
-import { useCallback, useEffect, useState, lazy, Suspense } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  lazy,
+  Suspense,
+  useMemo,
+} from "react";
 
 const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 import { Input } from "@/components/ui/input";
@@ -30,12 +37,17 @@ import api from "@/lib/axios-instance";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Semester,
   semesterTypeMap,
+  SemesterWithStats,
 } from "../../../../lib/src/types/allocation";
 import { AllocationForm } from "../../../../lib/src/types/allocationFormBuilder";
 import { useTheme } from "@/hooks/use-theme";
-import { DEPARTMENT_NAME, DEPARTMENT_NAME_FULL, FRONTEND_URL } from "@/lib/constants";
+import {
+  DEPARTMENT_NAME,
+  DEPARTMENT_NAME_FULL,
+  FRONTEND_URL,
+} from "@/lib/constants";
+import { Maximize2Icon } from "lucide-react";
 
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
@@ -46,7 +58,9 @@ export const AllocationOverview = () => {
   const { data: latestSemester } = useQuery({
     queryKey: ["latest-semester"],
     queryFn: () =>
-      api<Semester>("/allocation/semester/getLatest").then(({ data }) => data),
+      api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
+        ({ data }) => data
+      ),
   });
 
   // Fetch all available forms that can be linked
@@ -107,7 +121,7 @@ export const AllocationOverview = () => {
     handleSubmit: handlePublishFormSubmit,
     Subscribe: PublishFormSubscribe,
     setFieldValue: setPublishFormFieldValue,
-    reset: resetPublishForm
+    reset: resetPublishForm,
   } = useForm({
     defaultValues: {
       allocationDeadline: "",
@@ -129,9 +143,11 @@ Please fill your course options for the ${semesterTypeMap[latestSemester!.semest
 
 You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(emailFormState.values.allocationDeadline).toLocaleString("en-IN", {
-  timeZoneName: 'short'
-})}**
+**PLEASE FILL THE FORM BEFORE ${new Date(
+    emailFormState.values.allocationDeadline
+  ).toLocaleString("en-IN", {
+    timeZoneName: "short",
+  })}**
 
 <hr></hr>
 
@@ -172,6 +188,14 @@ Hyderabad Campus<span>
 
   const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
+  const notResponded = useMemo(
+    () => [
+      ...(latestSemester?.stats?.notRespondedFaculty ?? []),
+      ...(latestSemester?.stats?.notRespondedPhD ?? []),
+    ],
+    [latestSemester]
+  );
+
   return !latestSemester ? (
     <div className="flex h-full items-center justify-center">
       <div className="-mt-16 rounded-lg border-2 border-y-primary p-8 text-center">
@@ -190,8 +214,8 @@ Hyderabad Campus<span>
               <Dialog
                 open={isPublishDialogOpen}
                 onOpenChange={(open) => {
-                  if (!open) resetPublishForm()
-                  setIsPublishDialogOpen(open)
+                  if (!open) resetPublishForm();
+                  setIsPublishDialogOpen(open);
                 }}
               >
                 <DialogTrigger asChild>
@@ -224,6 +248,11 @@ Hyderabad Campus<span>
                             name={field.name}
                             value={field.state.value}
                             onBlur={field.handleBlur}
+                            min={
+                              new Date(Date.now() + 86400000)
+                                .toISOString()
+                                .split("T")[0]
+                            }
                             onChange={(e) => {
                               field.handleChange(e.target.value);
                             }}
@@ -233,12 +262,10 @@ Hyderabad Campus<span>
                       )}
                     </PublishFormField>
                     <PublishFormSubscribe
-                      selector={(state) => [
-                        state.values.allocationDeadline,
-                      ]}
+                      selector={(state) => [state.values.allocationDeadline]}
                     >
                       {() => {
-                        setPublishFormFieldValue('emailBody', getEmailBody())
+                        setPublishFormFieldValue("emailBody", getEmailBody());
                         return (
                           <UIDialog
                             open={previewOpen}
@@ -367,12 +394,75 @@ Hyderabad Campus<span>
               </div>
 
               {/* Responses + Pending */}
-              <div className="flex w-full flex-col rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
+              <div className="flex relative w-full flex-col rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
                 <span className="text-center text-sm text-gray-500">
                   Submission Overview
                 </span>
 
                 <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                  <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0"
+                        >
+                          <Maximize2Icon className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent className="max-w-3xl">
+                        <DialogHeader>
+                          <DialogTitle>Response Overview</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="border-r pr-4">
+                            <h3 className="mb-2 font-semibold text-green-600">
+                              Responded
+                            </h3>
+                            <ul className="space-y-1 text-sm">
+                              {latestSemester.form.responses && latestSemester.form.responses.length ? latestSemester.form.responses?.map(
+                                ({ submittedBy }) => (
+                                  <li
+                                    key={submittedBy.email}
+                                    className="text-green-700"
+                                  >
+                                    {submittedBy.name ??
+                                      `No Name - ${submittedBy.email}`}
+                                  </li>
+                                )
+                              ) : (
+                                <p className="text-destructive">
+                                  No responses yet.
+                                </p>
+                              )}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h3 className="mb-2 font-semibold text-red-600">
+                              Not Responded
+                            </h3>
+                            <ul className="space-y-1 text-sm">
+                              {notResponded.length > 0 ? (
+                                notResponded.map((responder) => (
+                                  <li
+                                    key={responder.email}
+                                    className="text-gray-700"
+                                  >
+                                    {responder.name ?? `No Name - ${responder.email}`}
+                                  </li>
+                                ))
+                              ) : (
+                                <p className="text-success">
+                                  Everyone has responded.
+                                </p>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   <div className="flex flex-col items-center">
                     <span className="text-3xl font-extrabold text-green-600">
                       {latestSemester.form.responses.length}
@@ -382,28 +472,11 @@ Hyderabad Campus<span>
 
                   <div className="flex flex-col items-center">
                     <span className="text-3xl font-extrabold text-red-600">
-                      5
+                      {(latestSemester.stats?.notRespondedFaculty.length ?? 0) +
+                        (latestSemester.stats?.notRespondedPhD.length ?? 0)}
                     </span>
                     <span className="text-xs text-gray-500">Pending</span>
                   </div>
-                </div>
-
-                <div className="mt-6 max-h-32 overflow-y-auto">
-                  {latestSemester.form.responses.length ? (
-                    <ol className="list-decimal space-y-1 px-5 text-sm">
-                      {latestSemester.form.responses.map(
-                        ({ submittedBy: { name } }, idx) => (
-                          <li key={idx} className="text-gray-700">
-                            {name}
-                          </li>
-                        )
-                      )}
-                    </ol>
-                  ) : (
-                    <span className="mt-2 block text-center text-gray-400">
-                      No responses yet
-                    </span>
-                  )}
                 </div>
               </div>
             </div>

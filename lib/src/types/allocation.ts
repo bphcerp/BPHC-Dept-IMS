@@ -32,7 +32,7 @@ export type Allocation = NewAllocation & {
 export type NewCourse = z.infer<typeof courseSchema>;
 export type UpdateCourse = Partial<NewCourse>;
 export type Course = NewCourse & {
-    fetchedFromTTD: boolean
+    fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
 };
@@ -84,6 +84,18 @@ export type Semester = SemesterMinimal & {
         name: string | null;
         email: string;
     } | null;
+};
+
+type SemesterResponseStat = {
+    email: string;
+    name: string | null;
+};
+
+export type SemesterWithStats = Semester & {
+    stats?: {
+        notRespondedFaculty: SemesterResponseStat[];
+        notRespondedPhD: SemesterResponseStat[];
+    };
 };
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;

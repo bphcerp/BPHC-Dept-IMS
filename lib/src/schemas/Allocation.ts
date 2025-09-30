@@ -131,6 +131,7 @@ export const dismissInstructorBodySchema = assignInstructorBodySchema;
 
 export const getLatestSemesterQuerySchema = z.object({
     minimal: z.coerce.boolean().optional(),
+    stats: z.coerce.boolean().optional(),
 });
 
 export const getInstructorDetailsQuerySchema = z.object({

@@ -29,7 +29,6 @@ export const allocationFormTemplateFieldSchema = z.object({
     templateId: z.string().uuid().optional(),
     label: z.string(),
     isRequired: z.boolean().optional(),
-    order: z.number().int().optional(),
     preferenceCount: z.number().int().optional(),
     preferenceType: allocationFormTemplatePreferenceTypeEnum.optional(),
     type: allocationFormTemplateFieldTypeEnum,
