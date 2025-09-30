@@ -24,6 +24,7 @@ interface ApplicationStatus {
   id: number;
   qualifyingArea1: string;
   qualifyingArea2: string;
+  status: "draft" | "applied" | "verified" | "resubmit";
   files: Record<string, string | null>;
 }
 
@@ -107,6 +108,23 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     },
   });
 
+  const finalSubmitMutation = useMutation({
+    mutationFn: async (applicationId: number) => {
+      const response = await api.post<{ success: boolean; message: string }>(
+        "/phd/student/finalSubmitQeApplication",
+        { applicationId }
+      );
+      return response.data;
+    },
+    onSuccess,
+    onError: (e) => {
+      toast.error(
+        (e as { response?: { data?: string } }).response?.data ||
+          "Failed to submit application"
+      );
+    },
+  });
+
   const handleFileChange = (fileType: FileFieldKey, file: File | null) => {
     setFiles((prev) => ({ ...prev, [fileType]: file }));
   };
@@ -124,7 +142,7 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, isDraft = true) => {
     e.preventDefault();
     const area1 =
       formData.qualifyingArea1 === "__not_listed__"
@@ -149,10 +167,15 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
       (key) => key !== "mastersReport"
     );
 
-    for (const field of requiredFiles) {
-      if (isNewApplication && !files[field]) {
-        toast.error("Please upload all required documents.");
-        return;
+    // For final submission, check required files
+    if (!isDraft) {
+      for (const field of requiredFiles) {
+        if (isNewApplication && !files[field]) {
+          toast.error(
+            "Please upload all required documents for final submission."
+          );
+          return;
+        }
       }
     }
 
@@ -174,11 +197,83 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
     submitApplicationMutation.mutate(submitData);
   };
 
+  const handleFinalSubmit = () => {
+    if (!existingApplication?.id) {
+      toast.error("Please save as draft first before final submission");
+      return;
+    }
+    finalSubmitMutation.mutate(existingApplication.id);
+  };
+
   const subAreas = subAreasData?.subAreas || [];
 
   return (
     <div className="space-y-6">
-      {/* Exam Details Card remains the same */}
+      {/* Exam Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Exam Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Exam Name</div>
+              <div className="text-sm text-gray-600">{exam.examName}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">Semester</div>
+              <div className="text-sm text-gray-600">
+                {exam.semester.year} - Semester {exam.semester.semesterNumber}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">
+                Registration Deadline
+              </div>
+              <div className="text-sm text-gray-600">
+                {new Date(exam.submissionDeadline).toLocaleString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">
+                Exam Period
+              </div>
+              <div className="text-sm text-gray-600">
+                {new Date(exam.examStartDate).toLocaleDateString()} -{" "}
+                {new Date(exam.examEndDate).toLocaleDateString()}
+              </div>
+            </div>
+            {exam.vivaDate && (
+              <div>
+                <div className="text-sm font-medium text-gray-700">
+                  Viva Date
+                </div>
+                <div className="text-sm text-gray-600">
+                  {new Date(exam.vivaDate).toLocaleString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Application Form */}
       <Card>
         <CardHeader>
           <CardTitle>Application Form</CardTitle>
@@ -351,26 +446,66 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
             </div>
 
             <div className="flex space-x-4">
-              <Button
-                type="submit"
-                disabled={submitApplicationMutation.isLoading}
-                className="flex-1"
-              >
-                {submitApplicationMutation.isLoading ? (
-                  <>
-                    <LoadingSpinner className="mr-2 h-4 w-4" /> Submitting...
-                  </>
-                ) : existingApplication ? (
-                  "Resubmit Application"
-                ) : (
-                  "Submit Application"
-                )}
-              </Button>
+              {existingApplication?.status === "draft" ? (
+                <>
+                  <Button
+                    type="submit"
+                    disabled={submitApplicationMutation.isLoading}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    {submitApplicationMutation.isLoading ? (
+                      <>
+                        <LoadingSpinner className="mr-2 h-4 w-4" /> Saving...
+                      </>
+                    ) : (
+                      "Save as Draft"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    disabled={
+                      finalSubmitMutation.isLoading ||
+                      submitApplicationMutation.isLoading
+                    }
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    {finalSubmitMutation.isLoading ? (
+                      <>
+                        <LoadingSpinner className="mr-2 h-4 w-4" />{" "}
+                        Submitting...
+                      </>
+                    ) : (
+                      "Final Submit"
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={submitApplicationMutation.isLoading}
+                  className="flex-1"
+                >
+                  {submitApplicationMutation.isLoading ? (
+                    <>
+                      <LoadingSpinner className="mr-2 h-4 w-4" /> Submitting...
+                    </>
+                  ) : existingApplication?.status === "resubmit" ? (
+                    "Resubmit Application"
+                  ) : (
+                    "Save as Draft"
+                  )}
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
-                disabled={submitApplicationMutation.isLoading}
+                disabled={
+                  submitApplicationMutation.isLoading ||
+                  finalSubmitMutation.isLoading
+                }
                 className="flex-1"
               >
                 Cancel

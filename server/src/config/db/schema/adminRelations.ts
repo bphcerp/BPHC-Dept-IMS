@@ -22,6 +22,7 @@ import {
     phdProposals,
 } from "./phd.ts";
 import { phdRequests } from "./phdRequest.ts"; 
+import { allocationSectionInstructors } from "./allocation.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     refreshTokens: many(refreshTokens, { relationName: "user" }),
@@ -63,9 +64,16 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     fileFieldStatuses: many(fileFieldStatus, {
         relationName: "fileFieldStatus",
     }),
-    files: many(files, { relationName: "files" }),
-    ics: many(courseHandoutRequests, { relationName: "ic" }),
-    reviewers: many(courseHandoutRequests, { relationName: "reviewer" }),
+    files: many(files, {
+        relationName: "files",
+    }),
+    ics: many(courseHandoutRequests, {
+        relationName: "ic",
+    }),
+    reviewers: many(courseHandoutRequests, {
+        relationName: "reviewer",
+    }),
+    courseAllocationSections: many(allocationSectionInstructors),
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -109,6 +117,11 @@ export const phdAdminRelations = relations(phd, ({ one, many }) => ({
     }),
     proposals: many(phdProposals, { relationName: "studentProposals" }),
     requests: many(phdRequests, { relationName: "studentRequests" }),
+    supervisor: one(faculty, {
+        fields: [phd.supervisorEmail],
+        references: [faculty.email],
+        relationName: "phdSupervisor",
+    }),
 }));
 
 export const staffAdminRelations = relations(staff, ({ one }) => ({

@@ -125,10 +125,69 @@ export const allPermissions = {
     "wilp:project:mail": "Send mass mails to faculty",
     "wilp:project:stats": "View all WILP project statistics",
 
+    // Grade Management module permissions
+    "grades:upload": "Upload Excel files for grade management",
+    "grades:manage": "Manage and input student grades",
+    "grades:export": "Export graded Excel files",
+    "grades:supervisor:view": "Supervisors can view their students and grades",
+    "grades:supervisor:save": "Supervisors can save/update student grades",
+    "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
     "phd:examiner:qe": "View and respond to examiner assignments",
 
     // ANALYTICS
     "analytics:publications": "View publications analytics",
+
+    // qp review module permissions
+    "qp:faculty:submit": "Submit paper for review",
+    "qp:dca-convenor:assignreviewer":
+        "Assign reviewer to handout as DCA convenor",
+    "qp:faculty:get-all-handouts": "View all handouts as faculty member",
+    "qp:dca:get-all-handouts": "View all handouts as DCA member",
+    "qp:faculty:review": "Review handouts as reviewer",
+    "qp:get:review": "view review details",
+    "qp:fic:get-all": "View question paper requests as FIC member",
+    "qp:dca-convenor:reminder": "Send reminder notifications as DCA convenor",
+    "qp:dca-convenor:update-reviewer":
+        "Update handout reviewer as DCA convenor",
+    "qp:dca-convenor:update-ic": "Update in-charge details as DCA convenor",
+    "qp:dca-convenor:download-review":
+        "Download review of papers as DCA convenor",
+    "qp:dca-convenor:get-all-faculty":
+        "View all faculty members as DCA convenor",
+    "qp:faculty:get-files": "Get files uploaded for a request",
+    "qp:dca:create-request": "Create a new question paper review request",
+    "qp:dca:get-all-requests": "Get all requests",
+    "qp:dca:get-all-courses": "Get all courses",
+
+    // Course Load Allocation module permissions
+    "allocation:settings:start": "Start a new course load allocation",
+    "allocation:settings:end": "End the current course load allocation",
+
+    "allocation:courses:write": "Create or Modify a new course",
+    "allocation:courses:view": "View all existing courses",
+    "allocation:courses:sync": "Sync all courses of the department from TTD",
+
+    "allocation:write": "Have read and write access to the allocation module",
+    "allocation:view": "Have readonly access to the allocation module",
+
+    "allocation:preference:write":
+        "Create or Modify a new form for allocation data retrieval",
+    "allocation:form:publish": "Publish a form for allocation data retrieval",
+    "allocation:form:close": "Close a form for allocation data retrieval",
+    "allocation:form:view": "View allocation data retrieval form",
+
+    "allocation:data:export": "Export allocation data",
+
+    "allocation:semesters:view": "View the semester details",
+    "allocation:semesters:write": "Create or Modify a semester",
+
+    "allocation:builder:template:write": "Create a form template",
+    "allocation:builder:template:view": "View form template details",
+
+    "allocation:builder:form:write": "Create a form instance of a template",
+    "allocation:builder:form:view": "View form details",
+    "allocation:form:response:submit": "Can submit responses to forms",
+    "allocation:form:response:view": "Can view responses to forms",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -152,6 +211,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/admin/permission/all": "admin:role:read",
 
     "/admin/testing": "admin:tester",
+
+    "/admin/member/getAllFaculty": "admin:member:read",
+    "/admin/member/getAllStaff": "admin:member:read",
+    "/admin/member/getAllPhD": "admin:member:read",
 
     // Conference
 
@@ -192,6 +255,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/student/getQualifyingExams": "phd:student:qe",
     "/phd/student/uploadQeApplicationForm": "phd:student:qe",
     "/phd/student/getQualifyingExamStatus": "phd:student:qe",
+    "/phd/student/finalSubmitQeApplication": "phd:student:qe",
     "/phd/student/getProposalEligibility": "phd:student:proposal",
     "/phd/student/getProposalDeadlines": "phd:student:proposal",
     "/phd/student/getProfileDetails": "phd:student:proposal",
@@ -377,6 +441,65 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/wilpProject/mail": "wilp:project:mail",
     "/wilpProject/stats": "wilp:project:stats",
 
+    // Grade Management
+    "/grades/upload": "grades:upload",
+    "/grades/manage": "grades:manage",
+    "/grades/export": "grades:export",
+    "/grades/supervisor": "grades:supervisor:view",
+    "/grades/supervisor/save": "grades:supervisor:save",
+    "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+
     // Analytics
     "/analytics/publications": "analytics:publications",
+
+    // qp review module
+    "/qp/uploadDocuments": "qp:faculty:submit",
+    "/qp/getFilesByRequestID": "qp:faculty:get-files",
+    "/qp/submitReview": "qp:faculty:review",
+    "/qp/saveReview": "qp:faculty:review",
+    "/qp/assignFaculty": "qp:dca-convenor:assignreviewer",
+    "/qp/createRequest": "qp:dca:create-request",
+    "/qp/getAllFICSubmissions": "qp:fic:get-all",
+    "/qp/getAllDcaMemberRequests": "qp:fic:get-all",
+    "/qp/getReviews": "qp:get:review",
+    "/qp/getAllCourses": "qp:dca:get-all-requests",
+    "/qp/updateIc": "qp:dca-convenor:update-ic",
+    "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
+    "/qp/sendReminders": "qp:dca-convenor:reminder",
+    "/qp/downloadReviewPdf": "qp:dca-convenor:download-review",
+
+    // Course Load Allocation
+    "/allocation/allocation/delete": "allocation:write",
+    "/allocation/allocation/update": "allocation:write",
+
+    "/allocation/course/create": "allocation:courses:write",
+    "/allocation/course/delete": "allocation:courses:write",
+    "/allocation/course/sync": "allocation:courses:sync",
+    "/allocation/course/update": "allocation:courses:write",
+
+    "/allocation/coursePreferences/delete": "allocation:preference:write",
+    "/allocation/coursePreferences/update": "allocation:preference:write",
+
+    "/allocation/semester/create": "allocation:semesters:write",
+    "/allocation/semester/get": "allocation:semesters:view",
+    "/allocation/semester/getLatest": "allocation:semesters:view",
+    "/allocation/semester/delete": "allocation:semesters:write",
+    "/allocation/semester/update": "allocation:semesters:write",
+    "/allocation/semester/linkForm": "allocation:semesters:write",
+
+    "/allocation/allocation/getPreferredFaculty": "allocation:write",
+    "/allocation/allocation/create": "allocation:write",
+
+    "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/get": "allocation:builder:template:view",
+    "/allocation/builder/template/getAll": "allocation:builder:template:view",
+
+    "/allocation/builder/form/create": "allocation:builder:form:write",
+    "/allocation/builder/form/get": "allocation:builder:form:view",
+    "/allocation/builder/form/getAll": "allocation:builder:form:view",
+
+    "/allocation/builder/form/response/register":
+        "allocation:form:response:submit",
+    "/allocation/builder/form/response/view": "allocation:form:response:view",
+    "/allocation/builder/form/response/get": "allocation:form:response:view",
 } as const;

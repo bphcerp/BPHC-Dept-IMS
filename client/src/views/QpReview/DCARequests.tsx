@@ -1,7 +1,6 @@
 "use client";
 import type React from "react";
 import { useState, useEffect } from "react";
-import { FilterBar } from "@/components/handouts/filterBar";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,28 +10,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "react-router-dom";
-import { STATUS_COLORS } from "@/components/handouts/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Mail, Download } from "lucide-react";
 import { AssignICDialog } from "@/components/qp_review/updateICDialog";
 import { AssignDCADialog } from "@/components/qp_review/assignDCADialog";
-import { SetDeadlineDialog } from "@/components/qp_review/setDeadline";
+import { CreateRequestDialog } from "@/components/qp_review/createRequestDialog";
+import SendReminderDialog from "@/components/qp_review/SendRemindersDialog";
+import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
+import { isAxiosError } from "axios";
+
+const STATUS_COLORS: Record<string, string> = {
+  "review pending": "text-yellow-600 bg-yellow-100 p-3",
+  reviewed: "text-green-600 bg-green-100 p-3",
+  notsubmitted: "text-red-600 bg-red-100 p-3 ",
+};
 
 interface QPDCAcon {
   reviewerEmail: string;
   id: string;
   courseName: string;
+  icEmail: string | null;
   courseCode: string;
   category: string;
+  requestType: string;
   reviewerName: string | null;
   professorName: string;
   submittedOn: string;
   status: string;
+}
+
+interface CreateRequestData {
+  icEmail: string;
+  courseName: string;
+  courseCode: string;
+  requestType: "Mid Sem" | "Comprehensive" | "Both";
+  category: "HD" | "FD";
 }
 
 export const DCAConvenercourses: React.FC = () => {
@@ -41,19 +57,24 @@ export const DCAConvenercourses: React.FC = () => {
     []
   );
   const [activeStatusFilters, setActiveStatusFilters] = useState<string[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>(
-    []
-  );
+  const [activeRequestTypeFilters, setActiveRequestTypeFilters] = useState<
+    string[]
+  >([]);
+  const [filteredCourses, setFilteredCourses] = useState<QPDCAcon[]>([]);
 
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
+  const [isCreateRequestDialogOpen, setIsCreateRequestDialogOpen] =
+    useState(false);
   const [currentcourseId, setCurrentcourseId] = useState<string | null>(null);
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // ... (keep all existing mutations - updateICMutation, updateReviewerMutation, etc.)
   const updateICMutation = useMutation({
     mutationFn: async ({
       id,
@@ -64,14 +85,11 @@ export const DCAConvenercourses: React.FC = () => {
       icEmail: string;
       sendEmail: boolean;
     }) => {
-      const response = await api.post<{ success: boolean }>(
-        "/qp/updateIc",
-        {
-          id: id.toString(),
-          icEmail,
-          sendEmail,
-        }
-      );
+      const response = await api.post<{ success: boolean }>("/qp/updateIc", {
+        id: id.toString(),
+        icEmail,
+        sendEmail,
+      });
       return response.data;
     },
     onSuccess: async () => {
@@ -95,6 +113,7 @@ export const DCAConvenercourses: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
+      console.log("Updating reviewer:", { id, reviewerEmail, sendEmail });
       const response = await api.post<{ success: boolean }>(
         "/qp/assignFaculty",
         {
@@ -126,7 +145,6 @@ export const DCAConvenercourses: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
-      // For each ID, call the updateReviewer endpoint
       const promises = ids.map((id) =>
         api.post<{ success: boolean }>("/qp/updateFaculty", {
           id: id.toString(),
@@ -148,6 +166,63 @@ export const DCAConvenercourses: React.FC = () => {
     },
     onError: () => {
       toast.error("Failed to assign reviewer to some courses");
+    },
+  });
+
+  const createRequestMutation = useMutation({
+    mutationFn: async (data: CreateRequestData) => {
+      const response = await api.post<{ success: boolean }>(
+        "/qp/createRequest",
+        {
+          icEmail: data.icEmail,
+          courseName: data.courseName,
+          courseCode: data.courseCode,
+          requestType: data.requestType,
+          category: data.category,
+        }
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      toast.success("Request created successfully");
+      await queryClient.invalidateQueries({
+        queryKey: ["*"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to create request");
+    },
+  });
+
+  const sendRemindersMutation = useMutation({
+    mutationFn: async (reminderData: {
+      selectedCourseIds: string[];
+      recipientCount: number;
+      courses: Array<{
+        id: string;
+        courseName: string;
+        courseCode: string;
+        icEmail: string | null;
+        reviewerEmail: string;
+        reviewerName: string | null;
+        status: string;
+        requestType: string;
+      }>;
+    }) => {
+      const response = await api.post<{ success: boolean }>(
+        "/qp/sendReminders",
+        reminderData
+      );
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(
+        `Email reminders sent successfully to ${variables.recipientCount} recipients`
+      );
+    },
+    onError: (error) => {
+      console.error("Send reminders error:", error);
+      toast.error("Failed to send email reminders");
     },
   });
 
@@ -174,18 +249,20 @@ export const DCAConvenercourses: React.FC = () => {
   useEffect(() => {
     if (!courses) return;
 
-    localStorage.setItem("courses DCA CONVENOR", JSON.stringify(courses));
+    localStorage.setItem("QP DCA CONVENOR", JSON.stringify(courses));
 
     let results = courses;
+
+    // Search filter
     if (searchQuery) {
       results = results.filter(
         (course) =>
-          course.courseName
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
+          course.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           course.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
+
+    // Apply all filters
     results = results.filter((course) => {
       const matchesCategory =
         activeCategoryFilters.length > 0
@@ -195,12 +272,24 @@ export const DCAConvenercourses: React.FC = () => {
         activeStatusFilters.length > 0
           ? activeStatusFilters.includes(course.status)
           : true;
-      return matchesCategory && matchesStatus;
+      const matchesRequestType =
+        activeRequestTypeFilters.length > 0
+          ? activeRequestTypeFilters.includes(course.requestType)
+          : true;
+
+      return matchesCategory && matchesStatus && matchesRequestType;
     });
 
     setFilteredCourses(results);
-  }, [searchQuery, activeCategoryFilters, activeStatusFilters, courses]);
+  }, [
+    searchQuery,
+    activeCategoryFilters,
+    activeStatusFilters,
+    activeRequestTypeFilters,
+    courses,
+  ]);
 
+  // ... (keep all existing handler functions)
   const handlePencilClick = (courseId: string, isReviewer: boolean) => {
     setCurrentcourseId(courseId);
     setIsBulkAssign(false);
@@ -254,6 +343,180 @@ export const DCAConvenercourses: React.FC = () => {
     setIsReviewerDialogOpen(false);
   };
 
+  const handleCreateRequest = (data: CreateRequestData) => {
+    createRequestMutation.mutate(data);
+  };
+
+  const handleSendReminders = () => {
+    const selectedCoursesData = filteredCourses.filter((course) =>
+      selectedcourses.includes(course.id)
+    );
+
+    const validCourses = selectedCoursesData.filter((course) => {
+      if (course.status === "notsubmitted") {
+        return course.icEmail;
+      }
+      if (course.status === "review pending") {
+        return course.reviewerEmail;
+      }
+      return false;
+    });
+
+    const reminderData = {
+      selectedCourseIds: selectedcourses,
+      recipientCount: validCourses.length,
+      courses: validCourses.map((course) => ({
+        id: course.id,
+        courseName: course.courseName,
+        icEmail: course.icEmail,
+        courseCode: course.courseCode,
+        reviewerEmail: course.reviewerEmail,
+        reviewerName: course.reviewerName,
+        status: course.status,
+        requestType: course.requestType,
+      })),
+    };
+
+    sendRemindersMutation.mutate(reminderData);
+  };
+
+  // UPDATED: Enhanced download function for ZIP/PDF handling
+  const handleDownloadReviews = async () => {
+    const selectedCoursesData = filteredCourses.filter((course) =>
+      selectedcourses.includes(course.id)
+    );
+
+    // Filter only reviewed courses
+    const reviewedCourses = selectedCoursesData.filter(
+      (course) => course.status === "reviewed"
+    );
+
+    if (reviewedCourses.length === 0) {
+      toast.warning("No completed reviews found in selected courses");
+      return;
+    }
+
+    console.log("Downloading reviews for courses:", reviewedCourses);
+    setIsDownloading(true);
+
+    try {
+      // Show appropriate loading message
+      const loadingMessage =
+        reviewedCourses.length === 1
+          ? "Generating PDF report..."
+          : `Creating ZIP with ${reviewedCourses.length} individual PDF reports...`;
+
+      toast.loading(loadingMessage, { id: "pdf-generation" });
+
+      // Make API call with proper configuration
+      const response = await api.post(
+        "/qp/downloadReviewPdf",
+        reviewedCourses,
+        {
+          responseType: "blob",
+          headers: {
+            "Content-Type": "application/json",
+            Accept:
+              reviewedCourses.length === 1
+                ? "application/pdf"
+                : "application/zip",
+          },
+          timeout: 90000, // 1.5 minutes for zip generation
+        }
+      );
+
+      console.log("File response received:", response);
+
+      // Dismiss loading toast
+      toast.dismiss("pdf-generation");
+
+      // Determine file type and create appropriate blob
+      const isZip = reviewedCourses.length > 1;
+      const mimeType = isZip ? "application/zip" : "application/pdf";
+      const fileExtension = isZip ? "zip" : "pdf";
+
+      const blob = new Blob([response.data], { type: mimeType });
+
+      // Create download URL
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Generate appropriate filename
+      const timestamp = new Date().toISOString().split("T")[0];
+      let filename: string;
+
+      if (reviewedCourses.length === 1) {
+        const course = reviewedCourses[0];
+        const cleanCourseName = course.courseName.replace(/[^a-zA-Z0-9]/g, "_");
+        filename = `${course.courseCode}-${cleanCourseName}-Review.${fileExtension}`;
+      } else {
+        filename = `reviews-${reviewedCourses.length}-courses-${timestamp}.${fileExtension}`;
+      }
+
+      link.download = filename;
+      link.style.display = "none";
+
+      // Download the file
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Success feedback
+      const successMessage =
+        reviewedCourses.length === 1
+          ? `Successfully downloaded review PDF for ${reviewedCourses[0].courseCode}`
+          : `Successfully downloaded ZIP containing ${reviewedCourses.length} individual review PDFs`;
+
+      toast.success(successMessage, { duration: 5000 });
+
+      // Clear selection after successful download
+      setSelectedcourses([]);
+    } catch (error) {
+      console.error("Download reviews error:", error);
+
+      // Dismiss loading toast
+      toast.dismiss("pdf-generation");
+
+      // Handle errors with specific messages
+      if (isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        if (status === 400) {
+          toast.error(
+            "Invalid request data. Please check selected courses and try again."
+          );
+        } else if (status === 500) {
+          toast.error(
+            "Server error occurred while generating files. Please try again later."
+          );
+        } else if (status === 413) {
+          toast.error("Request too large. Try selecting fewer courses.");
+        } else {
+          toast.error(
+            `Failed to download files (HTTP ${status}). Please contact support.`
+          );
+        }
+      } else if (isAxiosError(error) && error.request) {
+        toast.error(
+          "Network error. Please check your internet connection and try again."
+        );
+      } else if (isAxiosError(error) && error.code === "ECONNABORTED") {
+        toast.error(
+          "Request timed out. The file generation is taking too long. Try selecting fewer courses."
+        );
+      } else {
+        toast.error(
+          "Failed to download files. Please try again or contact support."
+        );
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleSelectcourse = (courseId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedcourses((prev) => [...prev, courseId]);
@@ -280,6 +543,27 @@ export const DCAConvenercourses: React.FC = () => {
     setIsBulkAssign(true);
     setIsReviewerDialogOpen(true);
   };
+
+  // Calculate recipients
+  const recipientCount = filteredCourses.filter((course) => {
+    if (!selectedcourses.includes(course.id)) return false;
+
+    if (course.status === "notsubmitted") {
+      return course.icEmail;
+    }
+
+    if (course.status === "review pending") {
+      return course.reviewerEmail;
+    }
+
+    return false;
+  }).length;
+
+  // Calculate reviewable courses count
+  const reviewableCoursesCount = filteredCourses.filter(
+    (course) =>
+      selectedcourses.includes(course.id) && course.status === "reviewed"
+  ).length;
 
   const isAllSelected =
     filteredCourses.length > 0 &&
@@ -311,34 +595,81 @@ export const DCAConvenercourses: React.FC = () => {
             </h1>
             <p className="mt-2 text-gray-600">2nd semester 2024-25</p>
             <div className="mt-2 flex gap-2">
-              <SetDeadlineDialog />
-              <Link to="/course/summary">
-                <Button
-                  variant="outline"
-                  className="hover:bg-primary hover:text-white"
-                >
-                  Summary
-                </Button>
-              </Link>
+              <Button
+                variant="default"
+                className="bg-primary text-white"
+                onClick={() => setIsCreateRequestDialogOpen(true)}
+              >
+                Create Request
+              </Button>
               {selectedcourses.length > 0 && (
-                <Button
-                  variant="default"
-                  className="bg-primary text-white"
-                  onClick={handleBulkAssignReviewer}
-                >
-                  Assign Reviewer ({selectedcourses.length})
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    className="bg-primary text-white"
+                    onClick={handleBulkAssignReviewer}
+                  >
+                    Assign Reviewer ({selectedcourses.length})
+                  </Button>
+
+                  <SendReminderDialog
+                    trigger={
+                      <Button
+                        className="flex items-center gap-2"
+                        disabled={sendRemindersMutation.isLoading}
+                      >
+                        <Mail className="h-4 w-4" />
+                        {sendRemindersMutation.isLoading
+                          ? `Sending... (${selectedcourses.length})`
+                          : `Send Reminders (${selectedcourses.length})`}
+                      </Button>
+                    }
+                    onConfirm={handleSendReminders}
+                    recipientCount={recipientCount}
+                    disabled={
+                      recipientCount === 0 || sendRemindersMutation.isLoading
+                    }
+                  />
+
+                  {/* UPDATED: Enhanced download button */}
+                  <Button
+                    onClick={() => void handleDownloadReviews()}
+                    className="flex items-center gap-2"
+                    variant={reviewableCoursesCount > 0 ? "default" : "outline"}
+                    disabled={isDownloading || reviewableCoursesCount === 0}
+                  >
+                    <Download
+                      className={`h-4 w-4 ${isDownloading ? "animate-spin" : ""}`}
+                    />
+                    {isDownloading
+                      ? reviewableCoursesCount === 1
+                        ? "Generating PDF..."
+                        : "Creating ZIP..."
+                      : reviewableCoursesCount === 1
+                        ? `Download PDF (1)`
+                        : `Download ZIP (${selectedcourses.length})`}
+                    {reviewableCoursesCount > 0 && !isDownloading && (
+                      <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">
+                        {reviewableCoursesCount === 1
+                          ? "1 PDF"
+                          : `${reviewableCoursesCount} PDFs`}
+                      </span>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
           <div className="ml-4">
-            <FilterBar
+            <QpFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               activeCategoryFilters={activeCategoryFilters}
               onCategoryFilterChange={setActiveCategoryFilters}
               activeStatusFilters={activeStatusFilters}
               onStatusFilterChange={setActiveStatusFilters}
+              activeRequestTypeFilters={activeRequestTypeFilters}
+              onRequestTypeFilterChange={setActiveRequestTypeFilters}
             />
           </div>
         </div>
@@ -365,6 +696,9 @@ export const DCAConvenercourses: React.FC = () => {
                   Course Name
                 </TableHead>
                 <TableHead className="px-4 py-2 text-left">Category</TableHead>
+                <TableHead className="px-4 py-2 text-left">
+                  Request Type
+                </TableHead>
                 <TableHead className="px-4 py-2 text-left">
                   Instructor Email
                 </TableHead>
@@ -404,6 +738,9 @@ export const DCAConvenercourses: React.FC = () => {
                       {course.category}
                     </TableCell>
                     <TableCell className="px-4 py-2">
+                      {course.requestType}
+                    </TableCell>
+                    <TableCell className="px-4 py-2">
                       <div className="flex items-center">
                         <span>{course.professorName}</span>
                         <button
@@ -428,8 +765,12 @@ export const DCAConvenercourses: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-2 uppercase">
-                      <span className={`whitespace-nowrap text-ellipsis ${STATUS_COLORS[course.status]}`}>
-                        {course.status === "notsubmitted"? "NOT SUBMITTED" : course.status}
+                      <span
+                        className={`text-ellipsis whitespace-nowrap ${STATUS_COLORS[course.status]}`}
+                      >
+                        {course.status === "notsubmitted"
+                          ? "NOT SUBMITTED"
+                          : course.status}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-2">
@@ -438,17 +779,17 @@ export const DCAConvenercourses: React.FC = () => {
                         : "NA"}
                     </TableCell>
                     <TableCell className="px-4 py-2">
-                      {course.status != "notsubmitted" ? (
+                      {course.status == "reviewed" ? (
                         <Button
                           variant="outline"
                           className="hover:bg-primary hover:text-white"
                           onClick={() =>
                             navigate(
-                              `/course/dcaconvenor/review/${course.id}`
+                              `/qpReview/dcarequests/seeReview/${course.id}`
                             )
                           }
                         >
-                          {course.status === "reviewed" ? "Review" : "View"}
+                          View Review
                         </Button>
                       ) : (
                         <Button
@@ -463,7 +804,7 @@ export const DCAConvenercourses: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="px-4 py-2 text-center">
+                  <TableCell colSpan={10} className="px-4 py-2 text-center">
                     No courses found
                   </TableCell>
                 </TableRow>
@@ -485,6 +826,13 @@ export const DCAConvenercourses: React.FC = () => {
         onAssign={handleAssignReviewer}
         isBulkAssign={isBulkAssign}
         selectedCount={selectedcourses.length}
+      />
+
+      <CreateRequestDialog
+        isOpen={isCreateRequestDialogOpen}
+        setIsOpen={setIsCreateRequestDialogOpen}
+        onSubmit={handleCreateRequest}
+        isLoading={createRequestMutation.isLoading}
       />
     </div>
   );

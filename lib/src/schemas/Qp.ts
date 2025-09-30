@@ -13,10 +13,13 @@ export type QpStatus = (typeof qpReviewStatuses)[number];
 
 export const categories = ["HD", "FD"] as const;
 
+export const requestTypes = ["Mid Sem", "Comprehensive", "Both"] as const;
+
 export const assignICBodySchema = z.object({
     courseName: z.string().nonempty(),
     courseCode: z.string().nonempty(),
     icEmail: z.string().email(),
+    requestType: z.enum(requestTypes),
     category: z.enum(categories),
 });
 
@@ -56,7 +59,7 @@ const reviewFieldSchema = z.object({
 
 export const submitQpReviewSchema = z.object({
     requestId: z.number().int().positive("Invalid request ID"),
-    email: z.string().email("Invalid email format"),
+    email: z.string().email("Invalid email format").optional(),
     review: z.record(z.string(), reviewFieldSchema),
 });
 
@@ -92,6 +95,7 @@ export const assignReviewerBodySchema = z.object({
             message: "Invalid handout id",
         }),
     reviewerEmail: z.string().email(),
+    sendEmail: z.boolean().default(false),
 });
 
 export type AssignReviewerBody = z.infer<typeof assignReviewerBodySchema>;
@@ -141,8 +145,8 @@ export type UploadFICDocuments = z.infer<typeof uploadDocumentsSchema>;
 
 export const requestIdSchema = z.object({
     requestId: z.preprocess(
-        (val) => Number(val), // Convert string to number
-        z.number().int().positive() // Ensure it's a positive integer
+        (val) => Number(val), 
+        z.number().int().positive() 
     ),
 });
 

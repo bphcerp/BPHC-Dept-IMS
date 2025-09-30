@@ -1,4 +1,5 @@
 import express from "express";
+
 import authRouter from "./auth/index.ts";
 import adminRouter from "./admin/index.ts";
 import phdRouter from "./phd/index.ts";
@@ -13,6 +14,9 @@ import profileRouter from "./profile/index.ts";
 import projectRouter from "./project/index.ts";
 import patentRouter from "./patent/index.ts";
 import wilpProjectRouter from "./wilpProject/index.ts";
+import gradesRouter from "./grades/index.ts";
+import allocationRouter from "./allocation/index.ts";
+import builderRouter from "./allocation/builder/index.ts";
 import contributorsRouter from "./contributors.ts";
 import todosRoute from "./todos.ts";
 import clearNotificationsRoute from "./clearNotifications.ts";
@@ -64,6 +68,8 @@ router.use("/qp", qpRouter);
 router.use("/publications", publicationsRouter);
 router.use("/inventory", inventoryRouter);
 router.use("/analytics", analyticsRouter);
+router.use("/allocation", allocationRouter);
+router.use("/builder", builderRouter);
 router.use("/todos", todosRoute);
 router.use("/clearNotifications", clearNotificationsRoute);
 router.use("/readNotifications", readNotificationsRoute);
@@ -71,6 +77,7 @@ router.use("/profile", profileRouter);
 router.use("/project", projectRouter);
 router.use("/patent", patentRouter);
 router.use("/wilpProject", wilpProjectRouter);
+router.use("/grades", gradesRouter);
 router.use("/meeting", meetingRouter);
 router.use("/phd-request", phdRequestRouter);
 

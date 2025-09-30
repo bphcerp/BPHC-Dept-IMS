@@ -11,6 +11,9 @@ import DCARequestsView from "@/views/QpReview/DCARequests";
 import FacultyReview from "@/views/QpReview/FacultyReview/[course]";
 import ReviewPage from "@/views/QpReview/FacultyReview";
 import PhdLayout from "@/layouts/Phd";
+import CoursesPage from "@/views/Allocation/CoursesPage";
+import FormTemplateList from "@/views/Allocation/FormTemplateList";
+import FormTemplateView from "@/views/Allocation/FormTemplateView";
 import { allPermissions, permissions } from "lib";
 import ExaminerAssignments from "@/views/Phd/Examiner/Assignments";
 import {
@@ -22,6 +25,7 @@ import {
   Warehouse,
   File,
   ChartNoAxesCombined,
+  ListOrderedIcon,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -106,10 +110,26 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import GradesLayout from "@/layouts/Grades";
+import UploadExcel from "@/views/Grades/UploadExcel";
+import ManageGrades from "@/views/Grades/ManageGrades";
+import SupervisorGradesView from "@/views/Grades/Supervisor";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
+import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
+import PatentDefaultRedirect from "./PatentDefaultRedirect";
+import DcaReview from "@/views/QpReview/DcaReview";
+import AllocationLayout from "@/layouts/Allocation";
+import { AllocationOverview } from "@/views/Allocation/AllocationOverview";
+import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
+import FormList from "@/views/Allocation/FormList";
+import FormResponsesView from "@/views/Allocation/FormResponsesView";
+import FormResponse from "@/views/Allocation/FormResponse";
+import AllocateCourse from "@/views/Allocation/AllocateCourse";
+import SemesterList from "@/views/Allocation/SemesterList";
+import AllocationModern from "@/views/Allocation/AllocationModern";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -143,12 +163,19 @@ const patentModulePermissions: string[] = Object.keys(allPermissions).filter(
 const wilpModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("wilp:")
 );
+const gradesModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("grades:")
+);
 const meetingModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("meeting:")
 );
 const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
   (permission) => permission.startsWith("analytics:")
 );
+
+const courseLoadAllocationModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("allocation:"));
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -214,6 +241,12 @@ const Routing = () => {
       requiredPermissions: wilpModulePermissions,
     },
     {
+      title: "Grade Management",
+      icon: <FileText />,
+      url: "/grades",
+      requiredPermissions: gradesModulePermissions,
+    },
+    {
       title: "Scheduler", //this is meeting everywhere, except for this title
       icon: <Calendar />,
       url: "/meeting",
@@ -224,6 +257,12 @@ const Routing = () => {
       icon: <ChartNoAxesCombined />,
       url: "/analytics",
       requiredPermissions: analyticsModulePermissions,
+    },
+    {
+      title: "Course Allocation",
+      icon: <ListOrderedIcon />,
+      url: "/allocation",
+      requiredPermissions: courseLoadAllocationModulePermissions,
     },
   ];
 
@@ -327,10 +366,45 @@ const Routing = () => {
                   <Navigate to="/qpReview/ficSubmission" replace={true} />
                 }
               />
-              <Route path="ficSubmission" element={<FicSubmissionView />} />
-              <Route path="dcarequests" element={<DCARequestsView />} />
-              <Route path="facultyReview" element={<ReviewPage />} />
-              <Route path="facultyReview/:course" element={<FacultyReview />} />
+
+              {/* FIC Submission Routes */}
+              {checkAccess(permissions["/qp/getAllFICSubmissions"]) && (
+                <Route path="ficSubmission" element={<FicSubmissionView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="ficSubmission/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* DCA Requests Routes */}
+              {checkAccess(permissions["/qp/getAllDcaMemberRequests"]) && (
+                <Route path="dcarequests" element={<DCARequestsView />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="dcarequests/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+
+              {/* Faculty Review Routes */}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route path="facultyReview" element={<ReviewPage />} />
+              )}
+              {checkAccess(permissions["/qp/getReviews"]) && (
+                <Route
+                  path="facultyReview/seeReview/:id"
+                  element={<DcaReview />}
+                />
+              )}
+              {checkAccess(permissions["/qp/submitReview"]) && (
+                <Route
+                  path="facultyReview/:course"
+                  element={<FacultyReview />}
+                />
+              )}
             </Route>
           )}
           {checkAccessAnyOne(courseHandoutsPermissions) && (
@@ -642,10 +716,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(projectModulePermissions) && (
             <Route path="/project" element={<ProjectLayout />}>
-              <Route
-                index
-                element={<Navigate to="/project/add" replace={true} />}
-              />
+              <Route index element={<ProjectDefaultRedirect />} />
               {checkAccess(permissions["/project/create"]) && (
                 <Route path="add" element={<AddProject />} />
               )}
@@ -665,10 +736,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(patentModulePermissions) && (
             <Route path="/patent" element={<PatentLayout />}>
-              <Route
-                index
-                element={<Navigate to="/patent/add" replace={true} />}
-              />
+              <Route index element={<PatentDefaultRedirect />} />
               {checkAccess(permissions["/patent/create"]) && (
                 <Route path="add" element={<AddPatent />} />
               )}
@@ -729,6 +797,102 @@ const Routing = () => {
                     path="publications"
                     element={<PublicationsAnalytics />}
                   />
+                </>
+              )}
+            </Route>
+          )}
+          {checkAccessAnyOne(gradesModulePermissions) && (
+            <Route path="/grades" element={<GradesLayout />}>
+              <Route
+                index
+                element={<Navigate to="/grades/upload" replace={true} />}
+              />
+              {checkAccess(permissions["/grades/upload"]) && (
+                <Route path="upload" element={<UploadExcel />} />
+              )}
+              {checkAccess(permissions["/grades/manage"]) && (
+                <Route path="manage" element={<ManageGrades />} />
+              )}
+              {checkAccess(permissions["/grades/supervisor"]) && (
+                <Route path="supervisor" element={<SupervisorGradesView />} />
+              )}
+            </Route>
+          )}
+          {/* TODO: use the permissions array (permissions based on the api routes the page is going to be using) instead of harcoded permissions */}
+          {checkAccessAnyOne(courseLoadAllocationModulePermissions) && (
+            <Route path="/allocation" element={<AllocationLayout />}>
+              <Route
+                index
+                element={
+                  <Navigate
+                    to={
+                      checkAccess("allocation:write")
+                        ? "/allocation/ongoing"
+                        : "/allocation/personal"
+                    }
+                    replace={true}
+                  />
+                }
+              />
+              {checkAccess("allocation:write") && (
+                <>
+                  <Route path="ongoing" element={<AllocationOverview />} />
+                  <Route path="responses" element={<div />} />
+                </>
+              )}
+
+              {checkAccessAnyOne([
+                "allocation:builder:template:view",
+                "allocation:write",
+              ]) && (
+                <>
+                  <Route path="templates" element={<FormTemplateList />} />
+                  <Route path="templates/new" element={<FormTemplateView />} />
+                  <Route
+                    path="templates/:id"
+                    element={<FormTemplateView create={false} />}
+                  />
+                </>
+              )}
+
+              {checkAccessAnyOne([
+                "allocation:builder:form:view",
+                "allocation:write",
+              ]) && (
+                <>
+                  <Route path="forms" element={<FormList />} />
+                  <Route path="forms/:id/preview" element={<FormResponse />} />
+                  <Route
+                    path="forms/:id/responses"
+                    element={<FormResponsesView />}
+                  />
+                  <Route
+                    path="forms/:id/submit"
+                    element={<FormResponse preview={false} />}
+                  />
+                </>
+              )}
+
+              {checkAccess("allocation:write") && (
+                <Route path="allocate" element={<AllocationModern />} />
+              )}
+              <Route path="allocate/:id" element={<AllocateCourse />} />
+
+              {checkAccessAnyOne([
+                "allocation:courses:view",
+                "allocation:write",
+              ]) && <Route path="courses" element={<CoursesPage />} />}
+
+              {checkAccessAnyOne([
+                "allocation:semesters:view",
+                "allocation:write",
+              ]) && (
+                <>
+                  <Route
+                    path="semesters/new"
+                    element={<RegisterNewSemester />}
+                  />
+                  <Route path="semesters" element={<SemesterList />} />
                 </>
               )}
             </Route>

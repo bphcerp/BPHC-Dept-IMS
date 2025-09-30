@@ -3,6 +3,7 @@ import { fileFields, files } from "@/config/db/schema/form.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import { eq } from "drizzle-orm";
@@ -15,11 +16,12 @@ const router = express.Router();
 
 const uploadDocumentsSchema = z.object({
   id: z.string().min(1),
-  field: z.enum(["midSemFile", "midSemSolFile", "compreFile", "compreSolFile"])
+  field: z.enum(["midSemQpFile", "midSemSolFile", "compreQpFile", "compreSolFile"])
 });
 
 router.post(
   "/",
+  checkAccess(),
   asyncHandler(async (req, res, next) =>
     pdfUpload.single("file")(req, res, (err) => {
       if (err instanceof multer.MulterError)
@@ -32,13 +34,12 @@ router.post(
       return next(new HttpError(HttpCode.BAD_REQUEST, "No File Uploaded"));
     }
 
-    console.log(req.query);
     const { id, field } = uploadDocumentsSchema.parse(req.query);
 
     const fieldMap = {
-      midSemFile: "midSemFilePath",
-      midSemSolFile: "midSemSolFilePath",
-      compreFile: "compreFilePath",
+      midSemQpFile: "midSemQpFilePath",
+      midSemSolFile: "midSemSolFilePath", 
+      compreQpFile: "compreQpFilePath",
       compreSolFile: "compreSolFilePath"
     };
 
@@ -52,8 +53,8 @@ router.post(
           originalName: req.file!.originalname,
           mimetype: req.file!.mimetype,
           size: req.file!.size,
-          fieldName: field,  
-          module: modules[5], 
+          fieldName: field,
+          module: modules[5],
         })
         .returning();
 
@@ -71,7 +72,8 @@ router.post(
         [fieldMap[field]]: insertedFileField[0].id
       };
 
-      if (field === "compreSolFile") {
+      // Check if this is a solution file upload to determine completion
+      if (field === "midSemSolFile" || field === "compreSolFile") {
         updateData.documentsUploaded = true;
         updateData.status = "review pending";
         updateData.submittedOn = new Date();

@@ -29,7 +29,7 @@ export const phdEmailTemplates = pgTable("phd_email_templates", {
 });
 
 export const phdExamApplicationStatus = pgEnum(
-    "phd_exam_application_status",
+    "phd_exam_application_status_enum",
     phdSchemas.phdExamApplicationStatuses
 );
 
@@ -138,7 +138,7 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
     studentEmail: text("student_email")
         .notNull()
         .references(() => phd.email, { onDelete: "cascade" }),
-    status: phdExamApplicationStatus("status").notNull().default("applied"),
+    status: phdExamApplicationStatus("status").notNull().default("draft"),
     comments: text("comments"),
     qualifyingArea1: text("qualifying_area_1").notNull(),
     qualifyingArea2: text("qualifying_area_2").notNull(),
@@ -409,4 +409,43 @@ export const phdSeminarSlots = pgTable(
             .notNull(),
     },
     (table) => [unique().on(table.startTime, table.venue)]
+);
+
+export const phdSupervisorGrades = pgTable(
+    "phd_supervisor_grades",
+    {
+        id: serial("id").primaryKey(),
+        studentEmail: text("student_email")
+            .notNull()
+            .references(() => phd.email, { onDelete: "cascade" }),
+        supervisorEmail: text("supervisor_email")
+            .notNull()
+            .references(() => faculty.email, { onDelete: "cascade" }),
+        courseName: text("course_name").notNull(),
+        midsemGrade: text("midsem_grade"),
+        compreGrade: text("compre_grade"),
+        midsemMarks: integer("midsem_marks"),
+        endsemMarks: integer("endsem_marks"),
+        midsemDocFileId: integer("midsem_doc_file_id").references(
+            () => files.id,
+            {
+                onDelete: "set null",
+            }
+        ),
+        endsemDocFileId: integer("endsem_doc_file_id").references(
+            () => files.id,
+            {
+                onDelete: "set null",
+            }
+        ),
+        updatedAt: timestamp("updated_at", { withTimezone: true })
+            .defaultNow()
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        unique().on(table.studentEmail, table.courseName),
+        index().on(table.studentEmail),
+        index().on(table.supervisorEmail),
+    ]
 );

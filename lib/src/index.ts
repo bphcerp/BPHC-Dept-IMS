@@ -14,10 +14,15 @@ import * as profileSchemas from "./schemas/Profile.ts";
 import * as meetingSchemas from "./schemas/Meeting.ts";
 import * as analyticsSchemas from "./schemas/Analytics.ts";
 import * as phdRequestSchemas from "./schemas/PhdRequest.ts";
+import * as allocationSchemas from "./schemas/Allocation.ts";
+import * as allocationFormBuilderSchemas from "./schemas/AllocationFormBuilder.ts";
+
 import { modules } from "./schemas/Form.ts";
 import * as authTypes from "./types/auth.ts";
 import * as authUtils from "./utils/auth.ts";
 import { allPermissions, permissions } from "./permissions.ts";
+
+import * as allocationTypes from "./types/allocation.ts";
 
 export {
     adminSchemas,
@@ -33,6 +38,9 @@ export {
     wilpProjectSchemas,
     modules,
     phdSchemas,
+    allocationSchemas,
+    allocationFormBuilderSchemas,
+    allocationTypes,
     authTypes,
     authUtils,
     permissions,

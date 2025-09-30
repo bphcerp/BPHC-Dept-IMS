@@ -9,6 +9,7 @@ const optionalString = z
 export const phdTypes = ["part-time", "full-time"] as const;
 
 export const phdExamApplicationStatuses = [
+    "draft",
     "applied",
     "verified",
     "resubmit",
