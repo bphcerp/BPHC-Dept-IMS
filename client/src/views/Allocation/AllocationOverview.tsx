@@ -420,12 +420,12 @@ Hyderabad Campus<span>
                       <DialogHeader>
                         <DialogTitle>Response Overview</DialogTitle>
                       </DialogHeader>
-                      <div className="grid grid-cols-2 gap-6 h-56">
+                      <div className="grid grid-cols-2 gap-6">
                         <div className="border-r pr-4">
                           <h3 className="mb-2 font-semibold text-green-600">
                             Responded
                           </h3>
-                          <ul className="space-y-1 text-sm overflow-y-auto">
+                          <ul className="space-y-1 text-sm overflow-y-auto h-64">
                             {latestSemester.form.responses &&
                             latestSemester.form.responses.length ? (
                               latestSemester.form.responses?.map(
@@ -451,9 +451,9 @@ Hyderabad Campus<span>
                           <h3 className="mb-2 font-semibold text-red-600">
                             Not Responded
                           </h3>
-                          <ul className="space-y-1 text-sm overflow-y-auto">
+                          <ul className="space-y-1 text-sm overflow-y-auto h-64">
                             {latestSemester.notResponded.length > 0 ? (
-                              latestSemester.notResponded.map((responder) => (
+                              [...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,].map((responder) => (
                                 <li
                                   key={responder.email}
                                   className="text-gray-700"
