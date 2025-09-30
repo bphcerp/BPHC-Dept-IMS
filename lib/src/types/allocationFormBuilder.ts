@@ -121,7 +121,7 @@ export type AllocationFormResponse = RawAllocationFormResponse & {
     id: string;
     course: Pick<Course, "name" | "code"> | null;
     templateField: AllocationFormTemplateField;
-    submittedBy: Pick<MemberDetailsResponse, "name" | "email">;
+    submittedBy: Pick<MemberDetailsResponse, "name" | "email" | "type">;
     submittedAt: Date;
 };
 

@@ -27,6 +27,7 @@ router.get(
                         columns: {
                             name: true,
                             email: true,
+                            type: true,
                         },
                     },
                 },

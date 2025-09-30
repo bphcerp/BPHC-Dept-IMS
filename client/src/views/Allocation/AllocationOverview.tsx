@@ -14,14 +14,7 @@ import {
   DialogHeader as UIDialogHeader,
   DialogTitle as UIDialogTitle,
 } from "@/components/ui/dialog";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  lazy,
-  Suspense,
-  useMemo,
-} from "react";
+import { useCallback, useEffect, useState, lazy, Suspense } from "react";
 
 const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 import { Input } from "@/components/ui/input";
@@ -187,14 +180,6 @@ Hyderabad Campus<span>
   }, [calculateTimeLeft]);
 
   const getFormattedAY = (year: number) => `${year}-${year + 1}`;
-
-  const notResponded = useMemo(
-    () => [
-      ...(latestSemester?.stats?.notRespondedFaculty ?? []),
-      ...(latestSemester?.stats?.notRespondedPhD ?? []),
-    ],
-    [latestSemester]
-  );
 
   return !latestSemester ? (
     <div className="flex h-full items-center justify-center">
@@ -383,7 +368,7 @@ Hyderabad Campus<span>
           latestSemester.form.publishedDate ? (
             <div className="grid h-auto grid-cols-1 gap-6 md:grid-cols-2">
               {/* Time Remaining */}
-              <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
+              <div className="flex flex-col items-center justify-center space-y-5 rounded-2xl p-2 shadow-lg transition hover:shadow-xl">
                 <span className="text-sm text-gray-500">Time Remaining</span>
                 <span className="mt-2 text-5xl font-extrabold text-primary">
                   {timeLeft ?? "--:--:--"}
@@ -394,75 +379,79 @@ Hyderabad Campus<span>
               </div>
 
               {/* Responses + Pending */}
-              <div className="flex relative w-full flex-col rounded-2xl bg-white p-2 shadow-lg transition hover:shadow-xl">
+              <div className="relative flex w-full flex-col justify-center rounded-2xl shadow-lg transition hover:shadow-xl">
                 <span className="text-center text-sm text-gray-500">
                   Submission Overview
                 </span>
 
                 <div className="mt-4 grid grid-cols-2 gap-4 text-center">
                   <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0"
-                        >
-                          <Maximize2Icon className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0"
+                      >
+                        <Maximize2Icon className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
 
-                      <DialogContent className="max-w-3xl">
-                        <DialogHeader>
-                          <DialogTitle>Response Overview</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid grid-cols-2 gap-6">
-                          <div className="border-r pr-4">
-                            <h3 className="mb-2 font-semibold text-green-600">
-                              Responded
-                            </h3>
-                            <ul className="space-y-1 text-sm">
-                              {latestSemester.form.responses && latestSemester.form.responses.length ? latestSemester.form.responses?.map(
+                    <DialogContent className="max-w-3xl">
+                      <DialogHeader>
+                        <DialogTitle>Response Overview</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="border-r pr-4">
+                          <h3 className="mb-2 font-semibold text-green-600">
+                            Responded
+                          </h3>
+                          <ul className="space-y-1 text-sm">
+                            {latestSemester.form.responses &&
+                            latestSemester.form.responses.length ? (
+                              latestSemester.form.responses?.map(
                                 ({ submittedBy }) => (
                                   <li
                                     key={submittedBy.email}
                                     className="text-green-700"
                                   >
                                     {submittedBy.name ??
-                                      `No Name - ${submittedBy.email}`}
+                                      `No Name - ${submittedBy.email}`} - { submittedBy.type.toUpperCase() }
                                   </li>
                                 )
-                              ) : (
-                                <p className="text-destructive">
-                                  No responses yet.
-                                </p>
-                              )}
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h3 className="mb-2 font-semibold text-red-600">
-                              Not Responded
-                            </h3>
-                            <ul className="space-y-1 text-sm">
-                              {notResponded.length > 0 ? (
-                                notResponded.map((responder) => (
-                                  <li
-                                    key={responder.email}
-                                    className="text-gray-700"
-                                  >
-                                    {responder.name ?? `No Name - ${responder.email}`}
-                                  </li>
-                                ))
-                              ) : (
-                                <p className="text-success">
-                                  Everyone has responded.
-                                </p>
-                              )}
-                            </ul>
-                          </div>
+                              )
+                            ) : (
+                              <p className="text-destructive">
+                                No responses yet.
+                              </p>
+                            )}
+                          </ul>
                         </div>
-                      </DialogContent>
-                    </Dialog>
+
+                        <div>
+                          <h3 className="mb-2 font-semibold text-red-600">
+                            Not Responded
+                          </h3>
+                          <ul className="space-y-1 text-sm">
+                            {latestSemester.notResponded.length > 0 ? (
+                              latestSemester.notResponded.map((responder) => (
+                                <li
+                                  key={responder.email}
+                                  className="text-gray-700"
+                                >
+                                  {responder.name ??
+                                    `No Name - ${responder.email}`} - { responder.type.toUpperCase() }
+                                </li>
+                              ))
+                            ) : (
+                              <p className="text-success">
+                                Everyone has responded.
+                              </p>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <div className="flex flex-col items-center">
                     <span className="text-3xl font-extrabold text-green-600">
                       {latestSemester.form.responses.length}
@@ -472,8 +461,7 @@ Hyderabad Campus<span>
 
                   <div className="flex flex-col items-center">
                     <span className="text-3xl font-extrabold text-red-600">
-                      {(latestSemester.stats?.notRespondedFaculty.length ?? 0) +
-                        (latestSemester.stats?.notRespondedPhD.length ?? 0)}
+                      {latestSemester.notResponded?.length ?? 0}
                     </span>
                     <span className="text-xs text-gray-500">Pending</span>
                   </div>

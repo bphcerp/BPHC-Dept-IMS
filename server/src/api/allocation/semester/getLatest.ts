@@ -39,7 +39,13 @@ export const getLatestSemester = async () => {
                 with: {
                     responses: {
                         with: {
-                            submittedBy: true,
+                            submittedBy: {
+                                columns: {
+                                    name: true,
+                                    email: true,
+                                    type: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -96,38 +102,25 @@ router.get(
                     });
 
                 if (stats) {
-                    const notRespondedFaculty = await db.query.faculty.findMany(
-                        {
-                            columns: {
-                                name: true,
-                                email: true,
-                            },
-                            where: (faculty, { notInArray }) =>
-                                notInArray(
-                                    faculty.email,
-                                    Array.from(seenEmails)
-                                ),
-                        }
-                    );
-
-                    const notRespondedPhD = await db.query.phd.findMany({
+                    const notResponded = await db.query.users.findMany({
                         columns: {
                             name: true,
                             email: true,
+                            type: true,
                         },
-                        where: (phd, { notInArray }) =>
-                            notInArray(phd.email, Array.from(seenEmails)),
+                        where: (user, { notInArray, and, ne }) =>
+                            and(
+                                notInArray(user.email, Array.from(seenEmails)),
+                                ne(user.type, "staff")
+                            ),
                     });
 
                     const semesterDataWithStats = {
                         ...semesterData,
-                        stats: {
-                            notRespondedFaculty,
-                            notRespondedPhD,
-                        },
-                    }
-                    res.status(200).json(semesterDataWithStats)
-                    return
+                        notResponded,
+                    };
+                    res.status(200).json(semesterDataWithStats);
+                    return;
                 }
             }
             res.status(200).json(semesterData);

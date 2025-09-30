@@ -11,7 +11,7 @@ import {
     semesterTypes,
     sectionTypes,
 } from "../schemas/Allocation.ts";
-import { MemberDetailsResponse } from "../schemas/Admin.ts";
+import { MemberDetailsResponse, userTypes } from "../schemas/Admin.ts";
 import {
     AllocationForm,
     AllocationFormResponse,
@@ -89,13 +89,11 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
+    type: (typeof userTypes)[number]
 };
 
 export type SemesterWithStats = Semester & {
-    stats?: {
-        notRespondedFaculty: SemesterResponseStat[];
-        notRespondedPhD: SemesterResponseStat[];
-    };
+    notResponded: SemesterResponseStat[];
 };
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;
