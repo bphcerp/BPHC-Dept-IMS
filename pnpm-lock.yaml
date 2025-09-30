@@ -316,6 +316,9 @@ importers:
       any-date-parser:
         specifier: ^2.0.3
         version: 2.0.3
+      axios:
+        specifier: ^1.7.7
+        version: 1.8.3
       bullmq:
         specifier: ^5.54.3
         version: 5.54.3

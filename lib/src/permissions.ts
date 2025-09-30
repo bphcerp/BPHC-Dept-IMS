@@ -145,6 +145,36 @@ export const allPermissions = {
     "qp:dca:create-request": "Create a new question paper review request",
     "qp:dca:get-all-requests": "Get all requests",
     "qp:dca:get-all-courses": "Get all courses",
+
+    // Course Load Allocation module permissions
+    "allocation:settings:start": "Start a new course load allocation",
+    "allocation:settings:end": "End the current course load allocation",
+
+    "allocation:courses:write": "Create or Modify a new course",
+    "allocation:courses:view": "View all existing courses",
+    "allocation:courses:sync": "Sync all courses of the department from TTD",
+
+    "allocation:write": "Have read and write access to the allocation module",
+    "allocation:view": "Have readonly access to the allocation module",
+
+    "allocation:preference:write":
+        "Create or Modify a new form for allocation data retrieval",
+    "allocation:form:publish": "Publish a form for allocation data retrieval",
+    "allocation:form:close": "Close a form for allocation data retrieval",
+    "allocation:form:view": "View allocation data retrieval form",
+
+    "allocation:data:export": "Export allocation data",
+
+    "allocation:semester:read": "View the semester details",
+    "allocation:semester:write": "Create or Modify a semester",
+
+    "allocation:builder:template:write": "Create a form template",
+    "allocation:builder:template:read": "View form template details",
+
+    "allocation:builder:form:write": "Create a form instance of a template",
+    "allocation:builder:form:read": "View form details",
+    "allocation:form:response:submit": "Can submit responses to forms",
+    "allocation:form:response:view": "Can view responses to forms",
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -168,6 +198,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/admin/permission/all": "admin:role:read",
 
     "/admin/testing": "admin:tester",
+
+    "/admin/member/getAllFaculty": "admin:member:read",
+    "/admin/member/getAllStaff": "admin:member:read",
+    "/admin/member/getAllPhD": "admin:member:read",
 
     // Conference
 
@@ -397,4 +431,39 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
     "/qp/sendReminders": "qp:dca-convenor:reminder",
     "/qp/downloadReviewPdf": "qp:dca-convenor:download-review",
+
+    // Course Load Allocation
+    "/allocation/allocation/delete": "allocation:write",
+    "/allocation/allocation/update": "allocation:write",
+
+    "/allocation/course/create": "allocation:courses:write",
+    "/allocation/course/delete": "allocation:courses:write",
+    "/allocation/course/sync": "allocation:courses:sync",
+    "/allocation/course/update": "allocation:courses:write",
+
+    "/allocation/coursePreferences/delete": "allocation:preference:write",
+    "/allocation/coursePreferences/update": "allocation:preference:write",
+
+    "/allocation/semester/create": "allocation:semester:write",
+    "/allocation/semester/get": "allocation:semester:read",
+    "/allocation/semester/getLatest": "allocation:semester:read",
+    "/allocation/semester/delete": "allocation:semester:write",
+    "/allocation/semester/update": "allocation:semester:write",
+    "/allocation/semester/linkForm": "allocation:semester:write",
+
+    "/allocation/allocation/getPreferredFaculty": "allocation:write",
+    "/allocation/allocation/create": "allocation:write",
+
+    "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/get": "allocation:builder:template:read",
+    "/allocation/builder/template/getAll": "allocation:builder:template:read",
+
+    "/allocation/builder/form/create": "allocation:builder:form:write",
+    "/allocation/builder/form/get": "allocation:builder:form:read",
+    "/allocation/builder/form/getAll": "allocation:builder:form:read",
+
+    "/allocation/builder/form/response/register":
+        "allocation:form:response:submit",
+    "/allocation/builder/form/response/view": "allocation:form:response:view",
+    "/allocation/builder/form/response/get": "allocation:form:response:view",
 } as const;

@@ -20,9 +20,12 @@ import * as inventoryRelations from "./schema/inventoryRelations.ts";
 import * as projectRelations from "./schema/projectRelations.ts";
 import * as project from "./schema/project.ts";
 import * as wilpProject from "./schema/wilpProject.ts";
-import * as meeting from "./schema/meeting.ts"; 
+import * as meeting from "./schema/meeting.ts";
 import * as meetingRelations from "./schema/meetingRelations.ts";
-
+import * as allocation from "./schema/allocation.ts";
+import * as allocationRelations from "./schema/allocationRelations.ts";
+import * as allocationFormBuilder from "./schema/allocationFormBuilder.ts";
+import * as allocationFormBuilderRelations from "./schema/allocationFormBuilderRelations.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
@@ -61,7 +64,11 @@ const db = drizzle(pool, {
         ...projectRelations,
         ...wilpProject,
         ...meeting,
-        ...meetingRelations
+        ...meetingRelations,
+        ...allocation,
+        ...allocationRelations,
+        ...allocationFormBuilder,
+        ...allocationFormBuilderRelations,
     },
 });
 
