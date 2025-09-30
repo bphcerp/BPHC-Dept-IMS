@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+// client/src/components/phd/phd-request/StudentFinalThesisForm.tsx
+import React, { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
   Card,
@@ -15,12 +16,19 @@ import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, File, ExternalLink, Replace } from "lucide-react";
+import { BASE_API_URL } from "@/lib/constants";
 
 interface StudentFinalThesisFormProps {
   request: {
     id: number;
-    reviews: { approved: boolean; comments: string | null }[];
+    comments: string | null;
+    documents: any[];
+    reviews: {
+      approved: boolean;
+      comments: string | null;
+      studentComments: string | null;
+    }[];
   };
   onSuccess: () => void;
 }
@@ -34,7 +42,11 @@ const FINAL_THESIS_DOCS = [
     required: true,
   },
   { id: "plagiarismReceipt", label: "Plagiarism Receipt", required: true },
-  { id: "thesisFeeReceipt", label: "Thesis Fee Receipt (SWD)", required: true },
+  {
+    id: "thesisFeeReceipt",
+    label: "Thesis Fee Receipt (SWD)",
+    required: true,
+  },
   {
     id: "titleApprovalForm",
     label: "Title Approval Form Copy",
@@ -60,11 +72,30 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
   request,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [files, setFiles] = useState<Record<string, File[]>>({});
-  const [comments, setComments] = useState("");
+  const [comments, setComments] = useState(request.comments || "");
+  const [existingFiles, setExistingFiles] = useState<Record<string, any>>({});
+  const [submittingType, setSubmittingType] = useState<
+    "draft" | "final" | null
+  >(null);
 
   const lastReview = request.reviews.length > 0 ? request.reviews[0] : null;
   const isReverted = lastReview && !lastReview.approved;
+  const revertComments = lastReview?.studentComments || lastReview?.comments;
+
+  useEffect(() => {
+    const studentDocs = request.documents.filter((doc) => !doc.isPrivate);
+    const preloaded: Record<string, any> = {};
+    studentDocs.forEach((doc) => {
+      const field = FINAL_THESIS_DOCS.find((f) => f.id === doc.documentType);
+      if (field) {
+        preloaded[field.id] = doc;
+      }
+    });
+    setExistingFiles(preloaded);
+    setComments(request.comments || "");
+  }, [request]);
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
@@ -76,12 +107,28 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         }
       );
     },
-    onSuccess: () => {
-      toast.success("Final thesis documents submitted for supervisor review.");
-      onSuccess();
+    onSuccess: (_data, variables) => {
+      const submissionType = variables.get("submissionType");
+      if (submissionType === "draft") {
+        toast.success("Draft saved successfully! Your changes are stored.");
+        // Invalidate query to refetch data and show the pre-loaded files, confirming the save.
+        void queryClient.invalidateQueries({
+          queryKey: ["phd-request-details", request.id],
+        });
+      } else {
+        toast.success(
+          "Final thesis documents submitted for supervisor review."
+        );
+        onSuccess();
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Submission failed.");
+    },
+    onSettled: () => {
+      setSubmittingType(null);
+      // Clear the local file state after submission to prevent re-uploading
+      setFiles({});
     },
   });
 
@@ -89,20 +136,32 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
     setFiles((prev) => ({ ...prev, [fieldId]: fileList }));
   };
 
-  const handleSubmit = () => {
-    const formData = new FormData();
-
-    for (const doc of FINAL_THESIS_DOCS) {
-      const uploadedFile = files[doc.id]?.[0];
-      if (doc.required && !uploadedFile) {
-        return toast.error(`Please upload the required document: ${doc.label}`);
-      }
-      if (uploadedFile) {
-        formData.append("documents", uploadedFile, uploadedFile.name);
+  const handleSubmit = (submissionType: "draft" | "final") => {
+    setSubmittingType(submissionType);
+    if (submissionType === "final") {
+      for (const doc of FINAL_THESIS_DOCS) {
+        const hasNewFile = files[doc.id]?.[0];
+        const hasOldFile = existingFiles[doc.id];
+        if (doc.required && !hasNewFile && !hasOldFile) {
+          toast.error(`Please upload the required document: ${doc.label}`);
+          setSubmittingType(null);
+          return;
+        }
       }
     }
 
+    const formData = new FormData();
+    formData.append("submissionType", submissionType);
     formData.append("comments", comments);
+
+    for (const doc of FINAL_THESIS_DOCS) {
+      const uploadedFile = files[doc.id]?.[0];
+      if (uploadedFile) {
+        // Use doc.id as the "originalname" to map it on the backend
+        formData.append("documents", uploadedFile, doc.id);
+      }
+    }
+
     mutation.mutate(formData);
   };
 
@@ -112,7 +171,7 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         <CardTitle>Final Thesis Submission</CardTitle>
         <CardDescription>
           Please upload all the required documents for your final thesis
-          submission.
+          submission. You can save your progress as a draft at any time.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -121,31 +180,71 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
             <Info className="h-4 w-4" />
             <AlertTitle>Action Required</AlertTitle>
             <AlertDescription>
-              Your submission has been reverted. Please review your supervisor's
-              comments, make the necessary corrections, and re-upload the
-              corrected documents.
-              <p className="mt-2 font-semibold">
-                Comments: {lastReview.comments}
-              </p>
+              Your submission has been reverted. Please review the comments,
+              make the necessary corrections, and re-upload the corrected
+              documents.
+              <p className="mt-2 font-semibold">Comments: {revertComments}</p>
             </AlertDescription>
           </Alert>
         )}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {FINAL_THESIS_DOCS.map((doc) => (
-            <div key={doc.id}>
-              <Label>
-                {doc.label}
-                {doc.required && <span className="text-destructive">*</span>}
-              </Label>
-              <FileUploader
-                value={files[doc.id] || []}
-                onValueChange={(fileList) => handleFileChange(doc.id, fileList)}
-                maxFileCount={1}
-                maxSize={10 * 1024 * 1024}
-                accept={{ "application/pdf": [] }}
-              />
-            </div>
-          ))}
+          {FINAL_THESIS_DOCS.map((doc) => {
+            const existingFile = existingFiles[doc.id];
+            const currentFile = files[doc.id]?.[0];
+            return (
+              <div key={doc.id}>
+                <Label>
+                  {doc.label}
+                  {doc.required && <span className="text-destructive">*</span>}
+                </Label>
+                {existingFile && !currentFile ? (
+                  <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
+                    <a
+                      href={`${BASE_API_URL}f/${existingFile.file.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                    >
+                      <File className="h-4 w-4" /> View Current File
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={() =>
+                        document.getElementById(`uploader-${doc.id}`)?.click()
+                      }
+                    >
+                      <Replace className="mr-2 h-4 w-4" /> Replace
+                    </Button>
+                    <div className="hidden">
+                      <FileUploader
+                        id={`uploader-${doc.id}`}
+                        value={[]}
+                        onValueChange={(fileList) =>
+                          handleFileChange(doc.id, fileList)
+                        }
+                        maxFileCount={1}
+                        maxSize={10 * 1024 * 1024}
+                        accept={{ "application/pdf": [] }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <FileUploader
+                    value={files[doc.id] || []}
+                    onValueChange={(fileList) =>
+                      handleFileChange(doc.id, fileList)
+                    }
+                    maxFileCount={1}
+                    maxSize={10 * 1024 * 1024}
+                    accept={{ "application/pdf": [] }}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
         <div>
           <Label htmlFor="comments">Comments for Supervisor (Optional)</Label>
@@ -156,9 +255,24 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
             placeholder="Add any notes or comments for your supervisor regarding your submission..."
           />
         </div>
-        <div className="flex justify-end border-t pt-4">
-          <Button onClick={handleSubmit} disabled={mutation.isLoading}>
-            {mutation.isLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}
+        <div className="flex justify-end gap-2 border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={() => handleSubmit("draft")}
+            disabled={mutation.isLoading}
+          >
+            {mutation.isLoading && submittingType === "draft" ? (
+              <LoadingSpinner className="mr-2 h-4 w-4" />
+            ) : null}
+            Save Draft
+          </Button>
+          <Button
+            onClick={() => handleSubmit("final")}
+            disabled={mutation.isLoading}
+          >
+            {mutation.isLoading && submittingType === "final" ? (
+              <LoadingSpinner className="mr-2 h-4 w-4" />
+            ) : null}
             Submit to Supervisor
           </Button>
         </div>

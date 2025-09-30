@@ -113,7 +113,7 @@ const PhdLayout = () => {
         {
           title: "Final Thesis Submission",
           icon: <Briefcase />,
-          url: "/phd/student/thesis-submission",
+          url: "/phd/phd-student/thesis-submission",
           requiredPermissions: ["phd-request:student:submit-final-thesis"],
         },
         {

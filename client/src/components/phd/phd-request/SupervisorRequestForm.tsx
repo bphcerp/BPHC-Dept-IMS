@@ -1,3 +1,4 @@
+// client/src/components/phd/phd-request/SupervisorRequestForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +25,6 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [files, setFiles] = useState<File[]>([]);
-
   const form = useForm<phdRequestSchemas.CreateRequestBody>({
     resolver: zodResolver(
       phdRequestSchemas.createRequestSchema.omit({
@@ -56,10 +56,12 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
   });
 
   const onSubmit = (data: { comments?: string }) => {
-    if (files.length === 0) {
+    // For final_thesis_submission, files are not required at initiation
+    if (requestType !== "final_thesis_submission" && files.length === 0) {
       toast.error("Please upload at least one required document.");
       return;
     }
+
     const formData = new FormData();
     formData.append("studentEmail", studentEmail);
     formData.append("requestType", requestType);
@@ -69,24 +71,27 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
     files.forEach((file) => {
       formData.append("documents", file);
     });
+
     mutation.mutate(formData);
   };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-      <div>
-        <Label htmlFor="documents">Required Documents</Label>
-        <FileUploader
-          value={files}
-          onValueChange={setFiles}
-          maxFileCount={5}
-          maxSize={2 * 1024 * 1024}
-          accept={{ "application/pdf": [] }}
-        />
-        <p className="mt-1 text-sm text-muted-foreground">
-          Upload all necessary forms/documents as PDF (max 5 files, 2MB each).
-        </p>
-      </div>
+      {requestType !== "final_thesis_submission" && (
+        <div>
+          <Label htmlFor="documents">Required Documents</Label>
+          <FileUploader
+            value={files}
+            onValueChange={setFiles}
+            maxFileCount={5}
+            maxSize={2 * 1024 * 1024}
+            accept={{ "application/pdf": [] }}
+          />
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload all necessary forms/documents as PDF (max 5 files, 2MB each).
+          </p>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="comments">Comments (Optional)</Label>

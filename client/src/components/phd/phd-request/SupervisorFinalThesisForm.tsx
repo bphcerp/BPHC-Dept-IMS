@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// client/src/components/phd/phd-request/SupervisorFinalThesisForm.tsx
+import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
@@ -15,9 +16,11 @@ import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { RequestDetailsCard } from "./RequestDetailsCard";
+import { BASE_API_URL } from "@/lib/constants";
+import { File, ExternalLink, Replace } from "lucide-react";
 
 interface SupervisorFinalThesisFormProps {
-  request: any;
+  request: any; // Using 'any' as the full type is complex and defined in ViewPhdRequest
   onSuccess: () => void;
 }
 
@@ -35,6 +38,24 @@ export const SupervisorFinalThesisReviewForm: React.FC<
 > = ({ request, onSuccess }) => {
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [comments, setComments] = useState("");
+  const [existingFiles, setExistingFiles] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    // Pre-load existing private files for the supervisor on revert scenarios
+    const supervisorDocs = request.documents.filter(
+      (doc: any) => doc.isPrivate
+    );
+    const preloaded: Record<string, any> = {};
+    supervisorDocs.forEach((doc: any) => {
+      // A simple heuristic to map existing files back to form fields
+      if (doc.file.originalName.toLowerCase().includes("examiner")) {
+        preloaded["examinerList"] = doc; // This might need refinement
+      } else if (doc.file.originalName.toLowerCase().includes("information")) {
+        preloaded["examinerInfoFormat"] = doc;
+      }
+    });
+    setExistingFiles(preloaded);
+  }, [request.documents]);
 
   const mutation = useMutation({
     mutationFn: (formData: FormData) => {
@@ -67,7 +88,7 @@ export const SupervisorFinalThesisReviewForm: React.FC<
     if (action === "approve") {
       for (const doc of SUPERVISOR_DOCS) {
         const uploadedFile = files[doc.id]?.[0];
-        if (doc.required && !uploadedFile) {
+        if (doc.required && !uploadedFile && !existingFiles[doc.id]) {
           return toast.error(
             `Please upload the required document: ${doc.label}`
           );
@@ -115,27 +136,70 @@ export const SupervisorFinalThesisReviewForm: React.FC<
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {SUPERVISOR_DOCS.map((doc) => (
-              <div key={doc.id}>
-                <Label>
-                  {doc.label}
-                  {doc.required && <span className="text-destructive">*</span>}
-                </Label>
-                <FileUploader
-                  value={files[doc.id] || []}
-                  onValueChange={(fileList) =>
-                    handleFileChange(doc.id, fileList)
-                  }
-                  maxFileCount={1}
-                  maxSize={4 * 1024 * 1024}
-                  accept={{ "application/pdf": [] }}
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  These documents will not be visible to the student.
-                </p>
-              </div>
-            ))}
+            {SUPERVISOR_DOCS.map((doc) => {
+              const existingFile = existingFiles[doc.id];
+              const currentFile = files[doc.id]?.[0];
+              return (
+                <div key={doc.id}>
+                  <Label>
+                    {doc.label}
+                    {doc.required && (
+                      <span className="text-destructive">*</span>
+                    )}
+                  </Label>
+                  {existingFile && !currentFile ? (
+                    <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
+                      <a
+                        href={`${BASE_API_URL}f/${existingFile.file.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                      >
+                        <File className="h-4 w-4" /> View Current File
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={() =>
+                          document.getElementById(`uploader-${doc.id}`)?.click()
+                        }
+                      >
+                        <Replace className="mr-2 h-4 w-4" /> Replace
+                      </Button>
+                      <div className="hidden">
+                        <FileUploader
+                          id={`uploader-${doc.id}`}
+                          value={[]}
+                          onValueChange={(fileList) =>
+                            handleFileChange(doc.id, fileList)
+                          }
+                          maxFileCount={1}
+                          maxSize={4 * 1024 * 1024}
+                          accept={{ "application/pdf": [] }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <FileUploader
+                      value={files[doc.id] || []}
+                      onValueChange={(fileList) =>
+                        handleFileChange(doc.id, fileList)
+                      }
+                      maxFileCount={1}
+                      maxSize={4 * 1024 * 1024}
+                      accept={{ "application/pdf": [] }}
+                    />
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    These documents will not be visible to the student.
+                  </p>
+                </div>
+              );
+            })}
           </div>
+
           <div>
             <Label htmlFor="comments">Comments</Label>
             <Textarea
@@ -145,6 +209,7 @@ export const SupervisorFinalThesisReviewForm: React.FC<
               placeholder="Provide comments for the student (if reverting) or for the DRC (if approving)..."
             />
           </div>
+
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button
               variant="destructive"

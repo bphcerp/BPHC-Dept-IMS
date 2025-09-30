@@ -1,3 +1,4 @@
+// server/src/api/phd-request/history.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
@@ -6,6 +7,7 @@ import { eq, desc } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { authUtils } from "lib";
+
 const router = express.Router();
 
 router.get(
@@ -24,13 +26,16 @@ router.get(
             studentEmailParam === "me"
                 ? requestingUser.email
                 : studentEmailParam;
+
         const studentData = await db.query.phd.findFirst({
             where: eq(phd.email, studentEmail),
             columns: { supervisorEmail: true },
         });
+
         if (!studentData) {
             throw new HttpError(HttpCode.NOT_FOUND, "Student not found.");
         }
+
         const isSelf = requestingUser.email === studentEmail;
         const isSupervisor =
             requestingUser.email === studentData.supervisorEmail;
@@ -42,12 +47,14 @@ router.get(
             "phd-request:hod:view",
             requestingUser.permissions
         );
+
         if (!isSelf && !isSupervisor && !isDrcConvener && !isHod) {
             throw new HttpError(
                 HttpCode.FORBIDDEN,
                 "You do not have permission to view this student's history."
             );
         }
+
         const requests = await db.query.phdRequests.findMany({
             where: eq(phdRequests.studentEmail, studentEmail),
             with: {
@@ -68,20 +75,24 @@ router.get(
             },
             orderBy: [desc(phdRequests.createdAt)],
         });
+
         if (!requests) {
             throw new HttpError(
                 HttpCode.NOT_FOUND,
                 "No requests found for this student."
             );
         }
+
         const isPrivilegedViewer = isDrcConvener || isHod;
+
         const finalRequests = requests.map((request) => {
-            const augmentedReviews = request.reviews.map((review) => {
+            const augmentedReviews = request.reviews.map((review: any) => {
                 let roleTitle = "";
                 const reviewer = review.reviewer;
                 const actionText = review.approved
                     ? "Approved by "
                     : "Reverted by ";
+
                 switch (review.reviewerRole) {
                     case "HOD":
                         roleTitle = "HOD";
@@ -117,14 +128,31 @@ router.get(
                         roleTitle = review.reviewerRole;
                         break;
                 }
+
                 const nameSuffix = isPrivilegedViewer
                     ? ` (${reviewer.name || reviewer.email})`
                     : "";
                 const reviewerDisplayName = `${actionText}${roleTitle}${nameSuffix}`;
+
                 return { ...review, reviewerDisplayName };
             });
-            return { ...request, reviews: augmentedReviews };
+
+            const finalRequest = { ...request, reviews: augmentedReviews };
+
+            // Filter for self-view
+            if (isSelf) {
+                finalRequest.documents = finalRequest.documents.filter(
+                    (doc) => !doc.isPrivate
+                );
+                finalRequest.reviews.forEach((review) => {
+                    // @ts-ignore
+                    delete review.supervisorComments;
+                });
+            }
+
+            return finalRequest;
         });
+
         res.status(200).json(finalRequests);
     })
 );

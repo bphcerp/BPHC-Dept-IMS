@@ -1,3 +1,4 @@
+// lib/src/schemas/PhdRequest.ts
 import { z } from "zod";
 
 export const phdRequestTypes = [
@@ -68,6 +69,7 @@ export type ReviewerBody = z.infer<typeof reviewerSchema>;
 
 export const studentFinalThesisSchema = z.object({
     comments: z.string().optional(),
+    submissionType: z.enum(["draft", "final"]),
 });
 export type StudentFinalThesisBody = z.infer<typeof studentFinalThesisSchema>;
 
@@ -89,41 +91,107 @@ export type SupervisorFinalThesisReviewBody = z.infer<
     typeof supervisorFinalThesisReviewSchema
 >;
 
-export const finalThesisReviewerSchema = z.discriminatedUnion("action", [
-    z.object({
-        action: z.literal("approve"),
-        comments: z.string().optional(),
-    }),
-    z.object({
-        action: z.literal("revert"),
-        comments: z.string().min(1, "Comments are required for reverting."),
-        revertTo: z.enum(["student", "supervisor", "both"], {
-            required_error: "Please specify who to revert to.",
+export const finalThesisReviewerSchema = z
+    .discriminatedUnion("action", [
+        z.object({
+            action: z.literal("approve"),
+            comments: z.string().optional(),
         }),
-    }),
-    z.object({
-        action: z.literal("forward_to_drc"),
-        comments: z.string().optional(),
-        assignedDrcMembers: z
-            .array(z.string().email())
-            .min(1, "At least one DRC member must be selected."),
-    }),
-]);
+        z.object({
+            action: z.literal("revert"),
+            comments: z.string().optional(),
+            studentComments: z.string().optional(),
+            supervisorComments: z.string().optional(),
+            revertTo: z.enum(["student", "supervisor", "both"], {
+                required_error: "Please specify who to revert to.",
+            }),
+        }),
+        z.object({
+            action: z.literal("forward_to_drc"),
+            comments: z.string().optional(),
+            assignedDrcMembers: z
+                .array(z.string().email())
+                .min(1, "At least one DRC member must be selected."),
+        }),
+    ])
+    .refine(
+        (data) => {
+            if (data.action === "revert") {
+                if (
+                    data.revertTo === "student" &&
+                    (!data.studentComments ||
+                        data.studentComments.trim().length === 0)
+                )
+                    return false;
+                if (
+                    data.revertTo === "supervisor" &&
+                    (!data.supervisorComments ||
+                        data.supervisorComments.trim().length === 0)
+                )
+                    return false;
+                if (
+                    data.revertTo === "both" &&
+                    (!data.studentComments ||
+                        data.studentComments.trim().length === 0 ||
+                        !data.supervisorComments ||
+                        data.supervisorComments.trim().length === 0)
+                )
+                    return false;
+            }
+            return true;
+        },
+        {
+            message: "Comments are required for the selected revert option.",
+        }
+    );
 export type FinalThesisReviewerBody = z.infer<typeof finalThesisReviewerSchema>;
 
-export const hodFinalThesisReviewerSchema = z.discriminatedUnion("action", [
-    z.object({
-        action: z.literal("approve"),
-        comments: z.string().optional(),
-    }),
-    z.object({
-        action: z.literal("revert"),
-        comments: z.string().min(1, "Comments are required for reverting."),
-        revertTo: z.enum(["student", "supervisor", "both"], {
-            required_error: "Please specify who to revert to.",
+export const hodFinalThesisReviewerSchema = z
+    .discriminatedUnion("action", [
+        z.object({
+            action: z.literal("approve"),
+            comments: z.string().optional(),
         }),
-    }),
-]);
+        z.object({
+            action: z.literal("revert"),
+            comments: z.string().optional(),
+            studentComments: z.string().optional(),
+            supervisorComments: z.string().optional(),
+            revertTo: z.enum(["student", "supervisor", "both"], {
+                required_error: "Please specify who to revert to.",
+            }),
+        }),
+    ])
+    .refine(
+        (data) => {
+            if (data.action === "revert") {
+                if (
+                    data.revertTo === "student" &&
+                    (!data.studentComments ||
+                        data.studentComments.trim().length === 0)
+                )
+                    return false;
+                if (
+                    data.revertTo === "supervisor" &&
+                    (!data.supervisorComments ||
+                        data.supervisorComments.trim().length === 0)
+                )
+                    return false;
+                if (
+                    data.revertTo === "both" &&
+                    (!data.studentComments ||
+                        data.studentComments.trim().length === 0 ||
+                        !data.supervisorComments ||
+                        data.supervisorComments.trim().length === 0)
+                )
+                    return false;
+            }
+            return true;
+        },
+        {
+            message: "Comments are required for the selected revert option.",
+        }
+    );
 export type HodFinalThesisReviewerBody = z.infer<
     typeof hodFinalThesisReviewerSchema
 >;

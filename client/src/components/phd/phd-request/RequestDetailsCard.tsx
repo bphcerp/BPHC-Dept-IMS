@@ -77,7 +77,7 @@ export const RequestDetailsCard: React.FC<RequestDetailsCardProps> = ({
               request.documents.map((doc) => (
                 <a
                   key={doc.id}
-                  href={`${BASE_API_URL}/f/${doc.file.id}`}
+                  href={`${BASE_API_URL}f/${doc.file.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

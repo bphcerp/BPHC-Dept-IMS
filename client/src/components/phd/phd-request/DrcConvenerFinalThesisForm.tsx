@@ -1,3 +1,4 @@
+// client/src/components/phd/phd-request/DrcConvenerFinalThesisForm.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -16,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 interface DrcConvenerFinalThesisFormProps {
   request: { id: number; status: string };
@@ -25,7 +27,9 @@ interface DrcConvenerFinalThesisFormProps {
 export const DrcConvenerFinalThesisForm: React.FC<
   DrcConvenerFinalThesisFormProps
 > = ({ request, onSuccess }) => {
-  const [comments, setComments] = useState("");
+  const [studentComments, setStudentComments] = useState("");
+  const [supervisorComments, setSupervisorComments] = useState("");
+  const [internalComments, setInternalComments] = useState("");
   const [revertTo, setRevertTo] = useState<
     "student" | "supervisor" | "both" | null
   >(null);
@@ -58,18 +62,18 @@ export const DrcConvenerFinalThesisForm: React.FC<
     },
   });
 
-  const handleSubmit = () => {
-    let data: any = { action, comments };
+  const handleSubmit = (
+    currentAction: "approve" | "revert" | "forward_to_drc"
+  ) => {
+    setAction(currentAction);
 
-    if (action === "revert") {
-      if (!comments.trim() || !revertTo) {
-        return toast.error("Comments and a revert target are required.");
-      }
+    let data: any = { action: currentAction, comments: internalComments };
+
+    if (currentAction === "revert") {
       data.revertTo = revertTo;
-    } else if (action === "forward_to_drc") {
-      if (selectedDrcMembers.length === 0) {
-        return toast.error("Please select at least one DRC member.");
-      }
+      data.studentComments = studentComments;
+      data.supervisorComments = supervisorComments;
+    } else if (currentAction === "forward_to_drc") {
       data.assignedDrcMembers = selectedDrcMembers;
     }
 
@@ -92,38 +96,84 @@ export const DrcConvenerFinalThesisForm: React.FC<
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="comments">Comments</Label>
+          <Label htmlFor="internalComments">Internal Comments (Optional)</Label>
           <Textarea
-            id="comments"
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-            placeholder="Provide comments for reversion or internal notes for other actions."
+            id="internalComments"
+            value={internalComments}
+            onChange={(e) => setInternalComments(e.target.value)}
+            placeholder="Provide internal notes for other actions."
           />
         </div>
-        <div className="space-y-2">
-          <Label>If Reverting, Revert To:</Label>
-          <RadioGroup
-            onValueChange={(val) => setRevertTo(val as any)}
-            value={revertTo ?? ""}
+
+        <Separator />
+
+        <div className="space-y-4 rounded-md border p-4">
+          <h3 className="font-semibold">Reversion Options</h3>
+          <div className="space-y-2">
+            <Label>Revert To:</Label>
+            <RadioGroup
+              onValueChange={(val) =>
+                setRevertTo(val as "student" | "supervisor" | "both")
+              }
+              value={revertTo ?? ""}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="student" id="r_student" />
+                <Label htmlFor="r_student">
+                  Student (for document corrections)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="supervisor" id="r_supervisor" />
+                <Label htmlFor="r_supervisor">
+                  Supervisor (for their private documents)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="both" id="r_both" />
+                <Label htmlFor="r_both">Both Student and Supervisor</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          {(revertTo === "student" || revertTo === "both") && (
+            <div className="space-y-2">
+              <Label htmlFor="studentComments">Comments for Student</Label>
+              <Textarea
+                id="studentComments"
+                value={studentComments}
+                onChange={(e) => setStudentComments(e.target.value)}
+                placeholder="These comments will be visible to the student."
+              />
+            </div>
+          )}
+          {(revertTo === "supervisor" || revertTo === "both") && (
+            <div className="space-y-2">
+              <Label htmlFor="supervisorComments">
+                Comments for Supervisor
+              </Label>
+              <Textarea
+                id="supervisorComments"
+                value={supervisorComments}
+                onChange={(e) => setSupervisorComments(e.target.value)}
+                placeholder="These comments will ONLY be visible to the supervisor."
+              />
+            </div>
+          )}
+          <Button
+            variant="destructive"
+            onClick={() => handleSubmit("revert")}
+            disabled={mutation.isLoading || !revertTo}
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="student" id="r_student" />
-              <Label htmlFor="r_student">
-                Student (for their document corrections)
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="supervisor" id="r_supervisor" />
-              <Label htmlFor="r_supervisor">
-                Supervisor (for their document corrections)
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="both" id="r_both" />
-              <Label htmlFor="r_both">Both Student and Supervisor</Label>
-            </div>
-          </RadioGroup>
+            {mutation.isLoading && action === "revert" ? (
+              <LoadingSpinner />
+            ) : (
+              "Revert Submission"
+            )}
+          </Button>
         </div>
+
+        <Separator />
+
         <div className="space-y-2">
           <Label>Forward to DRC Members for Review (Optional)</Label>
           <Combobox
@@ -141,25 +191,10 @@ export const DrcConvenerFinalThesisForm: React.FC<
         </div>
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button
-            variant="destructive"
-            onClick={() => {
-              setAction("revert");
-              handleSubmit();
-            }}
-            disabled={mutation.isLoading}
-          >
-            {mutation.isLoading && action === "revert" ? (
-              <LoadingSpinner />
-            ) : (
-              "Revert"
-            )}
-          </Button>
-          <Button
             onClick={() => {
               const finalAction =
                 selectedDrcMembers.length > 0 ? "forward_to_drc" : "approve";
-              setAction(finalAction);
-              handleSubmit();
+              handleSubmit(finalAction);
             }}
             disabled={mutation.isLoading}
           >

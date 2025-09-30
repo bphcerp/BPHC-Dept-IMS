@@ -1,3 +1,4 @@
+// server/src/api/phd-request/details.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
@@ -53,10 +54,12 @@ router.get(
                     req.user.permissions
                 ));
 
-        const augmentedReviews = request.reviews.map((review) => {
+        const augmentedReviews = request.reviews.map((review: any) => {
             let roleTitle = "";
             const reviewer = review.reviewer;
-            const actionText = review.approved ? "Approved by" : "Reverted by";
+            const actionText = review.approved
+                ? "Approved by "
+                : "Reverted by ";
 
             switch (review.reviewerRole) {
                 case "HOD":
@@ -89,25 +92,29 @@ router.get(
                     roleTitle = "Student";
                     break;
                 default:
-                    roleTitle = review.reviewerRole; // Fallback
+                    roleTitle = review.reviewerRole;
                     break;
             }
 
             const nameSuffix = isPrivilegedViewer
                 ? ` (${reviewer.name || reviewer.email})`
                 : "";
-
-            const reviewerDisplayName = `${actionText} ${roleTitle}${nameSuffix}`;
+            const reviewerDisplayName = `${actionText}${roleTitle}${nameSuffix}`;
 
             return { ...review, reviewerDisplayName };
         });
 
         const finalRequest = { ...request, reviews: augmentedReviews };
 
+        // Filter out private data for students
         if (req.user?.email === finalRequest.studentEmail) {
             finalRequest.documents = finalRequest.documents.filter(
                 (doc) => !doc.isPrivate
             );
+            finalRequest.reviews.forEach((review) => {
+                // @ts-ignore
+                delete review.supervisorComments;
+            });
         }
 
         res.status(200).json(finalRequest);

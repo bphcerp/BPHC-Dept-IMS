@@ -1,3 +1,4 @@
+// client/src/views/Phd/Supervisor/StudentHistory.tsx
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -35,9 +36,11 @@ interface PhdRequestDetails {
     reviewer: { name: string; email: string };
     approved: boolean;
     comments: string | null;
+    studentComments: string | null;
+    supervisorComments: string | null;
     createdAt: string;
     status_at_review: string | null;
-    reviewerDisplayName: string; // This line was missing or incorrect
+    reviewerDisplayName: string;
   }>;
   drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
 }
@@ -81,7 +84,7 @@ const StudentHistory: React.FC = () => {
     <div className="space-y-6">
       <BackButton />
       <div className="text-center">
-        <h1 className="text-3xl font-bold">Request History</h1>
+        <h1 className="text-3xl font-bold">Student Request Status</h1>
         <p className="mt-2 text-gray-600">
           Showing all past and present requests for{" "}
           {requests[0]?.student.name || studentEmail}.
@@ -121,8 +124,7 @@ const StudentHistory: React.FC = () => {
                     <div className="flex justify-end">
                       <Button variant="destructive" size="sm" asChild>
                         <Link to={`/phd/requests/${request.id}`}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Resubmit Request
+                          <Edit className="mr-2 h-4 w-4" /> Resubmit Request
                         </Link>
                       </Button>
                     </div>

@@ -1,3 +1,4 @@
+// client/src/views/Phd/Supervisor/MyStudents.tsx
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -36,7 +37,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { phdRequestSchemas } from "lib";
 import { SupervisorRequestForm } from "@/components/phd/phd-request/SupervisorRequestForm";
-import { UserPlus, MessageCircleWarning, Edit } from "lucide-react";
+import { UserPlus, MessageCircleWarning, Edit, FileCheck2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Tooltip,
@@ -97,7 +98,6 @@ const MyStudents: React.FC = () => {
           View the status of your PhD students and initiate new requests.
         </p>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>
@@ -184,6 +184,16 @@ const MyStudents: React.FC = () => {
                             </Link>
                           </Button>
                         )}
+                        {student.currentStatus
+                          .toLowerCase()
+                          .includes("supervisor_review_final_thesis") && (
+                          <Button variant="default" size="sm" asChild>
+                            <Link to={`/phd/requests/${student.requestId}`}>
+                              <FileCheck2 className="mr-2 h-4 w-4" />
+                              Review Final Thesis
+                            </Link>
+                          </Button>
+                        )}
                         {student.canResubmitRequest && student.requestId && (
                           <Button variant="destructive" size="sm" asChild>
                             <Link to={`/phd/requests/${student.requestId}`}>
@@ -193,7 +203,7 @@ const MyStudents: React.FC = () => {
                           </Button>
                         )}
                         <Button
-                          variant="default"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleOpenDialog(student)}
                           disabled={student.availableRequestTypes.length === 0}
@@ -210,7 +220,7 @@ const MyStudents: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
-      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+      <Dialog open={isRequestDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>

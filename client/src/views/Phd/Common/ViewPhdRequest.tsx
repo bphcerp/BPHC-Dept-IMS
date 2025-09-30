@@ -1,3 +1,4 @@
+// client/src/views/Phd/Common/ViewPhdRequest.tsx
 import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,6 +35,8 @@ interface PhdRequestDetails {
     reviewer: { name: string; email: string };
     approved: boolean;
     comments: string | null;
+    studentComments: string | null; // Added for new feature
+    supervisorComments: string | null; // Added for new feature
     createdAt: string;
     status_at_review: string | null;
     reviewerDisplayName: string;
@@ -45,7 +48,6 @@ const ViewPhdRequest: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { authState, checkAccess } = useAuth();
   const queryClient = useQueryClient();
-
   const queryKey = ["phd-request-details", id];
 
   const {
@@ -66,7 +68,9 @@ const ViewPhdRequest: React.FC = () => {
     await queryClient.invalidateQueries({
       queryKey: ["drc-convener-requests"],
     });
-    await queryClient.invalidateQueries({ queryKey: ["drc-member-requests"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["drc-member-requests"],
+    });
     await queryClient.invalidateQueries({ queryKey: ["hod-requests"] });
     await queryClient.invalidateQueries({
       queryKey: ["supervisor-my-students"],
@@ -75,10 +79,8 @@ const ViewPhdRequest: React.FC = () => {
 
   const renderActionPanel = () => {
     if (!request || !authState) return null;
-
     const { status, student, supervisor, requestType, id: requestId } = request;
 
-    // 1. Handle Student's turn
     if (authState.email === student.email && status === "student_review") {
       if (requestType === "final_thesis_submission") {
         return (
@@ -87,7 +89,6 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    // 2. Handle Supervisor's turn
     if (authState.email === supervisor.email) {
       const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
         [
@@ -95,6 +96,7 @@ const ViewPhdRequest: React.FC = () => {
           "reverted_by_drc_member",
           "reverted_by_hod",
         ];
+
       if (revertableStatuses.includes(status)) {
         return (
           <SupervisorResubmitForm
@@ -113,7 +115,6 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    // 3. Handle DRC Convener's turn
     if (checkAccess("phd-request:drc-convener:review")) {
       if (requestType === "final_thesis_submission") {
         if (
@@ -131,7 +132,6 @@ const ViewPhdRequest: React.FC = () => {
           );
         }
       } else {
-        // For other request types
         if (["supervisor_submitted", "drc_convener_review"].includes(status)) {
           return (
             <DrcConvenerReviewPanel
@@ -143,7 +143,6 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    // 4. Handle DRC Member's turn
     if (
       checkAccess("phd-request:drc-member:review") &&
       status === "drc_member_review"
@@ -153,7 +152,6 @@ const ViewPhdRequest: React.FC = () => {
       );
     }
 
-    // 5. Handle HOD's turn
     if (checkAccess("phd-request:hod:review") && status === "hod_review") {
       if (requestType === "final_thesis_submission") {
         return (
@@ -164,7 +162,7 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    return null; // No action panel for the current user/status combination
+    return null;
   };
 
   if (isLoading) {

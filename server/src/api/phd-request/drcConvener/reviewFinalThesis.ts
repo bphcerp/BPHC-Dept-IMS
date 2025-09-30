@@ -1,3 +1,4 @@
+// server/src/api/phd-request/drcConvener/reviewFinalThesis.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
@@ -45,7 +46,11 @@ router.post(
                 reviewerEmail: convenerEmail,
                 reviewerRole: "DRC_CONVENER",
                 approved: body.action !== "revert",
-                comments: body.comments || `Action: ${body.action}`,
+                comments: body.comments,
+                studentComments:
+                    body.action === "revert" ? body.studentComments : null,
+                supervisorComments:
+                    body.action === "revert" ? body.supervisorComments : null,
             });
 
             await completeTodo(
@@ -60,14 +65,17 @@ router.post(
             if (body.action === "revert") {
                 const todosToCreate = [];
                 const emailsToSend = [];
+                const targetStatus =
+                    body.revertTo === "supervisor"
+                        ? "supervisor_review_final_thesis"
+                        : "student_review";
 
-                // Handle revert to student
                 if (body.revertTo === "student" || body.revertTo === "both") {
                     todosToCreate.push({
                         assignedTo: request.studentEmail,
                         createdBy: convenerEmail,
                         title: `Action Required: Final Thesis Reverted by DRC Convener`,
-                        description: `The final thesis submission was reverted. Comments: ${body.comments}`,
+                        description: `The final thesis submission was reverted. Comments: ${body.studentComments}`,
                         module: modules[2],
                         completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
                         link: `/phd/requests/${requestId}`,
@@ -75,11 +83,9 @@ router.post(
                     emailsToSend.push({
                         to: request.studentEmail,
                         subject: `Final Thesis Reverted by DRC Convener`,
-                        text: `Dear Student,\n\nThe final thesis submission was reverted by the DRC Convener.\nComments: ${body.comments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        text: `Dear Student,\n\nThe final thesis submission was reverted by the DRC Convener.\nComments: ${body.studentComments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
                     });
                 }
-
-                // Handle revert to supervisor
                 if (
                     body.revertTo === "supervisor" ||
                     body.revertTo === "both"
@@ -88,7 +94,7 @@ router.post(
                         assignedTo: request.supervisorEmail,
                         createdBy: convenerEmail,
                         title: `Action Required: Final Thesis Reverted by DRC Convener`,
-                        description: `The final thesis submission for ${request.student.name} was reverted. Comments: ${body.comments}`,
+                        description: `The final thesis submission for ${request.student.name} was reverted. Comments: ${body.supervisorComments}`,
                         module: modules[2],
                         completionEvent: `phd-request:supervisor-resubmit-final-thesis:${requestId}`,
                         link: `/phd/requests/${requestId}`,
@@ -96,26 +102,18 @@ router.post(
                     emailsToSend.push({
                         to: request.supervisorEmail,
                         subject: `Final Thesis Reverted by DRC Convener`,
-                        text: `Dear Supervisor,\n\nThe final thesis submission was reverted by the DRC Convener.\nComments: ${body.comments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        text: `Dear Supervisor,\n\nThe final thesis submission was reverted by the DRC Convener.\n\nComments for you: ${body.supervisorComments}\nComments for student: ${body.studentComments}\nPlease take necessary action here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
                     });
                 }
 
-                // Set status based on primary actor
-                const targetStatus =
-                    body.revertTo === "supervisor"
-                        ? "supervisor_review_final_thesis"
-                        : "student_review";
                 await tx
                     .update(phdRequests)
                     .set({ status: targetStatus })
                     .where(eq(phdRequests.id, requestId));
 
-                if (todosToCreate.length > 0) {
+                if (todosToCreate.length > 0)
                     await createTodos(todosToCreate, tx);
-                }
-                if (emailsToSend.length > 0) {
-                    await sendBulkEmails(emailsToSend);
-                }
+                if (emailsToSend.length > 0) await sendBulkEmails(emailsToSend);
             } else if (body.action === "forward_to_drc") {
                 await tx
                     .update(phdRequests)
@@ -168,6 +166,7 @@ router.post(
                 }
             }
         });
+
         res.status(200).json({
             success: true,
             message: "Action processed successfully.",
