@@ -56,6 +56,7 @@ export const allPermissions = {
         "Submit review for an assigned PhD request",
     "phd-request:hod:view": "View PhD requests for final approval",
     "phd-request:hod:review": "Submit final approval for a PhD request",
+    "phd-request:staff:view": "View all PhD requests",
     "phd-request:common": "View PhD request details",
     //meeting
     "meeting:use": "Access and use the meeting module",
@@ -339,6 +340,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd-request/hod/requests": "phd-request:hod:view",
     "/phd-request/hod/review": "phd-request:hod:review",
+
+    "/phd-request/staff/getAllRequests": "phd-request:staff:view",
 
     "/phd-request/details": "phd-request:common",
 

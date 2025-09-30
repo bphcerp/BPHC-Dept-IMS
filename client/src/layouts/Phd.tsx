@@ -12,6 +12,7 @@ import {
   FileCheck2,
   UserCog,
   Briefcase,
+  FolderArchive,
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
@@ -137,6 +138,12 @@ const PhdLayout = () => {
     {
       title: "Staff",
       items: [
+        {
+          title: "All PhD Requests",
+          icon: <FolderArchive />,
+          url: "/phd/staff/all-requests",
+          requiredPermissions: ["phd-request:staff:view"],
+        },
         {
           title: "Semester Dates Management",
           icon: <Calendar />,

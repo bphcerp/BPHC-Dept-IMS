@@ -55,6 +55,7 @@ import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
 import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
+import PhdRequestsArchive from "@/views/Phd/Staff/PhdRequestsArchive";
 import SeminarScheduling from "@/views/Phd/DrcConvenor/SeminarScheduling";
 import MyStudents from "@/views/Phd/Supervisor/MyStudents";
 import DrcConvenerPhdRequestsDashboard from "@/views/Phd/DrcConvenor/PhdRequestsDashboard";
@@ -469,6 +470,8 @@ const Routing = () => {
                 permissions["/phd/staff/getAllSem"],
                 permissions["/phd/staff/qualifyingExams"],
                 permissions["/phd/staff/emailTemplates"],
+                permissions["/phd-request/staff/getAllRequests"],
+                
               ]) && (
                 <Route path="staff" element={<Outlet />}>
                   {checkAccess(permissions["/phd/staff/getAllSem"]) && (
@@ -494,6 +497,9 @@ const Routing = () => {
                       path="manage-email-templates"
                       element={<ManageEmailTemplates />}
                     />
+                  )}
+                  {checkAccess(permissions["/phd-request/staff/getAllRequests"]) && (
+                    <Route path="all-requests" element={<PhdRequestsArchive />} />
                   )}
                 </Route>
               )}
@@ -627,7 +633,8 @@ const Routing = () => {
                 "phd-request:drc-convener:view",
                 "phd-request:drc-member:view",
                 "phd-request:hod:view",
-                "phd-request:student:submit-final-thesis", // Use a relevant permission for student view
+                "phd-request:student:submit-final-thesis", 
+                "phd-request:staff:view"
               ]) && <Route path="requests/:id" element={<ViewPhdRequest />} />}
             </Route>
           )}

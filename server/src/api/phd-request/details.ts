@@ -1,4 +1,3 @@
-// server/src/api/phd-request/details.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
@@ -16,7 +15,7 @@ router.get(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-
+        
         const request = await db.query.phdRequests.findFirst({
             where: eq(phdRequests.id, requestId),
             with: {
@@ -51,6 +50,10 @@ router.get(
             ) ||
                 authUtils.checkAccess(
                     "phd-request:drc-convener:view",
+                    req.user.permissions
+                ) ||
+                authUtils.checkAccess(
+                    "phd-request:staff:view",
                     req.user.permissions
                 ));
 
@@ -103,16 +106,12 @@ router.get(
 
             return { ...review, reviewerDisplayName };
         });
-
         const finalRequest = { ...request, reviews: augmentedReviews };
-
-        // Filter out private data for students
         if (req.user?.email === finalRequest.studentEmail) {
             finalRequest.documents = finalRequest.documents.filter(
                 (doc) => !doc.isPrivate
             );
             finalRequest.reviews.forEach((review) => {
-                // @ts-ignore
                 delete review.supervisorComments;
             });
         }
