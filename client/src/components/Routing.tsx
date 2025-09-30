@@ -822,12 +822,12 @@ const Routing = () => {
               <Route path="allocate/:id" element={<AllocateCourse />} />
 
               {checkAccessAnyOne([
-                "allocation:courses:read",
+                "allocation:courses:view",
                 "allocation:write",
               ]) && <Route path="courses" element={<CoursesPage />} />}
 
               {checkAccessAnyOne([
-                "allocation:semesters:read",
+                "allocation:semesters:view",
                 "allocation:write",
               ]) && (
                 <>
