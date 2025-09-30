@@ -12,12 +12,11 @@ import {
 } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
-import { eq, and, inArray } from "drizzle-orm"; 
+import { eq, and, inArray } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
-import fs from "fs/promises"; 
-
+import fs from "fs/promises";
 const router = express.Router();
 
 router.post(
@@ -61,16 +60,83 @@ router.post(
             );
 
             if (action === "approve") {
-                if (!uploadedFiles || uploadedFiles.length < 2) {
-                    throw new HttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Supervisor report and final examination panel documents are required for approval."
+                if (uploadedFiles && uploadedFiles.length > 0) {
+                    const fieldNamesToReplace = uploadedFiles.map(
+                        (f) => f.originalname
                     );
+
+                    const oldDocsToDelete =
+                        await tx.query.phdRequestDocuments.findMany({
+                            where: and(
+                                eq(phdRequestDocuments.requestId, requestId),
+                                eq(
+                                    phdRequestDocuments.uploadedByEmail,
+                                    supervisorEmail
+                                ),
+                                inArray(
+                                    phdRequestDocuments.documentType,
+                                    fieldNamesToReplace
+                                )
+                            ),
+                            columns: { fileId: true },
+                        });
+
+                    if (oldDocsToDelete.length > 0) {
+                        const oldFileIds = oldDocsToDelete.map(
+                            (doc) => doc.fileId
+                        );
+                        const oldFileRecords = await tx
+                            .select({ path: files.filePath })
+                            .from(files)
+                            .where(inArray(files.id, oldFileIds));
+                        await tx
+                            .delete(phdRequestDocuments)
+                            .where(
+                                inArray(phdRequestDocuments.fileId, oldFileIds)
+                            );
+                        await tx
+                            .delete(files)
+                            .where(inArray(files.id, oldFileIds));
+                        for (const fileRecord of oldFileRecords) {
+                            try {
+                                await fs.unlink(fileRecord.path);
+                            } catch (e) {
+                                console.error(
+                                    `Failed to delete old supervisor file: ${fileRecord.path}`,
+                                    e
+                                );
+                            }
+                        }
+                    }
+
+                    const fileInserts = uploadedFiles.map((file) => ({
+                        userEmail: supervisorEmail,
+                        filePath: file.path,
+                        originalName: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                        fieldName: file.fieldname,
+                        module: modules[2],
+                    }));
+                    const insertedFiles = await tx
+                        .insert(files)
+                        .values(fileInserts)
+                        .returning();
+                    const documentInserts = insertedFiles.map(
+                        (file, index) => ({
+                            requestId,
+                            fileId: file.id,
+                            uploadedByEmail: supervisorEmail,
+                            documentType: uploadedFiles[index].originalname,
+                            isPrivate: true,
+                        })
+                    );
+                    await tx
+                        .insert(phdRequestDocuments)
+                        .values(documentInserts);
                 }
 
-                // *** START: Added file replacement logic ***
-                // Find any existing documents uploaded by this supervisor for this request.
-                const oldDocsToDelete =
+                const finalDocsCount = (
                     await tx.query.phdRequestDocuments.findMany({
                         where: and(
                             eq(phdRequestDocuments.requestId, requestId),
@@ -78,64 +144,17 @@ router.post(
                                 phdRequestDocuments.uploadedByEmail,
                                 supervisorEmail
                             ),
-                            eq(
-                                phdRequestDocuments.documentType,
-                                "final_thesis_supervisor_document"
-                            )
+                            eq(phdRequestDocuments.isPrivate, true)
                         ),
-                        columns: { fileId: true },
-                    });
+                    })
+                ).length;
 
-                if (oldDocsToDelete.length > 0) {
-                    const oldFileIds = oldDocsToDelete.map((doc) => doc.fileId);
-                    const oldFileRecords = await tx
-                        .select({ path: files.filePath })
-                        .from(files)
-                        .where(inArray(files.id, oldFileIds));
-
-                    // Delete from the linking table first
-                    await tx
-                        .delete(phdRequestDocuments)
-                        .where(inArray(phdRequestDocuments.fileId, oldFileIds));
-
-                    // Delete from the main files table
-                    await tx.delete(files).where(inArray(files.id, oldFileIds));
-
-                    // Use fs.promises to delete the actual files from the server
-                    for (const fileRecord of oldFileRecords) {
-                        try {
-                            await fs.unlink(fileRecord.path);
-                        } catch (e) {
-                            console.error(
-                                `Failed to delete old supervisor file: ${fileRecord.path}`,
-                                e
-                            );
-                        }
-                    }
+                if (finalDocsCount < 2) {
+                    throw new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Supervisor report and final examination panel documents are required for approval."
+                    );
                 }
-                // *** END: Added file replacement logic ***
-
-                const fileInserts = uploadedFiles.map((file) => ({
-                    userEmail: supervisorEmail,
-                    filePath: file.path,
-                    originalName: file.originalname,
-                    mimetype: file.mimetype,
-                    size: file.size,
-                    fieldName: file.fieldname,
-                    module: modules[2],
-                }));
-                const insertedFiles = await tx
-                    .insert(files)
-                    .values(fileInserts)
-                    .returning();
-                const documentInserts = insertedFiles.map((file) => ({
-                    requestId,
-                    fileId: file.id,
-                    uploadedByEmail: supervisorEmail,
-                    documentType: "final_thesis_supervisor_document",
-                    isPrivate: true,
-                }));
-                await tx.insert(phdRequestDocuments).values(documentInserts);
 
                 await tx.insert(phdRequestReviews).values({
                     requestId,
@@ -145,12 +164,10 @@ router.post(
                     comments: comments || "Approved by Supervisor",
                     status_at_review: request.status,
                 });
-
                 await tx
                     .update(phdRequests)
                     .set({ status: "drc_convener_review" })
                     .where(eq(phdRequests.id, requestId));
-
                 const drcConveners = await getUsersWithPermission(
                     "phd-request:drc-convener:view",
                     tx
@@ -175,7 +192,6 @@ router.post(
                     );
                 }
             } else {
-                // Revert action
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: supervisorEmail,
@@ -184,12 +200,10 @@ router.post(
                     comments: comments || "Reverted by Supervisor",
                     status_at_review: request.status,
                 });
-
                 await tx
                     .update(phdRequests)
                     .set({ status: "student_review" })
                     .where(eq(phdRequests.id, requestId));
-
                 const todos = [
                     {
                         assignedTo: request.studentEmail,

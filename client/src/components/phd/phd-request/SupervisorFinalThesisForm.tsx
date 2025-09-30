@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/SupervisorFinalThesisForm.tsx
 import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -20,7 +19,7 @@ import { BASE_API_URL } from "@/lib/constants";
 import { File, ExternalLink, Replace } from "lucide-react";
 
 interface SupervisorFinalThesisFormProps {
-  request: any; // Using 'any' as the full type is complex and defined in ViewPhdRequest
+  request: any;
   onSuccess: () => void;
 }
 
@@ -41,17 +40,13 @@ export const SupervisorFinalThesisReviewForm: React.FC<
   const [existingFiles, setExistingFiles] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    // Pre-load existing private files for the supervisor on revert scenarios
     const supervisorDocs = request.documents.filter(
       (doc: any) => doc.isPrivate
     );
     const preloaded: Record<string, any> = {};
     supervisorDocs.forEach((doc: any) => {
-      // A simple heuristic to map existing files back to form fields
-      if (doc.file.originalName.toLowerCase().includes("examiner")) {
-        preloaded["examinerList"] = doc; // This might need refinement
-      } else if (doc.file.originalName.toLowerCase().includes("information")) {
-        preloaded["examinerInfoFormat"] = doc;
+      if (SUPERVISOR_DOCS.some((d) => d.id === doc.documentType)) {
+        preloaded[doc.documentType] = doc;
       }
     });
     setExistingFiles(preloaded);
@@ -94,7 +89,7 @@ export const SupervisorFinalThesisReviewForm: React.FC<
           );
         }
         if (uploadedFile) {
-          formData.append("documents", uploadedFile, uploadedFile.name);
+          formData.append("documents", uploadedFile, doc.id);
         }
       }
     }

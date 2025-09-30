@@ -1,4 +1,3 @@
-// client/src/views/Phd/Supervisor/MyStudents.tsx
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -98,6 +97,7 @@ const MyStudents: React.FC = () => {
           View the status of your PhD students and initiate new requests.
         </p>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>

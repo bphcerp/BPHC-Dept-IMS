@@ -10,16 +10,13 @@ import {
 } from "@/config/db/schema/phdRequest.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { phdRequestSchemas } from "lib";
-
 const router = express.Router();
-
 type PhdRequestType = (typeof phdRequestSchemas.phdRequestTypes)[number];
 
-// Define the sequence of requests that must be completed in order.
 const postProposalRequestSequence: (PhdRequestType | PhdRequestType[])[] = [
     "pre_submission",
     "draft_notice",
-    ["change_of_title", "thesis_submission"], // change_of_title is optional, thesis_submission can proceed
+    ["change_of_title", "thesis_submission"],
     "final_thesis_submission",
 ];
 
@@ -93,26 +90,24 @@ router.get(
                         .filter((r) => r.status === "completed")
                         .map((r) => r.requestType)
                 );
-
                 for (const step of postProposalRequestSequence) {
                     const isStepArray = Array.isArray(step);
                     const stepRequests = isStepArray ? step : [step];
-
-                    // If at least one request in the step is completed, the step is considered passed.
                     const isStepCompleted = stepRequests.some((type) =>
                         completedTypes.has(type)
                     );
-
                     if (!isStepCompleted) {
-                        // Add all requests from the current uncompleted step as available.
                         availableRequestTypes.push(...stepRequests);
-                        break; // Stop after finding the first uncompleted step.
+                        break;
                     }
                 }
             }
-
-            // Determine current status string for display
             if (
+                latestRequest?.requestType === "final_thesis_submission" &&
+                latestRequest.status === "completed"
+            ) {
+                currentStatus = "Final Thesis Submission Completed";
+            } else if (
                 latestRequest &&
                 !["completed", "deleted"].includes(latestRequest.status)
             ) {
