@@ -165,14 +165,14 @@ export const allPermissions = {
 
     "allocation:data:export": "Export allocation data",
 
-    "allocation:semester:read": "View the semester details",
-    "allocation:semester:write": "Create or Modify a semester",
+    "allocation:semesters:view": "View the semester details",
+    "allocation:semesters:write": "Create or Modify a semester",
 
     "allocation:builder:template:write": "Create a form template",
-    "allocation:builder:template:read": "View form template details",
+    "allocation:builder:template:view": "View form template details",
 
     "allocation:builder:form:write": "Create a form instance of a template",
-    "allocation:builder:form:read": "View form details",
+    "allocation:builder:form:view": "View form details",
     "allocation:form:response:submit": "Can submit responses to forms",
     "allocation:form:response:view": "Can view responses to forms",
 } as const;
@@ -444,23 +444,23 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/coursePreferences/delete": "allocation:preference:write",
     "/allocation/coursePreferences/update": "allocation:preference:write",
 
-    "/allocation/semester/create": "allocation:semester:write",
-    "/allocation/semester/get": "allocation:semester:read",
-    "/allocation/semester/getLatest": "allocation:semester:read",
-    "/allocation/semester/delete": "allocation:semester:write",
-    "/allocation/semester/update": "allocation:semester:write",
-    "/allocation/semester/linkForm": "allocation:semester:write",
+    "/allocation/semester/create": "allocation:semesters:write",
+    "/allocation/semester/get": "allocation:semesters:view",
+    "/allocation/semester/getLatest": "allocation:semesters:view",
+    "/allocation/semester/delete": "allocation:semesters:write",
+    "/allocation/semester/update": "allocation:semesters:write",
+    "/allocation/semester/linkForm": "allocation:semesters:write",
 
     "/allocation/allocation/getPreferredFaculty": "allocation:write",
     "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
-    "/allocation/builder/template/get": "allocation:builder:template:read",
-    "/allocation/builder/template/getAll": "allocation:builder:template:read",
+    "/allocation/builder/template/get": "allocation:builder:template:view",
+    "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
-    "/allocation/builder/form/get": "allocation:builder:form:read",
-    "/allocation/builder/form/getAll": "allocation:builder:form:read",
+    "/allocation/builder/form/get": "allocation:builder:form:view",
+    "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":
         "allocation:form:response:submit",
