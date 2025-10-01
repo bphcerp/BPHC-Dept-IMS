@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/drcConvener/downloadProposalPackage.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -13,11 +14,14 @@ import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { createRequire } from "node:module";
+
 const require = createRequire(import.meta.url);
 const Docxtemplater = require("docxtemplater");
 const PizZip = require("pizzip");
 const ImageModule = require("docxtemplater-image-module-free");
+
 const execAsync = promisify(exec);
+
 const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
     const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir} ${docxPath}`;
     try {
@@ -36,6 +40,7 @@ const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
     }
 };
 const router = express.Router();
+
 router.post(
     "/",
     checkAccess(),
@@ -43,6 +48,7 @@ router.post(
         const { proposalIds } = phdSchemas.downloadBulkPackageSchema.parse(
             req.body
         );
+
         const proposalsToPackage = await db.query.phdProposals.findMany({
             where: and(inArray(phdProposals.id, proposalIds)),
             with: {
@@ -50,7 +56,11 @@ router.post(
                 supervisor: true,
                 dacReviews: {
                     with: {
-                        dacMember: { with: { signatureFile: true } },
+                        dacMember: {
+                            with: {
+                                signatureFile: true,
+                            },
+                        },
                         reviewForm: true,
                     },
                 },
@@ -62,27 +72,33 @@ router.post(
                 outsideSupervisorBiodataFile: true,
             },
         });
+
         if (proposalsToPackage.length === 0) {
             throw new HttpError(
                 HttpCode.NOT_FOUND,
                 "No valid proposals found for the given IDs."
             );
         }
+
         const drcUser = await db.query.faculty.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
-            with: { signatureFile: true },
+            with: {
+                signatureFile: true,
+            },
         });
+
         const zip = new JSZip();
         const tempDir = path.resolve("./temp");
         await fs.mkdir(tempDir, { recursive: true });
-
         const dacTemplatePath = path.join(import.meta.dirname, "./dac.docx");
         const dacTemplateContent = await fs.readFile(dacTemplatePath);
+
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
                   .readFile(drcUser.signatureFile.filePath)
                   .catch(() => null)
             : null;
+
         try {
             for (const proposal of proposalsToPackage) {
                 const studentFolderName =
@@ -93,6 +109,7 @@ router.post(
                 const studentFolder = zip.folder(studentFolderName);
                 if (!studentFolder)
                     throw new Error("Could not create student folder in zip.");
+
                 const filesToInclude = [
                     { name: "1_Appendix_I.pdf", file: proposal.appendixFile },
                     { name: "2_Summary.pdf", file: proposal.summaryFile },
@@ -110,6 +127,7 @@ router.post(
                         file: proposal.outsideSupervisorBiodataFile,
                     },
                 ];
+
                 for (const fileData of filesToInclude) {
                     if (fileData.file) {
                         try {
@@ -124,6 +142,7 @@ router.post(
                         }
                     }
                 }
+
                 for (const review of proposal.dacReviews) {
                     if (review.reviewForm) {
                         const formData = review.reviewForm
@@ -136,6 +155,7 @@ router.post(
                                   )
                                   .catch(() => null)
                             : null;
+
                         const templateData = {
                             department_name:
                                 environment.DEPARTMENT_NAME ||
@@ -152,15 +172,15 @@ router.post(
                             q1a: formData.q1a,
                             q1b: formData.q1b,
                             q1c: formData.q1c,
-                            q1d_product: formData.q1d === "product",
-                            q1d_process: formData.q1d === "process",
-                            q1d_frontier: formData.q1d === "frontier",
+                            q1d_product: formData.q1d.includes("product"),
+                            q1d_process: formData.q1d.includes("process"),
+                            q1d_frontier: formData.q1d.includes("frontier"),
                             q2a: formData.q2a,
                             q2b: formData.q2b,
                             q2c: formData.q2c,
-                            q2d_improve: formData.q2d === "improve",
-                            q2d_academic: formData.q2d === "academic",
-                            q2d_industry: formData.q2d === "industry",
+                            q2d_improve: formData.q2d.includes("improve"),
+                            q2d_academic: formData.q2d.includes("academic"),
+                            q2d_industry: formData.q2d.includes("industry"),
                             q3a: formData.q3a,
                             q3b: formData.q3b,
                             q3c: formData.q3c,
@@ -180,11 +200,13 @@ router.post(
                             q7_reasons: formData.q7_reasons,
                             q8_comments: formData.q8_comments || "",
                         };
+
                         const imageModule = new ImageModule({
                             centered: false,
                             getImage: (tag: string) => tag,
                             getSize: () => [150, 40],
                         });
+
                         const zip = new PizZip(dacTemplateContent);
                         const doc = new Docxtemplater(zip, {
                             paragraphLoop: true,
@@ -192,6 +214,7 @@ router.post(
                             modules: [imageModule],
                         });
                         doc.render(templateData);
+
                         const buf = doc
                             .getZip()
                             .generate({ type: "nodebuffer" });
@@ -200,6 +223,7 @@ router.post(
                             `review_${review.id}.docx`
                         );
                         await fs.writeFile(tempDocxPath, buf);
+
                         const pdfPath = await convertDocxToPdf(
                             tempDocxPath,
                             tempDir
@@ -226,6 +250,7 @@ router.post(
                     )
                 );
             const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+
             res.setHeader("Content-Type", "application/zip");
             res.setHeader(
                 "Content-Disposition",
@@ -237,4 +262,5 @@ router.post(
         }
     })
 );
+
 export default router;
