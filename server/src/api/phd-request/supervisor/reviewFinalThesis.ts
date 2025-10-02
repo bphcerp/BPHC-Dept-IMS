@@ -2,7 +2,6 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
-import { pdfUpload } from "@/config/multer.ts";
 import { phdRequestSchemas, modules } from "lib";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import {
@@ -10,19 +9,17 @@ import {
     phdRequestDocuments,
     phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
-import { files } from "@/config/db/schema/form.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
-import fs from "fs/promises";
+
 const router = express.Router();
 
 router.post(
     "/:id",
     checkAccess(),
-    pdfUpload.array("documents", 2),
     asyncHandler(async (req, res) => {
         const requestId = parseInt(req.params.id);
         if (isNaN(requestId)) {
@@ -31,7 +28,6 @@ router.post(
         const { comments, action } =
             phdRequestSchemas.supervisorFinalThesisReviewSchema.parse(req.body);
         const supervisorEmail = req.user!.email;
-        const uploadedFiles = req.files as Express.Multer.File[];
 
         await db.transaction(async (tx) => {
             const request = await tx.query.phdRequests.findFirst({
@@ -60,101 +56,41 @@ router.post(
             );
 
             if (action === "approve") {
-                if (uploadedFiles && uploadedFiles.length > 0) {
-                    const fieldNamesToReplace = uploadedFiles.map(
-                        (f) => f.originalname
-                    );
+                const preThesisRequest = await tx.query.phdRequests.findFirst({
+                    where: and(
+                        eq(phdRequests.studentEmail, request.studentEmail),
+                        eq(phdRequests.requestType, "pre_thesis_submission"),
+                        eq(phdRequests.status, "completed")
+                    ),
+                    with: {
+                        documents: {
+                            where: (cols, { eq }) => eq(cols.isPrivate, true),
+                            limit: 2,
+                        },
+                    },
+                });
 
-                    const oldDocsToDelete =
-                        await tx.query.phdRequestDocuments.findMany({
-                            where: and(
-                                eq(phdRequestDocuments.requestId, requestId),
-                                eq(
-                                    phdRequestDocuments.uploadedByEmail,
-                                    supervisorEmail
-                                ),
-                                inArray(
-                                    phdRequestDocuments.documentType,
-                                    fieldNamesToReplace
-                                )
-                            ),
-                            columns: { fileId: true },
-                        });
-
-                    if (oldDocsToDelete.length > 0) {
-                        const oldFileIds = oldDocsToDelete.map(
-                            (doc) => doc.fileId
-                        );
-                        const oldFileRecords = await tx
-                            .select({ path: files.filePath })
-                            .from(files)
-                            .where(inArray(files.id, oldFileIds));
-                        await tx
-                            .delete(phdRequestDocuments)
-                            .where(
-                                inArray(phdRequestDocuments.fileId, oldFileIds)
-                            );
-                        await tx
-                            .delete(files)
-                            .where(inArray(files.id, oldFileIds));
-                        for (const fileRecord of oldFileRecords) {
-                            try {
-                                await fs.unlink(fileRecord.path);
-                            } catch (e) {
-                                console.error(
-                                    `Failed to delete old supervisor file: ${fileRecord.path}`,
-                                    e
-                                );
-                            }
-                        }
-                    }
-
-                    const fileInserts = uploadedFiles.map((file) => ({
-                        userEmail: supervisorEmail,
-                        filePath: file.path,
-                        originalName: file.originalname,
-                        mimetype: file.mimetype,
-                        size: file.size,
-                        fieldName: file.fieldname,
-                        module: modules[2],
-                    }));
-                    const insertedFiles = await tx
-                        .insert(files)
-                        .values(fileInserts)
-                        .returning();
-                    const documentInserts = insertedFiles.map(
-                        (file, index) => ({
-                            requestId,
-                            fileId: file.id,
-                            uploadedByEmail: supervisorEmail,
-                            documentType: uploadedFiles[index].originalname,
-                            isPrivate: true,
-                        })
-                    );
-                    await tx
-                        .insert(phdRequestDocuments)
-                        .values(documentInserts);
-                }
-
-                const finalDocsCount = (
-                    await tx.query.phdRequestDocuments.findMany({
-                        where: and(
-                            eq(phdRequestDocuments.requestId, requestId),
-                            eq(
-                                phdRequestDocuments.uploadedByEmail,
-                                supervisorEmail
-                            ),
-                            eq(phdRequestDocuments.isPrivate, true)
-                        ),
-                    })
-                ).length;
-
-                if (finalDocsCount < 2) {
+                if (
+                    !preThesisRequest ||
+                    preThesisRequest.documents.length < 2
+                ) {
                     throw new HttpError(
                         HttpCode.BAD_REQUEST,
-                        "Supervisor report and final examination panel documents are required for approval."
+                        "Could not find the approved documents from the pre-thesis submission stage."
                     );
                 }
+
+                const documentInserts = preThesisRequest.documents.map(
+                    (doc) => ({
+                        requestId,
+                        fileId: doc.fileId,
+                        uploadedByEmail: supervisorEmail,
+                        documentType: doc.documentType,
+                        isPrivate: true,
+                    })
+                );
+
+                await tx.insert(phdRequestDocuments).values(documentInserts);
 
                 await tx.insert(phdRequestReviews).values({
                     requestId,
@@ -164,10 +100,12 @@ router.post(
                     comments: comments || "Approved by Supervisor",
                     status_at_review: request.status,
                 });
+
                 await tx
                     .update(phdRequests)
                     .set({ status: "drc_convener_review" })
                     .where(eq(phdRequests.id, requestId));
+
                 const drcConveners = await getUsersWithPermission(
                     "phd-request:drc-convener:view",
                     tx
@@ -183,6 +121,7 @@ router.post(
                         link: `/phd/requests/${requestId}`,
                     }));
                     await createTodos(todos, tx);
+
                     await sendBulkEmails(
                         drcConveners.map((convener) => ({
                             to: convener.email,
@@ -192,6 +131,7 @@ router.post(
                     );
                 }
             } else {
+                // Revert action
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: supervisorEmail,
@@ -200,10 +140,12 @@ router.post(
                     comments: comments || "Reverted by Supervisor",
                     status_at_review: request.status,
                 });
+
                 await tx
                     .update(phdRequests)
                     .set({ status: "student_review" })
                     .where(eq(phdRequests.id, requestId));
+
                 const todos = [
                     {
                         assignedTo: request.studentEmail,
@@ -216,6 +158,7 @@ router.post(
                     },
                 ];
                 await createTodos(todos, tx);
+
                 await sendBulkEmails([
                     {
                         to: request.studentEmail,

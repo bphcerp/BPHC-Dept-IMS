@@ -97,7 +97,6 @@ const MyStudents: React.FC = () => {
           View the status of your PhD students and initiate new requests.
         </p>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>
@@ -163,11 +162,11 @@ const MyStudents: React.FC = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div
-                        className="flex justify-end gap-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                    <TableCell
+                      className="text-right"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex justify-end gap-2">
                         {student.currentStatus.toLowerCase().includes("qe") && (
                           <Button variant="outline" size="sm" asChild>
                             <Link to="/phd/supervisor/examiner-suggestions">
@@ -184,22 +183,20 @@ const MyStudents: React.FC = () => {
                             </Link>
                           </Button>
                         )}
-                        
                         {student.currentStatus
                           .toLowerCase()
                           .endsWith("supervisor review final thesis") && (
                           <Button variant="default" size="sm" asChild>
                             <Link to={`/phd/requests/${student.requestId}`}>
-                              <FileCheck2 className="mr-2 h-4 w-4" />
-                              Review Final Thesis
+                              <FileCheck2 className="mr-2 h-4 w-4" /> Review
+                              Final Thesis
                             </Link>
                           </Button>
                         )}
                         {student.canResubmitRequest && student.requestId && (
                           <Button variant="destructive" size="sm" asChild>
                             <Link to={`/phd/requests/${student.requestId}`}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Resubmit Request
+                              <Edit className="mr-2 h-4 w-4" /> Resubmit Request
                             </Link>
                           </Button>
                         )}
@@ -209,8 +206,7 @@ const MyStudents: React.FC = () => {
                           onClick={() => handleOpenDialog(student)}
                           disabled={student.availableRequestTypes.length === 0}
                         >
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Initiate Request
+                          <UserPlus className="mr-2 h-4 w-4" /> Initiate Request
                         </Button>
                       </div>
                     </TableCell>

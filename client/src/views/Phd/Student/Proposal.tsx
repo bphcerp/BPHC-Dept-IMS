@@ -1,4 +1,3 @@
-// client/src/views/Phd/Student/Proposal.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -35,6 +34,7 @@ import {
   Clock,
   Download,
   Eye,
+  Edit,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
@@ -58,15 +58,18 @@ interface ProposalSemester {
   drcReviewDate: string;
   dacReviewDate: string;
 }
+
 interface DacFeedback {
   approved: boolean;
   comments: string;
   feedbackFileUrl: string | null;
 }
+
 interface DacSummary {
   label: string;
   status: "Approved" | "Reverted";
 }
+
 interface Proposal {
   id: number;
   title: string;
@@ -213,6 +216,49 @@ const StudentProposal: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleFinalSubmit = () => {
+    if (!proposalForPreview?.id) return;
+    // This is a placeholder for the final submission logic which is now in the form component.
+    // The `StudentProposalForm` handles both save and final submit.
+    // To adapt to the new flow, we would call the final submit mutation here.
+    // Since the form component already has this logic, let's trigger it from there.
+    // For this flow, we will make the `StudentProposalForm`'s internal submit handler public
+    // or pass the action to it. The simplest is to put the submit button on the preview.
+    const formData = new FormData();
+    formData.append("title", proposalForPreview.title);
+    formData.append(
+      "hasOutsideCoSupervisor",
+      String(proposalForPreview.hasOutsideCoSupervisor)
+    );
+    formData.append("declaration", "true"); // Must be true to submit
+    formData.append("submissionType", "final");
+    formData.append(
+      "internalCoSupervisors",
+      JSON.stringify(
+        proposalForPreview.coSupervisors
+          .filter((s: any) => s.coSupervisor)
+          .map((s: any) => s.coSupervisorEmail)
+      )
+    );
+    formData.append(
+      "externalCoSupervisors",
+      JSON.stringify(
+        proposalForPreview.coSupervisors.filter((s: any) => !s.coSupervisor)
+      )
+    );
+
+    fetchProposalDetailsMutation.mutate(proposalForPreview.id, {
+      onSuccess: () => {
+        toast.success("Proposal submitted successfully!");
+        setIsPreviewOpen(false);
+        void refetch();
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || "An error occurred.");
+      },
+    });
+  };
+
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -226,6 +272,7 @@ const StudentProposal: React.FC = () => {
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
     : true;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -247,6 +294,7 @@ const StudentProposal: React.FC = () => {
           </Button>
         )}
       </div>
+
       {!eligibility?.isEligible ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -282,6 +330,7 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
+
       {eligibility?.isEligible && <ProposalStatusTimeline role="student" /> &&
         currentDeadlines && (
           <DeadlinesCard
@@ -289,6 +338,7 @@ const StudentProposal: React.FC = () => {
             highlight="studentSubmissionDate"
           />
         )}
+
       <Card>
         <CardHeader>
           <CardTitle>Your Submissions</CardTitle>
@@ -338,41 +388,27 @@ const StudentProposal: React.FC = () => {
                         {new Date(p.updatedAt).toLocaleString()}
                       </TableCell>
                       <TableCell className="flex gap-2">
-                        {p.status === "draft" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openDialog(p, "preview")}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Preview
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => openDialog(p, "edit")}
-                            >
-                              Edit & Submit
-                            </Button>
-                          </>
-                        )}
                         {[
+                          "draft",
                           "supervisor_revert",
                           "drc_revert",
                           "dac_revert",
                         ].includes(p.status) && (
-                          <Button
-                            size="sm"
-                            onClick={() => openDialog(p, "edit")}
-                            disabled={fetchProposalDetailsMutation.isLoading}
-                          >
-                            {fetchProposalDetailsMutation.isLoading &&
-                            fetchProposalDetailsMutation.variables === p.id ? (
-                              <LoadingSpinner className="h-4 w-4" />
-                            ) : (
-                              "Resubmit"
-                            )}
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openDialog(p, "edit")}
+                            >
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => openDialog(p, "preview")}
+                            >
+                              <Eye className="mr-2 h-4 w-4" /> Preview
+                            </Button>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
@@ -455,12 +491,7 @@ const StudentProposal: React.FC = () => {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {proposalForForm?.status === "draft" ||
-              (proposalForForm?.id && !proposalForForm.status)
-                ? "Edit Draft"
-                : proposalForForm
-                  ? "Resubmit Proposal"
-                  : "New Proposal Application"}
+              {proposalForForm ? "Edit Proposal" : "New Proposal Application"}
             </DialogTitle>
           </DialogHeader>
           {!proposalForForm &&
@@ -503,11 +534,14 @@ const StudentProposal: React.FC = () => {
             <DialogTitle>Proposal Preview</DialogTitle>
             <CardDescription>
               Review your draft before final submission. To make changes, close
-              this preview and click "Edit & Submit".
+              this preview and click "Edit".
             </CardDescription>
           </DialogHeader>
           {proposalForPreview && (
-            <ProposalPreview proposal={proposalForPreview} />
+            <ProposalPreview
+              proposal={proposalForPreview}
+              onSubmit={handleFinalSubmit}
+            />
           )}
         </DialogContent>
       </Dialog>

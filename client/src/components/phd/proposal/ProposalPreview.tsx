@@ -1,4 +1,3 @@
-// client/src/components/phd/proposal/ProposalPreview.tsx
 import React from "react";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import {
@@ -9,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface CoSupervisor {
   coSupervisorEmail: string;
@@ -32,7 +32,11 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
 }
 
-const ProposalPreview: React.FC<{ proposal: Proposal }> = ({ proposal }) => {
+const ProposalPreview: React.FC<{
+  proposal: Proposal;
+  onSubmit: () => void;
+  isSubmitting?: boolean;
+}> = ({ proposal, onSubmit, isSubmitting = false }) => {
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -83,6 +87,9 @@ const ProposalPreview: React.FC<{ proposal: Proposal }> = ({ proposal }) => {
         </CardContent>
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
+      <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Submitting..." : "Final Submit"}
+      </Button>
     </div>
   );
 };

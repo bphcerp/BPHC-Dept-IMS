@@ -15,7 +15,7 @@ router.get(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-        
+
         const request = await db.query.phdRequests.findFirst({
             where: eq(phdRequests.id, requestId),
             with: {
@@ -57,7 +57,18 @@ router.get(
                     req.user.permissions
                 ));
 
-        const augmentedReviews = request.reviews.map((review: any) => {
+        const isStudentOrSupervisor =
+            req.user?.email === request.studentEmail ||
+            req.user?.email === request.supervisorEmail;
+
+        let filteredReviews = request.reviews;
+        if (isStudentOrSupervisor && !isPrivilegedViewer) {
+            filteredReviews = request.reviews.filter(
+                (review) => review.reviewerRole !== "DRC_MEMBER"
+            );
+        }
+
+        const augmentedReviews = filteredReviews.map((review: any) => {
             let roleTitle = "";
             const reviewer = review.reviewer;
             const actionText = review.approved
@@ -106,13 +117,15 @@ router.get(
 
             return { ...review, reviewerDisplayName };
         });
+
         const finalRequest = { ...request, reviews: augmentedReviews };
+
         if (req.user?.email === finalRequest.studentEmail) {
             finalRequest.documents = finalRequest.documents.filter(
                 (doc) => !doc.isPrivate
             );
             finalRequest.reviews.forEach((review) => {
-                delete review.supervisorComments;
+                delete (review as any).supervisorComments;
             });
         }
 

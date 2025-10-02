@@ -1,6 +1,5 @@
-// client/src/components/phd/phd-request/StudentFinalThesisForm.tsx
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
   Card,
@@ -42,11 +41,7 @@ const FINAL_THESIS_DOCS = [
     required: true,
   },
   { id: "plagiarismReceipt", label: "Plagiarism Receipt", required: true },
-  {
-    id: "thesisFeeReceipt",
-    label: "Thesis Fee Receipt (SWD)",
-    required: true,
-  },
+  { id: "thesisFeeReceipt", label: "Thesis Fee Receipt (SWD)", required: true },
   {
     id: "titleApprovalForm",
     label: "Title Approval Form Copy",
@@ -72,13 +67,9 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
   request,
   onSuccess,
 }) => {
-  const queryClient = useQueryClient();
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [comments, setComments] = useState(request.comments || "");
   const [existingFiles, setExistingFiles] = useState<Record<string, any>>({});
-  const [submittingType, setSubmittingType] = useState<
-    "draft" | "final" | null
-  >(null);
 
   const lastReview = request.reviews.length > 0 ? request.reviews[0] : null;
   const isReverted = lastReview && !lastReview.approved;
@@ -107,28 +98,12 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         }
       );
     },
-    onSuccess: (_data, variables) => {
-      const submissionType = variables.get("submissionType");
-      if (submissionType === "draft") {
-        toast.success("Draft saved successfully! Your changes are stored.");
-        // Invalidate query to refetch data and show the pre-loaded files, confirming the save.
-        void queryClient.invalidateQueries({
-          queryKey: ["phd-request-details", request.id],
-        });
-      } else {
-        toast.success(
-          "Final thesis documents submitted for supervisor review."
-        );
-        onSuccess();
-      }
+    onSuccess: () => {
+      toast.success("Changes saved successfully! Preview to finalize.");
+      onSuccess();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Submission failed.");
-    },
-    onSettled: () => {
-      setSubmittingType(null);
-      // Clear the local file state after submission to prevent re-uploading
-      setFiles({});
+      toast.error(error.response?.data?.message || "Saving failed.");
     },
   });
 
@@ -136,42 +111,27 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
     setFiles((prev) => ({ ...prev, [fieldId]: fileList }));
   };
 
-  const handleSubmit = (submissionType: "draft" | "final") => {
-    setSubmittingType(submissionType);
-    if (submissionType === "final") {
-      for (const doc of FINAL_THESIS_DOCS) {
-        const hasNewFile = files[doc.id]?.[0];
-        const hasOldFile = existingFiles[doc.id];
-        if (doc.required && !hasNewFile && !hasOldFile) {
-          toast.error(`Please upload the required document: ${doc.label}`);
-          setSubmittingType(null);
-          return;
-        }
-      }
-    }
-
+  const handleSaveChanges = () => {
     const formData = new FormData();
-    formData.append("submissionType", submissionType);
+    formData.append("submissionType", "draft");
     formData.append("comments", comments);
 
     for (const doc of FINAL_THESIS_DOCS) {
       const uploadedFile = files[doc.id]?.[0];
       if (uploadedFile) {
-        // Use doc.id as the "originalname" to map it on the backend
         formData.append("documents", uploadedFile, doc.id);
       }
     }
-
     mutation.mutate(formData);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Final Thesis Submission</CardTitle>
+        <CardTitle>Edit Final Thesis Submission</CardTitle>
         <CardDescription>
-          Please upload all the required documents for your final thesis
-          submission. You can save your progress as a draft at any time.
+          Please upload or replace the required documents for your final thesis
+          submission.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -257,23 +217,12 @@ export const StudentFinalThesisForm: React.FC<StudentFinalThesisFormProps> = ({
         </div>
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button
-            variant="outline"
-            onClick={() => handleSubmit("draft")}
+            onClick={handleSaveChanges}
             disabled={mutation.isLoading}
+            className="w-full"
           >
-            {mutation.isLoading && submittingType === "draft" ? (
-              <LoadingSpinner className="mr-2 h-4 w-4" />
-            ) : null}
-            Save Draft
-          </Button>
-          <Button
-            onClick={() => handleSubmit("final")}
-            disabled={mutation.isLoading}
-          >
-            {mutation.isLoading && submittingType === "final" ? (
-              <LoadingSpinner className="mr-2 h-4 w-4" />
-            ) : null}
-            Submit to Supervisor
+            {mutation.isLoading && <LoadingSpinner className="mr-2 h-4 w-4" />}
+            Save Changes
           </Button>
         </div>
       </CardContent>

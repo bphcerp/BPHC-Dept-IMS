@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/SupervisorRequestForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface SupervisorRequestFormProps {
   studentEmail: string;
@@ -56,7 +57,6 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
   });
 
   const onSubmit = (data: { comments?: string }) => {
-    // For final_thesis_submission, files are not required at initiation
     if (requestType !== "final_thesis_submission" && files.length === 0) {
       toast.error("Please upload at least one required document.");
       return;
@@ -77,6 +77,20 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+      {requestType === "pre_thesis_submission" && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Required Documents</AlertTitle>
+          <AlertDescription>
+            Please upload the following two documents:
+            <ul className="ml-6 mt-2 list-disc">
+              <li>Approved List of Examiners</li>
+              <li>Format for Information of Examiners</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {requestType !== "final_thesis_submission" && (
         <div>
           <Label htmlFor="documents">Required Documents</Label>

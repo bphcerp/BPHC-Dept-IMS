@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/FinalThesisPreview.tsx (New File)
 import React from "react";
 import {
   Card,
@@ -8,6 +7,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { CheckCircle, FileWarning } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FilePreviewData {
   label: string;
@@ -18,11 +18,15 @@ interface FilePreviewData {
 interface FinalThesisPreviewProps {
   files: FilePreviewData[];
   comments: string;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
 }
 
 export const FinalThesisPreview: React.FC<FinalThesisPreviewProps> = ({
   files,
   comments,
+  onSubmit,
+  isSubmitting,
 }) => {
   return (
     <div className="space-y-4 py-4">
@@ -66,6 +70,11 @@ export const FinalThesisPreview: React.FC<FinalThesisPreviewProps> = ({
             </p>
           </CardContent>
         </Card>
+      )}
+      {onSubmit && (
+        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Submitting..." : "Submit to Supervisor"}
+        </Button>
       )}
     </div>
   );

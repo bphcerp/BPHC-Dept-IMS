@@ -13,7 +13,7 @@ import {
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
@@ -36,6 +36,7 @@ router.post(
                 desc(table.semesterNumber),
             ],
         });
+
         if (!latestSemester) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -44,6 +45,21 @@ router.post(
         }
 
         if (requestType === "final_thesis_submission") {
+            const preThesisRequest = await db.query.phdRequests.findFirst({
+                where: and(
+                    eq(phdRequests.studentEmail, studentEmail),
+                    eq(phdRequests.requestType, "pre_thesis_submission"),
+                    eq(phdRequests.status, "completed")
+                ),
+            });
+
+            if (!preThesisRequest) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "A 'Pre-Thesis Submission' request must be completed before initiating the final submission."
+                );
+            }
+
             const [newRequest] = await db
                 .insert(phdRequests)
                 .values({
@@ -55,6 +71,7 @@ router.post(
                     comments: comments,
                 })
                 .returning({ id: phdRequests.id });
+
             const studentTodo = [
                 {
                     assignedTo: studentEmail,
@@ -67,6 +84,7 @@ router.post(
                 },
             ];
             await createTodos(studentTodo);
+
             await sendBulkEmails([
                 {
                     to: studentEmail,
@@ -103,7 +121,6 @@ router.post(
                 })
                 .returning({ id: phdRequests.id });
 
-            // Add a review entry for the submission itself to create a history record
             await tx.insert(phdRequestReviews).values({
                 requestId: newRequest.id,
                 reviewerEmail: supervisorEmail,
@@ -126,7 +143,6 @@ router.post(
                 .insert(files)
                 .values(fileInserts)
                 .returning();
-
             const documentInserts = insertedFiles.map((file) => ({
                 requestId: newRequest.id,
                 fileId: file.id,
@@ -135,7 +151,6 @@ router.post(
                 isPrivate: false,
             }));
             await tx.insert(phdRequestDocuments).values(documentInserts);
-
             return newRequest.id;
         });
 
@@ -152,12 +167,16 @@ router.post(
                 assignedTo: convener.email,
                 createdBy: supervisorEmail,
                 title: `New PhD Request from ${student?.name || studentEmail}`,
-                description: `A new '${requestType.replace(/_/g, " ")}' request has been submitted by the supervisor.`,
+                description: `A new '${requestType.replace(
+                    /_/g,
+                    " "
+                )}' request has been submitted by the supervisor.`,
                 module: modules[2],
                 completionEvent: `phd-request:drc-convener-review:${newRequestId}`,
                 link: `/phd/requests/${newRequestId}`,
             }));
             await createTodos(convenerTodos);
+
             await sendBulkEmails(
                 drcConveners.map((convener) => ({
                     to: convener.email,
@@ -167,11 +186,12 @@ router.post(
                         " "
                     )}' has been submitted for student ${
                         student?.name || studentEmail
-                    }.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
+                    }.\n\nPlease review it here: ${
+                        environment.FRONTEND_URL
+                    }/phd/requests/${newRequestId}`,
                 }))
             );
         }
-
         res.status(201).json({
             success: true,
             message: "Request submitted successfully.",
