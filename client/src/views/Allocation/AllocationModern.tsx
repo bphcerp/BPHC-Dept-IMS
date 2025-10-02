@@ -38,6 +38,8 @@ const AllocationModern = () => {
     onError: () => {
       toast.error("Failed to fetch current semester");
     },
+    refetchOnMount:true,
+    refetchOnWindowFocus: true
   });
 
   const {
@@ -238,7 +240,10 @@ const AllocationModern = () => {
     );
   }
 
-  if (currentSemester.form.allocationDeadline && new Date(currentSemester.form.allocationDeadline) > new Date()) {
+  if (
+    currentSemester.form.allocationDeadline &&
+    new Date(currentSemester.form.allocationDeadline) > new Date()
+  ) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
@@ -246,12 +251,15 @@ const AllocationModern = () => {
             Semester's Form Is Still Active
           </h2>
           <p className="text-muted-foreground">
-            This page will be active once all the required responses are collected.
+            This page will be active once all the required responses are
+            collected.
           </p>
         </div>
       </div>
     );
   }
+
+  const getCourseValidSections = () => allocationSchemas.sectionTypes.filter((type) => type === 'PRACTICAL' ? selectedCourse?.practicalUnits : type === 'TUTORIAL' ? selectedCourse?.offeredAs === 'CDC' : true)
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -304,7 +312,7 @@ const AllocationModern = () => {
             {/* Section Type Columns - only show when allocation exists */}
             {allocationData ? (
               <div className="flex flex-1 overflow-hidden">
-                {allocationSchemas.sectionTypes.map((sectionType) => (
+                {getCourseValidSections().map((sectionType) => (
                   <SectionTypeColumn
                     key={sectionType}
                     sectionType={sectionType}
@@ -318,12 +326,9 @@ const AllocationModern = () => {
             ) : (
               <div className="flex flex-1 items-center justify-center bg-muted/20">
                 <div className="text-center text-muted-foreground">
-                  <h3 className="mb-2 text-lg font-medium">
-                    Create Allocation
-                  </h3>
+                  <h3 className="mb-2 text-lg font-medium">Begin Allocation</h3>
                   <p className="text-sm">
-                    Select an Instructor in Charge from the header to create
-                    allocation for{" "}
+                    Click on "Begin Allocation" to start the allocation for {" "}
                     <span className="font-medium">{selectedCourse.code}</span>
                   </p>
                 </div>

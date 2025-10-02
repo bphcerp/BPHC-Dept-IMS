@@ -34,8 +34,6 @@ router.post(
                 `${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`
             );
 
-            console.log(`${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`)
-
             // Wilp courses are ignored they are not included in the allocation process.
             const mappedCourses = courses.filter((course) => !course.name.toUpperCase().includes('WILP')).map((courseData) => {
                 return courseSchema.parse({
@@ -47,6 +45,7 @@ router.post(
                     offeredAs: courseData.offeredAs === 'C' ? 'CDC' : 'Elective',
                     offeredTo: courseData.offeredTo,
                     offeredAlsoBy: courseData.offeredBy.filter((dept) => dept !== environment.TTD_DEPARTMENT_NAME),
+                    markedForAllocation: courseData.offeredAs === 'C'
                 });
             });
 
@@ -61,6 +60,7 @@ router.post(
                     offeredAs: sql`EXCLUDED.offered_as`,
                     offeredAlsoBy: sql`EXCLUDED.offered_also_by`,
                     offeredTo: sql`EXCLUDED.offered_to`,
+                    markedForAllocation: sql`EXCLUDED.marked_for_allocation`,
                 }
             })
 

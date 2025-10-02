@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 
@@ -63,14 +63,11 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   // Create allocation mutation
   const createAllocationMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedIC) {
-        throw new Error("IC is required");
-      }
 
       const payload = {
         semesterId,
         courseCode: selectedCourse.code,
-        ic: selectedIC.email,
+        ic: selectedIC?.email,
         sections: [],
       };
 
@@ -127,7 +124,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
       if (!selectedIC) {
         throw new Error("Please select a value from the dropdown");
       }
-      if (selectedIC.email === allocationData.ic.email) {
+      if (selectedIC.email === allocationData.ic?.email) {
         toast.info("Selected IC is the same as the current one");
         return;
       }
@@ -231,18 +228,11 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
           {/* Create/Update Button */}
           <Button
             onClick={handleCreateOrUpdate}
-            disabled={!selectedIC || isLoading_mutation}
+            disabled={isLoading_mutation}
             className="gap-2"
             variant={allocationData ? "outline" : "default"}
           >
-            {isLoading_mutation ? (
-              <LoadingSpinner />
-            ) : allocationData ? (
-              <Edit className="h-4 w-4" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {allocationData ? "Update IC" : "Create Allocation"}
+            {allocationData ? "Update IC" : "Begin Allocation"}
           </Button>
         </div>
       </div>

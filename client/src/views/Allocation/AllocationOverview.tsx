@@ -78,23 +78,28 @@ export const AllocationOverview = () => {
 
   const remindMutation = useMutation({
     mutationFn: () =>
-      api.post('/allocation/semester/remind').then(() => toast.success("Reminder successfully sent")).catch((e) => {
-        console.error("Error while sending reminder", e)
-        toast.error("Something went wrong")
-      }),
+      api
+        .post("/allocation/semester/remind")
+        .then(() => toast.success("Reminder successfully sent"))
+        .catch((e) => {
+          console.error("Error while sending reminder", e);
+          toast.error("Something went wrong");
+        }),
   });
 
   const endMutation = useMutation({
     mutationFn: () =>
-      api.post('/allocation/semester/end').then(() => {
-        toast.success("Reminder successfully sent")
-        queryClient.invalidateQueries(['latest-semester'])
-      }).catch((e) => {
-        console.error("Error while sending reminder", e)
-        toast.error("Something went wrong")
-      }),
+      api
+        .post("/allocation/semester/end")
+        .then(() => {
+          toast.success("Reminder successfully sent");
+          queryClient.invalidateQueries(["latest-semester"]);
+        })
+        .catch((e) => {
+          console.error("Error while sending reminder", e);
+          toast.error("Something went wrong");
+        }),
   });
-
 
   const publishFormMutation = useMutation({
     mutationFn: ({
@@ -254,7 +259,9 @@ Hyderabad Campus<span>
                             name={field.name}
                             value={field.state.value}
                             onBlur={field.handleBlur}
-                            min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                            min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                              .toISOString()
+                              .slice(0, 16)}
                             onChange={(e) => {
                               field.handleChange(e.target.value);
                             }}
@@ -376,8 +383,18 @@ Hyderabad Campus<span>
             )}
           {latestSemester.allocationStatus === "ongoing" && (
             <>
-              <Button variant="secondary" onClick={() => remindMutation.mutate()}>Send Reminder</Button>
-              <Button variant="destructive" onClick={() => endMutation.mutate()}>End Responses Collection</Button>
+              <Button
+                variant="secondary"
+                onClick={() => remindMutation.mutate()}
+              >
+                Send Reminder
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => endMutation.mutate()}
+              >
+                End Responses Collection
+              </Button>
             </>
           )}
         </div>
@@ -421,21 +438,32 @@ Hyderabad Campus<span>
                         <DialogTitle>Response Overview</DialogTitle>
                       </DialogHeader>
                       <div className="grid grid-cols-2 gap-6">
+                        {/* Responded List */}
                         <div className="border-r pr-4">
                           <h3 className="mb-2 font-semibold text-green-600">
                             Responded
                           </h3>
-                          <ul className="space-y-1 text-sm overflow-y-auto h-64">
+                          <ul className="h-64 space-y-2 overflow-y-auto text-sm">
                             {latestSemester.form.responses &&
                             latestSemester.form.responses.length ? (
-                              latestSemester.form.responses?.map(
+                              latestSemester.form.responses.map(
                                 ({ submittedBy }) => (
                                   <li
                                     key={submittedBy.email}
-                                    className="text-green-700"
+                                    className={`flex items-center justify-between rounded-md p-2 ${
+                                      submittedBy.type.toLowerCase() ===
+                                      "faculty"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-blue-100 text-blue-800"
+                                    } transition-shadow hover:shadow-md`}
                                   >
-                                    {submittedBy.name ??
-                                      `No Name - ${submittedBy.email}`} - { submittedBy.type.toUpperCase() }
+                                    <span>
+                                      {submittedBy.name ??
+                                        `No Name - ${submittedBy.email}`}
+                                    </span>
+                                    <span className="text-xs font-semibold uppercase">
+                                      {submittedBy.type}
+                                    </span>
                                   </li>
                                 )
                               )
@@ -447,19 +475,29 @@ Hyderabad Campus<span>
                           </ul>
                         </div>
 
+                        {/* Not Responded List */}
                         <div>
                           <h3 className="mb-2 font-semibold text-red-600">
                             Not Responded
                           </h3>
-                          <ul className="space-y-1 text-sm overflow-y-auto h-64">
+                          <ul className="h-64 space-y-2 overflow-y-auto text-sm">
                             {latestSemester.notResponded.length > 0 ? (
-                              [...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,...latestSemester.notResponded,].map((responder) => (
+                              latestSemester.notResponded.map((responder) => (
                                 <li
                                   key={responder.email}
-                                  className="text-gray-700"
+                                  className={`flex items-center justify-between rounded-md p-2 ${
+                                    responder.type.toLowerCase() === "faculty"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  } transition-shadow hover:shadow-md`}
                                 >
-                                  {responder.name ??
-                                    `No Name - ${responder.email}`} - { responder.type.toUpperCase() }
+                                  <span>
+                                    {responder.name ??
+                                      `No Name - ${responder.email}`}
+                                  </span>
+                                  <span className="text-xs font-semibold uppercase">
+                                    {responder.type}
+                                  </span>
                                 </li>
                               ))
                             ) : (

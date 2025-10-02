@@ -20,6 +20,10 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Search, User, BookOpen, Users, Calendar } from "lucide-react";
 import { allocationTypes } from "lib";
 import api from "@/lib/axios-instance";
+import { AxiosError } from "axios";
+import { PreferredFaculty } from "node_modules/lib/src/types/allocationFormBuilder";
+import { toast } from "sonner";
+import { sectionTypes } from "../../../../lib/src/schemas/Allocation";
 
 interface Instructor {
   email: string;
@@ -89,6 +93,25 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     enabled: isOpen,
   });
 
+  const { data: facultyPrefs } = useQuery({
+    queryKey: [`faculty-prefs`],
+    queryFn: async () => {
+      try {
+        const res = await api.get<PreferredFaculty[]>(
+          `/allocation/allocation/getFacultyPrefs?email=${selectedInstructorEmail}`
+        );
+        return res.data;
+      } catch (error) {
+        toast.error(
+          ((error as AxiosError).response?.data as string) ??
+            "Failed to get faculty with preference"
+        );
+        throw error;
+      }
+    },
+    enabled: !!selectedInstructorEmail,
+  });
+
   // Fetch selected instructor details
   const { data: instructorDetails, isLoading: instructorDetailsLoading } =
     useQuery({
@@ -156,10 +179,64 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     }
   };
 
+  const getAllocatedCourseLoad = () =>
+    instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
+      (acc, alloc) => {
+        let courseWiseLoad = 0;
+
+        sectionTypes.forEach((sectionType) => {
+          alloc.sections[sectionType]
+            ?.filter((section) =>
+              instructorDetails.userAllocatedSections[sectionType]?.some(
+                (userSection) => userSection.id === section.id
+              )
+            )
+            .forEach((section) => {
+              courseWiseLoad +=
+                (sectionType === "LECTURE"
+                  ? alloc.course.lectureUnits
+                  : sectionType === "PRACTICAL"
+                    ? alloc.course.practicalUnits
+                    : 1) / section.instructors.length;
+            });
+        });
+
+        return acc + courseWiseLoad;
+      },
+      0
+    ) ?? 0;
+
+  const getAllocatedSectionWiseLoad = (
+    sectionType: (typeof sectionTypes)[number]
+  ) =>
+    instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
+      (acc, alloc) => {
+        let courseWiseLoad = 0;
+
+        alloc.sections[sectionType]
+          ?.filter((section) =>
+            instructorDetails.userAllocatedSections[sectionType]?.some(
+              (userSection) => userSection.id === section.id
+            )
+          )
+          .forEach((section) => {
+            courseWiseLoad +=
+              (sectionType === "LECTURE"
+                ? alloc.course.lectureUnits
+                : sectionType === "PRACTICAL"
+                  ? alloc.course.practicalUnits
+                  : 1) / section.instructors.length;
+          });
+
+        return acc + courseWiseLoad;
+      },
+      0
+    ) ?? 0;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-6xl overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="flex max-w-6xl flex-col">
+        <DialogHeader className="h-fit">
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             Assign Instructor
@@ -175,12 +252,28 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                   {selectedSection.type.charAt(0)}
                   {selectedSection.sectionNumber}
                 </Badge>
+                <div>
+                  <Button
+                    onClick={handleAssignInstructor}
+                    disabled={isAssigning}
+                    className="w-full"
+                  >
+                    {isAssigning ? (
+                      <>
+                        <LoadingSpinner className="mr-2 h-4 w-4" />
+                        Assigning...
+                      </>
+                    ) : (
+                      "Assign Instructor"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex h-[600px] gap-6">
+        <div className="flex h-[80vh] gap-6">
           {/* Left Column - Instructor Selection */}
           <div className="flex w-1/3 flex-col">
             <div className="mb-4">
@@ -195,7 +288,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto rounded-md border">
+            <div className="flex h-full overflow-y-auto rounded-md border">
               {instructorsLoading ? (
                 <div className="flex items-center justify-center p-4">
                   <LoadingSpinner />
@@ -205,7 +298,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                   No instructors found
                 </div>
               ) : (
-                <div className="space-y-1 p-2">
+                <div className="flex flex-col space-y-1 overflow-y-auto p-2">
                   {filteredInstructors.map((instructor) => (
                     <div
                       key={instructor.email}
@@ -236,234 +329,268 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
             </div>
           </div>
 
-          {/* Right Column - Instructor Details */}
-          <div className="flex flex-1 flex-col">
+          <>
             {selectedInstructorEmail ? (
-              <>
-                <Card className="mb-4">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Selected Instructor
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="font-medium">Name:</span>{" "}
-                        {instructors.find(
-                          (i) => i.email === selectedInstructorEmail
-                        )?.name || "N/A"}
+              <div className="grid grid-cols-2 gap-x-2">
+                <div className="h-full overflow-y-auto">
+                  <Card className="mb-4">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Selected Instructor
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="font-medium">Name:</span>{" "}
+                          {instructors.find(
+                            (i) => i.email === selectedInstructorEmail
+                          )?.name || "N/A"}
+                        </div>
+                        <div>
+                          <span className="font-medium">Email:</span>{" "}
+                          {selectedInstructorEmail}
+                        </div>
+                        <Badge className="p-2 tracking-wide">
+                          <strong>
+                            Allocated Load : {getAllocatedCourseLoad()}
+                          </strong>
+                        </Badge>
                       </div>
-                      <div>
-                        <span className="font-medium">Email:</span>{" "}
-                        {selectedInstructorEmail}
+                    </CardContent>
+                  </Card>
+
+                  <div>
+                    {instructorDetailsLoading ? (
+                      <div className="flex items-center justify-center p-8">
+                        <LoadingSpinner />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex-1 overflow-y-auto">
-                  {instructorDetailsLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <LoadingSpinner />
-                    </div>
-                  ) : instructorDetails ? (
-                    <div className="space-y-4">
-                      {/* Current Allocations */}
-                      {Object.keys(instructorDetails.userAllocatedSections ?? {})
-                        .length > 0 && (
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Current Allocations
-                            </CardTitle>
-                            <CardDescription>
-                              Sections currently allocated to this instructor
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              {Object.entries(
-                                instructorDetails.userAllocatedSections
-                              ).map(([sectionType, sections]) => (
-                                <div key={sectionType}>
-                                  <Badge
-                                    className={`mb-2 ${getSectionTypeColor(sectionType)}`}
-                                  >
-                                    {sectionType}
-                                  </Badge>
-                                  <div className="ml-4 space-y-2">
-                                    {sections.map((section, index) => (
-                                      <div
-                                        key={index}
-                                        className="rounded bg-gray-50 p-2 text-sm"
-                                      >
-                                        <div className="font-medium">
-                                          {section.master.courseCode}
-                                        </div>
-                                        <div className="text-xs text-gray-600">
-                                          IC: {section.master.ic}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {/* Course Statistics */}
-                      {instructorDetails.allAllocationsOfCoursesAllocatedToUser?.length > 0 && (
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4" />
-                              Course Overview
-                            </CardTitle>
-                            <CardDescription>
-                              All courses where this instructor has allocations
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              {instructorDetails.allAllocationsOfCoursesAllocatedToUser.map(
-                                (allocation) => (
-                                  <div
-                                    key={allocation.id}
-                                    className="rounded-lg border p-4"
-                                  >
-                                    <div className="mb-3 flex items-start justify-between">
-                                      <div>
-                                        <div className="font-medium">
-                                          {allocation.courseCode}
-                                        </div>
-                                        <div className="text-sm text-gray-600">
-                                          {allocation.course.name}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          IC: {allocation.ic}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="flex gap-1">
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            {allocation.course.offeredAs}
-                                          </Badge>
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            {allocation.course.offeredTo}
-                                          </Badge>
-                                        </div>
-                                        <div className="mt-1 text-xs text-gray-500">
-                                          {allocation.course.totalUnits} units
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                      {Object.entries(allocation.sections).map(
-                                        ([sectionType, sections]) =>
-                                          sections.length > 0 && (
-                                            <div
-                                              key={sectionType}
-                                              className="flex items-center gap-2 text-sm"
-                                            >
-                                              <Badge
-                                                variant="outline"
-                                                className={`text-xs ${getSectionTypeColor(sectionType)}`}
-                                              >
-                                                {sectionType}
-                                              </Badge>
-                                              <div className="flex items-center gap-1">
-                                                <Users className="h-3 w-3 text-gray-400" />
-                                                <span className="text-xs text-gray-600">
-                                                  {sections.length} section
-                                                  {sections.length !== 1
-                                                    ? "s"
-                                                    : ""}{" "}
-                                                  •{" "}
-                                                  {sections.reduce(
-                                                    (acc, section) =>
-                                                      acc +
-                                                      section.instructors
-                                                        .length,
-                                                    0
-                                                  )}{" "}
-                                                  instructor
-                                                  {sections.reduce(
-                                                    (acc, section) =>
-                                                      acc +
-                                                      section.instructors
-                                                        .length,
-                                                    0
-                                                  ) !== 1
-                                                    ? "s"
-                                                    : ""}
-                                                </span>
-                                              </div>
-                                            </div>
-                                          )
-                                      )}
-                                    </div>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      {Object.keys(instructorDetails.userAllocatedSections ?? {})
-                        .length === 0 &&
-                        instructorDetails.allAllocationsOfCoursesAllocatedToUser?.length === 0 && (
+                    ) : instructorDetails ? (
+                      <div className="space-y-4">
+                        {/* Current Allocations */}
+                        {Object.keys(
+                          instructorDetails.userAllocatedSections ?? {}
+                        ).length > 0 && (
                           <Card>
-                            <CardContent className="p-8 text-center">
-                              <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-                              <div className="text-gray-600">
-                                No current allocations found for this instructor
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                Current Allocations
+                              </CardTitle>
+                              <CardDescription>
+                                Sections currently allocated to this instructor
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                {Object.entries(
+                                  instructorDetails.userAllocatedSections
+                                ).map(([sectionType, sections]) => (
+                                  <div
+                                    key={sectionType}
+                                    className="flex flex-col space-y-2"
+                                  >
+                                    <Badge
+                                      className={`mb-2 ${getSectionTypeColor(sectionType)}`}
+                                    >
+                                      {sectionType}
+                                    </Badge>
+                                    <div className="ml-4 space-y-2">
+                                      {sections.map((section, index) => (
+                                        <div
+                                          key={index}
+                                          className="rounded bg-gray-50 p-2 text-sm"
+                                        >
+                                          <div className="font-medium">
+                                            {section.master.courseCode}
+                                          </div>
+                                          <div className="text-xs text-gray-600">
+                                            IC: {section.master.ic ?? "Not Set"}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-sm"
+                                    >
+                                      Credit Load:{" "}
+                                      {getAllocatedSectionWiseLoad(
+                                        sectionType as (typeof sectionTypes)[number]
+                                      )}
+                                    </Badge>
+                                  </div>
+                                ))}
                               </div>
                             </CardContent>
                           </Card>
                         )}
-                    </div>
-                  ) : (
-                    <Card>
-                      <CardContent className="p-8 text-center">
-                        <div className="text-gray-600">
-                          No allocation details available
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
 
-                {/* Assign Button */}
-                <div className="mt-4 border-t pt-4">
-                  <Button
-                    onClick={handleAssignInstructor}
-                    disabled={isAssigning}
-                    className="w-full"
-                  >
-                    {isAssigning ? (
-                      <>
-                        <LoadingSpinner className="mr-2 h-4 w-4" />
-                        Assigning...
-                      </>
+                        {/* Course Statistics */}
+                        {instructorDetails
+                          .allAllocationsOfCoursesAllocatedToUser?.length >
+                          0 && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2">
+                                <BookOpen className="h-4 w-4" />
+                                Course Overview
+                              </CardTitle>
+                              <CardDescription>
+                                All courses where this instructor has
+                                allocations
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {instructorDetails.allAllocationsOfCoursesAllocatedToUser.map(
+                                  (allocation) => (
+                                    <div
+                                      key={allocation.id}
+                                      className="rounded-lg border p-4"
+                                    >
+                                      <div className="mb-3 flex items-start justify-between">
+                                        <div>
+                                          <div className="font-medium">
+                                            {allocation.courseCode}
+                                          </div>
+                                          <div className="text-sm text-gray-600">
+                                            {allocation.course.name}
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            IC: {allocation.ic}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <div className="flex gap-1">
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              {allocation.course.offeredAs}
+                                            </Badge>
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              {allocation.course.offeredTo}
+                                            </Badge>
+                                          </div>
+                                          <div className="mt-1 text-xs text-gray-500">
+                                            {allocation.course.totalUnits} units
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        {Object.entries(
+                                          allocation.sections
+                                        ).map(
+                                          ([sectionType, sections]) =>
+                                            sections.length > 0 && (
+                                              <div
+                                                key={sectionType}
+                                                className="flex items-center gap-2 text-sm"
+                                              >
+                                                <Badge
+                                                  variant="outline"
+                                                  className={`text-xs ${getSectionTypeColor(sectionType)}`}
+                                                >
+                                                  {sectionType}
+                                                </Badge>
+                                                <div className="flex items-center gap-1">
+                                                  <Users className="h-3 w-3 text-gray-400" />
+                                                  <span className="text-xs text-gray-600">
+                                                    {sections.length} section
+                                                    {sections.length !== 1
+                                                      ? "s"
+                                                      : ""}{" "}
+                                                    •{" "}
+                                                    {sections.reduce(
+                                                      (acc, section) =>
+                                                        acc +
+                                                        section.instructors
+                                                          .length,
+                                                      0
+                                                    )}{" "}
+                                                    instructor
+                                                    {sections.reduce(
+                                                      (acc, section) =>
+                                                        acc +
+                                                        section.instructors
+                                                          .length,
+                                                      0
+                                                    ) !== 1
+                                                      ? "s"
+                                                      : ""}
+                                                  </span>
+                                                </div>
+                                              </div>
+                                            )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {Object.keys(
+                          instructorDetails.userAllocatedSections ?? {}
+                        ).length === 0 &&
+                          instructorDetails
+                            .allAllocationsOfCoursesAllocatedToUser?.length ===
+                            0 && (
+                            <Card>
+                              <CardContent className="p-8 text-center">
+                                <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+                                <div className="text-gray-600">
+                                  No current allocations found for this
+                                  instructor
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                      </div>
                     ) : (
-                      "Assign Instructor"
+                      <Card>
+                        <CardContent className="p-8 text-center">
+                          <div className="text-gray-600">
+                            No allocation details available
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
-                  </Button>
+                  </div>
                 </div>
-              </>
+                <div className="flex h-full flex-col space-y-2 overflow-y-auto">
+                  <h2 className="h-fit w-full text-center text-xl font-bold">
+                    Instructor Form Response
+                  </h2>
+                  <div className="flex h-full flex-col space-y-2 overflow-y-auto p-2">
+                    {facultyPrefs?.map((pref) => (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center justify-between gap-2">
+                            <h5>{pref.courseCode}</h5>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${getSectionTypeColor(pref.templateField.preferenceType ?? pref.templateField.type)}`}
+                            >
+                              {pref.templateField.preferenceType}
+                            </Badge>
+                          </CardTitle>
+                          <CardDescription>{pref.course.name}</CardDescription>
+                        </CardHeader>
+                        <CardContent>Preference: {pref.preference}</CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </div>
             ) : (
               <Card className="flex-1">
                 <CardContent className="flex h-full items-center justify-center">
@@ -474,7 +601,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                 </CardContent>
               </Card>
             )}
-          </div>
+          </>
         </div>
       </DialogContent>
     </Dialog>

@@ -232,7 +232,7 @@ const AllocateCourse = () => {
             <Label className="text-md font-semibold">
               Instructor Incharge :
             </Label>
-            <div>{allocationData.ic.name}</div>
+            <div>{allocationData.ic?.name ?? "IC Not Set"}</div>
           </div>
           {allocationData.sections.length > 0 && (
             <div className="divide grid grid-cols-3 gap-4 divide-x-2">

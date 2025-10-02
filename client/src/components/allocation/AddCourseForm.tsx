@@ -22,7 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { courseSchema } from "../../../../lib/src/schemas/Allocation";
 import { NewCourse } from "../../../../lib/src/types/allocation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
 
@@ -46,12 +46,15 @@ const AddCourseForm = ({
     },
   });
 
+  const queryClient = useQueryClient()
+
   const { mutate: addCourse, isLoading } = useMutation({
     mutationFn: (newCourse: NewCourse) =>
       api.post("/allocation/course/create", newCourse),
     onSuccess: (data) => {
       if (data?.data?.success) {
         toast.success("Course added successfully!");
+        queryClient.invalidateQueries(["allocation", "courses"]);
         onCourseAdded();
         form.reset();
       } else {

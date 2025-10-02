@@ -5,10 +5,12 @@ import getCourseByCode from "./getCourseByCode.ts";
 import syncCourseWithTD from "./syncCourseWithTD.ts";
 import updateCourse from "./update.ts";
 import deleteCourse from "./delete.ts";
+import markCourse from "./mark.ts";
 
 const router = Router();
 
 router.use("/create", createCourse);
+router.use("/mark", markCourse);
 router.use("/get", getCourses);
 router.use("/getCourseByCode", getCourseByCode);
 router.use("/update", updateCourse);
