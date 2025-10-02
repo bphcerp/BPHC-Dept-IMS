@@ -1,4 +1,3 @@
-// client/src/views/Phd/Supervisor/StudentHistory.tsx
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { phdRequestSchemas } from "lib";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, FileCheck2 } from "lucide-react";
 
 interface PhdRequestDetails {
   id: number;
@@ -41,6 +40,7 @@ interface PhdRequestDetails {
     createdAt: string;
     status_at_review: string | null;
     reviewerDisplayName: string;
+    reviewerRole: string; // Fixed: Added missing property
   }>;
   drcAssignments: Array<{ drcMemberEmail: string; status: string }>;
 }
@@ -120,15 +120,23 @@ const StudentHistory: React.FC = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 border-t pt-4">
-                  {revertableStatuses.includes(request.status) && (
-                    <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {revertableStatuses.includes(request.status) && (
                       <Button variant="destructive" size="sm" asChild>
                         <Link to={`/phd/requests/${request.id}`}>
                           <Edit className="mr-2 h-4 w-4" /> Resubmit Request
                         </Link>
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {request.status === "supervisor_review_final_thesis" && (
+                      <Button variant="default" size="sm" asChild>
+                        <Link to={`/phd/requests/${request.id}`}>
+                          <FileCheck2 className="mr-2 h-4 w-4" /> Review Final
+                          Thesis
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                   <RequestDetailsCard request={request} />
                   <RequestStatusStepper
                     reviews={request.reviews}

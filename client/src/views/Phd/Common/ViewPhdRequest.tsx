@@ -260,7 +260,7 @@ const ViewPhdRequest: React.FC = () => {
               .map((doc) => ({
                 label: doc.documentType,
                 fileName: doc.file.originalName,
-                isNew: false,
+                fileId: doc.file.id, 
               }))}
             comments={request.comments || ""}
           />

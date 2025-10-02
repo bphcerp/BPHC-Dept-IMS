@@ -81,35 +81,27 @@ router.get(
                     "reverted_by_hod",
                 ];
 
-            // --- NEW TWO-PHASE LOGIC ---
-
-            // PHASE 1: Logic for AFTER the proposal is completed.
             if (latestProposal?.status === "completed") {
-                // After proposal completion, the status is ALWAYS the status of the most recent request.
                 if (latestRequest) {
                     currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+                    requestId = latestRequest.id; // Always set requestId if a request is the latest status
                     if (revertableStatuses.includes(latestRequest.status)) {
                         canResubmitRequest = true;
                         reversionComments =
                             latestRequest.reviews[0]?.comments ||
                             "No comments provided.";
-                        requestId = latestRequest.id;
                     }
                 } else {
-                    // This state occurs right after proposal is completed, before any new requests.
                     currentStatus = "Proposal: Completed";
                 }
-            }
-            // PHASE 2: Logic for BEFORE the proposal is completed.
-            else {
+            } else {
                 const latestActiveRequest = allRequests.find(
                     (req) => !["completed", "deleted"].includes(req.status)
                 );
 
-                // 2a. An active request takes highest priority.
                 if (latestActiveRequest) {
                     currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
-                    requestId = latestActiveRequest.id;
+                    requestId = latestActiveRequest.id; // Always set requestId if a request is the latest status
                     if (
                         revertableStatuses.includes(latestActiveRequest.status)
                     ) {
@@ -118,26 +110,19 @@ router.get(
                             latestActiveRequest.reviews[0]?.comments ||
                             "No comments provided.";
                     }
-                }
-                // 2b. If no active request, fall back to proposal status.
-                else if (latestProposal) {
+                } else if (latestProposal) {
                     currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-                }
-                // 2c. If no proposal, fall back to QE status.
-                else if (student.qeApplications.length > 0) {
+                } else if (student.qeApplications.length > 0) {
                     const lastAttempt = student.qeApplications[0];
                     currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
                     if (lastAttempt.result) {
                         currentStatus += ` (${lastAttempt.result})`;
                     }
-                }
-                // 2d. Default for new students.
-                else {
+                } else {
                     currentStatus = "Awaiting QE Application";
                 }
             }
 
-            // Logic for available request types remains the same
             const availableRequestTypes: PhdRequestType[] = [
                 ...anytimeRequests,
             ];

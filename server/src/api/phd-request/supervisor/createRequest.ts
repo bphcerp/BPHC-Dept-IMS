@@ -23,12 +23,18 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    pdfUpload.array("documents", 5),
+    pdfUpload.fields([
+        { name: "documents", maxCount: 5 },
+        { name: "examinerList", maxCount: 1 },
+        { name: "examinerInfoFormat", maxCount: 1 },
+    ]),
     asyncHandler(async (req, res) => {
         const { studentEmail, requestType, comments } =
             phdRequestSchemas.createRequestSchema.parse(req.body);
         const supervisorEmail = req.user!.email;
-        const uploadedFiles = req.files as Express.Multer.File[];
+        const uploadedFiles = req.files as
+            | { [fieldname: string]: Express.Multer.File[] }
+            | undefined;
 
         const latestSemester = await db.query.phdSemesters.findFirst({
             orderBy: (table, { desc }) => [
@@ -101,7 +107,15 @@ router.post(
             return;
         }
 
-        if (!uploadedFiles || uploadedFiles.length === 0) {
+        const filesToUpload = uploadedFiles
+            ? [
+                  ...(uploadedFiles["documents"] || []),
+                  ...(uploadedFiles["examinerList"] || []),
+                  ...(uploadedFiles["examinerInfoFormat"] || []),
+              ]
+            : [];
+
+        if (filesToUpload.length === 0) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "At least one document is required."
@@ -130,7 +144,7 @@ router.post(
                 status_at_review: "supervisor_submitted",
             });
 
-            const fileInserts = uploadedFiles.map((file) => ({
+            const fileInserts = filesToUpload.map((file) => ({
                 userEmail: supervisorEmail,
                 filePath: file.path,
                 originalName: file.originalname,
@@ -139,18 +153,25 @@ router.post(
                 fieldName: file.fieldname,
                 module: modules[2],
             }));
+
             const insertedFiles = await tx
                 .insert(files)
                 .values(fileInserts)
                 .returning();
+
             const documentInserts = insertedFiles.map((file) => ({
                 requestId: newRequest.id,
                 fileId: file.id,
                 uploadedByEmail: supervisorEmail,
-                documentType: requestType,
-                isPrivate: false,
+                documentType:
+                    file.fieldName === "documents"
+                        ? requestType
+                        : file.fieldName!, // FIX: Added non-null assertion as fieldName is guaranteed to exist on uploaded files
+                isPrivate: true,
             }));
+
             await tx.insert(phdRequestDocuments).values(documentInserts);
+
             return newRequest.id;
         });
 
@@ -167,28 +188,17 @@ router.post(
                 assignedTo: convener.email,
                 createdBy: supervisorEmail,
                 title: `New PhD Request from ${student?.name || studentEmail}`,
-                description: `A new '${requestType.replace(
-                    /_/g,
-                    " "
-                )}' request has been submitted by the supervisor.`,
+                description: `A new '${requestType.replace(/_/g, " ")}' request has been submitted by the supervisor.`,
                 module: modules[2],
                 completionEvent: `phd-request:drc-convener-review:${newRequestId}`,
                 link: `/phd/requests/${newRequestId}`,
             }));
             await createTodos(convenerTodos);
-
             await sendBulkEmails(
                 drcConveners.map((convener) => ({
                     to: convener.email,
                     subject: `New PhD Request from ${student?.name || studentEmail}`,
-                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(
-                        /_/g,
-                        " "
-                    )}' has been submitted for student ${
-                        student?.name || studentEmail
-                    }.\n\nPlease review it here: ${
-                        environment.FRONTEND_URL
-                    }/phd/requests/${newRequestId}`,
+                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(/_/g, " ")}' has been submitted for student ${student?.name || studentEmail}.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
                 }))
             );
         }
