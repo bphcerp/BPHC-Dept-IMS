@@ -10,16 +10,17 @@ import {
 } from "@/config/db/schema/phdRequest.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { phdRequestSchemas } from "lib";
+
 const router = express.Router();
+
 type PhdRequestType = (typeof phdRequestSchemas.phdRequestTypes)[number];
 
 const postProposalRequestSequence: (PhdRequestType | PhdRequestType[])[] = [
     "pre_submission",
     "draft_notice",
-    ["change_of_title", "thesis_submission"],
+    ["change_of_title", "pre_thesis_submission"],
     "final_thesis_submission",
 ];
-
 const anytimeRequests: PhdRequestType[] = [
     "jrf_recruitment",
     "jrf_to_phd_conversion",
@@ -41,7 +42,6 @@ router.get(
     checkAccess("phd-request:supervisor:view"),
     asyncHandler(async (req, res) => {
         const supervisorEmail = req.user!.email;
-
         const students = await db.query.phd.findMany({
             where: eq(phd.supervisorEmail, supervisorEmail),
             with: {
@@ -71,19 +71,76 @@ router.get(
             let reversionComments: string | null = null;
             let requestId: number | null = null;
 
-            const latestProposal = student.proposals[0];
             const allRequests = student.requests;
             const latestRequest = allRequests[0];
+            const latestProposal = student.proposals[0];
+            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+                [
+                    "reverted_by_drc_convener",
+                    "reverted_by_drc_member",
+                    "reverted_by_hod",
+                ];
 
+            // --- NEW TWO-PHASE LOGIC ---
 
-            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] = [
-				"reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"
-			];
+            // PHASE 1: Logic for AFTER the proposal is completed.
+            if (latestProposal?.status === "completed") {
+                // After proposal completion, the status is ALWAYS the status of the most recent request.
+                if (latestRequest) {
+                    currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+                    if (revertableStatuses.includes(latestRequest.status)) {
+                        canResubmitRequest = true;
+                        reversionComments =
+                            latestRequest.reviews[0]?.comments ||
+                            "No comments provided.";
+                        requestId = latestRequest.id;
+                    }
+                } else {
+                    // This state occurs right after proposal is completed, before any new requests.
+                    currentStatus = "Proposal: Completed";
+                }
+            }
+            // PHASE 2: Logic for BEFORE the proposal is completed.
+            else {
+                const latestActiveRequest = allRequests.find(
+                    (req) => !["completed", "deleted"].includes(req.status)
+                );
 
+                // 2a. An active request takes highest priority.
+                if (latestActiveRequest) {
+                    currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
+                    requestId = latestActiveRequest.id;
+                    if (
+                        revertableStatuses.includes(latestActiveRequest.status)
+                    ) {
+                        canResubmitRequest = true;
+                        reversionComments =
+                            latestActiveRequest.reviews[0]?.comments ||
+                            "No comments provided.";
+                    }
+                }
+                // 2b. If no active request, fall back to proposal status.
+                else if (latestProposal) {
+                    currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
+                }
+                // 2c. If no proposal, fall back to QE status.
+                else if (student.qeApplications.length > 0) {
+                    const lastAttempt = student.qeApplications[0];
+                    currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
+                    if (lastAttempt.result) {
+                        currentStatus += ` (${lastAttempt.result})`;
+                    }
+                }
+                // 2d. Default for new students.
+                else {
+                    currentStatus = "Awaiting QE Application";
+                }
+            }
+
+            // Logic for available request types remains the same
             const availableRequestTypes: PhdRequestType[] = [
                 ...anytimeRequests,
             ];
-
             if (latestProposal?.status === "completed") {
                 const completedTypes = new Set(
                     allRequests
@@ -102,34 +159,6 @@ router.get(
                     }
                 }
             }
-            if (
-                latestRequest?.requestType === "final_thesis_submission" &&
-                latestRequest.status === "completed"
-            ) {
-                currentStatus = "Final Thesis Submission Completed";
-            } else if (
-                latestRequest &&
-                !["completed", "deleted"].includes(latestRequest.status)
-            ) {
-                requestId = latestRequest.id;
-                currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-                if (revertableStatuses.includes(latestRequest.status)) {
-                    canResubmitRequest = true;
-                    reversionComments =
-                        latestRequest.reviews[0]?.comments ||
-                        "No comments provided.";
-                }
-            } else if (latestProposal) {
-                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-            } else if (student.qeApplications.length > 0) {
-                const lastAttempt = student.qeApplications[0];
-                currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
-                if (lastAttempt.result) {
-                    currentStatus += ` (${lastAttempt.result})`;
-                }
-            } else {
-                currentStatus = "Awaiting QE Application";
-            }
 
             return {
                 email: student.email,
@@ -142,7 +171,6 @@ router.get(
                 availableRequestTypes,
             };
         });
-
         res.status(200).json(studentStatuses);
     })
 );

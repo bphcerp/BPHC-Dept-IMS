@@ -226,6 +226,7 @@ const ViewPhdRequest: React.FC = () => {
     <div className="space-y-6">
       <BackButton />
       <RequestDetailsCard request={request} />
+      {/* The stepper now receives the already-filtered reviews from the server */}
       <RequestStatusStepper reviews={request.reviews} request={request} />
       <div className="mt-6">{renderActionPanel()}</div>
 

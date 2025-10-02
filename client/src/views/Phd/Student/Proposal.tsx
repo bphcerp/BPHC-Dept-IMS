@@ -183,6 +183,28 @@ const StudentProposal: React.FC = () => {
     },
   });
 
+  const finalSubmitMutation = useMutation({
+    mutationFn: (formData: FormData) => {
+      if (!proposalForPreview?.id) {
+        throw new Error("Proposal ID is missing for submission.");
+      }
+      return api.post(
+        `/phd/proposal/student/resubmit/${proposalForPreview.id}`,
+        formData
+      );
+    },
+    onSuccess: () => {
+      toast.success("Proposal submitted successfully for review!");
+      setIsPreviewOpen(false);
+      void refetch();
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "An error occurred during submission."
+      );
+    },
+  });
+
   const openDialog = async (proposal: Proposal, mode: "edit" | "preview") => {
     const response = await fetchProposalDetailsMutation.mutateAsync(
       proposal.id
@@ -217,46 +239,30 @@ const StudentProposal: React.FC = () => {
   };
 
   const handleFinalSubmit = () => {
-    if (!proposalForPreview?.id) return;
-    // This is a placeholder for the final submission logic which is now in the form component.
-    // The `StudentProposalForm` handles both save and final submit.
-    // To adapt to the new flow, we would call the final submit mutation here.
-    // Since the form component already has this logic, let's trigger it from there.
-    // For this flow, we will make the `StudentProposalForm`'s internal submit handler public
-    // or pass the action to it. The simplest is to put the submit button on the preview.
+    if (!proposalForPreview) return;
+
     const formData = new FormData();
     formData.append("title", proposalForPreview.title);
     formData.append(
       "hasOutsideCoSupervisor",
       String(proposalForPreview.hasOutsideCoSupervisor)
     );
-    formData.append("declaration", "true"); // Must be true to submit
-    formData.append("submissionType", "final");
+    formData.append("declaration", "true"); // Final submission requires declaration
+    formData.append("submissionType", "final"); // This updates the status on the backend
     formData.append(
       "internalCoSupervisors",
       JSON.stringify(
-        proposalForPreview.coSupervisors
-          .filter((s: any) => s.coSupervisor)
-          .map((s: any) => s.coSupervisorEmail)
+        proposalForPreview.coSupervisors?.map(
+          (s: any) => s.coSupervisorEmail
+        ) || []
       )
     );
     formData.append(
       "externalCoSupervisors",
-      JSON.stringify(
-        proposalForPreview.coSupervisors.filter((s: any) => !s.coSupervisor)
-      )
+      JSON.stringify(proposalForPreview.externalCoSupervisors || [])
     );
 
-    fetchProposalDetailsMutation.mutate(proposalForPreview.id, {
-      onSuccess: () => {
-        toast.success("Proposal submitted successfully!");
-        setIsPreviewOpen(false);
-        void refetch();
-      },
-      onError: (error: any) => {
-        toast.error(error.response?.data?.message || "An error occurred.");
-      },
-    });
+    finalSubmitMutation.mutate(formData);
   };
 
   if (isLoadingEligibility) {
@@ -541,6 +547,7 @@ const StudentProposal: React.FC = () => {
             <ProposalPreview
               proposal={proposalForPreview}
               onSubmit={handleFinalSubmit}
+              isSubmitting={finalSubmitMutation.isLoading}
             />
           )}
         </DialogContent>

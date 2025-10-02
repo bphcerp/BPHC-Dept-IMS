@@ -15,7 +15,7 @@ interface Review {
   supervisorComments: string | null;
   createdAt: string;
   reviewerDisplayName: string;
-  reviewerRole: string; // Assuming backend sends this
+  reviewerRole: string;
 }
 
 interface RequestStatusStepperProps {
@@ -36,24 +36,19 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
   const isStudent = userEmail === request.student.email;
   const isSupervisor = userEmail === request.supervisor.email;
 
-  const filteredReviews =
-    isStudent || isSupervisor
-      ? reviews.filter((review) => review.reviewerRole !== "DRC_MEMBER")
-      : reviews;
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Request History</CardTitle>
       </CardHeader>
       <CardContent>
-        {filteredReviews.length === 0 ? (
+        {reviews.length === 0 ? (
           <p className="text-muted-foreground">
             No review history yet. The request is pending initial review.
           </p>
         ) : (
           <ol className="relative ml-2 border-l border-gray-200 dark:border-gray-700">
-            {filteredReviews.map((review, index) => {
+            {reviews.map((review, index) => {
               const shouldShowStudentComments =
                 review.studentComments &&
                 (isStudent || isSupervisor || !isStudent);

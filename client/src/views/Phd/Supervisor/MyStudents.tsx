@@ -167,22 +167,31 @@ const MyStudents: React.FC = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex justify-end gap-2">
-                        {student.currentStatus.toLowerCase().includes("qe") && (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to="/phd/supervisor/examiner-suggestions">
-                              Suggest Examiners
-                            </Link>
-                          </Button>
-                        )}
+                        {student.currentStatus.toLowerCase().includes("qe") &&
+                          student.currentStatus
+                            .toLowerCase()
+                            .includes("verified") && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to="/phd/supervisor/examiner-suggestions">
+                                Suggest Examiners
+                              </Link>
+                            </Button>
+                          )}
                         {student.currentStatus
                           .toLowerCase()
-                          .includes("proposal") && (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to="/phd/supervisor/proposals">
-                              View Proposal
-                            </Link>
-                          </Button>
-                        )}
+                          .includes("proposal") &&
+                          (student.currentStatus
+                            .toLowerCase()
+                            .includes("supervisor review") ||
+                            student.currentStatus
+                              .toLowerCase()
+                              .includes("seminar pending")) && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to="/phd/supervisor/proposals">
+                                View Proposal
+                              </Link>
+                            </Button>
+                          )}
                         {student.currentStatus
                           .toLowerCase()
                           .endsWith("supervisor review final thesis") && (
