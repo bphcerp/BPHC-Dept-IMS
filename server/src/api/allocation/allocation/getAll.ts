@@ -1,7 +1,6 @@
 import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { allocationSchemas } from "lib";
 import { getLatestSemester } from "../semester/getLatest.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 
@@ -10,21 +9,22 @@ const router = express.Router();
 router.get(
     "/",
     asyncHandler(async (req, res, next) => {
-        let { code, semesterId } = allocationSchemas.courseCodeSchema.parse(
-            req.query
-        );
+        let { semesterId } = req.query;
 
-        if (!semesterId){
-            semesterId = (await getLatestSemester())?.id
-            if (!semesterId) return next(new HttpError(HttpCode.BAD_REQUEST, "No allocation going on"))
+        if (!semesterId) {
+            semesterId = (await getLatestSemester())?.id;
+            if (!semesterId)
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "No allocation going on"
+                    )
+                );
         }
 
-        const allocation = await db.query.masterAllocation.findFirst({
-            where: (master, { and, eq }) =>
-                and(
-                    eq(master.courseCode, code),
-                    eq(master.semesterId, semesterId)
-                ),
+        const allocations = await db.query.masterAllocation.findMany({
+            where: (master, { eq }) =>
+                eq(master.semesterId, semesterId as string),
             with: {
                 sections: {
                     orderBy: (section, { asc }) => asc(section.createdAt),
@@ -52,13 +52,19 @@ router.get(
                         },
                     },
                 },
-                ic: true,
+                course: true,
+                ic: {
+                    columns: {
+                        name: true,
+                        email: true
+                    }
+                },
             },
         });
 
         res.status(200).json(
-            allocation
-                ? {
+            allocations
+                ? allocations.map((allocation) => ({
                       ...allocation,
                       sections: allocation.sections.map((s) => ({
                           ...s,
@@ -75,7 +81,7 @@ router.get(
                                   : { email, name: "Not found" };
                           }),
                       })),
-                  }
+                  }))
                 : undefined
         );
     })

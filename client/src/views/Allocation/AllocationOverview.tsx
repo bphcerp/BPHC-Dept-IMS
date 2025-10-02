@@ -42,6 +42,9 @@ import {
 } from "@/lib/constants";
 import { Maximize2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+
+export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
@@ -205,7 +208,6 @@ Hyderabad Campus<span>
     return () => clearInterval(timer);
   }, [calculateTimeLeft]);
 
-  const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
   return !latestSemester ? (
     <div className="flex h-full items-center justify-center">
@@ -397,12 +399,15 @@ Hyderabad Campus<span>
               </Button>
             </>
           )}
+          {latestSemester.allocationStatus === "inAllocation" && (
+            <Button><Link to='/allocation/overview/summary'>View Current Allocation</Link></Button>
+          )}
         </div>
       </header>
       <section className="allocationStatsPanel">
         <h2 className="mb-2 text-xl font-semibold text-primary">Stats</h2>
         {latestSemester.form ? (
-          latestSemester.form.publishedDate ? (
+          latestSemester.allocationStatus === "ongoing" ? (
             <div className="grid h-auto grid-cols-1 gap-6 md:grid-cols-2">
               {/* Time Remaining */}
               <div className="flex flex-col items-center justify-center space-y-5 rounded-2xl p-2 shadow-lg transition hover:shadow-xl">
@@ -526,11 +531,20 @@ Hyderabad Campus<span>
                 </div>
               </div>
             </div>
-          ) : (
+          ) : !latestSemester.form.publishedDate ? (
             <div className="flex h-full items-center justify-center">
               <div className="rounded-xl border border-primary/30 bg-white p-8 text-center shadow-md">
                 <p className="text-lg font-medium text-gray-600">
                   Form Not Published Yet
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <div className="rounded-xl border border-primary/30 bg-white p-8 text-center shadow-md">
+                <p className="text-lg font-medium text-gray-600">
+                  In Allocation
+                  {/* Insert stats here */}
                 </p>
               </div>
             </div>

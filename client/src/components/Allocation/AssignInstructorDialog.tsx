@@ -236,7 +236,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="flex max-w-6xl flex-col">
-        <DialogHeader className="h-fit">
+        <DialogHeader className="relative h-fit">
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
             Assign Instructor
@@ -256,7 +256,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                   <Button
                     onClick={handleAssignInstructor}
                     disabled={isAssigning}
-                    className="w-full"
+                    className="absolute -top-2 right-5"
                   >
                     {isAssigning ? (
                       <>

@@ -171,6 +171,10 @@ export type AllocationResponse = {
     }[];
 } | null;
 
+export type AllocationSummaryType = (NonNullable<AllocationResponse> & {
+    course: Course
+})[]
+
 export type InstructorAllocationSection = {
     id: string;
     type: (typeof sectionTypes)[number];

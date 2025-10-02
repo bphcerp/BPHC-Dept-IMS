@@ -33,7 +33,7 @@ const AllocationLayout = () => {
               {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
-                url: "/allocation/ongoing",
+                url: "/allocation/overview",
                 requiredPermissions: ["allocation:write"],
               },
               {
