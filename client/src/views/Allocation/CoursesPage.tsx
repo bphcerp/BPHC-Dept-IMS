@@ -68,6 +68,7 @@ const columns: ColumnDef<Course>[] = [
   {
     accessorFn: (row) => (row.fetchedFromTTD ? "Yes" : "No"),
     header: "Fetched From TTD?",
+    cell: ({ row, getValue }) => <span className={`p-2 rounded-lg ${row.original.fetchedFromTTD ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>{getValue() as string}</span>,
     meta: {
       filterType: "dropdown",
     },
@@ -75,6 +76,7 @@ const columns: ColumnDef<Course>[] = [
   {
     accessorFn: (row) => (row.markedForAllocation ? "Yes" : "No"),
     header: "Marked For Allocation?",
+    cell: ({ row, getValue }) => <span className={`p-2 rounded-lg ${row.original.markedForAllocation ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{getValue() as string}</span>,
     meta: {
       filterType: "dropdown",
     },
@@ -120,7 +122,7 @@ const CoursesPage = () => {
         })
         .catch((e) => {
           console.error(e);
-          toast.error("Something went wrong");
+          toast.error(((e as AxiosError).response?.data as string) ?? "Something went wrong");
         }),
   });
 
@@ -178,8 +180,8 @@ const CoursesPage = () => {
               "allocation:write",
               "allocation:courses:mark",
             ]) &&
-              courses?.length && (
-                <Button onClick={() => markCourses()}>
+              !!courses?.length && (
+                <Button disabled={!selectedCourseCodes.length} onClick={() => markCourses()}>
                   Toggle Mark For Allocation
                 </Button>
               )}

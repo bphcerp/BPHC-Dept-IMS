@@ -13,6 +13,7 @@ export const getLatestSemesterMinimal = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
+        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
     });
 };
 
@@ -22,6 +23,7 @@ export const getLatestSemester = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
+        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
         with: {
             dcaConvenerAtStartOfSem: {
                 columns: {
@@ -122,18 +124,24 @@ router.get(
                             email: true,
                         },
                         where: (phd, { notInArray, and, eq }) =>
-                            and(notInArray(phd.email, Array.from(seenEmails)), eq(phd.phdType, 'full-time')),
+                            and(
+                                notInArray(phd.email, Array.from(seenEmails)),
+                                eq(phd.phdType, "full-time")
+                            ),
                     });
 
                     const semesterDataWithStats = {
                         ...semesterData,
-                        notResponded: [...notRespondedFaculty.map((faculty) => ({
-                            ...faculty,
-                            type: 'faculty'
-                        })), ...notRespondedPhD.map((phd) => ({
-                            ...phd,
-                            type: 'phd full time'
-                        }))],
+                        notResponded: [
+                            ...notRespondedFaculty.map((faculty) => ({
+                                ...faculty,
+                                type: "faculty",
+                            })),
+                            ...notRespondedPhD.map((phd) => ({
+                                ...phd,
+                                type: "phd full time",
+                            })),
+                        ],
                     };
                     res.status(200).json(semesterDataWithStats);
                     return;
