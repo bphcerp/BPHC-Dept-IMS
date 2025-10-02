@@ -3,23 +3,23 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { desc, eq, 
-    gte
+    // gte
  } from "drizzle-orm";
 import {
     phdProposals,
-    phdProposalSemesters,
+    // phdProposalSemesters,
     phdProposalDacReviews,
 } from "@/config/db/schema/phd.ts";
-import { phd } from "@/config/db/schema/admin.ts";
+// import { phd } from "@/config/db/schema/admin.ts";
 import environment from "@/config/environment.ts";
 const router = express.Router();
 router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const student = await db.query.phd.findFirst({
-            where: eq(phd.email, req.user!.email),
-        });
+        // const student = await db.query.phd.findFirst({
+        //     where: eq(phd.email, req.user!.email),
+        // });
         const proposals = await db.query.phdProposals.findMany({
             columns: {
                 id: true,
@@ -62,12 +62,12 @@ router.get(
                 return p;
             })
         );
-        const now = new Date();
-        const activeDeadline = await db.query.phdProposalSemesters.findFirst({
-            where: gte(phdProposalSemesters.studentSubmissionDate, now),
-        });
-        const canApply = student?.hasPassedQe && !proposals.some((p) => p.active) && !!activeDeadline;
-    
+        // const now = new Date();
+        // const activeDeadline = await db.query.phdProposalSemesters.findFirst({
+        //     where: gte(phdProposalSemesters.studentSubmissionDate, now),
+        // });
+        // const canApply = student?.hasPassedQe && !proposals.some((p) => p.active) && !!activeDeadline;
+        const canApply = true;
         res.status(200).json({ proposals: proposalsWithDacFeedback, canApply });
     })
 );

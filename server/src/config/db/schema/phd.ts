@@ -1,3 +1,4 @@
+// server/src/config/db/schema/phd.ts
 import {
     pgTable,
     text,
@@ -14,6 +15,7 @@ import { sql } from "drizzle-orm";
 import { faculty, phd } from "./admin.ts";
 import { phdSchemas } from "lib";
 import { files } from "./form.ts";
+
 export const phdEmailTemplates = pgTable("phd_email_templates", {
     id: serial("id").primaryKey(),
     name: text("name").notNull().unique(),
@@ -25,18 +27,22 @@ export const phdEmailTemplates = pgTable("phd_email_templates", {
         .$onUpdate(() => new Date())
         .notNull(),
 });
+
 export const phdExamApplicationStatus = pgEnum(
     "phd_exam_application_status_enum",
     phdSchemas.phdExamApplicationStatuses
 );
+
 export const phdProposalStatus = pgEnum(
     "phd_proposal_status",
     phdSchemas.phdProposalStatuses
 );
+
 export const phdExamResultStatus = pgEnum("phd_exam_result_status", [
     "pass",
     "fail",
 ]);
+
 export const phdCourses = pgTable("phd_courses", {
     id: serial("id").primaryKey(),
     studentEmail: text("student_email")
@@ -55,6 +61,7 @@ export const phdCourses = pgTable("phd_courses", {
         .array()
         .default(sql`'{}'::text[]`),
 });
+
 export const phdSemesters = pgTable(
     "phd_semesters",
     {
@@ -73,6 +80,7 @@ export const phdSemesters = pgTable(
     },
     (table) => [unique().on(table.year, table.semesterNumber)]
 );
+
 export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
     id: serial("id").primaryKey(),
     semesterId: integer("semester_id")
@@ -91,6 +99,7 @@ export const phdProposalSemesters = pgTable("phd_proposal_semesters", {
         withTimezone: true,
     }).notNull(),
 });
+
 export const phdQualifyingExams = pgTable(
     "phd_qualifying_exams",
     {
@@ -120,6 +129,7 @@ export const phdQualifyingExams = pgTable(
     },
     (table) => [unique().on(table.semesterId, table.examName)]
 );
+
 export const phdExamApplications = pgTable("phd_exam_applications", {
     id: serial("id").primaryKey(),
     examId: integer("exam_id")
@@ -168,9 +178,11 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
         .$onUpdate(() => new Date())
         .notNull(),
 });
+
 export const phdSubAreas = pgTable("phd_sub_areas", {
     subArea: text("sub_area").notNull().primaryKey(),
 });
+
 export const phdExaminerSuggestions = pgTable(
     "phd_examiner_suggestions",
     {
@@ -195,6 +207,7 @@ export const phdExaminerSuggestions = pgTable(
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );
+
 export const phdExaminerAssignments = pgTable(
     "phd_examiner_assignments",
     {
@@ -214,6 +227,7 @@ export const phdExaminerAssignments = pgTable(
     },
     (table) => [unique().on(table.applicationId, table.qualifyingArea)]
 );
+
 export const phdProposals = pgTable(
     "phd_proposals",
     {
@@ -281,6 +295,7 @@ export const phdProposals = pgTable(
         unique().on(table.studentEmail, table.active),
     ]
 );
+
 export const phdProposalCoSupervisors = pgTable(
     "phd_proposal_co_supervisors",
     {
@@ -301,6 +316,7 @@ export const phdProposalCoSupervisors = pgTable(
         index().on(table.proposalId),
     ]
 );
+
 export const phdProposalDacMembers = pgTable(
     "phd_proposal_dac_members",
     {
@@ -316,6 +332,7 @@ export const phdProposalDacMembers = pgTable(
         index().on(table.proposalId),
     ]
 );
+
 export const phdProposalDacReviews = pgTable(
     "phd_proposal_dac_reviews",
     {
@@ -337,6 +354,7 @@ export const phdProposalDacReviews = pgTable(
     },
     (table) => [unique().on(table.proposalId, table.dacMemberEmail)]
 );
+
 export const phdProposalDacReviewForms = pgTable(
     "phd_proposal_dac_review_forms",
     {
@@ -350,6 +368,7 @@ export const phdProposalDacReviewForms = pgTable(
         formData: jsonb("form_data").notNull(),
     }
 );
+
 export const phdExamTimetableSlots = pgTable(
     "phd_exam_timetable_slots",
     {
@@ -368,6 +387,28 @@ export const phdExamTimetableSlots = pgTable(
         unique().on(table.examId, table.studentEmail, table.qualifyingArea),
         index().on(table.examId),
     ]
+);
+
+export const phdSeminarSlots = pgTable(
+    "phd_seminar_slots",
+    {
+        id: serial("id").primaryKey(),
+        drcConvenerEmail: text("drc_convener_email")
+            .notNull()
+            .references(() => faculty.email),
+        venue: text("venue").notNull(),
+        startTime: timestamp("start_time", { withTimezone: true }).notNull(),
+        endTime: timestamp("end_time", { withTimezone: true }).notNull(),
+        isBooked: boolean("is_booked").notNull().default(false),
+        bookedByProposalId: integer("booked_by_proposal_id").references(
+            () => phdProposals.id,
+            { onDelete: "set null" }
+        ),
+        createdAt: timestamp("created_at", { withTimezone: true })
+            .defaultNow()
+            .notNull(),
+    },
+    (table) => [unique().on(table.startTime, table.venue)]
 );
 
 export const phdSupervisorGrades = pgTable(

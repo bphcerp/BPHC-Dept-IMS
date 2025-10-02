@@ -44,6 +44,20 @@ export const allPermissions = {
     "phd:dac:proposal": "DAC Member operations on proposals",
     "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    // phd requests
+    "phd-request:supervisor:create": "Create a new PhD request for a student",
+    "phd-request:supervisor:view": "View PhD requests for their students",
+    "phd-request:student:submit-final-thesis":
+        "Allow student to submit final thesis documents",
+    "phd-request:drc-convener:view": "View all PhD requests for review",
+    "phd-request:drc-convener:review": "Review and assign PhD requests",
+    "phd-request:drc-member:view": "View assigned PhD requests",
+    "phd-request:drc-member:review":
+        "Submit review for an assigned PhD request",
+    "phd-request:hod:view": "View PhD requests for final approval",
+    "phd-request:hod:review": "Submit final approval for a PhD request",
+    "phd-request:staff:view": "View all PhD requests",
+    "phd-request:common": "View PhD request details",
     //meeting
     "meeting:use": "Access and use the meeting module",
 
@@ -292,6 +306,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/getAvailableSlots": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
@@ -302,10 +319,32 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
-    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/seminarSlots": "phd:drc:proposal",
+
+    // PhD Requests
+    "/phd-request/supervisor/create": "phd-request:supervisor:create",
+    "/phd-request/supervisor/resubmit": "phd-request:supervisor:create",
+    "/phd-request/supervisor/my-students": "phd-request:supervisor:view",
+    "/phd-request/supervisor/review-final-thesis":
+        "phd-request:supervisor:view",
+
+    "/phd-request/student/submit-final-thesis":
+        "phd-request:student:submit-final-thesis",
+
+    "/phd-request/drc-convener/requests": "phd-request:drc-convener:view",
+    "/phd-request/drc-convener/review": "phd-request:drc-convener:review",
+
+    "/phd-request/drc-member/requests": "phd-request:drc-member:view",
+    "/phd-request/drc-member/review": "phd-request:drc-member:review",
+
+    "/phd-request/hod/requests": "phd-request:hod:view",
+    "/phd-request/hod/review": "phd-request:hod:review",
+
+    "/phd-request/staff/getAllRequests": "phd-request:staff:view",
+
+    "/phd-request/details": "phd-request:common",
 
     //meeting
     "/meeting/create": "meeting:use",

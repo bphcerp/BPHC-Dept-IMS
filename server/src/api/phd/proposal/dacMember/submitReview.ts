@@ -34,10 +34,12 @@ router.post(
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId))
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+
         const { approved, comments, evaluation } =
             phdSchemas.submitDacReviewSchema.parse(req.body);
         const dacMemberEmail = req.user!.email;
         const feedbackFile = req.file;
+
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: (cols, { eq }) => eq(cols.id, proposalId),
@@ -47,6 +49,7 @@ router.post(
                     proposalSemester: true,
                 },
             });
+
             if (!proposal)
                 throw new HttpError(HttpCode.NOT_FOUND, "Proposal not found");
             if (
@@ -62,6 +65,7 @@ router.post(
                     HttpCode.BAD_REQUEST,
                     "Proposal is not in DAC review stage"
                 );
+
             const isDacMember = proposal.dacMembers.some(
                 (m) => m.dacMemberEmail === dacMemberEmail
             );
@@ -70,6 +74,7 @@ router.post(
                     HttpCode.FORBIDDEN,
                     "You are not assigned to review this proposal."
                 );
+
             let feedbackFileId: number | null = null;
             if (feedbackFile) {
                 const [insertedFile] = await tx
@@ -86,6 +91,7 @@ router.post(
                     .returning();
                 feedbackFileId = insertedFile.id;
             }
+
             const [review] = await tx
                 .insert(phdProposalDacReviews)
                 .values({
@@ -93,12 +99,34 @@ router.post(
                     dacMemberEmail,
                     approved,
                     comments,
-                    feedbackFileId,
+                    ...(feedbackFileId && { feedbackFileId }),
+                })
+                .onConflictDoUpdate({
+                    target: [
+                        phdProposalDacReviews.proposalId,
+                        phdProposalDacReviews.dacMemberEmail,
+                    ],
+                    set: {
+                        approved,
+                        comments,
+                        ...(feedbackFileId && { feedbackFileId }),
+                    },
                 })
                 .returning();
+
             await tx
                 .insert(phdProposalDacReviewForms)
-                .values({ reviewId: review.id, formData: evaluation });
+                .values({
+                    reviewId: review.id,
+                    formData: evaluation,
+                })
+                .onConflictDoUpdate({
+                    target: phdProposalDacReviewForms.reviewId,
+                    set: {
+                        formData: evaluation,
+                    },
+                });
+
             await completeTodo(
                 {
                     module: modules[3],

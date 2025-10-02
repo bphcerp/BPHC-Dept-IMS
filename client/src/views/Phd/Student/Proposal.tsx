@@ -1,3 +1,4 @@
+// client/src/views/Phd/Student/Proposal.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -33,6 +34,7 @@ import {
   Info,
   Clock,
   Download,
+  Eye,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
@@ -47,6 +49,8 @@ import {
 import { toast } from "sonner";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline.tsx";
 import { phdSchemas } from "lib";
+import ProposalPreview from "@/components/phd/proposal/ProposalPreview";
+
 interface ProposalSemester {
   id: number;
   studentSubmissionDate: string;
@@ -77,6 +81,7 @@ interface Proposal {
   dacFeedback?: DacFeedback[];
   dacSummary?: DacSummary[];
 }
+
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -123,10 +128,16 @@ const DeadlinesCard = ({
     </Card>
   );
 };
+
 const StudentProposal: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [proposalForForm, setProposalForForm] = useState<Proposal | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [proposalForForm, setProposalForForm] = useState<any | null>(null);
+  const [proposalForPreview, setProposalForPreview] = useState<any | null>(
+    null
+  );
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
+
   const { data: eligibility, isLoading: isLoadingEligibility } = useQuery({
     queryKey: ["proposal-eligibility"],
     queryFn: async () => {
@@ -137,6 +148,7 @@ const StudentProposal: React.FC = () => {
       return res.data;
     },
   });
+
   const { data: proposalData, refetch } = useQuery({
     queryKey: ["student-proposals"],
     queryFn: async () => {
@@ -148,6 +160,7 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
+
   const { data: deadlineData } = useQuery({
     queryKey: ["active-proposal-deadlines"],
     queryFn: async () => {
@@ -158,25 +171,36 @@ const StudentProposal: React.FC = () => {
     },
     enabled: !!eligibility?.isEligible,
   });
+
   const fetchProposalDetailsMutation = useMutation({
     mutationFn: (proposalId: number) =>
-      api.get<Proposal>(`/phd/proposal/student/view/${proposalId}`),
-    onSuccess: (response) => {
-      setProposalForForm(response.data);
-      setIsFormOpen(true);
-    },
+      api.get(`/phd/proposal/student/view/${proposalId}`),
     onError: () => {
-      toast.error("Failed to fetch proposal details for editing.");
+      toast.error("Failed to fetch proposal details.");
     },
   });
-  const openResubmitDialog = (proposal: Proposal) => {
-    fetchProposalDetailsMutation.mutate(proposal.id);
+
+  const openDialog = async (proposal: Proposal, mode: "edit" | "preview") => {
+    const response = await fetchProposalDetailsMutation.mutateAsync(
+      proposal.id
+    );
+    if (response.data) {
+      if (mode === "edit") {
+        setProposalForForm(response.data);
+        setIsFormOpen(true);
+      } else {
+        setProposalForPreview(response.data);
+        setIsPreviewOpen(true);
+      }
+    }
   };
+
   const handleFormSuccess = () => {
     setIsFormOpen(false);
     setProposalForForm(null);
     void refetch();
   };
+
   const handleOpenNewProposalDialog = () => {
     if (!deadlineData?.deadlines || deadlineData.deadlines.length === 0) {
       toast.error("There are no active proposal submission cycles available.");
@@ -188,6 +212,7 @@ const StudentProposal: React.FC = () => {
     setProposalForForm(null);
     setIsFormOpen(true);
   };
+
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -196,6 +221,7 @@ const StudentProposal: React.FC = () => {
       </div>
     );
   }
+
   const currentDeadlines = deadlineData?.deadlines[0];
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
@@ -256,13 +282,13 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
-      
-      {eligibility?.isEligible && <ProposalStatusTimeline role="student"/> && currentDeadlines && (
-        <DeadlinesCard
-          deadlines={currentDeadlines}
-          highlight="studentSubmissionDate"
-        />
-      )}
+      {eligibility?.isEligible && <ProposalStatusTimeline role="student" /> &&
+        currentDeadlines && (
+          <DeadlinesCard
+            deadlines={currentDeadlines}
+            highlight="studentSubmissionDate"
+          />
+        )}
       <Card>
         <CardHeader>
           <CardTitle>Your Submissions</CardTitle>
@@ -311,7 +337,25 @@ const StudentProposal: React.FC = () => {
                       <TableCell>
                         {new Date(p.updatedAt).toLocaleString()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="flex gap-2">
+                        {p.status === "draft" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openDialog(p, "preview")}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Preview
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => openDialog(p, "edit")}
+                            >
+                              Edit & Submit
+                            </Button>
+                          </>
+                        )}
                         {[
                           "supervisor_revert",
                           "drc_revert",
@@ -319,7 +363,7 @@ const StudentProposal: React.FC = () => {
                         ].includes(p.status) && (
                           <Button
                             size="sm"
-                            onClick={() => openResubmitDialog(p)}
+                            onClick={() => openDialog(p, "edit")}
                             disabled={fetchProposalDetailsMutation.isLoading}
                           >
                             {fetchProposalDetailsMutation.isLoading &&
@@ -406,13 +450,17 @@ const StudentProposal: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {proposalForForm
-                ? "Resubmit Proposal"
-                : "New Proposal Application"}
+              {proposalForForm?.status === "draft" ||
+              (proposalForForm?.id && !proposalForForm.status)
+                ? "Edit Draft"
+                : proposalForForm
+                  ? "Resubmit Proposal"
+                  : "New Proposal Application"}
             </DialogTitle>
           </DialogHeader>
           {!proposalForForm &&
@@ -430,7 +478,7 @@ const StudentProposal: React.FC = () => {
                   <SelectContent>
                     {deadlineData.deadlines.map((cycle) => (
                       <SelectItem key={cycle.id} value={cycle.id.toString()}>
-                        Deadline:
+                        Deadline:{" "}
                         {new Date(
                           cycle.studentSubmissionDate
                         ).toLocaleDateString()}
@@ -448,7 +496,23 @@ const StudentProposal: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Proposal Preview</DialogTitle>
+            <CardDescription>
+              Review your draft before final submission. To make changes, close
+              this preview and click "Edit & Submit".
+            </CardDescription>
+          </DialogHeader>
+          {proposalForPreview && (
+            <ProposalPreview proposal={proposalForPreview} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 export default StudentProposal;

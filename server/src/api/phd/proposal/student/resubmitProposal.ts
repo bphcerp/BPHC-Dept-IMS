@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/student/resubmitProposal.ts
 import db from "@/config/db/index.ts";
 import {
     phdProposals,
@@ -38,33 +39,49 @@ router.post(
         if (isNaN(proposalId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
         }
+
         const {
             title,
             hasOutsideCoSupervisor,
             declaration,
+            submissionType,
             internalCoSupervisors,
             externalCoSupervisors,
         } = phdSchemas.phdProposalSubmissionSchema
             .omit({ proposalCycleId: true })
             .parse(req.body);
+
         const userEmail = req.user!.email;
         let supervisorEmail: string | null = null;
         let studentName: string | null = null;
         let facultyReviewDate: Date | null = null;
+
+        if (submissionType === "final" && !declaration) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "You must accept the declaration to submit."
+            );
+        }
+
         await db.transaction(async (tx) => {
             const proposal = await tx.query.phdProposals.findFirst({
                 where: and(
                     eq(phdProposals.id, proposalId),
                     eq(phdProposals.studentEmail, userEmail)
                 ),
-                with: { student: true, proposalSemester: true },
+                with: {
+                    student: true,
+                    proposalSemester: true,
+                },
             });
+
             if (!proposal) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
                     "Proposal not found or you do not have permission to edit it."
                 );
             }
+
             if (
                 new Date(proposal.proposalSemester.studentSubmissionDate) <
                 new Date()
@@ -74,25 +91,31 @@ router.post(
                     "The resubmission deadline for this cycle has passed."
                 );
             }
-            if (
-                !["supervisor_revert", "drc_revert", "dac_revert"].includes(
-                    proposal.status
-                )
-            ) {
+
+            const allowedStatuses = [
+                "draft",
+                "supervisor_revert",
+                "drc_revert",
+                "dac_revert",
+            ];
+            if (!allowedStatuses.includes(proposal.status)) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
                     "This proposal cannot be resubmitted at its current stage."
                 );
             }
+
             supervisorEmail = proposal.supervisorEmail;
             studentName = proposal.student.name;
             facultyReviewDate = proposal.proposalSemester.facultyReviewDate;
+
             const insertedFileIds: Partial<
                 Record<
                     (typeof phdSchemas.phdProposalFileFieldNames)[number],
                     number
                 >
             > = {};
+
             if (req.files && Object.entries(req.files).length) {
                 const fileInserts = Object.entries(req.files).map(
                     ([fieldName, files]) => {
@@ -123,6 +146,10 @@ router.post(
                     .delete(phdProposalDacReviews)
                     .where(eq(phdProposalDacReviews.proposalId, proposalId));
             }
+
+            const nextStatus =
+                submissionType === "draft" ? "draft" : "supervisor_review";
+
             await tx
                 .update(phdProposals)
                 .set({
@@ -144,14 +171,16 @@ router.post(
                     outsideSupervisorBiodataFileId:
                         insertedFileIds.outsideSupervisorBiodataFile ??
                         proposal.outsideSupervisorBiodataFileId,
-                    status: "supervisor_review",
+                    status: nextStatus,
                     comments: null,
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
+
             await tx
                 .delete(phdProposalCoSupervisors)
                 .where(eq(phdProposalCoSupervisors.proposalId, proposalId));
+
             const coSupervisorsToInsert = [];
             if (internalCoSupervisors) {
                 coSupervisorsToInsert.push(
@@ -175,6 +204,7 @@ router.post(
                     .insert(phdProposalCoSupervisors)
                     .values(coSupervisorsToInsert);
             }
+
             await completeTodo(
                 {
                     module: modules[3],
@@ -184,7 +214,8 @@ router.post(
                 tx
             );
         });
-        if (supervisorEmail) {
+
+        if (supervisorEmail && submissionType === "final") {
             await createTodos([
                 {
                     assignedTo: supervisorEmail,
@@ -205,7 +236,7 @@ router.post(
         }
         res.status(200).send({
             success: true,
-            message: "Proposal resubmitted successfully",
+            message: `Proposal ${submissionType === "draft" ? "draft saved" : "resubmitted successfully"}.`,
         });
     })
 );
