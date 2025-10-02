@@ -2,7 +2,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { authUtils } from "lib";
 
@@ -42,6 +42,30 @@ router.get(
             throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
         }
 
+        // If this is a final thesis submission, find the pre-approved documents and add them
+        if (request.requestType === "final_thesis_submission") {
+            const preThesisRequest = await db.query.phdRequests.findFirst({
+                where: and(
+                    eq(phdRequests.studentEmail, request.studentEmail),
+                    eq(phdRequests.requestType, "pre_thesis_submission"),
+                    eq(phdRequests.status, "completed")
+                ),
+                with: {
+                    documents: {
+                        where: (cols, { eq }) => eq(cols.isPrivate, true),
+                        with: {
+                            file: { columns: { originalName: true, id: true } },
+                        },
+                    },
+                },
+            });
+
+            if (preThesisRequest?.documents) {
+                // Add the pre-approved documents to the current request's document list for viewing
+                request.documents.push(...preThesisRequest.documents);
+            }
+        }
+
         const isPrivilegedViewer =
             req.user &&
             (authUtils.checkAccess(
@@ -62,6 +86,7 @@ router.get(
             req.user?.email === request.supervisorEmail;
 
         let filteredReviews = request.reviews;
+
         if (isStudentOrSupervisor && !isPrivilegedViewer) {
             filteredReviews = request.reviews.filter(
                 (review) => review.reviewerRole !== "DRC_MEMBER"
@@ -114,7 +139,6 @@ router.get(
                 ? ` (${reviewer.name || reviewer.email})`
                 : "";
             const reviewerDisplayName = `${actionText}${roleTitle}${nameSuffix}`;
-
             return { ...review, reviewerDisplayName };
         });
 

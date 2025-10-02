@@ -13,18 +13,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { RequestDetailsCard } from "./RequestDetailsCard";
-import { File } from "lucide-react";
+
+import { BASE_API_URL } from "@/lib/constants";
+import { File, ExternalLink } from "lucide-react";
 
 interface SupervisorFinalThesisFormProps {
   request: any;
   onSuccess: () => void;
 }
 
-const SUPERVISOR_DOCS = [
-  { id: "examinerList", label: "Approved List of Examiners" },
-  { id: "examinerInfoFormat", label: "Format for Information of Examiners" },
-];
+// Map the document types from the backend to user-friendly labels
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  examinerList: "Approved List of Examiners",
+  examinerInfoFormat: "Format for Information of Examiners",
+};
+
+const SUPERVISOR_DOC_TYPES = Object.keys(DOCUMENT_TYPE_LABELS);
 
 export const SupervisorFinalThesisReviewForm: React.FC<
   SupervisorFinalThesisFormProps
@@ -33,11 +37,10 @@ export const SupervisorFinalThesisReviewForm: React.FC<
   const [existingDocs, setExistingDocs] = useState<any[]>([]);
 
   useEffect(() => {
-    // Find documents that match the required types from the pre-thesis submission stage.
-    // The backend now auto-populates these.
+    // Filter for the specific private documents that were pre-loaded by the backend.
     const preThesisDocs = request.documents.filter(
       (doc: any) =>
-        doc.isPrivate && SUPERVISOR_DOCS.some((d) => d.id === doc.documentType)
+        doc.isPrivate && SUPERVISOR_DOC_TYPES.includes(doc.documentType)
     );
     setExistingDocs(preThesisDocs);
   }, [request.documents]);
@@ -69,24 +72,6 @@ export const SupervisorFinalThesisReviewForm: React.FC<
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Review Student's Final Thesis Submission</CardTitle>
-          <CardDescription>
-            The documents submitted by the student are listed below for your
-            review.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RequestDetailsCard
-            request={{
-              ...request,
-              documents: request.documents.filter((d: any) => !d.isPrivate),
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Your Action & Documents</CardTitle>
           <CardDescription>
             Approve the submission to forward it with your previously approved
@@ -98,14 +83,22 @@ export const SupervisorFinalThesisReviewForm: React.FC<
             <Label>Pre-approved Supervisor Documents</Label>
             <div className="mt-2 space-y-2 rounded-md border p-4">
               {existingDocs.length > 0 ? (
-                existingDocs.map((doc, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                existingDocs.map((doc) => (
+                  <a
+                    key={doc.id}
+                    href={`${BASE_API_URL}f/${doc.file.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
                   >
                     <File className="h-4 w-4" />
-                    <span>{doc.file.originalName}</span>
-                  </div>
+                    {/* Display the proper document label instead of the filename */}
+                    <span>
+                      {DOCUMENT_TYPE_LABELS[doc.documentType] ||
+                        doc.file.originalName}
+                    </span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
