@@ -125,7 +125,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     queryKey: ["instructor-list"],
     queryFn: async () => {
       const response = await api.get<InstructorWithPreference[]>(
-        `/allocation/allocation/getInstructorListWithPref?code=${courseCode}`
+        `/allocation/allocation/getInstructorListWithPref?code=${courseCode}&sectionType=${selectedSection?.type}`
       );
       return response.data;
     },

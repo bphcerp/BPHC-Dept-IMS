@@ -23,8 +23,6 @@ router.post(
             `${environment.TTD_API_URL}/${parsed.semesterType}/departments/${environment.TTD_DEPARTMENT_NAME}`
         );
 
-        console.log(deptInfo)
-
         const hodAtStartOfSemEmail = (
             await db
                 .select({ email: faculty.email })
@@ -38,8 +36,6 @@ router.post(
                 .from(faculty)
                 .where(eq(faculty.psrn, deptInfo.dcaConvener))
         )[0]?.email;
-
-        console.log()
 
         try {
             const newSemester = await db

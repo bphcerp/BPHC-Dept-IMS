@@ -110,6 +110,11 @@ export const courseCodeSchema = z.object({
     semesterId: z.string().uuid().optional(),
 });
 
+export const getInstructorsbyPreferenceSchema = z.object({
+    code: z.string().nonempty(),
+    sectionType: sectionTypeEnum,
+});
+
 export const courseAllocateSchema = z.object({
     semesterId: z.string().uuid().optional(),
     courseCode: z.string().nonempty(),
