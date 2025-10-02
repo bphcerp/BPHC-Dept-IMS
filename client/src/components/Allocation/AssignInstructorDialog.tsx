@@ -24,39 +24,78 @@ import { AxiosError } from "axios";
 import { PreferredFaculty } from "node_modules/lib/src/types/allocationFormBuilder";
 import { toast } from "sonner";
 import { sectionTypes } from "../../../../lib/src/schemas/Allocation";
-
-interface Instructor {
-  email: string;
-  name: string | null;
-}
+import { InstructorWithPreference } from "node_modules/lib/src/types/allocation";
 
 interface AssignInstructorDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  courseCode?: string | null;
   selectedSectionId: string;
   allocationData: allocationTypes.AllocationResponse | null;
   onAssignInstructor: (instructorEmail: string) => void;
   isAssigning: boolean;
 }
 
-interface Instructor {
-  email: string;
-  name: string | null;
-}
+export const getAllocatedCourseLoad = (instructorDetails: allocationTypes.InstructorAllocationDetails | undefined | null) =>
+  instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
+    (acc, alloc) => {
+      let courseWiseLoad = 0;
 
-interface AssignInstructorDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedSectionId: string;
-  allocationData: allocationTypes.AllocationResponse | null;
-  onAssignInstructor: (instructorEmail: string) => void;
-  isAssigning: boolean;
-}
+      sectionTypes.forEach((sectionType) => {
+        alloc.sections[sectionType]
+          ?.filter((section) =>
+            instructorDetails.userAllocatedSections[sectionType]?.some(
+              (userSection) => userSection.id === section.id
+            )
+          )
+          .forEach((section) => {
+            courseWiseLoad +=
+              (sectionType === "LECTURE"
+                ? alloc.course.lectureUnits
+                : sectionType === "PRACTICAL"
+                  ? alloc.course.practicalUnits
+                  : 1) / section.instructors.length;
+          });
+      });
+
+      return acc + courseWiseLoad;
+    },
+    0
+  ) ?? 0;
+
+export const getAllocatedSectionWiseLoad = (
+  sectionType: (typeof sectionTypes)[number],
+  instructorDetails: allocationTypes.InstructorAllocationDetails | undefined | null
+) =>
+  instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
+    (acc, alloc) => {
+      let courseWiseLoad = 0;
+
+      alloc.sections[sectionType]
+        ?.filter((section) =>
+          instructorDetails.userAllocatedSections[sectionType]?.some(
+            (userSection) => userSection.id === section.id
+          )
+        )
+        .forEach((section) => {
+          courseWiseLoad +=
+            (sectionType === "LECTURE"
+              ? alloc.course.lectureUnits
+              : sectionType === "PRACTICAL"
+                ? alloc.course.practicalUnits
+                : 1) / section.instructors.length;
+        });
+
+      return acc + courseWiseLoad;
+    },
+    0
+  ) ?? 0;
 
 const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   isOpen,
   onOpenChange,
   selectedSectionId,
+  courseCode,
   allocationData,
   onAssignInstructor,
   isAssigning,
@@ -85,16 +124,16 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   const { data: instructors = [], isLoading: instructorsLoading } = useQuery({
     queryKey: ["instructor-list"],
     queryFn: async () => {
-      const response = await api.get<Instructor[]>(
-        "/allocation/allocation/getInstructorList"
+      const response = await api.get<InstructorWithPreference[]>(
+        `/allocation/allocation/getInstructorListWithPref?code=${courseCode}`
       );
       return response.data;
     },
-    enabled: isOpen,
+    enabled: isOpen && !!selectedSection && !!courseCode,
   });
 
   const { data: facultyPrefs } = useQuery({
-    queryKey: [`faculty-prefs`],
+    queryKey: [`faculty-prefs`, courseCode],
     queryFn: async () => {
       try {
         const res = await api.get<PreferredFaculty[]>(
@@ -178,60 +217,6 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
-
-  const getAllocatedCourseLoad = () =>
-    instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
-      (acc, alloc) => {
-        let courseWiseLoad = 0;
-
-        sectionTypes.forEach((sectionType) => {
-          alloc.sections[sectionType]
-            ?.filter((section) =>
-              instructorDetails.userAllocatedSections[sectionType]?.some(
-                (userSection) => userSection.id === section.id
-              )
-            )
-            .forEach((section) => {
-              courseWiseLoad +=
-                (sectionType === "LECTURE"
-                  ? alloc.course.lectureUnits
-                  : sectionType === "PRACTICAL"
-                    ? alloc.course.practicalUnits
-                    : 1) / section.instructors.length;
-            });
-        });
-
-        return acc + courseWiseLoad;
-      },
-      0
-    ) ?? 0;
-
-  const getAllocatedSectionWiseLoad = (
-    sectionType: (typeof sectionTypes)[number]
-  ) =>
-    instructorDetails?.allAllocationsOfCoursesAllocatedToUser?.reduce(
-      (acc, alloc) => {
-        let courseWiseLoad = 0;
-
-        alloc.sections[sectionType]
-          ?.filter((section) =>
-            instructorDetails.userAllocatedSections[sectionType]?.some(
-              (userSection) => userSection.id === section.id
-            )
-          )
-          .forEach((section) => {
-            courseWiseLoad +=
-              (sectionType === "LECTURE"
-                ? alloc.course.lectureUnits
-                : sectionType === "PRACTICAL"
-                  ? alloc.course.practicalUnits
-                  : 1) / section.instructors.length;
-          });
-
-        return acc + courseWiseLoad;
-      },
-      0
-    ) ?? 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
@@ -317,8 +302,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                           <div className="truncate text-sm font-medium">
                             {instructor.name || instructor.email}
                           </div>
-                          <div className="truncate text-xs text-gray-500">
-                            {instructor.email}
+                          <div className="truncate text-xs font-semibold text-gray-500">
+                            Preference Given:{" "}
+                            {instructor.preference ?? "Not Given"}
                           </div>
                         </div>
                       </div>
@@ -354,7 +340,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                         </div>
                         <Badge className="p-2 tracking-wide">
                           <strong>
-                            Allocated Load : {getAllocatedCourseLoad()}
+                            Allocated Load : {getAllocatedCourseLoad(instructorDetails)}
                           </strong>
                         </Badge>
                       </div>
@@ -417,7 +403,8 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                                     >
                                       Credit Load:{" "}
                                       {getAllocatedSectionWiseLoad(
-                                        sectionType as (typeof sectionTypes)[number]
+                                        sectionType as (typeof sectionTypes)[number],
+                                        instructorDetails
                                       )}
                                     </Badge>
                                   </div>

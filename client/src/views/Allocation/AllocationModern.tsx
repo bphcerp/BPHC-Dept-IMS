@@ -363,6 +363,7 @@ const AllocationModern = () => {
         isOpen={isAssignInstructorDialogOpen}
         onOpenChange={handleCloseAssignDialog}
         selectedSectionId={selectedSectionId}
+        courseCode={selectedCourse?.code}
         allocationData={allocationData || null}
         onAssignInstructor={handleAssignInstructor}
         isAssigning={assignInstructorMutation.isLoading}

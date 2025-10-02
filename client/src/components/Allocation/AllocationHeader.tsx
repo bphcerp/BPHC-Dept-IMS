@@ -15,11 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-
-interface Instructor {
-  email: string;
-  name: string | null;
-}
+import { InstructorWithPreference } from "node_modules/lib/src/types/allocation";
 
 interface AllocationHeaderProps {
   selectedCourse: allocationTypes.Course;
@@ -34,7 +30,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   allocationData,
   onAllocationChange,
 }) => {
-  const [selectedIC, setSelectedIC] = useState<Instructor | null>(null);
+  const [selectedIC, setSelectedIC] = useState<InstructorWithPreference | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Set initial IC when allocation data changes
@@ -48,10 +44,10 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
 
   // Fetch instructor list
   const { data: instructors = [], isLoading: instructorsLoading } = useQuery({
-    queryKey: ["allocation", "instructors"],
+    queryKey: ["allocation", "instructors", selectedCourse.code],
     queryFn: async () => {
-      const response = await api.get<Instructor[]>(
-        "/allocation/allocation/getInstructorList"
+      const response = await api.get<InstructorWithPreference[]>(
+        `/allocation/allocation/getInstructorListWithPref?code=${selectedCourse.code}`
       );
       return response.data;
     },
@@ -169,7 +165,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                         {selectedInstructor.name || "No Name"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {selectedInstructor.email}
+                        Preference Given: {selectedInstructor.preference ?? "Not Given"}
                       </span>
                     </div>
                   ) : (
@@ -214,7 +210,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                             {instructor.name || "No Name"}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {instructor.email}
+                            Preference Given: {instructor.preference ?? "Not Given"}
                           </span>
                         </div>
                       </SelectItem>

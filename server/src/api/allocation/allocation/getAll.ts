@@ -27,7 +27,7 @@ router.get(
                 eq(master.semesterId, semesterId as string),
             with: {
                 sections: {
-                    orderBy: (section, { asc }) => asc(section.createdAt),
+                    orderBy: (section, { asc }) => [asc(section.type), asc(section.createdAt)],
                     with: {
                         instructors: {
                             with: {

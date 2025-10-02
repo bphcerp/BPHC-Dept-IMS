@@ -175,6 +175,12 @@ export type AllocationSummaryType = (NonNullable<AllocationResponse> & {
     course: Course
 })[]
 
+export type InstructorWithPreference = {
+  email: string;
+  name: string | null;
+  preference?: number | null
+}
+
 export type InstructorAllocationSection = {
     id: string;
     type: (typeof sectionTypes)[number];

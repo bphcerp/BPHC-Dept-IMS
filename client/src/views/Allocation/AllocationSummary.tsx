@@ -12,8 +12,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
+import { useState } from "react";
 
 export const AllocationSummary = () => {
+
+  const [creditLoadMap, setCreditLoadMap] = useState<Record<string, number>>({})
+
   const { data: allocationData, isLoading: isLoadingAllocation } = useQuery({
     queryKey: [`allocation`, "summary"],
     queryFn: async () => {
@@ -21,6 +25,26 @@ export const AllocationSummary = () => {
         const res = await api.get<AllocationSummaryType>(
           `/allocation/allocation/getAll`
         );
+
+        const data = res.data
+
+        const creditLoadMapTemp : Record<string, number> = {}
+
+        data.forEach((alloc) => {
+          alloc.sections.forEach((section) => {
+            section.instructors.map((instr) => {
+              if (!creditLoadMapTemp[instr.email]) creditLoadMapTemp[instr.email] = 0
+              creditLoadMapTemp[instr.email] += (section.type === "LECTURE"
+              ? alloc.course.lectureUnits
+              : section.type === "PRACTICAL"
+                ? alloc.course.practicalUnits
+                : 1) / section.instructors.length;
+            })
+          })
+        })
+
+        setCreditLoadMap(creditLoadMapTemp)
+
         return res.data;
       } catch (error) {
         toast.error("Failed to fetch courses");
@@ -104,11 +128,11 @@ export const AllocationSummary = () => {
                               key={idx}
                               className="flex items-center justify-between border-b px-3 py-2 text-sm"
                             >
-                              <span>{inst.name ?? "Unnamed Instructor"}</span>
+                              <span>{inst.name ?? "Unnamed Instructor"} - { creditLoadMap[inst.email] } Credits</span>
                             </div>
                           ))
                         ) : (
-                          <div className="flex items-center justify-between px-3 py-2 text-sm">
+                          <div className="flex items-center justify-between border-b px-3 py-2 text-sm">
                             <span className="font-bold">TBA</span>
                           </div>
                         )}
