@@ -65,14 +65,13 @@ router.post(
                     with: {
                         documents: {
                             where: (cols, { eq }) => eq(cols.isPrivate, true),
-                            limit: 2,
                         },
                     },
                 });
 
                 if (
                     !preThesisRequest ||
-                    preThesisRequest.documents.length < 2
+                    preThesisRequest.documents.length === 0
                 ) {
                     throw new HttpError(
                         HttpCode.BAD_REQUEST,
@@ -80,17 +79,31 @@ router.post(
                     );
                 }
 
-                const documentInserts = preThesisRequest.documents.map(
-                    (doc) => ({
+                // This logic correctly prevents duplication in the database
+                await tx
+                    .delete(phdRequestDocuments)
+                    .where(
+                        and(
+                            eq(phdRequestDocuments.requestId, requestId),
+                            eq(phdRequestDocuments.isPrivate, true)
+                        )
+                    );
+
+                const documentInserts = preThesisRequest.documents
+                    .filter((doc) => doc.documentType !== null)
+                    .map((doc) => ({
                         requestId,
                         fileId: doc.fileId,
                         uploadedByEmail: supervisorEmail,
-                        documentType: doc.documentType,
+                        documentType: doc.documentType!,
                         isPrivate: true,
-                    })
-                );
+                    }));
 
-                await tx.insert(phdRequestDocuments).values(documentInserts);
+                if (documentInserts.length > 0) {
+                    await tx
+                        .insert(phdRequestDocuments)
+                        .values(documentInserts);
+                }
 
                 await tx.insert(phdRequestReviews).values({
                     requestId,
@@ -115,23 +128,22 @@ router.post(
                         assignedTo: convener.email,
                         createdBy: supervisorEmail,
                         title: `Final Thesis review for ${request.student.name}`,
-                        description: `The final thesis submission for ${request.student.name}has been approved by the supervisor and requires DRC review.`,
+                        description: `The final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.`,
                         module: modules[2],
                         completionEvent: `phd-request:drc-convener-review:${requestId}`,
                         link: `/phd/requests/${requestId}`,
                     }));
                     await createTodos(todos, tx);
-
                     await sendBulkEmails(
                         drcConveners.map((convener) => ({
                             to: convener.email,
                             subject: `Final Thesis review for ${request.student.name}`,
-                            text: `Dear DRC Convener,\n\nThe final thesis submission for ${request.student.name}has been approved by the supervisor and requires DRC review.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                            text: `Dear DRC Convener,\n\nThe final thesis submission for ${request.student.name} has been approved by the supervisor and requires DRC review.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
                         }))
                     );
                 }
             } else {
-                // Revert action
+                // Revert Action
                 await tx.insert(phdRequestReviews).values({
                     requestId,
                     reviewerEmail: supervisorEmail,
@@ -158,7 +170,6 @@ router.post(
                     },
                 ];
                 await createTodos(todos, tx);
-
                 await sendBulkEmails([
                     {
                         to: request.studentEmail,

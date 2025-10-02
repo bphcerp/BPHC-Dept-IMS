@@ -22,7 +22,6 @@ interface SupervisorFinalThesisFormProps {
   onSuccess: () => void;
 }
 
-// Map the document types from the backend to user-friendly labels
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   examinerList: "Approved List of Examiners",
   examinerInfoFormat: "Format for Information of Examiners",
@@ -37,7 +36,6 @@ export const SupervisorFinalThesisReviewForm: React.FC<
   const [existingDocs, setExistingDocs] = useState<any[]>([]);
 
   useEffect(() => {
-    // Filter for the specific private documents that were pre-loaded by the backend.
     const preThesisDocs = request.documents.filter(
       (doc: any) =>
         doc.isPrivate && SUPERVISOR_DOC_TYPES.includes(doc.documentType)
@@ -92,7 +90,6 @@ export const SupervisorFinalThesisReviewForm: React.FC<
                     className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
                   >
                     <File className="h-4 w-4" />
-                    {/* Display the proper document label instead of the filename */}
                     <span>
                       {DOCUMENT_TYPE_LABELS[doc.documentType] ||
                         doc.file.originalName}
@@ -109,8 +106,8 @@ export const SupervisorFinalThesisReviewForm: React.FC<
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               These documents were approved during the Pre-Thesis Submission
-              stage and will be automatically attached. They are not visible to
-              the student.
+              stage and will be automatically attached upon approval. They are
+              not visible to the student.
             </p>
           </div>
 

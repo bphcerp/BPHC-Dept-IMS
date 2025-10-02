@@ -31,9 +31,10 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
   const [selectedDrcMembers, setSelectedDrcMembers] = useState<string[]>([]);
 
   const { data: facultyList = [] } = useQuery<ComboboxOption[]>({
-    queryKey: ["facultyList"],
+    queryKey: ["facultyList", "drc"], // Use a specific query key for caching
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList");
+      // Add the ?role=drc query parameter to the request
+      const res = await api.get("/phd/proposal/getFacultyList?role=drc");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -100,6 +101,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             placeholder="Provide comments for reversion or internal notes for approval..."
           />
         </div>
+
         {request.status === "supervisor_submitted" && (
           <div className="space-y-2">
             <Label>Assign DRC Members for Review (Optional)</Label>
@@ -108,14 +110,15 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
               selectedValues={selectedDrcMembers}
               onSelectedValuesChange={setSelectedDrcMembers}
               placeholder="Select DRC members..."
-              searchPlaceholder="Search faculty..."
-              emptyPlaceholder="No faculty found."
+              searchPlaceholder="Search DRC members..."
+              emptyPlaceholder="No DRC members found."
             />
             <p className="text-sm text-muted-foreground">
               If no members are selected, you can forward directly to the HOD.
             </p>
           </div>
         )}
+
         <div className="flex flex-wrap justify-end gap-2 border-t pt-4">
           <Button
             variant="destructive"
@@ -124,6 +127,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
           >
             Revert to Supervisor
           </Button>
+
           {request.status === "supervisor_submitted" && (
             <Button
               onClick={() =>
@@ -140,6 +144,7 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
                 : "Forward to HOD"}
             </Button>
           )}
+
           {request.status === "drc_convener_review" && (
             <Button
               onClick={() => handleSubmit("approve")}

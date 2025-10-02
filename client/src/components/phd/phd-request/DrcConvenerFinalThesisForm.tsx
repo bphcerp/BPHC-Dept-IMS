@@ -30,9 +30,10 @@ export const DrcConvenerFinalThesisForm: React.FC<
   const [action, setAction] = useState<string>("");
 
   const { data: facultyList = [] } = useQuery<ComboboxOption[]>({
-    queryKey: ["facultyList"],
+    queryKey: ["facultyList", "drc"], // Use a specific query key for caching
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList");
+      // Add the ?role=drc query parameter to the request
+      const res = await api.get("/phd/proposal/getFacultyList?role=drc");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -105,8 +106,8 @@ export const DrcConvenerFinalThesisForm: React.FC<
             selectedValues={selectedDrcMembers}
             onSelectedValuesChange={setSelectedDrcMembers}
             placeholder="Select DRC members..."
-            searchPlaceholder="Search faculty..."
-            emptyPlaceholder="No faculty found."
+            searchPlaceholder="Search DRC members..."
+            emptyPlaceholder="No DRC members found."
           />
           <p className="text-sm text-muted-foreground">
             If no members are selected, approving will forward the request
