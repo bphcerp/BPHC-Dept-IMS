@@ -277,11 +277,18 @@ router.post(
 
                         const imageModule = new ImageModule({
                             centered: false,
-                            // MODIFIED: getImage now looks up the buffer in our imageStore using the string key
-                            getImage: (tag: string) => {
-                                return imageStore.get(tag);
+                            getImage: (tag: string): Buffer | undefined =>
+                                imageStore.get(tag),
+                            getSize: (
+                                _img: Buffer,
+                                tag: string,
+                                _value: unknown
+                            ): [number, number] => {
+                                if (tag.includes("signature")) {
+                                    return [150, 50]; 
+                                }
+                                return [12, 12]; 
                             },
-                            getSize: () => [12, 12],
                         });
 
                         const pizZip = new PizZip(dacTemplateContent);
