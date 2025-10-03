@@ -133,7 +133,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   });
 
   const { data: facultyPrefs } = useQuery({
-    queryKey: [`faculty-prefs`, courseCode],
+    queryKey: [`faculty-prefs`, courseCode, selectedInstructorEmail],
     queryFn: async () => {
       try {
         const res = await api.get<PreferredFaculty[]>(
