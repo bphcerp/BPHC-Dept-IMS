@@ -28,6 +28,7 @@ export type Allocation = NewAllocation & {
     semester: Semester;
     instructor: MemberDetailsResponse;
 };
+export type CourseAllocationStatusResponse = Record<string, "Allocated" | "Pending" | "Not Started"> 
 
 export type NewCourse = z.infer<typeof courseSchema>;
 export type UpdateCourse = Partial<NewCourse>;

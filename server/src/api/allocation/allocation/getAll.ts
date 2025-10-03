@@ -3,11 +3,13 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { getLatestSemester } from "../semester/getLatest.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:courses:view"),
     asyncHandler(async (req, res, next) => {
         let { semesterId } = req.query;
 

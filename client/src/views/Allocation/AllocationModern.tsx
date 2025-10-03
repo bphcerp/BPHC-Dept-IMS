@@ -112,7 +112,7 @@ const AllocationModern = () => {
     onSuccess: () => {
       toast.success("Instructor assigned successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse?.code],
+        queryKey: ["allocation"],
       });
       setIsAssignInstructorDialogOpen(false);
       setSelectedSectionId("");

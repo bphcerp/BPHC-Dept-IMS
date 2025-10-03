@@ -43,7 +43,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Section added successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {
@@ -64,7 +64,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Section removed successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {
@@ -88,7 +88,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Instructor dismissed successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {

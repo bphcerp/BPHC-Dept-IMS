@@ -91,7 +91,7 @@ const CoursesPage = () => {
   const queryClient = useQueryClient();
 
   const { data: courses = [] } = useQuery<Course[], AxiosError>(
-    ["allocation", "courses"],
+    ["allocation", "courses", "unmarked"],
     async () => {
       return api
         .get<Course[]>("/allocation/course/get?unmarked=true")

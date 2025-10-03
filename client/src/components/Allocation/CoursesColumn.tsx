@@ -1,11 +1,22 @@
 import React, { useState } from "react";
 import { allocationTypes } from "lib";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Search, BookOpen, GraduationCap, Clock } from "lucide-react";
+import {
+  courseTypes,
+  degreeTypes,
+} from "node_modules/lib/src/schemas/Allocation";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
 
 interface CoursesColumnProps {
   courses: allocationTypes.Course[];
@@ -24,31 +35,50 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
+  const { data: allocationStatusData } = useQuery({
+    queryKey: ["allocation", "status"],
+    queryFn: async () => {
+      const response =
+        await api.get<allocationTypes.CourseAllocationStatusResponse>(
+          "/allocation/allocation/getStatus"
+        );
+      return response.data;
+    },
+  });
+
   const filteredCourses = courses.filter(
     (course) =>
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getCourseTypeColor = (courseType: string) => {
+  const getCourseTypeColor = (courseType: (typeof courseTypes)[number]) => {
     switch (courseType) {
       case "CDC":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "Elective":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
-  const getDegreeTypeColor = (degreeType: string) => {
+  const getDegreeTypeColor = (degreeType: (typeof degreeTypes)[number]) => {
     switch (degreeType) {
       case "FD":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "HD":
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+    }
+  };
+
+  const getAllocationStatusColor = (courseCode: string) => {
+    if (!allocationStatusData) return
+    switch(allocationStatusData[courseCode]){
+      case "Allocated":
+        return "border-l-success"
+      case "Pending":
+        return "border-l-yellow-500"
+      case "Not Started":
+        return "border-l-red-600"
     }
   };
 
@@ -76,9 +106,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
       </div>
 
       {/* Scrollable Course List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 bg-white">
         <div className="space-y-2 p-3 pr-2">
-          {isLoading ? (
+          {(isLoading || !allocationStatusData) ? (
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner />
             </div>
@@ -90,17 +120,17 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             filteredCourses.map((course) => (
               <Card
                 key={course.code}
-                className={`cursor-pointer border-l-4 transition-all duration-200 hover:shadow-md ${
+                className={`cursor-pointer border-l-8 transition-all duration-200 hover:shadow-md ${
                   selectedCourse?.code === course.code
-                    ? "border-l-primary bg-primary/5 shadow-md"
-                    : "border-l-primary/30"
+                    ? "border-l-primary bg-primary/15 shadow-md"
+                    : `${getAllocationStatusColor(course.code)}`
                 }`}
                 onClick={() => onCourseSelect(course)}
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-sm font-semibold">
-                      {course.code}
+                      {course.name}
                     </CardTitle>
                     <div className="flex gap-1">
                       <Badge
@@ -121,7 +151,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 <CardContent className="pt-0">
                   <div className="space-y-2">
                     <h4 className="text-xs font-medium leading-tight">
-                      {course.name}
+                      {course.code}
                     </h4>
 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">

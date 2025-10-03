@@ -4,11 +4,13 @@ import express from "express";
 import { allocationSchemas } from "lib";
 import { getLatestSemester } from "../semester/getLatest.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:courses:view"),
     asyncHandler(async (req, res, next) => {
         let { code, semesterId } = allocationSchemas.courseCodeSchema.parse(
             req.query
