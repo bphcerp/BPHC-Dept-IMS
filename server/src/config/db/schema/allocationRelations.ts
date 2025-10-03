@@ -2,18 +2,18 @@ import { relations } from "drizzle-orm";
 import { allocationSectionInstructors } from "./allocation.ts";
 import { course } from "./allocation.ts";
 import { semester } from "./allocation.ts";
-import { users } from "./admin.ts";
+import { faculty, users } from "./admin.ts";
 import { masterAllocation, allocationSection } from "./allocation.ts";
 import { allocationForm } from "./allocationFormBuilder.ts";
 
 export const semesterRelations = relations(semester, ({ one }) => ({
-    dcaConvenerAtStartOfSem: one(users, {
+    dcaConvenerAtStartOfSem: one(faculty, {
         fields: [semester.dcaConvenerAtStartOfSemEmail],
-        references: [users.email],
+        references: [faculty.email],
     }),
-    hodAtStartOfSem: one(users, {
+    hodAtStartOfSem: one(faculty, {
         fields: [semester.hodAtStartOfSemEmail],
-        references: [users.email],
+        references: [faculty.email],
     }),
     form: one(allocationForm, {
         fields: [semester.formId],

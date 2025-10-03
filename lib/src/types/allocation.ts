@@ -11,7 +11,7 @@ import {
     semesterTypes,
     sectionTypes,
 } from "../schemas/Allocation.ts";
-import { MemberDetailsResponse, userTypes } from "../schemas/Admin.ts";
+import { MemberDetailsResponse } from "../schemas/Admin.ts";
 import {
     AllocationForm,
     AllocationFormResponse,
@@ -89,7 +89,7 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
-    type: (typeof userTypes)[number]
+    type: 'faculty' | 'phd full time'
 };
 
 export type SemesterWithStats = Semester & {
@@ -134,19 +134,13 @@ export type TTDDepartment = {
     name: string;
     hodName: string;
     hodPsrn: string;
-    dcaConvener: {
-        name: string;
-        psrn: string;
-    };
-    delegated: {
-        _id: string;
-        psrn: string;
-        name: string;
-    };
+    dcaConvener: string
+    delegated: string
+    freezeStatus: boolean
 };
 
 export type AllocationType = {
-    ic: MemberDetailsResponse;
+    ic: MemberDetailsResponse | null;
     sections: {
         type: AllocationFormTemplatePreferenceFieldType;
         number: string;
@@ -163,7 +157,7 @@ export type AllocationResponse = {
     ic: {
         email: string;
         name: string | null;
-    };
+    } | null;
     courseCode: string;
     sections: {
         id: string;
@@ -176,6 +170,16 @@ export type AllocationResponse = {
         }[];
     }[];
 } | null;
+
+export type AllocationSummaryType = (NonNullable<AllocationResponse> & {
+    course: Course
+})[]
+
+export type InstructorWithPreference = {
+  email: string;
+  name: string | null;
+  preference?: number | null
+}
 
 export type InstructorAllocationSection = {
     id: string;
@@ -199,7 +203,7 @@ export type InstructorAllocationSection = {
 export type InstructorAllocationMaster = {
     id: string;
     semesterId: string;
-    ic: string;
+    ic: string | null;
     courseCode: string;
     course: {
         code: string;
@@ -222,12 +226,13 @@ export type InstructorAllocationMaster = {
 export type InstructorAllocationSections = Record<
     (typeof sectionTypes)[number],
     {
+        id: string
         type: (typeof sectionTypes)[number];
         createdAt: Date;
         master: {
             id: string;
             courseCode: string;
-            ic: string;
+            ic: string | null;
         };
     }[]
 >;

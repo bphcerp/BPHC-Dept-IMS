@@ -165,6 +165,7 @@ export const allPermissions = {
     "allocation:settings:end": "End the current course load allocation",
 
     "allocation:courses:write": "Create or Modify a new course",
+    "allocation:courses:mark": "Mark Courses For Allocation",
     "allocation:courses:view": "View all existing courses",
     "allocation:courses:sync": "Sync all courses of the department from TTD",
 
@@ -476,12 +477,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/allocation/update": "allocation:write",
 
     "/allocation/course/create": "allocation:courses:write",
+    "/allocation/course/mark": "allocation:courses:mark",
     "/allocation/course/delete": "allocation:courses:write",
     "/allocation/course/sync": "allocation:courses:sync",
     "/allocation/course/update": "allocation:courses:write",
-
-    "/allocation/coursePreferences/delete": "allocation:preference:write",
-    "/allocation/coursePreferences/update": "allocation:preference:write",
 
     "/allocation/semester/create": "allocation:semesters:write",
     "/allocation/semester/get": "allocation:semesters:view",

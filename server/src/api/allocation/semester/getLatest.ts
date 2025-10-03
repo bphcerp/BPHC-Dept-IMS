@@ -13,6 +13,7 @@ export const getLatestSemesterMinimal = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
+        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
     });
 };
 
@@ -22,6 +23,7 @@ export const getLatestSemester = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
+        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
         with: {
             dcaConvenerAtStartOfSem: {
                 columns: {
@@ -102,22 +104,44 @@ router.get(
                     });
 
                 if (stats) {
-                    const notResponded = await db.query.users.findMany({
+                    const notRespondedFaculty = await db.query.faculty.findMany(
+                        {
+                            columns: {
+                                name: true,
+                                email: true,
+                            },
+                            where: (faculty, { notInArray }) =>
+                                notInArray(
+                                    faculty.email,
+                                    Array.from(seenEmails)
+                                ),
+                        }
+                    );
+
+                    const notRespondedPhD = await db.query.phd.findMany({
                         columns: {
                             name: true,
                             email: true,
-                            type: true,
                         },
-                        where: (user, { notInArray, and, or, eq }) =>
+                        where: (phd, { notInArray, and, eq }) =>
                             and(
-                                notInArray(user.email, Array.from(seenEmails)),
-                                or(eq(user.type, 'phd'), eq(user.type, 'faculty'))
+                                notInArray(phd.email, Array.from(seenEmails)),
+                                eq(phd.phdType, "full-time")
                             ),
                     });
 
                     const semesterDataWithStats = {
                         ...semesterData,
-                        notResponded,
+                        notResponded: [
+                            ...notRespondedFaculty.map((faculty) => ({
+                                ...faculty,
+                                type: "faculty",
+                            })),
+                            ...notRespondedPhD.map((phd) => ({
+                                ...phd,
+                                type: "phd full time",
+                            })),
+                        ],
                     };
                     res.status(200).json(semesterDataWithStats);
                     return;

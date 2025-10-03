@@ -2,7 +2,7 @@ import db from "@/config/db/index.ts";
 import { course } from "@/config/db/schema/allocation.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Router } from "express";
 
 const router = Router();
@@ -14,7 +14,7 @@ router.get(
         const { code } = req.params;
 
         const result = await db.query.course.findFirst({
-            where: eq(course.code, code),
+            where: and(eq(course.code, code), eq(course.markedForAllocation,true)),
         });
 
         if (!result) {

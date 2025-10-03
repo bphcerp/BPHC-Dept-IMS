@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -9,11 +9,10 @@ import CoursesColumn from "@/components/Allocation/CoursesColumn";
 import SectionTypeColumn from "@/components/Allocation/SectionTypeColumn";
 import AllocationHeader from "@/components/Allocation/AllocationHeader";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
+import { Button } from "@/components/ui/button";
 
 const AllocationModern = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [currentSemester, setCurrentSemester] =
-    useState<allocationTypes.Semester | null>(null);
   const [selectedCourse, setSelectedCourse] =
     useState<allocationTypes.Course | null>(null);
 
@@ -24,21 +23,19 @@ const AllocationModern = () => {
 
   const queryClient = useQueryClient();
 
-  const { isLoading: semesterLoading, isError: semesterError } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
+  const { data: currentSemester, isLoading: semesterLoading, isError: semesterError } = useQuery({
+    queryKey: ["allocation", "semester", "latest-full"],
     queryFn: async () => {
       const response = await api.get<allocationTypes.Semester>(
         "/allocation/semester/getLatest"
       );
       return response.data;
     },
-    onSuccess: (data) => {
-      setCurrentSemester(data);
-    },
     onError: () => {
       toast.error("Failed to fetch current semester");
     },
   });
+
 
   const {
     data: courses = [],
@@ -238,7 +235,10 @@ const AllocationModern = () => {
     );
   }
 
-  if (currentSemester.form.allocationDeadline && new Date(currentSemester.form.allocationDeadline) > new Date()) {
+  if (
+    currentSemester.form.allocationDeadline &&
+    new Date(currentSemester.form.allocationDeadline) > new Date()
+  ) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
@@ -246,12 +246,22 @@ const AllocationModern = () => {
             Semester's Form Is Still Active
           </h2>
           <p className="text-muted-foreground">
-            This page will be active once all the required responses are collected.
+            This page will be active once all the required responses are
+            collected.
           </p>
         </div>
       </div>
     );
   }
+
+  const getCourseValidSections = () =>
+    allocationSchemas.sectionTypes.filter((type) =>
+      type === "PRACTICAL"
+        ? selectedCourse?.practicalUnits
+        : type === "TUTORIAL"
+          ? selectedCourse?.offeredAs === "CDC"
+          : true
+    );
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -265,12 +275,20 @@ const AllocationModern = () => {
             </p>
           </div>
           {currentSemester && (
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                Current Semester
-              </div>
-              <div className="font-semibold">
-                {currentSemester.year} Semester {currentSemester.semesterType}
+            <div className="flex space-x-2">
+              { semesterLoading || allocationLoading || coursesLoading && <LoadingSpinner /> }
+              <Button variant='link'>
+                <Link to="/allocation/overview/summary">
+                  View Current Allocation
+                </Link>
+              </Button>
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">
+                  Current Semester
+                </div>
+                <div className="font-semibold">
+                  {currentSemester.year} Semester {currentSemester.semesterType}
+                </div>
               </div>
             </div>
           )}
@@ -304,7 +322,7 @@ const AllocationModern = () => {
             {/* Section Type Columns - only show when allocation exists */}
             {allocationData ? (
               <div className="flex flex-1 overflow-hidden">
-                {allocationSchemas.sectionTypes.map((sectionType) => (
+                {getCourseValidSections().map((sectionType) => (
                   <SectionTypeColumn
                     key={sectionType}
                     sectionType={sectionType}
@@ -318,12 +336,9 @@ const AllocationModern = () => {
             ) : (
               <div className="flex flex-1 items-center justify-center bg-muted/20">
                 <div className="text-center text-muted-foreground">
-                  <h3 className="mb-2 text-lg font-medium">
-                    Create Allocation
-                  </h3>
+                  <h3 className="mb-2 text-lg font-medium">Begin Allocation</h3>
                   <p className="text-sm">
-                    Select an Instructor in Charge from the header to create
-                    allocation for{" "}
+                    Click on "Begin Allocation" to start the allocation for{" "}
                     <span className="font-medium">{selectedCourse.code}</span>
                   </p>
                 </div>
@@ -348,6 +363,7 @@ const AllocationModern = () => {
         isOpen={isAssignInstructorDialogOpen}
         onOpenChange={handleCloseAssignDialog}
         selectedSectionId={selectedSectionId}
+        courseCode={selectedCourse?.code}
         allocationData={allocationData || null}
         onAssignInstructor={handleAssignInstructor}
         isAssigning={assignInstructorMutation.isLoading}

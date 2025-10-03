@@ -47,9 +47,18 @@ export const courseSchema = z.object({
     offeredTo: degreeTypeEnum,
     offeredAlsoBy: z.array(z.string()).optional(),
     totalUnits: z.number().int().min(1),
+    markedForAllocation: z.boolean(),
     // createdAt: z.date().optional(),
     // updatedAt: z.date().optional()
 });
+
+export const courseMarkSchema = z.object({
+    courseCodes: z.string().nonempty().array()
+})
+
+export const courseGetQuerySchema = z.object({
+    unmarked: z.coerce.boolean()
+})
 
 export const deleteCourseSchema = z.object({
     code: z.string(),
@@ -101,10 +110,15 @@ export const courseCodeSchema = z.object({
     semesterId: z.string().uuid().optional(),
 });
 
+export const getInstructorsbyPreferenceSchema = z.object({
+    code: z.string().nonempty(),
+    sectionType: sectionTypeEnum,
+});
+
 export const courseAllocateSchema = z.object({
     semesterId: z.string().uuid().optional(),
     courseCode: z.string().nonempty(),
-    ic: z.string().email().nonempty(),
+    ic: z.string().email().optional(),
     sections: z.array(
         z.object({
             type: z.enum(sectionTypes),

@@ -30,23 +30,28 @@ router.post(
         }
 
         await db.transaction(async (tx) => {
-            const master = await tx
-                .insert(masterAllocation)
-                .values({
-                    courseCode,
-                    ic,
-                    semesterId,
-                })
-                .returning()
-                .onConflictDoUpdate({
-                    target: [
-                        masterAllocation.courseCode,
-                        masterAllocation.semesterId,
-                    ],
-                    set: {
-                        ic: ic,
-                    },
-                });
+            const master = ic
+                ? await tx
+                      .insert(masterAllocation)
+                      .values({
+                          courseCode,
+                          ic,
+                          semesterId,
+                      })
+                      .returning()
+                      .onConflictDoUpdate({
+                          target: [
+                              masterAllocation.courseCode,
+                              masterAllocation.semesterId,
+                          ],
+                          set: {
+                              ic: ic,
+                          },
+                      })
+                : await tx.insert(masterAllocation).values({
+                      courseCode,
+                      semesterId,
+                  }).returning()
             for (const { type, instructors } of sections) {
                 const [section] = await tx
                     .insert(allocationSection)

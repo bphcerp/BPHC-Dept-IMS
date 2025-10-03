@@ -1,5 +1,6 @@
 import db from "@/config/db/index.ts";
 import { allocationSection } from "@/config/db/schema/allocation.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { allocationSchemas } from "lib";
@@ -8,9 +9,21 @@ const router = express.Router();
 
 router.post(
     "/",
-    asyncHandler(async (req, res, _next) => {
+    asyncHandler(async (req, res, next) => {
         const { masterId, sectionType } =
             allocationSchemas.addSectionBodySchema.parse(req.body);
+        
+        const masterAllocation = await db.query.masterAllocation.findFirst({
+            with: {
+                course: true
+            },
+            where: (masterAllocation , { eq }) => eq(masterAllocation.id, masterId)
+        })
+
+        if (!masterAllocation) return next(new HttpError(HttpCode.BAD_REQUEST, "Allocation not found. masterId is invalid"));
+        
+        if (sectionType === 'PRACTICAL' && !masterAllocation.course.practicalUnits) return next(new HttpError(HttpCode.BAD_REQUEST, "This course doesnt have a practical section"))     
+        if (sectionType === 'TUTORIAL' && masterAllocation.course.offeredAs === 'Elective') return next(new HttpError(HttpCode.BAD_REQUEST, "This course is an elective and therefore doesn't have tutorial section"))     
 
         await db.insert(allocationSection).values({
             masterId,

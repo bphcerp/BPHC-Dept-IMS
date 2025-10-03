@@ -128,4 +128,5 @@ export type AllocationFormResponse = RawAllocationFormResponse & {
 export type PreferredFaculty = RawAllocationFormResponse & {
     submittedBy: MemberDetailsResponse;
     templateField: NewAllocationFormTemplateField;
+    course: Course
 };
