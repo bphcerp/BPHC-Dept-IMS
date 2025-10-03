@@ -13,7 +13,7 @@ import {
 import { files } from "@/config/db/schema/form.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { phd } from "@/config/db/schema/admin.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
@@ -23,12 +23,18 @@ const router = express.Router();
 router.post(
     "/",
     checkAccess(),
-    pdfUpload.array("documents", 5),
+    pdfUpload.fields([
+        { name: "documents", maxCount: 5 },
+        { name: "examinerList", maxCount: 1 },
+        { name: "examinerInfoFormat", maxCount: 1 },
+    ]),
     asyncHandler(async (req, res) => {
         const { studentEmail, requestType, comments } =
             phdRequestSchemas.createRequestSchema.parse(req.body);
         const supervisorEmail = req.user!.email;
-        const uploadedFiles = req.files as Express.Multer.File[];
+        const uploadedFiles = req.files as
+            | { [fieldname: string]: Express.Multer.File[] }
+            | undefined;
 
         const latestSemester = await db.query.phdSemesters.findFirst({
             orderBy: (table, { desc }) => [
@@ -36,6 +42,7 @@ router.post(
                 desc(table.semesterNumber),
             ],
         });
+
         if (!latestSemester) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
@@ -44,6 +51,21 @@ router.post(
         }
 
         if (requestType === "final_thesis_submission") {
+            const preThesisRequest = await db.query.phdRequests.findFirst({
+                where: and(
+                    eq(phdRequests.studentEmail, studentEmail),
+                    eq(phdRequests.requestType, "pre_thesis_submission"),
+                    eq(phdRequests.status, "completed")
+                ),
+            });
+
+            if (!preThesisRequest) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "A 'Pre-Thesis Submission' request must be completed before initiating the final submission."
+                );
+            }
+
             const [newRequest] = await db
                 .insert(phdRequests)
                 .values({
@@ -55,6 +77,7 @@ router.post(
                     comments: comments,
                 })
                 .returning({ id: phdRequests.id });
+
             const studentTodo = [
                 {
                     assignedTo: studentEmail,
@@ -67,6 +90,7 @@ router.post(
                 },
             ];
             await createTodos(studentTodo);
+
             await sendBulkEmails([
                 {
                     to: studentEmail,
@@ -83,7 +107,15 @@ router.post(
             return;
         }
 
-        if (!uploadedFiles || uploadedFiles.length === 0) {
+        const filesToUpload = uploadedFiles
+            ? [
+                  ...(uploadedFiles["documents"] || []),
+                  ...(uploadedFiles["examinerList"] || []),
+                  ...(uploadedFiles["examinerInfoFormat"] || []),
+              ]
+            : [];
+
+        if (filesToUpload.length === 0) {
             throw new HttpError(
                 HttpCode.BAD_REQUEST,
                 "At least one document is required."
@@ -103,7 +135,6 @@ router.post(
                 })
                 .returning({ id: phdRequests.id });
 
-            // Add a review entry for the submission itself to create a history record
             await tx.insert(phdRequestReviews).values({
                 requestId: newRequest.id,
                 reviewerEmail: supervisorEmail,
@@ -113,7 +144,7 @@ router.post(
                 status_at_review: "supervisor_submitted",
             });
 
-            const fileInserts = uploadedFiles.map((file) => ({
+            const fileInserts = filesToUpload.map((file) => ({
                 userEmail: supervisorEmail,
                 filePath: file.path,
                 originalName: file.originalname,
@@ -122,6 +153,7 @@ router.post(
                 fieldName: file.fieldname,
                 module: modules[2],
             }));
+
             const insertedFiles = await tx
                 .insert(files)
                 .values(fileInserts)
@@ -131,9 +163,13 @@ router.post(
                 requestId: newRequest.id,
                 fileId: file.id,
                 uploadedByEmail: supervisorEmail,
-                documentType: requestType,
-                isPrivate: false,
+                documentType:
+                    file.fieldName === "documents"
+                        ? requestType
+                        : file.fieldName!, // FIX: Added non-null assertion as fieldName is guaranteed to exist on uploaded files
+                isPrivate: true,
             }));
+
             await tx.insert(phdRequestDocuments).values(documentInserts);
 
             return newRequest.id;
@@ -162,16 +198,10 @@ router.post(
                 drcConveners.map((convener) => ({
                     to: convener.email,
                     subject: `New PhD Request from ${student?.name || studentEmail}`,
-                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(
-                        /_/g,
-                        " "
-                    )}' has been submitted for student ${
-                        student?.name || studentEmail
-                    }.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
+                    text: `Dear DRC Convener,\n\nA new PhD request for '${requestType.replace(/_/g, " ")}' has been submitted for student ${student?.name || studentEmail}.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${newRequestId}`,
                 }))
             );
         }
-
         res.status(201).json({
             success: true,
             message: "Request submitted successfully.",

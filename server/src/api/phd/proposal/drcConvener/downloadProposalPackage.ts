@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/drcConvener/downloadProposalPackage.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -23,7 +22,7 @@ const ImageModule = require("docxtemplater-image-module-free");
 const execAsync = promisify(exec);
 
 const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
-    const command = `libreoffice --headless --convert-to pdf --outdir ${outputDir} ${docxPath}`;
+    const command = `libreoffice --headless --nologo --convert-to pdf --outdir ${outputDir} ${docxPath}`;
     try {
         await execAsync(command);
         const pdfPath = path.join(
@@ -39,6 +38,7 @@ const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
         );
     }
 };
+
 const router = express.Router();
 
 router.post(
@@ -56,11 +56,7 @@ router.post(
                 supervisor: true,
                 dacReviews: {
                     with: {
-                        dacMember: {
-                            with: {
-                                signatureFile: true,
-                            },
-                        },
+                        dacMember: { with: { signatureFile: true } },
                         reviewForm: true,
                     },
                 },
@@ -82,22 +78,49 @@ router.post(
 
         const drcUser = await db.query.faculty.findFirst({
             where: (cols, { eq }) => eq(cols.email, req.user!.email),
-            with: {
-                signatureFile: true,
-            },
+            with: { signatureFile: true },
         });
 
         const zip = new JSZip();
         const tempDir = path.resolve("./temp");
         await fs.mkdir(tempDir, { recursive: true });
+
         const dacTemplatePath = path.join(import.meta.dirname, "./dac.docx");
-        const dacTemplateContent = await fs.readFile(dacTemplatePath);
+        const checkedImagePath = path.join(
+            import.meta.dirname,
+            "./checked.png"
+        );
+
+        const transparentPixelBuffer = Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+            "base64"
+        );
+
+        const [dacTemplateContent, checkedImageBuffer] = await Promise.all([
+            fs.readFile(dacTemplatePath),
+            fs.readFile(checkedImagePath).catch(() => {
+                throw new HttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "checked.png image not found."
+                );
+            }),
+        ]);
+
+        // --- NEW: Image Store Map ---
+        // This map will hold all our image buffers, referenced by simple string keys.
+        const imageStore = new Map<string, Buffer>();
+        imageStore.set("checked", checkedImageBuffer);
+        imageStore.set("unchecked", transparentPixelBuffer); // Use transparent pixel for unchecked/null states
 
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
                   .readFile(drcUser.signatureFile.filePath)
                   .catch(() => null)
             : null;
+
+        if (drcSignatureBuffer) {
+            imageStore.set("drc_signature_key", drcSignatureBuffer);
+        }
 
         try {
             for (const proposal of proposalsToPackage) {
@@ -110,6 +133,7 @@ router.post(
                 if (!studentFolder)
                     throw new Error("Could not create student folder in zip.");
 
+                // Add student proposal files to the zip
                 const filesToInclude = [
                     { name: "1_Appendix_I.pdf", file: proposal.appendixFile },
                     { name: "2_Summary.pdf", file: proposal.summaryFile },
@@ -127,7 +151,6 @@ router.post(
                         file: proposal.outsideSupervisorBiodataFile,
                     },
                 ];
-
                 for (const fileData of filesToInclude) {
                     if (fileData.file) {
                         try {
@@ -147,6 +170,8 @@ router.post(
                     if (review.reviewForm) {
                         const formData = review.reviewForm
                             .formData as phdSchemas.DacReviewFormData;
+
+                        // Load DAC signature and add to the image store with a unique key for this review
                         const dacSignatureBuffer = review.dacMember
                             .signatureFile
                             ? await fs
@@ -155,6 +180,13 @@ router.post(
                                   )
                                   .catch(() => null)
                             : null;
+                        const dacSignatureKey = `dac_signature_${review.id}`;
+                        if (dacSignatureBuffer) {
+                            imageStore.set(dacSignatureKey, dacSignatureBuffer);
+                        }
+
+                        const getBoxKey = (condition: boolean) =>
+                            condition ? "checked" : "unchecked";
 
                         const templateData = {
                             department_name:
@@ -167,48 +199,100 @@ router.post(
                             student_name: proposal.student.name,
                             student_id: proposal.student.idNumber || "N/A",
                             supervisor_name: proposal.supervisor.name,
-                            drc_signature: drcSignatureBuffer,
-                            dac_signature: dacSignatureBuffer,
-                            q1a: formData.q1a,
-                            q1b: formData.q1b,
-                            q1c: formData.q1c,
-                            q1d_product: formData.q1d.includes("product"),
-                            q1d_process: formData.q1d.includes("process"),
-                            q1d_frontier: formData.q1d.includes("frontier"),
-                            q2a: formData.q2a,
-                            q2b: formData.q2b,
-                            q2c: formData.q2c,
-                            q2d_improve: formData.q2d.includes("improve"),
-                            q2d_academic: formData.q2d.includes("academic"),
-                            q2d_industry: formData.q2d.includes("industry"),
-                            q3a: formData.q3a,
-                            q3b: formData.q3b,
-                            q3c: formData.q3c,
-                            q4a: formData.q4a,
-                            q4b: formData.q4b,
-                            q4c: formData.q4c,
-                            q4d: formData.q4d,
-                            q4e: formData.q4e,
-                            q4f: formData.q4f,
-                            q4g: formData.q4g,
-                            q5a: formData.q5a,
-                            q5b: formData.q5b,
-                            q5c: formData.q5c,
-                            q6_accepted: formData.q6 === "accepted",
-                            q6_minor: formData.q6 === "minor",
-                            q6_revision: formData.q6 === "revision",
+
+                            // MODIFIED: Pass string keys instead of buffers
+                            drc_signature: drcSignatureBuffer
+                                ? "drc_signature_key"
+                                : "unchecked",
+                            dac_signature: dacSignatureBuffer
+                                ? dacSignatureKey
+                                : "unchecked",
+
+                            q1a_yes_box: getBoxKey(formData.q1a),
+                            q1a_no_box: getBoxKey(!formData.q1a),
+                            q1b_yes_box: getBoxKey(formData.q1b),
+                            q1b_no_box: getBoxKey(!formData.q1b),
+                            q1c_yes_box: getBoxKey(formData.q1c),
+                            q1c_no_box: getBoxKey(!formData.q1c),
+                            q2a_yes_box: getBoxKey(formData.q2a),
+                            q2a_no_box: getBoxKey(!formData.q2a),
+                            q2b_yes_box: getBoxKey(formData.q2b),
+                            q2b_no_box: getBoxKey(!formData.q2b),
+                            q2c_yes_box: getBoxKey(formData.q2c),
+                            q2c_no_box: getBoxKey(!formData.q2c),
+                            q3a_yes_box: getBoxKey(formData.q3a),
+                            q3a_no_box: getBoxKey(!formData.q3a),
+                            q3b_yes_box: getBoxKey(formData.q3b),
+                            q3b_no_box: getBoxKey(!formData.q3b),
+                            q3c_yes_box: getBoxKey(formData.q3c),
+                            q3c_no_box: getBoxKey(!formData.q3c),
+                            q4a_yes_box: getBoxKey(formData.q4a),
+                            q4a_no_box: getBoxKey(!formData.q4a),
+                            q4b_yes_box: getBoxKey(formData.q4b),
+                            q4b_no_box: getBoxKey(!formData.q4b),
+                            q4c_yes_box: getBoxKey(formData.q4c),
+                            q4c_no_box: getBoxKey(!formData.q4c),
+                            q4d_yes_box: getBoxKey(formData.q4d),
+                            q4d_no_box: getBoxKey(!formData.q4d),
+                            q4e_yes_box: getBoxKey(formData.q4e),
+                            q4e_no_box: getBoxKey(!formData.q4e),
+                            q4f_yes_box: getBoxKey(formData.q4f),
+                            q4f_no_box: getBoxKey(!formData.q4f),
+                            q4g_yes_box: getBoxKey(formData.q4g),
+                            q4g_no_box: getBoxKey(!formData.q4g),
+                            q5a_yes_box: getBoxKey(formData.q5a),
+                            q5a_no_box: getBoxKey(!formData.q5a),
+                            q5b_yes_box: getBoxKey(formData.q5b),
+                            q5b_no_box: getBoxKey(!formData.q5b),
+                            q5c_yes_box: getBoxKey(formData.q5c),
+                            q5c_no_box: getBoxKey(!formData.q5c),
+                            q1d_product_box: getBoxKey(
+                                formData.q1d.includes("product")
+                            ),
+                            q1d_process_box: getBoxKey(
+                                formData.q1d.includes("process")
+                            ),
+                            q1d_frontier_box: getBoxKey(
+                                formData.q1d.includes("frontier")
+                            ),
+                            q2d_improve_box: getBoxKey(
+                                formData.q2d.includes("improve")
+                            ),
+                            q2d_academic_box: getBoxKey(
+                                formData.q2d.includes("academic")
+                            ),
+                            q2d_industry_box: getBoxKey(
+                                formData.q2d.includes("industry")
+                            ),
+                            q6_accepted_box: getBoxKey(
+                                formData.q6 === "accepted"
+                            ),
+                            q6_minor_box: getBoxKey(formData.q6 === "minor"),
+                            q6_revision_box: getBoxKey(
+                                formData.q6 === "revision"
+                            ),
                             q7_reasons: formData.q7_reasons,
                             q8_comments: formData.q8_comments || "",
                         };
 
                         const imageModule = new ImageModule({
                             centered: false,
-                            getImage: (tag: string) => tag,
-                            getSize: () => [150, 40],
+                            getImage: (tag: string): Buffer | undefined =>
+                                imageStore.get(tag),
+                            getSize: (
+                                _img: Buffer,
+                                tag: string,
+                                _value: unknown
+                            ): [number, number] => {
+                                if (tag.includes("signature")) {
+                                    return [150, 50]; 
+                                }
+                                return [12, 12]; 
+                            },
                         });
 
-                        const zip = new PizZip(dacTemplateContent);
-                        const doc = new Docxtemplater(zip, {
+                        const pizZip = new PizZip(dacTemplateContent);
+                        const doc = new Docxtemplater(pizZip, {
                             paragraphLoop: true,
                             linebreaks: true,
                             modules: [imageModule],
@@ -240,6 +324,7 @@ router.post(
                     }
                 }
             }
+
             await db
                 .update(phdProposals)
                 .set({ status: "finalising_documents" })
@@ -249,6 +334,7 @@ router.post(
                         proposalsToPackage.map((p) => p.id)
                     )
                 );
+
             const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
             res.setHeader("Content-Type", "application/zip");

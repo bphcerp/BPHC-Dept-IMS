@@ -11,6 +11,9 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { getAccess } from "@/lib/auth/index.ts";
+import { authUtils } from "lib";
 
 // Promisify the exec function for async/await usage
 const execAsync = promisify(exec);
@@ -68,10 +71,7 @@ router.post(
 
         if (
             proposalsForNotice.some(
-                (p) =>
-                    ![ "finalising_documents", "completed"].includes(
-                        p.status
-                    )
+                (p) => !["finalising_documents", "completed"].includes(p.status)
             )
         ) {
             throw new HttpError(
@@ -80,11 +80,27 @@ router.post(
             );
         }
 
-        const drcUser = await db.query.faculty.findFirst({
-            where: (cols, { eq }) => eq(cols.email, req.user!.email),
-            columns: { name: true },
-        });
-        const drcConvenerName = drcUser?.name || req.user!.email;
+        const allDrcConveners = await getUsersWithPermission(
+            "phd-request:drc-convener:view"
+        );
+
+        let drcUser = null;
+        for (const convener of allDrcConveners) {
+            // Get the full permission set for the current user
+            const permissions = await getAccess(convener.roles);
+            // Check if they have the HOD permission
+            const isHod = authUtils.checkAccess(
+                "phd-request:hod:view",
+                permissions
+            );
+
+            if (!isHod) {
+                drcUser = convener; // Found the first user who is not an HOD
+                break; // Stop searching
+            }
+        }
+
+        const drcConvenerName = drcUser?.name || "DRC Convener";
 
         // --- DOCX Templating Logic ---
         // Use createRequire to reliably load CJS modules in an ESM project

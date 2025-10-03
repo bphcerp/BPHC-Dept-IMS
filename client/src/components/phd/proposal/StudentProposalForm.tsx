@@ -1,4 +1,3 @@
-// client/src/components/phd/proposal/StudentProposalForm.tsx
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -124,7 +123,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   const [files, setFiles] = useState<Record<string, File | null>>({});
   const [hasOutsideCoSupervisor, setHasOutsideCoSupervisor] = useState(false);
   const [declaration, setDeclaration] = useState(false);
-  const [previewConfirmation, setPreviewConfirmation] = useState(false);
   const [internalCoSupervisors, setInternalCoSupervisors] = useState<string[]>(
     []
   );
@@ -198,7 +196,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       return api.post(`/phd/proposal/student/submitProposal`, formData);
     },
     onSuccess: () => {
-      toast.success(`Proposal action completed successfully!`);
+      toast.success(`Proposal changes saved successfully!`);
       onSuccess();
     },
     onError: (error: any) => {
@@ -238,56 +236,12 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     setExternalCoSupervisors((prev) => prev.filter((e) => e.email !== email));
   };
 
-  const handleSubmit = (submissionType: "draft" | "final") => {
-    if (submissionType === "final") {
-      if (
-        !title ||
-        (!files.appendixFile && !proposalData?.appendixFileUrl) ||
-        (!files.summaryFile && !proposalData?.summaryFileUrl) ||
-        (!files.outlineFile && !proposalData?.outlineFileUrl)
-      ) {
-        toast.error(
-          "Please fill in the title and upload all mandatory documents."
-        );
-        return;
-      }
-      if (
-        profileData?.phdType === "part-time" &&
-        !files.placeOfResearchFile &&
-        !proposalData?.placeOfResearchFileUrl
-      ) {
-        toast.error(
-          "Part-time students must upload the 'Place of Research' document."
-        );
-        return;
-      }
-      if (
-        hasOutsideCoSupervisor &&
-        !files.outsideCoSupervisorFormatFile &&
-        !proposalData?.outsideCoSupervisorFormatFileUrl &&
-        !files.outsideSupervisorBiodataFile &&
-        !proposalData?.outsideSupervisorBiodataFileUrl
-      ) {
-        toast.error(
-          "Please upload both documents for the outside co-supervisor."
-        );
-        return;
-      }
-      if (!declaration) {
-        toast.error("You must agree to the declaration.");
-        return;
-      }
-      if (!previewConfirmation) {
-        toast.error("Please confirm you have previewed the submission.");
-        return;
-      }
-    }
-
+  const handleSaveChanges = () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
-    formData.append("submissionType", submissionType);
+    formData.append("submissionType", "draft"); // Always save as draft from edit form
     formData.append(
       "internalCoSupervisors",
       JSON.stringify(internalCoSupervisors)
@@ -296,11 +250,13 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       "externalCoSupervisors",
       JSON.stringify(externalCoSupervisors)
     );
+
     Object.keys(files).forEach((key) => {
       if (files[key]) {
         formData.append(key, files[key] as File);
       }
     });
+
     mutation.mutate(formData);
   };
 
@@ -339,7 +295,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       {proposalData?.id && (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>Resubmitting Proposal</AlertTitle>
+          <AlertTitle>Editing Proposal</AlertTitle>
           <AlertDescription>
             The form fields have been pre-filled with your previous submission.
             Please review the details and upload any corrected documents below.
@@ -456,6 +412,20 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         </div>
       </div>
 
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="hasOutsideCoSupervisor"
+          checked={hasOutsideCoSupervisor}
+          onCheckedChange={(checked) =>
+            setHasOutsideCoSupervisor(checked as boolean)
+          }
+        />
+        <Label htmlFor="hasOutsideCoSupervisor">
+          I have an outside co-supervisor (from outside of BITS Pilani
+          campuses).
+        </Label>
+      </div>
+
       {hasOutsideCoSupervisor &&
         outsideSupervisorFileFields.map((field) => (
           <FileField
@@ -467,94 +437,26 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           />
         ))}
 
-      <div className="space-y-2 rounded-md border p-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="hasOutsideCoSupervisor"
-            checked={hasOutsideCoSupervisor}
-            onCheckedChange={(checked) =>
-              setHasOutsideCoSupervisor(checked as boolean)
-            }
-          />
-          <Label htmlFor="hasOutsideCoSupervisor">
-            I have an outside co-supervisor (from outside of BITS Pilani
-            campuses) and have attached the required forms.
-          </Label>
-        </div>
-      </div>
-
       <div className="flex items-center space-x-2">
         <Checkbox
           id="declaration"
           checked={declaration}
           onCheckedChange={(checked) => setDeclaration(checked as boolean)}
-          required
         />
         <Label htmlFor="declaration">
           I hereby declare that all the information I have filled is correct to
-          the best of my knowledge. *
+          the best of my knowledge.
         </Label>
       </div>
 
-      <div className="space-y-4 rounded-md border-2 border-primary/50 bg-primary/5 p-4">
-        <div className="flex items-start space-x-2">
-          <Checkbox
-            id="previewConfirmation"
-            checked={previewConfirmation}
-            onCheckedChange={(checked) =>
-              setPreviewConfirmation(checked as boolean)
-            }
-          />
-          <Label
-            htmlFor="previewConfirmation"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            I have previewed my submission and confirm all details are correct.
-            I understand I cannot edit after final submission unless it is
-            reverted. *
-          </Label>
-        </div>
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>Final Step</AlertTitle>
-          <AlertDescription>
-            You can save your application as a draft anytime. Before final
-            submission, please use the "Preview" button on the main page to
-            review your application. Check the box above to confirm your review
-            before submitting.
-          </AlertDescription>
-        </Alert>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex justify-end">
         <Button
           type="button"
-          variant="outline"
           className="w-full"
           disabled={mutation.isLoading}
-          onClick={() => handleSubmit("draft")}
+          onClick={handleSaveChanges}
         >
-          {mutation.isLoading &&
-          mutation.variables?.get("submissionType") === "draft" ? (
-            <LoadingSpinner />
-          ) : (
-            "Save as Draft"
-          )}
-        </Button>
-        <Button
-          type="button"
-          className="w-full"
-          disabled={mutation.isLoading || !previewConfirmation || !declaration}
-          onClick={() => handleSubmit("final")}
-        >
-          {mutation.isLoading &&
-          mutation.variables?.get("submissionType") === "final" ? (
-            <LoadingSpinner />
-          ) : proposalData?.id ? (
-            "Resubmit Proposal"
-          ) : (
-            "Submit Proposal"
-          )}
+          {mutation.isLoading ? <LoadingSpinner /> : "Save Changes"}
         </Button>
       </div>
     </form>

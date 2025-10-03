@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/RequestStatusStepper.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, XCircle } from "lucide-react";
@@ -6,13 +5,17 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/Auth";
 
 interface Review {
-  reviewer: { name: string; email: string };
+  reviewer: {
+    name: string;
+    email: string;
+  };
   approved: boolean;
   comments: string | null;
   studentComments: string | null;
   supervisorComments: string | null;
   createdAt: string;
   reviewerDisplayName: string;
+  reviewerRole: string;
 }
 
 interface RequestStatusStepperProps {
@@ -30,8 +33,6 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
 }) => {
   const { authState } = useAuth();
   const userEmail = authState?.email;
-
-  // Determine if the current user is the student or the supervisor
   const isStudent = userEmail === request.student.email;
   const isSupervisor = userEmail === request.supervisor.email;
 
@@ -48,18 +49,15 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
         ) : (
           <ol className="relative ml-2 border-l border-gray-200 dark:border-gray-700">
             {reviews.map((review, index) => {
-              // Decide which comments to show based on user role
               const shouldShowStudentComments =
                 review.studentComments &&
                 (isStudent || isSupervisor || !isStudent);
               const shouldShowSupervisorComments =
                 review.supervisorComments && !isStudent;
-
               const generalComments =
                 !review.studentComments && !review.supervisorComments
                   ? review.comments
                   : null;
-
               return (
                 <li key={index} className="mb-10 ml-6">
                   <span
@@ -92,7 +90,6 @@ export const RequestStatusStepper: React.FC<RequestStatusStepperProps> = ({
                   <time className="mb-2 block text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
                     Reviewed on {new Date(review.createdAt).toLocaleString()}
                   </time>
-
                   {(generalComments ||
                     shouldShowStudentComments ||
                     shouldShowSupervisorComments) && (

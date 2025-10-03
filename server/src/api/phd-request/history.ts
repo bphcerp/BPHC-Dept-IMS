@@ -1,4 +1,3 @@
-// server/src/api/phd-request/history.ts
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
@@ -22,6 +21,7 @@ router.get(
                 "Authentication required."
             );
         }
+
         const studentEmail =
             studentEmailParam === "me"
                 ? requestingUser.email
@@ -39,16 +39,21 @@ router.get(
         const isSelf = requestingUser.email === studentEmail;
         const isSupervisor =
             requestingUser.email === studentData.supervisorEmail;
-        const isDrcConvener = authUtils.checkAccess(
-            "phd-request:drc-convener:view",
-            requestingUser.permissions
-        );
-        const isHod = authUtils.checkAccess(
-            "phd-request:hod:view",
-            requestingUser.permissions
-        );
+        const isPrivilegedViewer =
+            authUtils.checkAccess(
+                "phd-request:drc-convener:view",
+                requestingUser.permissions
+            ) ||
+            authUtils.checkAccess(
+                "phd-request:hod:view",
+                requestingUser.permissions
+            ) ||
+            authUtils.checkAccess(
+                "phd-request:staff:view",
+                requestingUser.permissions
+            );
 
-        if (!isSelf && !isSupervisor && !isDrcConvener && !isHod) {
+        if (!isSelf && !isSupervisor && !isPrivilegedViewer) {
             throw new HttpError(
                 HttpCode.FORBIDDEN,
                 "You do not have permission to view this student's history."
@@ -83,10 +88,17 @@ router.get(
             );
         }
 
-        const isPrivilegedViewer = isDrcConvener || isHod;
-
         const finalRequests = requests.map((request) => {
-            const augmentedReviews = request.reviews.map((review: any) => {
+            let reviewsToProcess = request.reviews;
+
+        
+            if (isSupervisor && !isPrivilegedViewer) {
+                reviewsToProcess = request.reviews.filter(
+                    (review) => review.reviewerRole !== "DRC_MEMBER"
+                );
+            }
+
+            const augmentedReviews = reviewsToProcess.map((review: any) => {
                 let roleTitle = "";
                 const reviewer = review.reviewer;
                 const actionText = review.approved
@@ -133,19 +145,16 @@ router.get(
                     ? ` (${reviewer.name || reviewer.email})`
                     : "";
                 const reviewerDisplayName = `${actionText}${roleTitle}${nameSuffix}`;
-
                 return { ...review, reviewerDisplayName };
             });
 
             const finalRequest = { ...request, reviews: augmentedReviews };
 
-            // Filter for self-view
             if (isSelf) {
                 finalRequest.documents = finalRequest.documents.filter(
                     (doc) => !doc.isPrivate
                 );
                 finalRequest.reviews.forEach((review) => {
-                    // @ts-ignore
                     delete review.supervisorComments;
                 });
             }

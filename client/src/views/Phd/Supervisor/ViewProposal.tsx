@@ -1,4 +1,3 @@
-// client/src/views/Phd/Supervisor/ViewProposal.tsx
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -20,26 +19,41 @@ import { Check, X, AlertTriangle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface DacReview {
-  dacMember: { name: string | null; email: string };
+  dacMember: {
+    name: string | null;
+    email: string;
+  };
   approved: boolean;
 }
+
 interface DacMember {
-  dacMember: { name: string | null; email: string } | null;
+  dacMember: {
+    name: string | null;
+    email: string;
+  } | null;
   dacMemberEmail: string;
   dacMemberName: string | null;
 }
+
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
-  coSupervisor: { name: string | null; email: string } | null;
+  coSupervisor: {
+    name: string | null;
+    email: string;
+  } | null;
 }
+
 interface Proposal {
   id: number;
   title: string;
   status: string;
   comments: string | null;
   isResubmission: boolean;
-  student: { email: string; name: string | null };
+  student: {
+    email: string;
+    name: string | null;
+  };
   dacMembers: DacMember[];
   dacReviews: DacReview[];
   coSupervisors: CoSupervisor[];
@@ -49,7 +63,10 @@ interface Proposal {
   placeOfResearchFileUrl?: string | null;
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
-  proposalSemester: { facultyReviewDate: string };
+  proposalSemester: {
+    facultyReviewDate: string;
+  };
+  canBookSlot?: boolean; // This property will be sent from backend
 }
 
 const SupervisorViewProposal: React.FC = () => {
@@ -135,8 +152,23 @@ const SupervisorViewProposal: React.FC = () => {
         );
       case "dac_accepted":
       case "seminar_pending":
+        if (proposal.canBookSlot) {
+          return (
+            <SeminarSlotSelector proposalId={proposalId} onSuccess={refetch} />
+          );
+        }
         return (
-          <SeminarSlotSelector proposalId={proposalId} onSuccess={refetch} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Seminar Scheduling</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Please wait for the DRC Convenor to request seminar details.
+                Once requested, available slots will appear here for booking.
+              </p>
+            </CardContent>
+          </Card>
         );
       default:
         return (

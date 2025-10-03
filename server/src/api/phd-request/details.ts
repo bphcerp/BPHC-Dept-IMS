@@ -2,7 +2,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { authUtils } from "lib";
 
@@ -15,7 +15,7 @@ router.get(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
-        
+
         const request = await db.query.phdRequests.findFirst({
             where: eq(phdRequests.id, requestId),
             with: {
@@ -42,6 +42,35 @@ router.get(
             throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
         }
 
+        if (request.requestType === "final_thesis_submission") {
+            const hasPrivateDocs = request.documents.some(
+                (doc) => doc.isPrivate
+            );
+            if (!hasPrivateDocs) {
+                const preThesisRequest = await db.query.phdRequests.findFirst({
+                    where: and(
+                        eq(phdRequests.studentEmail, request.studentEmail),
+                        eq(phdRequests.requestType, "pre_thesis_submission"),
+                        eq(phdRequests.status, "completed")
+                    ),
+                    with: {
+                        documents: {
+                            where: (cols, { eq }) => eq(cols.isPrivate, true),
+                            with: {
+                                file: {
+                                    columns: { originalName: true, id: true },
+                                },
+                            },
+                        },
+                    },
+                });
+
+                if (preThesisRequest?.documents) {
+                    request.documents.push(...preThesisRequest.documents);
+                }
+            }
+        }
+
         const isPrivilegedViewer =
             req.user &&
             (authUtils.checkAccess(
@@ -57,7 +86,19 @@ router.get(
                     req.user.permissions
                 ));
 
-        const augmentedReviews = request.reviews.map((review: any) => {
+        const isStudentOrSupervisor =
+            req.user?.email === request.studentEmail ||
+            req.user?.email === request.supervisorEmail;
+
+        let filteredReviews = request.reviews;
+
+        if (isStudentOrSupervisor && !isPrivilegedViewer) {
+            filteredReviews = request.reviews.filter(
+                (review) => review.reviewerRole !== "DRC_MEMBER"
+            );
+        }
+
+        const augmentedReviews = filteredReviews.map((review: any) => {
             let roleTitle = "";
             const reviewer = review.reviewer;
             const actionText = review.approved
@@ -103,16 +144,17 @@ router.get(
                 ? ` (${reviewer.name || reviewer.email})`
                 : "";
             const reviewerDisplayName = `${actionText}${roleTitle}${nameSuffix}`;
-
             return { ...review, reviewerDisplayName };
         });
+
         const finalRequest = { ...request, reviews: augmentedReviews };
+
         if (req.user?.email === finalRequest.studentEmail) {
             finalRequest.documents = finalRequest.documents.filter(
                 (doc) => !doc.isPrivate
             );
             finalRequest.reviews.forEach((review) => {
-                delete review.supervisorComments;
+                delete (review as any).supervisorComments;
             });
         }
 

@@ -10,16 +10,17 @@ import {
 } from "@/config/db/schema/phdRequest.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
 import { phdRequestSchemas } from "lib";
+
 const router = express.Router();
+
 type PhdRequestType = (typeof phdRequestSchemas.phdRequestTypes)[number];
 
 const postProposalRequestSequence: (PhdRequestType | PhdRequestType[])[] = [
     "pre_submission",
     "draft_notice",
-    ["change_of_title", "thesis_submission"],
+    ["change_of_title", "pre_thesis_submission"],
     "final_thesis_submission",
 ];
-
 const anytimeRequests: PhdRequestType[] = [
     "jrf_recruitment",
     "jrf_to_phd_conversion",
@@ -41,7 +42,6 @@ router.get(
     checkAccess("phd-request:supervisor:view"),
     asyncHandler(async (req, res) => {
         const supervisorEmail = req.user!.email;
-
         const students = await db.query.phd.findMany({
             where: eq(phd.supervisorEmail, supervisorEmail),
             with: {
@@ -71,19 +71,61 @@ router.get(
             let reversionComments: string | null = null;
             let requestId: number | null = null;
 
-            const latestProposal = student.proposals[0];
             const allRequests = student.requests;
             const latestRequest = allRequests[0];
+            const latestProposal = student.proposals[0];
+            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+                [
+                    "reverted_by_drc_convener",
+                    "reverted_by_drc_member",
+                    "reverted_by_hod",
+                ];
 
+            if (latestProposal?.status === "completed") {
+                if (latestRequest) {
+                    currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
+                    requestId = latestRequest.id; // Always set requestId if a request is the latest status
+                    if (revertableStatuses.includes(latestRequest.status)) {
+                        canResubmitRequest = true;
+                        reversionComments =
+                            latestRequest.reviews[0]?.comments ||
+                            "No comments provided.";
+                    }
+                } else {
+                    currentStatus = "Proposal: Completed";
+                }
+            } else {
+                const latestActiveRequest = allRequests.find(
+                    (req) => !["completed", "deleted"].includes(req.status)
+                );
 
-            const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] = [
-				"reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"
-			];
+                if (latestActiveRequest) {
+                    currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
+                    requestId = latestActiveRequest.id; // Always set requestId if a request is the latest status
+                    if (
+                        revertableStatuses.includes(latestActiveRequest.status)
+                    ) {
+                        canResubmitRequest = true;
+                        reversionComments =
+                            latestActiveRequest.reviews[0]?.comments ||
+                            "No comments provided.";
+                    }
+                } else if (latestProposal) {
+                    currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
+                } else if (student.qeApplications.length > 0) {
+                    const lastAttempt = student.qeApplications[0];
+                    currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
+                    if (lastAttempt.result) {
+                        currentStatus += ` (${lastAttempt.result})`;
+                    }
+                } else {
+                    currentStatus = "Awaiting QE Application";
+                }
+            }
 
             const availableRequestTypes: PhdRequestType[] = [
                 ...anytimeRequests,
             ];
-
             if (latestProposal?.status === "completed") {
                 const completedTypes = new Set(
                     allRequests
@@ -102,34 +144,6 @@ router.get(
                     }
                 }
             }
-            if (
-                latestRequest?.requestType === "final_thesis_submission" &&
-                latestRequest.status === "completed"
-            ) {
-                currentStatus = "Final Thesis Submission Completed";
-            } else if (
-                latestRequest &&
-                !["completed", "deleted"].includes(latestRequest.status)
-            ) {
-                requestId = latestRequest.id;
-                currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-                if (revertableStatuses.includes(latestRequest.status)) {
-                    canResubmitRequest = true;
-                    reversionComments =
-                        latestRequest.reviews[0]?.comments ||
-                        "No comments provided.";
-                }
-            } else if (latestProposal) {
-                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-            } else if (student.qeApplications.length > 0) {
-                const lastAttempt = student.qeApplications[0];
-                currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
-                if (lastAttempt.result) {
-                    currentStatus += ` (${lastAttempt.result})`;
-                }
-            } else {
-                currentStatus = "Awaiting QE Application";
-            }
 
             return {
                 email: student.email,
@@ -142,7 +156,6 @@ router.get(
                 availableRequestTypes,
             };
         });
-
         res.status(200).json(studentStatuses);
     })
 );

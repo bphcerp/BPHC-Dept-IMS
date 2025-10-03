@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/DrcConvenerFinalThesisForm.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -13,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
@@ -27,19 +25,15 @@ interface DrcConvenerFinalThesisFormProps {
 export const DrcConvenerFinalThesisForm: React.FC<
   DrcConvenerFinalThesisFormProps
 > = ({ request, onSuccess }) => {
-  const [studentComments, setStudentComments] = useState("");
-  const [supervisorComments, setSupervisorComments] = useState("");
-  const [internalComments, setInternalComments] = useState("");
-  const [revertTo, setRevertTo] = useState<
-    "student" | "supervisor" | "both" | null
-  >(null);
+  const [comments, setComments] = useState("");
   const [selectedDrcMembers, setSelectedDrcMembers] = useState<string[]>([]);
   const [action, setAction] = useState<string>("");
 
   const { data: facultyList = [] } = useQuery<ComboboxOption[]>({
-    queryKey: ["facultyList"],
+    queryKey: ["facultyList", "drc"], // Use a specific query key for caching
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList");
+      // Add the ?role=drc query parameter to the request
+      const res = await api.get("/phd/proposal/getFacultyList?role=drc");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
         value: f.email,
@@ -67,13 +61,13 @@ export const DrcConvenerFinalThesisForm: React.FC<
   ) => {
     setAction(currentAction);
 
-    let data: any = { action: currentAction, comments: internalComments };
+    let data: any = { action: currentAction, comments };
 
-    if (currentAction === "revert") {
-      data.revertTo = revertTo;
-      data.studentComments = studentComments;
-      data.supervisorComments = supervisorComments;
-    } else if (currentAction === "forward_to_drc") {
+    if (currentAction === "revert" && !comments.trim()) {
+      toast.error("Comments are required to revert a request.");
+      return;
+    }
+    if (currentAction === "forward_to_drc") {
       data.assignedDrcMembers = selectedDrcMembers;
     }
 
@@ -96,84 +90,15 @@ export const DrcConvenerFinalThesisForm: React.FC<
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="internalComments">Internal Comments (Optional)</Label>
+          <Label htmlFor="comments">Comments</Label>
           <Textarea
-            id="internalComments"
-            value={internalComments}
-            onChange={(e) => setInternalComments(e.target.value)}
-            placeholder="Provide internal notes for other actions."
+            id="comments"
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+            placeholder="Provide comments for reversion or internal notes for other actions."
           />
         </div>
-
         <Separator />
-
-        <div className="space-y-4 rounded-md border p-4">
-          <h3 className="font-semibold">Reversion Options</h3>
-          <div className="space-y-2">
-            <Label>Revert To:</Label>
-            <RadioGroup
-              onValueChange={(val) =>
-                setRevertTo(val as "student" | "supervisor" | "both")
-              }
-              value={revertTo ?? ""}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="student" id="r_student" />
-                <Label htmlFor="r_student">
-                  Student (for document corrections)
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="supervisor" id="r_supervisor" />
-                <Label htmlFor="r_supervisor">
-                  Supervisor (for their private documents)
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="both" id="r_both" />
-                <Label htmlFor="r_both">Both Student and Supervisor</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          {(revertTo === "student" || revertTo === "both") && (
-            <div className="space-y-2">
-              <Label htmlFor="studentComments">Comments for Student</Label>
-              <Textarea
-                id="studentComments"
-                value={studentComments}
-                onChange={(e) => setStudentComments(e.target.value)}
-                placeholder="These comments will be visible to the student."
-              />
-            </div>
-          )}
-          {(revertTo === "supervisor" || revertTo === "both") && (
-            <div className="space-y-2">
-              <Label htmlFor="supervisorComments">
-                Comments for Supervisor
-              </Label>
-              <Textarea
-                id="supervisorComments"
-                value={supervisorComments}
-                onChange={(e) => setSupervisorComments(e.target.value)}
-                placeholder="These comments will ONLY be visible to the supervisor."
-              />
-            </div>
-          )}
-          <Button
-            variant="destructive"
-            onClick={() => handleSubmit("revert")}
-            disabled={mutation.isLoading || !revertTo}
-          >
-            {mutation.isLoading && action === "revert" ? (
-              <LoadingSpinner />
-            ) : (
-              "Revert Submission"
-            )}
-          </Button>
-        </div>
-
-        <Separator />
-
         <div className="space-y-2">
           <Label>Forward to DRC Members for Review (Optional)</Label>
           <Combobox
@@ -181,15 +106,27 @@ export const DrcConvenerFinalThesisForm: React.FC<
             selectedValues={selectedDrcMembers}
             onSelectedValuesChange={setSelectedDrcMembers}
             placeholder="Select DRC members..."
-            searchPlaceholder="Search faculty..."
-            emptyPlaceholder="No faculty found."
+            searchPlaceholder="Search DRC members..."
+            emptyPlaceholder="No DRC members found."
           />
           <p className="text-sm text-muted-foreground">
             If no members are selected, approving will forward the request
             directly to the HOD.
           </p>
         </div>
+
         <div className="flex justify-end gap-2 border-t pt-4">
+          <Button
+            variant="destructive"
+            onClick={() => handleSubmit("revert")}
+            disabled={mutation.isLoading}
+          >
+            {mutation.isLoading && action === "revert" ? (
+              <LoadingSpinner />
+            ) : (
+              "Revert to Student"
+            )}
+          </Button>
           <Button
             onClick={() => {
               const finalAction =

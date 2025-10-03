@@ -1,4 +1,3 @@
-// client/src/views/Phd/Student/Proposal.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -35,6 +34,7 @@ import {
   Clock,
   Download,
   Eye,
+  Edit,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentProposalForm } from "@/components/phd/proposal/StudentProposalForm";
@@ -58,15 +58,18 @@ interface ProposalSemester {
   drcReviewDate: string;
   dacReviewDate: string;
 }
+
 interface DacFeedback {
   approved: boolean;
   comments: string;
   feedbackFileUrl: string | null;
 }
+
 interface DacSummary {
   label: string;
   status: "Approved" | "Reverted";
 }
+
 interface Proposal {
   id: number;
   title: string;
@@ -180,6 +183,28 @@ const StudentProposal: React.FC = () => {
     },
   });
 
+  const finalSubmitMutation = useMutation({
+    mutationFn: (formData: FormData) => {
+      if (!proposalForPreview?.id) {
+        throw new Error("Proposal ID is missing for submission.");
+      }
+      return api.post(
+        `/phd/proposal/student/resubmit/${proposalForPreview.id}`,
+        formData
+      );
+    },
+    onSuccess: () => {
+      toast.success("Proposal submitted successfully for review!");
+      setIsPreviewOpen(false);
+      void refetch();
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "An error occurred during submission."
+      );
+    },
+  });
+
   const openDialog = async (proposal: Proposal, mode: "edit" | "preview") => {
     const response = await fetchProposalDetailsMutation.mutateAsync(
       proposal.id
@@ -213,6 +238,33 @@ const StudentProposal: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleFinalSubmit = () => {
+    if (!proposalForPreview) return;
+
+    const formData = new FormData();
+    formData.append("title", proposalForPreview.title);
+    formData.append(
+      "hasOutsideCoSupervisor",
+      String(proposalForPreview.hasOutsideCoSupervisor)
+    );
+    formData.append("declaration", "true"); // Final submission requires declaration
+    formData.append("submissionType", "final"); // This updates the status on the backend
+    formData.append(
+      "internalCoSupervisors",
+      JSON.stringify(
+        proposalForPreview.coSupervisors?.map(
+          (s: any) => s.coSupervisorEmail
+        ) || []
+      )
+    );
+    formData.append(
+      "externalCoSupervisors",
+      JSON.stringify(proposalForPreview.externalCoSupervisors || [])
+    );
+
+    finalSubmitMutation.mutate(formData);
+  };
+
   if (isLoadingEligibility) {
     return (
       <div className="flex h-64 w-full items-center justify-center">
@@ -226,6 +278,7 @@ const StudentProposal: React.FC = () => {
   const isDeadlinePassed = currentDeadlines
     ? new Date(currentDeadlines.studentSubmissionDate) < new Date()
     : true;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -247,6 +300,7 @@ const StudentProposal: React.FC = () => {
           </Button>
         )}
       </div>
+
       {!eligibility?.isEligible ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -282,6 +336,7 @@ const StudentProposal: React.FC = () => {
           )}
         </>
       )}
+
       {eligibility?.isEligible && <ProposalStatusTimeline role="student" /> &&
         currentDeadlines && (
           <DeadlinesCard
@@ -289,6 +344,7 @@ const StudentProposal: React.FC = () => {
             highlight="studentSubmissionDate"
           />
         )}
+
       <Card>
         <CardHeader>
           <CardTitle>Your Submissions</CardTitle>
@@ -338,41 +394,27 @@ const StudentProposal: React.FC = () => {
                         {new Date(p.updatedAt).toLocaleString()}
                       </TableCell>
                       <TableCell className="flex gap-2">
-                        {p.status === "draft" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openDialog(p, "preview")}
-                            >
-                              <Eye className="mr-2 h-4 w-4" />
-                              Preview
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => openDialog(p, "edit")}
-                            >
-                              Edit & Submit
-                            </Button>
-                          </>
-                        )}
                         {[
+                          "draft",
                           "supervisor_revert",
                           "drc_revert",
                           "dac_revert",
                         ].includes(p.status) && (
-                          <Button
-                            size="sm"
-                            onClick={() => openDialog(p, "edit")}
-                            disabled={fetchProposalDetailsMutation.isLoading}
-                          >
-                            {fetchProposalDetailsMutation.isLoading &&
-                            fetchProposalDetailsMutation.variables === p.id ? (
-                              <LoadingSpinner className="h-4 w-4" />
-                            ) : (
-                              "Resubmit"
-                            )}
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openDialog(p, "edit")}
+                            >
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => openDialog(p, "preview")}
+                            >
+                              <Eye className="mr-2 h-4 w-4" /> Preview
+                            </Button>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
@@ -455,12 +497,7 @@ const StudentProposal: React.FC = () => {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {proposalForForm?.status === "draft" ||
-              (proposalForForm?.id && !proposalForForm.status)
-                ? "Edit Draft"
-                : proposalForForm
-                  ? "Resubmit Proposal"
-                  : "New Proposal Application"}
+              {proposalForForm ? "Edit Proposal" : "New Proposal Application"}
             </DialogTitle>
           </DialogHeader>
           {!proposalForForm &&
@@ -503,11 +540,15 @@ const StudentProposal: React.FC = () => {
             <DialogTitle>Proposal Preview</DialogTitle>
             <CardDescription>
               Review your draft before final submission. To make changes, close
-              this preview and click "Edit & Submit".
+              this preview and click "Edit".
             </CardDescription>
           </DialogHeader>
           {proposalForPreview && (
-            <ProposalPreview proposal={proposalForPreview} />
+            <ProposalPreview
+              proposal={proposalForPreview}
+              onSubmit={handleFinalSubmit}
+              isSubmitting={finalSubmitMutation.isLoading}
+            />
           )}
         </DialogContent>
       </Dialog>

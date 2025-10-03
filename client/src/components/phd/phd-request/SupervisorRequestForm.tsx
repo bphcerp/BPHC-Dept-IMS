@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/SupervisorRequestForm.tsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +23,10 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
-  const [files, setFiles] = useState<File[]>([]);
+  const [generalFiles, setGeneralFiles] = useState<File[]>([]);
+  const [examinerListFile, setExaminerListFile] = useState<File[]>([]);
+  const [examinerInfoFile, setExaminerInfoFile] = useState<File[]>([]);
+
   const form = useForm<phdRequestSchemas.CreateRequestBody>({
     resolver: zodResolver(
       phdRequestSchemas.createRequestSchema.omit({
@@ -56,42 +58,74 @@ export const SupervisorRequestForm: React.FC<SupervisorRequestFormProps> = ({
   });
 
   const onSubmit = (data: { comments?: string }) => {
-    // For final_thesis_submission, files are not required at initiation
-    if (requestType !== "final_thesis_submission" && files.length === 0) {
-      toast.error("Please upload at least one required document.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("studentEmail", studentEmail);
     formData.append("requestType", requestType);
     if (data.comments) {
       formData.append("comments", data.comments);
     }
-    files.forEach((file) => {
-      formData.append("documents", file);
-    });
+
+    if (requestType === "pre_thesis_submission") {
+      if (examinerListFile.length === 0 || examinerInfoFile.length === 0) {
+        toast.error(
+          "Please upload both required documents for pre-thesis submission."
+        );
+        return;
+      }
+      formData.append("examinerList", examinerListFile[0]);
+      formData.append("examinerInfoFormat", examinerInfoFile[0]);
+    } else if (requestType !== "final_thesis_submission") {
+      if (generalFiles.length === 0) {
+        toast.error("Please upload at least one required document.");
+        return;
+      }
+      generalFiles.forEach((file) => {
+        formData.append("documents", file);
+      });
+    }
 
     mutation.mutate(formData);
   };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-      {requestType !== "final_thesis_submission" && (
+      {requestType === "pre_thesis_submission" ? (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="examinerList">Approved List of Examiners *</Label>
+            <FileUploader
+              value={examinerListFile}
+              onValueChange={setExaminerListFile}
+              maxFileCount={1}
+              maxSize={2 * 1024 * 1024}
+              accept={{ "application/pdf": [] }}
+            />
+          </div>
+          <div>
+            <Label htmlFor="examinerInfoFormat">
+              Format for Information of Examiners *
+            </Label>
+            <FileUploader
+              value={examinerInfoFile}
+              onValueChange={setExaminerInfoFile}
+              maxFileCount={1}
+              maxSize={2 * 1024 * 1024}
+              accept={{ "application/pdf": [] }}
+            />
+          </div>
+        </div>
+      ) : requestType !== "final_thesis_submission" ? (
         <div>
           <Label htmlFor="documents">Required Documents</Label>
           <FileUploader
-            value={files}
-            onValueChange={setFiles}
+            value={generalFiles}
+            onValueChange={setGeneralFiles}
             maxFileCount={5}
             maxSize={2 * 1024 * 1024}
             accept={{ "application/pdf": [] }}
           />
-          <p className="mt-1 text-sm text-muted-foreground">
-            Upload all necessary forms/documents as PDF (max 5 files, 2MB each).
-          </p>
         </div>
-      )}
+      ) : null}
 
       <div>
         <Label htmlFor="comments">Comments (Optional)</Label>

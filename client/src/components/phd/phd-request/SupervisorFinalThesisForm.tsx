@@ -11,55 +11,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { FileUploader } from "@/components/ui/file-uploader";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { RequestDetailsCard } from "./RequestDetailsCard";
+
 import { BASE_API_URL } from "@/lib/constants";
-import { File, ExternalLink, Replace } from "lucide-react";
+import { File, ExternalLink } from "lucide-react";
 
 interface SupervisorFinalThesisFormProps {
   request: any;
   onSuccess: () => void;
 }
 
-const SUPERVISOR_DOCS = [
-  { id: "examinerList", label: "Approved List of Examiners", required: true },
-  {
-    id: "examinerInfoFormat",
-    label: "Format for Information of Examiners",
-    required: true,
-  },
-];
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  examinerList: "Approved List of Examiners",
+  examinerInfoFormat: "Format for Information of Examiners",
+};
+
+const SUPERVISOR_DOC_TYPES = Object.keys(DOCUMENT_TYPE_LABELS);
 
 export const SupervisorFinalThesisReviewForm: React.FC<
   SupervisorFinalThesisFormProps
 > = ({ request, onSuccess }) => {
-  const [files, setFiles] = useState<Record<string, File[]>>({});
   const [comments, setComments] = useState("");
-  const [existingFiles, setExistingFiles] = useState<Record<string, any>>({});
+  const [existingDocs, setExistingDocs] = useState<any[]>([]);
 
   useEffect(() => {
-    const supervisorDocs = request.documents.filter(
-      (doc: any) => doc.isPrivate
+    const preThesisDocs = request.documents.filter(
+      (doc: any) =>
+        doc.isPrivate && SUPERVISOR_DOC_TYPES.includes(doc.documentType)
     );
-    const preloaded: Record<string, any> = {};
-    supervisorDocs.forEach((doc: any) => {
-      if (SUPERVISOR_DOCS.some((d) => d.id === doc.documentType)) {
-        preloaded[doc.documentType] = doc;
-      }
-    });
-    setExistingFiles(preloaded);
+    setExistingDocs(preThesisDocs);
   }, [request.documents]);
 
   const mutation = useMutation({
-    mutationFn: (formData: FormData) => {
+    mutationFn: (data: { action: "approve" | "revert"; comments: string }) => {
       return api.post(
         `/phd-request/supervisor/review-final-thesis/${request.id}`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        data
       );
     },
     onSuccess: () => {
@@ -72,131 +60,61 @@ export const SupervisorFinalThesisReviewForm: React.FC<
   });
 
   const handleSubmit = (action: "approve" | "revert") => {
-    const formData = new FormData();
-    formData.append("action", action);
-    formData.append("comments", comments);
-
     if (action === "revert" && !comments.trim()) {
       return toast.error("Comments are required to revert.");
     }
-
-    if (action === "approve") {
-      for (const doc of SUPERVISOR_DOCS) {
-        const uploadedFile = files[doc.id]?.[0];
-        if (doc.required && !uploadedFile && !existingFiles[doc.id]) {
-          return toast.error(
-            `Please upload the required document: ${doc.label}`
-          );
-        }
-        if (uploadedFile) {
-          formData.append("documents", uploadedFile, doc.id);
-        }
-      }
-    }
-
-    mutation.mutate(formData);
-  };
-
-  const handleFileChange = (fieldId: string, fileList: File[]) => {
-    setFiles((prev) => ({ ...prev, [fieldId]: fileList }));
+    mutation.mutate({ action, comments });
   };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Review Student's Final Thesis Submission</CardTitle>
-          <CardDescription>
-            The documents submitted by the student are listed below for your
-            review.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RequestDetailsCard
-            request={{
-              ...request,
-              documents: request.documents.filter((d: any) => !d.isPrivate),
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Your Action & Documents</CardTitle>
           <CardDescription>
-            Approve the submission and upload your confidential documents, or
-            revert with comments for the student to revise.
+            Approve the submission to forward it with your previously approved
+            documents, or revert with comments for the student to revise.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {SUPERVISOR_DOCS.map((doc) => {
-              const existingFile = existingFiles[doc.id];
-              const currentFile = files[doc.id]?.[0];
-              return (
-                <div key={doc.id}>
-                  <Label>
-                    {doc.label}
-                    {doc.required && (
-                      <span className="text-destructive">*</span>
-                    )}
-                  </Label>
-                  {existingFile && !currentFile ? (
-                    <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
-                      <a
-                        href={`${BASE_API_URL}f/${existingFile.file.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
-                      >
-                        <File className="h-4 w-4" /> View Current File
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        onClick={() =>
-                          document.getElementById(`uploader-${doc.id}`)?.click()
-                        }
-                      >
-                        <Replace className="mr-2 h-4 w-4" /> Replace
-                      </Button>
-                      <div className="hidden">
-                        <FileUploader
-                          id={`uploader-${doc.id}`}
-                          value={[]}
-                          onValueChange={(fileList) =>
-                            handleFileChange(doc.id, fileList)
-                          }
-                          maxFileCount={1}
-                          maxSize={4 * 1024 * 1024}
-                          accept={{ "application/pdf": [] }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <FileUploader
-                      value={files[doc.id] || []}
-                      onValueChange={(fileList) =>
-                        handleFileChange(doc.id, fileList)
-                      }
-                      maxFileCount={1}
-                      maxSize={4 * 1024 * 1024}
-                      accept={{ "application/pdf": [] }}
-                    />
-                  )}
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    These documents will not be visible to the student.
-                  </p>
-                </div>
-              );
-            })}
+          <div>
+            <Label>Pre-approved Supervisor Documents</Label>
+            <div className="mt-2 space-y-2 rounded-md border p-4">
+              {existingDocs.length > 0 ? (
+                existingDocs.map((doc) => (
+                  <a
+                    key={doc.id}
+                    href={`${BASE_API_URL}f/${doc.file.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                  >
+                    <File className="h-4 w-4" />
+                    <span>
+                      {DOCUMENT_TYPE_LABELS[doc.documentType] ||
+                        doc.file.originalName}
+                    </span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Could not find pre-approved documents. Please contact an
+                  admin.
+                </p>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              These documents were approved during the Pre-Thesis Submission
+              stage and will be automatically attached upon approval. They are
+              not visible to the student.
+            </p>
           </div>
 
           <div>
-            <Label htmlFor="comments">Comments</Label>
+            <Label htmlFor="comments">
+              Comments for Student (Required if reverting)
+            </Label>
             <Textarea
               id="comments"
               value={comments}

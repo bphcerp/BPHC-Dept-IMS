@@ -1,4 +1,3 @@
-// client/src/components/phd/phd-request/FinalThesisPreview.tsx (New File)
 import React from "react";
 import {
   Card,
@@ -7,22 +6,28 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { CheckCircle, FileWarning } from "lucide-react";
+import { CheckCircle, FileWarning, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BASE_API_URL } from "@/lib/constants";
 
 interface FilePreviewData {
   label: string;
   fileName: string;
-  isNew: boolean;
+  fileId?: number;
 }
 
 interface FinalThesisPreviewProps {
   files: FilePreviewData[];
   comments: string;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
 }
 
 export const FinalThesisPreview: React.FC<FinalThesisPreviewProps> = ({
   files,
   comments,
+  onSubmit,
+  isSubmitting,
 }) => {
   return (
     <div className="space-y-4 py-4">
@@ -43,7 +48,18 @@ export const FinalThesisPreview: React.FC<FinalThesisPreviewProps> = ({
               >
                 <div>
                   <p className="font-medium">{file.label}</p>
-                  <p className="text-muted-foreground">{file.fileName}</p>
+                  {file.fileId ? (
+                    <a
+                      href={`${BASE_API_URL}f/${file.fileId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                    >
+                      {file.fileName} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <p className="text-muted-foreground">{file.fileName}</p>
+                  )}
                 </div>
                 {file.fileName !== "Not uploaded" ? (
                   <CheckCircle className="h-5 w-5 text-green-500" />
@@ -66,6 +82,11 @@ export const FinalThesisPreview: React.FC<FinalThesisPreviewProps> = ({
             </p>
           </CardContent>
         </Card>
+      )}
+      {onSubmit && (
+        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Submitting..." : "Submit to Supervisor"}
+        </Button>
       )}
     </div>
   );

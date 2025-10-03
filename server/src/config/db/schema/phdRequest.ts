@@ -76,8 +76,8 @@ export const phdRequestReviews = pgTable("phd_request_reviews", {
     reviewerRole: text("reviewer_role").notNull(),
     approved: boolean("approved").notNull(),
     comments: text("comments"),
-    studentComments: text("student_comments"), 
-    supervisorComments: text("supervisor_comments"), 
+    studentComments: text("student_comments"),
+    supervisorComments: text("supervisor_comments"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
         .notNull(),
