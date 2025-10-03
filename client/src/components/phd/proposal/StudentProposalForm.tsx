@@ -29,12 +29,18 @@ interface Faculty {
 }
 
 const templateLinks: Record<string, string> = {
-  appendixFile: "https://",
-  summaryFile: "https://",
-  outlineFile: "https://",
-  outsideSupervisorBiodataFile: "https://",
-  outsideCoSupervisorFormatFile: "https://",
-  placeOfResearchFile: "https://",
+  appendixFile:
+    "https://www.bits-pilani.ac.in/uploads/Appendix_I_and_II_for_PhD_students_w.e.f._I_Sem_2020-21.doc",
+  summaryFile:
+    "https://www.bits-pilani.ac.in/uploads/SUMMARY_OF_RESEARCH_PROPOSAL_w.e.f._I_Sem_2020-21.doc",
+  outlineFile:
+    "https://www.bits-pilani.ac.in/uploads/OUTLINE_OF_PROPOSED_TOPIC_OF_RESEARCH_w.e.f._I_Sem_2020-21.doc",
+  outsideSupervisorBiodataFile:
+    "https://www.bits-pilani.ac.in/uploads/BIODATA_OF_PROPOSED_SUPERVISOR_w.e.f._I_Sem_2020-21.doc",
+  outsideCoSupervisorFormatFile:
+    "https://www.bits-pilani.ac.in/uploads/Format_for_Proposed_Outside_Co-supervisor_w.e.f_2020-21.doc",
+  placeOfResearchFile:
+    "https://www.bits-pilani.ac.in/uploads/FORMAT_FOR_PLACE_OF_RESEARCH_WORK_w.e.f._I_Sem_2020-21.doc",
 };
 
 const FileField = ({
