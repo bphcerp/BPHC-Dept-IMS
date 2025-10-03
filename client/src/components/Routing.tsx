@@ -131,6 +131,7 @@ import FormResponse from "@/views/Allocation/FormResponse";
 import AllocateCourse from "@/views/Allocation/AllocateCourse";
 import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
+import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -471,7 +472,6 @@ const Routing = () => {
                 permissions["/phd/staff/qualifyingExams"],
                 permissions["/phd/staff/emailTemplates"],
                 permissions["/phd-request/staff/getAllRequests"],
-                
               ]) && (
                 <Route path="staff" element={<Outlet />}>
                   {checkAccess(permissions["/phd/staff/getAllSem"]) && (
@@ -498,8 +498,13 @@ const Routing = () => {
                       element={<ManageEmailTemplates />}
                     />
                   )}
-                  {checkAccess(permissions["/phd-request/staff/getAllRequests"]) && (
-                    <Route path="all-requests" element={<PhdRequestsArchive />} />
+                  {checkAccess(
+                    permissions["/phd-request/staff/getAllRequests"]
+                  ) && (
+                    <Route
+                      path="all-requests"
+                      element={<PhdRequestsArchive />}
+                    />
                   )}
                 </Route>
               )}
@@ -633,8 +638,8 @@ const Routing = () => {
                 "phd-request:drc-convener:view",
                 "phd-request:drc-member:view",
                 "phd-request:hod:view",
-                "phd-request:student:submit-final-thesis", 
-                "phd-request:staff:view"
+                "phd-request:student:submit-final-thesis",
+                "phd-request:staff:view",
               ]) && <Route path="requests/:id" element={<ViewPhdRequest />} />}
             </Route>
           )}
@@ -834,7 +839,7 @@ const Routing = () => {
                   <Navigate
                     to={
                       checkAccess("allocation:write")
-                        ? "/allocation/ongoing"
+                        ? "/allocation/overview"
                         : "/allocation/personal"
                     }
                     replace={true}
@@ -843,9 +848,13 @@ const Routing = () => {
               />
               {checkAccess("allocation:write") && (
                 <>
-                  <Route path="ongoing" element={<AllocationOverview />} />
+                  <Route path="overview" element={<AllocationOverview />} />
                   <Route path="responses" element={<div />} />
                 </>
+              )}
+
+              {checkAccessAnyOne(["allocation:write", "allocation:view"]) && (
+                <Route path="overview/summary" element={<AllocationSummary />} />
               )}
 
               {checkAccessAnyOne([

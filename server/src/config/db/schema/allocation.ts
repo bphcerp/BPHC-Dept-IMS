@@ -9,7 +9,7 @@ import {
     index,
     boolean,
 } from "drizzle-orm/pg-core";
-import { users } from "./admin.ts";
+import { faculty, users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 import { allocationForm } from "./allocationFormBuilder.ts";
 import { allocationSchemas } from "lib";
@@ -45,7 +45,6 @@ export const masterAllocation = pgTable(
             }),
 
         ic: text("instructor_email")
-            .notNull()
             .references(() => users.email),
 
         courseCode: text("course_code")
@@ -100,6 +99,7 @@ export const course = pgTable("allocation_course", {
     offeredTo: degreeTypeEnum("offered_to").notNull(),
     offeredAlsoBy: text("offered_also_by").array(),
     fetchedFromTTD: boolean('fetched_from_ttd').default(true),
+    markedForAllocation: boolean('marked_for_allocation').default(false).notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
@@ -126,10 +126,10 @@ export const semester = pgTable(
         ).notNull(),
 
         hodAtStartOfSemEmail: text("hod_at_start").references(
-            () => users.email
+            () => faculty.email
         ),
         dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
-            () => users.email
+            () => faculty.email
         ),
         allocationStatus: allocationStatus("allocation_status").default('notStarted').notNull(),
 

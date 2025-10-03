@@ -12,14 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-
-interface Instructor {
-  email: string;
-  name: string | null;
-}
+import { InstructorWithPreference } from "node_modules/lib/src/types/allocation";
 
 interface AllocationHeaderProps {
   selectedCourse: allocationTypes.Course;
@@ -34,7 +30,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   allocationData,
   onAllocationChange,
 }) => {
-  const [selectedIC, setSelectedIC] = useState<Instructor | null>(null);
+  const [selectedIC, setSelectedIC] = useState<InstructorWithPreference | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Set initial IC when allocation data changes
@@ -48,10 +44,10 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
 
   // Fetch instructor list
   const { data: instructors = [], isLoading: instructorsLoading } = useQuery({
-    queryKey: ["allocation", "instructors"],
+    queryKey: ["allocation", "instructors", selectedCourse.code],
     queryFn: async () => {
-      const response = await api.get<Instructor[]>(
-        "/allocation/allocation/getInstructorList"
+      const response = await api.get<InstructorWithPreference[]>(
+        `/allocation/allocation/getInstructorListWithPref?code=${selectedCourse.code}&sectionType=LECTURE`
       );
       return response.data;
     },
@@ -63,14 +59,11 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   // Create allocation mutation
   const createAllocationMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedIC) {
-        throw new Error("IC is required");
-      }
 
       const payload = {
         semesterId,
         courseCode: selectedCourse.code,
-        ic: selectedIC.email,
+        ic: selectedIC?.email,
         sections: [],
       };
 
@@ -127,7 +120,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
       if (!selectedIC) {
         throw new Error("Please select a value from the dropdown");
       }
-      if (selectedIC.email === allocationData.ic.email) {
+      if (selectedIC.email === allocationData.ic?.email) {
         toast.info("Selected IC is the same as the current one");
         return;
       }
@@ -172,7 +165,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                         {selectedInstructor.name || "No Name"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {selectedInstructor.email}
+                        Preference Given: {selectedInstructor.preference ?? "Not Given"}
                       </span>
                     </div>
                   ) : (
@@ -217,7 +210,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                             {instructor.name || "No Name"}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {instructor.email}
+                            Preference Given: {instructor.preference ?? "Not Given"}
                           </span>
                         </div>
                       </SelectItem>
@@ -231,18 +224,11 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
           {/* Create/Update Button */}
           <Button
             onClick={handleCreateOrUpdate}
-            disabled={!selectedIC || isLoading_mutation}
+            disabled={isLoading_mutation}
             className="gap-2"
             variant={allocationData ? "outline" : "default"}
           >
-            {isLoading_mutation ? (
-              <LoadingSpinner />
-            ) : allocationData ? (
-              <Edit className="h-4 w-4" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {allocationData ? "Update IC" : "Create Allocation"}
+            {allocationData ? "Update IC" : "Begin Allocation"}
           </Button>
         </div>
       </div>

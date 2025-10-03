@@ -28,7 +28,7 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorKey: "hodAtStartOfSem",
+    accessorKey: "hodAtStartOfSem.name",
     header: "HoD*",
     meta: {
       filterType: "dropdown",
@@ -36,7 +36,7 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorKey: "dcaConvenerAtStartOfSem",
+    accessorKey: "dcaConvenerAtStartOfSem.name",
     header: "DCA Convener*",
     meta: {
       filterType: "dropdown",

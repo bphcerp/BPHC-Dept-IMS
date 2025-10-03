@@ -21,7 +21,7 @@ router.get(
                         columns: {},
                         with: {
                             section: {
-                                columns: { type: true, createdAt: true },
+                                columns: { type: true, createdAt: true, id: true },
                                 with: {
                                     master: {
                                         columns: {

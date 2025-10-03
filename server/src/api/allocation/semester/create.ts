@@ -34,7 +34,7 @@ router.post(
             await db
                 .select({ email: faculty.email })
                 .from(faculty)
-                .where(eq(faculty.psrn, deptInfo.dcaConvener.psrn))
+                .where(eq(faculty.psrn, deptInfo.dcaConvener))
         )[0]?.email;
 
         try {
