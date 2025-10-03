@@ -344,6 +344,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd-request/staff/getAllRequests": "phd-request:staff:view",
 
     "/phd-request/details": "phd-request:common",
+    "/phd-request/history": "phd-request:common",
+    "/phd-request/download-packages": "phd-request:common",
 
     //meeting
     "/meeting/create": "meeting:use",

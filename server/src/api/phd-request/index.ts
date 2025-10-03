@@ -7,6 +7,7 @@ import hodRouter from "./hod/index.ts";
 import detailsRouter from "./details.ts";
 import historyRouter from "./history.ts";
 import staffRouter from "./staff/index.ts";
+import downloadPackagesRouter from "./downloadPackages.ts";
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use("/hod", hodRouter);
 router.use("/details", detailsRouter);
 router.use("/history", historyRouter);
 router.use("/staff", staffRouter);
+router.use("/download-packages", downloadPackagesRouter);
 
 export default router;
