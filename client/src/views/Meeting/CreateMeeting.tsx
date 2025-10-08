@@ -85,6 +85,7 @@ const CreateMeeting: React.FC = () => {
               onSubmit={handleFormSubmit}
               isSubmitting={mutation.isLoading}
               facultyList={userListOptions}
+              defaultValues={formData}
             />
           </CardContent>
         </Card>
