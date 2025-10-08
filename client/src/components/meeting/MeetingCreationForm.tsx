@@ -19,12 +19,14 @@ interface MeetingCreationFormProps {
   onSubmit: (data: FormValues) => void;
   isSubmitting: boolean;
   facultyList: { value: string; label: string }[];
+  defaultValues?: Partial<FormValues>;
 }
 
 export const MeetingCreationForm: React.FC<MeetingCreationFormProps> = ({
   onSubmit,
   isSubmitting,
   facultyList,
+  defaultValues,
 }) => {
   const {
     register,
@@ -35,6 +37,7 @@ export const MeetingCreationForm: React.FC<MeetingCreationFormProps> = ({
     resolver: zodResolver(
       meetingSchemas.createMeetingObjectSchema.omit({ timeSlots: true })
     ),
+    defaultValues,
   });
 
   return (

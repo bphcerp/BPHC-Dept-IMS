@@ -5,7 +5,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { users } from "@/config/db/schema/admin.ts";
 import { meetingParticipants } from "@/config/db/schema/meeting.ts";
-import { eq, and, inArray, notInArray } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -31,8 +31,7 @@ router.get(
         const allUsers = await db.query.users.findMany({
             where: and(
                 eq(users.deactivated, false),
-                inArray(users.type, ["faculty", "staff"]),
-                notInArray(users.email, existingEmails)
+                inArray(users.type, ["faculty", "staff"])
             ),
             columns: {
                 name: true,

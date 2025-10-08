@@ -437,7 +437,8 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
             <DialogTitle>Finalize Meeting Slots</DialogTitle>
             <DialogDescription>
               Provide a venue, a Google Meet link, or both for each selected
-              time slot.
+              time slot. Participants will receive a reminder 15 minutes before
+              each finalized time.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
