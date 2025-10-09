@@ -80,7 +80,7 @@ const AllocateCourse = () => {
     queryFn: async () => {
       try {
         const res = await api.get<PreferredFaculty[]>(
-          `/allocation/allocation/getPreferredFaculty?code=${code}`
+          `/allocation/allocation/getPrefsCourse?code=${code}`
         );
         return res.data;
       } catch (error) {

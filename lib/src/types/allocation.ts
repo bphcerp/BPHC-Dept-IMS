@@ -28,7 +28,10 @@ export type Allocation = NewAllocation & {
     semester: Semester;
     instructor: MemberDetailsResponse;
 };
-export type CourseAllocationStatusResponse = Record<string, "Allocated" | "Pending" | "Not Started"> 
+export type CourseAllocationStatusResponse = Record<
+    string,
+    "Allocated" | "Pending" | "Not Started"
+>;
 
 export type NewCourse = z.infer<typeof courseSchema>;
 export type UpdateCourse = Partial<NewCourse>;
@@ -90,7 +93,7 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
-    type: 'faculty' | 'phd full time'
+    type: "faculty" | "phd full time";
 };
 
 export type SemesterWithStats = Semester & {
@@ -135,9 +138,9 @@ export type TTDDepartment = {
     name: string;
     hodName: string;
     hodPsrn: string;
-    dcaConvener: string
-    delegated: string
-    freezeStatus: boolean
+    dcaConvener: string;
+    delegated: string;
+    freezeStatus: boolean;
 };
 
 export type AllocationType = {
@@ -160,6 +163,7 @@ export type AllocationResponse = {
         name: string | null;
     } | null;
     courseCode: string;
+    course: Pick<Course, "name">;
     sections: {
         id: string;
         type: (typeof sectionTypes)[number];
@@ -173,14 +177,14 @@ export type AllocationResponse = {
 } | null;
 
 export type AllocationSummaryType = (NonNullable<AllocationResponse> & {
-    course: Course
-})[]
+    course: Course;
+})[];
 
 export type InstructorWithPreference = {
-  email: string;
-  name: string | null;
-  preference?: number | null
-}
+    email: string;
+    name: string | null;
+    preference?: number | null;
+};
 
 export type InstructorAllocationSection = {
     id: string;
@@ -224,21 +228,25 @@ export type InstructorAllocationMaster = {
     >;
 };
 
-export type InstructorAllocationSections = Record<
+export type InstructorAllocationDetails = Record<
     (typeof sectionTypes)[number],
     {
-        id: string
+        id: string;
         type: (typeof sectionTypes)[number];
         createdAt: Date;
+        instructors: {
+            email: string
+            name: string | null;
+        }[];
         master: {
             id: string;
-            courseCode: string;
+            course: {
+                name: string;
+                lectureUnits: number;
+                practicalUnits: number;
+                code: string;
+            }
             ic: string | null;
         };
     }[]
 >;
-
-export type InstructorAllocationDetails = {
-    allAllocationsOfCoursesAllocatedToUser: InstructorAllocationMaster[];
-    userAllocatedSections: InstructorAllocationSections;
-};

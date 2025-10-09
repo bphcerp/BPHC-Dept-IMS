@@ -23,7 +23,11 @@ const AllocationModern = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: currentSemester, isLoading: semesterLoading, isError: semesterError } = useQuery({
+  const {
+    data: currentSemester,
+    isLoading: semesterLoading,
+    isError: semesterError,
+  } = useQuery({
     queryKey: ["allocation", "semester", "latest-full"],
     queryFn: async () => {
       const response = await api.get<allocationTypes.Semester>(
@@ -35,7 +39,6 @@ const AllocationModern = () => {
       toast.error("Failed to fetch current semester");
     },
   });
-
 
   const {
     data: courses = [],
@@ -276,8 +279,10 @@ const AllocationModern = () => {
           </div>
           {currentSemester && (
             <div className="flex space-x-2">
-              { semesterLoading || allocationLoading || coursesLoading && <LoadingSpinner /> }
-              <Button variant='link'>
+              {semesterLoading ||
+                allocationLoading ||
+                (coursesLoading && <LoadingSpinner />)}
+              <Button variant="link">
                 <Link to="/allocation/overview/summary">
                   View Current Allocation
                 </Link>

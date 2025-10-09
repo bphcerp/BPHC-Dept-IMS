@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { AlertTriangleIcon, Search } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
 import { InstructorWithPreference } from "node_modules/lib/src/types/allocation";
@@ -30,7 +30,9 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   allocationData,
   onAllocationChange,
 }) => {
-  const [selectedIC, setSelectedIC] = useState<InstructorWithPreference | null>(null);
+  const [selectedIC, setSelectedIC] = useState<InstructorWithPreference | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState("");
 
   // Set initial IC when allocation data changes
@@ -59,7 +61,6 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   // Create allocation mutation
   const createAllocationMutation = useMutation({
     mutationFn: async () => {
-
       const payload = {
         semesterId,
         courseCode: selectedCourse.code,
@@ -147,6 +148,9 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
         {/* IC Selection and Action */}
         <div className="flex items-center gap-3">
           {/* IC Dropdown */}
+          { allocationData && !allocationData.ic && (
+            <AlertTriangleIcon className="size-8 text-yellow-300" />
+          )}
           <div className="w-80">
             <Select
               value={selectedIC?.email}
@@ -165,7 +169,8 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                         {selectedInstructor.name || "No Name"}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Preference Given: {selectedInstructor.preference ?? "Not Given"}
+                        Preference Given:{" "}
+                        {selectedInstructor.preference ?? "Not Given"}
                       </span>
                     </div>
                   ) : (
@@ -210,7 +215,8 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                             {instructor.name || "No Name"}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            Preference Given: {instructor.preference ?? "Not Given"}
+                            Preference Given:{" "}
+                            {instructor.preference ?? "Not Given"}
                           </span>
                         </div>
                       </SelectItem>
@@ -221,15 +227,24 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
             </Select>
           </div>
 
-          {/* Create/Update Button */}
-          <Button
-            onClick={handleCreateOrUpdate}
-            disabled={isLoading_mutation}
-            className="gap-2"
-            variant={allocationData ? "outline" : "default"}
-          >
-            {allocationData ? "Update IC" : "Begin Allocation"}
-          </Button>
+          {!allocationData ||
+          !allocationData?.ic ||
+          (selectedIC && selectedIC.email !== allocationData.ic.email) ? (
+            <Button
+              onClick={handleCreateOrUpdate}
+              disabled={isLoading_mutation}
+              className="gap-2"
+              variant={allocationData ? "outline" : "default"}
+            >
+              {allocationData
+                ? !!allocationData.ic
+                  ? "Update IC"
+                  : "Set IC"
+                : "Begin Allocation"}
+            </Button>
+          ) : (
+            <></>
+          )}
         </div>
       </div>
     </div>

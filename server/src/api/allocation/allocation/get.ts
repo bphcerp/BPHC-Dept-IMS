@@ -16,9 +16,15 @@ router.get(
             req.query
         );
 
-        if (!semesterId){
-            semesterId = (await getLatestSemester())?.id
-            if (!semesterId) return next(new HttpError(HttpCode.BAD_REQUEST, "No allocation going on"))
+        if (!semesterId) {
+            semesterId = (await getLatestSemester())?.id;
+            if (!semesterId)
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "No allocation going on"
+                    )
+                );
         }
 
         const allocation = await db.query.masterAllocation.findFirst({
@@ -55,6 +61,9 @@ router.get(
                     },
                 },
                 ic: true,
+                course: {
+                    columns: { name: true },
+                },
             },
         });
 

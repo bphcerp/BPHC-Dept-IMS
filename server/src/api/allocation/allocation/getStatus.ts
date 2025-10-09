@@ -9,65 +9,83 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 const router = express.Router();
 
 router.get(
-  "/",
-  checkAccess(),
-  asyncHandler(async (_req, res, next) => {
+    "/",
+    checkAccess(),
+    asyncHandler(async (_req, res, next) => {
+        const latestSemester = await getLatestSemester();
 
-    const latestSemester = await getLatestSemester()
+        if (!latestSemester)
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "No allocation going on")
+            );
 
-    if (!latestSemester) return next(new HttpError(HttpCode.BAD_REQUEST, "No allocation going on"))
+        const masterAllocations = await db.query.masterAllocation.findMany({
+            where: (alloc, { eq }) => eq(alloc.semesterId, latestSemester.id),
+            with: {
+                course: true,
+                sections: {
+                    with: {
+                        instructors: true,
+                    },
+                },
+            },
+        });
 
-    const masterAllocations = await db.query.masterAllocation.findMany({
-      where: (alloc, { eq }) => eq(alloc.semesterId, latestSemester.id),
-      with: {
-        course: true,
-        sections: {
-          with: {
-            instructors: true,
-          },
-        },
-      },
-    });
+        const map = new Map<
+            string,
+            { sections: { id?: string; instructorsCount: number }[]; hasIC: boolean }
+        >();
 
-    const map = new Map<string, { sections: { id?: string; instructorsCount: number }[] }>();
+        for (const m of masterAllocations) {
+            const code = m.course?.code;
+            if (!code) continue;
+            const sections = (m.sections || []).map((s) => ({
+                id: (s as any).id,
+                instructorsCount: ((s as any).instructors || []).length,
+            }));
+            const hasIC = Boolean((m as any).ic); // true if IC is set, false if null/undefined/empty
+            map.set(code, { sections, hasIC });
+        }
 
-    for (const m of masterAllocations) {
-      const code = m.course?.code;
-      if (!code) continue;
-      const sections = (m.sections || []).map((s) => ({
-        id: (s as any).id,
-        instructorsCount: ((s as any).instructors || []).length,
-      }));
-      map.set(code, { sections });
-    }
+        const allCourses = await db.query.course.findMany();
 
-    const allCourses = await db.query.course.findMany();
+        const result: CourseAllocationStatusResponse = {};
 
-    const result: CourseAllocationStatusResponse = {};
+        for (const c of allCourses) {
+            const code = c.code;
+            const entry = map.get(code);
 
-    for (const c of allCourses) {
-      const code = c.code;
-      const entry = map.get(code);
+            if (!entry) {
+                result[code] = "Not Started";
+                continue;
+            }
 
-      if (!entry || entry.sections.length === 0) {
-        result[code] = "Not Started";
-        continue;
-      }
+            if (!entry.hasIC) {
+                result[code] = "Pending";
+                continue;
+            }
 
-      const sections = entry.sections;
-      const numWithInstr = sections.filter((s) => s.instructorsCount > 0).length;
+            if (entry.sections.length === 0) {
+                result[code] = "Not Started";
+                continue;
+            }
 
-      if (numWithInstr === 0) {
-        result[code] = "Not Started";
-      } else if (numWithInstr === sections.length) {
-        result[code] = "Allocated";
-      } else {
-        result[code] = "Pending";
-      }
-    }
+            const sections = entry.sections;
+            const numWithInstr = sections.filter(
+                (s) => s.instructorsCount > 0
+            ).length;
 
-    res.status(200).json(result);
-  })
+            if (numWithInstr === 0) {
+                result[code] = "Not Started";
+            } else if (numWithInstr === sections.length) {
+                result[code] = "Allocated";
+            } else {
+                result[code] = "Pending";
+            }
+        }
+
+        res.status(200).json(result);
+    })
 );
 
 export default router;
