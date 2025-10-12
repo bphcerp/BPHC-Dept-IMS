@@ -2,7 +2,7 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
-import { getInstructorsbyPreferenceSchema } from "node_modules/lib/src/schemas/Allocation.ts";
+import { getPreferenceSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
 
 const router = express.Router();
@@ -10,7 +10,7 @@ const router = express.Router();
 router.get(
     "/",
     asyncHandler(async (req, res, next) => {
-        const { code, sectionType } = getInstructorsbyPreferenceSchema.parse(req.query);
+        const { code, sectionType } = getPreferenceSchema.parse(req.query);
         const currentAllocationSemester = await getLatestSemester();
 
         if (!currentAllocationSemester)
@@ -60,7 +60,8 @@ router.get(
                     user.name ?? user.type === "phd"
                         ? (user.phd?.name ?? null)
                         : (user.faculty?.name ?? null),
-                preference: facultiesPrefs.find((pref) => pref.submittedByEmail === user.email)?.preference ?? null
+                preference: facultiesPrefs.find((pref) => pref.submittedByEmail === user.email)?.preference ?? null,
+                type: user.type,
             })).sort((facultyA, facultyB) => !facultyA.preference ? !facultyB.preference ? 0 : 1 : !facultyB.preference ? -1 : facultyA.preference - facultyB.preference)
         );
     })

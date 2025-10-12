@@ -106,7 +106,7 @@ const SemesterList = () => {
         columns={columns}
         data={semesters}
         additionalButtons={
-          semesters.some(semester => semester.allocationStatus === 'ongoing') ? <></> : <Button>
+          semesters.some(semester => ['inAllocation', 'formCollection'].includes(semester.allocationStatus)) ? <></> : <Button>
             <Link to="new">New Semester</Link>
           </Button>
         }

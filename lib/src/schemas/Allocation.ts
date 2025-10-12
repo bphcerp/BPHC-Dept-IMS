@@ -6,9 +6,9 @@ export const semesterTypes = ["1", "2", "3"] as const; // 3 is for summer term
 export const courseTypes = ["CDC", "Elective"] as const;
 export const allocationStatuses = [
     "notStarted",
-    "ongoing",
-    "completed",
+    "formCollection",
     "inAllocation",
+    "completed",
 ] as const;
 
 export const sectionTypeEnum = z.enum(sectionTypes);
@@ -110,9 +110,9 @@ export const courseCodeSchema = z.object({
     semesterId: z.string().uuid().optional(),
 });
 
-export const getInstructorsbyPreferenceSchema = z.object({
+export const getPreferenceSchema = z.object({
     code: z.string().nonempty(),
-    sectionType: sectionTypeEnum,
+    sectionType: sectionTypeEnum.optional(),
 });
 
 export const courseAllocateSchema = z.object({

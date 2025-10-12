@@ -29,12 +29,15 @@ router.get(
                 eq(master.semesterId, semesterId as string),
             with: {
                 sections: {
-                    orderBy: (section, { asc }) => [asc(section.type), asc(section.createdAt)],
+                    orderBy: (section, { asc }) => [
+                        asc(section.type),
+                        asc(section.createdAt),
+                    ],
                     with: {
                         instructors: {
                             with: {
                                 instructor: {
-                                    columns: { email: true },
+                                    columns: { email: true, type: true },
                                     with: {
                                         faculty: {
                                             columns: {
@@ -58,32 +61,45 @@ router.get(
                 ic: {
                     columns: {
                         name: true,
-                        email: true
-                    }
+                        email: true,
+                    },
                 },
             },
         });
 
         res.status(200).json(
             allocations
-                ? allocations.map((allocation) => ({
-                      ...allocation,
-                      sections: allocation.sections.map((s) => ({
-                          ...s,
-                          instructors: s.instructors.map((i) => {
-                              const { email, ...rest } = i.instructor;
-                              const instructor = Object.values(rest).filter(
-                                  (v) => !!v
-                              )[0];
-                              return instructor
-                                  ? {
-                                        email: instructor.email,
-                                        name: instructor.name,
-                                    }
-                                  : { email, name: "Not found" };
-                          }),
-                      })),
-                  }))
+                ? allocations
+                      .map((allocation) => ({
+                          ...allocation,
+                          sections: allocation.sections.map((s) => ({
+                              ...s,
+                              instructors: s.instructors.map((i) => {
+                                  const { email,type, ...rest } = i.instructor;
+                                  const instructor = Object.values(rest).filter(
+                                      (v) => !!v
+                                  )[0];
+                                  return { email, type, name: instructor?.name ?? "Not Provided" };
+                              }),
+                          })),
+                      }))
+                      .sort((a, b) => {
+                          const codeA = a.course?.code ?? "";
+                          const codeB = b.course?.code ?? "";
+                          const codeCompare = codeA.localeCompare(codeB);
+                          if (codeCompare !== 0) return codeCompare;
+
+                          const offeredToA = a.course?.offeredTo ?? "";
+                          const offeredToB = b.course?.offeredTo ?? "";
+                          const offeredToCompare = offeredToA.localeCompare(
+                              offeredToB
+                          );
+                          if (offeredToCompare !== 0) return -offeredToCompare;
+
+                          const offeredAsA = a.course?.offeredAs ?? "";
+                          const offeredAsB = b.course?.offeredAs ?? "";
+                          return offeredAsA.localeCompare(offeredAsB);
+                      })
                 : undefined
         );
     })

@@ -20,10 +20,17 @@ const AllocationModern = () => {
   const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
     useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [userTypeViewMode, setUserTypeViewMode] = useState<"faculty" | "phd">(
+    "faculty"
+  );
 
   const queryClient = useQueryClient();
 
-  const { data: currentSemester, isLoading: semesterLoading, isError: semesterError } = useQuery({
+  const {
+    data: currentSemester,
+    isLoading: semesterLoading,
+    isError: semesterError,
+  } = useQuery({
     queryKey: ["allocation", "semester", "latest-full"],
     queryFn: async () => {
       const response = await api.get<allocationTypes.Semester>(
@@ -35,7 +42,6 @@ const AllocationModern = () => {
       toast.error("Failed to fetch current semester");
     },
   });
-
 
   const {
     data: courses = [],
@@ -259,8 +265,11 @@ const AllocationModern = () => {
       type === "PRACTICAL"
         ? selectedCourse?.practicalUnits
         : type === "TUTORIAL"
-          ? selectedCourse?.offeredAs === "CDC"
-          : true
+          ? selectedCourse?.offeredAs === "CDC" &&
+            selectedCourse?.offeredTo !== "HD"
+          : type === "LECTURE"
+            ? userTypeViewMode === "faculty"
+            : true
     );
 
   return (
@@ -276,11 +285,29 @@ const AllocationModern = () => {
           </div>
           {currentSemester && (
             <div className="flex space-x-2">
-              { semesterLoading || allocationLoading || coursesLoading && <LoadingSpinner /> }
-              <Button variant='link'>
-                <Link to="/allocation/overview/summary">
-                  View Current Allocation
-                </Link>
+              {semesterLoading ||
+                allocationLoading ||
+                (coursesLoading && <LoadingSpinner />)}
+              <div className="flex items-center space-x-2">
+                <div className="mr-2 text-sm text-muted-foreground">View:</div>
+                <Button
+                  variant={userTypeViewMode === "faculty" ? "default" : "ghost"}
+                  onClick={() => setUserTypeViewMode("faculty")}
+                  className="!px-3"
+                >
+                  Faculty
+                </Button>
+                <Button
+                  variant={userTypeViewMode === "phd" ? "default" : "ghost"}
+                  onClick={() => setUserTypeViewMode("phd")}
+                  className="!px-3"
+                >
+                  PhD
+                </Button>
+              </div>
+
+              <Button variant="link">
+                <Link to="/allocation/summary">View Current Allocation</Link>
               </Button>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">
@@ -302,7 +329,6 @@ const AllocationModern = () => {
           <CoursesColumn
             courses={courses}
             isLoading={coursesLoading}
-            semesterId={currentSemester.id}
             selectedCourse={selectedCourse}
             onCourseSelect={handleCourseSelect}
           />
@@ -317,6 +343,7 @@ const AllocationModern = () => {
               semesterId={currentSemester.id}
               allocationData={allocationData || null}
               onAllocationChange={handleCreateAllocation}
+              userTypeViewMode={userTypeViewMode}
             />
 
             {/* Section Type Columns - only show when allocation exists */}
@@ -326,7 +353,6 @@ const AllocationModern = () => {
                   <SectionTypeColumn
                     key={sectionType}
                     sectionType={sectionType}
-                    selectedCourse={selectedCourse}
                     allocationData={allocationData}
                     isLoading={allocationLoading}
                     onAssignInstructor={handleOpenAssignDialog}
@@ -367,6 +393,7 @@ const AllocationModern = () => {
         allocationData={allocationData || null}
         onAssignInstructor={handleAssignInstructor}
         isAssigning={assignInstructorMutation.isLoading}
+        userTypeViewMode={userTypeViewMode}
       />
     </div>
   );

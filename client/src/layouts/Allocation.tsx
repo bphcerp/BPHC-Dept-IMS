@@ -60,12 +60,18 @@ const AllocationLayout = () => {
             title: "Course Allocation",
             items: [
               {
+                title: "Summary",
+                icon: <UserRoundIcon />,
+                url: "/allocation/summary",
+                requiredPermissions: ["allocation:view"],
+              },
+              {
                 title: "Your Allocations",
                 icon: <UserRoundIcon />,
                 url: "/allocation/personal",
                 requiredPermissions: ["allocation:view"],
               },
-              ...(currentSemester?.allocationStatus === 'ongoing'
+              ...(currentSemester?.allocationStatus === 'formCollection'
                 ? [
                     {
                       title: "Submit Your Preferences",
@@ -96,7 +102,7 @@ const AllocationLayout = () => {
           },
         ]}
       />
-      <div className="w-full overflow-y-auto">
+      <div className="w-full h-screen overflow-y-auto">
         <Outlet />
       </div>
     </>
