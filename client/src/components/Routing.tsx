@@ -264,13 +264,7 @@ const Routing = () => {
       icon: <ListOrderedIcon />,
       url: "/allocation",
       requiredPermissions: courseLoadAllocationModulePermissions,
-    },
-    {
-      title: "Your Allocations",
-      icon: <ListOrderedIcon />,
-      url: "/allocation/summary",
-      requiredPermissions: [],
-    },
+    }
   ];
 
   return (
