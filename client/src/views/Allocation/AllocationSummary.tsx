@@ -149,7 +149,7 @@ export const AllocationSummary = () => {
                               key={idx}
                               className="flex items-center justify-between border-b px-3 py-2 text-sm"
                             >
-                              <span>
+                              <span className={data.ic?.email === inst.email ? "font-semibold" : "font-medium"}>
                                 {inst.name ?? "Unnamed Instructor"}
                                 {showTeachingLoad && (
                                   <span> - {computedCreditLoadMap[inst.email] ?? 0} Credits</span>

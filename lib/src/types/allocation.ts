@@ -184,6 +184,7 @@ export type InstructorWithPreference = {
     email: string;
     name: string | null;
     preference?: number | null;
+    type: "faculty" | "phd";
 };
 
 export type InstructorAllocationSection = {

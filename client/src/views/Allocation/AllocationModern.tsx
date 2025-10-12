@@ -20,6 +20,9 @@ const AllocationModern = () => {
   const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
     useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<string>("");
+  const [userTypeViewMode, setUserTypeViewMode] = useState<"faculty" | "phd">(
+    "faculty"
+  );
 
   const queryClient = useQueryClient();
 
@@ -262,8 +265,11 @@ const AllocationModern = () => {
       type === "PRACTICAL"
         ? selectedCourse?.practicalUnits
         : type === "TUTORIAL"
-          ? selectedCourse?.offeredAs === "CDC" && selectedCourse?.offeredTo !== "HD"
-          : true
+          ? selectedCourse?.offeredAs === "CDC" &&
+            selectedCourse?.offeredTo !== "HD"
+          : type === "LECTURE"
+            ? userTypeViewMode === "faculty"
+            : true
     );
 
   return (
@@ -282,8 +288,26 @@ const AllocationModern = () => {
               {semesterLoading ||
                 allocationLoading ||
                 (coursesLoading && <LoadingSpinner />)}
+              <div className="flex items-center space-x-2">
+                <div className="mr-2 text-sm text-muted-foreground">View:</div>
+                <Button
+                  variant={userTypeViewMode === "faculty" ? "default" : "ghost"}
+                  onClick={() => setUserTypeViewMode("faculty")}
+                  className="!px-3"
+                >
+                  Faculty
+                </Button>
+                <Button
+                  variant={userTypeViewMode === "phd" ? "default" : "ghost"}
+                  onClick={() => setUserTypeViewMode("phd")}
+                  className="!px-3"
+                >
+                  PhD
+                </Button>
+              </div>
+
               <Button variant="link">
-                <Link to="/allocation/overview/summary">
+                <Link to="/allocation/summary">
                   View Current Allocation
                 </Link>
               </Button>
@@ -321,6 +345,7 @@ const AllocationModern = () => {
               semesterId={currentSemester.id}
               allocationData={allocationData || null}
               onAllocationChange={handleCreateAllocation}
+              userTypeViewMode={userTypeViewMode}
             />
 
             {/* Section Type Columns - only show when allocation exists */}
@@ -330,7 +355,6 @@ const AllocationModern = () => {
                   <SectionTypeColumn
                     key={sectionType}
                     sectionType={sectionType}
-                    selectedCourse={selectedCourse}
                     allocationData={allocationData}
                     isLoading={allocationLoading}
                     onAssignInstructor={handleOpenAssignDialog}
@@ -371,6 +395,7 @@ const AllocationModern = () => {
         allocationData={allocationData || null}
         onAssignInstructor={handleAssignInstructor}
         isAssigning={assignInstructorMutation.isLoading}
+        userTypeViewMode={userTypeViewMode}
       />
     </div>
   );

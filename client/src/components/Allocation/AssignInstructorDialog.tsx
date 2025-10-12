@@ -37,6 +37,7 @@ interface AssignInstructorDialogProps {
   allocationData: allocationTypes.AllocationResponse | null;
   onAssignInstructor: (instructorEmail: string) => void;
   isAssigning: boolean;
+  userTypeViewMode?: "faculty" | "phd";
 }
 
 export const getAllocatedCourseLoad = (
@@ -75,6 +76,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   onOpenChange,
   selectedSectionId,
   courseCode,
+  userTypeViewMode,
   allocationData,
   onAssignInstructor,
   isAssigning,
@@ -116,6 +118,10 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     },
     enabled: isOpen && !!selectedSection && !!courseCode,
   });
+
+  const visibleInstructors = userTypeViewMode
+    ? instructors.filter((i) => i.type === userTypeViewMode)
+    : instructors;
 
   const { data: courseSectionPrefs } = useQuery({
     queryKey: [
@@ -176,7 +182,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     });
 
   const filteredInstructors = useMemo(() => {
-    return instructors.filter((instructor) => {
+    return visibleInstructors.filter((instructor) => {
       const matchesSearch =
         instructor.name
           ?.toLowerCase()
@@ -325,6 +331,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                           <div className="truncate text-xs font-semibold text-gray-500">
                             Preference Given:{" "}
                             {instructor.preference ?? "Not Given"}
+                          </div>
+                          <div className="truncate text-xs font-semibold text-gray-500">
+                            Type: {instructor.type === "phd" ? "PhD" : "Faculty"}
                           </div>
                         </div>
                       </div>

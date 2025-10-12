@@ -87,7 +87,7 @@ router.get(
                         name:
                             i.instructor.name ??
                             i.instructor.faculty.name ??
-                            "Not found",
+                            "Not Provided",
                     })),
                     master: {
                         ...cur.section.master,

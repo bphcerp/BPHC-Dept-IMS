@@ -60,7 +60,8 @@ router.get(
                     user.name ?? user.type === "phd"
                         ? (user.phd?.name ?? null)
                         : (user.faculty?.name ?? null),
-                preference: facultiesPrefs.find((pref) => pref.submittedByEmail === user.email)?.preference ?? null
+                preference: facultiesPrefs.find((pref) => pref.submittedByEmail === user.email)?.preference ?? null,
+                type: user.type,
             })).sort((facultyA, facultyB) => !facultyA.preference ? !facultyB.preference ? 0 : 1 : !facultyB.preference ? -1 : facultyA.preference - facultyB.preference)
         );
     })

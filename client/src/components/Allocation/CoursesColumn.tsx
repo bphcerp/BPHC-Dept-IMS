@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { allocationTypes, allocationSchemas } from "lib";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,9 +61,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     AllocationStatus[]
   >([...allocationStatusOptions]);
 
-  const [sortField, setSortField] = useState<"allocation" | "name" | "code">(
-    "code"
-  );
+  const [sortField, setSortField] = useState<
+    "default" | "allocation" | "name" | "code"
+  >("default");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const { data: allocationStatusData } = useQuery({
@@ -73,35 +73,38 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         await api.get<allocationTypes.CourseAllocationStatusResponse>(
           "/allocation/allocation/getStatus"
         );
-      setSortField("code");
-      setSortOrder("asc");
       return response.data;
     },
   });
 
-  const filteredCourses = courses
-    .filter(
-      (course) =>
-        course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter((course) => {
-      if (!degreeFilters || degreeFilters.length === 0) return false;
-      if (!degreeFilters.includes(course.offeredTo)) return false;
+  const filteredCourses = (() => {
+    const base = courses
+      .filter(
+        (course) =>
+          course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((course) => {
+        if (!degreeFilters || degreeFilters.length === 0) return false;
+        if (!degreeFilters.includes(course.offeredTo)) return false;
 
-      if (!courseTypeFilters || courseTypeFilters.length === 0) return false;
-      if (!courseTypeFilters.includes(course.offeredAs)) return false;
+        if (!courseTypeFilters || courseTypeFilters.length === 0) return false;
+        if (!courseTypeFilters.includes(course.offeredAs)) return false;
 
-      if (!allocationStatusData) return true;
-      const status = allocationStatusData[
-        course.code
-      ] as allocationTypes.CourseAllocationStatusResponse[keyof allocationTypes.CourseAllocationStatusResponse];
-      if (!status) return false;
-      if (!allocationStatusFilters || allocationStatusFilters.length === 0)
-        return false;
-      return allocationStatusFilters.includes(status);
-    })
-    .sort((a, b) => {
+        if (!allocationStatusData) return true;
+        const status = allocationStatusData[
+          course.code
+        ] as allocationTypes.CourseAllocationStatusResponse[keyof allocationTypes.CourseAllocationStatusResponse];
+        if (!status) return false;
+        if (!allocationStatusFilters || allocationStatusFilters.length === 0)
+          return false;
+        return allocationStatusFilters.includes(status);
+      });
+
+  // If user hasn't selected a client-side sort, preserve server/default order
+  if (sortField === "default") return base;
+
+    return base.sort((a, b) => {
       if (sortField === "name") {
         const res = a.name.localeCompare(b.name);
         return sortOrder === "asc" ? res : -res;
@@ -123,6 +126,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
       const res = oa - ob;
       return sortOrder === "asc" ? res : -res;
     });
+  })();
 
   const getCourseTypeColor = (
     courseType: (typeof allocationSchemas.courseTypes)[number]
@@ -163,9 +167,21 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     setDegreeFilters([...allocationSchemas.degreeTypes]);
     setCourseTypeFilters([...allocationSchemas.courseTypes]);
     setAllocationStatusFilters([...allocationStatusOptions]);
-    setSortField("code");
+    setSortField("default");
     setSortOrder("asc");
   };
+
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedCourse || !scrollAreaRef.current) return;
+
+    const selector = `[data-course-code="${selectedCourse.code}"]`;
+    const el = scrollAreaRef.current.querySelector(selector) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedCourse]);
 
   return (
     <div className="flex h-full flex-col">
@@ -314,9 +330,12 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 <DropdownMenuRadioGroup
                   value={sortField}
                   onValueChange={(v) =>
-                    setSortField(v as "allocation" | "name" | "code")
+                    setSortField(v as "default" | "allocation" | "name" | "code")
                   }
                 >
+                  <DropdownMenuRadioItem value="default">
+                    Default (server order)
+                  </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="allocation">
                     Allocation Status
                   </DropdownMenuRadioItem>
@@ -348,7 +367,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             degreeFilters.length !== allocationSchemas.degreeTypes.length ||
             allocationStatusFilters.length !== allocationStatusOptions.length ||
             searchTerm !== "" ||
-            sortField !== "code" ||
+            sortField !== "default" ||
             sortOrder !== "asc" ? (
               <Button
                 variant="ghost"
@@ -363,8 +382,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Course List */}
-      <ScrollArea className="flex-1 bg-white">
+  <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
         <div className="space-y-2 p-3 pr-2">
           {isLoading || !allocationStatusData ? (
             <div className="flex items-center justify-center py-8">
@@ -378,6 +396,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             filteredCourses.map((course) => (
               <Card
                 key={course.code}
+                data-course-code={course.code}
                 className={`cursor-pointer border-l-8 transition-all duration-200 hover:shadow-md ${
                   selectedCourse?.code === course.code
                     ? "border-l-primary bg-primary/15 shadow-md"

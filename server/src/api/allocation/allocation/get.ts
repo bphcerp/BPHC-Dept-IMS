@@ -83,7 +83,7 @@ router.get(
                                         email: instructor.email,
                                         name: instructor.name,
                                     }
-                                  : { email, name: "Not found" };
+                                  : { email, name: "Not Provided" };
                           }),
                       })),
                   }

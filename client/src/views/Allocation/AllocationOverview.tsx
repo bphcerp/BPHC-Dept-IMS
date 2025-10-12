@@ -400,7 +400,7 @@ Hyderabad Campus<span>
             </>
           )}
           {latestSemester.allocationStatus === "inAllocation" && (
-            <Button><Link to='/allocation/overview/summary'>View Current Allocation</Link></Button>
+            <Button><Link to='/allocation/summary'>View Current Allocation</Link></Button>
           )}
         </div>
       </header>
