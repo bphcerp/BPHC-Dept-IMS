@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/axios-instance";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   AllocationSummaryType,
@@ -12,38 +13,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAuth } from "@/hooks/Auth";
 
 export const AllocationSummary = () => {
 
-  const [creditLoadMap, setCreditLoadMap] = useState<Record<string, number>>({})
+  const [showTeachingLoad, setShowTeachingLoad] = useState(false)
+
+  const [searchParams] = useSearchParams();
+  const semesterId = searchParams.get("semesterId");
+
+  const { checkAccess } = useAuth();
 
   const { data: allocationData, isLoading: isLoadingAllocation } = useQuery({
-    queryKey: [`allocation`, "summary"],
+    queryKey: [`allocation`, "summary", semesterId ?? "latest"],
     queryFn: async () => {
       try {
+        const query = semesterId ? `?semesterId=${encodeURIComponent(semesterId)}` : "";
         const res = await api.get<AllocationSummaryType>(
-          `/allocation/allocation/getAll`
+          `/allocation/allocation/getAll${query}`
         );
-
-        const data = res.data
-
-        const creditLoadMapTemp : Record<string, number> = {}
-
-        data.forEach((alloc) => {
-          alloc.sections.forEach((section) => {
-            section.instructors.map((instr) => {
-              if (!creditLoadMapTemp[instr.email]) creditLoadMapTemp[instr.email] = 0
-              creditLoadMapTemp[instr.email] += (section.type === "LECTURE"
-              ? alloc.course.lectureUnits
-              : section.type === "PRACTICAL"
-                ? alloc.course.practicalUnits
-                : 1) / section.instructors.length;
-            })
-          })
-        })
-
-        setCreditLoadMap(creditLoadMapTemp)
 
         return res.data;
       } catch (error) {
@@ -70,11 +59,30 @@ export const AllocationSummary = () => {
       .filter((section) => section.type === sectionType)
       .findIndex((section) => section.id === sectionId) + 1;
 
+  const computedCreditLoadMap = useMemo(() => {
+    if (!showTeachingLoad || !allocationData) return {} as Record<string, number>;
+    const creditLoadMapTemp: Record<string, number> = {};
+    allocationData.forEach((alloc) => {
+      alloc.sections.forEach((section) => {
+        section.instructors.forEach((instr) => {
+          if (!creditLoadMapTemp[instr.email]) creditLoadMapTemp[instr.email] = 0;
+          creditLoadMapTemp[instr.email] +=
+            (section.type === "LECTURE"
+              ? alloc.course.lectureUnits
+              : section.type === "PRACTICAL"
+              ? alloc.course.practicalUnits
+              : 1) / section.instructors.length;
+        });
+      });
+    });
+    return creditLoadMapTemp;
+  }, [showTeachingLoad, allocationData]);
+
   return isLoadingAllocation || !latestSemester || !allocationData ? (
     <Skeleton className="m-10 h-[80vh] w-full" />
   ) : (
-    <div className="allocationSummary gap-y-2 p-5">
-      <div className="flex flex-col items-center">
+    <div className="allocationSummary gap-y-2 py-5 px-2">
+      <div className="flex flex-col items-center sticky top-0 left-0 py-2 z-10 bg-background">
         <h1 className="text-3xl font-bold text-primary">Allocation Summary</h1>
         <div className="flex w-full justify-between px-20 text-lg">
           <div>
@@ -86,6 +94,19 @@ export const AllocationSummary = () => {
             <span>{getFormattedAY(latestSemester.year)}</span>
           </div>
         </div>
+        {checkAccess("allocation:write") && (
+          <div className="mt-4">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={showTeachingLoad}
+                onChange={(e) => setShowTeachingLoad(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>Show Teaching Load</span>
+            </label>
+          </div>
+        )}
       </div>
       <div>
         {allocationData.map((data) => (
@@ -128,7 +149,12 @@ export const AllocationSummary = () => {
                               key={idx}
                               className="flex items-center justify-between border-b px-3 py-2 text-sm"
                             >
-                              <span>{inst.name ?? "Unnamed Instructor"} - { creditLoadMap[inst.email] } Credits</span>
+                              <span>
+                                {inst.name ?? "Unnamed Instructor"}
+                                {showTeachingLoad && (
+                                  <span> - {computedCreditLoadMap[inst.email] ?? 0} Credits</span>
+                                )}
+                              </span>
                             </div>
                           ))
                         ) : (

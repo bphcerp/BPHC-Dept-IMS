@@ -128,7 +128,6 @@ import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 import FormList from "@/views/Allocation/FormList";
 import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
-import AllocateCourse from "@/views/Allocation/AllocateCourse";
 import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
@@ -265,6 +264,12 @@ const Routing = () => {
       icon: <ListOrderedIcon />,
       url: "/allocation",
       requiredPermissions: courseLoadAllocationModulePermissions,
+    },
+    {
+      title: "Your Allocations",
+      icon: <ListOrderedIcon />,
+      url: "/allocation/summary",
+      requiredPermissions: [],
     },
   ];
 
@@ -853,9 +858,14 @@ const Routing = () => {
                 </>
               )}
 
-              {checkAccessAnyOne(["allocation:write", "allocation:view"]) && (
-                <Route path="overview/summary" element={<AllocationSummary />} />
+              {checkAccessAnyOne(["allocation:view", "allocation:write"]) && (
+                <Route
+                  path="/allocation/summary"
+                  element={<AllocationSummary />}
+                />
               )}
+
+              {/* summary moved to a top-level unprotected route */}
 
               {checkAccessAnyOne([
                 "allocation:builder:template:view",
@@ -892,7 +902,6 @@ const Routing = () => {
               {checkAccess("allocation:write") && (
                 <Route path="allocate" element={<AllocationModern />} />
               )}
-              <Route path="allocate/:id" element={<AllocateCourse />} />
 
               {checkAccessAnyOne([
                 "allocation:courses:view",

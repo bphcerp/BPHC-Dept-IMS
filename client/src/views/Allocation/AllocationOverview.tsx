@@ -383,7 +383,7 @@ Hyderabad Campus<span>
                 </DialogContent>
               </Dialog>
             )}
-          {latestSemester.allocationStatus === "ongoing" && (
+          {latestSemester.allocationStatus === "formCollection" && (
             <>
               <Button
                 variant="secondary"
@@ -407,7 +407,7 @@ Hyderabad Campus<span>
       <section className="allocationStatsPanel">
         <h2 className="mb-2 text-xl font-semibold text-primary">Stats</h2>
         {latestSemester.form ? (
-          latestSemester.allocationStatus === "ongoing" ? (
+          latestSemester.allocationStatus === "formCollection" ? (
             <div className="grid h-auto grid-cols-1 gap-6 md:grid-cols-2">
               {/* Time Remaining */}
               <div className="flex flex-col items-center justify-center space-y-5 rounded-2xl p-2 shadow-lg transition hover:shadow-xl">

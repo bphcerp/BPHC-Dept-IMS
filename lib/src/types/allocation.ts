@@ -50,7 +50,7 @@ export const semesterStatusMap: Record<
 > = {
     completed: "Completed",
     notStarted: "Not Started",
-    ongoing: "Ongoing",
+    formCollection: "Collecting Responses",
     inAllocation: "In Allocation",
 };
 

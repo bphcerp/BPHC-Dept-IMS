@@ -6,9 +6,9 @@ export const semesterTypes = ["1", "2", "3"] as const; // 3 is for summer term
 export const courseTypes = ["CDC", "Elective"] as const;
 export const allocationStatuses = [
     "notStarted",
-    "ongoing",
-    "completed",
+    "formCollection",
     "inAllocation",
+    "completed",
 ] as const;
 
 export const sectionTypeEnum = z.enum(sectionTypes);
