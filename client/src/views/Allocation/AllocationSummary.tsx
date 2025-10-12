@@ -101,6 +101,7 @@ export const AllocationSummary = () => {
         allocationData={null}
         onAssignInstructor={async () => {}}
         isAssigning={false}
+        userTypeViewMode="faculty"
         viewModeInstructorEmail={selectedInstructorEmail}
       />
       <div className="sticky left-0 top-0 z-10 flex flex-col items-center bg-background py-2">
