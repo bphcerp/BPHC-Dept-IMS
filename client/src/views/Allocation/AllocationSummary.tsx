@@ -178,7 +178,7 @@ export const AllocationSummary = () => {
                                     : "font-medium"
                                 }
                               >
-                                {(inst.name && inst.type === 'faculty') ? <Button onClick={() =>{
+                                {(inst.name && inst.type === 'faculty' && checkAccess('allocation:write')) ? <Button onClick={() =>{
                                   setSelectedInstructorEmail(inst.email)
                                   setIsAssignInstructorDialogOpen(true)
                                 }} variant="link" className="p-0 m-0">{inst.name}</Button> : inst.name ?? `Unnamed Instructor - ${inst.email}`}
