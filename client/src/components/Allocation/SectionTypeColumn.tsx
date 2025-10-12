@@ -279,7 +279,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                                   >
                                     <div className="flex flex-col">
                                       <span className={allocationData.ic?.email === instructor.email ? "font-semibold" : "font-medium"}>
-                                        {instructor.name ?? "Unknown Name"}
+                                        {instructor.name ?? "Unknown Name"} - {instructor.type === 'faculty' ? 'Faculty' : 'PhD'}
                                       </span>
                                     </div>
                                     <Button

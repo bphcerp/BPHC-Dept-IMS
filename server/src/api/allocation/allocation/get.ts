@@ -40,7 +40,7 @@ router.get(
                         instructors: {
                             with: {
                                 instructor: {
-                                    columns: { email: true },
+                                    columns: { email: true, type: true },
                                     with: {
                                         faculty: {
                                             columns: {
@@ -74,16 +74,15 @@ router.get(
                       sections: allocation.sections.map((s) => ({
                           ...s,
                           instructors: s.instructors.map((i) => {
-                              const { email, ...rest } = i.instructor;
+                              const { email, type, ...rest } = i.instructor;
                               const instructor = Object.values(rest).filter(
                                   (v) => !!v
                               )[0];
-                              return instructor
-                                  ? {
-                                        email: instructor.email,
-                                        name: instructor.name,
-                                    }
-                                  : { email, name: "Not Provided" };
+                              return {
+                                  email,
+                                  type,
+                                  name: instructor?.name ?? "Not Provided",
+                              };
                           }),
                       })),
                   }

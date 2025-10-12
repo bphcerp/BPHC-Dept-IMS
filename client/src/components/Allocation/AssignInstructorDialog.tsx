@@ -88,10 +88,10 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     string | null
   >(viewModeInstructorEmail ?? null);
 
-
   useEffect(() => {
-    if (viewModeInstructorEmail) setSelectedInstructorEmail(viewModeInstructorEmail);
-  },[viewModeInstructorEmail])
+    if (viewModeInstructorEmail)
+      setSelectedInstructorEmail(viewModeInstructorEmail);
+  }, [viewModeInstructorEmail]);
 
   const [selectedViewOtherResponsesInfo, setSelectedViewOtherResponsesInfo] =
     useState<{
@@ -151,7 +151,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         throw error;
       }
     },
-    enabled: !!selectedViewOtherResponsesInfo,
+    enabled: !!selectedViewOtherResponsesInfo && userTypeViewMode !== "phd",
   });
 
   const { data: facultyPrefs } = useQuery({
@@ -170,7 +170,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         throw error;
       }
     },
-    enabled: !!selectedInstructorEmail,
+    enabled: !!selectedInstructorEmail && userTypeViewMode !== "phd",
   });
 
   // Fetch selected instructor details
@@ -185,7 +185,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
           );
         return response.data;
       },
-      enabled: !!selectedInstructorEmail,
+      enabled: !!selectedInstructorEmail && userTypeViewMode !== "phd",
     });
 
   const filteredInstructors = useMemo(() => {
@@ -257,7 +257,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         <DialogHeader className="relative h-fit">
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            { viewModeInstructorEmail ? "Instructor Details" : "Assign Instructor"}
+            {viewModeInstructorEmail
+              ? "Instructor Details"
+              : "Assign Instructor"}
             {selectedSection && allocationData && (
               <div className="ml-4 flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
@@ -293,7 +295,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
 
         <div className="flex h-[80vh] w-full gap-6">
           {!viewModeInstructorEmail && (
-            <div className="flex w-[15vw] flex-col">
+            <div className={`flex ${userTypeViewMode === 'faculty' ? 'w-[20vw]' : 'w-full'} flex-col`}>
               <div className="mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 -translate-y-1/2 transform text-gray-400" />
@@ -316,7 +318,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                     No instructors found
                   </div>
                 ) : (
-                  <div className="flex flex-col space-y-1 overflow-y-auto p-2">
+                  <div className="flex flex-col space-y-1 w-full overflow-y-auto p-2">
                     {filteredInstructors.map((instructor) => (
                       <div
                         key={instructor.email}
@@ -353,232 +355,238 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
             </div>
           )}
 
-          <div className="flex-1">
-            {selectedInstructorEmail ? (
-              <div className="grid h-full grid-cols-2 gap-x-2">
-                <div className="h-full overflow-y-auto">
-                  <>
-                    {instructorDetailsLoading ? (
-                      <div className="flex items-center justify-center p-8">
-                        <LoadingSpinner />
-                      </div>
-                    ) : instructorDetails ? (
-                      <>
-                        {/* Current Allocations */}
-                        {Object.keys(instructorDetails ?? {}).length > 0 && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                Current Allocations
-                              </CardTitle>
-                              <CardDescription>
-                                Sections currently allocated to this instructor
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              {Object.entries(instructorDetails).map(
-                                ([sectionType, sections]) => (
-                                  <div
-                                    key={sectionType}
-                                    className="flex flex-col space-y-2"
-                                  >
-                                    <div>
-                                      {sections.map((section, index) => (
-                                        <div
-                                          key={index}
-                                          className="rounded bg-gray-50 text-sm"
-                                        >
-                                          <div className={`py-1 font-medium`}>
-                                            <span
-                                              className={
-                                                getSectionTypeColor(
-                                                  section.type
-                                                ) + " p-1"
-                                              }
-                                            >
-                                              {section.type.charAt(0)}
-                                              {getSectionNumber(
-                                                section.id,
-                                                section.master.id,
-                                                section.type
-                                              )}
-                                            </span>
-                                            {" - "}
-                                            <span>
-                                              {section.master.course.name} -{" "}
-                                              {section.master.course.code}
-                                            </span>
-                                          </div>
-                                          <div className="text-xs text-gray-600">
-                                            IC: {section.master.ic ?? "Not Set"}
-                                          </div>
-                                          <div className="mt-1 text-sm">
-                                            <div className="font-medium">
-                                              Instructors:
-                                            </div>
-                                            <ol className="ml-3 mt-1 list-inside list-decimal space-y-0.5 text-xs">
-                                              {section.instructors.map(
-                                                (i, idx) => (
-                                                  <li
-                                                    key={i.email ?? idx}
-                                                    className="truncate"
-                                                  >
-                                                    <span className="font-light">
-                                                      {i.name ?? "N/A"}
-                                                    </span>
-                                                  </li>
-                                                )
-                                              )}
-                                            </ol>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <Badge
-                                      variant="outline"
-                                      className="w-fit text-sm"
+          {userTypeViewMode === "faculty" && (
+            <div className="flex-1">
+              {selectedInstructorEmail ? (
+                <div className="grid h-full grid-cols-2 gap-x-2">
+                  <div className="h-full overflow-y-auto">
+                    <>
+                      {instructorDetailsLoading ? (
+                        <div className="flex items-center justify-center p-8">
+                          <LoadingSpinner />
+                        </div>
+                      ) : instructorDetails ? (
+                        <>
+                          {/* Current Allocations */}
+                          {Object.keys(instructorDetails ?? {}).length > 0 && (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  Current Allocations
+                                </CardTitle>
+                                <CardDescription>
+                                  Sections currently allocated to this
+                                  instructor
+                                </CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                {Object.entries(instructorDetails).map(
+                                  ([sectionType, sections]) => (
+                                    <div
+                                      key={sectionType}
+                                      className="flex flex-col space-y-2"
                                     >
-                                      Credit Load:{" "}
-                                      {getAllocatedCourseLoad(
-                                        instructorDetails,
-                                        sectionType as (typeof sectionTypes)[number]
-                                      )}
-                                    </Badge>
-                                  </div>
-                                )
-                              )}
-                              <Badge variant="outline" className="text-md">
-                                <span>
-                                  <strong>Total Allocated Load</strong>:{" "}
-                                  {getAllocatedCourseLoad(instructorDetails)}
-                                </span>
-                              </Badge>
-                            </CardContent>
-                          </Card>
-                        )}
-
-                        {Object.keys(instructorDetails ?? {}).length === 0 && (
-                          <Card>
-                            <CardContent className="p-8 text-center">
-                              <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-                              <div className="text-gray-600">
-                                No current allocations found for this instructor
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </>
-                    ) : (
-                      <Card>
-                        <CardContent className="p-8 text-center">
-                          <div className="text-gray-600">
-                            No allocation details available
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </>
-                </div>
-                <div className="flex h-full flex-col space-y-2 overflow-y-auto">
-                  <h2 className="h-fit w-full text-center text-xl font-bold">
-                    Instructor Response
-                  </h2>
-                  <div className="flex h-full flex-col space-y-2 overflow-y-auto p-2">
-                    {facultyPrefs?.map((pref) => (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center justify-between gap-2">
-                            <h5>
-                              {pref.courseCode} - {pref.course.name}
-                            </h5>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getSectionTypeColor(pref.templateField.preferenceType ?? pref.templateField.type)}`}
-                            >
-                              {pref.templateField.preferenceType}
-                            </Badge>
-                          </CardTitle>
-                          <CardDescription>
-                            <div className="flex justify-between">
-                              <span>Preference: {pref.preference}</span>
-                              <Button
-                                variant="link"
-                                className="m-0 p-0 text-xs"
-                                onClick={() => {
-                                  if (
-                                    selectedViewOtherResponsesInfo &&
-                                    selectedViewOtherResponsesInfo.courseCode ===
-                                      pref.courseCode &&
-                                    selectedViewOtherResponsesInfo.sectionType ===
-                                      pref.templateField.preferenceType
+                                      <div>
+                                        {sections.map((section, index) => (
+                                          <div
+                                            key={index}
+                                            className="rounded bg-gray-50 text-sm"
+                                          >
+                                            <div className={`py-1 font-medium`}>
+                                              <span
+                                                className={
+                                                  getSectionTypeColor(
+                                                    section.type
+                                                  ) + " p-1"
+                                                }
+                                              >
+                                                {section.type.charAt(0)}
+                                                {getSectionNumber(
+                                                  section.id,
+                                                  section.master.id,
+                                                  section.type
+                                                )}
+                                              </span>
+                                              {" - "}
+                                              <span>
+                                                {section.master.course.name} -{" "}
+                                                {section.master.course.code}
+                                              </span>
+                                            </div>
+                                            <div className="text-xs text-gray-600">
+                                              IC:{" "}
+                                              {section.master.ic ?? "Not Set"}
+                                            </div>
+                                            <div className="mt-1 text-sm">
+                                              <div className="font-medium">
+                                                Instructors:
+                                              </div>
+                                              <ol className="ml-3 mt-1 list-inside list-decimal space-y-0.5 text-xs">
+                                                {section.instructors.map(
+                                                  (i, idx) => (
+                                                    <li
+                                                      key={i.email ?? idx}
+                                                      className="truncate"
+                                                    >
+                                                      <span className="font-light">
+                                                        {i.name ?? "N/A"}
+                                                      </span>
+                                                    </li>
+                                                  )
+                                                )}
+                                              </ol>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <Badge
+                                        variant="outline"
+                                        className="w-fit text-sm"
+                                      >
+                                        Credit Load:{" "}
+                                        {getAllocatedCourseLoad(
+                                          instructorDetails,
+                                          sectionType as (typeof sectionTypes)[number]
+                                        )}
+                                      </Badge>
+                                    </div>
                                   )
-                                    setSelectedViewOtherResponsesInfo(null);
-                                  else
-                                    setSelectedViewOtherResponsesInfo({
-                                      courseCode: pref.courseCode!,
-                                      sectionType:
-                                        pref.templateField.preferenceType!,
-                                    });
-                                }}
-                              >
-                                {selectedViewOtherResponsesInfo &&
-                                selectedViewOtherResponsesInfo.courseCode ===
-                                  pref.courseCode &&
-                                selectedViewOtherResponsesInfo.sectionType ===
-                                  pref.templateField.preferenceType
-                                  ? "Close"
-                                  : "View Other Responses"}
-                              </Button>
-                            </div>
-                          </CardDescription>
-                          {courseSectionPrefs &&
-                            courseSectionPrefs.length > 0 &&
-                            selectedViewOtherResponsesInfo &&
-                            selectedViewOtherResponsesInfo.courseCode ===
-                              pref.courseCode &&
-                            selectedViewOtherResponsesInfo.sectionType ===
-                              pref.templateField.preferenceType && (
-                              <CardContent className="mt-2 border-t pt-2">
-                                <div className="text-sm font-semibold">
-                                  Other Faculty Preferences for this Course:
-                                </div>
-                                <ul className="list-inside list-disc space-y-1 text-xs">
-                                  {courseSectionPrefs
-                                    .filter(
-                                      (cfp) =>
-                                        cfp.submittedBy.email !=
-                                        selectedInstructorEmail
-                                    )
-                                    .map((cfp) => (
-                                      <li key={cfp.submittedBy.email}>
-                                        {cfp.submittedBy.name}
-                                        {" - "}
-                                        <span className="font-medium">
-                                          {cfp.preference}
-                                        </span>
-                                      </li>
-                                    ))}
-                                </ul>
+                                )}
+                                <Badge variant="outline" className="text-md">
+                                  <span>
+                                    <strong>Total Allocated Load</strong>:{" "}
+                                    {getAllocatedCourseLoad(instructorDetails)}
+                                  </span>
+                                </Badge>
                               </CardContent>
-                            )}
-                        </CardHeader>
-                      </Card>
-                    ))}
+                            </Card>
+                          )}
+
+                          {Object.keys(instructorDetails ?? {}).length ===
+                            0 && (
+                            <Card>
+                              <CardContent className="p-8 text-center">
+                                <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+                                <div className="text-gray-600">
+                                  No current allocations found for this
+                                  instructor
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )}
+                        </>
+                      ) : (
+                        <Card>
+                          <CardContent className="p-8 text-center">
+                            <div className="text-gray-600">
+                              No allocation details available
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </>
+                  </div>
+                  <div className="flex h-full flex-col space-y-2 overflow-y-auto">
+                    <h2 className="h-fit w-full text-center text-xl font-bold">
+                      Instructor Response
+                    </h2>
+                    <div className="flex h-full flex-col space-y-2 overflow-y-auto p-2">
+                      {facultyPrefs?.map((pref) => (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center justify-between gap-2">
+                              <h5>
+                                {pref.courseCode} - {pref.course.name}
+                              </h5>
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${getSectionTypeColor(pref.templateField.preferenceType ?? pref.templateField.type)}`}
+                              >
+                                {pref.templateField.preferenceType}
+                              </Badge>
+                            </CardTitle>
+                            <CardDescription>
+                              <div className="flex justify-between">
+                                <span>Preference: {pref.preference}</span>
+                                <Button
+                                  variant="link"
+                                  className="m-0 p-0 text-xs"
+                                  onClick={() => {
+                                    if (
+                                      selectedViewOtherResponsesInfo &&
+                                      selectedViewOtherResponsesInfo.courseCode ===
+                                        pref.courseCode &&
+                                      selectedViewOtherResponsesInfo.sectionType ===
+                                        pref.templateField.preferenceType
+                                    )
+                                      setSelectedViewOtherResponsesInfo(null);
+                                    else
+                                      setSelectedViewOtherResponsesInfo({
+                                        courseCode: pref.courseCode!,
+                                        sectionType:
+                                          pref.templateField.preferenceType!,
+                                      });
+                                  }}
+                                >
+                                  {selectedViewOtherResponsesInfo &&
+                                  selectedViewOtherResponsesInfo.courseCode ===
+                                    pref.courseCode &&
+                                  selectedViewOtherResponsesInfo.sectionType ===
+                                    pref.templateField.preferenceType
+                                    ? "Close"
+                                    : "View Other Responses"}
+                                </Button>
+                              </div>
+                            </CardDescription>
+                            {courseSectionPrefs &&
+                              courseSectionPrefs.length > 0 &&
+                              selectedViewOtherResponsesInfo &&
+                              selectedViewOtherResponsesInfo.courseCode ===
+                                pref.courseCode &&
+                              selectedViewOtherResponsesInfo.sectionType ===
+                                pref.templateField.preferenceType && (
+                                <CardContent className="mt-2 border-t pt-2">
+                                  <div className="text-sm font-semibold">
+                                    Other Faculty Preferences for this Course:
+                                  </div>
+                                  <ul className="list-inside list-disc space-y-1 text-xs">
+                                    {courseSectionPrefs
+                                      .filter(
+                                        (cfp) =>
+                                          cfp.submittedBy.email !=
+                                          selectedInstructorEmail
+                                      )
+                                      .map((cfp) => (
+                                        <li key={cfp.submittedBy.email}>
+                                          {cfp.submittedBy.name}
+                                          {" - "}
+                                          <span className="font-medium">
+                                            {cfp.preference}
+                                          </span>
+                                        </li>
+                                      ))}
+                                  </ul>
+                                </CardContent>
+                              )}
+                          </CardHeader>
+                        </Card>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <Card className="h-full">
-                <CardContent className="flex h-full items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <User className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-                    <div>Select an instructor to view details</div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+              ) : (
+                <Card className="h-full">
+                  <CardContent className="flex h-full items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <User className="mx-auto mb-3 h-12 w-12 text-gray-300" />
+                      <div>Select an instructor to view details</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
