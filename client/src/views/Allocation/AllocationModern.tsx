@@ -262,7 +262,7 @@ const AllocationModern = () => {
       type === "PRACTICAL"
         ? selectedCourse?.practicalUnits
         : type === "TUTORIAL"
-          ? selectedCourse?.offeredAs === "CDC"
+          ? selectedCourse?.offeredAs === "CDC" && selectedCourse?.offeredTo !== "HD"
           : true
     );
 
@@ -307,7 +307,6 @@ const AllocationModern = () => {
           <CoursesColumn
             courses={courses}
             isLoading={coursesLoading}
-            semesterId={currentSemester.id}
             selectedCourse={selectedCourse}
             onCourseSelect={handleCourseSelect}
           />

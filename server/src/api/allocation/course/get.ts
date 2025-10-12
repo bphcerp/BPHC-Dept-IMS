@@ -8,10 +8,15 @@ const router = Router();
 router.get(
     "/",
     asyncHandler(async (req, res) => {
-        const { unmarked } = courseGetQuerySchema.parse(req.query)
+        const { unmarked } = courseGetQuerySchema.parse(req.query);
         const result = await db.query.course.findMany({
-            where: (course, { eq }) => unmarked ? undefined : eq(course.markedForAllocation, true),
-            orderBy: (course, { desc, asc }) => [desc(course.offeredTo), asc(course.offeredAs)]
+            where: (course, { eq }) =>
+                unmarked ? undefined : eq(course.markedForAllocation, true),
+            orderBy: (course, { desc, asc }) => [
+                asc(course.code),
+                desc(course.offeredTo),
+                asc(course.offeredAs),
+            ],
         });
 
         res.status(200).json(result);

@@ -464,7 +464,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                 </div>
                 <div className="flex h-full flex-col space-y-2 overflow-y-auto">
                   <h2 className="h-fit w-full text-center text-xl font-bold">
-                    Instructor Form Response
+                    Instructor Response
                   </h2>
                   <div className="flex h-full flex-col space-y-2 overflow-y-auto p-2">
                     {facultyPrefs?.map((pref) => (
