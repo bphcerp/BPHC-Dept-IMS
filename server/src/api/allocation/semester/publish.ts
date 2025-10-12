@@ -26,7 +26,7 @@ router.post(
         const semesterUpdated = await db.transaction(async (tx) => {
             const semesterUpdated = await tx
                 .update(semester)
-                .set({ allocationStatus: "ongoing" })
+                .set({ allocationStatus: "formCollection" })
                 .where(eq(semester.id, id))
                 .returning();
 
