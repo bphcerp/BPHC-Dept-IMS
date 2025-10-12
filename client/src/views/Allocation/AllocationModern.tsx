@@ -307,9 +307,7 @@ const AllocationModern = () => {
               </div>
 
               <Button variant="link">
-                <Link to="/allocation/summary">
-                  View Current Allocation
-                </Link>
+                <Link to="/allocation/summary">View Current Allocation</Link>
               </Button>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">

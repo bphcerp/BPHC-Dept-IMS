@@ -19,7 +19,7 @@ router.get(
         if (!currentAllocationSemester) return next(new HttpError(HttpCode.BAD_REQUEST, "There is no semester whose allocation is ongoing currently"))
 
         const responses = (await db.query.allocationFormResponse.findMany({
-            where: (response, { eq, and, isNull }) => and(eq(response.courseCode, code), eq(response.formId, currentAllocationSemester.formId!)),
+            where: (response, { eq, and }) => and(eq(response.courseCode, code), eq(response.formId, currentAllocationSemester.formId!)),
             with: {
                 submittedBy: {
                     with: {

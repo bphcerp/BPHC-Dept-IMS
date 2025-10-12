@@ -15,10 +15,14 @@ import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/Auth";
+import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 
 export const AllocationSummary = () => {
-
-  const [showTeachingLoad, setShowTeachingLoad] = useState(false)
+  const [showTeachingLoad, setShowTeachingLoad] = useState(false);
+  const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
+    useState(false);
+  const [selectedInstructorEmail, setSelectedInstructorEmail] =
+    useState<string | null>(null);
 
   const [searchParams] = useSearchParams();
   const semesterId = searchParams.get("semesterId");
@@ -29,7 +33,9 @@ export const AllocationSummary = () => {
     queryKey: [`allocation`, "summary", semesterId ?? "latest"],
     queryFn: async () => {
       try {
-        const query = semesterId ? `?semesterId=${encodeURIComponent(semesterId)}` : "";
+        const query = semesterId
+          ? `?semesterId=${encodeURIComponent(semesterId)}`
+          : "";
         const res = await api.get<AllocationSummaryType>(
           `/allocation/allocation/getAll${query}`
         );
@@ -60,18 +66,20 @@ export const AllocationSummary = () => {
       .findIndex((section) => section.id === sectionId) + 1;
 
   const computedCreditLoadMap = useMemo(() => {
-    if (!showTeachingLoad || !allocationData) return {} as Record<string, number>;
+    if (!showTeachingLoad || !allocationData)
+      return {} as Record<string, number>;
     const creditLoadMapTemp: Record<string, number> = {};
     allocationData.forEach((alloc) => {
       alloc.sections.forEach((section) => {
         section.instructors.forEach((instr) => {
-          if (!creditLoadMapTemp[instr.email]) creditLoadMapTemp[instr.email] = 0;
+          if (!creditLoadMapTemp[instr.email])
+            creditLoadMapTemp[instr.email] = 0;
           creditLoadMapTemp[instr.email] +=
             (section.type === "LECTURE"
               ? alloc.course.lectureUnits
               : section.type === "PRACTICAL"
-              ? alloc.course.practicalUnits
-              : 1) / section.instructors.length;
+                ? alloc.course.practicalUnits
+                : 1) / section.instructors.length;
         });
       });
     });
@@ -81,8 +89,21 @@ export const AllocationSummary = () => {
   return isLoadingAllocation || !latestSemester || !allocationData ? (
     <Skeleton className="m-10 h-[80vh] w-full" />
   ) : (
-    <div className="allocationSummary gap-y-2 py-5 px-2">
-      <div className="flex flex-col items-center sticky top-0 left-0 py-2 z-10 bg-background">
+    <div className="allocationSummary gap-y-2 px-2 py-5">
+      <AssignInstructorDialog
+        isOpen={isAssignInstructorDialogOpen}
+        onOpenChange={(open) => {
+          setIsAssignInstructorDialogOpen(open)
+          if (!open) setSelectedInstructorEmail(null)
+        }}
+        courseCode={null}
+        selectedSectionId=""
+        allocationData={null}
+        onAssignInstructor={async () => {}}
+        isAssigning={false}
+        viewModeInstructorEmail={selectedInstructorEmail}
+      />
+      <div className="sticky left-0 top-0 z-10 flex flex-col items-center bg-background py-2">
         <h1 className="text-3xl font-bold text-primary">Allocation Summary</h1>
         <div className="flex w-full justify-between px-20 text-lg">
           <div>
@@ -110,7 +131,7 @@ export const AllocationSummary = () => {
       </div>
       <div>
         {allocationData.map((data) => (
-          <Card className="w-full overflow-hidden rounded-none">
+          <Card key={data.id} className="w-full overflow-hidden rounded-none">
             <CardContent className="p-0">
               <div className="grid grid-cols-[500px_1fr] border-b">
                 {/* Left Side (Course Info) */}
@@ -149,10 +170,24 @@ export const AllocationSummary = () => {
                               key={idx}
                               className="flex items-center justify-between border-b px-3 py-2 text-sm"
                             >
-                              <span className={data.ic?.email === inst.email ? "font-semibold" : "font-medium"}>
-                                {inst.name ?? "Unnamed Instructor"}
+                              <span
+                                className={
+                                  data.ic?.email === inst.email
+                                    ? "font-semibold"
+                                    : "font-medium"
+                                }
+                              >
+                                {(inst.name && inst.type === 'faculty') ? <Button onClick={() =>{
+                                  setSelectedInstructorEmail(inst.email)
+                                  setIsAssignInstructorDialogOpen(true)
+                                }} variant="link" className="p-0 m-0">{inst.name}</Button> : inst.name ?? `Unnamed Instructor - ${inst.email}`}
                                 {showTeachingLoad && (
-                                  <span> - {computedCreditLoadMap[inst.email] ?? 0} Credits</span>
+                                  <span>
+                                    {" "}
+                                    - {computedCreditLoadMap[inst.email] ??
+                                      0}{" "}
+                                    Credits
+                                  </span>
                                 )}
                               </span>
                             </div>

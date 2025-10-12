@@ -172,6 +172,7 @@ export type AllocationResponse = {
         instructors: {
             name: string | null;
             email: string;
+            type: "faculty" | "phd";
         }[];
     }[];
 } | null;

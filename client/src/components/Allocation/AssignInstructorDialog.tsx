@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -38,6 +38,7 @@ interface AssignInstructorDialogProps {
   onAssignInstructor: (instructorEmail: string) => void;
   isAssigning: boolean;
   userTypeViewMode?: "faculty" | "phd";
+  viewModeInstructorEmail?: string | null;
 }
 
 export const getAllocatedCourseLoad = (
@@ -80,11 +81,17 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   allocationData,
   onAssignInstructor,
   isAssigning,
+  viewModeInstructorEmail,
 }) => {
   const [instructorSearchValue, setInstructorSearchValue] = useState("");
   const [selectedInstructorEmail, setSelectedInstructorEmail] = useState<
     string | null
-  >(null);
+  >(viewModeInstructorEmail ?? null);
+
+
+  useEffect(() => {
+    if (viewModeInstructorEmail) setSelectedInstructorEmail(viewModeInstructorEmail);
+  },[viewModeInstructorEmail])
 
   const [selectedViewOtherResponsesInfo, setSelectedViewOtherResponsesInfo] =
     useState<{
@@ -250,7 +257,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         <DialogHeader className="relative h-fit">
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Assign Instructor
+            { viewModeInstructorEmail ? "Instructor Details" : "Assign Instructor"}
             {selectedSection && allocationData && (
               <div className="ml-4 flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
@@ -285,64 +292,66 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         </DialogHeader>
 
         <div className="flex h-[80vh] w-full gap-6">
-          {/* Left Column - Instructor Selection */}
-          <div className="flex w-[15vw] flex-col">
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 -translate-y-1/2 transform text-gray-400" />
-                <Input
-                  placeholder="Search instructors..."
-                  value={instructorSearchValue}
-                  onChange={(e) => setInstructorSearchValue(e.target.value)}
-                  className="pl-10"
-                />
+          {!viewModeInstructorEmail && (
+            <div className="flex w-[15vw] flex-col">
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 -translate-y-1/2 transform text-gray-400" />
+                  <Input
+                    placeholder="Search instructors..."
+                    value={instructorSearchValue}
+                    onChange={(e) => setInstructorSearchValue(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="flex h-full w-full overflow-y-auto rounded-md border">
-              {instructorsLoading ? (
-                <div className="flex items-center justify-center p-4">
-                  <LoadingSpinner />
-                </div>
-              ) : filteredInstructors.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  No instructors found
-                </div>
-              ) : (
-                <div className="flex flex-col space-y-1 overflow-y-auto p-2">
-                  {filteredInstructors.map((instructor) => (
-                    <div
-                      key={instructor.email}
-                      onClick={() =>
-                        setSelectedInstructorEmail(instructor.email)
-                      }
-                      className={`cursor-pointer rounded-md p-3 transition-colors hover:bg-gray-100 ${
-                        selectedInstructorEmail === instructor.email
-                          ? "border border-blue-200 bg-blue-50"
-                          : "border border-transparent"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium">
-                            {instructor.name || instructor.email}
-                          </div>
-                          <div className="truncate text-xs font-semibold text-gray-500">
-                            Preference Given:{" "}
-                            {instructor.preference ?? "Not Given"}
-                          </div>
-                          <div className="truncate text-xs font-semibold text-gray-500">
-                            Type: {instructor.type === "phd" ? "PhD" : "Faculty"}
+              <div className="flex h-full w-full overflow-y-auto rounded-md border">
+                {instructorsLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <LoadingSpinner />
+                  </div>
+                ) : filteredInstructors.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No instructors found
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-1 overflow-y-auto p-2">
+                    {filteredInstructors.map((instructor) => (
+                      <div
+                        key={instructor.email}
+                        onClick={() =>
+                          setSelectedInstructorEmail(instructor.email)
+                        }
+                        className={`cursor-pointer rounded-md p-3 transition-colors hover:bg-gray-100 ${
+                          selectedInstructorEmail === instructor.email
+                            ? "border border-blue-200 bg-blue-50"
+                            : "border border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium">
+                              {instructor.name || instructor.email}
+                            </div>
+                            <div className="truncate text-xs font-semibold text-gray-500">
+                              Preference Given:{" "}
+                              {instructor.preference ?? "Not Given"}
+                            </div>
+                            <div className="truncate text-xs font-semibold text-gray-500">
+                              Type:{" "}
+                              {instructor.type === "phd" ? "PhD" : "Faculty"}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex-1">
             {selectedInstructorEmail ? (

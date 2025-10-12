@@ -1,4 +1,5 @@
 ALTER TABLE "public"."allocation_semester" ALTER COLUMN "allocation_status" SET DATA TYPE text;--> statement-breakpoint
+ALTER TABLE "public"."allocation_semester" ALTER COLUMN "allocation_status" DROP DEFAULT; --> manual addition to fix cascade error
 DROP TYPE "public"."allocation_status";--> statement-breakpoint
 CREATE TYPE "public"."allocation_status" AS ENUM('notStarted', 'formCollection', 'inAllocation', 'completed');--> statement-breakpoint
 ALTER TABLE "public"."allocation_semester" ALTER COLUMN "allocation_status" SET DATA TYPE "public"."allocation_status" USING "allocation_status"::"public"."allocation_status";--> statement-breakpoint
