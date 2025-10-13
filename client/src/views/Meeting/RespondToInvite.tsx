@@ -1,4 +1,3 @@
-// client/src/views/Meeting/RespondToInvite.tsx
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
@@ -13,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Users, User } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const RespondToInvite: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,7 +85,8 @@ const RespondToInvite: React.FC = () => {
           )}
           {meeting.venue && (
             <p className="mt-2">
-              <strong>Venue:</strong> {meeting.venue}
+              <strong>Venue:</strong>
+              {meeting.venue}
             </p>
           )}
           {meeting.googleMeetLink && (
@@ -106,11 +108,44 @@ const RespondToInvite: React.FC = () => {
   }
 
   return (
-    <AvailabilityResponseForm
-      timeSlots={meeting.timeSlots}
-      onSubmit={mutation.mutate}
-      isSubmitting={mutation.isLoading}
-    />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{meeting.title}</CardTitle>
+          <CardDescription>{meeting.purpose}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <User className="h-4 w-4" />
+              Organizer
+            </div>
+            <p className="pl-6 text-sm text-muted-foreground">
+              {meeting.organizer.name} ({meeting.organizer.email})
+            </p>
+          </div>
+          <Separator />
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Users className="h-4 w-4" />
+              Invitees ({meeting.participants.length})
+            </div>
+            <ul className="grid grid-cols-1 gap-x-4 gap-y-1 pl-6 pt-2 text-sm text-muted-foreground md:grid-cols-2 lg:grid-cols-3">
+              {meeting.participants.map((p: any) => (
+                <li key={p.participantEmail} className="truncate">
+                  {p.participantName || p.participantEmail}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+      <AvailabilityResponseForm
+        timeSlots={meeting.timeSlots}
+        onSubmit={mutation.mutate}
+        isSubmitting={mutation.isLoading}
+      />
+    </div>
   );
 };
 
