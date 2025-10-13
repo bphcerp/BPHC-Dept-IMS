@@ -35,14 +35,59 @@ const emailQueue = new Queue(QUEUE_NAME, {
     prefix: QUEUE_NAME,
 });
 
+let testTransporter: nodemailer.Transporter | null = null;
+
+if (!environment.PROD) {
+    (async () => {
+        const testAccount = await nodemailer.createTestAccount();
+        testTransporter = nodemailer.createTransport({
+            host: "smtp.ethereal.email",
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: testAccount.user, // generated ethereal user
+                pass: testAccount.pass, // generated ethereal password
+            },
+        });
+        logger.info(
+            `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
+        );
+    })();
+}
+
 const emailWorker = new Worker<SendMailOptions>(
     QUEUE_NAME,
     async (job) => {
-        if (!environment.PROD) {
+        if (!environment.PROD && testTransporter) {
             logger.info(
-                `EMAIL JOB: ${job.id} - Skipped in non-production environment`
+                `EMAIL JOB: ${job.id} - Using test ethereal account in development.`
             );
-            logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+
+            const { from, ...mailOptions } = { ...job.data };
+
+            const footerText =
+                "\n\n---\nThis is an auto-generated email from ims. Please do not reply." +
+                (from ? `\nSent by: ${from}` : "");
+            const footerHtml =
+                "<br><br><hr><p><i>This is an auto-generated email from ims. Please do not reply.</i>" +
+                (from ? `<br /><i>Sent by: ${from}</i>` : "") +
+                "</p>";
+
+            if (mailOptions.text) {
+                mailOptions.text = `${mailOptions.text}${footerText}`;
+            }
+            if (mailOptions.html && typeof mailOptions.html === "string") {
+                mailOptions.html = `${mailOptions.html}${footerHtml}`;
+            }
+
+            const info = await testTransporter.sendMail({
+                from: (testTransporter.options as any).auth?.user,
+                ...mailOptions,
+            });
+
+            logger.info(
+                `EMAIL JOB: ${job.id} - Email sent. View the ethereal mail here: ${nodemailer.getTestMessageUrl(info)}`
+            );
             return;
         }
 

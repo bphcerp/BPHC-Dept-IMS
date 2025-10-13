@@ -9,6 +9,8 @@ import assert from "assert";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { getLatestSemester } from "./getLatest.ts";
 import environment from "@/config/environment.ts";
+import DOMPurify from "isomorphic-dompurify";
+import { marked } from "marked";
 
 const router = express.Router();
 
@@ -48,6 +50,8 @@ router.post(
 
         const recipients = [ ...faculties, ...phds ]
 
+        const htmlBody = DOMPurify.sanitize(marked(latestSemester.form.emailBody!))
+
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
                 module: "Course Allocation",
@@ -76,7 +80,7 @@ router.post(
                 inReplyTo: latestSemester.form.emailMsgId!,
                 subject:
                     "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
-                html: latestSemester.form.emailBody!,
+                html: htmlBody,
             }
 
         await createTodos(todos);

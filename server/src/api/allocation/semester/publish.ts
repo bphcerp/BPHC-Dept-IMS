@@ -11,6 +11,8 @@ import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import assert from "assert";
 import environment from "@/config/environment.ts";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 const router = express.Router();
 
@@ -45,9 +47,11 @@ router.post(
             (el) => el.email
         );
 
-        const phds = (await db.select().from(phd)).map((el) => el.email);
+        const phds = (await db.select().from(phd).where(eq(phd.phdType, 'full-time'))).map((el) => el.email);
 
         const recipients = [...faculties, ...phds];
+
+        const htmlBody = DOMPurify.sanitize(marked(emailBody))
 
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
@@ -75,15 +79,15 @@ router.post(
             to: environment.DEPARTMENT_EMAIL,
             bcc: recipients,
             subject:
-                "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
-            html: emailBody,
+                "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
+            html: htmlBody,
         };
 
         await createTodos(todos);
         await createNotifications(notifications);
         const emailMsg = (await sendEmail(email)).returnvalue;
 
-        if (emailMsg.messageId) {
+        if (emailMsg?.messageId) {
             await db
                 .update(allocationForm)
                 .set({
