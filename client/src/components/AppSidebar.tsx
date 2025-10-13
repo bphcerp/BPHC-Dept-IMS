@@ -18,7 +18,7 @@ import { Link, useLocation } from "react-router-dom";
 import api from "@/lib/axios-instance";
 import { DEPARTMENT_NAME, LOGIN_ENDPOINT } from "@/lib/constants";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { ArrowLeftIcon, Users, LogOut, BookMarked } from "lucide-react";
+import { ArrowLeftIcon, Users, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export interface SidebarMenuItem {
