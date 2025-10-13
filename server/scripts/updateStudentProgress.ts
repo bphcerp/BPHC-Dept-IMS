@@ -1,6 +1,6 @@
 import db from "@/config/db/index.ts";
 import logger from "@/config/logger.ts";
-import { users, phd } from "@/config/db/schema/admin.ts";
+import { users, phd, faculty } from "@/config/db/schema/admin.ts";
 import { phdProposals, phdSemesters } from "@/config/db/schema/phd.ts";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { and, eq, desc, notInArray } from "drizzle-orm";
@@ -18,6 +18,7 @@ const studentProgressSchema = z.object({
     "personal email": z.string().email().optional().nullable(),
     "notional supervisor email": z.string().email().optional().nullable(),
     "supervisor email": z.string().email().optional().nullable(),
+    "Supervisor Name": z.string().optional().nullable(),
     "pas/fail the qe(true or false)": z
         .union([z.string(), z.boolean()])
         .optional(),
@@ -29,6 +30,9 @@ const studentProgressSchema = z.object({
         .union([z.string(), z.number(), z.date()])
         .optional(),
     "Draft Notice": z.union([z.string(), z.number(), z.date()]).optional(),
+    "Pre-thesis Submission": z
+        .union([z.string(), z.number(), z.date()])
+        .optional(),
     "Final Thesis": z.union([z.string(), z.number(), z.date()]).optional(),
 });
 
@@ -38,17 +42,12 @@ function excelDateToJSDate(serial: number) {
     const utc_days = Math.floor(serial - 25569);
     const utc_value = utc_days * 86400;
     const date_info = new Date(utc_value * 1000);
-
     const fractional_day = serial - Math.floor(serial) + 0.0000001;
-
     let total_seconds = Math.floor(86400 * fractional_day);
-
     const seconds = total_seconds % 60;
     total_seconds -= seconds;
-
     const hours = Math.floor(total_seconds / (60 * 60));
     const minutes = Math.floor(total_seconds / 60) % 60;
-
     return new Date(
         date_info.getFullYear(),
         date_info.getMonth(),
@@ -61,10 +60,10 @@ function excelDateToJSDate(serial: number) {
 
 async function updateStudentProgress(filePath: string) {
     logger.info(`Starting student progress update from file: ${filePath}`);
-
     try {
         const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
+        if (!sheetName) throw new Error("No sheets found in the Excel file.");
         const sheet = workbook.Sheets[sheetName];
         const data = xlsx.utils.sheet_to_json(sheet) as unknown[];
 
@@ -88,26 +87,88 @@ async function updateStudentProgress(filePath: string) {
             logger.info(`Processing student: ${studentData.email}`);
 
             try {
+                let currentStatus = "Awaiting QE Application";
+                const qeStatus = studentData["pas/fail the qe(true or false)"];
+                if (
+                    qeStatus &&
+                    (String(qeStatus).toLowerCase() === "true" ||
+                        qeStatus === true)
+                ) {
+                    currentStatus = "QE Passed, Awaiting Proposal";
+                    if (
+                        studentData["Proposal Seminar"]?.toLowerCase() ===
+                        "completed"
+                    ) {
+                        currentStatus =
+                            "Proposal Completed, Awaiting Pre-Submission Request";
+                        if (studentData["Presubmission Seminar"]) {
+                            currentStatus =
+                                "Pre-Submission Completed, Awaiting Draft Notice Request";
+                            if (studentData["Draft Notice"]) {
+                                currentStatus =
+                                    "Draft Notice Completed, Awaiting Pre-Thesis Submission";
+                                if (studentData["Pre-thesis Submission"]) {
+                                    currentStatus =
+                                        "Pre-Thesis Submission Completed, Awaiting Final Thesis Submission";
+                                    if (studentData["Final Thesis"]) {
+                                        currentStatus = "PhD Journey Completed";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 await db.transaction(async (tx) => {
-                    // 1. Upsert user in 'users' table
-                    const userData = {
-                        email: studentData.email,
-                        name: studentData.name,
-                        phone: studentData["phone number"]?.toString(),
-                        type: "phd" as const,
-                    };
+                    // 1. Ensure Supervisors Exist
+                    const supervisorEmails = new Set<string>();
+                    if (studentData["supervisor email"]) {
+                        supervisorEmails.add(studentData["supervisor email"]);
+                    }
+                    if (studentData["notional supervisor email"]) {
+                        supervisorEmails.add(
+                            studentData["notional supervisor email"]
+                        );
+                    }
+
+                    for (const email of supervisorEmails) {
+                        const existingSupervisor =
+                            await tx.query.users.findFirst({
+                                where: eq(users.email, email),
+                            });
+                        if (!existingSupervisor) {
+                            await tx.insert(users).values({
+                                email,
+                                name: studentData["Supervisor Name"],
+                                type: "faculty",
+                            });
+                            await tx.insert(faculty).values({
+                                email,
+                                name: studentData["Supervisor Name"],
+                            });
+                            logger.info(
+                                `Created new faculty user for supervisor: ${email}`
+                            );
+                        }
+                    }
+
+                    // 2. Upsert Student User and PhD Data
                     await tx
                         .insert(users)
-                        .values(userData)
+                        .values({
+                            email: studentData.email,
+                            name: studentData.name,
+                            phone: studentData["phone number"]?.toString(),
+                            type: "phd",
+                        })
                         .onConflictDoUpdate({
                             target: users.email,
                             set: {
-                                name: userData.name,
-                                phone: userData.phone,
+                                name: studentData.name,
+                                phone: studentData["phone number"]?.toString(),
                             },
                         });
 
-                    // 2. Prepare and Upsert data in 'phd' table
                     const phdData = {
                         email: studentData.email,
                         name: studentData.name,
@@ -117,14 +178,15 @@ async function updateStudentProgress(filePath: string) {
                             studentData[
                                 "phd type(full time/ part time)"
                             ]?.toLowerCase() === "full time"
-                                ? "full-time"
-                                : ("part-time" as "full-time" | "part-time"),
+                                ? ("full-time" as const)
+                                : ("part-time" as const),
                         phone: studentData["phone number"]?.toString(),
                         erpId: studentData["erp id"]?.toString(),
                         personalEmail: studentData["personal email"],
                         notionalSupervisorEmail:
                             studentData["notional supervisor email"],
                         supervisorEmail: studentData["supervisor email"],
+                        currentStatus: currentStatus,
                     };
 
                     await tx
@@ -132,23 +194,10 @@ async function updateStudentProgress(filePath: string) {
                         .values(phdData)
                         .onConflictDoUpdate({
                             target: phd.email,
-                            set: {
-                                name: phdData.name,
-                                idNumber: phdData.idNumber,
-                                department: phdData.department,
-                                phdType: phdData.phdType,
-                                phone: phdData.phone,
-                                erpId: phdData.erpId,
-                                personalEmail: phdData.personalEmail,
-                                notionalSupervisorEmail:
-                                    phdData.notionalSupervisorEmail,
-                                supervisorEmail: phdData.supervisorEmail,
-                            },
+                            set: { ...phdData },
                         });
 
-                    // 3. Update QE Status
-                    const qeStatus =
-                        studentData["pas/fail the qe(true or false)"];
+                    // 3. Update QE Status if applicable
                     if (
                         qeStatus &&
                         (String(qeStatus).toLowerCase() === "true" ||
@@ -161,20 +210,17 @@ async function updateStudentProgress(filePath: string) {
                                 "qualification date if passed is required when QE status is true."
                             );
                         }
-
                         let qualificationDate: Date;
                         if (typeof qeDateValue === "number") {
                             qualificationDate = excelDateToJSDate(qeDateValue);
                         } else {
                             qualificationDate = new Date(qeDateValue);
                         }
-
                         if (isNaN(qualificationDate.getTime())) {
                             throw new Error(
                                 `Invalid qualification date format: ${qeDateValue}`
                             );
                         }
-
                         await tx
                             .update(phd)
                             .set({
@@ -182,9 +228,6 @@ async function updateStudentProgress(filePath: string) {
                                 qualificationDate: qualificationDate,
                             })
                             .where(eq(phd.email, studentData.email));
-                        logger.info(
-                            `Updated QE status to 'passed' for ${studentData.email}`
-                        );
                     }
 
                     // 4. Update Proposal Status
@@ -206,7 +249,6 @@ async function updateStudentProgress(filePath: string) {
                                 ),
                                 orderBy: [desc(phdProposals.createdAt)],
                             });
-
                         if (latestActiveProposal) {
                             await tx
                                 .update(phdProposals)
@@ -214,20 +256,14 @@ async function updateStudentProgress(filePath: string) {
                                 .where(
                                     eq(phdProposals.id, latestActiveProposal.id)
                                 );
-                            logger.info(
-                                `Updated proposal status to 'completed' for ${studentData.email}`
-                            );
-                        } else {
-                            logger.warn(
-                                `No active proposal found for ${studentData.email} to mark as completed.`
-                            );
                         }
                     }
 
-                    // 5. Update PhD Requests
+                    // 5. Upsert PhD Requests
                     const requestMappings = {
-                        "Presubmission Seminar": "pre_thesis_submission",
+                        "Presubmission Seminar": "pre_submission",
                         "Draft Notice": "draft_notice",
+                        "Pre-thesis Submission": "pre_thesis_submission",
                         "Final Thesis": "final_thesis_submission",
                     } as const;
 
@@ -238,7 +274,6 @@ async function updateStudentProgress(filePath: string) {
                                 desc(phdSemesters.semesterNumber),
                             ],
                         });
-
                     if (!latestSemester)
                         throw new Error(
                             "No active semester found in the database."
@@ -270,9 +305,6 @@ async function updateStudentProgress(filePath: string) {
                                                 existingRequest.id
                                             )
                                         );
-                                    logger.info(
-                                        `Updated request '${requestType}' to 'completed' for ${studentData.email}`
-                                    );
                                 }
                             } else {
                                 const supervisorEmail =
@@ -289,9 +321,6 @@ async function updateStudentProgress(filePath: string) {
                                     requestType: requestType,
                                     status: "completed",
                                 });
-                                logger.info(
-                                    `Created completed request '${requestType}' for ${studentData.email}`
-                                );
                             }
                         }
                     }
@@ -299,9 +328,7 @@ async function updateStudentProgress(filePath: string) {
                 successCount++;
             } catch (e) {
                 logger.error(
-                    `Failed to process student ${studentData.email}: ${
-                        (e as Error).message
-                    }`
+                    `Failed to process student ${studentData.email}: ${(e as Error).message}`
                 );
                 errorCount++;
             }
