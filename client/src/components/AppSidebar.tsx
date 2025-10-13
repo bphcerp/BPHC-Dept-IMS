@@ -117,20 +117,6 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
         </SidebarContent>
 
         <SidebarFooter>
-          {/* Wiki Button */}
-          {authState && (
-            <SidebarMenuButton
-              asChild
-              tooltip="Help"
-              className="flex items-start gap-2 mb-1"
-            >
-              <Link to="/help">
-                <BookMarked className="h-5 w-5 shrink-0" />
-                {!isCollapsed && <span>Help</span>}
-              </Link>
-            </SidebarMenuButton>
-          )}
-
           {/* View Contributors Button */}
           {!pathname.startsWith("/contributors") && (
             <SidebarMenuButton
