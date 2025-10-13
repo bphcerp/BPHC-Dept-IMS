@@ -91,7 +91,6 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
-import HelpPage from "@/views/Wiki";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ProjectDetails from "@/views/Project/[id]";
@@ -131,6 +130,7 @@ import FormResponse from "@/views/Allocation/FormResponse";
 import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
+import HelpButton from "./HelpButton";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -264,7 +264,7 @@ const Routing = () => {
       icon: <ListOrderedIcon />,
       url: "/allocation",
       requiredPermissions: courseLoadAllocationModulePermissions,
-    }
+    },
   ];
 
   return (
@@ -287,10 +287,6 @@ const Routing = () => {
             }
           />
           <Route path="/contributors" element={<ContributorsPage />} />
-          <Route
-            path="/help"
-            element={authState ? <HelpPage /> : <Navigate to="/" replace />}
-          />
           {!authState && <Route path="*" element={<Navigate to="/" />} />}
           {authState && <Route path="/profile" element={<ProfilePage />} />}
           {checkAccessAnyOne(adminModulePermissions) && (
@@ -918,6 +914,9 @@ const Routing = () => {
           )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <div className="fixed bottom-0 right-0 p-4">
+          <HelpButton />
+        </div>
       </BrowserRouter>
       <TestingPopup />
     </>
