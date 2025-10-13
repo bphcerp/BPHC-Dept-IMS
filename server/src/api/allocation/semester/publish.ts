@@ -37,7 +37,6 @@ router.post(
                 .set({
                     publishedDate: new Date(),
                     allocationDeadline,
-                    emailBody,
                 })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
             return semesterUpdated;
@@ -85,13 +84,15 @@ router.post(
 
         await createTodos(todos);
         await createNotifications(notifications);
-        const emailMsg = (await sendEmail(email)).returnvalue;
+        const emailMsg = await sendEmail(email);
+
+        console.log(emailMsg)
 
         if (emailMsg?.messageId) {
             await db
                 .update(allocationForm)
                 .set({
-                    emailMsgId: emailMsg!.messageId,
+                    emailMsgId: emailMsg.messageId,
                 })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
         }

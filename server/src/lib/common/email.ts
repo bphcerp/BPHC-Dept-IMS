@@ -1,6 +1,6 @@
 import environment from "@/config/environment.ts";
 import nodemailer, { type SendMailOptions } from "nodemailer";
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, QueueEvents } from "bullmq";
 import logger from "@/config/logger.ts";
 import { redisConfig } from "@/config/redis.ts";
 
@@ -88,7 +88,7 @@ const emailWorker = new Worker<SendMailOptions>(
             logger.info(
                 `EMAIL JOB: ${job.id} - Email sent. View the ethereal mail here: ${nodemailer.getTestMessageUrl(info)}`
             );
-            return;
+            return info;
         }
 
         const { from, ...mailOptions } = { ...job.data };
@@ -124,8 +124,15 @@ emailWorker.on("failed", (job, err) => {
     logger.error(`Email job failed: ${job?.id}`, err);
 });
 
+const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
+    connection: redisConfig,
+    prefix: QUEUE_NAME,
+});
+
 export async function sendEmail(emailData: SendMailOptions) {
-    return await emailQueue.add(JOB_NAME, emailData);
+    const job = await emailQueue.add(JOB_NAME, emailData);
+    const completedJob = await job.waitUntilFinished(emailQueueEvents);
+    return completedJob;
 }
 
 export async function sendBulkEmails(emails: SendMailOptions[]) {

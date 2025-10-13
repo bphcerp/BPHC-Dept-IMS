@@ -43,6 +43,7 @@ import {
 import { Maximize2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
@@ -387,9 +388,11 @@ Hyderabad Campus<span>
             <>
               <Button
                 variant="secondary"
+                disabled={remindMutation.isLoading}
                 onClick={() => remindMutation.mutate()}
               >
                 Send Reminder
+                { remindMutation.isLoading && <LoadingSpinner /> }
               </Button>
               <Button
                 variant="destructive"

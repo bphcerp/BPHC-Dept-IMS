@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_form" DROP COLUMN "email_body";
