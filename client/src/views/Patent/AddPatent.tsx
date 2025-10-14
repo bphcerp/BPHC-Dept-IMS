@@ -111,7 +111,7 @@ export default function AddPatent() {
   });
 
   const fetchInventorDetails = async (email: string, index: number) => {
-    if (!email || !email.includes("@")) return;
+    if (!email) return;
 
     setInventorLoading(index);
     try {
@@ -181,7 +181,7 @@ export default function AddPatent() {
     }));
 
     // Trigger auto-fill for email changes
-    if (field === "email" && value && value.includes("@")) {
+    if (field === "email" && value) {
       void inventorDebouncers.current[index]?.(value);
     }
   };
