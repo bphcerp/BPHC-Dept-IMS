@@ -60,20 +60,21 @@ router.get(
                 },
                 qeApplications: {
                     orderBy: (cols, { desc }) => [desc(cols.createdAt)],
-                    limit: 2,
+                    limit: 1,
                 },
             },
         });
 
         const studentStatuses = students.map((student) => {
-            let currentStatus = "No Activity";
+            let currentStatus = student.currentStatus; // Start with the baseline status
             let canResubmitRequest = false;
             let reversionComments: string | null = null;
             let requestId: number | null = null;
 
             const allRequests = student.requests;
-            const latestRequest = allRequests[0];
             const latestProposal = student.proposals[0];
+            const latestQeApplication = student.qeApplications[0];
+
             const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
                 [
                     "reverted_by_drc_convener",
@@ -81,46 +82,39 @@ router.get(
                     "reverted_by_hod",
                 ];
 
-            if (latestProposal?.status === "completed") {
-                if (latestRequest) {
-                    currentStatus = `Request: ${latestRequest.requestType.replace(/_/g, " ")} - ${latestRequest.status.replace(/_/g, " ")}`;
-                    requestId = latestRequest.id; // Always set requestId if a request is the latest status
-                    if (revertableStatuses.includes(latestRequest.status)) {
-                        canResubmitRequest = true;
-                        reversionComments =
-                            latestRequest.reviews[0]?.comments ||
-                            "No comments provided.";
-                    }
-                } else {
-                    currentStatus = "Proposal: Completed";
-                }
-            } else {
-                const latestActiveRequest = allRequests.find(
-                    (req) => !["completed", "deleted"].includes(req.status)
-                );
+            // PRIORITY 1: Check for any active request (highest priority)
+            const latestActiveRequest = allRequests.find(
+                (req) => !["completed", "deleted"].includes(req.status)
+            );
 
-                if (latestActiveRequest) {
-                    currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
-                    requestId = latestActiveRequest.id; // Always set requestId if a request is the latest status
-                    if (
-                        revertableStatuses.includes(latestActiveRequest.status)
-                    ) {
-                        canResubmitRequest = true;
-                        reversionComments =
-                            latestActiveRequest.reviews[0]?.comments ||
-                            "No comments provided.";
-                    }
-                } else if (latestProposal) {
-                    currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-                } else if (student.qeApplications.length > 0) {
-                    const lastAttempt = student.qeApplications[0];
-                    currentStatus = `QE Attempt ${lastAttempt.attemptNumber}: ${lastAttempt.status}`;
-                    if (lastAttempt.result) {
-                        currentStatus += ` (${lastAttempt.result})`;
-                    }
-                } else {
-                    currentStatus = "Awaiting QE Application";
+            if (latestActiveRequest) {
+                currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
+                requestId = latestActiveRequest.id;
+                if (revertableStatuses.includes(latestActiveRequest.status)) {
+                    canResubmitRequest = true;
+                    reversionComments =
+                        latestActiveRequest.reviews[0]?.comments ||
+                        "No comments provided.";
                 }
+            }
+            // PRIORITY 2: Check for an active proposal
+            else if (
+                latestProposal &&
+                latestProposal.status !== "completed" &&
+                latestProposal.status !== "deleted"
+            ) {
+                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
+            }
+            // PRIORITY 3: Check for the latest QE application status
+            else if (latestQeApplication) {
+                const status = `QE Attempt: ${latestQeApplication.status}`;
+                currentStatus = latestQeApplication.result
+                    ? `${status} (${latestQeApplication.result})`
+                    : status;
+            }
+            // Fallback to the database status if no active workflows are found
+            else {
+                currentStatus = student.currentStatus;
             }
 
             const availableRequestTypes: PhdRequestType[] = [
