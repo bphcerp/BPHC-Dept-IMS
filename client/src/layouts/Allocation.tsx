@@ -11,6 +11,7 @@ import {
   TableOfContentsIcon,
   UserRoundIcon,
   GroupIcon,
+  Grid3X3Icon,
 } from "lucide-react";
 import { SemesterMinimal } from "node_modules/lib/src/types/allocation";
 import { Outlet } from "react-router-dom";
@@ -36,6 +37,12 @@ const AllocationLayout = () => {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
                 url: "/allocation/overview",
+                requiredPermissions: ["allocation:write"],
+              },
+              {
+                title: "Matrix",
+                icon: <Grid3X3Icon />,
+                url: "/allocation/creditmatrix",
                 requiredPermissions: ["allocation:write"],
               },
               {

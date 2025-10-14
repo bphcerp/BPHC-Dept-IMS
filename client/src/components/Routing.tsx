@@ -132,6 +132,7 @@ import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 import HelpButton from "./HelpButton";
 import CourseGroups from "@/views/Allocation/CourseGroups";
+import { AllocationMatrixView } from "@/views/Allocation/AllocationMatrixView";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -848,6 +849,8 @@ const Routing = () => {
                   <Route path="responses" element={<div />} />
                 </>
               )}
+
+              { checkAccess("allocation:write") && <Route path="creditmatrix" element={<AllocationMatrixView />} /> }
 
               {checkAccess("allocation:view") && (
                 <>

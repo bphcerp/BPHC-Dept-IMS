@@ -190,6 +190,8 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                         placeholder="Search instructors..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
                         className="h-8 pl-8"
                       />
                     </div>
