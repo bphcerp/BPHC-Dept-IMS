@@ -1,11 +1,14 @@
 import { excelUpload } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
 import { eq, sql } from "drizzle-orm";
 import db from "@/config/db/index.ts";
 import XLSX from "xlsx";
-import { publicationsTable, researgencePublications } from "@/config/db/schema/publications.ts";
+import {
+    publicationsTable,
+    researgencePublications,
+} from "@/config/db/schema/publications.ts";
 import { publicationsSchemas } from "lib";
 import logger from "@/config/logger.ts";
 
@@ -24,8 +27,9 @@ function parseRow(row: any): ReseargencePublication | null {
         !row["SOURCE PUBLICATION"] ||
         !row["YEAR"] ||
         !row["ARTICLE TYPE"]
-    )
+    ) {
         return null;
+    }
 
     return {
         pubId: parseInt(row["PUB ID"].trim()),
@@ -41,7 +45,9 @@ function parseRow(row: any): ReseargencePublication | null {
         level: row["LEVEL"]?.trim() || null,
         type: row["ARTICLE TYPE"].trim() || null,
         year: parseInt(row["YEAR"].trim()),
-        month: row["MONTH"] ? (publicationsSchemas.months[parseInt(row["MONTH"]) - 1]) : null,
+        month: row["MONTH"]
+            ? (publicationsSchemas.months[parseInt(row["MONTH"]) - 1])
+            : null,
         homeAuthorLocation: row["HOME AUTHOR LOCATION"]?.trim() || null,
         volNo: row["VOL NO"]?.trim() || null,
         issNo: row["ISS NO"]?.trim() || null,
@@ -66,6 +72,7 @@ router.post(
     checkAccess("publications:upload"),
     excelUpload.single("file"),
     asyncHandler(async (req: Request, res: Response) => {
+        const { return_type } = req.query;
 
         if (!req.file) {
             res.status(400).json({ error: "No file uploaded" });
@@ -85,6 +92,8 @@ router.post(
             return;
         }
 
+        const return_data = [];
+
         const results = {
             total: data.length,
             matched: 0,
@@ -100,69 +109,131 @@ router.post(
             if (!parsedRow) {
                 results.failed++;
                 results.errors.push(
-                    `Row ${i + 2}: Invalid or missing required data`
+                    `Row ${i + 2}: Invalid or missing required data`,
                 );
+                return_data.push({
+                    Reason: "Missing required data.",
+                    ...row,
+                });
                 continue;
             }
             try {
                 let [existingPub] = await db
                     .select()
                     .from(researgencePublications)
-                    .where(eq( sql`lower(${researgencePublications.publicationTitle})`, sql`lower(${parsedRow.publicationTitle})`));
+                    .where(
+                        eq(
+                            researgencePublications.publicationTitle,
+                            parsedRow.publicationTitle,
+                        ),
+                    );
 
                 if (existingPub) {
                     results.repeated++;
                     await db
                         .update(researgencePublications)
                         .set(parsedRow)
-                        .where(eq( sql`lower(${researgencePublications.publicationTitle})`, sql`lower(${parsedRow.publicationTitle})`))
+                        .where(
+                            eq(
+                                researgencePublications.publicationTitle,
+                                parsedRow.publicationTitle,
+                            ),
+                        );
                 }
 
                 let [matchedPub] = await db
                     .select()
                     .from(publicationsTable)
-                    .where(eq( sql`lower(${publicationsTable.title})`, sql`lower(${parsedRow.publicationTitle})`))
+                    .where(
+                        eq(
+                            sql`regexp_replace(lower(${publicationsTable.title}), '[[:space:][:punct:]]+', '', 'g')`,
+                            sql`regexp_replace(lower(${parsedRow.publicationTitle}), '[[:space:][:punct:]]+', '', 'g')`,
+                        ),
+                    );
 
-                if(matchedPub) {
+                if (matchedPub) {
                     results.matched++;
 
                     await db.update(publicationsTable)
-                    .set({
-                        type: parsedRow.type,
-                        journal: parsedRow.sourcePublication,
-                        volume: parsedRow.volNo,
-                        issue: parsedRow.issNo,
-                        month: parsedRow.month,
-                        year: parsedRow.year.toString(),
-                        link: parsedRow.link,
-                        authorNames: parsedRow.authors,
-                    }).where(eq(publicationsTable.citationId, matchedPub.citationId))
+                        .set({
+                            type: parsedRow.type,
+                            journal: parsedRow.sourcePublication,
+                            volume: parsedRow.volNo,
+                            issue: parsedRow.issNo,
+                            month: parsedRow.month,
+                            year: parsedRow.year.toString(),
+                            link: parsedRow.link,
+                            authorNames: parsedRow.authors,
+                        }).where(
+                            eq(
+                                publicationsTable.citationId,
+                                matchedPub.citationId,
+                            ),
+                        );
                 }
 
-                if(existingPub) continue;
+                if (existingPub) continue;
 
                 let [newEntry] = await db
                     .insert(researgencePublications)
                     .values(parsedRow)
                     .returning();
                 if (newEntry) results.successful++;
-                
+
+                if (!matchedPub) {
+                    return_data.push({
+                        Reason: "Could Not Find Match.",
+                        ...parsedRow,
+                    });
+                }
             } catch (error) {
                 results.failed++;
                 results.errors.push(
-                    `Row ${i + 2}: ${error instanceof Error ? error.message : "Unknown error"}`
+                    `Row ${i + 2}: ${
+                        error instanceof Error ? error.message : "Unknown error"
+                    }`,
                 );
-                logger.error(`Could not add publication : ${parsedRow.publicationTitle} due to an Unknown Error.`);
+                logger.error(
+                    `Could not add publication : ${parsedRow.publicationTitle} due to an Unknown Error.`,
+                );
+                return_data.push({
+                    Reason: "Unknown Error.",
+                    ...parsedRow,
+                });
             }
         }
 
         logger.info(`Updated ${results.repeated} duplicate publications.`);
         logger.info("Data upload completed.");
-        res.json({
-            message: "Data upload completed",
-            results,
-        });
-    })
+
+        if (return_type == "xlsx") {
+            const ret_workbook = XLSX.utils.book_new();
+            const ret_sheet = XLSX.utils.json_to_sheet(return_data);
+            XLSX.utils.book_append_sheet(ret_workbook, ret_sheet, "Results");
+
+            const buffer = XLSX.write(ret_workbook, {
+                type: "buffer",
+                bookType: "xlsx",
+            });
+
+            res.set({
+                "Content-Disposition":
+                    "attachment; filename=upload_results.xlsx",
+                "Content-Type":
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Content-Length": buffer.length,
+            });
+            res.send(buffer);
+            logger.info("Returned Upload results as XLSX");
+        } else {
+            res.json({
+                message: "Data upload completed",
+                results,
+            });
+
+            logger.info("Returned upload results as data.");
+        }
+    }),
 );
 
 export default router;
