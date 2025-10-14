@@ -58,7 +58,14 @@ if (!environment.PROD) {
 const emailWorker = new Worker<SendMailOptions>(
     QUEUE_NAME,
     async (job) => {
-        if (!environment.PROD && testTransporter) {
+        if (!environment.PROD) {
+            if (!testTransporter) {
+                logger.info(
+                    `EMAIL JOB: ${job.id} - Test etherael account not created, skipped in non-production environment`
+                );
+                logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+                return
+            }
             logger.info(
                 `EMAIL JOB: ${job.id} - Using test ethereal account in development.`
             );
