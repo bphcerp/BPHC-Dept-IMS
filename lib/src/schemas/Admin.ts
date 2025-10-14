@@ -166,6 +166,7 @@ export interface MemberDetailsResponse {
     supervisorEmail?: string | null;
     emergencyPhoneNumber?: string | null;
     phdType?: (typeof phdTypes)[number] | null;
+    currentStatus?: string | null;
 }
 
 // testing schemas

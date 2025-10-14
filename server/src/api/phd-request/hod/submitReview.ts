@@ -8,6 +8,7 @@ import {
     phdRequests,
     phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
+import { phd } from "@/config/db/schema/admin.ts";
 import {
     createTodos,
     completeTodo,
@@ -19,7 +20,7 @@ import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
-router.post(
+export default router.post(
     "/:id",
     checkAccess(),
     asyncHandler(async (req, res) => {
@@ -72,17 +73,46 @@ router.post(
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
 
+                let nextStatus: string | undefined = undefined;
+                switch (request.requestType) {
+                    case "pre_submission":
+                        nextStatus =
+                            "Pre-Submission Completed, Awaiting Draft Notice Request";
+                        break;
+                    case "draft_notice":
+                        nextStatus =
+                            "Draft Notice Completed, Awaiting Pre-Thesis Submission";
+                        break;
+                    case "pre_thesis_submission":
+                        nextStatus =
+                            "Pre-Thesis Submission Completed, Awaiting Final Thesis Submission";
+                        break;
+                }
+
+                if (nextStatus) {
+                    await tx
+                        .update(phd)
+                        .set({ currentStatus: nextStatus })
+                        .where(eq(phd.email, request.studentEmail));
+                }
+
                 const notificationsToCreate = [
                     {
                         userEmail: request.studentEmail,
                         title: `Your PhD Request has been Approved`,
-                        content: `Your '${request.requestType.replace(/_/g, " ")}' request has been approved by the HOD.`,
+                        content: `Your '${request.requestType.replace(
+                            /_/g,
+                            " "
+                        )}' request has been approved by the HOD.`,
                         module: modules[2],
                     },
                     {
                         userEmail: request.supervisorEmail,
                         title: `PhD Request for ${request.student.name} Approved`,
-                        content: `The '${request.requestType.replace(/_/g, " ")}' request for your student has been approved by the HOD.`,
+                        content: `The '${request.requestType.replace(
+                            /_/g,
+                            " "
+                        )}' request for your student has been approved by the HOD.`,
                         module: modules[2],
                     },
                 ];
@@ -92,12 +122,24 @@ router.post(
                     {
                         to: request.studentEmail,
                         subject: `Your PhD Request has been Approved`,
-                        text: `Dear ${request.student.name},\n\nYour PhD request for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
+                        text: `Dear ${
+                            request.student.name
+                        },\n\nYour PhD request for '${request.requestType.replace(
+                            /_/g,
+                            " "
+                        )}' has been approved by the HOD.`,
                     },
                     {
                         to: request.supervisorEmail,
                         subject: `PhD Request for ${request.student.name} Approved`,
-                        text: `Dear ${request.supervisor.name},\n\nThe PhD request for your student, ${request.student.name}, for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
+                        text: `Dear ${
+                            request.supervisor.name
+                        },\n\nThe PhD request for your student, ${
+                            request.student.name
+                        }, for '${request.requestType.replace(
+                            /_/g,
+                            " "
+                        )}' has been approved by the HOD.`,
                     },
                 ]);
             } else {
@@ -120,21 +162,25 @@ router.post(
                     ],
                     tx
                 );
+
                 await sendBulkEmails([
                     {
                         to: request.supervisorEmail,
                         subject: `PhD Request Reverted by HOD`,
-                        text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by the HOD.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        text: `Dear ${
+                            request.supervisor.name
+                        },\n\nYour PhD request for '${
+                            request.student.name
+                        }' has been reverted by the HOD.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${
+                            environment.FRONTEND_URL
+                        }/phd/requests/${requestId}`,
                     },
                 ]);
             }
         });
-
         res.status(200).json({
             success: true,
             message: "HOD review submitted successfully.",
         });
     })
 );
-
-export default router;

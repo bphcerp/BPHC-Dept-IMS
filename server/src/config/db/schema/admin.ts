@@ -121,6 +121,9 @@ export const phd = pgTable("phd", {
     qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
     hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
     qualificationDate: timestamp("qualification_date", { withTimezone: true }),
+    currentStatus: text("current_status")
+        .default("Awaiting QE Application")
+        .notNull(),
 });
 
 export const staff = pgTable("staff", {
