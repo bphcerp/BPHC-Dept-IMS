@@ -4,7 +4,7 @@ import { users, phd, faculty } from "@/config/db/schema/admin.ts";
 import { phdProposals, phdSemesters } from "@/config/db/schema/phd.ts";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
-import { and, eq, desc, notInArray } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import xlsx from "xlsx";
 import { z } from "zod";
 import { modules } from "lib";
@@ -146,19 +146,15 @@ async function updateStudentProgress(filePath: string) {
                         where: eq(users.email, email),
                     });
                     if (!existingSupervisor) {
-                        await tx
-                            .insert(users)
-                            .values({
-                                email,
-                                name: studentData["Supervisor Name"],
-                                type: "faculty",
-                            });
-                        await tx
-                            .insert(faculty)
-                            .values({
-                                email,
-                                name: studentData["Supervisor Name"],
-                            });
+                        await tx.insert(users).values({
+                            email,
+                            name: studentData["Supervisor Name"],
+                            type: "faculty",
+                        });
+                        await tx.insert(faculty).values({
+                            email,
+                            name: studentData["Supervisor Name"],
+                        });
                         logger.info(
                             `Created new faculty user for supervisor: ${email}`
                         );
@@ -335,15 +331,13 @@ async function updateStudentProgress(filePath: string) {
                                     `'supervisor email' column is required to create new request '${requestType}' for ${studentData.email}`
                                 );
                             }
-                            await tx
-                                .insert(phdRequests)
-                                .values({
-                                    studentEmail: studentData.email,
-                                    supervisorEmail: supervisorEmail,
-                                    semesterId: latestSemester.id,
-                                    requestType: requestType,
-                                    status: "completed",
-                                });
+                            await tx.insert(phdRequests).values({
+                                studentEmail: studentData.email,
+                                supervisorEmail: supervisorEmail,
+                                semesterId: latestSemester.id,
+                                requestType: requestType,
+                                status: "completed",
+                            });
                         }
                     }
                 }
