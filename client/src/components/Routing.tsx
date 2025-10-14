@@ -114,7 +114,8 @@ import SendMail from "@/views/Wilp/SendMail";
 import GradesLayout from "@/layouts/Grades";
 import UploadExcel from "@/views/Grades/UploadExcel";
 import ManageGrades from "@/views/Grades/ManageGrades";
-import SupervisorGradesView from "@/views/Grades/Supervisor";
+import AssignGradesView from "@/views/Grades/AssignGrades";
+import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
@@ -449,16 +450,16 @@ const Routing = () => {
                     {checkAccess(
                       permissions["/handout/dcaconvenor/exportSummary"]
                     ) && (
-                      <Route path="summary" element={<DCAConvenerSummary />} />
-                    )}
+                        <Route path="summary" element={<DCAConvenerSummary />} />
+                      )}
                     {checkAccess(
                       permissions["/handout/dcaconvenor/finalDecision"]
                     ) && (
-                      <Route
-                        path="dcaconvenor/review/:id"
-                        element={<DCAConvenorReview />}
-                      />
-                    )}
+                        <Route
+                          path="dcaconvenor/review/:id"
+                          element={<DCAConvenorReview />}
+                        />
+                      )}
                   </>
                 )}
             </Route>
@@ -472,41 +473,41 @@ const Routing = () => {
                 permissions["/phd/staff/emailTemplates"],
                 permissions["/phd-request/staff/getAllRequests"],
               ]) && (
-                <Route path="staff" element={<Outlet />}>
-                  {checkAccess(permissions["/phd/staff/getAllSem"]) && (
-                    <Route
-                      path="update-semester-dates"
-                      element={<UpdateSemesterDates />}
-                    />
-                  )}
-                  {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                    <>
+                  <Route path="staff" element={<Outlet />}>
+                    {checkAccess(permissions["/phd/staff/getAllSem"]) && (
                       <Route
-                        path="update-deadlines"
-                        element={<UpdateDeadlinesPage />}
+                        path="update-semester-dates"
+                        element={<UpdateSemesterDates />}
                       />
+                    )}
+                    {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
+                      <>
+                        <Route
+                          path="update-deadlines"
+                          element={<UpdateDeadlinesPage />}
+                        />
+                        <Route
+                          path="update-subareas"
+                          element={<UpdateSubAreasPage />}
+                        />
+                      </>
+                    )}
+                    {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
                       <Route
-                        path="update-subareas"
-                        element={<UpdateSubAreasPage />}
+                        path="manage-email-templates"
+                        element={<ManageEmailTemplates />}
                       />
-                    </>
-                  )}
-                  {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
-                    <Route
-                      path="manage-email-templates"
-                      element={<ManageEmailTemplates />}
-                    />
-                  )}
-                  {checkAccess(
-                    permissions["/phd-request/staff/getAllRequests"]
-                  ) && (
-                    <Route
-                      path="all-requests"
-                      element={<PhdRequestsArchive />}
-                    />
-                  )}
-                </Route>
-              )}
+                    )}
+                    {checkAccess(
+                      permissions["/phd-request/staff/getAllRequests"]
+                    ) && (
+                        <Route
+                          path="all-requests"
+                          element={<PhdRequestsArchive />}
+                        />
+                      )}
+                  </Route>
+                )}
 
               {/* Student */}
               {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
@@ -527,76 +528,76 @@ const Routing = () => {
                 permissions["/phd/drcMember/getAvailableExams"],
                 permissions["/phd/proposal/drcConvener/getProposals"],
               ]) && (
-                <Route path="drc-convenor" element={<Outlet />}>
-                  {checkAccess(
-                    permissions["/phd/drcMember/getAvailableExams"]
-                  ) && (
-                    <Route
-                      path="qualifying-exam-management"
-                      element={<QualifyingExamManagement />}
-                    />
-                  )}
-                  {checkAccess(
-                    permissions["/phd/proposal/drcConvener/getProposals"]
-                  ) && (
-                    <>
-                      <Route
-                        path="proposal-management"
-                        element={<DrcProposalManagement />}
-                      />
-                      <Route
-                        path="proposal-management/:id"
-                        element={<DrcViewProposal />}
-                      />
-                      <Route
-                        path="seminar-scheduling"
-                        element={<SeminarScheduling />}
-                      />
-                    </>
-                  )}
-                </Route>
-              )}
+                  <Route path="drc-convenor" element={<Outlet />}>
+                    {checkAccess(
+                      permissions["/phd/drcMember/getAvailableExams"]
+                    ) && (
+                        <Route
+                          path="qualifying-exam-management"
+                          element={<QualifyingExamManagement />}
+                        />
+                      )}
+                    {checkAccess(
+                      permissions["/phd/proposal/drcConvener/getProposals"]
+                    ) && (
+                        <>
+                          <Route
+                            path="proposal-management"
+                            element={<DrcProposalManagement />}
+                          />
+                          <Route
+                            path="proposal-management/:id"
+                            element={<DrcViewProposal />}
+                          />
+                          <Route
+                            path="seminar-scheduling"
+                            element={<SeminarScheduling />}
+                          />
+                        </>
+                      )}
+                  </Route>
+                )}
               {checkAccess(
                 permissions["/phd/proposal/dacMember/getProposals"]
               ) && (
-                <Route path="dac" element={<Outlet />}>
-                  <Route path="proposals" element={<DacProposalManagement />} />
-                  <Route path="proposals/:id" element={<DacViewProposal />} />
-                </Route>
-              )}
+                  <Route path="dac" element={<Outlet />}>
+                    <Route path="proposals" element={<DacProposalManagement />} />
+                    <Route path="proposals/:id" element={<DacViewProposal />} />
+                  </Route>
+                )}
               {checkAccessAnyOne([
                 permissions["/phd/proposal/supervisor/getProposals"],
                 permissions["/phd/supervisor/suggestExaminers"],
               ]) && (
-                <Route path="supervisor" element={<Outlet />}>
-                  {checkAccess(
-                    permissions["/phd/proposal/supervisor/getProposals"]
-                  ) && (
-                    <>
-                      <Route
-                        path="proposals"
-                        element={<SupervisorProposal />}
-                      />
-                      <Route
-                        path="proposal/:id"
-                        element={<SupervisorViewProposal />}
-                      />
-                    </>
-                  )}
-                  {checkAccess(
-                    permissions["/phd/supervisor/suggestExaminers"]
-                  ) && (
+                  <Route path="supervisor" element={<Outlet />}>
+                    {checkAccess(
+                      permissions["/phd/proposal/supervisor/getProposals"]
+                    ) && (
+                        <>
+                          <Route
+                            path="proposals"
+                            element={<SupervisorProposal />}
+                          />
+                          <Route
+                            path="proposal/:id"
+                            element={<SupervisorViewProposal />}
+                          />
+                        </>
+                      )}
+                    {checkAccess(
+                      permissions["/phd/supervisor/suggestExaminers"]
+                    ) && (
+                        <Route
+                          path="examiner-suggestions"
+                          element={<ExaminerSuggestions />}
+                        />
+                      )}
                     <Route
-                      path="examiner-suggestions"
-                      element={<ExaminerSuggestions />}
+                      path="student-history/:studentEmail"
+                      element={<StudentHistory />}
                     />
-                  )}
-                  <Route
-                    path="student-history/:studentEmail"
-                    element={<StudentHistory />}
-                  />
-                </Route>
-              )}
+                  </Route>
+                )}
               {checkAccess(permissions["/phd/examiner/assignments"]) && (
                 <Route path="examiner" element={<Outlet />}>
                   <Route path="assignments" element={<ExaminerAssignments />} />
@@ -816,7 +817,7 @@ const Routing = () => {
             <Route path="/grades" element={<GradesLayout />}>
               <Route
                 index
-                element={<Navigate to="/grades/upload" replace={true} />}
+                element={<GradesDefaultRedirect />}
               />
               {checkAccess(permissions["/grades/upload"]) && (
                 <Route path="upload" element={<UploadExcel />} />
@@ -825,7 +826,7 @@ const Routing = () => {
                 <Route path="manage" element={<ManageGrades />} />
               )}
               {checkAccess(permissions["/grades/supervisor"]) && (
-                <Route path="supervisor" element={<SupervisorGradesView />} />
+                <Route path="assign-grades" element={<AssignGradesView />} />
               )}
             </Route>
           )}
@@ -865,33 +866,33 @@ const Routing = () => {
                 "allocation:builder:template:view",
                 "allocation:write",
               ]) && (
-                <>
-                  <Route path="templates" element={<FormTemplateList />} />
-                  <Route path="templates/new" element={<FormTemplateView />} />
-                  <Route
-                    path="templates/:id"
-                    element={<FormTemplateView create={false} />}
-                  />
-                </>
-              )}
+                  <>
+                    <Route path="templates" element={<FormTemplateList />} />
+                    <Route path="templates/new" element={<FormTemplateView />} />
+                    <Route
+                      path="templates/:id"
+                      element={<FormTemplateView create={false} />}
+                    />
+                  </>
+                )}
 
               {checkAccessAnyOne([
                 "allocation:builder:form:view",
                 "allocation:write",
               ]) && (
-                <>
-                  <Route path="forms" element={<FormList />} />
-                  <Route path="forms/:id/preview" element={<FormResponse />} />
-                  <Route
-                    path="forms/:id/responses"
-                    element={<FormResponsesView />}
-                  />
-                  <Route
-                    path="forms/:id/submit"
-                    element={<FormResponse preview={false} />}
-                  />
-                </>
-              )}
+                  <>
+                    <Route path="forms" element={<FormList />} />
+                    <Route path="forms/:id/preview" element={<FormResponse />} />
+                    <Route
+                      path="forms/:id/responses"
+                      element={<FormResponsesView />}
+                    />
+                    <Route
+                      path="forms/:id/submit"
+                      element={<FormResponse preview={false} />}
+                    />
+                  </>
+                )}
 
               {checkAccess("allocation:write") && (
                 <Route path="allocate" element={<AllocationModern />} />
@@ -906,14 +907,14 @@ const Routing = () => {
                 "allocation:semesters:view",
                 "allocation:write",
               ]) && (
-                <>
-                  <Route
-                    path="semesters/new"
-                    element={<RegisterNewSemester />}
-                  />
-                  <Route path="semesters" element={<SemesterList />} />
-                </>
-              )}
+                  <>
+                    <Route
+                      path="semesters/new"
+                      element={<RegisterNewSemester />}
+                    />
+                    <Route path="semesters" element={<SemesterList />} />
+                  </>
+                )}
             </Route>
           )}
           <Route path="*" element={<NotFoundPage />} />

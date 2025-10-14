@@ -25,6 +25,13 @@ interface SheetData {
     extraContent?: unknown[][];
 }
 
+interface InstructorColumnInfo {
+    sheetName: string;
+    hasInstructorColumn: boolean;
+    instructorColumnName?: string;
+    instructorColumnIndex?: number;
+}
+
 interface ExcelData {
     fileName: string;
     sheets: SheetData[];
@@ -54,7 +61,7 @@ export default function UploadExcel() {
             const formData = new FormData();
             formData.append("excel", file);
 
-            const response = await api.post<{ success: boolean; data: ExcelData; gradeOptions: string[] }>("/grades/upload", formData, {
+            const response = await api.post<{ success: boolean; data: ExcelData; gradeOptions: string[]; instructorColumnInfo: InstructorColumnInfo[] }>("/grades/upload", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -63,10 +70,12 @@ export default function UploadExcel() {
             if (response.data.success) {
                 const data: ExcelData = response.data.data;
                 const gradeOptions: string[] = response.data.gradeOptions;
+                const instructorColumnInfo: InstructorColumnInfo[] = response.data.instructorColumnInfo;
 
                 try {
                     localStorage.setItem("grades:lastExcelData", JSON.stringify(data));
                     localStorage.setItem("grades:lastGradeOptions", JSON.stringify(gradeOptions));
+                    localStorage.setItem("grades:instructorColumnInfo", JSON.stringify(instructorColumnInfo));
                 } catch (e) {
                     if (process.env.NODE_ENV !== "production") console.warn("Failed to persist last excel data", e);
                 }
@@ -77,6 +86,7 @@ export default function UploadExcel() {
                     state: {
                         excelData: data,
                         gradeOptions,
+                        instructorColumnInfo,
                     },
                 });
             }
