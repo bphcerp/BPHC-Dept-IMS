@@ -45,7 +45,7 @@ const AllocationLayout = () => {
                 requiredPermissions: ["allocation:courses:view"],
               },
               {
-                title: "Manage Course Groups",
+                title: "Course Groups",
                 icon: <GroupIcon />,
                 url: "/allocation/course-groups",
                 requiredPermissions: ["allocation:courses:write"],

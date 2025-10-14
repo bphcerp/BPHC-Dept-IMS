@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { allocationSectionInstructors } from "./allocation.ts";
+import { allocationCourseGroup, allocationCourseGroupMapping, allocationSectionInstructors } from "./allocation.ts";
 import { course } from "./allocation.ts";
 import { semester } from "./allocation.ts";
 import { faculty, users } from "./admin.ts";
@@ -60,3 +60,20 @@ export const allocationSectionInstructorsRelations = relations(
         }),
     })
 );
+
+
+export const courseGroupRelations = relations(allocationCourseGroup, ({ many }) => ({
+    mappings: many(allocationCourseGroupMapping),
+}));
+
+export const courseGroupMappingRelations = relations(allocationCourseGroupMapping, ({ one }) => ({
+    group: one(allocationCourseGroup, {
+        fields: [allocationCourseGroupMapping.groupId],
+        references: [allocationCourseGroup.id],
+    }),
+    course: one(course, {
+        fields: [allocationCourseGroupMapping.courseCode],
+        references: [course.code],
+    }),
+}));
+

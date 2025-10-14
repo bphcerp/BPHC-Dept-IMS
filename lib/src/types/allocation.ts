@@ -255,5 +255,10 @@ export type InstructorAllocationDetails = Record<
     }[]
 >;
 
-export type CourseGroup = z.infer<typeof courseGroupSchema>;
+export type NewCourseGroup = z.infer<typeof courseGroupSchema>;
+export type CourseGroup = NewCourseGroup & {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    course
 export type CourseGroupMapping = z.infer<typeof courseGroupMappingSchema>;

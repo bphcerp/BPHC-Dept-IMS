@@ -153,7 +153,7 @@ export const getInstructorDetailsQuerySchema = z.object({
 });
 
 export const courseGroupSchema = z.object({
-    id: z.string().uuid(),
+    // id: z.string().uuid(),
     name: z.string().nonempty(),
 });
 

@@ -6,7 +6,9 @@ const router = express.Router();
 router.get(
     "/",
     asyncHandler(async (_req, res) => {
-        const groups = await db.query.allocationCourseGroup.findMany();
+        const groups = await db.query.allocationCourseGroup.findMany({
+            with: { courses: true },
+        });
         res.json(groups);
     })
 );

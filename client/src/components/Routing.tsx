@@ -131,6 +131,7 @@ import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 import HelpButton from "./HelpButton";
+import CourseGroups from "@/views/Allocation/CourseGroups";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -897,6 +898,16 @@ const Routing = () => {
                 "allocation:courses:view",
                 "allocation:write",
               ]) && <Route path="courses" element={<CoursesPage />} />}
+
+              {checkAccessAnyOne([
+                "allocation:courses:write",
+                "allocation:write",
+              ]) && (
+                <Route
+                  path="course-groups"
+                  element={<CourseGroups />}
+                />
+              )}
 
               {checkAccessAnyOne([
                 "allocation:semesters:view",

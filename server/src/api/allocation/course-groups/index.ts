@@ -5,6 +5,6 @@ import express from "express";
 const router = express.Router();
 
 router.use("/create", createRouter);
-router.use("get", getRouter);
+router.use("/get", getRouter);
 
 export default router;

@@ -15,7 +15,7 @@ const CourseGroups = () => {
   const [selectedCourse, setSelectedCourse] = useState("");
 
   const { data: groups = [] } = useQuery(["courseGroups"], async () => {
-    const response = await api.get<CourseGroup[]>("/allocation/course-groups");
+    const response = await api.get<CourseGroup[]>("/allocation/course-groups/get");
     return response.data;
   });
 
@@ -26,7 +26,7 @@ const CourseGroups = () => {
 
   const createGroupMutation = useMutation(
     async (name: string) => {
-      await api.post("/allocation/course-groups", { name });
+      await api.post("/allocation/course-groups/create", { name });
     },
     {
       onSuccess: () => {
