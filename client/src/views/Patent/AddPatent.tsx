@@ -91,7 +91,7 @@ export default function AddPatent() {
   const [success, setSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [inventorLoading, setInventorLoading] = useState<number | null>(null);
-  const inventorDebouncers = useRef<{ [key: number]: (email: string) => void }>({});
+  const inventorDebouncers = useRef<{ [key: number]: (email: string, name: string) => void }>({});
 
   const [formData, setFormData] = useState({
     applicationNumber: "",
@@ -115,10 +115,106 @@ export default function AddPatent() {
     form01Link: "",
   });
 
-  const fetchInventorDetails = async (email: string, index: number) => {
-    if (!email) return;
+  const clearSuggestions = (idx: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      inventors: prev.inventors.map((inv, i) =>
+        idx === i
+          ? {
+              ...inv,
+              emailSuggestions: [],
+              nameSuggestions: [],
+            }
+          : inv
+      ),
+    }));
+  };
+
+  const setInputs = (idx: number, suggestion: Suggestion) => {
+    setFormData((prev) => ({
+      ...prev,
+      inventors: prev.inventors.map((inv, j) =>
+        idx === j
+          ? {
+              ...inv,
+              email: suggestion.email,
+              name: suggestion.name,
+              emailSuggestions: [],
+              nameSuggestions: [],
+            }
+          : inv
+      ),
+    }));
+  };
+
+  const fetchInventorDetails = async (email: string, name: string, index: number) => {
+    if (!email && !name) return;
 
     setInventorLoading(index);
+    if (email) await fetchInventorByEmail(email, index);
+    else await fetchInventorByName(name, index);
+  };
+
+  const fetchInventorByName = async (name: string, index: number) => {
+    try {
+      const response = await api.get(`/project/faculty/by-name?name=${encodeURIComponent(name)}`);
+      const data = response.data as FacultyResponse;
+      
+      if (data.success && data.faculty) {
+        setFormData(prev => ({
+          ...prev,
+          inventors: prev.inventors.map((inv, idx) => 
+            idx === index ? {
+              ...inv,
+              email: data.faculty!.email || "",
+            } : inv
+          )
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          inventors: prev.inventors.map((inv, idx) =>
+            idx === index ? {
+              ...inv,
+              email: "",
+            } : inv
+          )
+        }));
+      }
+    } catch {
+      const suggestions = await api.get(
+        `/project/faculty/suggest/by-name?name=${encodeURIComponent(name)}`
+      );
+      if (suggestions.data.success) {
+        setFormData((prev) => ({
+          ...prev,
+          inventors: prev.inventors.map((inv, idx) =>
+            idx === index
+              ? {
+                  ...inv,
+                  nameSuggestions:
+                    suggestions.data.suggestions || [],
+                }
+              : inv
+          ),
+        }));
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        inventors: prev.inventors.map((inv, idx) =>
+          idx === index ? {
+            ...inv,
+            email: "",
+          } : inv
+        )
+      }));
+    } finally {
+      setInventorLoading(null);
+    }
+  }
+
+  const fetchInventorByEmail = async (email: string, index: number) => {
     try {
       const response = await api.get(`/project/faculty/by-email?email=${encodeURIComponent(email)}`);
       const data = response.data as FacultyResponse;
@@ -146,7 +242,7 @@ export default function AddPatent() {
       }
     } catch {
       const suggestions = await api.get(
-        `/project/faculty/by-email-suggestions?email=${encodeURIComponent(email)}`
+        `/project/faculty/suggest/by-email?email=${encodeURIComponent(email)}`
       );
       if (suggestions.data.success) {
         setFormData((prev) => ({
@@ -175,14 +271,14 @@ export default function AddPatent() {
     } finally {
       setInventorLoading(null);
     }
-  };
+  }
 
   useEffect(() => {
     // Set up debounced functions for each inventor
     formData.inventors.forEach((_, index) => {
       if (!inventorDebouncers.current[index]) {
-        inventorDebouncers.current[index] = debounce((email: string) => {
-          void fetchInventorDetails(email, index);
+        inventorDebouncers.current[index] = debounce((email: string, name: string) => {
+          void fetchInventorDetails(email, name, index);
         }, 500);
       }
     });
@@ -216,8 +312,8 @@ export default function AddPatent() {
     }));
 
     // Trigger auto-fill for email changes
-    if (field === "email" && value) {
-      void inventorDebouncers.current[index]?.(value);
+    if ((field === "email" || field === "name") && value) {
+      void inventorDebouncers.current[index]?.(field === "email" ? value : "", field === "name" ? value : "");
     }
   };
 
@@ -527,36 +623,12 @@ export default function AddPatent() {
                                 {inventor.emailSuggestions.length > 0 && (
                                   <div className="absolute z-10 bg-white border p-1 pr-8 border-gray-400 rounded-md shadow-lg">
                                     {inventor.emailSuggestions.map((suggestion, i) => (
-                                      <div key={i} className="p-1 cursor-pointer" onClick={
-                                        () => {
-                                          setFormData((prev) => ({
-                                            ...prev,
-                                            inventors: prev.inventors.map((inv, j) =>
-                                              idx === j
-                                                ? {
-                                                    ...inv,
-                                                    email: suggestion.email,
-                                                    name: suggestion.name,
-                                                    emailSuggestions: [],
-                                                  }
-                                                : inv
-                                            ),
-                                          }));
-                                        }
+                                      <div key={i} className="py-1 px-2 cursor-pointer hover:bg-gray-300 pr-8 rounded-sm" onClick={
+                                        ()=> setInputs(idx, suggestion)
                                       }>{suggestion.email}</div>
                                     ))}
-                                    <div className="p-0.5 absolute top-0 right-0 hover:bg-gray-300 cursor-pointer rounded-full"
-                                    onClick={()=>{setFormData((prev) => ({
-                                          ...prev,
-                                          inventors: prev.inventors.map((inv, i) =>
-                                            idx === i
-                                              ? {
-                                                  ...inv,
-                                                  emailSuggestions: [],
-                                                }
-                                              : inv
-                                          ),
-                                        }));}}>
+                                    <div className="p-0.5 m-1 absolute top-0 right-0 hover:bg-gray-300 cursor-pointer rounded-full"
+                                    onClick={() => clearSuggestions(idx)}>
                                       <X className="size-5" />
                                     </div>
                                   </div>
@@ -571,9 +643,23 @@ export default function AddPatent() {
                                 id={`inventor-${idx}-name`}
                                 value={inventor.name}
                                 onChange={(e) => handleInventorChange(idx, "name", e.target.value)}
+                                autoComplete="off"
                                 placeholder="Enter full name"
                                 className={fieldErrors[`inventors.${idx}.name`] ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                               />
+                              {inventor.nameSuggestions.length > 0 && (
+                                  <div className="absolute z-10 bg-white border p-1 pr-8 border-gray-400 rounded-md shadow-lg">
+                                    {inventor.nameSuggestions.map((suggestion, i) => (
+                                      <div key={i} className="py-1 px-2 cursor-pointer hover:bg-gray-300 pr-8 rounded-sm" onClick={
+                                        ()=> setInputs(idx, suggestion)
+                                      }>{suggestion.name}</div>
+                                    ))}
+                                    <div className="p-0.5 m-1 absolute top-0 right-0 hover:bg-gray-300 cursor-pointer rounded-full"
+                                    onClick={() => clearSuggestions(idx)}>
+                                      <X className="size-5" />
+                                    </div>
+                                  </div>
+                                )}
                               {fieldErrors[`inventors.${idx}.name`] && (
                                 <p className="text-sm text-red-500 mt-1">{fieldErrors[`inventors.${idx}.name`]}</p>
                               )}
