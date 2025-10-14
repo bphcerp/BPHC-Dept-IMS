@@ -121,8 +121,9 @@ const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
     prefix: QUEUE_NAME,
 });
 
-export async function sendEmail(emailData: SendMailOptions) {
+export async function sendEmail(emailData: SendMailOptions, blocking = false) {
     const job = await emailQueue.add(JOB_NAME, emailData);
+    if (!blocking) return job;
     const completedJob = await job.waitUntilFinished(emailQueueEvents);
     return completedJob;
 }

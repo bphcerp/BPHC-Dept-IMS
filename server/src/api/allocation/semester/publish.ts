@@ -84,7 +84,7 @@ router.post(
 
         await createTodos(todos);
         await createNotifications(notifications);
-        const emailMsg = await sendEmail(email);
+        const emailMsg = await sendEmail(email, true);
 
         if (emailMsg?.messageId) {
             await db

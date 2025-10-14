@@ -102,7 +102,7 @@ router.post(
 
         await createTodos(todos);
         await createNotifications(notifications);
-        await sendEmail(email);
+        await sendEmail(email, true);
 
         res.send("Reminder sent successfully");
     })
