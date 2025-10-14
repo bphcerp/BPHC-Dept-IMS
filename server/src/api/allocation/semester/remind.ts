@@ -97,7 +97,7 @@ router.post(
             inReplyTo: latestSemester.form.emailMsgId!,
             subject:
                 "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
-            text: "This is a reminder to the trailing mail regarding submission of course preferences for the upcoming semester. Please submit your preferences before the deadline.",
+            text: "This is a reminder to the previous mail regarding submission of course preferences for the upcoming semester. Please submit your preferences before the deadline.",
         };
 
         await createTodos(todos);
