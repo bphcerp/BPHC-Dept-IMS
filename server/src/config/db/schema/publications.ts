@@ -1,5 +1,4 @@
 import {
-    boolean,
     index,
     integer,
     numeric,
