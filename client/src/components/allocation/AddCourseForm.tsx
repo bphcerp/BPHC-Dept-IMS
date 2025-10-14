@@ -73,7 +73,6 @@ const AddCourseForm = ({
       name: values.name.trim(),
       code: values.code.trim().toUpperCase(),
     };
-    console.log("Submitting new course:", newCourse);
     addCourse(newCourse);
   };
 

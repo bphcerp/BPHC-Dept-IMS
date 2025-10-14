@@ -12,7 +12,10 @@ import {
 } from "../ui/select";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
-import { Course } from "node_modules/lib/src/types/allocation";
+import {
+  Course,
+  CourseGroupMinimal,
+} from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +26,7 @@ export type AllocationClientField = NewAllocationFormTemplateField & {
   id: string;
   value?: string | number;
   preferences?: { courseCode: string; takenConsecutively: boolean }[];
+  group?: CourseGroupMinimal | null;
 };
 
 const formatPreferenceType = (
@@ -50,9 +54,9 @@ export const FormTemplateFieldComponent = ({
 }) => {
   const { data: allCourses } = useQuery(["courses"], fetchCourses);
 
-  const filteredCourses = field.groupId ? allCourses?.filter(
-    (course: Course) => course.groupId === field.groupId
-  ) : allCourses
+  const filteredCourses = field.groupId
+    ? allCourses?.filter((course: Course) => course.groupId === field.groupId)
+    : allCourses;
 
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
@@ -128,24 +132,27 @@ export const FormTemplateFieldComponent = ({
                           <SelectTrigger {...controllerField}>
                             <SelectValue placeholder="Select a course..." />
                           </SelectTrigger>
-                          {!create && (
-                            filteredCourses ? <SelectContent>
-                              {filteredCourses
-                                .filter(
-                                  (course) =>
-                                    !selectedCourses.includes(course.code) ||
-                                    course.code === controllerField.value
-                                )
-                                .map((course) => (
-                                  <SelectItem
-                                    key={course.code}
-                                    value={course.code}
-                                  >
-                                    {course.code} {course.name}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent> : <Skeleton className="w-full h-full" />
-                          )}
+                          {!create &&
+                            (filteredCourses ? (
+                              <SelectContent>
+                                {filteredCourses
+                                  .filter(
+                                    (course) =>
+                                      !selectedCourses.includes(course.code) ||
+                                      course.code === controllerField.value
+                                  )
+                                  .map((course) => (
+                                    <SelectItem
+                                      key={course.code}
+                                      value={course.code}
+                                    >
+                                      {course.code} {course.name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            ) : (
+                              <Skeleton className="h-full w-full" />
+                            ))}
                         </Select>
                       )}
                     />
@@ -199,7 +206,7 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
-          {( !form || create) && (
+          {(!form || create) && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
               {field.preferenceType === "LECTURE" ? (
                 <span className="text-destructive">
@@ -215,12 +222,18 @@ export const FormTemplateFieldComponent = ({
               <p>The list of courses will be populated automatically.</p>
             </div>
           )}
-          <div className="text-xs italic text-muted-foreground">
+          <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">
             <p>
-              {" "}
               Check the box if you have been the course's In-Charge more than 2
               times consecutively.
             </p>
+
+            {!!field.group && (
+              <p>
+                This field is populated with courses from group:{" "}
+                {field.group.name}
+              </p>
+            )}
           </div>
         </div>
       );

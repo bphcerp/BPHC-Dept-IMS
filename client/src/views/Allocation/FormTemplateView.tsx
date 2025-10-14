@@ -27,7 +27,10 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
-import { Course, CourseGroup } from "node_modules/lib/src/types/allocation";
+import {
+  Course,
+  CourseGroupMinimal,
+} from "node_modules/lib/src/types/allocation";
 
 export const fieldTypes: AllocationFormTemplateFieldType[] = [
   "PREFERENCE",
@@ -42,7 +45,7 @@ export const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
 const FormTemplateView = ({ create = true }) => {
   const [fields, setFields] = useState<AllocationClientField[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [groups, setGroups] = useState<CourseGroup[]>([]);
+  const [groups, setGroups] = useState<CourseGroupMinimal[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
   const navigate = useNavigate();
@@ -53,7 +56,6 @@ const FormTemplateView = ({ create = true }) => {
   const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
-    console.log("wau", create);
     if (!create) {
       const fetchCourses = async () => {
         try {
@@ -69,7 +71,6 @@ const FormTemplateView = ({ create = true }) => {
           const response = await api.get(
             `/allocation/builder/template/get/${id}`
           );
-          console.log(response.data);
           setTemplateToView(response.data);
         } catch (error) {
           console.error("Error fetching courses:", error);
@@ -82,7 +83,9 @@ const FormTemplateView = ({ create = true }) => {
 
     const fetchGroups = async () => {
       try {
-        const response = await api.get("/allocation/groups/get");
+        const response = await api.get<CourseGroupMinimal[]>(
+          "/allocation/groups/get"
+        );
         setGroups(response.data);
       } catch (error) {
         console.error("Error fetching groups:", error);
@@ -137,15 +140,15 @@ const FormTemplateView = ({ create = true }) => {
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateName || !templateDescription || !fields.length){
-      toast.warning("Please fill all required fields")
-      return
+    if (!templateName || !templateDescription || !fields.length) {
+      toast.warning("Please fill all required fields");
+      return;
     }
     try {
       const templateCreateData: NewAllocationFormTemplate = {
         name: templateName,
         description: templateDescription,
-        fields: fields.map(({ id, ...field }) => field),
+        fields: fields.map(({ id, group, ...field }) => field),
       };
       await api.post("/allocation/builder/template/create", templateCreateData);
       toast.success("Template saved successfully!");
@@ -246,9 +249,9 @@ const FormTemplateView = ({ create = true }) => {
                     <div className="col-start-2 flex items-center gap-2 md:col-start-3">
                       <Select
                         value={field.type}
-                        onValueChange={(value: AllocationFormTemplateFieldType) =>
-                          handleTypeChange(field.id, field.type, value)
-                        }
+                        onValueChange={(
+                          value: AllocationFormTemplateFieldType
+                        ) => handleTypeChange(field.id, field.type, value)}
                       >
                         <SelectTrigger className="w-[220px]">
                           <SelectValue />
@@ -360,17 +363,19 @@ const FormTemplateView = ({ create = true }) => {
                     <Separator />
                     <Label className="text-sm font-medium">Group Setting</Label>
                     <div className="space-y-2">
-                      <Label
-                        htmlFor={`group-setting-${field.id}`}
-                        className="text-xs"
-                      >
+                      <Label className="text-xs">
                         Select a group for this preference field
                       </Label>
                       <Select
                         value={field.groupId || ""}
-                        onValueChange={(value) =>
-                          updateField(field.id, "groupId", value)
-                        }
+                        onValueChange={(value) => {
+                          updateField(field.id, "groupId", value);
+                          updateField(
+                            field.id,
+                            "group",
+                            groups.find((g) => g.id === value)
+                          );
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a group" />

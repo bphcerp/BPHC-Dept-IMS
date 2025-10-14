@@ -155,10 +155,9 @@ export const getInstructorDetailsQuerySchema = z.object({
 export const courseGroupSchema = z.object({
     // id: z.string().uuid(),
     name: z.string().nonempty(),
+    description: z.string().nonempty(),
 });
 
-export const courseGroupMappingSchema = z.object({
-    id: z.string().uuid(),
-    groupId: z.string().uuid(),
-    courseCode: z.string().nonempty(),
-});
+export const courseGroupInsertQueryParamSchema = z.object({
+    courses: z.coerce.boolean().optional()
+})

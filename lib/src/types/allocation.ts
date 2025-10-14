@@ -17,7 +17,7 @@ import {
     AllocationFormResponse,
     AllocationFormTemplatePreferenceFieldType,
 } from "./allocationFormBuilder.ts";
-import { courseGroupSchema, courseGroupMappingSchema } from "../schemas/Allocation.js";
+import { courseGroupSchema } from "../schemas/Allocation.js";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -260,5 +260,6 @@ export type CourseGroup = NewCourseGroup & {
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    course
-export type CourseGroupMapping = z.infer<typeof courseGroupMappingSchema>;
+    courses: Pick<Course, 'name' | 'code'>[]
+}
+export type CourseGroupMinimal = Omit<CourseGroup, 'courses'>

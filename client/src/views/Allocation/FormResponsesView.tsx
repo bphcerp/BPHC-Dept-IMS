@@ -20,7 +20,6 @@ const FormResponsesView = () => {
     const fetchFormDetails = async () => {
       try {
         const response = await api.get(`/allocation/builder/form/get/${id}`);
-        console.log("Form details fetched: ", response.data)
         setForm(response.data);
       } catch (error) {
         console.error("Error fetching form details:", error);
@@ -32,7 +31,6 @@ const FormResponsesView = () => {
       try {
         const response = await api.get(`/allocation/course/get`);
         setCourses(response.data);
-        console.log("Courses fetched: ", response.data)
       } catch (error) {
         console.error("Error fetching courses: ", error);
         toast.error("Error in fetching courses!");
@@ -43,8 +41,6 @@ const FormResponsesView = () => {
       try {
         const response = await api.get(`/allocation/builder/form/response/get/${id}`);
         setResponses(response.data);
-        console.log("Responses fetched: ", response.data)
-
       } catch (error) {
         console.error("Error in fetching responses: ", error); 
         toast.error("Error in fetching responses!");

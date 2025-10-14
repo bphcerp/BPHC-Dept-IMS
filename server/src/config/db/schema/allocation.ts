@@ -104,6 +104,9 @@ export const course = pgTable("allocation_course", {
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
+        onDelete: "set null",
+    }),
 });
 
 export const semester = pgTable(
@@ -150,18 +153,7 @@ export const allocationCourseGroup = pgTable("allocation_course_group", {
         .primaryKey()
         .$defaultFn(() => uuidv4()),
     name: text("name").notNull(),
+    description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-});
-
-export const allocationCourseGroupMapping = pgTable("allocation_course_group_mapping", {
-    id: uuid("id")
-        .primaryKey()
-        .$defaultFn(() => uuidv4()),
-    groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
-        onDelete: "cascade",
-    }),
-    courseCode: text("course_code").references(() => course.code, {
-        onDelete: "cascade",
-    }),
 });

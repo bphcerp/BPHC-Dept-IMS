@@ -86,8 +86,6 @@ router.post(
         await createNotifications(notifications);
         const emailMsg = await sendEmail(email);
 
-        console.log(emailMsg)
-
         if (emailMsg?.messageId) {
             await db
                 .update(allocationForm)

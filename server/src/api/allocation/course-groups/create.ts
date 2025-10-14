@@ -9,11 +9,11 @@ const router = express.Router();
 router.post(
     "/",
     asyncHandler(async (req, res, next) => {
-        const { name } = courseGroupSchema.parse(req.body);
+        const { name, description } = courseGroupSchema.parse(req.body);
         if (!name) {
             return next(new HttpError(HttpCode.BAD_REQUEST, "Group name is required"));
         }
-        const group = await db.insert(allocationCourseGroup).values({ name });
+        const group = await db.insert(allocationCourseGroup).values({ name, description })
         res.json(group);
     })
 );
