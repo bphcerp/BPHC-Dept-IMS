@@ -27,6 +27,10 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  Course,
+  CourseGroupMinimal,
+} from "node_modules/lib/src/types/allocation";
 
 export const fieldTypes: AllocationFormTemplateFieldType[] = [
   "PREFERENCE",
@@ -40,7 +44,8 @@ export const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
 
 const FormTemplateView = ({ create = true }) => {
   const [fields, setFields] = useState<AllocationClientField[]>([]);
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [groups, setGroups] = useState<CourseGroupMinimal[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [templateDescription, setTemplateDescription] = useState("");
   const navigate = useNavigate();
@@ -51,7 +56,6 @@ const FormTemplateView = ({ create = true }) => {
   const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
-    console.log("wau", create);
     if (!create) {
       const fetchCourses = async () => {
         try {
@@ -67,7 +71,6 @@ const FormTemplateView = ({ create = true }) => {
           const response = await api.get(
             `/allocation/builder/template/get/${id}`
           );
-          console.log(response.data);
           setTemplateToView(response.data);
         } catch (error) {
           console.error("Error fetching courses:", error);
@@ -77,6 +80,19 @@ const FormTemplateView = ({ create = true }) => {
       fetchTemplate();
       fetchCourses();
     }
+
+    const fetchGroups = async () => {
+      try {
+        const response = await api.get<CourseGroupMinimal[]>(
+          "/allocation/course-groups/get"
+        );
+        setGroups(response.data);
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+      }
+    };
+
+    fetchGroups();
   }, [create, id]);
 
   const addField = () => {
@@ -88,6 +104,7 @@ const FormTemplateView = ({ create = true }) => {
         type: "PREFERENCE",
         preferenceCount: 3,
         preferenceType: "LECTURE",
+        groupId: null,
       },
     ]);
   };
@@ -124,15 +141,15 @@ const FormTemplateView = ({ create = true }) => {
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateName || !templateDescription || !fields.length){
-      toast.warning("Please fill all required fields")
-      return
+    if (!templateName || !templateDescription || !fields.length) {
+      toast.warning("Please fill all required fields");
+      return;
     }
     try {
       const templateCreateData: NewAllocationFormTemplate = {
         name: templateName,
         description: templateDescription,
-        fields: fields.map(({ id, ...field }) => field),
+        fields: fields.map(({ id, group, ...field }) => field),
       };
       await api.post("/allocation/builder/template/create", templateCreateData);
       toast.success("Template saved successfully!");
@@ -220,43 +237,43 @@ const FormTemplateView = ({ create = true }) => {
             <Card key={field.id} className="border-border">
               <CardHeader className="gap-4 bg-muted/50 p-4">
                 <div className="flex items-center justify-between">
-                <Input
-                  placeholder="Enter question label..."
-                  value={field.label}
-                  onChange={(e) =>
-                    updateField(field.id, "label", e.target.value)
-                  }
-                  className="h-auto border-none bg-transparent p-0 text-base font-semibold shadow-none focus-visible:ring-0"
-                  readOnly={!create}
-                />
-                {create && (
-                  <div className="col-start-2 flex items-center gap-2 md:col-start-3">
-                    <Select
-                      value={field.type}
-                      onValueChange={(value: AllocationFormTemplateFieldType) =>
-                        handleTypeChange(field.id, field.type, value)
-                      }
-                    >
-                      <SelectTrigger className="w-[220px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fieldTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type.replace("_", " ")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      onClick={() => removeField(field.id)}
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </div>
-                )}
+                  <Input
+                    placeholder="Enter question label..."
+                    value={field.label}
+                    onChange={(e) =>
+                      updateField(field.id, "label", e.target.value)
+                    }
+                    className="h-auto border-none bg-transparent p-0 text-base font-semibold shadow-none focus-visible:ring-0"
+                    readOnly={!create}
+                  />
+                  {create && (
+                    <div className="col-start-2 flex items-center gap-2 md:col-start-3">
+                      <Select
+                        value={field.type}
+                        onValueChange={(
+                          value: AllocationFormTemplateFieldType
+                        ) => handleTypeChange(field.id, field.type, value)}
+                      >
+                        <SelectTrigger className="w-[220px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fieldTypes.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type.replace("_", " ")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => removeField(field.id)}
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
@@ -269,7 +286,7 @@ const FormTemplateView = ({ create = true }) => {
                   <div className="space-y-4">
                     <Separator />
                     <Label className="text-sm font-medium">Configuration</Label>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <div className="space-y-2">
                         <Label
                           htmlFor={`pref-count-${field.id}`}
@@ -293,7 +310,7 @@ const FormTemplateView = ({ create = true }) => {
                           className="w-24"
                         />
                       </div>
-                      <div className="flex flex-col space-y-4">
+                      <div className="flex flex-col col-span-2 space-y-4">
                         <div className="space-y-2">
                           <Label className="text-xs">
                             This is preference for
@@ -339,6 +356,40 @@ const FormTemplateView = ({ create = true }) => {
                           </AlertDescription>
                         </Alert>
                       </div>
+                      {create && field.type === "PREFERENCE" && (
+                        <div className="space-y-4">
+                          <Label className="text-sm font-medium">
+                            Group Setting
+                          </Label>
+                          <div className="space-y-2">
+                            <Label className="text-xs">
+                              Select a group for this preference field
+                            </Label>
+                            <Select
+                              value={field.groupId || ""}
+                              onValueChange={(value) => {
+                                updateField(field.id, "groupId", value);
+                                updateField(
+                                  field.id,
+                                  "group",
+                                  groups.find((g) => g.id === value)
+                                );
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a group" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {groups.map((group) => (
+                                  <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

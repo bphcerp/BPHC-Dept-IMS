@@ -24,10 +24,11 @@ import {
 import { Trash2 } from "lucide-react";
 import { fieldTypes } from "./FormTemplateView";
 import NotFoundPage from "@/layouts/404";
+import { Course } from "node_modules/lib/src/types/allocation";
 
 const FormResponse = ({ preview = true }: { preview?: boolean }) => {
   const [form, setForm] = useState<AllocationForm | null>(null);
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<Course[]>([]);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
         .then(({ data }) => {
           if ((data as AllocationFormUserCheck).userAlreadyResponded){
             toast.warning("You've already responded to this form");
-            setTimeout(() => navigate('/allocation'),2000)
+            setTimeout(() => navigate(`/allocation/forms/${id}/responses?personal=true`),2000)
           }
           setForm(data);
           if (!preview) {
@@ -111,7 +112,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
         response: responses,
       });
       toast.success("Form response submitted successfully!");
-      navigate(-1);
+      navigate('/allocation');
     } catch (error) {
       console.error("Error submitting form response:", error);
       toast.error(

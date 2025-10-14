@@ -8,7 +8,10 @@ import {
   DatabaseIcon,
   FrameIcon,
   SendIcon,
+  TableOfContentsIcon,
   UserRoundIcon,
+  GroupIcon,
+  Grid3X3Icon,
 } from "lucide-react";
 import { SemesterMinimal } from "node_modules/lib/src/types/allocation";
 import { Outlet } from "react-router-dom";
@@ -37,10 +40,22 @@ const AllocationLayout = () => {
                 requiredPermissions: ["allocation:write"],
               },
               {
+                title: "Matrix",
+                icon: <Grid3X3Icon />,
+                url: "/allocation/creditmatrix",
+                requiredPermissions: ["allocation:write"],
+              },
+              {
                 title: "Courses",
                 icon: <DatabaseIcon />,
                 url: "/allocation/courses",
                 requiredPermissions: ["allocation:courses:view"],
+              },
+              {
+                title: "Course Groups",
+                icon: <GroupIcon />,
+                url: "/allocation/course-groups",
+                requiredPermissions: ["allocation:courses:write"],
               },
               {
                 title: "Semesters",
@@ -61,7 +76,7 @@ const AllocationLayout = () => {
             items: [
               {
                 title: "Summary",
-                icon: <UserRoundIcon />,
+                icon: <TableOfContentsIcon />,
                 url: "/allocation/summary",
                 requiredPermissions: ["allocation:view"],
               },

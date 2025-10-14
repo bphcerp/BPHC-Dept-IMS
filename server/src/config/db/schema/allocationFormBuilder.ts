@@ -10,6 +10,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { users } from "./admin.ts";
 import { course } from "./allocation.ts";
+import { allocationCourseGroup } from "./allocation.ts";
 
 export const allocationFormTemplateFieldType = pgEnum(
     "allocation_form_template_field_type",
@@ -50,8 +51,7 @@ export const allocationForm = pgTable("allocation_form", {
         .notNull()
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
-    allocationDeadline: timestamp("allocation_deadline"),
-    emailBody: text('email_body'),
+    allocationDeadline: timestamp("allocation_deadline", { withTimezone: true }),
     emailMsgId: text('email_msg_id')
 });
 
@@ -93,5 +93,8 @@ export const allocationFormTemplateField = pgTable(
         preferenceType:
             allocationFormTemplatePreferenceFieldType("preference_type"),
         type: allocationFormTemplateFieldType("type"),
+        groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
+            onDelete: "set null",
+        }),
     }
 );

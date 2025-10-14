@@ -12,14 +12,21 @@ import {
 } from "../ui/select";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
-import { Course } from "node_modules/lib/src/types/allocation";
+import {
+  Course,
+  CourseGroupMinimal,
+} from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { Skeleton } from "../ui/skeleton";
 
 export type AllocationClientField = NewAllocationFormTemplateField & {
   id: string;
   value?: string | number;
   preferences?: { courseCode: string; takenConsecutively: boolean }[];
+  group?: CourseGroupMinimal | null;
 };
 
 const formatPreferenceType = (
@@ -29,17 +36,30 @@ const formatPreferenceType = (
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
+const fetchCourses = async () => {
+  const response = await api.get<Course[]>("/allocation/course/get");
+  return response.data;
+};
+
 export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,
+  preview = false,
   form,
 }: {
   field: AllocationClientField;
   create: boolean;
   courses: Course[];
+  preview?: boolean;
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
+  const { data: allCourses } = useQuery(["courses"], fetchCourses);
+
+  const filteredCourses = field.groupId
+    ? allCourses?.filter((course: Course) => course.groupId === field.groupId)
+    : allCourses;
+
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   const handleCourseChange = (courseCode: string, index: number) => {
@@ -103,7 +123,6 @@ export const FormTemplateFieldComponent = ({
                       }}
                       render={({ field: controllerField }) => (
                         <Select
-                          disabled={create}
                           required
                           onValueChange={(value) => {
                             controllerField.onChange(value);
@@ -114,9 +133,9 @@ export const FormTemplateFieldComponent = ({
                           <SelectTrigger {...controllerField}>
                             <SelectValue placeholder="Select a course..." />
                           </SelectTrigger>
-                          {!create && (
+                          {filteredCourses ? (
                             <SelectContent>
-                              {courses
+                              {filteredCourses
                                 .filter(
                                   (course) =>
                                     !selectedCourses.includes(course.code) ||
@@ -131,13 +150,14 @@ export const FormTemplateFieldComponent = ({
                                   </SelectItem>
                                 ))}
                             </SelectContent>
+                          ) : (
+                            <Skeleton className="h-full w-full" />
                           )}
                         </Select>
                       )}
                     />
                   ) : (
                     <Select
-                      disabled
                       value={
                         courses.find(
                           (c) => c.code === field.preferences?.[i]?.courseCode
@@ -148,7 +168,7 @@ export const FormTemplateFieldComponent = ({
                         <SelectValue placeholder="Select a course..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map((course) => (
+                        {!!filteredCourses && filteredCourses.map((course) => (
                           <SelectItem key={course.code} value={course.code}>
                             {course.name}
                           </SelectItem>
@@ -185,7 +205,7 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
-          {( !form || create) && (
+          {(!form || create) && !preview && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
               {field.preferenceType === "LECTURE" ? (
                 <span className="text-destructive">
@@ -201,12 +221,18 @@ export const FormTemplateFieldComponent = ({
               <p>The list of courses will be populated automatically.</p>
             </div>
           )}
-          <div className="text-xs italic text-muted-foreground">
+          <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">
             <p>
-              {" "}
               Check the box if you have been the course's In-Charge more than 2
               times consecutively.
             </p>
+
+            {!!field.group && (
+              <p>
+                This field is populated with courses from group:{" "}
+                {field.group.name}
+              </p>
+            )}
           </div>
         </div>
       );

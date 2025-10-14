@@ -6,12 +6,12 @@ const router = express.Router({ mergeParams: true });
 
 router.get(
     "/:id",
-    checkAccess("allocation:form:response:submit"),
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const formId = req.params.id;
 
-        const response = await db.query.allocationFormResponse.findMany({
-            where: (fr, { eq , and }) => and(eq(fr.formId, formId), eq(fr.submittedByEmail, req.user!.email)),
+        const formResponses = await db.query.allocationFormResponse.findMany({
+            where: (fr, { eq }) => eq(fr.formId, formId),
             with: {
                 course: {
                     columns: {
@@ -32,7 +32,7 @@ router.get(
                 submittedByEmail: false,
             },
         });
-        res.status(200).json(response);
+        res.status(200).json(formResponses);
     })
 );
 

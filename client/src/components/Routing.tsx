@@ -131,6 +131,8 @@ import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 import HelpButton from "./HelpButton";
+import CourseGroups from "@/views/Allocation/CourseGroups";
+import { AllocationMatrixView } from "@/views/Allocation/AllocationMatrixView";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -848,11 +850,21 @@ const Routing = () => {
                 </>
               )}
 
-              {checkAccessAnyOne(["allocation:view", "allocation:write"]) && (
-                <Route
-                  path="/allocation/summary"
-                  element={<AllocationSummary />}
-                />
+              { checkAccess("allocation:write") && <Route path="creditmatrix" element={<AllocationMatrixView />} /> }
+
+              {checkAccess("allocation:view") && (
+                <>
+                  {checkAccess("allocation:summary:view") && (
+                    <Route
+                      path="/allocation/summary"
+                      element={<AllocationSummary />}
+                    />
+                  )}
+                  <Route
+                    path="/allocation/personal"
+                    element={<NotFoundPage />}
+                  />
+                </>
               )}
 
               {/* summary moved to a top-level unprotected route */}
@@ -872,12 +884,17 @@ const Routing = () => {
               )}
 
               {checkAccessAnyOne([
-                "allocation:builder:form:view",
+                "allocation:form:response:view",
                 "allocation:write",
               ]) && (
                 <>
                   <Route path="forms" element={<FormList />} />
                   <Route path="forms/:id/preview" element={<FormResponse />} />
+                </>
+              )}
+
+              {checkAccess("allocation:form:response:submit") && (
+                <>
                   <Route
                     path="forms/:id/responses"
                     element={<FormResponsesView />}
@@ -897,6 +914,11 @@ const Routing = () => {
                 "allocation:courses:view",
                 "allocation:write",
               ]) && <Route path="courses" element={<CoursesPage />} />}
+
+              {checkAccessAnyOne([
+                "allocation:courses:write",
+                "allocation:write",
+              ]) && <Route path="course-groups" element={<CourseGroups />} />}
 
               {checkAccessAnyOne([
                 "allocation:semesters:view",

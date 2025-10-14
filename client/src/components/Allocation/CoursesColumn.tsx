@@ -61,9 +61,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     AllocationStatus[]
   >([...allocationStatusOptions]);
 
-  const [sortField, setSortField] = useState<
-    "default" | "allocation" | "name" | "code"
-  >("default");
+  const [sortField, setSortField] = useState<"allocation" | "name" | "code">(
+    "code"
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const { data: allocationStatusData } = useQuery({
@@ -100,9 +100,6 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
           return false;
         return allocationStatusFilters.includes(status);
       });
-
-  // If user hasn't selected a client-side sort, preserve server/default order
-  if (sortField === "default") return base;
 
     return base.sort((a, b) => {
       if (sortField === "name") {
@@ -167,7 +164,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     setDegreeFilters([...allocationSchemas.degreeTypes]);
     setCourseTypeFilters([...allocationSchemas.courseTypes]);
     setAllocationStatusFilters([...allocationStatusOptions]);
-    setSortField("default");
+    setSortField("code");
     setSortOrder("asc");
   };
 
@@ -330,12 +327,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 <DropdownMenuRadioGroup
                   value={sortField}
                   onValueChange={(v) =>
-                    setSortField(v as "default" | "allocation" | "name" | "code")
+                    setSortField(v as "allocation" | "name" | "code")
                   }
                 >
-                  <DropdownMenuRadioItem value="default">
-                    Default (server order)
-                  </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="allocation">
                     Allocation Status
                   </DropdownMenuRadioItem>
@@ -355,11 +349,6 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 >
                   {sortOrder === "asc" ? "Ascending" : "Descending"}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-3 pb-2 text-xs text-muted-foreground">
-                  The default sorting order is HD-CDC, HD-Elective, FD-CDC, and
-                  FD-Elective
-                </div>
               </DropdownMenuContent>
             </DropdownMenu>
             {courseTypeFilters.length !==
@@ -367,7 +356,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             degreeFilters.length !== allocationSchemas.degreeTypes.length ||
             allocationStatusFilters.length !== allocationStatusOptions.length ||
             searchTerm !== "" ||
-            sortField !== "default" ||
+            sortField !== "code" ||
             sortOrder !== "asc" ? (
               <Button
                 variant="ghost"
@@ -382,7 +371,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         </div>
       </div>
 
-  <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
         <div className="space-y-2 p-3 pr-2">
           {isLoading || !allocationStatusData ? (
             <div className="flex items-center justify-center py-8">
