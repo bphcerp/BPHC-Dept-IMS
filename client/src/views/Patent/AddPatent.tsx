@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { patentSchemas } from "lib";
 import api from "@/lib/axios-instance";
-import { ArrowLeft, Save, User, FileSpreadsheet, Plus, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Save, User, FileSpreadsheet, Plus, Trash2, Users, X } from "lucide-react";
 import BulkUpload from "./BulkUpload";
 import { toast } from "sonner";
 
@@ -39,6 +39,11 @@ type FacultyResponse = {
   faculty?: Faculty;
   error?: string;
 };
+
+type Suggestion = {
+  email: string;
+  name: string;
+}
 
 function debounce<T extends unknown[]>(fn: (...args: T) => void, delay: number) {
   let timeoutId: NodeJS.Timeout;
@@ -90,7 +95,7 @@ export default function AddPatent() {
 
   const [formData, setFormData] = useState({
     applicationNumber: "",
-    inventors: [{ name: "", email: "" }],
+    inventors: [{ name: "", email: "", nameSuggestions: [] as Suggestion[], emailSuggestions: [] as Suggestion[] }],
     department: "",
     title: "",
     campus: "",
@@ -140,6 +145,24 @@ export default function AddPatent() {
         }));
       }
     } catch {
+      const suggestions = await api.get(
+        `/project/faculty/by-email-suggestions?email=${encodeURIComponent(email)}`
+      );
+      if (suggestions.data.success) {
+        setFormData((prev) => ({
+          ...prev,
+          inventors: prev.inventors.map((inv, idx) =>
+            idx === index
+              ? {
+                  ...inv,
+                  emailSuggestions:
+                    suggestions.data.suggestions || [],
+                }
+              : inv
+          ),
+        }));
+      }
+
       setFormData(prev => ({
         ...prev,
         inventors: prev.inventors.map((inv, idx) =>
@@ -173,6 +196,18 @@ export default function AddPatent() {
   };
 
   const handleInventorChange = (index: number, field: string, value: string) => {
+    // clears all prev suggestions
+    setFormData((prev) => ({
+      ...prev,
+      inventors: prev.inventors.map((inv) => {
+        return {
+          ...inv,
+          nameSuggestions: [],
+          emailSuggestions: [],
+        };
+      }),
+    }));
+
     setFormData(prev => ({
       ...prev,
       inventors: prev.inventors.map((inv, idx) =>
@@ -189,7 +224,7 @@ export default function AddPatent() {
   const addInventor = () => {
     setFormData(prev => ({
       ...prev,
-      inventors: [...prev.inventors, { name: "", email: "" }]
+      inventors: [...prev.inventors, { name: "", email: "", nameSuggestions: [], emailSuggestions: [] }],
     }));
   };
 
@@ -486,8 +521,46 @@ export default function AddPatent() {
                                   type="email"
                                   value={inventor.email}
                                   onChange={(e) => handleInventorChange(idx, "email", e.target.value)}
+                                  autoComplete="off"
                                   placeholder="Enter email address"
                                 />
+                                {inventor.emailSuggestions.length > 0 && (
+                                  <div className="absolute z-10 bg-white border p-1 pr-8 border-gray-400 rounded-md shadow-lg">
+                                    {inventor.emailSuggestions.map((suggestion, i) => (
+                                      <div key={i} className="p-1 cursor-pointer" onClick={
+                                        () => {
+                                          setFormData((prev) => ({
+                                            ...prev,
+                                            inventors: prev.inventors.map((inv, j) =>
+                                              idx === j
+                                                ? {
+                                                    ...inv,
+                                                    email: suggestion.email,
+                                                    name: suggestion.name,
+                                                    emailSuggestions: [],
+                                                  }
+                                                : inv
+                                            ),
+                                          }));
+                                        }
+                                      }>{suggestion.email}</div>
+                                    ))}
+                                    <div className="p-0.5 absolute top-0 right-0 hover:bg-gray-300 cursor-pointer rounded-full"
+                                    onClick={()=>{setFormData((prev) => ({
+                                          ...prev,
+                                          inventors: prev.inventors.map((inv, i) =>
+                                            idx === i
+                                              ? {
+                                                  ...inv,
+                                                  emailSuggestions: [],
+                                                }
+                                              : inv
+                                          ),
+                                        }));}}>
+                                      <X className="size-5" />
+                                    </div>
+                                  </div>
+                                )}
                                 {inventorLoading === idx && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
                               </div>
                               <p className="text-xs text-gray-500 mt-1">Optional - will auto-fill name</p>
