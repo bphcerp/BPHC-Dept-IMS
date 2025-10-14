@@ -209,7 +209,6 @@ Hyderabad Campus<span>
     return () => clearInterval(timer);
   }, [calculateTimeLeft]);
 
-
   return !latestSemester ? (
     <div className="flex h-full items-center justify-center">
       <div className="-mt-16 rounded-lg border-2 border-y-primary p-8 text-center">
@@ -392,7 +391,7 @@ Hyderabad Campus<span>
                 onClick={() => remindMutation.mutate()}
               >
                 Send Reminder
-                { remindMutation.isLoading && <LoadingSpinner /> }
+                {remindMutation.isLoading && <LoadingSpinner />}
               </Button>
               <Button
                 variant="destructive"
@@ -403,7 +402,9 @@ Hyderabad Campus<span>
             </>
           )}
           {latestSemester.allocationStatus === "inAllocation" && (
-            <Button><Link to='/allocation/summary'>View Current Allocation</Link></Button>
+            <Button>
+              <Link to="/allocation/summary">View Current Allocation</Link>
+            </Button>
           )}
         </div>
       </header>
@@ -415,7 +416,9 @@ Hyderabad Campus<span>
               {/* Time Remaining */}
               <div className="flex flex-col items-center justify-center space-y-5 rounded-2xl p-2 shadow-lg transition hover:shadow-xl">
                 <span className="text-sm text-gray-500">Time Remaining</span>
-                <span className="mt-2 text-5xl font-extrabold text-primary">
+                <span
+                  className={`"mt-2 text-5xl font-extrabold ${timeLeft === "00:00:00" ? "text-red-600" : "text-primary"}`}
+                >
                   {timeLeft ?? "--:--:--"}
                 </span>
                 <span className="mt-1 text-xs text-muted-foreground">

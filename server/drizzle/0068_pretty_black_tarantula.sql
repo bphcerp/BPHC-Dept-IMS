@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_form" ALTER COLUMN "allocation_deadline" SET DATA TYPE timestamp with time zone;

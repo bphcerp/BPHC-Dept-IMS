@@ -51,7 +51,7 @@ export const allocationForm = pgTable("allocation_form", {
         .notNull()
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
-    allocationDeadline: timestamp("allocation_deadline"),
+    allocationDeadline: timestamp("allocation_deadline", { withTimezone: true }),
     emailMsgId: text('email_msg_id')
 });
 
