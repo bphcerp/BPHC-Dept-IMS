@@ -1,5 +1,4 @@
 import db from "@/config/db/index.ts";
-import logger from "@/config/logger.ts";
 import { users, phd, faculty } from "@/config/db/schema/admin.ts";
 import { phdProposals, phdSemesters } from "@/config/db/schema/phd.ts";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
@@ -62,7 +61,7 @@ function excelDateToJSDate(serial: number) {
 }
 
 async function updateStudentProgress(filePath: string) {
-    logger.info(`Starting student progress update from file: ${filePath}`);
+    console.log(`Starting student progress update from file: ${filePath}`);
     const workbook = xlsx.readFile(filePath);
     const sheetName = workbook.SheetNames[0];
     if (!sheetName) throw new Error("No sheets found in the Excel file.");
@@ -76,7 +75,7 @@ async function updateStudentProgress(filePath: string) {
         const parsedRow = studentProgressSchema.safeParse(row);
 
         if (!parsedRow.success) {
-            logger.error(
+            console.log(
                 `Skipping invalid row: ${JSON.stringify(row)}. Errors: ${
                     parsedRow.error.message
                 }`
@@ -86,8 +85,8 @@ async function updateStudentProgress(filePath: string) {
         }
 
         const studentData = parsedRow.data;
-        logger.info(`Processing student: ${studentData.email}`);
-        console.log("Parsed Excel Data for student:", studentData);
+        console.log(`Processing student: ${studentData.email}`);
+        // console.log("Parsed Excel Data for student:", studentData);
 
         await db
             .transaction(async (tx) => {
@@ -136,7 +135,7 @@ async function updateStudentProgress(filePath: string) {
                     supervisorEmails.size === 0 &&
                     currentStatus !== "Awaiting QE Application"
                 ) {
-                    logger.warn(
+                    console.log(
                         `Student ${studentData.email} has progress but is missing a 'supervisor email' in the Excel sheet. They will not be linked to a supervisor.`
                     );
                 }
@@ -155,7 +154,7 @@ async function updateStudentProgress(filePath: string) {
                             email,
                             name: studentData["Supervisor Name"],
                         });
-                        logger.info(
+                        console.log(
                             `Created new faculty user for supervisor: ${email}`
                         );
                     }
@@ -199,7 +198,7 @@ async function updateStudentProgress(filePath: string) {
                     .insert(phd)
                     .values({ email: studentData.email, ...phdDataSet })
                     .onConflictDoUpdate({ target: phd.email, set: phdDataSet });
-                logger.info(
+                console.log(
                     `Upserted data for ${studentData.email} with status: ${currentStatus}`
                 );
 
@@ -287,7 +286,7 @@ async function updateStudentProgress(filePath: string) {
                                 outlineFileId: dummyFile.id,
                             });
                         } else {
-                            logger.warn(
+                            console.log(
                                 `Cannot create completed proposal for ${studentData.email} due to missing supervisor email.`
                             );
                         }
@@ -346,23 +345,23 @@ async function updateStudentProgress(filePath: string) {
                 successCount++;
             })
             .catch((e) => {
-                logger.error(
+                console.log(
                     `Failed to process student ${studentData.email}: ${(e as Error).message}`
                 );
                 errorCount++;
             });
     }
 
-    logger.info("------------------------------------");
-    logger.info("Student progress update complete.");
-    logger.info(`Successfully processed: ${successCount}`);
-    logger.info(`Failed to process: ${errorCount}`);
-    logger.info("------------------------------------");
+    console.log("------------------------------------");
+    console.log("Student progress update complete.");
+    console.log(`Successfully processed: ${successCount}`);
+    console.log(`Failed to process: ${errorCount}`);
+    console.log("------------------------------------");
 }
 
 const args = process.argv.slice(2);
 if (args.length !== 1) {
-    logger.error(
+    console.log(
         "Usage: tsx scripts/updateStudentProgress.ts <path_to_xlsx_file>"
     );
     process.exit(1);
@@ -371,7 +370,7 @@ if (args.length !== 1) {
 const filePath = args[0];
 updateStudentProgress(filePath)
     .catch((e) => {
-        logger.error("Unhandled error in updateStudentProgress script:", e);
+        console.log("Unhandled error in updateStudentProgress script:", e);
     })
     .finally(() => {
         process.exit(0);
