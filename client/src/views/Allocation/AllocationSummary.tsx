@@ -21,8 +21,9 @@ export const AllocationSummary = () => {
   const [showTeachingLoad, setShowTeachingLoad] = useState(false);
   const [isAssignInstructorDialogOpen, setIsAssignInstructorDialogOpen] =
     useState(false);
-  const [selectedInstructorEmail, setSelectedInstructorEmail] =
-    useState<string | null>(null);
+  const [selectedInstructorEmail, setSelectedInstructorEmail] = useState<
+    string | null
+  >(null);
 
   const [searchParams] = useSearchParams();
   const semesterId = searchParams.get("semesterId");
@@ -93,8 +94,8 @@ export const AllocationSummary = () => {
       <AssignInstructorDialog
         isOpen={isAssignInstructorDialogOpen}
         onOpenChange={(open) => {
-          setIsAssignInstructorDialogOpen(open)
-          if (!open) setSelectedInstructorEmail(null)
+          setIsAssignInstructorDialogOpen(open);
+          if (!open) setSelectedInstructorEmail(null);
         }}
         courseCode={null}
         selectedSectionId=""
@@ -142,12 +143,10 @@ export const AllocationSummary = () => {
                       to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
                     >
                       <Button variant="link" className="text-lg font-semibold">
+                        {data.courseCode} -{" "}
                         {data.course.name ?? "Unnamed Course"}
                       </Button>
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {data.courseCode}
-                    </p>
                   </div>
                 </div>
 
@@ -178,10 +177,27 @@ export const AllocationSummary = () => {
                                     : "font-medium"
                                 }
                               >
-                                {(inst.name && inst.type === 'faculty' && checkAccess('allocation:write')) ? <Button onClick={() =>{
-                                  setSelectedInstructorEmail(inst.email)
-                                  setIsAssignInstructorDialogOpen(true)
-                                }} variant="link" className="p-0 m-0">{inst.name}</Button> : inst.name ?? `Unnamed Instructor - ${inst.email}`}
+                                {inst.name &&
+                                inst.type === "faculty" &&
+                                checkAccess("allocation:write") ? (
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedInstructorEmail(inst.email);
+                                      setIsAssignInstructorDialogOpen(true);
+                                    }}
+                                    variant="link"
+                                    className={`m-0 h-fit p-0 ${
+                                      data.ic?.email === inst.email
+                                        ? "font-semibold"
+                                        : "font-medium"
+                                    }`}
+                                  >
+                                    {inst.name}
+                                  </Button>
+                                ) : (
+                                  (inst.name ??
+                                  `Unnamed Instructor - ${inst.email}`)
+                                )}
                                 {showTeachingLoad && (
                                   <span>
                                     {" "}

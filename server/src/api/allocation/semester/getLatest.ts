@@ -1,6 +1,5 @@
 import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { getLatestSemesterQuerySchema } from "node_modules/lib/src/schemas/Allocation.ts";
@@ -58,7 +57,6 @@ export const getLatestSemester = async () => {
 
 router.get(
     "/",
-    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const { minimal, stats } = getLatestSemesterQuerySchema.parse(
             req.query

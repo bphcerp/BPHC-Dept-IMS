@@ -1,4 +1,3 @@
-// client/src/components/meeting/MeetingDetails.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
@@ -150,6 +149,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
         .then((res) => res.data),
     enabled: isOrganizer && isAddInviteesOpen,
   });
+
   const userListOptions = useMemo(
     () =>
       userList?.map((u: any) => ({
@@ -201,6 +201,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
       setEditingSlot(null);
     }
   };
+
   const initialInvitees = useMemo(
     () => meeting.participants.filter((p: any) => p.type === "initial"),
     [meeting.participants]
@@ -209,6 +210,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
     () => meeting.participants.filter((p: any) => p.type === "other"),
     [meeting.participants]
   );
+
   const onAddInviteesSubmit = (
     data: Omit<AddInviteesFormData, "meetingId">
   ) => {
@@ -233,8 +235,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
               >
                 <DialogTrigger asChild>
                   <Button variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Invitees
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Invitees
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -294,7 +295,8 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
         </CardHeader>
         <CardContent>
           <p>
-            <strong>Organizer:</strong> {meeting.organizerEmail}
+            <strong>Organizer:</strong> {meeting.organizer.name} (
+            {meeting.organizer.email})
           </p>
           <p>
             <strong>Status:</strong> <Badge>{meeting.status}</Badge>
@@ -354,7 +356,9 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
               <h4 className="mb-2 text-sm font-semibold">Initial Invitees</h4>
               <ul className="list-disc pl-5 text-sm">
                 {initialInvitees.map((p: any) => (
-                  <li key={p.participantEmail}>{p.participantEmail}</li>
+                  <li key={p.participantEmail}>
+                    {p.participantName || p.participantEmail}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -365,7 +369,9 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
               <h4 className="mb-2 text-sm font-semibold">Other Invitees</h4>
               <ul className="list-disc pl-5 text-sm">
                 {otherInvitees.map((p: any) => (
-                  <li key={p.participantEmail}>{p.participantEmail}</li>
+                  <li key={p.participantEmail}>
+                    {p.participantName || p.participantEmail}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -396,6 +402,7 @@ export const MeetingDetails: React.FC<MeetingDetailsProps> = ({
                     {new Date(slot.startTime).toLocaleString()}
                   </label>
                 </div>
+
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-green-600">
                     <Check className="h-5 w-5" />

@@ -13,7 +13,11 @@ router.get(
 
         const template = await db.query.allocationFormTemplate.findFirst({
             with: {
-                fields: true,
+                fields: {
+                    with: {
+                        group: true
+                    }
+                },
                 createdBy: {
                     columns: { name: true, email: true },
                 },

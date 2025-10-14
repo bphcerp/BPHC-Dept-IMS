@@ -1,6 +1,6 @@
 import environment from "@/config/environment.ts";
 import nodemailer, { type SendMailOptions } from "nodemailer";
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, QueueEvents } from "bullmq";
 import logger from "@/config/logger.ts";
 import { redisConfig } from "@/config/redis.ts";
 
@@ -35,15 +35,40 @@ const emailQueue = new Queue(QUEUE_NAME, {
     prefix: QUEUE_NAME,
 });
 
+let testTransporter: nodemailer.Transporter | null = null;
+
+if (!environment.PROD) {
+    (async () => {
+        const testAccount = await nodemailer.createTestAccount();
+        testTransporter = nodemailer.createTransport({
+            host: "smtp.ethereal.email",
+            port: 587,
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: testAccount.user, // generated ethereal user
+                pass: testAccount.pass, // generated ethereal password
+            },
+        });
+        logger.info(
+            `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
+        );
+    })();
+}
+
 const emailWorker = new Worker<SendMailOptions>(
     QUEUE_NAME,
     async (job) => {
         if (!environment.PROD) {
+            if (!testTransporter) {
+                logger.info(
+                    `EMAIL JOB: ${job.id} - Test ethereal account not created, skipped in non-production environment`
+                );
+                logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+                return;
+            }
             logger.info(
-                `EMAIL JOB: ${job.id} - Skipped in non-production environment`
+                `EMAIL JOB: ${job.id} - Using test ethereal account in development.`
             );
-            logger.debug(`Email data: ${JSON.stringify(job.data)}`);
-            return;
         }
 
         const { from, ...mailOptions } = { ...job.data };
@@ -63,6 +88,18 @@ const emailWorker = new Worker<SendMailOptions>(
             mailOptions.html = `${mailOptions.html}${footerHtml}`;
         }
 
+        if (!environment.PROD && testTransporter) {
+            const info = await testTransporter.sendMail({
+                from: (testTransporter.options as any).auth?.user,
+                ...mailOptions,
+            });
+
+            logger.info(
+                `EMAIL JOB: ${job.id} - Email sent. View the ethereal mail here: ${nodemailer.getTestMessageUrl(info)}`
+            );
+            return info;
+        }
+
         return await transporter.sendMail({
             from: environment.BPHCERP_EMAIL,
             ...mailOptions,
@@ -79,8 +116,16 @@ emailWorker.on("failed", (job, err) => {
     logger.error(`Email job failed: ${job?.id}`, err);
 });
 
-export async function sendEmail(emailData: SendMailOptions) {
-    return await emailQueue.add(JOB_NAME, emailData);
+const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
+    connection: redisConfig,
+    prefix: QUEUE_NAME,
+});
+
+export async function sendEmail(emailData: SendMailOptions, blocking = false) {
+    const job = await emailQueue.add(JOB_NAME, emailData);
+    if (!blocking) return job;
+    const completedJob = await job.waitUntilFinished(emailQueueEvents);
+    return completedJob;
 }
 
 export async function sendBulkEmails(emails: SendMailOptions[]) {

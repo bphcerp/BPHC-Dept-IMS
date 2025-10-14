@@ -8,6 +8,7 @@ import {
 
 import { users } from "./admin.ts";
 import { course, semester } from "./allocation.ts";
+import { allocationCourseGroup } from "./allocation.ts";
 
 export const allocationFormTemplateRelations = relations(
     allocationFormTemplate,
@@ -68,6 +69,10 @@ export const allocationFormTemplateFieldRelations = relations(
         template: one(allocationFormTemplate, {
             fields: [allocationFormTemplateField.templateId],
             references: [allocationFormTemplate.id],
+        }),
+        group: one(allocationCourseGroup, {
+            fields: [allocationFormTemplateField.groupId],
+            references: [allocationCourseGroup.id],
         }),
     })
 );

@@ -2,7 +2,6 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { faculty, phd } from "@/config/db/schema/admin.ts";
 import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import assert from "assert";
@@ -17,7 +16,7 @@ router.post(
     checkAccess("allocation:form:publish"),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
-        
+
         const latestSemester = await getLatestSemester();
 
         if (!latestSemester) {
@@ -31,22 +30,44 @@ router.post(
 
         if (!latestSemester.form) {
             return next(
-                new HttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Form not published yet"
-                )
+                new HttpError(HttpCode.BAD_REQUEST, "Form not published yet")
             );
         }
 
-        const faculties = (await db.select().from(faculty)).map(
-            (el) => el.email
+        const seenEmails = new Set<string>();
+        latestSemester.form.responses = latestSemester.form.responses.filter(
+            (response) => {
+                const email = response.submittedBy?.email;
+                if (!email || seenEmails.has(email)) return false;
+                seenEmails.add(email);
+                return true;
+            }
         );
 
-        const phds = (await db.select().from(phd)).map(
-            (el) => el.email
-        );
+        const notRespondedFaculty = (await db.query.faculty
+            .findMany({
+                columns: {
+                    email: true,
+                },
+                where: (faculty, { notInArray }) =>
+                    notInArray(faculty.email, Array.from(seenEmails)),
+            }))
+            .map((el) => el.email);
 
-        const recipients = [ ...faculties, ...phds ]
+        const notRespondedPhD = (await db.query.phd
+            .findMany({
+                columns: {
+                    email: true,
+                },
+                where: (phd, { notInArray, and, eq }) =>
+                    and(
+                        notInArray(phd.email, Array.from(seenEmails)),
+                        eq(phd.phdType, "full-time")
+                    ),
+            }))
+            .map((el) => el.email);
+
+        const recipients = [...notRespondedFaculty, ...notRespondedPhD];
 
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
@@ -71,17 +92,17 @@ router.post(
             }));
 
         const email: Parameters<typeof sendEmail>[0] = {
-                to: environment.DEPARTMENT_EMAIL,
-                bcc: recipients,
-                inReplyTo: latestSemester.form.emailMsgId!,
-                subject:
-                    "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
-                html: latestSemester.form.emailBody!,
-            }
+            to: environment.DEPARTMENT_EMAIL,
+            bcc: recipients,
+            inReplyTo: latestSemester.form.emailMsgId!,
+            subject:
+                "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
+            text: "This is a reminder to the previous mail regarding submission of course preferences for the upcoming semester. Please submit your preferences before the deadline.",
+        };
 
         await createTodos(todos);
         await createNotifications(notifications);
-        await sendEmail(email);
+        await sendEmail(email, true);
 
         res.send("Reminder sent successfully");
     })

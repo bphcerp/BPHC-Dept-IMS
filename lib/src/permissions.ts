@@ -177,6 +177,8 @@ export const allPermissions = {
     "allocation:write": "Have read and write access to the allocation module",
     "allocation:view": "Have readonly access to the allocation module",
 
+    "allocation:summary:view": "View the summary of allocations",
+
     "allocation:preference:write":
         "Create or Modify a new form for allocation data retrieval",
     "allocation:form:publish": "Publish a form for allocation data retrieval",
@@ -503,7 +505,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/allocation/semester/create": "allocation:semesters:write",
     "/allocation/semester/get": "allocation:semesters:view",
-    "/allocation/semester/getLatest": "allocation:semesters:view",
     "/allocation/semester/delete": "allocation:semesters:write",
     "/allocation/semester/update": "allocation:semesters:write",
     "/allocation/semester/linkForm": "allocation:semesters:write",
@@ -516,11 +517,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
-    "/allocation/builder/form/get": "allocation:builder:form:view",
     "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":
         "allocation:form:response:submit",
     "/allocation/builder/form/response/view": "allocation:form:response:view",
-    "/allocation/builder/form/response/get": "allocation:form:response:view",
+    "/allocation/builder/form/response/getAll": "allocation:form:response:view",
 } as const;

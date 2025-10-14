@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
     "/",
-    checkAccess("allocation:courses:view"),
+    checkAccess("allocation:summary:view"),
     asyncHandler(async (req, res, next) => {
         let { semesterId } = req.query;
 

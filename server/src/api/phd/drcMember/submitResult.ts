@@ -47,7 +47,10 @@ export default router.post(
                 // Update student's main profile
                 await tx
                     .update(phd)
-                    .set({ hasPassedQe: true })
+                    .set({
+                        hasPassedQe: true,
+                        currentStatus: "QE Passed, Awaiting Proposal",
+                    })
                     .where(eq(phd.email, application.studentEmail));
 
                 // Create a To-do for the DRC member to set the qualification date
