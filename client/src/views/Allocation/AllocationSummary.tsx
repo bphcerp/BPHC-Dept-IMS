@@ -142,12 +142,9 @@ export const AllocationSummary = () => {
                       to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
                     >
                       <Button variant="link" className="text-lg font-semibold">
-                        {data.course.name ?? "Unnamed Course"}
+                        {data.courseCode} - {data.course.name ?? "Unnamed Course"}
                       </Button>
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {data.courseCode}
-                    </p>
                   </div>
                 </div>
 
@@ -181,7 +178,7 @@ export const AllocationSummary = () => {
                                 {(inst.name && inst.type === 'faculty' && checkAccess('allocation:write')) ? <Button onClick={() =>{
                                   setSelectedInstructorEmail(inst.email)
                                   setIsAssignInstructorDialogOpen(true)
-                                }} variant="link" className="p-0 m-0">{inst.name}</Button> : inst.name ?? `Unnamed Instructor - ${inst.email}`}
+                                }} variant="link" className="p-0 m-0 h-fit">{inst.name}</Button> : inst.name ?? `Unnamed Instructor - ${inst.email}`}
                                 {showTeachingLoad && (
                                   <span>
                                     {" "}

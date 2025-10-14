@@ -45,11 +45,13 @@ export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,
+  preview = false,
   form,
 }: {
   field: AllocationClientField;
   create: boolean;
   courses: Course[];
+  preview?: boolean;
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
   const { data: allCourses } = useQuery(["courses"], fetchCourses);
@@ -121,7 +123,6 @@ export const FormTemplateFieldComponent = ({
                       }}
                       render={({ field: controllerField }) => (
                         <Select
-                          disabled={create}
                           required
                           onValueChange={(value) => {
                             controllerField.onChange(value);
@@ -132,33 +133,31 @@ export const FormTemplateFieldComponent = ({
                           <SelectTrigger {...controllerField}>
                             <SelectValue placeholder="Select a course..." />
                           </SelectTrigger>
-                          {!create &&
-                            (filteredCourses ? (
-                              <SelectContent>
-                                {filteredCourses
-                                  .filter(
-                                    (course) =>
-                                      !selectedCourses.includes(course.code) ||
-                                      course.code === controllerField.value
-                                  )
-                                  .map((course) => (
-                                    <SelectItem
-                                      key={course.code}
-                                      value={course.code}
-                                    >
-                                      {course.code} {course.name}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            ) : (
-                              <Skeleton className="h-full w-full" />
-                            ))}
+                          {filteredCourses ? (
+                            <SelectContent>
+                              {filteredCourses
+                                .filter(
+                                  (course) =>
+                                    !selectedCourses.includes(course.code) ||
+                                    course.code === controllerField.value
+                                )
+                                .map((course) => (
+                                  <SelectItem
+                                    key={course.code}
+                                    value={course.code}
+                                  >
+                                    {course.code} {course.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          ) : (
+                            <Skeleton className="h-full w-full" />
+                          )}
                         </Select>
                       )}
                     />
                   ) : (
                     <Select
-                      disabled
                       value={
                         courses.find(
                           (c) => c.code === field.preferences?.[i]?.courseCode
@@ -169,7 +168,7 @@ export const FormTemplateFieldComponent = ({
                         <SelectValue placeholder="Select a course..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map((course) => (
+                        {!!filteredCourses && filteredCourses.map((course) => (
                           <SelectItem key={course.code} value={course.code}>
                             {course.name}
                           </SelectItem>
@@ -206,7 +205,7 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
-          {(!form || create) && (
+          {(!form || create) && !preview && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
               {field.preferenceType === "LECTURE" ? (
                 <span className="text-destructive">

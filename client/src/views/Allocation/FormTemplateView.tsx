@@ -84,7 +84,7 @@ const FormTemplateView = ({ create = true }) => {
     const fetchGroups = async () => {
       try {
         const response = await api.get<CourseGroupMinimal[]>(
-          "/allocation/groups/get"
+          "/allocation/course-groups/get"
         );
         setGroups(response.data);
       } catch (error) {
@@ -104,6 +104,7 @@ const FormTemplateView = ({ create = true }) => {
         type: "PREFERENCE",
         preferenceCount: 3,
         preferenceType: "LECTURE",
+        groupId: null,
       },
     ]);
   };
@@ -285,7 +286,7 @@ const FormTemplateView = ({ create = true }) => {
                   <div className="space-y-4">
                     <Separator />
                     <Label className="text-sm font-medium">Configuration</Label>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <div className="space-y-2">
                         <Label
                           htmlFor={`pref-count-${field.id}`}
@@ -309,7 +310,7 @@ const FormTemplateView = ({ create = true }) => {
                           className="w-24"
                         />
                       </div>
-                      <div className="flex flex-col space-y-4">
+                      <div className="flex flex-col col-span-2 space-y-4">
                         <div className="space-y-2">
                           <Label className="text-xs">
                             This is preference for
@@ -355,39 +356,40 @@ const FormTemplateView = ({ create = true }) => {
                           </AlertDescription>
                         </Alert>
                       </div>
-                    </div>
-                  </div>
-                )}
-                {create && field.type === "PREFERENCE" && (
-                  <div className="space-y-4">
-                    <Separator />
-                    <Label className="text-sm font-medium">Group Setting</Label>
-                    <div className="space-y-2">
-                      <Label className="text-xs">
-                        Select a group for this preference field
-                      </Label>
-                      <Select
-                        value={field.groupId || ""}
-                        onValueChange={(value) => {
-                          updateField(field.id, "groupId", value);
-                          updateField(
-                            field.id,
-                            "group",
-                            groups.find((g) => g.id === value)
-                          );
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a group" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {groups.map((group) => (
-                            <SelectItem key={group.id} value={group.id}>
-                              {group.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {create && field.type === "PREFERENCE" && (
+                        <div className="space-y-4">
+                          <Label className="text-sm font-medium">
+                            Group Setting
+                          </Label>
+                          <div className="space-y-2">
+                            <Label className="text-xs">
+                              Select a group for this preference field
+                            </Label>
+                            <Select
+                              value={field.groupId || ""}
+                              onValueChange={(value) => {
+                                updateField(field.id, "groupId", value);
+                                updateField(
+                                  field.id,
+                                  "group",
+                                  groups.find((g) => g.id === value)
+                                );
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a group" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {groups.map((group) => (
+                                  <SelectItem key={group.id} value={group.id}>
+                                    {group.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

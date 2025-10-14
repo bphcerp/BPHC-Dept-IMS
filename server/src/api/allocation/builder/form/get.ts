@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get(
     "/:id",
-    checkAccess(),
+    checkAccess("allocation:form:response:submit"),
     asyncHandler(async (req, res, next) => {
         const { id } = req.params;
         const { checkUserResponse } = req.query;
@@ -15,12 +15,14 @@ router.get(
         const form = await db.query.allocationForm.findFirst({
             columns: {
                 templateId: false,
-                emailBody: false,
             },
             with: {
                 template: {
                     with: {
                         fields: {
+                            with: {
+                                group: true
+                            },
                             where: req.user?.userType === 'phd' ? (field, { not, and, eq } ) => and(not(eq(field.preferenceType, 'LECTURE')), not(eq(field.type, 'TEACHING_ALLOCATION'))) : undefined
                         },
                     },

@@ -58,7 +58,6 @@ export const getLatestSemester = async () => {
 
 router.get(
     "/",
-    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const { minimal, stats } = getLatestSemesterQuerySchema.parse(
             req.query
