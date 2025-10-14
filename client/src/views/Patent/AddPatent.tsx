@@ -54,6 +54,49 @@ function extractCampusFromEmail(email: string | undefined): string {
   return "";
 }
 
+function getFY(date: string): string {
+  if (!date) return "";
+
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+
+  // FY starts in April
+  if (month >= 4) {
+    return `${year}-${(year + 1).toString().slice(-2)}`;
+  } else {
+    return `${year - 1}-${year.toString().slice(-2)}`;
+  }
+}
+
+function getAY(date: string): string {
+  if (!date) return "";
+
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  
+  // AY starts in August
+  if (month >= 8) {
+    return `${year}-${(year + 1).toString().slice(-2)}`;
+  } else {
+    return `${year - 1}-${year.toString().slice(-2)}`;
+  }
+}
+
+function getCY(date: string): string {
+  if (!date) return "";
+
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+
+  return `${d.getFullYear()}`;
+}
+
 function debounce<T extends unknown[]>(fn: (...args: T) => void, delay: number) {
   let timeoutId: NodeJS.Timeout;
   return (...args: T) => {
@@ -298,8 +341,23 @@ export default function AddPatent() {
   }, [formData.inventors.length]);
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
+    const newFilingFY = field === "filingDate" && typeof value == "string" ? getFY(value) : null;
+    const newFilingAY = field === "filingDate" && typeof value == "string" ? getAY(value) : null;
+    const applicationPublicationFY = field === "applicationPublicationDate" && typeof value == "string" ? getFY(value) : null;
+    const applicationPublicationAY = field === "applicationPublicationDate" && typeof value == "string" ? getAY(value) : null;
+    const grantedFY = field === "grantedDate" && typeof value == "string" ? getFY(value) : null;
+    const grantedAY = field === "grantedDate" && typeof value == "string" ? getAY(value) : null;
+    const grantedCY = field === "grantedDate" && typeof value == "string" ? getCY(value) : null;
+
     setFormData(prev => ({
       ...prev,
+      filingFY: newFilingFY || prev.filingFY,
+      filingAY: newFilingAY || prev.filingAY,
+      publishedFY: applicationPublicationFY || prev.publishedFY,
+      publishedAY: applicationPublicationAY || prev.publishedAY,
+      grantedFY: grantedFY || prev.grantedFY,
+      grantedAY: grantedAY || prev.grantedAY,
+      grantedCY: grantedCY || prev.grantedCY,
       [field]: value,
     }));
   };
