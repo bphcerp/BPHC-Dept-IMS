@@ -282,10 +282,10 @@ export const phdProposals = pgTable(
         active: boolean("active").generatedAlwaysAs(
             sql.raw(
                 `CASE WHEN status IN(` +
-                phdSchemas.inactivePhdProposalStatuses
-                    .map((s) => `'${s}'`)
-                    .join(", ") +
-                `)THEN NULL ELSE true END`
+                    phdSchemas.inactivePhdProposalStatuses
+                        .map((s) => `'${s}'`)
+                        .join(", ") +
+                    `)THEN NULL ELSE true END`
             )
         ),
     },
@@ -411,7 +411,11 @@ export const phdSeminarSlots = pgTable(
     (table) => [unique().on(table.startTime, table.venue)]
 );
 
-export const gradePhaseEnum = pgEnum("grade_phase_enum", ["draft", "midsem", "endsem"]);
+export const gradePhaseEnum = pgEnum("grade_phase_enum", [
+    "draft",
+    "midsem",
+    "endsem",
+]);
 
 export const instructorSupervisorGrades = pgTable(
     "instructor_supervisor_grades",
@@ -456,44 +460,5 @@ export const instructorSupervisorGrades = pgTable(
         index().on(table.instructorSupervisorEmail),
         index().on(table.role),
         index().on(table.phase),
-    ]
-);
-
-export const phdSupervisorGrades = pgTable(
-    "phd_supervisor_grades",
-    {
-        id: serial("id").primaryKey(),
-        studentEmail: text("student_email")
-            .notNull()
-            .references(() => phd.email, { onDelete: "cascade" }),
-        supervisorEmail: text("supervisor_email")
-            .notNull()
-            .references(() => faculty.email, { onDelete: "cascade" }),
-        courseName: text("course_name").notNull(),
-        midsemGrade: text("midsem_grade"),
-        compreGrade: text("compre_grade"),
-        midsemMarks: integer("midsem_marks"),
-        endsemMarks: integer("endsem_marks"),
-        midsemDocFileId: integer("midsem_doc_file_id").references(
-            () => files.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        endsemDocFileId: integer("endsem_doc_file_id").references(
-            () => files.id,
-            {
-                onDelete: "set null",
-            }
-        ),
-        updatedAt: timestamp("updated_at", { withTimezone: true })
-            .defaultNow()
-            .$onUpdate(() => new Date())
-            .notNull(),
-    },
-    (table) => [
-        unique().on(table.studentEmail, table.courseName),
-        index().on(table.studentEmail),
-        index().on(table.supervisorEmail),
     ]
 );
