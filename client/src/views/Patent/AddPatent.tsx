@@ -43,6 +43,15 @@ type FacultyResponse = {
 type Suggestion = {
   email: string;
   name: string;
+  department?: string;
+}
+
+function extractCampusFromEmail(email: string | undefined): string {
+  if (!email) return "";
+  if (email.includes("@hyderabad.bits-pilani.ac.in")) return "Hyderabad";
+  if (email.includes("@goa.bits-pilani.ac.in")) return "Goa";
+  if (email.includes("@pilani.bits-pilani.ac.in")) return "Pilani";
+  return "";
 }
 
 function debounce<T extends unknown[]>(fn: (...args: T) => void, delay: number) {
@@ -79,8 +88,6 @@ function getFieldDisplayName(fieldPath: string): string {
 
   return fieldMap[fieldPath] || fieldPath;
 }
-
-
 
 export default function AddPatent() {
   const { authState, checkAccess } = useAuth();
@@ -133,6 +140,8 @@ export default function AddPatent() {
   const setInputs = (idx: number, suggestion: Suggestion) => {
     setFormData((prev) => ({
       ...prev,
+      department: suggestion.department ?? "",
+      campus: extractCampusFromEmail(suggestion.email) || "",
       inventors: prev.inventors.map((inv, j) =>
         idx === j
           ? {
@@ -163,6 +172,8 @@ export default function AddPatent() {
       if (data.success && data.faculty) {
         setFormData(prev => ({
           ...prev,
+          department: data.faculty?.department ?? "",
+          campus: extractCampusFromEmail(data.faculty?.email) || "",
           inventors: prev.inventors.map((inv, idx) => 
             idx === index ? {
               ...inv,
@@ -222,6 +233,8 @@ export default function AddPatent() {
       if (data.success && data.faculty) {
         setFormData(prev => ({
           ...prev,
+          department: data.faculty?.department ?? "",
+          campus: extractCampusFromEmail(data.faculty?.email) || "",
           inventors: prev.inventors.map((inv, idx) => 
             idx === index ? {
               ...inv,
