@@ -17,6 +17,7 @@ import {
     AllocationFormResponse,
     AllocationFormTemplatePreferenceFieldType,
 } from "./allocationFormBuilder.ts";
+import { courseGroupSchema, courseGroupMappingSchema } from "../schemas/Allocation.js";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -39,6 +40,7 @@ export type Course = NewCourse & {
     fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
+    groupId? : string | null
 };
 
 export type SemesterAllocationStatusEnumType =
@@ -252,3 +254,6 @@ export type InstructorAllocationDetails = Record<
         };
     }[]
 >;
+
+export type CourseGroup = z.infer<typeof courseGroupSchema>;
+export type CourseGroupMapping = z.infer<typeof courseGroupMappingSchema>;

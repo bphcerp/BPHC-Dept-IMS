@@ -151,3 +151,14 @@ export const getLatestSemesterQuerySchema = z.object({
 export const getInstructorDetailsQuerySchema = z.object({
     email: z.string().email(),
 });
+
+export const courseGroupSchema = z.object({
+    id: z.string().uuid(),
+    name: z.string().nonempty(),
+});
+
+export const courseGroupMappingSchema = z.object({
+    id: z.string().uuid(),
+    groupId: z.string().uuid(),
+    courseCode: z.string().nonempty(),
+});

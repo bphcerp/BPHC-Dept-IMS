@@ -12,11 +12,7 @@ router.get(
         const result = await db.query.course.findMany({
             where: (course, { eq }) =>
                 unmarked ? undefined : eq(course.markedForAllocation, true),
-            orderBy: (course, { desc, asc }) => [
-                asc(course.code),
-                desc(course.offeredTo),
-                asc(course.offeredAs),
-            ],
+            orderBy: (course, { desc, asc }) => [asc(course.code)],
         });
 
         res.status(200).json(result);

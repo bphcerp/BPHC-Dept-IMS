@@ -8,6 +8,7 @@ import {
 
 import { users } from "./admin.ts";
 import { course, semester } from "./allocation.ts";
+import { allocationCourseGroup, allocationCourseGroupMapping } from "./allocation.ts";
 
 export const allocationFormTemplateRelations = relations(
     allocationFormTemplate,
@@ -69,5 +70,24 @@ export const allocationFormTemplateFieldRelations = relations(
             fields: [allocationFormTemplateField.templateId],
             references: [allocationFormTemplate.id],
         }),
+        group: one(allocationCourseGroup, {
+            fields: [allocationFormTemplateField.groupId],
+            references: [allocationCourseGroup.id],
+        }),
     })
 );
+
+export const courseGroupRelations = relations(allocationCourseGroup, ({ many }) => ({
+    mappings: many(allocationCourseGroupMapping),
+}));
+
+export const courseGroupMappingRelations = relations(allocationCourseGroupMapping, ({ one }) => ({
+    group: one(allocationCourseGroup, {
+        fields: [allocationCourseGroupMapping.groupId],
+        references: [allocationCourseGroup.id],
+    }),
+    course: one(course, {
+        fields: [allocationCourseGroupMapping.courseCode],
+        references: [course.code],
+    }),
+}));

@@ -2,8 +2,6 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { faculty, phd } from "@/config/db/schema/admin.ts";
-import { eq } from "drizzle-orm";
 import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import assert from "assert";

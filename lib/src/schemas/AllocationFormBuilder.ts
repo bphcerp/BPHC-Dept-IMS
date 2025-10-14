@@ -32,6 +32,7 @@ export const allocationFormTemplateFieldSchema = z.object({
     preferenceCount: z.number().int().optional(),
     preferenceType: allocationFormTemplatePreferenceTypeEnum.optional(),
     type: allocationFormTemplateFieldTypeEnum,
+    groupId: z.string().uuid().optional(),
 });
 
 export const updateAllocationFormTemplateFieldSchema =

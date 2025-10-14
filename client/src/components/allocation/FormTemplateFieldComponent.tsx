@@ -15,6 +15,9 @@ import { Checkbox } from "../ui/checkbox";
 import { Course } from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { Skeleton } from "../ui/skeleton";
 
 export type AllocationClientField = NewAllocationFormTemplateField & {
   id: string;
@@ -29,6 +32,11 @@ const formatPreferenceType = (
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
+const fetchCourses = async () => {
+  const response = await api.get<Course[]>("/allocation/course/get");
+  return response.data;
+};
+
 export const FormTemplateFieldComponent = ({
   field,
   create,
@@ -40,6 +48,12 @@ export const FormTemplateFieldComponent = ({
   courses: Course[];
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
+  const { data: allCourses } = useQuery(["courses"], fetchCourses);
+
+  const filteredCourses = field.groupId ? allCourses?.filter(
+    (course: Course) => course.groupId === field.groupId
+  ) : allCourses
+
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   const handleCourseChange = (courseCode: string, index: number) => {
@@ -115,8 +129,8 @@ export const FormTemplateFieldComponent = ({
                             <SelectValue placeholder="Select a course..." />
                           </SelectTrigger>
                           {!create && (
-                            <SelectContent>
-                              {courses
+                            filteredCourses ? <SelectContent>
+                              {filteredCourses
                                 .filter(
                                   (course) =>
                                     !selectedCourses.includes(course.code) ||
@@ -130,7 +144,7 @@ export const FormTemplateFieldComponent = ({
                                     {course.code} {course.name}
                                   </SelectItem>
                                 ))}
-                            </SelectContent>
+                            </SelectContent> : <Skeleton className="w-full h-full" />
                           )}
                         </Select>
                       )}
