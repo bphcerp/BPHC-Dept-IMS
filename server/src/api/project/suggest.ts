@@ -34,9 +34,9 @@ router.get(
             limit: 5,
         });
         if (searchUsers.length <= 0) {
-            res.status(400).json({
+            res.status(404).json({
                 success: false,
-                error: "Email is required",
+                error: "No users found",
             });
             return;
         }
@@ -88,9 +88,9 @@ router.get(
             limit: 5,
         });
         if (searchUsers.length <= 0) {
-            res.status(400).json({
+            res.status(404).json({
                 success: false,
-                error: "Name is required",
+                error: "No users found",
             });
             return;
         }
