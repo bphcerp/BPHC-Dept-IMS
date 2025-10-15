@@ -53,6 +53,7 @@ export const AllocationOverview = () => {
   const queryClient = useQueryClient();
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [emailPreviewed, setEmailPreviewed] = useState(false);
   const editorTheme = useTheme();
 
   const { data: latestSemester } = useQuery({
@@ -133,7 +134,7 @@ export const AllocationOverview = () => {
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
         allocationDeadline,
         emailBody,
-        isPublishedToRoleId
+        isPublishedToRoleId,
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["semester"] });
@@ -180,17 +181,18 @@ export const AllocationOverview = () => {
     },
   });
 
-  const getEmailBody = () => `Dear Professor/Mr./Ms.,
+  const getEmailBody = (allocationDeadline: string) => `Dear Professor/Mr./Ms.,
 
 Please fill your course options for the ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}. Ignore this email if you have already filled your preferences.
 
 You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(
-    emailFormState.values.allocationDeadline
-  ).toLocaleString("en-IN", {
-    timeZoneName: "short",
-  })}**
+**PLEASE FILL THE FORM BEFORE ${new Date(allocationDeadline).toLocaleString(
+    "en-IN",
+    {
+      timeZoneName: "short",
+    }
+  )}**
 
 <hr></hr>
 
@@ -258,8 +260,14 @@ Hyderabad Campus<span>
                   <DialogHeader>
                     <DialogTitle>Publish Allocation Form</DialogTitle>
                     <DialogDescription className="flex flex-col space-y-2">
-                      <p>Set a deadline for the allocation form submission and select the role to which the form should be published.</p>
-                      <p>An email will be sent to all the users with the role selected.</p>
+                      <p>
+                        Set a deadline for the allocation form submission and
+                        select the role to which the form should be published.
+                      </p>
+                      <p>
+                        An email will be sent to all the users with the role
+                        selected.
+                      </p>
                     </DialogDescription>
                   </DialogHeader>
                   <form
@@ -290,6 +298,11 @@ Hyderabad Campus<span>
                                 .slice(0, 16)}
                               onChange={(e) => {
                                 field.handleChange(e.target.value);
+                                setEmailPreviewed(false);
+                                setPublishFormFieldValue(
+                                  "emailBody",
+                                  getEmailBody(e.target.value)
+                                );
                               }}
                               type="datetime-local"
                             />
@@ -309,7 +322,10 @@ Hyderabad Campus<span>
                               </SelectTrigger>
                               <SelectContent>
                                 {roles?.map((role) => (
-                                  <SelectItem key={role.id} value={role.id.toString()}>
+                                  <SelectItem
+                                    key={role.id}
+                                    value={role.id.toString()}
+                                  >
                                     {role.roleName}
                                   </SelectItem>
                                 ))}
@@ -319,72 +335,63 @@ Hyderabad Campus<span>
                         )}
                       </PublishFormField>
                     </div>
-                    <PublishFormSubscribe
-                      selector={(state) => [state.values.allocationDeadline]}
+                    <UIDialog
+                      open={previewOpen}
+                      modal
+                      onOpenChange={(open) => {
+                        setPreviewOpen(open);
+                      }}
                     >
-                      {() => {
-                        setPublishFormFieldValue("emailBody", getEmailBody());
-                        return (
-                          <UIDialog
-                            open={previewOpen}
-                            modal
-                            onOpenChange={(open) => {
-                              setPreviewOpen(open);
-                            }}
-                          >
-                            <UIDialogContent className="w-screen max-w-full">
-                              <UIDialogHeader>
-                                <UIDialogTitle>Edit Email</UIDialogTitle>
-                              </UIDialogHeader>
-                              <div
-                                className="py-2"
-                                data-color-mode={editorTheme}
-                              >
-                                <PublishFormField name="emailBody">
-                                  {(field) => (
-                                    <div className="relative h-full">
-                                      <Suspense
-                                        fallback={
-                                          <div className="w-full text-center">
-                                            Loading editor...
-                                          </div>
-                                        }
-                                      >
-                                        <MDEditor
-                                          value={field.state.value}
-                                          onChange={(val) =>
-                                            field.handleChange(val ?? "")
-                                          }
-                                          height={400}
-                                          preview="live"
-                                          commandsFilter={(command) =>
-                                            command.name !== "fullscreen"
-                                              ? command
-                                              : false
-                                          }
-                                        />
-                                      </Suspense>
+                      <UIDialogContent className="w-screen max-w-full">
+                        <UIDialogHeader>
+                          <UIDialogTitle>Edit Email</UIDialogTitle>
+                        </UIDialogHeader>
+                        <div className="py-2" data-color-mode={editorTheme}>
+                          <PublishFormField name="emailBody">
+                            {(field) => (
+                              <div className="relative h-full">
+                                <Suspense
+                                  fallback={
+                                    <div className="w-full text-center">
+                                      Loading editor...
                                     </div>
-                                  )}
-                                </PublishFormField>
+                                  }
+                                >
+                                  <MDEditor
+                                    value={field.state.value}
+                                    onChange={(val) =>
+                                      field.handleChange(val ?? "")
+                                    }
+                                    height={400}
+                                    preview="live"
+                                    commandsFilter={(command) =>
+                                      command.name !== "fullscreen"
+                                        ? command
+                                        : false
+                                    }
+                                  />
+                                </Suspense>
                               </div>
-                              <Button
-                                className="mt-2"
-                                onClick={() => setPreviewOpen(false)}
-                              >
-                                Done
-                              </Button>
-                              <style>
-                                {`
+                            )}
+                          </PublishFormField>
+                        </div>
+                        <Button
+                          className="mt-2"
+                          onClick={() => {
+                            setPreviewOpen(false);
+                            setEmailPreviewed(true);
+                          }}
+                        >
+                          Done
+                        </Button>
+                        <style>
+                          {`
                       .wmde-markdown ul { list-style-type: disc; margin-left: 1.5rem; }
                       .wmde-markdown ol { list-style-type: decimal; margin-left: 1.5rem; }
                     `}
-                              </style>
-                            </UIDialogContent>
-                          </UIDialog>
-                        );
-                      }}
-                    </PublishFormSubscribe>
+                        </style>
+                      </UIDialogContent>
+                    </UIDialog>
                   </form>
                   <DialogFooter>
                     <PublishFormSubscribe
@@ -419,7 +426,8 @@ Hyderabad Campus<span>
                               !allocationDeadline ||
                               !isPublishedToRoleId ||
                               !emailFormState.values.emailBody ||
-                              publishFormMutation.isLoading
+                              publishFormMutation.isLoading ||
+                              !emailPreviewed
                             }
                           >
                             {publishFormMutation.isLoading
