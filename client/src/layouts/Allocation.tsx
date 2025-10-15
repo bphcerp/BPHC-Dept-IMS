@@ -9,7 +9,6 @@ import {
   FrameIcon,
   SendIcon,
   TableOfContentsIcon,
-  UserRoundIcon,
   GroupIcon,
   Grid3X3Icon,
 } from "lucide-react";

@@ -29,7 +29,7 @@ export const AllocationSummary = () => {
   const [searchParams] = useSearchParams();
   const semesterId = searchParams.get("semesterId");
 
-  const { checkAccess, checkAccessAnyOne } = useAuth();
+  const { checkAccess } = useAuth();
 
   const queryClient = useQueryClient();
 
