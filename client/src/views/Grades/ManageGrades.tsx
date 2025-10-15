@@ -898,7 +898,6 @@ export default function ManageGrades() {
                             {header.name}
                           </TableHead>
                         ))}
-                        <TableHead className="min-w-[120px]">Topic</TableHead>
                         <TableHead className="min-w-[140px]">
                           Midsem Report
                         </TableHead>
@@ -1151,18 +1150,6 @@ export default function ManageGrades() {
                                   })()}
                                 </TableCell>
                               ))}
-                              <TableCell>
-                                <div className="font-medium">
-                                  {(() => {
-                                    const topic = (
-                                      student as Record<string, unknown>
-                                    )["_topic"];
-                                    return typeof topic === "string"
-                                      ? topic
-                                      : "—";
-                                  })()}
-                                </div>
-                              </TableCell>
                               <TableCell>
                                 {(student as Record<string, unknown>)[
                                   "_midsemDocFileId"
