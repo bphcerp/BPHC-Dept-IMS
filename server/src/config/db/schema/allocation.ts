@@ -90,7 +90,7 @@ export const allocationSectionInstructors = pgTable(
 export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),
     name: text("name").notNull(),
-    timetableCourseId: text("td_course_id"),
+    timetableCourseId: integer("td_course_id"),
 
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),

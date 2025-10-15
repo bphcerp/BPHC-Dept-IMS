@@ -48,7 +48,7 @@ export const courseSchema = z.object({
     offeredAlsoBy: z.array(z.string()).optional(),
     totalUnits: z.number().int().min(1),
     markedForAllocation: z.boolean(),
-    timetableCourseId: z.string().optional(),
+    timetableCourseId: z.number().optional(),
 });
 
 export const courseMarkSchema = z.object({

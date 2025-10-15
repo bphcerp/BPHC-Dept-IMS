@@ -18,6 +18,10 @@ const columns: ColumnDef<Course>[] = [
       filterType: "search",
     },
   },
+  {
+    accessorKey: "timetableCourseId",
+    header: "TD ID",
+  },
 
   {
     accessorKey: "name",
@@ -52,7 +56,7 @@ const columns: ColumnDef<Course>[] = [
   },
   {
     accessorKey: "offeredAlsoBy",
-    header: "Type",
+    header: "Offered Also By",
   },
   {
     accessorFn: (row) => (row.fetchedFromTTD ? "Yes" : "No"),

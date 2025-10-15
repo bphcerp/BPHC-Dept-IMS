@@ -505,6 +505,13 @@
       "when": 1760532876742,
       "tag": "0071_thankful_jubilee",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1760534909966,
+      "tag": "0072_confused_king_cobra",
+      "breakpoints": true
     }
   ]
 }
