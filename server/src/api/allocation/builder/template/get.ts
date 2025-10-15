@@ -15,7 +15,8 @@ router.get(
             with: {
                 fields: {
                     with: {
-                        group: true
+                        group: true,
+                        viewableByRole: true
                     }
                 },
                 createdBy: {

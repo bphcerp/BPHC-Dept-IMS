@@ -903,6 +903,10 @@ const Routing = () => {
                     path="forms/:id/submit"
                     element={<FormResponse preview={false} />}
                   />
+                  <Route
+                    path="submit"
+                    element={<FormResponse preview={false} latest={true} />}
+                  />
                 </>
               )}
 

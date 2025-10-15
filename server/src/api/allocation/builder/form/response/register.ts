@@ -47,9 +47,15 @@ router.post(
                 )
             );
         }
+        
+        const formSemester = await db.query.semester.findFirst({
+            where: (s, { eq }) => eq(s.formId, form.id),
+        });
 
         if (
             form.allocationDeadline &&
+            formSemester &&
+            formSemester.allocationStatus !== "formCollection" &&
             Date.now() > new Date(form.allocationDeadline).getTime()
         ) {
             return next(

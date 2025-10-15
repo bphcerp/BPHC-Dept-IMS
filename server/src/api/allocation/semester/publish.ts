@@ -58,7 +58,7 @@ router.post(
                 title: "Course Preference Submission",
                 description: `Submit your course preferences for the upcoming semester`,
                 assignedTo: el,
-                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+                link: `/allocation/submit`,
                 completionEvent: `preference submission by ${el}`,
                 deadline: allocationDeadline,
                 createdBy: req.user!.email,
@@ -71,7 +71,7 @@ router.post(
                 title: "Course Preference Submission",
                 userEmail: el,
                 content: `Submit your course preferences for the upcoming semester`,
-                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+                link: `/allocation/submit`,
             }));
 
         const email: Parameters<typeof sendEmail>[0] = {

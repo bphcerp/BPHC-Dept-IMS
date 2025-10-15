@@ -64,6 +64,7 @@ export const allocationSection = pgTable(
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
         createdAt: timestamp("created_at").notNull().defaultNow(),
+        timetableRoomId: text("td_room_id")
     },
     (table) => [index().on(table.masterId)]
 );
@@ -89,6 +90,7 @@ export const allocationSectionInstructors = pgTable(
 export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),
     name: text("name").notNull(),
+    timetableCourseId: text("td_course_id"),
 
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),

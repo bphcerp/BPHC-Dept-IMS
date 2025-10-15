@@ -56,11 +56,11 @@ import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
 
-const HEADER_COLOR = "#E8E8F0"
-const ROW_COLOR_ODD = "#F7F7FB"
-const ROW_COLOR_EVEN = "white"
+const HEADER_COLOR = "#E8E8F0";
+const ROW_COLOR_ODD = "#F7F7FB";
+const ROW_COLOR_EVEN = "white";
 
-type BaseTableProps<T> =  {
+type BaseTableProps<T> = {
   data: T[];
   columns: ColumnDef<T>[];
   initialState?: InitialTableState;
@@ -69,20 +69,21 @@ type BaseTableProps<T> =  {
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
-  mainSearchColumn? : keyof T;
-}
+  mainSearchColumn?: keyof T;
+};
 
 type AltTableProps1<T> = {
-  exportFunction?: ((itemIds: (T[keyof T])[], columnsVisible: string[]) => void);
+  exportFunction?: (itemIds: T[keyof T][], columnsVisible: string[]) => void;
   idColumn: keyof T;
-}
+};
 
 type AltTableProps2 = {
   exportFunction?: never;
-  idColumn?: never
-}
+  idColumn?: never;
+};
 
-type DataTableProps<T> = BaseTableProps<T> & (AltTableProps1<T> | AltTableProps2  )
+type DataTableProps<T> = BaseTableProps<T> &
+  (AltTableProps1<T> | AltTableProps2);
 
 export type TableFilterType =
   | "dropdown"
@@ -150,9 +151,19 @@ export function DataTable<T>({
   }, []);
 
   useEffect(() => {
-    if (containerElementRef.current)
-      setAvailableWindowWidth(containerElementRef.current.offsetWidth);
-  }, [containerElementRef.current]);
+    const element = containerElementRef.current;
+    if (!element) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setAvailableWindowWidth(entry.contentRect.width);
+      }
+    });
+
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const initialColumnFilters = useMemo(() => {
     const filters: ColumnFiltersState = [];
@@ -493,17 +504,20 @@ export function DataTable<T>({
     setSearchParams(params);
 
     // Reset table state
-    table.reset()
+    table.reset();
   };
 
-  const camelToTitle = (str: string) => str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
+  const camelToTitle = (str: string) =>
+    str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 
   const handleExport = (selected: boolean) => {
     // Export function just returns the ids of the rows and visible columns, data fetching and excel
     // generation is handled by the backend
-    if(!idColumn) return;
+    if (!idColumn) return;
 
-    const rowModel = selected ? table.getSelectedRowModel() : table.getPrePaginationRowModel();
+    const rowModel = selected
+      ? table.getSelectedRowModel()
+      : table.getPrePaginationRowModel();
     const itemIds = rowModel.rows.map((row) => row.original[idColumn]);
     const columnsVisible = table
       .getVisibleFlatColumns()
@@ -637,7 +651,7 @@ export function DataTable<T>({
               >
                 {/* Sticky first column (checkbox for select all) */}
                 <TableHead
-                  className="z-[3] sticky left-0 w-2"
+                  className="sticky left-0 z-[3] w-2"
                   style={{ backgroundColor: HEADER_COLOR }}
                 >
                   <Checkbox
@@ -660,7 +674,10 @@ export function DataTable<T>({
                     id={header.column.id}
                     onClick={header.column.getToggleSortingHandler()}
                     className={`${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
-                    style={{ ...getCommonPinningStyles(header.column), backgroundColor: HEADER_COLOR }}
+                    style={{
+                      ...getCommonPinningStyles(header.column),
+                      backgroundColor: HEADER_COLOR,
+                    }}
                   >
                     <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
                       <div className="flex space-x-2">

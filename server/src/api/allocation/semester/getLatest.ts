@@ -41,6 +41,11 @@ export const getLatestSemester = async () => {
                     responses: {
                         with: {
                             submittedBy: {
+                                with: {
+                                    faculty: { columns: { name: true } },
+                                    phd: { columns: { name: true } },
+                                    staff: { columns: { name: true } },
+                                },
                                 columns: {
                                     name: true,
                                     email: true,
@@ -99,6 +104,23 @@ router.get(
                         if (!email || seenEmails.has(email)) return false;
                         seenEmails.add(email);
                         return true;
+                    }).map((response) => {
+                        if (response.submittedBy) {
+                            if (response.submittedBy.type === "faculty") {
+                                response.submittedBy.name =
+                                    response.submittedBy.faculty?.name ||
+                                    response.submittedBy.name;
+                            } else if (response.submittedBy.type === "phd") {
+                                response.submittedBy.name =
+                                    response.submittedBy.phd?.name ||
+                                    response.submittedBy.name;
+                            } else if (response.submittedBy.type === "staff") {
+                                response.submittedBy.name =
+                                    response.submittedBy.staff?.name ||
+                                    response.submittedBy.name;
+                            }
+                        }
+                        return response;
                     });
 
                 if (stats) {

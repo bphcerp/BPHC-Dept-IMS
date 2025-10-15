@@ -118,10 +118,10 @@ const FormTemplateView = ({ create = true }) => {
         preferenceType: "LECTURE",
         groupId: null,
         group: null,
-        viewableByRole: null,
+        viewableByRoleId: null,
       },
     ]);
-  }
+  };
 
   const updateField = (
     id: string,
@@ -296,80 +296,13 @@ const FormTemplateView = ({ create = true }) => {
                   create={create}
                   courses={courses}
                 />
-                {create && field.type === "PREFERENCE" && (
+                {create && (
                   <div className="space-y-4">
-                    <Separator />
-                    <Label className="text-sm font-medium">Configuration</Label>
+                    <Separator className="my-2" />
+                    <Label className="text-md font-semibold">
+                      Configuration
+                    </Label>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor={`pref-count-${field.id}`}
-                          className="text-xs"
-                        >
-                          Number of Preferences
-                        </Label>
-                        <Input
-                          id={`pref-count-${field.id}`}
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={field.preferenceCount}
-                          onChange={(e) =>
-                            updateField(
-                              field.id,
-                              "preferenceCount",
-                              parseInt(e.target.value, 10) || 1
-                            )
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      <div className="flex flex-col col-span-2 space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-xs">
-                            This is preference for
-                          </Label>
-                          <RadioGroup
-                            value={field.preferenceType}
-                            onValueChange={(
-                              value: AllocationFormTemplatePreferenceFieldType
-                            ) => updateField(field.id, "preferenceType", value)}
-                            className="flex items-center space-x-4"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="LECTURE"
-                                id={`r1-${field.id}`}
-                              />
-                              <Label htmlFor={`r1-${field.id}`}>Lecture</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="TUTORIAL"
-                                id={`r2-${field.id}`}
-                              />
-                              <Label htmlFor={`r2-${field.id}`}>Tutorial</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="PRACTICAL"
-                                id={`r3-${field.id}`}
-                              />
-                              <Label htmlFor={`r3-${field.id}`}>
-                                Practical
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        </div>
-                        <Alert variant="destructive">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            This setting is important. Mismatching this with the
-                            question label may lead to unexpected behavior
-                            during allocation.
-                          </AlertDescription>
-                        </Alert>
-                      </div>
                       {/* Viewable by role dropdown */}
                       <div className="space-y-4">
                         <Label className="text-sm font-medium">
@@ -380,9 +313,15 @@ const FormTemplateView = ({ create = true }) => {
                             Select a role that can view this field
                           </Label>
                           <Select
-                            value={field.viewableByRole || ""}
+                            value={field.viewableByRoleId?.toString() || ""}
                             onValueChange={(value) => {
-                              updateField(field.id, "viewableByRole", value);
+                              console.log(roles, value);
+                              updateField(field.id, "viewableByRoleId", value);
+                              updateField(
+                                field.id,
+                                "viewableByRole",
+                                roles?.find((r) => r.id === value)
+                              );
                             }}
                           >
                             <SelectTrigger>
@@ -390,7 +329,7 @@ const FormTemplateView = ({ create = true }) => {
                             </SelectTrigger>
                             <SelectContent>
                               {roles?.map((role) => (
-                                <SelectItem key={role.id} value={role.id}>
+                                <SelectItem key={role.id} value={role.id.toString()}>
                                   {role.roleName}
                                 </SelectItem>
                               ))}
@@ -398,39 +337,118 @@ const FormTemplateView = ({ create = true }) => {
                           </Select>
                         </div>
                       </div>
-                      {/* Group Setting dropdown */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-medium">
-                          Group Setting
-                        </Label>
-                        <div className="space-y-2">
-                          <Label className="text-xs">
-                            Select a group for this preference field
-                          </Label>
-                          <Select
-                            value={field.groupId || ""}
-                            onValueChange={(value) => {
-                              updateField(field.id, "groupId", value);
-                              updateField(
-                                field.id,
-                                "group",
-                                groups.find((g) => g.id === value)
-                              );
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a group" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {groups.map((group) => (
-                                <SelectItem key={group.id} value={group.id}>
-                                  {group.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
+                      {field.type === "PREFERENCE" && (
+                        <>
+                          <div className="flex flex-col items-center space-y-2">
+                            <Label
+                              htmlFor={`pref-count-${field.id}`}
+                              className="text-xs"
+                            >
+                              Number of Preferences
+                            </Label>
+                            <Input
+                              id={`pref-count-${field.id}`}
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={field.preferenceCount}
+                              onChange={(e) =>
+                                updateField(
+                                  field.id,
+                                  "preferenceCount",
+                                  parseInt(e.target.value, 10) || 1
+                                )
+                              }
+                              className="w-24"
+                            />
+                          </div>
+                          {/* Group Setting dropdown */}
+                          <div className="space-y-4">
+                            <Label className="text-sm font-medium">
+                              Group Setting
+                            </Label>
+                            <div className="space-y-2">
+                              <Label className="text-xs">
+                                Select a group for this preference field
+                              </Label>
+                              <Select
+                                value={field.groupId || ""}
+                                onValueChange={(value) => {
+                                  updateField(field.id, "groupId", value);
+                                  updateField(
+                                    field.id,
+                                    "group",
+                                    groups.find((g) => g.id === value)
+                                  );
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a group" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {groups.map((group) => (
+                                    <SelectItem key={group.id} value={group.id}>
+                                      {group.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="col-span-2 flex flex-col space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs">
+                                This is preference for
+                              </Label>
+                              <RadioGroup
+                                value={field.preferenceType}
+                                onValueChange={(
+                                  value: AllocationFormTemplatePreferenceFieldType
+                                ) =>
+                                  updateField(field.id, "preferenceType", value)
+                                }
+                                className="flex items-center space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem
+                                    value="LECTURE"
+                                    id={`r1-${field.id}`}
+                                  />
+                                  <Label htmlFor={`r1-${field.id}`}>
+                                    Lecture
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem
+                                    value="TUTORIAL"
+                                    id={`r2-${field.id}`}
+                                  />
+                                  <Label htmlFor={`r2-${field.id}`}>
+                                    Tutorial
+                                  </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem
+                                    value="PRACTICAL"
+                                    id={`r3-${field.id}`}
+                                  />
+                                  <Label htmlFor={`r3-${field.id}`}>
+                                    Practical
+                                  </Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                            <Alert variant="destructive">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription className="text-xs">
+                                This setting is important. Mismatching this with
+                                the question label may lead to unexpected
+                                behavior during allocation.
+                              </AlertDescription>
+                            </Alert>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
