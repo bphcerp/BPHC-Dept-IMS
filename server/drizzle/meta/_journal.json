@@ -484,6 +484,13 @@
       "when": 1760462312082,
       "tag": "0068_pretty_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1760485962754,
+      "tag": "0069_daffy_triathlon",
+      "breakpoints": true
     }
   ]
 }
