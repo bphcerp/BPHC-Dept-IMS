@@ -5,9 +5,8 @@ import db from "@/config/db/index.ts";
 import { instructorSupervisorGrades } from "@/config/db/schema/phd.ts";
 import { createTodos, createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { inArray } from "drizzle-orm";
 
 const router = Router();
 
@@ -46,12 +45,28 @@ router.post(
             res.status(400).json({
                 success: false,
                 message:
-                    "No instructor-assigned students found for the selected courses",
+                    "No instructor-assigned students found for the selected courses who still need midsem notifications",
             });
             return;
         }
 
-        if (draftStudents.length > 0) {
+        let studentsToNotify;
+        if (draftStudents.length > 0 && midsemStudents.length === 0) {
+            studentsToNotify = filteredStudents;
+        } else {
+            studentsToNotify = midsemStudents;
+        }
+
+        if (studentsToNotify.length === 0) {
+            res.status(400).json({
+                success: false,
+                message:
+                    "No instructors found who still need midsem reminder notifications (all have already submitted or are in draft phase)",
+            });
+            return;
+        }
+
+        if (draftStudents.length > 0 && midsemStudents.length === 0) {
             await db
                 .update(instructorSupervisorGrades)
                 .set({ phase: "midsem" })
@@ -66,9 +81,6 @@ router.post(
                     )
                 );
         }
-
-        const studentsToNotify =
-            midsemStudents.length > 0 ? midsemStudents : filteredStudents;
         const instructorMap = new Map<
             string,
             Array<{ courseName: string; studentCount: number }>
@@ -146,10 +158,10 @@ router.post(
 
         res.json({
             success: true,
-            message: `Midsem notification sent to ${instructorMap.size} instructors for ${filteredStudents.length} students across ${courseNames.length} courses`,
+            message: `Midsem notification sent to ${instructorMap.size} instructors for ${studentsToNotify.length} students across ${courseNames.length} courses`,
             data: {
                 instructorsNotified: instructorMap.size,
-                studentsAffected: filteredStudents.length,
+                studentsAffected: studentsToNotify.length,
                 coursesAffected: courseNames.length,
                 todosCreated: todosToCreate.length,
                 notificationsCreated: notificationsToCreate.length,

@@ -5,13 +5,13 @@ import db from "@/config/db/index.ts";
 import { instructorSupervisorGrades } from "@/config/db/schema/phd.ts";
 import { createTodos, createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
 
 const sendEndsemNotificationSchema = z.object({
-    courseNames: z.array(z.string()).min(1), 
+    courseNames: z.array(z.string()).min(1),
     subject: z.string().min(1),
     body: z.string().min(1),
 });
@@ -38,23 +38,36 @@ router.post(
         if (filteredStudents.length === 0) {
             res.status(400).json({
                 success: false,
-                message: "No instructor-assigned students found for the selected courses (midsem/endsem phase)",
+                message: "No instructor-assigned students found for the selected courses who still need endsem notifications",
             });
             return;
         }
-        if (midsemStudents.length > 0) {
-            for (const courseName of courseNames) {
-                await db.update(instructorSupervisorGrades)
-                    .set({ phase: 'endsem' })
-                    .where(and(
-                        eq(instructorSupervisorGrades.courseName, courseName),
-                        eq(instructorSupervisorGrades.role, 'instructor'),
-                        eq(instructorSupervisorGrades.phase, 'midsem')
-                    ));
-            }
+
+        let studentsToNotify;
+        if (midsemStudents.length > 0 && endsemStudents.length === 0) {
+            
+            studentsToNotify = filteredStudents;
+        } else {
+            studentsToNotify = endsemStudents;
         }
 
-        const studentsToNotify = endsemStudents.length > 0 ? endsemStudents : filteredStudents;
+        if (studentsToNotify.length === 0) {
+            res.status(400).json({
+                success: false,
+                message: "No instructors found who still need endsem reminder notifications (all have already submitted or are in midsem phase)",
+            });
+            return;
+        }
+
+        if (midsemStudents.length > 0 && endsemStudents.length === 0) {
+            await db.update(instructorSupervisorGrades)
+                .set({ phase: 'endsem' })
+                .where(and(
+                    inArray(instructorSupervisorGrades.courseName, courseNames),
+                    eq(instructorSupervisorGrades.role, 'instructor'),
+                    eq(instructorSupervisorGrades.phase, 'midsem')
+                ));
+        }
         const instructorMap = new Map<string, Array<{ courseName: string; studentCount: number }>>();
 
         studentsToNotify.forEach(student => {
@@ -80,7 +93,7 @@ router.post(
                 module: "Grades" as any,
                 completionEvent: `grades:endsem-submit:${email}`,
                 link: `/grades/assign-grades`,
-                deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
+                deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             };
         });
 
@@ -99,7 +112,6 @@ router.post(
 
         await createNotifications(notificationsToCreate);
 
-        // Send ONE email per instructor
         const emailsToSend = Array.from(instructorMap.entries()).map(([email, courses]) => {
             const courseList = courses.map(c => `${c.courseName} (${c.studentCount} students)`).join('\n  - ');
             return {
@@ -113,10 +125,10 @@ router.post(
 
         res.json({
             success: true,
-            message: `Endsem notification sent to ${instructorMap.size} instructors for ${filteredStudents.length} students across ${courseNames.length} courses`,
+            message: `Endsem notification sent to ${instructorMap.size} instructors for ${studentsToNotify.length} students across ${courseNames.length} courses`,
             data: {
                 instructorsNotified: instructorMap.size,
-                studentsAffected: filteredStudents.length,
+                studentsAffected: studentsToNotify.length,
                 coursesAffected: courseNames.length,
                 todosCreated: todosToCreate.length,
                 notificationsCreated: notificationsToCreate.length,
