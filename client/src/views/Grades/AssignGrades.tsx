@@ -471,6 +471,27 @@ export default function AssignGradesView() {
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
   }, [students, grades, activeCourse, sheets, instructorAssignments]);
 
+  // Determine if a course needs a topic column
+  const courseNeedsTopic = (courseName: string): boolean => {
+    const n = courseName.toLowerCase();
+    // Courses that do NOT need topics
+    const coursesWithoutTopics = [
+      "phd seminar",
+      "independent study",
+      "phd thesis",
+      "teaching practice-i",
+      "practice lect series i"
+    ];
+
+    // Check if this course matches any of the courses that don't need topics
+    const shouldNotHaveTopic = coursesWithoutTopics.some(course =>
+      n.includes(course) || course.includes(n)
+    );
+
+    // Return true if the course should have topics (i.e., it's NOT in the list of courses without topics)
+    return !shouldNotHaveTopic;
+  };
+
   const getFixedGradeOptionsForSheet = (sheetName: string): string[] | null => {
     const n = sheetName.toLowerCase();
     const hasAll = (words: string[]) => words.every((w) => n.includes(w));
@@ -577,6 +598,10 @@ export default function AssignGradesView() {
     if (!row.midsemGrade || String(row.midsemGrade).trim() === "") {
       return "Enter a midsem grade before submitting.";
     }
+    // Only require topic for courses that need topics
+    if (courseNeedsTopic(activeCourse) && (!row.topic || String(row.topic).trim() === "")) {
+      return "Enter a topic before submitting.";
+    }
     return null;
   };
 
@@ -651,11 +676,14 @@ export default function AssignGradesView() {
           const hasMidsemGrade =
             typeof grade.midsemGrade === "string" &&
             grade.midsemGrade.trim() !== "";
+          const hasTopic = courseNeedsTopic(courseName) ?
+            (typeof grade.topic === "string" && grade.topic.trim() !== "") : true;
           return (
             grade.midsemMarks !== undefined &&
             grade.midsemMarks !== null &&
             !Number.isNaN(Number(grade.midsemMarks)) &&
-            hasMidsemGrade
+            hasMidsemGrade &&
+            hasTopic
           );
         }
 
@@ -1041,9 +1069,11 @@ export default function AssignGradesView() {
                               <TableHead className="min-w-[140px]">
                                 Endsem Report
                               </TableHead>
-                              <TableHead className="min-w-[120px]">
-                                Topic
-                              </TableHead>
+                              {courseNeedsTopic(c) && (
+                                <TableHead className="min-w-[120px]">
+                                  Topic
+                                </TableHead>
+                              )}
                             </>
                           )}
                           <TableHead className="min-w-[100px]">Role</TableHead>
@@ -1062,7 +1092,7 @@ export default function AssignGradesView() {
                               const valueRaw = r.excelRow[header.name];
                               const value =
                                 typeof valueRaw === "string" ||
-                                typeof valueRaw === "number"
+                                  typeof valueRaw === "number"
                                   ? valueRaw
                                   : "";
 
@@ -1135,8 +1165,7 @@ export default function AssignGradesView() {
 
                                         forceRerender();
                                       }}
-                                      className={`w-28 ${
-                                        coursePhase === "draft" ||
+                                      className={`w-28 ${coursePhase === "draft" ||
                                         (coursePhase === "midsem" &&
                                           getGradeColumnRole(
                                             c,
@@ -1147,9 +1176,9 @@ export default function AssignGradesView() {
                                             c,
                                             headerIndex + 1
                                           ) === "midsem")
-                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
-                                          : ""
-                                      }`}
+                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                        : ""
+                                        }`}
                                       placeholder="Marks"
                                       readOnly={
                                         coursePhase === "draft" ||
@@ -1232,12 +1261,12 @@ export default function AssignGradesView() {
                                         forceRerender();
                                       },
                                       coursePhase === "draft" ||
-                                        (coursePhase === "midsem" &&
-                                          getGradeColumnRole(c, headerIndex) ===
-                                            "endsem") ||
-                                        (coursePhase === "endsem" &&
-                                          getGradeColumnRole(c, headerIndex) ===
-                                            "midsem"),
+                                      (coursePhase === "midsem" &&
+                                        getGradeColumnRole(c, headerIndex) ===
+                                        "endsem") ||
+                                      (coursePhase === "endsem" &&
+                                        getGradeColumnRole(c, headerIndex) ===
+                                        "midsem"),
                                       "Enter grade"
                                     )}
                                   </TableCell>
@@ -1268,11 +1297,10 @@ export default function AssignGradesView() {
                                         });
                                       }}
                                       placeholder="Topic"
-                                      className={`w-40 ${
-                                        coursePhase === "draft"
-                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
-                                          : ""
-                                      }`}
+                                      className={`w-40 ${coursePhase === "draft"
+                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                        : ""
+                                        }`}
                                       readOnly={coursePhase !== "midsem"}
                                     />
                                   </TableCell>
@@ -1321,12 +1349,11 @@ export default function AssignGradesView() {
                                       });
                                     }}
                                     placeholder="Marks"
-                                    className={`w-28 ${
-                                      coursePhase === "draft" ||
+                                    className={`w-28 ${coursePhase === "draft" ||
                                       coursePhase === "endsem"
-                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
-                                        : ""
-                                    }`}
+                                      ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                      : ""
+                                      }`}
                                     readOnly={
                                       coursePhase === "draft" ||
                                       coursePhase === "endsem"
@@ -1349,7 +1376,7 @@ export default function AssignGradesView() {
                                       });
                                     },
                                     coursePhase === "draft" ||
-                                      coursePhase === "endsem",
+                                    coursePhase === "endsem",
                                     "Grade"
                                   )}
                                 </TableCell>
@@ -1375,7 +1402,7 @@ export default function AssignGradesView() {
                                       }
                                       className={
                                         coursePhase === "draft" ||
-                                        coursePhase === "endsem"
+                                          coursePhase === "endsem"
                                           ? "cursor-not-allowed bg-gray-200 text-gray-600"
                                           : ""
                                       }
@@ -1415,12 +1442,11 @@ export default function AssignGradesView() {
                                       });
                                     }}
                                     placeholder="Marks"
-                                    className={`w-28 ${
-                                      coursePhase === "draft" ||
+                                    className={`w-28 ${coursePhase === "draft" ||
                                       coursePhase === "midsem"
-                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
-                                        : ""
-                                    }`}
+                                      ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                      : ""
+                                      }`}
                                     readOnly={
                                       coursePhase === "draft" ||
                                       coursePhase === "midsem"
@@ -1443,7 +1469,7 @@ export default function AssignGradesView() {
                                       });
                                     },
                                     coursePhase === "draft" ||
-                                      coursePhase === "midsem",
+                                    coursePhase === "midsem",
                                     "Grade"
                                   )}
                                 </TableCell>
@@ -1469,7 +1495,7 @@ export default function AssignGradesView() {
                                       }
                                       className={
                                         coursePhase === "draft" ||
-                                        coursePhase === "midsem"
+                                          coursePhase === "midsem"
                                           ? "cursor-not-allowed bg-gray-200 text-gray-600"
                                           : ""
                                       }
@@ -1490,29 +1516,30 @@ export default function AssignGradesView() {
                                     )}
                                   </div>
                                 </TableCell>
-                                <TableCell>
-                                  <Input
-                                    value={r.topic || ""}
-                                    onChange={(e) => {
-                                      setGrades((prev) => {
-                                        const key = `${r.erpId}::${c}`;
-                                        const updated = { ...prev };
-                                        updated[key] = {
-                                          ...updated[key],
-                                          topic: e.target.value,
-                                        } as GradeRow;
-                                        return updated;
-                                      });
-                                    }}
-                                    placeholder="Topic"
-                                    className={`w-40 ${
-                                      coursePhase === "draft"
+                                {courseNeedsTopic(c) && (
+                                  <TableCell>
+                                    <Input
+                                      value={r.topic || ""}
+                                      onChange={(e) => {
+                                        setGrades((prev) => {
+                                          const key = `${r.erpId}::${c}`;
+                                          const updated = { ...prev };
+                                          updated[key] = {
+                                            ...updated[key],
+                                            topic: e.target.value,
+                                          } as GradeRow;
+                                          return updated;
+                                        });
+                                      }}
+                                      placeholder="Topic"
+                                      className={`w-40 ${coursePhase === "draft"
                                         ? "cursor-not-allowed bg-gray-200 text-gray-600"
                                         : ""
-                                    }`}
-                                    readOnly={coursePhase === "draft"}
-                                  />
-                                </TableCell>
+                                        }`}
+                                      readOnly={coursePhase === "draft"}
+                                    />
+                                  </TableCell>
+                                )}
                               </>
                             )}
 
