@@ -66,7 +66,7 @@ export const getAllocatedCourseLoad = (
               ? section.master.course.lectureUnits
               : section.type === "PRACTICAL"
                 ? section.master.course.practicalUnits
-                : 1) / section.instructors.length;
+                : 1) / section.instructors.filter((inst) => inst.type === 'faculty').length;
 
           return acc + courseWiseLoad;
         }, 0)
@@ -295,9 +295,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
 
         <div className="flex h-[80vh] w-full gap-6">
           {!viewModeInstructorEmail && (
-            <div
-              className={`flex ${userTypeViewMode === "faculty" ? "w-[20vw]" : "w-full"} flex-col`}
-            >
+            <div className="flex w-[20vw] flex-col">
               <div className="mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 -translate-y-1/2 transform text-gray-400" />
@@ -443,7 +441,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                                       variant="outline"
                                       className="w-fit text-sm"
                                     >
-                                      Credit Load:{" "}
+                                      {sectionType} Credit Load:{" "}
                                       {getAllocatedCourseLoad(
                                         instructorDetails,
                                         sectionType as (typeof sectionTypes)[number]

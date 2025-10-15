@@ -48,8 +48,32 @@ router.post(
             );
         }
 
+        const { roles: userRoles } = (await db.query.users.findFirst({
+            where: (user, { eq }) => eq(user.email, req.user!.email),
+            columns: {
+                roles: true,
+            },
+        }))!;
+
+        if (
+            form.isPublishedToRoleId &&
+            !userRoles?.includes(form.isPublishedToRoleId)) {
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You do not have permission to submit this form"
+                )
+            );
+        }
+
+        const formSemester = await db.query.semester.findFirst({
+            where: (s, { eq }) => eq(s.formId, form.id),
+        });
+
         if (
             form.allocationDeadline &&
+            formSemester &&
+            formSemester.allocationStatus !== "formCollection" &&
             Date.now() > new Date(form.allocationDeadline).getTime()
         ) {
             return next(

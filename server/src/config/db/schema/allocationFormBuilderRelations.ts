@@ -6,7 +6,7 @@ import {
     allocationFormTemplateField,
 } from "./allocationFormBuilder.ts";
 
-import { users } from "./admin.ts";
+import { roles, users } from "./admin.ts";
 import { course, semester } from "./allocation.ts";
 import { allocationCourseGroup } from "./allocation.ts";
 
@@ -37,6 +37,10 @@ export const allocationFormRelations = relations(
         semester: one(semester, {
             fields: [allocationForm.id],
             references: [semester.formId],
+        }),
+        isPublishedToRole: one(roles, {
+            fields: [allocationForm.isPublishedToRoleId],
+            references: [roles.id],
         }),
     })
 );
@@ -73,6 +77,10 @@ export const allocationFormTemplateFieldRelations = relations(
         group: one(allocationCourseGroup, {
             fields: [allocationFormTemplateField.groupId],
             references: [allocationCourseGroup.id],
+        }),
+        viewableByRole: one(roles, {
+            fields: [allocationFormTemplateField.viewableByRoleId],
+            references: [roles.id],
         }),
     })
 );

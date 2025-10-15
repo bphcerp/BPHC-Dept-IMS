@@ -37,6 +37,7 @@ router.post(
             // Wilp courses are ignored they are not included in the allocation process.
             const mappedCourses = courses.filter((course) => !course.name.toUpperCase().includes('WILP')).map((courseData) => {
                 return courseSchema.parse({
+                    timetableCourseId: courseData.id,
                     code: `${courseData.deptCode} ${courseData.courseCode}`,
                     name: courseData.name,
                     lectureUnits: courseData.lectureUnits,
@@ -54,13 +55,13 @@ router.post(
                 set: {
                     name: sql`EXCLUDED.name`,
                     code: sql`EXCLUDED.code`,
+                    timetableCourseId: sql`EXCLUDED.td_course_id`,
                     lectureUnits: sql`EXCLUDED.lecture_units`,
                     practicalUnits: sql`EXCLUDED.practical_units`,
                     totalUnits: sql`EXCLUDED.total_units`,
                     offeredAs: sql`EXCLUDED.offered_as`,
                     offeredAlsoBy: sql`EXCLUDED.offered_also_by`,
                     offeredTo: sql`EXCLUDED.offered_to`,
-                    markedForAllocation: sql`EXCLUDED.marked_for_allocation`,
                 }
             })
 

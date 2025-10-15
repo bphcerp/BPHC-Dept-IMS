@@ -8,10 +8,10 @@ import {
 import { allocationSchemas } from "lib";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getFormattedAY } from "./AllocationOverview";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
 
-// Helper to get all unique instructors
 function getUniqueInstructors(allocationData: AllocationSummaryType) {
   const instructorMap: Record<string, { email: string; name: string | null }> =
     {};
@@ -27,7 +27,6 @@ function getUniqueInstructors(allocationData: AllocationSummaryType) {
   return Object.values(instructorMap);
 }
 
-// Helper to get all unique course-section types
 function getCourseSectionRows(allocationData: AllocationSummaryType) {
   const rows: {
     key: string;
@@ -50,7 +49,6 @@ function getCourseSectionRows(allocationData: AllocationSummaryType) {
   return rows;
 }
 
-// Helper to compute credit load for instructor for a course-section type
 function getCreditLoadForInstructor(
   alloc: AllocationSummaryType[number],
   sectionType: string,
@@ -60,17 +58,32 @@ function getCreditLoadForInstructor(
   let total = 0;
   sections.forEach((section) => {
     if (section.instructors.some((inst) => inst.email === instructorEmail)) {
-      // Divide units by number of instructors for fairness
       const units =
         sectionType === "LECTURE"
           ? alloc.course.lectureUnits
           : sectionType === "PRACTICAL"
             ? alloc.course.practicalUnits
             : 1;
-      total += units / section.instructors.length;
+      total +=
+        units /
+        section.instructors.filter((instr) => instr.type === "faculty").length;
     }
   });
   return total > 0 ? total : null;
+}
+
+function getSectionCounts(
+  alloc: AllocationSummaryType[number],
+  sectionType: string
+) {
+  const sections = alloc.sections.filter((s) => s.type === sectionType);
+  let allocated = 0;
+  let pending = 0;
+  sections.forEach((s) => {
+    if (s.instructors.some((inst) => inst.type === "faculty")) allocated++;
+    else pending++;
+  });
+  return { allocated, pending, total: allocated + pending };
 }
 
 export const AllocationMatrixView = () => {
@@ -91,23 +104,25 @@ export const AllocationMatrixView = () => {
   });
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
+    queryKey: ["semester", "latest"],
     queryFn: () =>
       api
         .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
         .then(({ data }) => data),
   });
 
-  // Memoize matrix data
   const matrix = useMemo(() => {
     if (!allocationData) return null;
     const instructors = getUniqueInstructors(allocationData);
     const rows = getCourseSectionRows(allocationData);
-    // Build matrix: rows x columns
     const dataRows = rows.map((row) => {
       const alloc = allocationData.find((a) => a.courseCode === row.courseCode);
+      const counts = alloc
+        ? getSectionCounts(alloc, row.sectionType)
+        : { allocated: 0, pending: 0, total: 0 };
       return {
         ...row,
+        counts,
         values: instructors.map((inst) => {
           const val = alloc
             ? getCreditLoadForInstructor(alloc, row.sectionType, inst.email)
@@ -116,7 +131,6 @@ export const AllocationMatrixView = () => {
         }),
       };
     });
-    // Totals row
     const totals = instructors.map((inst) => {
       let sum = 0;
       allocationData.forEach((alloc) => {
@@ -155,6 +169,15 @@ export const AllocationMatrixView = () => {
         <thead className="sticky -top-1 left-0 z-10">
           <tr className="bg-muted">
             <th className="border px-4 py-2 font-bold">Course-Section</th>
+            <th className="border bg-red-100 px-4 py-2 font-bold text-red-700">
+              Pending
+            </th>
+            <th className="border bg-green-100 px-4 py-2 font-bold text-green-700">
+              Allocated
+            </th>
+            <th className="border bg-blue-100 px-4 py-2 font-bold text-blue-700">
+              Total
+            </th>
             {matrix.instructors.map((inst) => (
               <th key={inst.email} className="border px-4 py-2 font-bold">
                 {inst.name ?? inst.email}
@@ -163,6 +186,15 @@ export const AllocationMatrixView = () => {
           </tr>
           <tr className="bg-secondary font-bold">
             <td className="border px-4 py-2">Total</td>
+            <td className="border bg-red-100 px-4 py-2 text-center text-red-700">
+              —
+            </td>
+            <td className="border bg-green-100 px-4 py-2 text-center text-green-700">
+              —
+            </td>
+            <td className="border bg-blue-100 px-4 py-2 text-center text-blue-700">
+              —
+            </td>
             {matrix.totals.map((total, idx) => (
               <td key={idx} className="border px-4 py-2 text-center">
                 {total}
@@ -174,8 +206,23 @@ export const AllocationMatrixView = () => {
           {matrix.dataRows.map((row) => (
             <tr key={row.key}>
               <td className="border px-4 py-2 font-semibold">
-                {row.courseCode} - {row.courseName} -{" "}
-                {row.sectionType.charAt(0)}
+                <Button variant="link" className="m-0 h-fit p-0 text-wrap">
+                  <Link
+                    to={`/allocation/allocate?course=${encodeURIComponent(row.courseCode)}`}
+                  >
+                    {row.courseCode} - {row.courseName} -{" "}
+                    {row.sectionType.charAt(0)}
+                  </Link>
+                </Button>
+              </td>
+              <td className="border bg-red-50 px-4 py-2 text-center font-semibold text-red-700">
+                {row.counts.pending}
+              </td>
+              <td className="border bg-green-50 px-4 py-2 text-center font-semibold text-green-700">
+                {row.counts.allocated}
+              </td>
+              <td className="border bg-blue-50 px-4 py-2 text-center font-semibold text-blue-700">
+                {row.counts.total}
               </td>
               {row.values.map((val, idx) => (
                 <td

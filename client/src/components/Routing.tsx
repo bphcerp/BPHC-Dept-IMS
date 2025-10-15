@@ -835,7 +835,7 @@ const Routing = () => {
                     to={
                       checkAccess("allocation:write")
                         ? "/allocation/overview"
-                        : "/allocation/personal"
+                        : "/allocation/submit"
                     }
                     replace={true}
                   />
@@ -860,10 +860,6 @@ const Routing = () => {
                       element={<AllocationSummary />}
                     />
                   )}
-                  <Route
-                    path="/allocation/personal"
-                    element={<NotFoundPage />}
-                  />
                 </>
               )}
 
@@ -902,6 +898,10 @@ const Routing = () => {
                   <Route
                     path="forms/:id/submit"
                     element={<FormResponse preview={false} />}
+                  />
+                  <Route
+                    path="submit"
+                    element={<FormResponse preview={false} latest={true} />}
                   />
                 </>
               )}

@@ -33,6 +33,7 @@ export const allocationFormTemplateFieldSchema = z.object({
     preferenceType: allocationFormTemplatePreferenceTypeEnum.optional(),
     type: allocationFormTemplateFieldTypeEnum,
     groupId: z.string().uuid().optional().nullable(),
+    viewableByRoleId: z.coerce.number().optional().nullable(),
 });
 
 export const updateAllocationFormTemplateFieldSchema =
@@ -77,6 +78,7 @@ export const allocationFormSchema = z.object({
 export const allocationFormPublishSchema = z.object({
     allocationDeadline: z.coerce.date().optional(),
     emailBody: z.string(),
+    isPublishedToRoleId: z.coerce.number(),
 });
 
 export const updateAllocationFormSchema = allocationFormSchema

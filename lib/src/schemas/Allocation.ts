@@ -48,8 +48,7 @@ export const courseSchema = z.object({
     offeredAlsoBy: z.array(z.string()).optional(),
     totalUnits: z.number().int().min(1),
     markedForAllocation: z.boolean(),
-    // createdAt: z.date().optional(),
-    // updatedAt: z.date().optional()
+    timetableCourseId: z.string().optional(),
 });
 
 export const courseMarkSchema = z.object({
@@ -74,8 +73,6 @@ export const semesterSchema = z.object({
     semesterType: semesterTypeEnum,
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
-    noOfElectivesPerInstructor: z.number().int().min(0),
-    noOfDisciplineCoursesPerInstructor: z.number().int().min(0),
     // hodAtStartOfSemEmail: z.string().email().optional(),
     // dcaConvenerAtStartOfSemEmail: z.string().email().optional(),
     allocationStatus: allocationStatusEnum,
@@ -96,6 +93,7 @@ export const allocationSectionSchema = z.object({
     name: z.string(),
     type: sectionTypeEnum,
     masterId: z.string().uuid(),
+    timetableRoomId: z.string().optional(),
 });
 
 export const masterAllocationSchema = z.object({

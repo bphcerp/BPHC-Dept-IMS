@@ -9,7 +9,6 @@ import {
   FrameIcon,
   SendIcon,
   TableOfContentsIcon,
-  UserRoundIcon,
   GroupIcon,
   Grid3X3Icon,
 } from "lucide-react";
@@ -18,7 +17,7 @@ import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
   const { data: currentSemester } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
+    queryKey: ["semester", "latest"],
     queryFn: () =>
       api
         .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
@@ -78,15 +77,13 @@ const AllocationLayout = () => {
                 title: "Summary",
                 icon: <TableOfContentsIcon />,
                 url: "/allocation/summary",
-                requiredPermissions: ["allocation:view"],
+                requiredPermissions: [
+                  currentSemester?.summaryHidden
+                    ? "allocation:write"
+                    : "allocation:summary:view",
+                ],
               },
-              {
-                title: "Your Allocations",
-                icon: <UserRoundIcon />,
-                url: "/allocation/personal",
-                requiredPermissions: ["allocation:view"],
-              },
-              ...(currentSemester?.allocationStatus === 'formCollection'
+              ...(currentSemester?.allocationStatus === "formCollection"
                 ? [
                     {
                       title: "Submit Your Preferences",
@@ -105,19 +102,25 @@ const AllocationLayout = () => {
                 title: "Templates",
                 icon: <FrameIcon />,
                 url: "/allocation/templates",
-                requiredPermissions: ["allocation:write", "allocation:builder:template:view"],
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:template:view",
+                ],
               },
               {
                 title: "Forms",
                 icon: <ClipboardCheckIcon />,
                 url: "/allocation/forms",
-                requiredPermissions: ["allocation:write", "allocation:builder:form:view"],
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:form:view",
+                ],
               },
             ],
           },
         ]}
       />
-      <div className="w-full h-screen overflow-y-auto">
+      <div className="h-screen w-full overflow-y-auto">
         <Outlet />
       </div>
     </>

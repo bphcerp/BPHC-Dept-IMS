@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/axios-instance";
 import { useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AllocationSummaryType,
   SemesterMinimal,
@@ -16,6 +16,7 @@ import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/Auth";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
+import NotFoundPage from "@/layouts/404";
 
 export const AllocationSummary = () => {
   const [showTeachingLoad, setShowTeachingLoad] = useState(false);
@@ -29,6 +30,35 @@ export const AllocationSummary = () => {
   const semesterId = searchParams.get("semesterId");
 
   const { checkAccess } = useAuth();
+
+  const queryClient = useQueryClient();
+
+  const toggleSummaryAccessMutation = useMutation({
+    mutationFn: () =>
+      api
+        .post(
+          `/allocation/semester/toggleSummary${semesterId ? `?semesterId=${semesterId}` : ""}`
+        )
+        .then(() => {
+          toast.success("Successful");
+          queryClient.invalidateQueries(["semester", "latest"]);
+        })
+        .catch((e) => {
+          console.error("Error while toggling summary access", e);
+          toast.error("Something went wrong");
+        }),
+  });
+
+  const { data: latestSemester } = useQuery({
+    queryKey: ["semester", "latest"],
+    queryFn: () =>
+      api
+        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
+        .then(({ data }) => data),
+  });
+
+  if (latestSemester?.summaryHidden && !checkAccess("allocation:write"))
+    return <NotFoundPage />;
 
   const { data: allocationData, isLoading: isLoadingAllocation } = useQuery({
     queryKey: [`allocation`, "summary", semesterId ?? "latest"],
@@ -47,14 +77,6 @@ export const AllocationSummary = () => {
         throw error;
       }
     },
-  });
-
-  const { data: latestSemester } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
-    queryFn: () =>
-      api
-        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
-        .then(({ data }) => data),
   });
 
   const getSectionNumber = (
@@ -80,7 +102,9 @@ export const AllocationSummary = () => {
               ? alloc.course.lectureUnits
               : section.type === "PRACTICAL"
                 ? alloc.course.practicalUnits
-                : 1) / section.instructors.length;
+                : 1) /
+            section.instructors.filter((instr) => instr.type === "faculty")
+              .length;
         });
       });
     });
@@ -107,6 +131,14 @@ export const AllocationSummary = () => {
       />
       <div className="sticky left-0 top-0 z-10 flex flex-col items-center bg-background py-2">
         <h1 className="text-3xl font-bold text-primary">Allocation Summary</h1>
+        {checkAccess("allocation:write") && (
+          <Button
+            variant="link"
+            onClick={() => toggleSummaryAccessMutation.mutate()}
+          >
+            {latestSemester.summaryHidden ? "Allow" : "Revoke"} Access To All
+          </Button>
+        )}
         <div className="flex w-full justify-between px-20 text-lg">
           <div>
             <span>Semester:</span>{" "}

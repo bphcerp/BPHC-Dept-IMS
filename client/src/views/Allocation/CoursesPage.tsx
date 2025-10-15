@@ -13,7 +13,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "code",
-    header: "Course Code",
+    header: "Code",
     meta: {
       filterType: "search",
     },
@@ -21,15 +21,18 @@ const columns: ColumnDef<Course>[] = [
 
   {
     accessorKey: "name",
-    header: "Course Title",
+    header: "Title",
     meta: {
       filterType: "search",
+      tailwindWidthString: 'w-64 min-w-64'
     },
   },
 
   {
-    accessorKey: "totalUnits",
-    header: "Units",
+    accessorFn: () => "Credit Split",
+    header: "Credit Split",
+    cell: ({ row }) =>
+      `L:${row.original.lectureUnits} P:${row.original.practicalUnits} T:${row.original.offeredAs === "CDC" && row.original.offeredTo === "FD" ? 1 : 0}`,
   },
 
   {
@@ -41,24 +44,6 @@ const columns: ColumnDef<Course>[] = [
   },
 
   {
-    accessorKey: "lectureUnits",
-    header: "Lecture Units",
-    cell: ({ row }) => {
-      const value = row.original.lectureUnits;
-      return value === 0 ? "0" : value;
-    },
-  },
-
-  {
-    accessorKey: "practicalUnits",
-    header: "Practical Units",
-    cell: ({ row }) => {
-      const value = row.original.practicalUnits;
-      return value === 0 ? "0" : value;
-    },
-  },
-
-  {
     accessorKey: "offeredAs",
     header: "Type",
     meta: {
@@ -66,9 +51,19 @@ const columns: ColumnDef<Course>[] = [
     },
   },
   {
+    accessorKey: "offeredAlsoBy",
+    header: "Type",
+  },
+  {
     accessorFn: (row) => (row.fetchedFromTTD ? "Yes" : "No"),
     header: "Fetched From TTD?",
-    cell: ({ row, getValue }) => <span className={`p-2 rounded-lg ${row.original.fetchedFromTTD ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>{getValue() as string}</span>,
+    cell: ({ row, getValue }) => (
+      <span
+        className={`rounded-lg p-2 ${row.original.fetchedFromTTD ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"}`}
+      >
+        {getValue() as string}
+      </span>
+    ),
     meta: {
       filterType: "dropdown",
     },
@@ -76,7 +71,13 @@ const columns: ColumnDef<Course>[] = [
   {
     accessorFn: (row) => (row.markedForAllocation ? "Yes" : "No"),
     header: "Marked For Allocation?",
-    cell: ({ row, getValue }) => <span className={`p-2 rounded-lg ${row.original.markedForAllocation ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{getValue() as string}</span>,
+    cell: ({ row, getValue }) => (
+      <span
+        className={`rounded-lg p-2 ${row.original.markedForAllocation ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
+      >
+        {getValue() as string}
+      </span>
+    ),
     meta: {
       filterType: "dropdown",
     },
@@ -122,7 +123,10 @@ const CoursesPage = () => {
         })
         .catch((e) => {
           console.error(e);
-          toast.error(((e as AxiosError).response?.data as string) ?? "Something went wrong");
+          toast.error(
+            ((e as AxiosError).response?.data as string) ??
+              "Something went wrong"
+          );
         }),
   });
 
@@ -139,10 +143,9 @@ const CoursesPage = () => {
   const handleSyncCourses = async () => {
     try {
       await api.post(`/allocation/course/sync`);
-      toast.info(
-        "Please note that CDC's have been marked for allocation for your convenience"
+      toast.success(
+        "Courses synced with TTD successfully. Marked for allocation has NOT been modified."
       );
-      toast.success("Courses synced with TTD successfully");
       queryClient.invalidateQueries(["allocation", "courses"]);
     } catch (error) {
       console.error("Error syncing courses", error);
@@ -156,7 +159,7 @@ const CoursesPage = () => {
   return (
     <div className="p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="mb-4 text-2xl font-bold"> Courses </h1>
+        <h1 className="mb-4 text-2xl font-bold text-primary">Courses</h1>
         {checkAccessAnyOne(["allocation:write", "allocation:courses:sync"]) && (
           <Button onClick={handleSyncCourses} variant="outline">
             Sync Courses*
@@ -168,6 +171,7 @@ const CoursesPage = () => {
       </h4>
       <DataTable
         idColumn="code"
+        isTableHeaderFixed={true}
         columns={columns}
         data={courses}
         setSelected={(courses) =>
@@ -181,7 +185,10 @@ const CoursesPage = () => {
               "allocation:courses:mark",
             ]) &&
               !!courses?.length && (
-                <Button disabled={!selectedCourseCodes.length} onClick={() => markCourses()}>
+                <Button
+                  disabled={!selectedCourseCodes.length}
+                  onClick={() => markCourses()}
+                >
                   Toggle Mark For Allocation
                 </Button>
               )}

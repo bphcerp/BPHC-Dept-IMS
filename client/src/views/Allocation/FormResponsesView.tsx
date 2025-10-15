@@ -30,8 +30,8 @@ const FormResponsesView = () => {
     personal !== "true" &&
     !checkAccessAnyOne(["allocation:form:response:view", "allocation:write"])
   )
-    return <NotFoundPage />
-  if (personal && personal != "true") return <NotFoundPage />
+    return <NotFoundPage />;
+  if (personal && personal != "true") return <NotFoundPage />;
 
   useEffect(() => {
     const fetchFormDetails = async () => {
@@ -139,12 +139,17 @@ const FormResponsesView = () => {
             <div>
               <p>
                 <span className="font-bold">Submitted by:</span>{" "}
-                {currentUserResponses[0].submittedBy.name} (
-                {currentUserResponses[0].submittedBy.email})
+                {currentUserResponses[0].submittedBy.name ??
+                  currentUserResponses[0].submittedBy.email}
               </p>
               <p>
                 <span className="font-bold">Submitted at:</span>{" "}
-                {new Date(currentUserResponses[0].submittedAt).toLocaleString()}
+                {new Date(currentUserResponses[0].submittedAt).toLocaleString(
+                  "en-IN",
+                  {
+                    timeZoneName: "short",
+                  }
+                )}
               </p>
             </div>
             {!personal && (

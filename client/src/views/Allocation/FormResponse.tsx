@@ -24,26 +24,47 @@ import {
 import { Trash2 } from "lucide-react";
 import { fieldTypes } from "./FormTemplateView";
 import NotFoundPage from "@/layouts/404";
-import { Course } from "node_modules/lib/src/types/allocation";
+import { Course, SemesterMinimal } from "node_modules/lib/src/types/allocation";
+import { useQuery } from "@tanstack/react-query";
 
-const FormResponse = ({ preview = true }: { preview?: boolean }) => {
+const FormResponse = ({
+  preview = true,
+  latest = false,
+}: {
+  preview?: boolean;
+  latest?: boolean;
+}) => {
   const [form, setForm] = useState<AllocationForm | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const methods = useForm();
+  const formController = useForm();
+
+  const { data: currentSemester } = useQuery({
+    queryKey: ["allocation", "semester", "latest"],
+    queryFn: () =>
+      api
+        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
+        .then(({ data }) => data),
+  });
 
   useEffect(() => {
     const fetchFormDetails = async () => {
       await api
         .get<AllocationFormUserCheck | AllocationForm>(
-          `/allocation/builder/form/get/${id}${!preview ? "?checkUserResponse=true" : ""}`
+          `/allocation/builder/form/get${latest ? "/latest" : `/${id}`}${!preview ? "?checkUserResponse=true" : ""}`
         )
         .then(({ data }) => {
-          if ((data as AllocationFormUserCheck).userAlreadyResponded){
+          if ((data as AllocationFormUserCheck).userAlreadyResponded) {
             toast.warning("You've already responded to this form");
-            setTimeout(() => navigate(`/allocation/forms/${id}/responses?personal=true`),2000)
+            setTimeout(
+              () =>
+                navigate(
+                  `/allocation/forms/${data.id}/responses?personal=true`
+                ),
+              1000
+            );
           }
           setForm(data);
           if (!preview) {
@@ -61,7 +82,7 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
                 }
               }
             });
-            methods.reset(defaultValues);
+            formController.reset(defaultValues);
           }
         })
         .catch((error) => {
@@ -108,11 +129,11 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
 
     try {
       await api.post(`/allocation/builder/form/response/register`, {
-        formId: id,
+        formId: id ?? currentSemester?.formId,
         response: responses,
       });
       toast.success("Form response submitted successfully!");
-      navigate('/allocation');
+      navigate("/allocation");
     } catch (error) {
       console.error("Error submitting form response:", error);
       toast.error(
@@ -124,8 +145,8 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
 
   if (
     form &&
-    form.allocationDeadline &&
-    Date.now() > new Date(form.allocationDeadline).getTime()
+    form.allocationDeadline && currentSemester &&
+    currentSemester.allocationStatus !== "formCollection"
   )
     return (
       <div className="mx-auto flex max-w-4xl items-center justify-center py-10">
@@ -188,11 +209,8 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
               ))}
             </div>
           ) : (
-            <FormProvider {...methods}>
-              <form
-                onSubmit={methods.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+            <FormProvider {...formController}>
+              <div className="space-y-6">
                 {form.template.fields.map((field) => (
                   <Card key={field.id} className="border-border">
                     <CardHeader className="gap-4 bg-muted/50 p-4">
@@ -205,18 +223,22 @@ const FormResponse = ({ preview = true }: { preview?: boolean }) => {
                         field={field}
                         create={false}
                         courses={courses}
-                        form={methods}
+                        form={formController}
                       />
                     </CardContent>
                   </Card>
                 ))}
 
                 <div className="flex justify-end pt-4">
-                  <Button size="lg" type="submit">
+                  <Button
+                    size="lg"
+                    type="submit"
+                    onClick={formController.handleSubmit(onSubmit)}
+                  >
                     Submit Form
                   </Button>
                 </div>
-              </form>
+              </div>
             </FormProvider>
           )}
         </>

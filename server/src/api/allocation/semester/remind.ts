@@ -44,30 +44,24 @@ router.post(
             }
         );
 
-        const notRespondedFaculty = (await db.query.faculty
-            .findMany({
-                columns: {
-                    email: true,
-                },
-                where: (faculty, { notInArray }) =>
-                    notInArray(faculty.email, Array.from(seenEmails)),
-            }))
-            .map((el) => el.email);
-
-        const notRespondedPhD = (await db.query.phd
-            .findMany({
-                columns: {
-                    email: true,
-                },
-                where: (phd, { notInArray, and, eq }) =>
+        const recipients = (
+            await db.query.users.findMany({
+                where: (users, { and, sql, eq }) =>
                     and(
-                        notInArray(phd.email, Array.from(seenEmails)),
-                        eq(phd.phdType, "full-time")
+                        sql`${latestSemester.form?.isPublishedToRoleId} = ANY(${users.roles})`,
+                        eq(users.deactivated, false)
                     ),
-            }))
-            .map((el) => el.email);
+            })
+        ).map((el) => el.email);
 
-        const recipients = [...notRespondedFaculty, ...notRespondedPhD];
+        if (recipients.length === 0) {
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Everyone has responded to the form"
+                )
+            );
+        }
 
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
@@ -75,7 +69,7 @@ router.post(
                 title: "Course Preference Submission Reminder",
                 description: `Submit your course preferences for the upcoming semester`,
                 assignedTo: el,
-                link: `/allocation/forms/${latestSemester.formId}/submit`,
+                link: `/allocation/submit`,
                 completionEvent: `preference submission by ${el}`,
                 deadline: latestSemester.form!.allocationDeadline,
                 createdBy: req.user!.email,
@@ -88,7 +82,7 @@ router.post(
                 title: "Course Preference Submission Reminder",
                 userEmail: el,
                 content: `Submit your course preferences for the upcoming semester`,
-                link: `/allocation/forms/${latestSemester.formId}/submit`,
+                link: `/allocation/submit`,
             }));
 
         const email: Parameters<typeof sendEmail>[0] = {

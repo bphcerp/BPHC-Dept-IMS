@@ -7,7 +7,8 @@ import getAllSemesters from "./getAll.ts";
 import getLatestSemester from "./getLatest.ts";
 import publishRouter from "./publish.ts";
 import remindRouter from "./remind.ts";
-import endLatestSemFormRouter from "./end.ts";
+import endLatestSemFormRouter from "./endForm.ts";
+import toggleSemesterSummary from "./toggleSummary.ts";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/getLatest", getLatestSemester);
 router.use("/publish", publishRouter);
 router.use("/remind", remindRouter);
 router.use("/end", endLatestSemFormRouter);
+router.use("/toggleSummary", toggleSemesterSummary);
 
 export default router;

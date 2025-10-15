@@ -8,9 +8,10 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import { v4 as uuidv4 } from "uuid";
-import { users } from "./admin.ts";
+import { roles, users } from "./admin.ts";
 import { course } from "./allocation.ts";
 import { allocationCourseGroup } from "./allocation.ts";
+import { sectionTypes } from "node_modules/lib/src/schemas/Allocation.ts";
 
 export const allocationFormTemplateFieldType = pgEnum(
     "allocation_form_template_field_type",
@@ -19,7 +20,7 @@ export const allocationFormTemplateFieldType = pgEnum(
 
 export const allocationFormTemplatePreferenceFieldType = pgEnum(
     "allocation_form_template_preference_field_type",
-    ["LECTURE", "TUTORIAL", "PRACTICAL"]
+    sectionTypes
 );
 
 export const allocationFormTemplate = pgTable("allocation_form_template", {
@@ -42,7 +43,7 @@ export const allocationForm = pgTable("allocation_form", {
     templateId: uuid("template_id").references(
         () => allocationFormTemplate.id,
         { onDelete: "cascade" }
-    ),
+    ).notNull(),
     title: text("title").notNull().unique(),
     description: text("description").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -52,6 +53,9 @@ export const allocationForm = pgTable("allocation_form", {
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
     allocationDeadline: timestamp("allocation_deadline", { withTimezone: true }),
+    isPublishedToRoleId: integer("is_published_to_role_id").references(() => roles.id, {
+        onDelete: "set null",
+    }),
     emailMsgId: text('email_msg_id')
 });
 
@@ -96,5 +100,8 @@ export const allocationFormTemplateField = pgTable(
         groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
             onDelete: "set null",
         }),
+        viewableByRoleId: integer("viewable_by_role_id").references(() => roles.id, {
+            onDelete: "set null",
+        })
     }
 );

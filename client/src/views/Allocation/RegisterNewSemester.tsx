@@ -34,8 +34,6 @@ const RegisterNewSemester = () => {
       semesterType: "1",
       allocationStatus: "notStarted",
       year: new Date().getFullYear(),
-      noOfDisciplineCoursesPerInstructor: 3,
-      noOfElectivesPerInstructor: 3,
       startDate: "",
       endDate: "",
     } as NewSemester,
@@ -124,32 +122,6 @@ const RegisterNewSemester = () => {
                   <FormLabel>End Date</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="noOfDisciplineCoursesPerInstructor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Discipline Courses Per Instructor</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} value={Number(field.value)} onChange={(e) => field.onChange(Number(e.target.value))}/>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="noOfElectivesPerInstructor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Electives Per Instructor</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} value={Number(field.value)}  onChange={(e) => field.onChange(Number(e.target.value))}/>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

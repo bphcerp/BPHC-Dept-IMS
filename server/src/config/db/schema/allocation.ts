@@ -64,6 +64,7 @@ export const allocationSection = pgTable(
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
         createdAt: timestamp("created_at").notNull().defaultNow(),
+        timetableRoomId: text("td_room_id")
     },
     (table) => [index().on(table.masterId)]
 );
@@ -89,6 +90,7 @@ export const allocationSectionInstructors = pgTable(
 export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),
     name: text("name").notNull(),
+    timetableCourseId: text("td_course_id"),
 
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),
@@ -121,15 +123,10 @@ export const semester = pgTable(
             onDelete: "restrict",
         }),
 
+        summaryHidden: boolean("summary_hidden").default(true).notNull(),
+
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
-
-        noOfElectivesPerInstructor: integer(
-            "no_of_electives_per_instructor"
-        ).notNull(),
-        noOfDisciplineCoursesPerInstructor: integer(
-            "no_of_discipline_courses_per_instructor"
-        ).notNull(),
 
         hodAtStartOfSemEmail: text("hod_at_start").references(
             () => faculty.email

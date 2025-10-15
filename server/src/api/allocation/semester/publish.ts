@@ -6,7 +6,6 @@ import { allocationForm } from "@/config/db/schema/allocationFormBuilder.ts";
 import { allocationFormPublishSchema } from "node_modules/lib/src/schemas/AllocationFormBuilder.ts";
 import { eq } from "drizzle-orm";
 import { semester } from "@/config/db/schema/allocation.ts";
-import { faculty, phd } from "@/config/db/schema/admin.ts";
 import { createNotifications, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import assert from "assert";
@@ -22,7 +21,7 @@ router.post(
     asyncHandler(async (req, res) => {
         assert(req.user);
         const { id } = req.params;
-        const { allocationDeadline, emailBody } =
+        const { allocationDeadline, emailBody, isPublishedToRoleId } =
             allocationFormPublishSchema.parse(req.body);
 
         const semesterUpdated = await db.transaction(async (tx) => {
@@ -37,20 +36,26 @@ router.post(
                 .set({
                     publishedDate: new Date(),
                     allocationDeadline,
+                    isPublishedToRoleId,
                 })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
             return semesterUpdated;
         });
 
-        const faculties = (await db.select().from(faculty)).map(
-            (el) => el.email
-        );
+        const recipients = (
+            await db.query.users.findMany({
+                where: (users, { and, sql, eq }) =>
+                    and(
+                        sql`${isPublishedToRoleId} = ANY(${users.roles})`,
+                        eq(users.deactivated, false)
+                    ),
+            })
+        ).map((el) => el.email);
 
-        const phds = (await db.select().from(phd).where(eq(phd.phdType, 'full-time'))).map((el) => el.email);
+        assert(semesterUpdated[0].formId);
+        assert(recipients.length > 0);
 
-        const recipients = [...faculties, ...phds];
-
-        const htmlBody = DOMPurify.sanitize(marked(emailBody))
+        const htmlBody = DOMPurify.sanitize(marked(emailBody));
 
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({
@@ -58,7 +63,7 @@ router.post(
                 title: "Course Preference Submission",
                 description: `Submit your course preferences for the upcoming semester`,
                 assignedTo: el,
-                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+                link: `/allocation/submit`,
                 completionEvent: `preference submission by ${el}`,
                 deadline: allocationDeadline,
                 createdBy: req.user!.email,
@@ -71,7 +76,7 @@ router.post(
                 title: "Course Preference Submission",
                 userEmail: el,
                 content: `Submit your course preferences for the upcoming semester`,
-                link: `/allocation/forms/${semesterUpdated[0].formId}/submit`,
+                link: `/allocation/submit`,
             }));
 
         const email: Parameters<typeof sendEmail>[0] = {
