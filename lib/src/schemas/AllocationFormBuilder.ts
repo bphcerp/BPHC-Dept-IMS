@@ -78,6 +78,7 @@ export const allocationFormSchema = z.object({
 export const allocationFormPublishSchema = z.object({
     allocationDeadline: z.coerce.date().optional(),
     emailBody: z.string(),
+    isPublishedToRoleId: z.coerce.number(),
 });
 
 export const updateAllocationFormSchema = allocationFormSchema

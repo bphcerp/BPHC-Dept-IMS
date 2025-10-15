@@ -22,10 +22,10 @@ router.get(
             );
 
         const results = await db.query.users.findMany({
-            where: (cols, { eq, or, and }) =>
+            where: (users, { eq, and, sql }) =>
                 and(
-                    or(eq(cols.type, "phd"), eq(cols.type, "faculty")),
-                    eq(cols.deactivated, false)
+                    sql`${currentAllocationSemester.form?.isPublishedToRoleId} = ANY(${users.roles})`,
+                    eq(users.deactivated, false)
                 ),
             columns: { email: true, type: true, name: true },
             orderBy: (cols, { asc }) => asc(cols.name),
@@ -39,30 +39,50 @@ router.get(
             },
         });
 
-        const facultiesPrefs = (await db.query.allocationFormResponse.findMany({
-            where: (response, { eq, and, isNull }) =>
-                and(
-                    eq(response.courseCode, code),
-                    eq(response.formId, currentAllocationSemester.formId!),
-                    isNull(response.teachingAllocation),
-                ),
-            orderBy: (response, { asc }) => asc(response.preference),
-            with: {
-                submittedBy: true,
-                templateField: true,
-            },
-        })).filter((pref) => pref.templateField?.preferenceType === sectionType);
+        const facultiesPrefs = (
+            await db.query.allocationFormResponse.findMany({
+                where: (response, { eq, and, isNull }) =>
+                    and(
+                        eq(response.courseCode, code),
+                        eq(response.formId, currentAllocationSemester.formId!),
+                        isNull(response.teachingAllocation)
+                    ),
+                orderBy: (response, { asc }) => asc(response.preference),
+                with: {
+                    submittedBy: true,
+                    templateField: true,
+                },
+            })
+        ).filter((pref) => pref.templateField?.preferenceType === sectionType);
 
         res.status(200).json(
-            results.filter((user) => user.type === 'phd' ? user.phd.phdType === 'full-time': true).map((user) => ({
-                email: user.email,
-                name:
-                    user.name ?? user.type === "phd"
-                        ? (user.phd?.name ?? null)
-                        : (user.faculty?.name ?? null),
-                preference: facultiesPrefs.find((pref) => pref.submittedByEmail === user.email)?.preference ?? null,
-                type: user.type,
-            })).sort((facultyA, facultyB) => !facultyA.preference ? !facultyB.preference ? 0 : 1 : !facultyB.preference ? -1 : facultyA.preference - facultyB.preference)
+            results
+                .filter((user) =>
+                    user.type === "phd"
+                        ? user.phd.phdType === "full-time"
+                        : true
+                )
+                .map((user) => ({
+                    email: user.email,
+                    name:
+                        (user.name ?? user.type === "phd")
+                            ? (user.phd?.name ?? null)
+                            : (user.faculty?.name ?? null),
+                    preference:
+                        facultiesPrefs.find(
+                            (pref) => pref.submittedByEmail === user.email
+                        )?.preference ?? null,
+                    type: user.type,
+                }))
+                .sort((facultyA, facultyB) =>
+                    !facultyA.preference
+                        ? !facultyB.preference
+                            ? 0
+                            : 1
+                        : !facultyB.preference
+                          ? -1
+                          : facultyA.preference - facultyB.preference
+                )
         );
     })
 );

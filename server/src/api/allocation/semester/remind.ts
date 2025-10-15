@@ -44,30 +44,24 @@ router.post(
             }
         );
 
-        const notRespondedFaculty = (await db.query.faculty
-            .findMany({
-                columns: {
-                    email: true,
-                },
-                where: (faculty, { notInArray }) =>
-                    notInArray(faculty.email, Array.from(seenEmails)),
-            }))
-            .map((el) => el.email);
-
-        const notRespondedPhD = (await db.query.phd
-            .findMany({
-                columns: {
-                    email: true,
-                },
-                where: (phd, { notInArray, and, eq }) =>
+        const recipients = (
+            await db.query.users.findMany({
+                where: (users, { and, sql, eq }) =>
                     and(
-                        notInArray(phd.email, Array.from(seenEmails)),
-                        eq(phd.phdType, "full-time")
+                        sql`${latestSemester.form?.isPublishedToRoleId} = ANY(${users.roles})`,
+                        eq(users.deactivated, false)
                     ),
-            }))
-            .map((el) => el.email);
+            })
+        ).map((el) => el.email);
 
-        const recipients = [...notRespondedFaculty, ...notRespondedPhD];
+        if (recipients.length === 0) {
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Everyone has responded to the form"
+                )
+            );
+        }
 
         const todos: Parameters<typeof createTodos>[0] = recipients.map(
             (el) => ({

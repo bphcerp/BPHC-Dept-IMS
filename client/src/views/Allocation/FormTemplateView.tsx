@@ -39,7 +39,7 @@ export const fieldTypes: AllocationFormTemplateFieldType[] = [
   "TEACHING_ALLOCATION",
 ];
 
-export const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
+const DEFAULT_LABELS: Record<AllocationFormTemplateFieldType, string> = {
   PREFERENCE: "Please rank your course preferences.",
   TEACHING_ALLOCATION: "What is your teaching allocation?",
 };
@@ -119,6 +119,7 @@ const FormTemplateView = ({ create = true }) => {
         groupId: null,
         group: null,
         viewableByRoleId: null,
+        viewableByRole: null,
       },
     ]);
   };
@@ -315,12 +316,11 @@ const FormTemplateView = ({ create = true }) => {
                           <Select
                             value={field.viewableByRoleId?.toString() || ""}
                             onValueChange={(value) => {
-                              console.log(roles, value);
                               updateField(field.id, "viewableByRoleId", value);
                               updateField(
                                 field.id,
                                 "viewableByRole",
-                                roles?.find((r) => r.id === value)
+                                roles?.find((r) => r.id.toString() === value)
                               );
                             }}
                           >

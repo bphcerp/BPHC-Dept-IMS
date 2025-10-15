@@ -53,6 +53,9 @@ export const allocationForm = pgTable("allocation_form", {
         .references(() => users.email),
     publishedDate: timestamp("published_date", { withTimezone: true }),
     allocationDeadline: timestamp("allocation_deadline", { withTimezone: true }),
+    isPublishedToRoleId: integer("is_published_to_role_id").references(() => roles.id, {
+        onDelete: "set null",
+    }),
     emailMsgId: text('email_msg_id')
 });
 

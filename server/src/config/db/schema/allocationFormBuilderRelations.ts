@@ -38,6 +38,10 @@ export const allocationFormRelations = relations(
             fields: [allocationForm.id],
             references: [semester.formId],
         }),
+        isPublishedToRole: one(roles, {
+            fields: [allocationForm.isPublishedToRoleId],
+            references: [roles.id],
+        }),
     })
 );
 

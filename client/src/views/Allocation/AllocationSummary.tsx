@@ -80,7 +80,7 @@ export const AllocationSummary = () => {
               ? alloc.course.lectureUnits
               : section.type === "PRACTICAL"
                 ? alloc.course.practicalUnits
-                : 1) / section.instructors.length;
+                : 1) / section.instructors.filter((instr) => instr.type === 'faculty').length;
         });
       });
     });

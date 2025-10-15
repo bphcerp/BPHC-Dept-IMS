@@ -11,7 +11,7 @@ import {
     semesterTypes,
     sectionTypes,
 } from "../schemas/Allocation.ts";
-import { MemberDetailsResponse } from "../schemas/Admin.ts";
+import { MemberDetailsResponse, userTypes } from "../schemas/Admin.ts";
 import {
     AllocationForm,
     AllocationFormResponse,
@@ -241,6 +241,7 @@ export type InstructorAllocationDetails = Record<
         instructors: {
             email: string
             name: string | null;
+            type: (typeof userTypes)[number];
         }[];
         master: {
             id: string;

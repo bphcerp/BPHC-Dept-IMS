@@ -36,8 +36,18 @@ router.get(
                                                             name: true,
                                                         },
                                                     },
+                                                    staff: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
+                                                    phd: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
                                                 },
-                                                columns: { name: true, email: true },
+                                                columns: { name: true, email: true, type: true },
                                             },
                                         },
                                     },
@@ -84,9 +94,12 @@ router.get(
                     ...cur.section,
                     instructors: cur.section.instructors.map((i) => ({
                         email: i.instructor.email,
+                        type: i.instructor.type,
                         name:
                             i.instructor.name ??
-                            i.instructor.faculty.name ??
+                            i.instructor.faculty?.name ??
+                            i.instructor.phd?.name ??
+                            i.instructor.staff?.name ??
                             "Not Provided",
                     })),
                     master: {

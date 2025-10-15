@@ -44,6 +44,8 @@ import { Maximize2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { AxiosError } from "axios";
+import { Role } from "@/components/admin/RoleList";
 
 export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
@@ -59,6 +61,16 @@ export const AllocationOverview = () => {
       api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
         ({ data }) => data
       ),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const response = await api.get<Role[]>("/admin/role");
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Fetch all available forms that can be linked
@@ -87,7 +99,10 @@ export const AllocationOverview = () => {
         .then(() => toast.success("Reminder successfully sent"))
         .catch((e) => {
           console.error("Error while sending reminder", e);
-          toast.error("Something went wrong");
+          toast.error(
+            ((e as AxiosError).response?.data as string) ??
+              "Something went wrong"
+          );
         }),
   });
 
@@ -109,13 +124,16 @@ export const AllocationOverview = () => {
     mutationFn: ({
       allocationDeadline,
       emailBody,
+      isPublishedToRoleId,
     }: {
       allocationDeadline: string;
       emailBody: string;
+      isPublishedToRoleId: string;
     }) =>
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
         allocationDeadline,
         emailBody,
+        isPublishedToRoleId
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
@@ -149,13 +167,15 @@ export const AllocationOverview = () => {
     defaultValues: {
       allocationDeadline: "",
       emailBody: "",
+      isPublishedToRoleId: "",
     },
     onSubmit: ({ value }) => {
-      if (value.allocationDeadline && latestSemester?.form?.id) {
-        publishFormMutation.mutate({
-          allocationDeadline: value.allocationDeadline,
-          emailBody: value.emailBody,
-        });
+      if (
+        value.allocationDeadline &&
+        latestSemester?.form?.id &&
+        value.isPublishedToRoleId
+      ) {
+        publishFormMutation.mutate(value);
       }
     },
   });
@@ -237,9 +257,9 @@ Hyderabad Campus<span>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle>Publish Allocation Form</DialogTitle>
-                    <DialogDescription>
-                      Set a deadline for the allocation form submission. This
-                      will notify all faculty members.
+                    <DialogDescription className="flex flex-col space-y-2">
+                      <p>Set a deadline for the allocation form submission and select the role to which the form should be published.</p>
+                      <p>An email will be sent to all the users with the role selected.</p>
                     </DialogDescription>
                   </DialogHeader>
                   <form
@@ -250,28 +270,55 @@ Hyderabad Campus<span>
                       void handlePublishFormSubmit();
                     }}
                   >
-                    <PublishFormField name="allocationDeadline">
-                      {(field) => (
-                        <div className="flex items-center space-x-3">
-                          <Label htmlFor={field.name}>
-                            Allocation Form Deadline
-                          </Label>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                              .toISOString()
-                              .slice(0, 16)}
-                            onChange={(e) => {
-                              field.handleChange(e.target.value);
-                            }}
-                            type="datetime-local"
-                          />
-                        </div>
-                      )}
-                    </PublishFormField>
+                    <div className="grid grid-rows-2 gap-4">
+                      <PublishFormField name="allocationDeadline">
+                        {(field) => (
+                          <div className="flex items-center justify-between space-x-3">
+                            <Label htmlFor={field.name}>
+                              Allocation Form Deadline
+                            </Label>
+                            <Input
+                              id={field.name}
+                              name={field.name}
+                              value={field.state.value}
+                              onBlur={field.handleBlur}
+                              className="w-52"
+                              min={new Date(
+                                Date.now() + 7 * 24 * 60 * 60 * 1000
+                              )
+                                .toISOString()
+                                .slice(0, 16)}
+                              onChange={(e) => {
+                                field.handleChange(e.target.value);
+                              }}
+                              type="datetime-local"
+                            />
+                          </div>
+                        )}
+                      </PublishFormField>
+                      <PublishFormField name="isPublishedToRoleId">
+                        {(field) => (
+                          <div className="flex items-center justify-between space-x-3">
+                            <Label>Publish To Role</Label>
+                            <Select
+                              value={field.state.value}
+                              onValueChange={(val) => field.handleChange(val)}
+                            >
+                              <SelectTrigger className="w-52">
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {roles?.map((role) => (
+                                  <SelectItem key={role.id} value={role.id.toString()}>
+                                    {role.roleName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </PublishFormField>
+                    </div>
                     <PublishFormSubscribe
                       selector={(state) => [state.values.allocationDeadline]}
                     >
@@ -343,10 +390,11 @@ Hyderabad Campus<span>
                     <PublishFormSubscribe
                       selector={(state) => [
                         state.values.allocationDeadline,
+                        state.values.isPublishedToRoleId,
                         state.isValid,
                       ]}
                     >
-                      {([allocationDeadline, isValid]) => (
+                      {([allocationDeadline, isPublishedToRoleId, isValid]) => (
                         <>
                           <Button
                             type="button"
@@ -354,6 +402,7 @@ Hyderabad Campus<span>
                             disabled={
                               !isValid ||
                               !allocationDeadline ||
+                              !isPublishedToRoleId ||
                               publishFormMutation.isLoading
                             }
                             onClick={() => {
@@ -368,6 +417,7 @@ Hyderabad Campus<span>
                             disabled={
                               !isValid ||
                               !allocationDeadline ||
+                              !isPublishedToRoleId ||
                               !emailFormState.values.emailBody ||
                               publishFormMutation.isLoading
                             }

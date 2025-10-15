@@ -67,7 +67,7 @@ function getCreditLoadForInstructor(
           : sectionType === "PRACTICAL"
             ? alloc.course.practicalUnits
             : 1;
-      total += units / section.instructors.length;
+      total += units / section.instructors.filter((instr) => instr.type === 'faculty').length;
     }
   });
   return total > 0 ? total : null;

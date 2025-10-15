@@ -211,7 +211,8 @@ const CourseGroups = () => {
   });
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4 p-4">
+      <h1 className="text-2xl font-bold text-primary">Course Groups</h1>
       <div className="flex justify-end">
         <Dialog>
           <DialogTrigger asChild>
