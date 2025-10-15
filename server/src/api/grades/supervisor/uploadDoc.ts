@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db from "@/config/db/index.ts";
-import { phdSupervisorGrades } from "@/config/db/schema/phd.ts";
+import { instructorSupervisorGrades } from "@/config/db/schema/phd.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -20,25 +20,25 @@ router.post(
         if (!supervisorEmail) {
             return next(new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated"));
         }
-        const { studentEmail, courseName, type, erpId, name } = req.body as { studentEmail?: string; courseName?: string; type?: string; erpId?: string; name?: string };
-        if (!studentEmail || !courseName || !type) {
-            return next(new HttpError(HttpCode.BAD_REQUEST, "Missing studentEmail/courseName/type"));
+        const { studentErpId, courseName, type, erpId, name } = req.body as { studentErpId?: string; courseName?: string; type?: string; erpId?: string; name?: string };
+        if (!studentErpId || !courseName || !type) {
+            return next(new HttpError(HttpCode.BAD_REQUEST, "Missing studentErpId/courseName/type"));
         }
         if (!req.file) {
             return next(new HttpError(HttpCode.BAD_REQUEST, "Missing file"));
         }
 
-        const student = await db.query.phd.findFirst({
-            where: (phd) => and(eq(phd.email, studentEmail), eq(phd.supervisorEmail, supervisorEmail)),
-            columns: { email: true },
+        const existing = await db.query.instructorSupervisorGrades.findFirst({
+            where: (t) => and(
+                eq(t.studentErpId, studentErpId),
+                eq(t.courseName, courseName),
+                eq(t.instructorSupervisorEmail, supervisorEmail)
+            ),
         });
-        if (!student) {
-            return next(new HttpError(HttpCode.FORBIDDEN, "Not allowed for this student"));
-        }
 
-        const existing = await db.query.phdSupervisorGrades.findFirst({
-            where: (t) => and(eq(t.studentEmail, studentEmail), eq(t.courseName, courseName)),
-        });
+        if (!existing) {
+            return next(new HttpError(HttpCode.FORBIDDEN, "Not allowed for this student/course"));
+        }
 
         const inserted = await db.insert(files).values({
             userEmail: supervisorEmail,
@@ -51,19 +51,10 @@ router.post(
         }).returning();
         const fileId = inserted[0].id;
 
-        if (existing) {
-            await db
-                .update(phdSupervisorGrades)
-                .set(type === 'mid' ? { midsemDocFileId: fileId } : { endsemDocFileId: fileId })
-                .where(eq(phdSupervisorGrades.id, existing.id));
-        } else {
-            await db.insert(phdSupervisorGrades).values({
-                studentEmail,
-                supervisorEmail,
-                courseName,
-                ...(type === 'mid' ? { midsemDocFileId: fileId } : { endsemDocFileId: fileId }),
-            });
-        }
+        await db
+            .update(instructorSupervisorGrades)
+            .set(type === 'mid' ? { midsemDocFileId: fileId } : { endsemDocFileId: fileId })
+            .where(eq(instructorSupervisorGrades.id, existing.id));
 
         res.json({ success: true, fileId });
     })

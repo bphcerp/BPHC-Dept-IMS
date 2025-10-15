@@ -133,6 +133,11 @@ export const allPermissions = {
     "grades:supervisor:view": "Supervisors can view their students and grades",
     "grades:supervisor:save": "Supervisors can save/update student grades",
     "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
+    "grades:instructor:view": "Instructors can view their assigned students and grades",
+    "grades:instructor:save": "Instructors can save/update student grades",
+    "grades:assign": "Assign instructors to students",
+    "grades:notifications:send": "Send grade notifications to instructors",
+    "grades:submit": "Submit grades and complete phase transitions",
     "phd:examiner:qe": "View and respond to examiner assignments",
 
     // ANALYTICS
@@ -456,6 +461,14 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+    "/grades/instructor": "grades:instructor:view",
+    "/grades/instructor/save": "grades:instructor:save",
+    "/grades/assign-student-instructor": "grades:assign",
+    "/grades/instructor-assignments": "grades:assign",
+    "/grades/debug-instructor-assignments": "grades:assign",
+    "/grades/notifications/send-midsem": "grades:notifications:send",
+    "/grades/notifications/send-endsem": "grades:notifications:send",
+    "/grades/submit-grades": "grades:submit",
 
     // Analytics
     "/analytics/publications": "analytics:publications",

@@ -55,7 +55,7 @@ function extractCampusFromEmail(email: string | undefined): string {
 }
 
 function getAffiliationFromCampus(campus: string) {
-  return campus ? `BITS ${campus} campus` : "";
+  return campus ? `BITS Pilani ${campus} campus` : "";
 }
 
 export default function AddProject() {

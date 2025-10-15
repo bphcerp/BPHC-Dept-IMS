@@ -19,18 +19,29 @@ router.get(
             columns: { email: true, erpId: true, supervisorEmail: true },
         });
 
-        const emails = students.map((s) => s.email);
-        const grades = emails.length
-            ? await db.query.phdSupervisorGrades.findMany({
-                where: (t) => inArray(t.studentEmail, emails),
+        const studentErpIds = students.map((s) => s.erpId).filter((id): id is string => Boolean(id));
+        const gradesRaw = studentErpIds.length
+            ? await db.query.instructorSupervisorGrades.findMany({
+                where: (t) => inArray(t.studentErpId, studentErpIds),
             })
             : [];
+
+        const grades = gradesRaw.map(grade => {
+            const student = students.find(s => s.erpId === grade.studentErpId);
+            return {
+                studentEmail: student?.email || `student_${grade.studentErpId}@example.com`,
+                courseName: grade.courseName,
+                midsemGrade: grade.midsemGrade,
+                compreGrade: grade.compreGrade,
+                midsemMarks: grade.midsemMarks,
+                endsemMarks: grade.endsemMarks,
+                midsemDocFileId: grade.midsemDocFileId,
+                endsemDocFileId: grade.endsemDocFileId,
+            };
+        });
 
         res.json({ success: true, data: { students, grades } });
     })
 );
 
 export default router;
-
-
-

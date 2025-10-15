@@ -16,53 +16,29 @@ const payloadSchema = z.object({
     compreGrade: z.string().optional(),
     midsemMarks: z.number().int().min(0).max(100).optional(),
     endsemMarks: z.number().int().min(0).max(100).optional(),
-    topic: z.string().optional(),
 });
 
 router.post(
     "/",
-    checkAccess("grades:supervisor:save"),
+    checkAccess("grades:instructor:save"),
     asyncHandler(async (req, res, next) => {
-        const supervisorEmail = req.user?.email;
-        if (!supervisorEmail) {
+        const instructorEmail = req.user?.email;
+        if (!instructorEmail) {
             return next(new HttpError(HttpCode.UNAUTHORIZED, "Unauthenticated"));
         }
-        const { studentErpId, courseName, midsemGrade, compreGrade, midsemMarks, endsemMarks, topic } = payloadSchema.parse(req.body);
+        const { studentErpId, courseName, midsemGrade, compreGrade, midsemMarks, endsemMarks } = payloadSchema.parse(req.body);
 
         const existing = await db.query.instructorSupervisorGrades.findFirst({
             where: (t) => and(
                 eq(t.studentErpId, studentErpId),
                 eq(t.courseName, courseName),
-                eq(t.instructorSupervisorEmail, supervisorEmail),
-                eq(t.role, 'supervisor')
+                eq(t.instructorSupervisorEmail, instructorEmail),
+                eq(t.role, 'instructor')
             ),
         });
 
         if (!existing) {
-            const student = await db.query.phd.findFirst({
-                where: (phd) => and(
-                    eq(phd.erpId, studentErpId),
-                    eq(phd.supervisorEmail, supervisorEmail)
-                ),
-            });
-
-            if (student) {
-                await db.insert(instructorSupervisorGrades).values({
-                    studentErpId,
-                    instructorSupervisorEmail: supervisorEmail,
-                    courseName,
-                    role: 'supervisor',
-                    midsemGrade: midsemGrade || null,
-                    compreGrade: compreGrade || null,
-                    midsemMarks: midsemMarks || null,
-                    endsemMarks: endsemMarks || null,
-                    topic: topic || null,
-                });
-                res.json({ success: true, message: "Grade saved successfully" });
-                return;
-            } else {
-                return next(new HttpError(HttpCode.FORBIDDEN, "Not allowed for this student/course"));
-            }
+            return next(new HttpError(HttpCode.FORBIDDEN, "Not allowed for this student/course"));
         }
 
         await db.update(instructorSupervisorGrades)
@@ -71,14 +47,13 @@ router.post(
                 compreGrade: compreGrade || null,
                 midsemMarks: midsemMarks || null,
                 endsemMarks: endsemMarks || null,
-                topic: topic || null,
                 updatedAt: new Date(),
             })
             .where(and(
                 eq(instructorSupervisorGrades.studentErpId, studentErpId),
                 eq(instructorSupervisorGrades.courseName, courseName),
-                eq(instructorSupervisorGrades.instructorSupervisorEmail, supervisorEmail),
-                eq(instructorSupervisorGrades.role, 'supervisor')
+                eq(instructorSupervisorGrades.instructorSupervisorEmail, instructorEmail),
+                eq(instructorSupervisorGrades.role, 'instructor')
             ));
 
         res.json({ success: true, message: "Grade saved successfully" });

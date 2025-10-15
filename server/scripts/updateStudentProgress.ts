@@ -1,6 +1,11 @@
+// server/scripts/updateStudentProgress.ts
 import db from "@/config/db/index.ts";
 import { users, phd, faculty } from "@/config/db/schema/admin.ts";
-import { phdProposals, phdSemesters } from "@/config/db/schema/phd.ts";
+import {
+    phdProposals,
+    phdSemesters,
+    phdProposalSemesters,
+} from "@/config/db/schema/phd.ts";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { and, eq, desc } from "drizzle-orm";
@@ -20,7 +25,7 @@ const studentProgressSchema = z.object({
     "notional supervisor email": z.string().email().optional().nullable(),
     "supervisor email": z.string().email().optional().nullable(),
     "Supervisor Name": z.string().optional().nullable(),
-    "pas/fail the qe(true  or false)": z
+    "pas/fail the qe(true or false)": z
         .union([z.string(), z.boolean()])
         .optional(),
     "qualification date if passed": z
@@ -67,13 +72,11 @@ async function updateStudentProgress(filePath: string) {
     if (!sheetName) throw new Error("No sheets found in the Excel file.");
     const sheet = workbook.Sheets[sheetName];
     const data = xlsx.utils.sheet_to_json(sheet) as unknown[];
-
     let successCount = 0;
     let errorCount = 0;
 
     for (const row of data) {
         const parsedRow = studentProgressSchema.safeParse(row);
-
         if (!parsedRow.success) {
             console.log(
                 `Skipping invalid row: ${JSON.stringify(row)}. Errors: ${
@@ -83,15 +86,14 @@ async function updateStudentProgress(filePath: string) {
             errorCount++;
             continue;
         }
-
         const studentData = parsedRow.data;
         console.log(`Processing student: ${studentData.email}`);
-        // console.log("Parsed Excel Data for student:", studentData);
 
         await db
             .transaction(async (tx) => {
                 let currentStatus = "Awaiting QE Application";
-                const qeStatus = studentData["pas/fail the qe(true  or false)"];
+                const qeStatus = studentData["pas/fail the qe(true or false)"];
+
                 if (
                     (qeStatus &&
                         (String(qeStatus).toLowerCase() === "true" ||
@@ -194,10 +196,17 @@ async function updateStudentProgress(filePath: string) {
                     supervisorEmail: studentData["supervisor email"],
                     currentStatus: currentStatus,
                 };
+
                 await tx
                     .insert(phd)
-                    .values({ email: studentData.email, ...phdDataSet })
-                    .onConflictDoUpdate({ target: phd.email, set: phdDataSet });
+                    .values({
+                        email: studentData.email,
+                        ...phdDataSet,
+                    })
+                    .onConflictDoUpdate({
+                        target: phd.email,
+                        set: phdDataSet,
+                    });
                 console.log(
                     `Upserted data for ${studentData.email} with status: ${currentStatus}`
                 );
@@ -214,6 +223,7 @@ async function updateStudentProgress(filePath: string) {
                         if (typeof qeDateValue === "number")
                             qualificationDate = excelDateToJSDate(qeDateValue);
                         else qualificationDate = new Date(qeDateValue);
+
                         if (
                             qualificationDate &&
                             !isNaN(qualificationDate.getTime())
@@ -242,6 +252,15 @@ async function updateStudentProgress(filePath: string) {
                     studentData["Proposal Seminar"]?.toLowerCase() ===
                     "completed"
                 ) {
+                    const latestProposalSemester =
+                        await tx.query.phdProposalSemesters.findFirst({
+                            orderBy: [desc(phdProposalSemesters.id)],
+                        });
+                    if (!latestProposalSemester) {
+                        throw new Error(
+                            "No active proposal semester found. Please create one before running this script."
+                        );
+                    }
                     const existingProposal =
                         await tx.query.phdProposals.findFirst({
                             where: eq(
@@ -249,6 +268,7 @@ async function updateStudentProgress(filePath: string) {
                                 studentData.email
                             ),
                         });
+
                     if (existingProposal) {
                         if (existingProposal.status !== "completed") {
                             await tx
@@ -260,7 +280,6 @@ async function updateStudentProgress(filePath: string) {
                         }
                     } else {
                         if (studentData["supervisor email"]) {
-                            // Create a single dummy file record to satisfy foreign key constraints
                             const [dummyFile] = await tx
                                 .insert(files)
                                 .values({
@@ -280,7 +299,7 @@ async function updateStudentProgress(filePath: string) {
                                     studentData["supervisor email"],
                                 title: "Completed via Excel Import",
                                 status: "completed",
-                                proposalSemesterId: latestSemester.id,
+                                proposalSemesterId: latestProposalSemester.id,
                                 appendixFileId: dummyFile.id,
                                 summaryFileId: dummyFile.id,
                                 outlineFileId: dummyFile.id,

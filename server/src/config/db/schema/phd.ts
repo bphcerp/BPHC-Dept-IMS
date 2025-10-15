@@ -411,21 +411,32 @@ export const phdSeminarSlots = pgTable(
     (table) => [unique().on(table.startTime, table.venue)]
 );
 
-export const phdSupervisorGrades = pgTable(
-    "phd_supervisor_grades",
+export const gradePhaseEnum = pgEnum("grade_phase_enum", [
+    "draft",
+    "midsem",
+    "endsem",
+]);
+
+export const instructorSupervisorGrades = pgTable(
+    "instructor_supervisor_grades",
     {
         id: serial("id").primaryKey(),
-        studentEmail: text("student_email")
+        studentErpId: text("student_erp_id")
             .notNull()
-            .references(() => phd.email, { onDelete: "cascade" }),
-        supervisorEmail: text("supervisor_email")
+            .references(() => phd.erpId, { onDelete: "cascade" }),
+        campusId: text("campus_id"),
+        studentName: text("student_name"),
+        instructorSupervisorEmail: text("instructor_supervisor_email")
             .notNull()
             .references(() => faculty.email, { onDelete: "cascade" }),
         courseName: text("course_name").notNull(),
+        role: text("role").notNull(), // 'instructor' or 'supervisor'
+        phase: gradePhaseEnum("phase").notNull().default("draft"),
         midsemGrade: text("midsem_grade"),
         compreGrade: text("compre_grade"),
         midsemMarks: integer("midsem_marks"),
         endsemMarks: integer("endsem_marks"),
+        topic: text("topic"),
         midsemDocFileId: integer("midsem_doc_file_id").references(
             () => files.id,
             {
@@ -444,8 +455,10 @@ export const phdSupervisorGrades = pgTable(
             .notNull(),
     },
     (table) => [
-        unique().on(table.studentEmail, table.courseName),
-        index().on(table.studentEmail),
-        index().on(table.supervisorEmail),
+        unique().on(table.studentErpId, table.courseName),
+        index().on(table.studentErpId),
+        index().on(table.instructorSupervisorEmail),
+        index().on(table.role),
+        index().on(table.phase),
     ]
 );

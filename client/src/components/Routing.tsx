@@ -113,7 +113,8 @@ import SendMail from "@/views/Wilp/SendMail";
 import GradesLayout from "@/layouts/Grades";
 import UploadExcel from "@/views/Grades/UploadExcel";
 import ManageGrades from "@/views/Grades/ManageGrades";
-import SupervisorGradesView from "@/views/Grades/Supervisor";
+import AssignGradesView from "@/views/Grades/AssignGrades";
+import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
@@ -812,10 +813,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(gradesModulePermissions) && (
             <Route path="/grades" element={<GradesLayout />}>
-              <Route
-                index
-                element={<Navigate to="/grades/upload" replace={true} />}
-              />
+              <Route index element={<GradesDefaultRedirect />} />
               {checkAccess(permissions["/grades/upload"]) && (
                 <Route path="upload" element={<UploadExcel />} />
               )}
@@ -823,7 +821,7 @@ const Routing = () => {
                 <Route path="manage" element={<ManageGrades />} />
               )}
               {checkAccess(permissions["/grades/supervisor"]) && (
-                <Route path="supervisor" element={<SupervisorGradesView />} />
+                <Route path="assign-grades" element={<AssignGradesView />} />
               )}
             </Route>
           )}
@@ -850,7 +848,9 @@ const Routing = () => {
                 </>
               )}
 
-              { checkAccess("allocation:write") && <Route path="creditmatrix" element={<AllocationMatrixView />} /> }
+              {checkAccess("allocation:write") && (
+                <Route path="creditmatrix" element={<AllocationMatrixView />} />
+              )}
 
               {checkAccess("allocation:view") && (
                 <>

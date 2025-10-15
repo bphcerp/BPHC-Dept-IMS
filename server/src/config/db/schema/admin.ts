@@ -55,7 +55,7 @@ export const users = pgTable("users", {
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
-        testerRollbackRoles: integer("tester_rollback_roles")
+    testerRollbackRoles: integer("tester_rollback_roles")
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
@@ -105,7 +105,7 @@ export const phd = pgTable("phd", {
         onDelete: "set null",
     }),
     idNumber: text("id_number"),
-    erpId: text("erp_id"),
+    erpId: text("erp_id").unique(),
     name: text("name"),
     instituteEmail: text("institute_email"),
     mobile: text("mobile"),
