@@ -673,14 +673,14 @@ export default function ManageGrades() {
       link.href = url;
       link.setAttribute(
         "download",
-        modifiedData.fileName.replace(/\.[^/.]+$/, "_graded.xlsx")
+        modifiedData.fileName.replace(/\.[^/.]+$/, "_graded.zip")
       );
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success("Excel file exported successfully!");
+      toast.success("Grade package exported successfully!");
     } catch (error: unknown) {
       const message =
         (error as { response?: { data?: { message?: string } } })?.response
@@ -898,7 +898,6 @@ export default function ManageGrades() {
                             {header.name}
                           </TableHead>
                         ))}
-                        <TableHead className="min-w-[120px]">Topic</TableHead>
                         <TableHead className="min-w-[140px]">
                           Midsem Report
                         </TableHead>
@@ -1151,18 +1150,6 @@ export default function ManageGrades() {
                                   })()}
                                 </TableCell>
                               ))}
-                              <TableCell>
-                                <div className="font-medium">
-                                  {(() => {
-                                    const topic = (
-                                      student as Record<string, unknown>
-                                    )["_topic"];
-                                    return typeof topic === "string"
-                                      ? topic
-                                      : "—";
-                                  })()}
-                                </div>
-                              </TableCell>
                               <TableCell>
                                 {(student as Record<string, unknown>)[
                                   "_midsemDocFileId"
