@@ -140,13 +140,38 @@ export default function AssignGradesView() {
   const [instructorAssignments, setInstructorAssignments] = useState<
     InstructorAssignment[]
   >([]);
+  const [courseCompletion, setCourseCompletion] = useState<
+    Record<string, { completed: number; total: number }>
+  >({});
+
+  const deriveCoursePhase = useCallback(
+    (courseName: string): "draft" | "midsem" | "endsem" => {
+      if (!courseName) return "draft";
+
+      const gradeForCourse = Object.values(grades).find(
+        (g) => g.courseName === courseName && g.role === "instructor"
+      );
+      if (gradeForCourse?.phase) return gradeForCourse.phase;
+
+      const assignmentPhase = instructorAssignments.find(
+        (ia) => ia.courseName === courseName && ia.phase
+      )?.phase;
+
+      switch (String(assignmentPhase ?? "").toLowerCase()) {
+        case "midsem":
+          return "midsem";
+        case "endsem":
+          return "endsem";
+        default:
+          return "draft";
+      }
+    },
+    [grades, instructorAssignments]
+  );
+
   const coursePhase = useMemo<"draft" | "midsem" | "endsem">(() => {
-    if (!activeCourse) return "draft";
-    const gradeForCourse = Object.values(grades).find(
-      (g) => g.courseName === activeCourse && g.role === "instructor"
-    );
-    return gradeForCourse?.phase ?? "draft";
-  }, [activeCourse, grades]);
+    return deriveCoursePhase(activeCourse);
+  }, [activeCourse, deriveCoursePhase]);
 
   useEffect(() => {
     let isMounted = true;
@@ -496,14 +521,192 @@ export default function AssignGradesView() {
     [sheets]
   );
 
+  const validateMidsem = (row: GradeRow | undefined) => {
+    if (!row) return "Missing row data";
+    if (
+      row.midsemMarks === undefined ||
+      row.midsemMarks === null ||
+      Number.isNaN(Number(row.midsemMarks))
+    ) {
+      return "Enter midsem marks before submitting.";
+    }
+    if (!row.midsemGrade || String(row.midsemGrade).trim() === "") {
+      return "Enter a midsem grade before submitting.";
+    }
+    if (!row.topic || String(row.topic).trim() === "") {
+      return "Enter a topic before submitting.";
+    }
+    return null;
+  };
+
+  const validateEndsem = (row: GradeRow | undefined) => {
+    if (!row) return "Missing row data";
+    if (
+      row.endsemMarks === undefined ||
+      row.endsemMarks === null ||
+      Number.isNaN(Number(row.endsemMarks))
+    ) {
+      return "Enter endsem marks before submitting.";
+    }
+    if (!row.compreGrade || String(row.compreGrade).trim() === "") {
+      return "Enter endsem grade before submitting.";
+    }
+    return null;
+  };
+
+  const computeCompletionForCourse = useCallback(
+    (
+      courseName: string,
+      gradeState: Record<string, GradeRow>
+    ): { completed: number; total: number } => {
+      const phase = deriveCoursePhase(courseName);
+      const sheet = sheets.find((s) => s.sheetName === courseName);
+
+      const relevantStudents = (() => {
+        if (sheet) {
+          const allowedErp = sheet.erpIds ?? null;
+          return students.filter((s) => {
+            const isInstructorAssigned = instructorAssignments.some(
+              (ia: InstructorAssignment) =>
+                ia.studentErpId === s.erpId && ia.courseName === courseName
+            );
+            const isInstructorAssignedAnywhere = instructorAssignments.some(
+              (ia: InstructorAssignment) => ia.studentErpId === s.erpId
+            );
+
+            if (isInstructorAssigned) {
+              return true;
+            }
+
+            if (isInstructorAssignedAnywhere) {
+              return false;
+            }
+
+            if (allowedErp && allowedErp.length > 0) {
+              return s.erpId && allowedErp.includes(String(s.erpId));
+            }
+
+            return true;
+          });
+        }
+
+        return students.filter((s) => {
+          const isInstructorAssigned = instructorAssignments.some(
+            (ia: InstructorAssignment) =>
+              ia.studentErpId === s.erpId && ia.courseName === courseName
+          );
+          if (isInstructorAssigned) return true;
+
+          const key = `${s.erpId}::${courseName}`;
+          return gradeState[key] !== undefined;
+        });
+      })();
+
+      const completed = relevantStudents.filter((student) => {
+        const grade = gradeState[`${student.erpId}::${courseName}`];
+        if (!grade) return false;
+
+        if (phase === "midsem") {
+          const hasMidsemGrade =
+            typeof grade.midsemGrade === "string" &&
+            grade.midsemGrade.trim() !== "";
+          const hasTopic =
+            typeof grade.topic === "string" && grade.topic.trim() !== "";
+          return (
+            grade.midsemMarks !== undefined &&
+            grade.midsemMarks !== null &&
+            !Number.isNaN(Number(grade.midsemMarks)) &&
+            hasMidsemGrade &&
+            hasTopic
+          );
+        }
+
+        if (phase === "endsem") {
+          const hasCompreGrade =
+            typeof grade.compreGrade === "string" &&
+            grade.compreGrade.trim() !== "";
+          return (
+            grade.endsemMarks !== undefined &&
+            grade.endsemMarks !== null &&
+            !Number.isNaN(Number(grade.endsemMarks)) &&
+            hasCompreGrade
+          );
+        }
+
+        return false;
+      }).length;
+
+      return { completed, total: relevantStudents.length };
+    },
+    [deriveCoursePhase, sheets, students, instructorAssignments]
+  );
+
+  useEffect(() => {
+    const courseNames = new Set<string>();
+    sheets.forEach((sheet) => courseNames.add(sheet.sheetName));
+    instructorAssignments.forEach((assignment) =>
+      courseNames.add(assignment.courseName)
+    );
+
+    if (
+      courseNames.size === 0 &&
+      userRoles.supervisor &&
+      !userRoles.instructor
+    ) {
+      DEFAULT_GRADE_TABS.forEach((c) => courseNames.add(c));
+    }
+
+    const next: Record<string, { completed: number; total: number }> = {};
+    courseNames.forEach((courseName) => {
+      next[courseName] = computeCompletionForCourse(courseName, grades);
+    });
+
+    setCourseCompletion((prev) => {
+      const prevKeys = Object.keys(prev);
+      const nextKeys = Object.keys(next);
+      if (
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every(
+          (key) =>
+            prev[key]?.completed === next[key]?.completed &&
+            prev[key]?.total === next[key]?.total
+        )
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [
+    computeCompletionForCourse,
+    grades,
+    sheets,
+    instructorAssignments,
+    userRoles,
+  ]);
+
   const saveRow = async (
     studentErpId: string,
     role: "instructor" | "supervisor"
   ) => {
+    const key = `${studentErpId}::${activeCourse}`;
+    const row = grades[key];
+
+    if (coursePhase === "midsem") {
+      const err = validateMidsem(row);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+    } else if (coursePhase === "endsem") {
+      const err = validateEndsem(row);
+      if (err) {
+        toast.error(err);
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
-      const key = `${studentErpId}::${activeCourse}`;
-      const row = grades[key];
       const endpoint =
         role === "instructor"
           ? "/grades/submit-grades"
@@ -536,7 +739,7 @@ export default function AssignGradesView() {
         return updated;
       });
 
-      toast.success("Saved");
+      toast.success("Submitted");
     } catch (e: unknown) {
       const msg = getErrorMessage(e);
       console.error("[DEBUG] AssignGrades saveRow error:", e);
@@ -710,7 +913,7 @@ export default function AssignGradesView() {
                 }
 
                 return allCourses.map((c: string) => {
-                  const stats = getCompletionForSheet(c);
+                  const stats = courseCompletion[c] ?? getCompletionForSheet(c);
                   return (
                     <TabsTrigger
                       key={c}
@@ -1065,6 +1268,38 @@ export default function AssignGradesView() {
                                   </TableCell>
                                 );
                               }
+
+                              const lname = header.name.toLowerCase();
+                              if (lname.includes("topic")) {
+                                const gradeKey = `${r.erpId}::${c}`;
+                                const currentTopic =
+                                  (grades[gradeKey]?.topic ??
+                                    (typeof value === "string" ? value : "")) ||
+                                  "";
+                                return (
+                                  <TableCell key={header.name}>
+                                    <Input
+                                      value={currentTopic}
+                                      onChange={(e) => {
+                                        const nextValue = e.target.value;
+                                        r.excelRow[header.name] = nextValue;
+                                        setGrades((prev) => {
+                                          const updated = { ...prev };
+                                          updated[gradeKey] = {
+                                            ...updated[gradeKey],
+                                            topic: nextValue,
+                                          } as GradeRow;
+                                          return updated;
+                                        });
+                                      }}
+                                      placeholder="Topic"
+                                      className="w-40"
+                                      readOnly={coursePhase === "draft"}
+                                    />
+                                  </TableCell>
+                                );
+                              }
+
                               return (
                                 <TableCell key={header.name}>
                                   <div className="font-medium">
@@ -1289,7 +1524,7 @@ export default function AssignGradesView() {
                                 }}
                                 disabled={isSaving || coursePhase === "draft"}
                               >
-                                Save
+                                Submit
                               </Button>
                             </TableCell>
                           </TableRow>
