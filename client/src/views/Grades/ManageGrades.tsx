@@ -673,14 +673,14 @@ export default function ManageGrades() {
       link.href = url;
       link.setAttribute(
         "download",
-        modifiedData.fileName.replace(/\.[^/.]+$/, "_graded.xlsx")
+        modifiedData.fileName.replace(/\.[^/.]+$/, "_graded.zip")
       );
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      toast.success("Excel file exported successfully!");
+      toast.success("Grade package exported successfully!");
     } catch (error: unknown) {
       const message =
         (error as { response?: { data?: { message?: string } } })?.response

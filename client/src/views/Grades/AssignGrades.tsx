@@ -533,9 +533,6 @@ export default function AssignGradesView() {
     if (!row.midsemGrade || String(row.midsemGrade).trim() === "") {
       return "Enter a midsem grade before submitting.";
     }
-    if (!row.topic || String(row.topic).trim() === "") {
-      return "Enter a topic before submitting.";
-    }
     return null;
   };
 
@@ -610,14 +607,11 @@ export default function AssignGradesView() {
           const hasMidsemGrade =
             typeof grade.midsemGrade === "string" &&
             grade.midsemGrade.trim() !== "";
-          const hasTopic =
-            typeof grade.topic === "string" && grade.topic.trim() !== "";
           return (
             grade.midsemMarks !== undefined &&
             grade.midsemMarks !== null &&
             !Number.isNaN(Number(grade.midsemMarks)) &&
-            hasMidsemGrade &&
-            hasTopic
+            hasMidsemGrade
           );
         }
 
@@ -1294,7 +1288,7 @@ export default function AssignGradesView() {
                                       }}
                                       placeholder="Topic"
                                       className="w-40"
-                                      readOnly={coursePhase === "draft"}
+                                      readOnly={coursePhase !== "midsem"}
                                     />
                                   </TableCell>
                                 );
@@ -1435,7 +1429,7 @@ export default function AssignGradesView() {
                                     }}
                                     placeholder="Topic"
                                     className="w-40"
-                                    readOnly={coursePhase === "draft"}
+                                    readOnly={coursePhase !== "midsem"}
                                   />
                                 </TableCell>
                               </>
