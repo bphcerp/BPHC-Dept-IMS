@@ -8,7 +8,7 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import { v4 as uuidv4 } from "uuid";
-import { users } from "./admin.ts";
+import { roles, users } from "./admin.ts";
 import { course } from "./allocation.ts";
 import { allocationCourseGroup } from "./allocation.ts";
 
@@ -96,5 +96,8 @@ export const allocationFormTemplateField = pgTable(
         groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
             onDelete: "set null",
         }),
+        viewableByRole: uuid("viewable_by_role_id").references(() => roles.id, {
+            onDelete: "set null",
+        })
     }
 );

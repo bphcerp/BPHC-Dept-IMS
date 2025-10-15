@@ -74,8 +74,6 @@ export const semesterSchema = z.object({
     semesterType: semesterTypeEnum,
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
-    noOfElectivesPerInstructor: z.number().int().min(0),
-    noOfDisciplineCoursesPerInstructor: z.number().int().min(0),
     // hodAtStartOfSemEmail: z.string().email().optional(),
     // dcaConvenerAtStartOfSemEmail: z.string().email().optional(),
     allocationStatus: allocationStatusEnum,

@@ -124,13 +124,6 @@ export const semester = pgTable(
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
 
-        noOfElectivesPerInstructor: integer(
-            "no_of_electives_per_instructor"
-        ).notNull(),
-        noOfDisciplineCoursesPerInstructor: integer(
-            "no_of_discipline_courses_per_instructor"
-        ).notNull(),
-
         hodAtStartOfSemEmail: text("hod_at_start").references(
             () => faculty.email
         ),

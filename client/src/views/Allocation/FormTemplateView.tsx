@@ -31,6 +31,8 @@ import {
   Course,
   CourseGroupMinimal,
 } from "node_modules/lib/src/types/allocation";
+import { Role } from "@/components/admin/RoleList";
+import { useQuery } from "@tanstack/react-query";
 
 export const fieldTypes: AllocationFormTemplateFieldType[] = [
   "PREFERENCE",
@@ -54,6 +56,16 @@ const FormTemplateView = ({ create = true }) => {
     useState<AllocationFormTemplate | null>(null);
 
   const { id } = useParams<{ id: string }>();
+
+  const { data: roles } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const response = await api.get<Role[]>("/admin/role");
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+  });
 
   useEffect(() => {
     if (!create) {
@@ -105,9 +117,11 @@ const FormTemplateView = ({ create = true }) => {
         preferenceCount: 3,
         preferenceType: "LECTURE",
         groupId: null,
+        group: null,
+        viewableByRole: null,
       },
     ]);
-  };
+  }
 
   const updateField = (
     id: string,
@@ -356,40 +370,67 @@ const FormTemplateView = ({ create = true }) => {
                           </AlertDescription>
                         </Alert>
                       </div>
-                      {create && field.type === "PREFERENCE" && (
-                        <div className="space-y-4">
-                          <Label className="text-sm font-medium">
-                            Group Setting
+                      {/* Viewable by role dropdown */}
+                      <div className="space-y-4">
+                        <Label className="text-sm font-medium">
+                          Viewable by Role
+                        </Label>
+                        <div className="space-y-2">
+                          <Label className="text-xs">
+                            Select a role that can view this field
                           </Label>
-                          <div className="space-y-2">
-                            <Label className="text-xs">
-                              Select a group for this preference field
-                            </Label>
-                            <Select
-                              value={field.groupId || ""}
-                              onValueChange={(value) => {
-                                updateField(field.id, "groupId", value);
-                                updateField(
-                                  field.id,
-                                  "group",
-                                  groups.find((g) => g.id === value)
-                                );
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a group" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {groups.map((group) => (
-                                  <SelectItem key={group.id} value={group.id}>
-                                    {group.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          <Select
+                            value={field.viewableByRole || ""}
+                            onValueChange={(value) => {
+                              updateField(field.id, "viewableByRole", value);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles?.map((role) => (
+                                <SelectItem key={role.id} value={role.id}>
+                                  {role.roleName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      )}
+                      </div>
+                      {/* Group Setting dropdown */}
+                      <div className="space-y-4">
+                        <Label className="text-sm font-medium">
+                          Group Setting
+                        </Label>
+                        <div className="space-y-2">
+                          <Label className="text-xs">
+                            Select a group for this preference field
+                          </Label>
+                          <Select
+                            value={field.groupId || ""}
+                            onValueChange={(value) => {
+                              updateField(field.id, "groupId", value);
+                              updateField(
+                                field.id,
+                                "group",
+                                groups.find((g) => g.id === value)
+                              );
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a group" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {groups.map((group) => (
+                                <SelectItem key={group.id} value={group.id}>
+                                  {group.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

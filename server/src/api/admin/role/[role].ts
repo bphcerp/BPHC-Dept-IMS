@@ -18,6 +18,7 @@ router.get(
         );
         const allRoles = await db.query.roles.findMany({
             columns: {
+                id: true,
                 roleName: true,
                 memberCount: true,
             },
