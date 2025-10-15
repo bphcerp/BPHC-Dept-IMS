@@ -76,6 +76,7 @@ export type SemesterMinimal = NewSemester & {
     formId: string;
     createdAt: Date;
     updatedAt: Date;
+    summaryHidden: boolean;
 };
 
 export type Semester = SemesterMinimal & {

@@ -31,7 +31,7 @@ const AllocationModern = () => {
     isLoading: semesterLoading,
     isError: semesterError,
   } = useQuery({
-    queryKey: ["allocation", "semester", "latest-full"],
+    queryKey: ["semester", "latest-full"],
     queryFn: async () => {
       const response = await api.get<allocationTypes.Semester>(
         "/allocation/semester/getLatest"

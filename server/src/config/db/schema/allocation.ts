@@ -123,6 +123,8 @@ export const semester = pgTable(
             onDelete: "restrict",
         }),
 
+        summaryHidden: boolean("summary_hidden").default(true).notNull(),
+
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
 

@@ -498,6 +498,13 @@
       "when": 1760526065015,
       "tag": "0070_little_king_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1760532876742,
+      "tag": "0071_thankful_jubilee",
+      "breakpoints": true
     }
   ]
 }

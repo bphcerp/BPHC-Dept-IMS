@@ -104,7 +104,7 @@ export const AllocationMatrixView = () => {
   });
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
+    queryKey: ["semester", "latest"],
     queryFn: () =>
       api
         .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")

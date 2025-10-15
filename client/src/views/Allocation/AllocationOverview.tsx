@@ -56,7 +56,7 @@ export const AllocationOverview = () => {
   const editorTheme = useTheme();
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["latest-semester"],
+    queryKey: ["semester", "latest-full-stats"],
     queryFn: () =>
       api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
         ({ data }) => data
@@ -88,7 +88,7 @@ export const AllocationOverview = () => {
         formId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+      await queryClient.invalidateQueries({ queryKey: ["semester"] });
     },
   });
 
@@ -112,7 +112,7 @@ export const AllocationOverview = () => {
         .post("/allocation/semester/end")
         .then(() => {
           toast.success("Reminder successfully sent");
-          queryClient.invalidateQueries(["latest-semester"]);
+          queryClient.invalidateQueries(["semester"]);
         })
         .catch((e) => {
           console.error("Error while sending reminder", e);
@@ -136,7 +136,7 @@ export const AllocationOverview = () => {
         isPublishedToRoleId
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+      await queryClient.invalidateQueries({ queryKey: ["semester"] });
       setIsPublishDialogOpen(false); // Close dialog on success
     },
   });
