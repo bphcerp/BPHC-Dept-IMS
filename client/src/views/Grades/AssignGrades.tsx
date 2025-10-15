@@ -502,6 +502,50 @@ export default function AssignGradesView() {
     return null;
   };
 
+  // Unified grade input component that works for both Excel and non-Excel cases
+  const renderGradeInput = (
+    courseName: string,
+    currentValue: string,
+    onValueChange: (value: string) => void,
+    disabled: boolean,
+    placeholder: string = "Enter grade"
+  ) => {
+    const fixedOptions = getFixedGradeOptionsForSheet(courseName);
+
+    if (fixedOptions && fixedOptions.length > 0) {
+      return (
+        <Select
+          value={currentValue}
+          onValueChange={onValueChange}
+          disabled={disabled}
+        >
+          <SelectTrigger
+            className={`w-40 ${disabled ? "cursor-not-allowed bg-gray-200 text-gray-600" : ""}`}
+          >
+            <SelectValue placeholder="Select" />
+          </SelectTrigger>
+          <SelectContent>
+            {fixedOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    return (
+      <Input
+        value={currentValue}
+        onChange={(e) => onValueChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-40 ${disabled ? "cursor-not-allowed bg-gray-200 text-gray-600" : ""}`}
+        readOnly={disabled}
+      />
+    );
+  };
+
   const getGradeColumnRole = useCallback(
     (sheetName: string, headerIndex: number): "midsem" | "endsem" | null => {
       const sheet = sheets.find((s) => s.sheetName === sheetName);
@@ -985,11 +1029,17 @@ export default function AssignGradesView() {
                               <TableHead className="min-w-[120px]">
                                 Midsem Grade
                               </TableHead>
+                              <TableHead className="min-w-[140px]">
+                                Midsem Report
+                              </TableHead>
                               <TableHead className="min-w-[100px]">
                                 Endsem Marks
                               </TableHead>
                               <TableHead className="min-w-[120px]">
                                 Endsem Grade
+                              </TableHead>
+                              <TableHead className="min-w-[140px]">
+                                Endsem Report
                               </TableHead>
                               <TableHead className="min-w-[120px]">
                                 Topic
@@ -997,12 +1047,6 @@ export default function AssignGradesView() {
                             </>
                           )}
                           <TableHead className="min-w-[100px]">Role</TableHead>
-                          <TableHead className="min-w-[140px]">
-                            Midsem Report
-                          </TableHead>
-                          <TableHead className="min-w-[140px]">
-                            Endsem Report
-                          </TableHead>
                           <TableHead className="min-w-[100px]">
                             Action
                           </TableHead>
@@ -1015,9 +1059,6 @@ export default function AssignGradesView() {
                               sheets.find((s) => s.sheetName === c)
                                 ?.columnHeaders || []
                             ).map((header, headerIndex) => {
-                              const sheet = sheets.find(
-                                (s) => s.sheetName === c
-                              );
                               const valueRaw = r.excelRow[header.name];
                               const value =
                                 typeof valueRaw === "string" ||
@@ -1094,7 +1135,21 @@ export default function AssignGradesView() {
 
                                         forceRerender();
                                       }}
-                                      className="w-28"
+                                      className={`w-28 ${
+                                        coursePhase === "draft" ||
+                                        (coursePhase === "midsem" &&
+                                          getGradeColumnRole(
+                                            c,
+                                            headerIndex + 1
+                                          ) === "endsem") ||
+                                        (coursePhase === "endsem" &&
+                                          getGradeColumnRole(
+                                            c,
+                                            headerIndex + 1
+                                          ) === "midsem")
+                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                          : ""
+                                      }`}
                                       placeholder="Marks"
                                       readOnly={
                                         coursePhase === "draft" ||
@@ -1114,20 +1169,6 @@ export default function AssignGradesView() {
                                 );
                               }
                               if (header.type === "grade") {
-                                const fixedOptions =
-                                  getFixedGradeOptionsForSheet(c);
-                                const sheetOptions =
-                                  sheet?.gradeOptionsByHeader[header.name];
-                                // Only use dropdown if there are explicitly defined options
-                                // Don't fallback to globalGradeOptions - use text input instead
-                                const options =
-                                  fixedOptions ??
-                                  (sheetOptions && sheetOptions.length > 0
-                                    ? sheetOptions
-                                    : null);
-
-                                const overrideKey = `${r.erpId}::${c}::${header.name}`;
-
                                 const savedGrade = (() => {
                                   const g = grades[`${r.erpId}::${c}`];
                                   if (!g) return undefined;
@@ -1160,105 +1201,45 @@ export default function AssignGradesView() {
                                     ? candidate
                                     : ""
                                 );
-                                if (options && options.length > 0) {
-                                  return (
-                                    <TableCell key={header.name}>
-                                      <Select
-                                        value={String(current)}
-                                        onValueChange={(v) => {
-                                          r.excelRow[header.name] = v;
 
-                                          // Also update grades state for saving
-                                          const gradeKey = `${r.erpId}::${c}`;
-                                          const gradeRole = getGradeColumnRole(
-                                            c,
-                                            headerIndex
-                                          );
-                                          if (gradeRole === "midsem") {
-                                            grades[gradeKey] = {
-                                              ...grades[gradeKey],
-                                              midsemGrade: v,
-                                            } as GradeRow;
-                                          } else if (gradeRole === "endsem") {
-                                            grades[gradeKey] = {
-                                              ...grades[gradeKey],
-                                              compreGrade: v,
-                                            } as GradeRow;
-                                          }
+                                const gradeRole = getGradeColumnRole(
+                                  c,
+                                  headerIndex
+                                );
 
-                                          forceRerender();
-                                        }}
-                                        disabled={
-                                          coursePhase === "draft" ||
-                                          (coursePhase === "midsem" &&
-                                            getGradeColumnRole(
-                                              c,
-                                              headerIndex
-                                            ) === "endsem") ||
-                                          (coursePhase === "endsem" &&
-                                            getGradeColumnRole(
-                                              c,
-                                              headerIndex
-                                            ) === "midsem")
-                                        }
-                                      >
-                                        <SelectTrigger className="w-40">
-                                          <SelectValue placeholder="Select" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {options.map((g) => (
-                                            <SelectItem
-                                              key={`${overrideKey}:${g}`}
-                                              value={g}
-                                            >
-                                              {g}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </TableCell>
-                                  );
-                                }
                                 return (
                                   <TableCell key={header.name}>
-                                    <Input
-                                      value={String(current)}
-                                      onChange={(e) => {
-                                        r.excelRow[header.name] =
-                                          e.target.value;
+                                    {renderGradeInput(
+                                      c,
+                                      current,
+                                      (value) => {
+                                        r.excelRow[header.name] = value;
 
                                         // Also update grades state for saving
                                         const gradeKey = `${r.erpId}::${c}`;
-                                        const gradeRole = getGradeColumnRole(
-                                          c,
-                                          headerIndex
-                                        );
                                         if (gradeRole === "midsem") {
                                           grades[gradeKey] = {
                                             ...grades[gradeKey],
-                                            midsemGrade: e.target.value,
+                                            midsemGrade: value,
                                           } as GradeRow;
                                         } else if (gradeRole === "endsem") {
                                           grades[gradeKey] = {
                                             ...grades[gradeKey],
-                                            compreGrade: e.target.value,
+                                            compreGrade: value,
                                           } as GradeRow;
                                         }
 
                                         forceRerender();
-                                      }}
-                                      placeholder="Enter grade"
-                                      className="w-40"
-                                      readOnly={
-                                        coursePhase === "draft" ||
+                                      },
+                                      coursePhase === "draft" ||
                                         (coursePhase === "midsem" &&
                                           getGradeColumnRole(c, headerIndex) ===
                                             "endsem") ||
                                         (coursePhase === "endsem" &&
                                           getGradeColumnRole(c, headerIndex) ===
-                                            "midsem")
-                                      }
-                                    />
+                                            "midsem"),
+                                      "Enter grade"
+                                    )}
                                   </TableCell>
                                 );
                               }
@@ -1287,7 +1268,11 @@ export default function AssignGradesView() {
                                         });
                                       }}
                                       placeholder="Topic"
-                                      className="w-40"
+                                      className={`w-40 ${
+                                        coursePhase === "draft"
+                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                          : ""
+                                      }`}
                                       readOnly={coursePhase !== "midsem"}
                                     />
                                   </TableCell>
@@ -1336,7 +1321,12 @@ export default function AssignGradesView() {
                                       });
                                     }}
                                     placeholder="Marks"
-                                    className="w-28"
+                                    className={`w-28 ${
+                                      coursePhase === "draft" ||
+                                      coursePhase === "endsem"
+                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                        : ""
+                                    }`}
                                     readOnly={
                                       coursePhase === "draft" ||
                                       coursePhase === "endsem"
@@ -1344,26 +1334,67 @@ export default function AssignGradesView() {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <Input
-                                    value={r.midsemGrade}
-                                    onChange={(e) => {
+                                  {renderGradeInput(
+                                    c,
+                                    r.midsemGrade,
+                                    (value) => {
                                       setGrades((prev) => {
                                         const key = `${r.erpId}::${c}`;
                                         const updated = { ...prev };
                                         updated[key] = {
                                           ...updated[key],
-                                          midsemGrade: e.target.value,
+                                          midsemGrade: value,
                                         } as GradeRow;
                                         return updated;
                                       });
-                                    }}
-                                    placeholder="Grade"
-                                    className="w-40"
-                                    readOnly={
-                                      coursePhase === "draft" ||
-                                      coursePhase === "endsem"
-                                    }
-                                  />
+                                    },
+                                    coursePhase === "draft" ||
+                                      coursePhase === "endsem",
+                                    "Grade"
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="file"
+                                      accept="application/pdf"
+                                      onChange={(e) => {
+                                        const f = e.target.files?.[0];
+                                        if (f)
+                                          void uploadDoc(
+                                            r.erpId || "",
+                                            f,
+                                            "mid",
+                                            r.erpId,
+                                            r.name
+                                          );
+                                      }}
+                                      disabled={
+                                        coursePhase === "draft" ||
+                                        coursePhase === "endsem"
+                                      }
+                                      className={
+                                        coursePhase === "draft" ||
+                                        coursePhase === "endsem"
+                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                          : ""
+                                      }
+                                    />
+                                    {r.midsemDocFileId ? (
+                                      <a
+                                        className="text-primary underline"
+                                        href={`${BASE_API_URL}f/${r.midsemDocFileId}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        View
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted-foreground">
+                                        —
+                                      </span>
+                                    )}
+                                  </div>
                                 </TableCell>
                                 <TableCell>
                                   <Input
@@ -1384,7 +1415,12 @@ export default function AssignGradesView() {
                                       });
                                     }}
                                     placeholder="Marks"
-                                    className="w-28"
+                                    className={`w-28 ${
+                                      coursePhase === "draft" ||
+                                      coursePhase === "midsem"
+                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                        : ""
+                                    }`}
                                     readOnly={
                                       coursePhase === "draft" ||
                                       coursePhase === "midsem"
@@ -1392,26 +1428,67 @@ export default function AssignGradesView() {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <Input
-                                    value={r.compreGrade}
-                                    onChange={(e) => {
+                                  {renderGradeInput(
+                                    c,
+                                    r.compreGrade,
+                                    (value) => {
                                       setGrades((prev) => {
                                         const key = `${r.erpId}::${c}`;
                                         const updated = { ...prev };
                                         updated[key] = {
                                           ...updated[key],
-                                          compreGrade: e.target.value,
+                                          compreGrade: value,
                                         } as GradeRow;
                                         return updated;
                                       });
-                                    }}
-                                    placeholder="Grade"
-                                    className="w-40"
-                                    readOnly={
-                                      coursePhase === "draft" ||
-                                      coursePhase === "midsem"
-                                    }
-                                  />
+                                    },
+                                    coursePhase === "draft" ||
+                                      coursePhase === "midsem",
+                                    "Grade"
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="file"
+                                      accept="application/pdf"
+                                      onChange={(e) => {
+                                        const f = e.target.files?.[0];
+                                        if (f)
+                                          void uploadDoc(
+                                            r.erpId || "",
+                                            f,
+                                            "end",
+                                            r.erpId,
+                                            r.name
+                                          );
+                                      }}
+                                      disabled={
+                                        coursePhase === "draft" ||
+                                        coursePhase === "midsem"
+                                      }
+                                      className={
+                                        coursePhase === "draft" ||
+                                        coursePhase === "midsem"
+                                          ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                          : ""
+                                      }
+                                    />
+                                    {r.endsemDocFileId ? (
+                                      <a
+                                        className="text-primary underline"
+                                        href={`${BASE_API_URL}f/${r.endsemDocFileId}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        View
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted-foreground">
+                                        —
+                                      </span>
+                                    )}
+                                  </div>
                                 </TableCell>
                                 <TableCell>
                                   <Input
@@ -1428,8 +1505,12 @@ export default function AssignGradesView() {
                                       });
                                     }}
                                     placeholder="Topic"
-                                    className="w-40"
-                                    readOnly={coursePhase !== "midsem"}
+                                    className={`w-40 ${
+                                      coursePhase === "draft"
+                                        ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                        : ""
+                                    }`}
+                                    readOnly={coursePhase === "draft"}
                                   />
                                 </TableCell>
                               </>
@@ -1437,86 +1518,17 @@ export default function AssignGradesView() {
 
                             <TableCell>{getRoleBadge(r.role)}</TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="file"
-                                  accept="application/pdf"
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f)
-                                      void uploadDoc(
-                                        r.erpId || "",
-                                        f,
-                                        "mid",
-                                        r.erpId,
-                                        r.name
-                                      );
-                                  }}
-                                  disabled={
-                                    coursePhase === "draft" ||
-                                    coursePhase === "endsem"
-                                  }
-                                />
-                                {r.midsemDocFileId ? (
-                                  <a
-                                    className="text-primary underline"
-                                    href={`${BASE_API_URL}f/${r.midsemDocFileId}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    View
-                                  </a>
-                                ) : (
-                                  <span className="text-muted-foreground">
-                                    —
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="file"
-                                  accept="application/pdf"
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f)
-                                      void uploadDoc(
-                                        r.erpId || "",
-                                        f,
-                                        "end",
-                                        r.erpId,
-                                        r.name
-                                      );
-                                  }}
-                                  disabled={
-                                    coursePhase === "draft" ||
-                                    coursePhase === "midsem"
-                                  }
-                                />
-                                {r.endsemDocFileId ? (
-                                  <a
-                                    className="text-primary underline"
-                                    href={`${BASE_API_URL}f/${r.endsemDocFileId}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    View
-                                  </a>
-                                ) : (
-                                  <span className="text-muted-foreground">
-                                    —
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   void saveRow(r.erpId || "", r.role);
                                 }}
                                 disabled={isSaving || coursePhase === "draft"}
+                                className={
+                                  isSaving || coursePhase === "draft"
+                                    ? "cursor-not-allowed bg-gray-200 text-gray-600"
+                                    : ""
+                                }
                               >
                                 Submit
                               </Button>
