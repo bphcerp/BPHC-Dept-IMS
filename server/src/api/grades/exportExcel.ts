@@ -10,6 +10,7 @@ import { inArray } from "drizzle-orm";
 import JSZip from "jszip";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import logger from "@/config/logger.ts";
 
 const router = Router();
 
@@ -285,13 +286,17 @@ router.post(
                                     );
                                     fileBufferCache.set(record.id, buffer);
                                 } catch (readError) {
-                                    console.error(
-                                        "Failed to read midsem file",
-                                        {
-                                            fileId: record.id,
-                                            filePath: record.filePath,
-                                            error: readError,
-                                        }
+                                    logger.error(
+                                        "Failed to read midsem file: " +
+                                            JSON.stringify(
+                                                {
+                                                    fileId: record.id,
+                                                    filePath: record.filePath,
+                                                    error: readError,
+                                                },
+                                                null,
+                                                4
+                                            )
                                     );
                                 }
                             }
@@ -319,13 +324,17 @@ router.post(
                                     );
                                     fileBufferCache.set(record.id, buffer);
                                 } catch (readError) {
-                                    console.error(
-                                        "Failed to read endsem file",
-                                        {
-                                            fileId: record.id,
-                                            filePath: record.filePath,
-                                            error: readError,
-                                        }
+                                    logger.error(
+                                        "Failed to read midsem file: " +
+                                            JSON.stringify(
+                                                {
+                                                    fileId: record.id,
+                                                    filePath: record.filePath,
+                                                    error: readError,
+                                                },
+                                                null,
+                                                4
+                                            )
                                     );
                                 }
                             }
