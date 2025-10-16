@@ -4,7 +4,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { Router } from "express";
-import { courseSchema } from "../../../../../lib/src/schemas/Allocation.ts";
+import { courseSchema, courseTypeMap } from "../../../../../lib/src/schemas/Allocation.ts";
 import { TTDCourse } from "../../../../../lib/src/types/allocation.ts";
 import environment from "@/config/environment.ts";
 import axios from "axios";
@@ -31,7 +31,7 @@ router.post(
 
             // Fetch all the course data from TTD API
             const { data: courses } = await axios.get<TTDCourse[]>(
-                `${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.DEPARTMENT_NAME}`
+                `${environment.TTD_API_URL}/${latestSemester.semesterType}/courses?deptCode=${environment.TTD_DEPARTMENT_NAME}`
             );
 
             // Wilp courses are ignored they are not included in the allocation process.
@@ -43,7 +43,7 @@ router.post(
                     lectureUnits: courseData.lectureUnits,
                     practicalUnits: courseData.labUnits,
                     totalUnits: courseData.totalUnits,
-                    offeredAs: courseData.offeredAs === 'C' ? 'CDC' : 'Elective',
+                    offeredAs: courseTypeMap[courseData.offeredAs],
                     offeredTo: courseData.offeredTo,
                     offeredAlsoBy: courseData.offeredBy.filter((dept) => dept !== environment.TTD_DEPARTMENT_NAME),
                     markedForAllocation: courseData.offeredAs === 'C'

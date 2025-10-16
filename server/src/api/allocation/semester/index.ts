@@ -1,6 +1,7 @@
 import { Router } from "express";
 import updateSemester from "./update.ts";
 import linkForm from "./linkForm.ts";
+import unlinkForm from "./unlinkForm.ts";
 import deleteSemester from "./delete.ts";
 import createSemester from "./create.ts";
 import getAllSemesters from "./getAll.ts";
@@ -14,6 +15,7 @@ const router = Router();
 
 router.use("/update", updateSemester);
 router.use("/linkForm", linkForm);
+router.use("/unlinkForm", unlinkForm);
 router.use("/delete", deleteSemester);
 router.use("/create", createSemester);
 router.use("/get", getAllSemesters);

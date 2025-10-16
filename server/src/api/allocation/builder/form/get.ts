@@ -4,6 +4,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { getLatestSemesterMinimal } from "../../semester/getLatest.ts";
+import { allocationFormGetQuerySchema } from "node_modules/lib/src/schemas/AllocationFormBuilder.ts";
 const router = express.Router();
 
 router.get(
@@ -11,9 +12,9 @@ router.get(
     checkAccess("allocation:form:response:submit"),
     asyncHandler(async (req, res, next) => {
         let { id } = req.params;
-        const { checkUserResponse } = req.query;
+        const { checkUserResponse, isPreview } = allocationFormGetQuerySchema.parse(req.query);
 
-        if (id === 'latest') {
+        if (id === "latest") {
             const latestSem = await getLatestSemesterMinimal();
             if (!latestSem)
                 return next(
@@ -23,7 +24,7 @@ router.get(
                     )
                 );
 
-            if (!latestSem.formId){
+            if (!latestSem.formId) {
                 return next(
                     new HttpError(
                         HttpCode.NOT_FOUND,
@@ -45,6 +46,12 @@ router.get(
                         fields: {
                             with: {
                                 group: true,
+                                viewableByRole: {
+                                    columns: {
+                                        allowed: false,
+                                        disallowed: false,
+                                    },
+                                },
                             },
                         },
                     },
@@ -74,17 +81,27 @@ router.get(
         form.template.fields = form.template.fields.filter((field) => {
             if (
                 !field.viewableByRoleId ||
-                userPermsSet.has("*") ||
-                userPermsSet.has("allocation:form:response:view") ||
-                userPermsSet.has("allocation:write")
+                (isPreview &&
+                    (userPermsSet.has("*") ||
+                        userPermsSet.has("allocation:form:response:view") ||
+                        userPermsSet.has("allocation:write")))
             )
                 return true;
             return userRoles.includes(field.viewableByRoleId);
         });
 
+        if (!form.template.fields.length) {
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You dont have access to this form"
+                )
+            );
+        }
+
         let userAlreadyResponded;
 
-        if (checkUserResponse === "true")
+        if (checkUserResponse)
             userAlreadyResponded = (
                 await db.query.allocationFormResponse.findFirst({
                     where: (formResponse, { eq, and }) =>
@@ -97,7 +114,7 @@ router.get(
 
         res.status(200).json({
             ...form,
-            ...(checkUserResponse === "true"
+            ...(checkUserResponse
                 ? {
                       userAlreadyResponded,
                   }

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const sectionTypes = ["LECTURE", "TUTORIAL", "PRACTICAL"] as const;
-export const degreeTypes = ["FD", "HD"] as const;
+export const degreeTypes = ["FD", "HD", "PhD"] as const;
 export const semesterTypes = ["1", "2", "3"] as const; // 3 is for summer term
-export const courseTypes = ["CDC", "Elective"] as const;
+export const courseTypes = ["CDC", "DEL", "HEL"] as const;
 export const allocationStatuses = [
     "notStarted",
     "formCollection",
@@ -16,6 +16,12 @@ export const degreeTypeEnum = z.enum(degreeTypes);
 export const semesterTypeEnum = z.enum(semesterTypes);
 export const courseTypeEnum = z.enum(courseTypes);
 export const allocationStatusEnum = z.enum(allocationStatuses);
+
+export const courseTypeMap: Record<string, (typeof courseTypes)[number]> = {
+    C: "CDC",
+    D: "DEL",
+    H: "HEL",
+};
 
 // ------------------------ NOTE ------------------------
 // The commented fields are automatically managed by the api and are not required in the schema.
@@ -52,12 +58,12 @@ export const courseSchema = z.object({
 });
 
 export const courseMarkSchema = z.object({
-    courseCodes: z.string().nonempty().array()
-})
+    courseCodes: z.string().nonempty().array(),
+});
 
 export const courseGetQuerySchema = z.object({
-    unmarked: z.coerce.boolean()
-})
+    unmarked: z.coerce.boolean(),
+});
 
 export const deleteCourseSchema = z.object({
     code: z.string(),
@@ -158,9 +164,9 @@ export const courseGroupSchema = z.object({
 
 export const courseGroupCourseAddSchema = z.object({
     courseCodes: z.string().nonempty().array(),
-    removedCourseCodes: z.string().nonempty().array().optional()
+    removedCourseCodes: z.string().nonempty().array().optional(),
 });
 
 export const courseGroupInsertQueryParamSchema = z.object({
-    courses: z.coerce.boolean().optional()
-})
+    courses: z.coerce.boolean().optional(),
+});

@@ -11,6 +11,11 @@ export const allocationFormTemplatePreferenceTypeEnum = z.enum([
     "PRACTICAL",
 ]);
 
+export const allocationFormGetQuerySchema = z.object({
+    checkUserResponse: z.coerce.boolean().optional(),
+    isPreview: z.coerce.boolean().optional()
+})
+
 export const allocationFormResponsesClientSchema = z.object({
     teachingAllocation: z.number().int().optional(),
     templateFieldId: z.string().uuid().optional(),

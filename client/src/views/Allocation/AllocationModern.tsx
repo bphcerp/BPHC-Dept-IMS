@@ -133,7 +133,6 @@ const AllocationModern = () => {
 
   const handleCourseSelect = (course: allocationTypes.Course | null) => {
     setSelectedCourse(course);
-
     if (course) {
       setSearchParams({ course: course.code });
     } else {
@@ -266,7 +265,7 @@ const AllocationModern = () => {
         ? selectedCourse?.practicalUnits
         : type === "TUTORIAL"
           ? selectedCourse?.offeredAs === "CDC" &&
-            selectedCourse?.offeredTo !== "HD"
+            selectedCourse?.offeredTo === "FD"
           : type === "LECTURE"
             ? userTypeViewMode === "faculty"
             : true
@@ -362,11 +361,28 @@ const AllocationModern = () => {
             ) : (
               <div className="flex flex-1 items-center justify-center bg-muted/20">
                 <div className="text-center text-muted-foreground">
-                  <h3 className="mb-2 text-lg font-medium">Begin Allocation</h3>
-                  <p className="text-sm">
-                    Click on "Begin Allocation" to start the allocation for{" "}
-                    <span className="font-medium">{selectedCourse.code}</span>
-                  </p>
+                  {getCourseValidSections().length ? (
+                    <>
+                      <h3 className="mb-2 text-lg font-medium">
+                        Begin Allocation
+                      </h3>
+                      <p className="text-sm">
+                        Click on "Begin Allocation" to start the allocation for{" "}
+                        <span className="font-medium">
+                          {selectedCourse.code}
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="mb-2 text-lg font-medium">
+                        No sections available
+                      </h3>
+                      <p className="text-sm">
+                        No Sections are available to allocate
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             )}

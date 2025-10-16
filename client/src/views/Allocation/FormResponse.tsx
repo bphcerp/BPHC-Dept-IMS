@@ -53,7 +53,7 @@ const FormResponse = ({
     const fetchFormDetails = async () => {
       await api
         .get<AllocationFormUserCheck | AllocationForm>(
-          `/allocation/builder/form/get${latest ? "/latest" : `/${id}`}${!preview ? "?checkUserResponse=true" : ""}`
+          `/allocation/builder/form/get${latest ? "/latest" : `/${id}`}${!preview ? "?checkUserResponse=true" : "?isPreview=true"}`
         )
         .then(({ data }) => {
           if ((data as AllocationFormUserCheck).userAlreadyResponded) {
@@ -86,7 +86,9 @@ const FormResponse = ({
           }
         })
         .catch((error) => {
+          toast.error(((error as AxiosError).response?.data as string) ?? "Something went wrong")
           console.error("Error fetching form details:", error);
+          navigate('/allocation')
         });
     };
 

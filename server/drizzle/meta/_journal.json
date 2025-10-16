@@ -512,6 +512,13 @@
       "when": 1760534909966,
       "tag": "0072_confused_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1760600092819,
+      "tag": "0073_tranquil_white_queen",
+      "breakpoints": true
     }
   ]
 }

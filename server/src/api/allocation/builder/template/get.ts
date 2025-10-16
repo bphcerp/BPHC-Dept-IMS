@@ -16,8 +16,13 @@ router.get(
                 fields: {
                     with: {
                         group: true,
-                        viewableByRole: true
-                    }
+                        viewableByRole: {
+                            columns: {
+                                allowed: false,
+                                disallowed: false,
+                            },
+                        },
+                    },
                 },
                 createdBy: {
                     columns: { name: true, email: true },

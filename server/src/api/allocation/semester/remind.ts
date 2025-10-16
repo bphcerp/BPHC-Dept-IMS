@@ -89,8 +89,9 @@ router.post(
             to: environment.DEPARTMENT_EMAIL,
             bcc: recipients,
             inReplyTo: latestSemester.form.emailMsgId!,
+            references: latestSemester.form.emailMsgId!,
             subject:
-                "REMINDER: Teaching Allocation Submission For the Upcoming Semester",
+                "Re: IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
             text: "This is a reminder to the previous mail regarding submission of course preferences for the upcoming semester. Please submit your preferences before the deadline.",
         };
 

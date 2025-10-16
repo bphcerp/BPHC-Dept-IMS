@@ -221,7 +221,7 @@ export type InstructorAllocationMaster = {
         lectureUnits: number;
         practicalUnits: number;
         totalUnits: number | null;
-        offeredAs: "CDC" | "Elective";
+        offeredAs: "CDC" | "DEL";
         offeredTo: "FD" | "HD";
         offeredAlsoBy: string[] | null;
         createdAt: Date | null;
