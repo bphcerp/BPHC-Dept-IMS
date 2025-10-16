@@ -5,7 +5,6 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { and, eq } from "drizzle-orm";
 import express from "express";
-import { semesterFormLinkSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
 const router = express.Router();
 
