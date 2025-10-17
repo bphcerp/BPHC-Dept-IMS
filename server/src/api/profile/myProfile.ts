@@ -3,7 +3,12 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import db from "@/config/db/index.ts";
 import { users } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
-import { projects, investigators } from "@/config/db/schema/project.ts";
+import {
+    projects,
+    investigators,
+    projectCoPIs,
+} from "@/config/db/schema/project.ts";
+import { patents, patentInventors } from "@/config/db/schema/patents.ts";
 
 const router = express.Router();
 
@@ -25,16 +30,55 @@ router.get(
             return;
         }
 
-        const projectsData = await db
+        // projects
+        const projectsPIData = await db
             .select({
                 project: projects,
             })
             .from(projects)
-            .rightJoin(investigators, eq(investigators.id, projects.piId))
+            .innerJoin(investigators, eq(investigators.id, projects.piId))
             .where(eq(investigators.email, userEmail));
-        const parsedProjectsData = projectsData.map((item) => item.project);
+        const parsedProjectsPIData = projectsPIData.map((item) => {
+            return { ...item.project, role: "PI" };
+        });
+        const projectsCoPIData = await db
+            .select({
+                project: projects,
+            })
+            .from(projects)
+            .innerJoin(projectCoPIs, eq(projectCoPIs.projectId, projects.id))
+            .innerJoin(
+                investigators,
+                eq(investigators.id, projectCoPIs.investigatorId)
+            )
+            .where(eq(investigators.email, userEmail));
+        const parsedProjectsCoPIData = projectsCoPIData.map((item) => {
+            return { ...item.project, role: "Co-PI" };
+        });
 
-        res.status(200).json({ ...data[0], projects: parsedProjectsData });
+        const parsedProjectsData = [
+            ...parsedProjectsPIData,
+            ...parsedProjectsCoPIData,
+        ];
+
+        // patents
+        const patentsData = await db
+            .select({
+                patent: patents,
+            })
+            .from(patents)
+            .innerJoin(
+                patentInventors,
+                eq(patentInventors.patentId, patents.id)
+            )
+            .where(eq(patentInventors.email, userEmail));
+        const parsedPatentsData = patentsData.map((item) => item.patent);
+
+        res.status(200).json({
+            ...data[0],
+            projects: parsedProjectsData,
+            patents: parsedPatentsData,
+        });
     })
 );
 
