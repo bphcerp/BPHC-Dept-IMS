@@ -1,14 +1,18 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import db from "@/config/db/index.ts";
-import { users } from "@/config/db/schema/admin.ts";
-import { eq } from "drizzle-orm";
+import { faculty, users } from "@/config/db/schema/admin.ts";
+import { desc, eq } from "drizzle-orm";
 import {
     projects,
     investigators,
     projectCoPIs,
 } from "@/config/db/schema/project.ts";
 import { patents, patentInventors } from "@/config/db/schema/patents.ts";
+import {
+    publicationsTable,
+    authorPublicationsTable,
+} from "@/config/db/schema/publications.ts";
 
 const router = express.Router();
 
@@ -74,10 +78,34 @@ router.get(
             .where(eq(patentInventors.email, userEmail));
         const parsedPatentsData = patentsData.map((item) => item.patent);
 
+        // publications
+        const publicationsData = await db
+            .select({
+                publication: publicationsTable,
+            })
+            .from(publicationsTable)
+            .innerJoin(
+                authorPublicationsTable,
+                eq(
+                    authorPublicationsTable.citationId,
+                    publicationsTable.citationId
+                )
+            )
+            .innerJoin(
+                faculty,
+                eq(faculty.authorId, authorPublicationsTable.authorId)
+            )
+            .where(eq(faculty.email, userEmail))
+            .orderBy(desc(publicationsTable.year));
+        const parsedPublicationsData = publicationsData.map(
+            (item) => item.publication
+        );
+
         res.status(200).json({
             ...data[0],
             projects: parsedProjectsData,
             patents: parsedPatentsData,
+            publications: parsedPublicationsData,
         });
     })
 );

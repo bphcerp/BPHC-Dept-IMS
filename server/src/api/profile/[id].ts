@@ -3,8 +3,8 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import db from "@/config/db/index.ts";
-import { users } from "@/config/db/schema/admin.ts";
-import { eq } from "drizzle-orm";
+import { faculty, users } from "@/config/db/schema/admin.ts";
+import { desc, eq } from "drizzle-orm";
 import { optionalAuth } from "@/middleware/optionalAuth.ts";
 import {
     investigators,
@@ -12,6 +12,10 @@ import {
     projects,
 } from "@/config/db/schema/project.ts";
 import { patentInventors, patents } from "@/config/db/schema/patents.ts";
+import {
+    authorPublicationsTable,
+    publicationsTable,
+} from "@/config/db/schema/publications.ts";
 
 const router = express.Router();
 
@@ -62,12 +66,12 @@ router.get(
         const parsedProjectsCoPIData = projectsCoPIData.map((item) => {
             return { ...item.project, role: "Co-PI" };
         });
-        
+
         const parsedProjectsData = [
             ...parsedProjectsPIData,
             ...parsedProjectsCoPIData,
         ];
-        
+
         // patents
         const patentsData = await db
             .select({
@@ -82,13 +86,34 @@ router.get(
         const parsedPatentsData = patentsData.map((item) => item.patent);
 
         // publications
-        
+        const publicationsData = await db
+            .select({
+                publication: publicationsTable,
+            })
+            .from(publicationsTable)
+            .innerJoin(
+                authorPublicationsTable,
+                eq(
+                    authorPublicationsTable.citationId,
+                    publicationsTable.citationId
+                )
+            )
+            .innerJoin(
+                faculty,
+                eq(faculty.authorId, authorPublicationsTable.authorId)
+            )
+            .where(eq(faculty.email, userEmail))
+            .orderBy(desc(publicationsTable.year));
+        const parsedPublicationsData = publicationsData.map(
+            (item) => item.publication
+        );
 
         // add all the data together
         var parsedData = {
             ...data[0],
             projects: parsedProjectsData,
             patents: parsedPatentsData,
+            publications: parsedPublicationsData,
         };
         if (!req.user) parsedData.phone = null;
         else if (
