@@ -3,19 +3,10 @@
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import db from "@/config/db/index.ts";
-import { faculty, users } from "@/config/db/schema/admin.ts";
-import { desc, eq } from "drizzle-orm";
+import { users } from "@/config/db/schema/admin.ts";
+import { eq } from "drizzle-orm";
 import { optionalAuth } from "@/middleware/optionalAuth.ts";
-import {
-    investigators,
-    projectCoPIs,
-    projects,
-} from "@/config/db/schema/project.ts";
-import { patentInventors, patents } from "@/config/db/schema/patents.ts";
-import {
-    authorPublicationsTable,
-    publicationsTable,
-} from "@/config/db/schema/publications.ts";
+import { getProjectDataByEmail, getPatentsDataByEmail, getPublicationsDataByEmail } from "./myProfile.ts";
 
 const router = express.Router();
 
@@ -42,71 +33,12 @@ router.get(
         }
 
         // projects
-        const projectsPIData = await db
-            .select({
-                project: projects,
-            })
-            .from(projects)
-            .innerJoin(investigators, eq(investigators.id, projects.piId))
-            .where(eq(investigators.email, userEmail));
-        const parsedProjectsPIData = projectsPIData.map((item) => {
-            return { ...item.project, role: "PI" };
-        });
-        const projectsCoPIData = await db
-            .select({
-                project: projects,
-            })
-            .from(projects)
-            .innerJoin(projectCoPIs, eq(projectCoPIs.projectId, projects.id))
-            .innerJoin(
-                investigators,
-                eq(investigators.id, projectCoPIs.investigatorId)
-            )
-            .where(eq(investigators.email, userEmail));
-        const parsedProjectsCoPIData = projectsCoPIData.map((item) => {
-            return { ...item.project, role: "Co-PI" };
-        });
-
-        const parsedProjectsData = [
-            ...parsedProjectsPIData,
-            ...parsedProjectsCoPIData,
-        ];
-
+        const parsedProjectsData = await getProjectDataByEmail(userEmail);
         // patents
-        const patentsData = await db
-            .select({
-                patent: patents,
-            })
-            .from(patents)
-            .innerJoin(
-                patentInventors,
-                eq(patentInventors.patentId, patents.id)
-            )
-            .where(eq(patentInventors.email, userEmail));
-        const parsedPatentsData = patentsData.map((item) => item.patent);
-
+        const parsedPatentsData = await getPatentsDataByEmail(userEmail);
         // publications
-        const publicationsData = await db
-            .select({
-                publication: publicationsTable,
-            })
-            .from(publicationsTable)
-            .innerJoin(
-                authorPublicationsTable,
-                eq(
-                    authorPublicationsTable.citationId,
-                    publicationsTable.citationId
-                )
-            )
-            .innerJoin(
-                faculty,
-                eq(faculty.authorId, authorPublicationsTable.authorId)
-            )
-            .where(eq(faculty.email, userEmail))
-            .orderBy(desc(publicationsTable.year));
-        const parsedPublicationsData = publicationsData.map(
-            (item) => item.publication
-        );
+        const parsedPublicationsData =
+            await getPublicationsDataByEmail(userEmail);
 
         // add all the data together
         var parsedData = {
