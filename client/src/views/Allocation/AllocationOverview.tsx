@@ -43,6 +43,9 @@ import {
 import { Maximize2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { AxiosError } from "axios";
+import { Role } from "@/components/admin/RoleList";
 
 export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
@@ -50,14 +53,25 @@ export const AllocationOverview = () => {
   const queryClient = useQueryClient();
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [emailPreviewed, setEmailPreviewed] = useState(false);
   const editorTheme = useTheme();
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["latest-semester"],
+    queryKey: ["semester", "latest-full-stats"],
     queryFn: () =>
       api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
         ({ data }) => data
       ),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const response = await api.get<Role[]>("/admin/role");
+      return response.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   // Fetch all available forms that can be linked
@@ -75,7 +89,15 @@ export const AllocationOverview = () => {
         formId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+      await queryClient.invalidateQueries({ queryKey: ["semester"] });
+    },
+  });
+
+  const unlinkFormMutation = useMutation({
+    mutationFn: () =>
+      api.post(`/allocation/semester/unlinkForm/${latestSemester?.id}`),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["semester"] });
     },
   });
 
@@ -86,7 +108,10 @@ export const AllocationOverview = () => {
         .then(() => toast.success("Reminder successfully sent"))
         .catch((e) => {
           console.error("Error while sending reminder", e);
-          toast.error("Something went wrong");
+          toast.error(
+            ((e as AxiosError).response?.data as string) ??
+              "Something went wrong"
+          );
         }),
   });
 
@@ -96,7 +121,7 @@ export const AllocationOverview = () => {
         .post("/allocation/semester/end")
         .then(() => {
           toast.success("Reminder successfully sent");
-          queryClient.invalidateQueries(["latest-semester"]);
+          queryClient.invalidateQueries(["semester"]);
         })
         .catch((e) => {
           console.error("Error while sending reminder", e);
@@ -108,16 +133,19 @@ export const AllocationOverview = () => {
     mutationFn: ({
       allocationDeadline,
       emailBody,
+      isPublishedToRoleId,
     }: {
       allocationDeadline: string;
       emailBody: string;
+      isPublishedToRoleId: string;
     }) =>
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
         allocationDeadline,
         emailBody,
+        isPublishedToRoleId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["latest-semester"] });
+      await queryClient.invalidateQueries({ queryKey: ["semester"] });
       setIsPublishDialogOpen(false); // Close dialog on success
     },
   });
@@ -148,28 +176,31 @@ export const AllocationOverview = () => {
     defaultValues: {
       allocationDeadline: "",
       emailBody: "",
+      isPublishedToRoleId: "",
     },
     onSubmit: ({ value }) => {
-      if (value.allocationDeadline && latestSemester?.form?.id) {
-        publishFormMutation.mutate({
-          allocationDeadline: value.allocationDeadline,
-          emailBody: value.emailBody,
-        });
+      if (
+        value.allocationDeadline &&
+        latestSemester?.form?.id &&
+        value.isPublishedToRoleId
+      ) {
+        publishFormMutation.mutate(value);
       }
     },
   });
 
-  const getEmailBody = () => `Dear Professor/Mr./Ms.,
+  const getEmailBody = (allocationDeadline: string) => `Dear Professor/Mr./Ms.,
 
 Please fill your course options for the ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}. Ignore this email if you have already filled your preferences.
 
 You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(
-    emailFormState.values.allocationDeadline
-  ).toLocaleString("en-IN", {
-    timeZoneName: "short",
-  })}**
+**PLEASE FILL THE FORM BEFORE ${new Date(allocationDeadline).toLocaleString(
+    "en-IN",
+    {
+      timeZoneName: "short",
+    }
+  )}**
 
 <hr></hr>
 
@@ -208,7 +239,6 @@ Hyderabad Campus<span>
     return () => clearInterval(timer);
   }, [calculateTimeLeft]);
 
-
   return !latestSemester ? (
     <div className="flex h-full items-center justify-center">
       <div className="-mt-16 rounded-lg border-2 border-y-primary p-8 text-center">
@@ -224,172 +254,217 @@ Hyderabad Campus<span>
         <div className="flex space-x-2">
           {latestSemester.form &&
             latestSemester.allocationStatus === "notStarted" && (
-              <Dialog
-                open={isPublishDialogOpen}
-                onOpenChange={(open) => {
-                  if (!open) resetPublishForm();
-                  setIsPublishDialogOpen(open);
-                }}
-              >
-                <DialogTrigger asChild>
-                  <Button>Publish Allocation Form</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Publish Allocation Form</DialogTitle>
-                    <DialogDescription>
-                      Set a deadline for the allocation form submission. This
-                      will notify all faculty members.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form
-                    id="publish-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      void handlePublishFormSubmit();
-                    }}
-                  >
-                    <PublishFormField name="allocationDeadline">
-                      {(field) => (
-                        <div className="flex items-center space-x-3">
-                          <Label htmlFor={field.name}>
-                            Allocation Form Deadline
-                          </Label>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                              .toISOString()
-                              .slice(0, 16)}
-                            onChange={(e) => {
-                              field.handleChange(e.target.value);
-                            }}
-                            type="datetime-local"
-                          />
-                        </div>
-                      )}
-                    </PublishFormField>
-                    <PublishFormSubscribe
-                      selector={(state) => [state.values.allocationDeadline]}
+              <>
+                <Button onClick={() => unlinkFormMutation.mutate()} variant="destructive">Unlink Form</Button>
+                <Dialog
+                  open={isPublishDialogOpen}
+                  onOpenChange={(open) => {
+                    if (!open) resetPublishForm();
+                    setIsPublishDialogOpen(open);
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button>Publish Allocation Form</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Publish Allocation Form</DialogTitle>
+                      <DialogDescription className="flex flex-col space-y-2">
+                        <p>
+                          Set a deadline for the allocation form submission and
+                          select the role to which the form should be published.
+                        </p>
+                        <p>
+                          An email will be sent to all the users with the role
+                          selected.
+                        </p>
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form
+                      id="publish-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void handlePublishFormSubmit();
+                      }}
                     >
-                      {() => {
-                        setPublishFormFieldValue("emailBody", getEmailBody());
-                        return (
-                          <UIDialog
-                            open={previewOpen}
-                            modal
-                            onOpenChange={(open) => {
-                              setPreviewOpen(open);
+                      <div className="grid grid-rows-2 gap-4">
+                        <PublishFormField name="allocationDeadline">
+                          {(field) => (
+                            <div className="flex items-center justify-between space-x-3">
+                              <Label htmlFor={field.name}>
+                                Allocation Form Deadline
+                              </Label>
+                              <Input
+                                id={field.name}
+                                name={field.name}
+                                value={field.state.value}
+                                onBlur={field.handleBlur}
+                                className="w-52"
+                                min={new Date(
+                                  Date.now() + 7 * 24 * 60 * 60 * 1000
+                                )
+                                  .toISOString()
+                                  .slice(0, 16)}
+                                onChange={(e) => {
+                                  field.handleChange(e.target.value);
+                                  setEmailPreviewed(false);
+                                  setPublishFormFieldValue(
+                                    "emailBody",
+                                    getEmailBody(e.target.value)
+                                  );
+                                }}
+                                type="datetime-local"
+                              />
+                            </div>
+                          )}
+                        </PublishFormField>
+                        <PublishFormField name="isPublishedToRoleId">
+                          {(field) => (
+                            <div className="flex items-center justify-between space-x-3">
+                              <Label>Publish To Role</Label>
+                              <Select
+                                value={field.state.value}
+                                onValueChange={(val) => field.handleChange(val)}
+                              >
+                                <SelectTrigger className="w-52">
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {roles?.map((role) => (
+                                    <SelectItem
+                                      key={role.id}
+                                      value={role.id.toString()}
+                                    >
+                                      {role.roleName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </PublishFormField>
+                      </div>
+                      <UIDialog
+                        open={previewOpen}
+                        modal
+                        onOpenChange={(open) => {
+                          setPreviewOpen(open);
+                        }}
+                      >
+                        <UIDialogContent className="w-screen max-w-full">
+                          <UIDialogHeader>
+                            <UIDialogTitle>Edit Email</UIDialogTitle>
+                          </UIDialogHeader>
+                          <div className="py-2" data-color-mode={editorTheme}>
+                            <PublishFormField name="emailBody">
+                              {(field) => (
+                                <div className="relative h-full">
+                                  <Suspense
+                                    fallback={
+                                      <div className="w-full text-center">
+                                        Loading editor...
+                                      </div>
+                                    }
+                                  >
+                                    <MDEditor
+                                      value={field.state.value}
+                                      onChange={(val) =>
+                                        field.handleChange(val ?? "")
+                                      }
+                                      height={400}
+                                      preview="live"
+                                      commandsFilter={(command) =>
+                                        command.name !== "fullscreen"
+                                          ? command
+                                          : false
+                                      }
+                                    />
+                                  </Suspense>
+                                </div>
+                              )}
+                            </PublishFormField>
+                          </div>
+                          <Button
+                            className="mt-2"
+                            onClick={() => {
+                              setPreviewOpen(false);
+                              setEmailPreviewed(true);
                             }}
                           >
-                            <UIDialogContent className="w-screen max-w-full">
-                              <UIDialogHeader>
-                                <UIDialogTitle>Edit Email</UIDialogTitle>
-                              </UIDialogHeader>
-                              <div
-                                className="py-2"
-                                data-color-mode={editorTheme}
-                              >
-                                <PublishFormField name="emailBody">
-                                  {(field) => (
-                                    <div className="relative h-full">
-                                      <Suspense
-                                        fallback={
-                                          <div className="w-full text-center">
-                                            Loading editor...
-                                          </div>
-                                        }
-                                      >
-                                        <MDEditor
-                                          value={field.state.value}
-                                          onChange={(val) =>
-                                            field.handleChange(val ?? "")
-                                          }
-                                          height={400}
-                                          preview="live"
-                                          commandsFilter={(command) =>
-                                            command.name !== "fullscreen"
-                                              ? command
-                                              : false
-                                          }
-                                        />
-                                      </Suspense>
-                                    </div>
-                                  )}
-                                </PublishFormField>
-                              </div>
-                              <Button
-                                className="mt-2"
-                                onClick={() => setPreviewOpen(false)}
-                              >
-                                Done
-                              </Button>
-                              <style>
-                                {`
+                            Done
+                          </Button>
+                          <style>
+                            {`
                       .wmde-markdown ul { list-style-type: disc; margin-left: 1.5rem; }
                       .wmde-markdown ol { list-style-type: decimal; margin-left: 1.5rem; }
                     `}
-                              </style>
-                            </UIDialogContent>
-                          </UIDialog>
-                        );
-                      }}
-                    </PublishFormSubscribe>
-                  </form>
-                  <DialogFooter>
-                    <PublishFormSubscribe
-                      selector={(state) => [
-                        state.values.allocationDeadline,
-                        state.isValid,
-                      ]}
-                    >
-                      {([allocationDeadline, isValid]) => (
-                        <>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={
-                              !isValid ||
-                              !allocationDeadline ||
-                              publishFormMutation.isLoading
-                            }
-                            onClick={() => {
-                              if (!previewOpen) setPreviewOpen(true);
-                            }}
-                          >
-                            Preview Email
-                          </Button>
-                          <Button
-                            type="submit"
-                            form="publish-form"
-                            disabled={
-                              !isValid ||
-                              !allocationDeadline ||
-                              !emailFormState.values.emailBody ||
-                              publishFormMutation.isLoading
-                            }
-                          >
-                            {publishFormMutation.isLoading
-                              ? "Publishing..."
-                              : "Publish & Notify"}
-                          </Button>
-                        </>
-                      )}
-                    </PublishFormSubscribe>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                          </style>
+                        </UIDialogContent>
+                      </UIDialog>
+                    </form>
+                    <DialogFooter>
+                      <PublishFormSubscribe
+                        selector={(state) => [
+                          state.values.allocationDeadline,
+                          state.values.isPublishedToRoleId,
+                          state.isValid,
+                        ]}
+                      >
+                        {([
+                          allocationDeadline,
+                          isPublishedToRoleId,
+                          isValid,
+                        ]) => (
+                          <>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={
+                                !isValid ||
+                                !allocationDeadline ||
+                                !isPublishedToRoleId ||
+                                publishFormMutation.isLoading
+                              }
+                              onClick={() => {
+                                if (!previewOpen) setPreviewOpen(true);
+                              }}
+                            >
+                              Preview Email
+                            </Button>
+                            <Button
+                              type="submit"
+                              form="publish-form"
+                              disabled={
+                                !isValid ||
+                                !allocationDeadline ||
+                                !isPublishedToRoleId ||
+                                !emailFormState.values.emailBody ||
+                                publishFormMutation.isLoading ||
+                                !emailPreviewed
+                              }
+                            >
+                              {publishFormMutation.isLoading
+                                ? "Publishing..."
+                                : "Publish & Notify"}
+                            </Button>
+                          </>
+                        )}
+                      </PublishFormSubscribe>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           {latestSemester.allocationStatus === "formCollection" && (
             <>
               <Button
                 variant="secondary"
+                disabled={remindMutation.isLoading}
                 onClick={() => remindMutation.mutate()}
               >
                 Send Reminder
+                {remindMutation.isLoading && <LoadingSpinner />}
               </Button>
               <Button
                 variant="destructive"
@@ -400,7 +475,9 @@ Hyderabad Campus<span>
             </>
           )}
           {latestSemester.allocationStatus === "inAllocation" && (
-            <Button><Link to='/allocation/summary'>View Current Allocation</Link></Button>
+            <Button>
+              <Link to="/allocation/summary">View Current Allocation</Link>
+            </Button>
           )}
         </div>
       </header>
@@ -412,7 +489,9 @@ Hyderabad Campus<span>
               {/* Time Remaining */}
               <div className="flex flex-col items-center justify-center space-y-5 rounded-2xl p-2 shadow-lg transition hover:shadow-xl">
                 <span className="text-sm text-gray-500">Time Remaining</span>
-                <span className="mt-2 text-5xl font-extrabold text-primary">
+                <span
+                  className={`"mt-2 text-5xl font-extrabold ${timeLeft === "00:00:00" ? "text-red-600" : "text-primary"}`}
+                >
                   {timeLeft ?? "--:--:--"}
                 </span>
                 <span className="mt-1 text-xs text-muted-foreground">

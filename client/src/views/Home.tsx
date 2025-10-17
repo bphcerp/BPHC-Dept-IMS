@@ -164,7 +164,7 @@ function Home({ sidebarItems }: { sidebarItems?: SidebarMenuGroup[] }) {
                     {data.notifications.filter((n) => !n.read).length > 0 && (
                       <Badge
                         variant="destructive"
-                        className="ml-2 h-5 w-5 p-0 text-xs"
+                        className="ml-2 flex h-5 w-5 items-center justify-center p-0 text-xs"
                       >
                         {data.notifications.filter((n) => !n.read).length}
                       </Badge>

@@ -133,6 +133,11 @@ export const allPermissions = {
     "grades:supervisor:view": "Supervisors can view their students and grades",
     "grades:supervisor:save": "Supervisors can save/update student grades",
     "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
+    "grades:instructor:view": "Instructors can view their assigned students and grades",
+    "grades:instructor:save": "Instructors can save/update student grades",
+    "grades:assign": "Assign instructors to students",
+    "grades:notifications:send": "Send grade notifications to instructors",
+    "grades:submit": "Submit grades and complete phase transitions",
     "phd:examiner:qe": "View and respond to examiner assignments",
 
     // ANALYTICS
@@ -171,6 +176,8 @@ export const allPermissions = {
 
     "allocation:write": "Have read and write access to the allocation module",
     "allocation:view": "Have readonly access to the allocation module",
+
+    "allocation:summary:view": "View the summary of allocations",
 
     "allocation:preference:write":
         "Create or Modify a new form for allocation data retrieval",
@@ -454,6 +461,14 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+    "/grades/instructor": "grades:instructor:view",
+    "/grades/instructor/save": "grades:instructor:save",
+    "/grades/assign-student-instructor": "grades:assign",
+    "/grades/instructor-assignments": "grades:assign",
+    "/grades/debug-instructor-assignments": "grades:assign",
+    "/grades/notifications/send-midsem": "grades:notifications:send",
+    "/grades/notifications/send-endsem": "grades:notifications:send",
+    "/grades/submit-grades": "grades:submit",
 
     // Analytics
     "/analytics/publications": "analytics:publications",
@@ -490,10 +505,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/allocation/semester/create": "allocation:semesters:write",
     "/allocation/semester/get": "allocation:semesters:view",
-    "/allocation/semester/getLatest": "allocation:semesters:view",
     "/allocation/semester/delete": "allocation:semesters:write",
     "/allocation/semester/update": "allocation:semesters:write",
     "/allocation/semester/linkForm": "allocation:semesters:write",
+    "/allocation/semester/unlinkForm": "allocation:semesters:write",
 
     "/allocation/allocation/getPrefsCourse": "allocation:write",
     "/allocation/allocation/create": "allocation:write",
@@ -503,11 +518,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
-    "/allocation/builder/form/get": "allocation:builder:form:view",
     "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":
         "allocation:form:response:submit",
     "/allocation/builder/form/response/view": "allocation:form:response:view",
-    "/allocation/builder/form/response/get": "allocation:form:response:view",
+    "/allocation/builder/form/response/getAll": "allocation:form:response:view",
 } as const;

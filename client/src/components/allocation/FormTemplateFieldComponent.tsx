@@ -12,14 +12,23 @@ import {
 } from "../ui/select";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
-import { Course } from "node_modules/lib/src/types/allocation";
+import {
+  Course,
+  CourseGroupMinimal,
+} from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { Skeleton } from "../ui/skeleton";
+import { Role } from "../admin/RoleList";
 
 export type AllocationClientField = NewAllocationFormTemplateField & {
   id: string;
   value?: string | number;
   preferences?: { courseCode: string; takenConsecutively: boolean }[];
+  group?: CourseGroupMinimal | null;
+  viewableByRole?: Role | null;
 };
 
 const formatPreferenceType = (
@@ -29,17 +38,30 @@ const formatPreferenceType = (
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
+const fetchCourses = async () => {
+  const response = await api.get<Course[]>("/allocation/course/get");
+  return response.data;
+};
+
 export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,
+  preview = false,
   form,
 }: {
   field: AllocationClientField;
   create: boolean;
   courses: Course[];
+  preview?: boolean;
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
+  const { data: allCourses } = useQuery(["courses"], fetchCourses);
+
+  const filteredCourses = field.groupId
+    ? allCourses?.filter((course: Course) => course.groupId === field.groupId)
+    : allCourses;
+
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   const handleCourseChange = (courseCode: string, index: number) => {
@@ -48,21 +70,34 @@ export const FormTemplateFieldComponent = ({
     setSelectedCourses(updatedSelectedCourses);
   };
 
+  const renderError = (name: string) => {
+    const error = form?.formState.errors?.[name];
+    if (!error) return null;
+    return (
+      <p className="mt-1 text-xs text-destructive">
+        {(error as any)?.message || "This field is required"}
+      </p>
+    );
+  };
+
   switch (field.type) {
     case "TEACHING_ALLOCATION":
       return (
         <div>
           <div className="relative w-32">
             {form ? (
-              <Input
-                {...form.register(`${field.id}_teachingAllocation`, {
-                  required: true,
-                })}
-                disabled={create}
-                required
-                type="number"
-                placeholder="e.g., 50"
-              />
+              <>
+                <Input
+                  {...form.register(`${field.id}_teachingAllocation`, {
+                    required: "Teaching allocation is required",
+                  })}
+                  disabled={create}
+                  required
+                  type="number"
+                  placeholder="e.g., 50"
+                />
+                {renderError(`${field.id}_teachingAllocation`)}
+              </>
             ) : (
               <Input
                 value={field.value || ""}
@@ -75,9 +110,10 @@ export const FormTemplateFieldComponent = ({
               %
             </span>
           </div>
-          {(!form || create) && (
+          {(!form || create) && !!field.viewableByRole && (
             <span className="text-xs text-destructive">
-              This field will not be visible to non-faculty members
+              This field will not be visible to members without the "
+              {field.viewableByRole.roleName}" role
             </span>
           )}
         </div>
@@ -88,109 +124,117 @@ export const FormTemplateFieldComponent = ({
         <div className="space-y-4">
           <div className="space-y-3">
             {Array.from({ length: field.preferenceCount || 1 }).map((_, i) => (
-              <div key={i} className="flex items-end gap-4">
-                <div className="flex-grow space-y-2">
-                  <Label>
-                    Preference {i + 1} (
-                    {formatPreferenceType(field.preferenceType)})
-                  </Label>
-                  {form ? (
-                    <Controller
-                      name={`${field.id}_preference_${i}`}
-                      control={form.control}
-                      rules={{
-                        required: true,
-                      }}
-                      render={({ field: controllerField }) => (
-                        <Select
-                          disabled={create}
-                          required
-                          onValueChange={(value) => {
-                            controllerField.onChange(value);
-                            handleCourseChange(value, i);
+              <div key={i} className="flex flex-col gap-1">
+                <div className="flex items-end gap-4">
+                  <div className="flex-grow space-y-2">
+                    <Label>
+                      Preference {i + 1} (
+                      {formatPreferenceType(field.preferenceType)})
+                    </Label>
+                    {form ? (
+                      <>
+                        <Controller
+                          name={`${field.id}_preference_${i}`}
+                          control={form.control}
+                          rules={{
+                            required: "Please select a course",
                           }}
-                          value={controllerField.value}
-                        >
-                          <SelectTrigger {...controllerField}>
-                            <SelectValue placeholder="Select a course..." />
-                          </SelectTrigger>
-                          {!create && (
-                            <SelectContent>
-                              {courses
-                                .filter(
-                                  (course) =>
-                                    !selectedCourses.includes(course.code) ||
-                                    course.code === controllerField.value
-                                )
-                                .map((course) => (
-                                  <SelectItem
-                                    key={course.code}
-                                    value={course.code}
-                                  >
-                                    {course.code} {course.name}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
+                          render={({ field: controllerField }) => (
+                            <Select
+                              required
+                              onValueChange={(value) => {
+                                controllerField.onChange(value);
+                                handleCourseChange(value, i);
+                              }}
+                              value={controllerField.value}
+                            >
+                              <SelectTrigger {...controllerField}>
+                                <SelectValue placeholder="Select a course..." />
+                              </SelectTrigger>
+                              {filteredCourses ? (
+                                <SelectContent>
+                                  {filteredCourses
+                                    .filter(
+                                      (course) =>
+                                        !selectedCourses.includes(
+                                          course.code
+                                        ) ||
+                                        course.code === controllerField.value
+                                    )
+                                    .map((course) => (
+                                      <SelectItem
+                                        key={course.code}
+                                        value={course.code}
+                                      >
+                                        {course.code} {course.name}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              ) : (
+                                <Skeleton className="h-full w-full" />
+                              )}
+                            </Select>
                           )}
-                        </Select>
-                      )}
-                    />
-                  ) : (
-                    <Select
-                      disabled
-                      value={
-                        courses.find(
-                          (c) => c.code === field.preferences?.[i]?.courseCode
-                        )?.code || ""
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a course..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem key={course.code} value={course.code}>
-                            {course.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center pb-2">
-                  {form ? (
-                    <Controller
-                      name={`${field.id}_courseAgain_${i}`}
-                      control={form.control}
-                      render={({ field: controllerField }) => (
-                        <Checkbox
-                          {...controllerField}
-                          checked={controllerField.value}
-                          onCheckedChange={controllerField.onChange}
-                          id={`course-again-${field.id}-${i}`}
-                          disabled={create}
                         />
-                      )}
-                    />
-                  ) : (
-                    <Checkbox
-                      checked={
-                        field.preferences?.[i]?.takenConsecutively || false
-                      }
-                      id={`course-again-${field.id}-${i}`}
-                      disabled
-                    />
-                  )}
+                        {renderError(`${field.id}_preference_${i}`)}
+                      </>
+                    ) : (
+                      <Select
+                        value={
+                          courses.find(
+                            (c) => c.code === field.preferences?.[i]?.courseCode
+                          )?.code || ""
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a course..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {!!filteredCourses &&
+                            filteredCourses.map((course) => (
+                              <SelectItem key={course.code} value={course.code}>
+                                {course.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center pb-2">
+                    {form ? (
+                      <Controller
+                        name={`${field.id}_courseAgain_${i}`}
+                        control={form.control}
+                        render={({ field: controllerField }) => (
+                          <Checkbox
+                            {...controllerField}
+                            checked={controllerField.value}
+                            onCheckedChange={controllerField.onChange}
+                            id={`course-again-${field.id}-${i}`}
+                            disabled={create}
+                          />
+                        )}
+                      />
+                    ) : (
+                      <Checkbox
+                        checked={
+                          field.preferences?.[i]?.takenConsecutively || false
+                        }
+                        id={`course-again-${field.id}-${i}`}
+                        disabled
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-          {( !form || create) && (
+          {(!form || create) && !preview && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
-              {field.preferenceType === "LECTURE" ? (
+              {field.viewableByRole ? (
                 <span className="text-destructive">
-                  This field ( Lecture ) will not be visible to non-faculty
-                  members
+                  This field will not be visible to members without the "
+                  {field.viewableByRole.roleName}" role
                 </span>
               ) : (
                 <span className="text-success">
@@ -201,12 +245,18 @@ export const FormTemplateFieldComponent = ({
               <p>The list of courses will be populated automatically.</p>
             </div>
           )}
-          <div className="text-xs italic text-muted-foreground">
+          <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">
             <p>
-              {" "}
               Check the box if you have been the course's In-Charge more than 2
               times consecutively.
             </p>
+
+            {!!field.group && (
+              <p>
+                This field is populated with courses from group:{" "}
+                {field.group.name}
+              </p>
+            )}
           </div>
         </div>
       );

@@ -44,8 +44,7 @@ export const masterAllocation = pgTable(
                 onDelete: "restrict",
             }),
 
-        ic: text("instructor_email")
-            .references(() => users.email),
+        ic: text("instructor_email").references(() => users.email),
 
         courseCode: text("course_code")
             .notNull()
@@ -65,6 +64,7 @@ export const allocationSection = pgTable(
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
         createdAt: timestamp("created_at").notNull().defaultNow(),
+        timetableRoomId: text("td_room_id")
     },
     (table) => [index().on(table.masterId)]
 );
@@ -90,6 +90,7 @@ export const allocationSectionInstructors = pgTable(
 export const course = pgTable("allocation_course", {
     code: text("code").primaryKey(),
     name: text("name").notNull(),
+    timetableCourseId: integer("td_course_id"),
 
     lectureUnits: integer("lecture_units").notNull(),
     practicalUnits: integer("practical_units").notNull(),
@@ -98,11 +99,16 @@ export const course = pgTable("allocation_course", {
     offeredAs: courseTypeEnum("offered_as").notNull(),
     offeredTo: degreeTypeEnum("offered_to").notNull(),
     offeredAlsoBy: text("offered_also_by").array(),
-    fetchedFromTTD: boolean('fetched_from_ttd').default(true),
-    markedForAllocation: boolean('marked_for_allocation').default(false).notNull(),
+    fetchedFromTTD: boolean("fetched_from_ttd").default(true),
+    markedForAllocation: boolean("marked_for_allocation")
+        .default(false)
+        .notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
+        onDelete: "set null",
+    }),
 });
 
 export const semester = pgTable(
@@ -117,13 +123,10 @@ export const semester = pgTable(
             onDelete: "restrict",
         }),
 
+        summaryHidden: boolean("summary_hidden").default(true).notNull(),
+
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
-
-        noOfElectivesPerInstructor: integer("no_of_electives_per_instructor").notNull(),
-        noOfDisciplineCoursesPerInstructor: integer(
-            "no_of_discipline_courses_per_instructor"
-        ).notNull(),
 
         hodAtStartOfSemEmail: text("hod_at_start").references(
             () => faculty.email
@@ -131,7 +134,9 @@ export const semester = pgTable(
         dcaConvenerAtStartOfSemEmail: text("dca_at_start").references(
             () => faculty.email
         ),
-        allocationStatus: allocationStatus("allocation_status").default('notStarted').notNull(),
+        allocationStatus: allocationStatus("allocation_status")
+            .default("notStarted")
+            .notNull(),
 
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 
@@ -139,3 +144,13 @@ export const semester = pgTable(
     },
     (table) => [unique().on(table.year, table.semesterType)]
 );
+
+export const allocationCourseGroup = pgTable("allocation_course_group", {
+    id: uuid("id")
+        .primaryKey()
+        .$defaultFn(() => uuidv4()),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});

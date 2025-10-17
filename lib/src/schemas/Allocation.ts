@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const sectionTypes = ["LECTURE", "TUTORIAL", "PRACTICAL"] as const;
-export const degreeTypes = ["FD", "HD"] as const;
+export const degreeTypes = ["FD", "HD", "PhD"] as const;
 export const semesterTypes = ["1", "2", "3"] as const; // 3 is for summer term
-export const courseTypes = ["CDC", "Elective"] as const;
+export const courseTypes = ["CDC", "DEL", "HEL"] as const;
 export const allocationStatuses = [
     "notStarted",
     "formCollection",
@@ -16,6 +16,12 @@ export const degreeTypeEnum = z.enum(degreeTypes);
 export const semesterTypeEnum = z.enum(semesterTypes);
 export const courseTypeEnum = z.enum(courseTypes);
 export const allocationStatusEnum = z.enum(allocationStatuses);
+
+export const courseTypeMap: Record<string, (typeof courseTypes)[number]> = {
+    C: "CDC",
+    D: "DEL",
+    H: "HEL",
+};
 
 // ------------------------ NOTE ------------------------
 // The commented fields are automatically managed by the api and are not required in the schema.
@@ -48,17 +54,16 @@ export const courseSchema = z.object({
     offeredAlsoBy: z.array(z.string()).optional(),
     totalUnits: z.number().int().min(1),
     markedForAllocation: z.boolean(),
-    // createdAt: z.date().optional(),
-    // updatedAt: z.date().optional()
+    timetableCourseId: z.number().optional(),
 });
 
 export const courseMarkSchema = z.object({
-    courseCodes: z.string().nonempty().array()
-})
+    courseCodes: z.string().nonempty().array(),
+});
 
 export const courseGetQuerySchema = z.object({
-    unmarked: z.coerce.boolean()
-})
+    unmarked: z.coerce.boolean(),
+});
 
 export const deleteCourseSchema = z.object({
     code: z.string(),
@@ -74,8 +79,6 @@ export const semesterSchema = z.object({
     semesterType: semesterTypeEnum,
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
-    noOfElectivesPerInstructor: z.number().int().min(0),
-    noOfDisciplineCoursesPerInstructor: z.number().int().min(0),
     // hodAtStartOfSemEmail: z.string().email().optional(),
     // dcaConvenerAtStartOfSemEmail: z.string().email().optional(),
     allocationStatus: allocationStatusEnum,
@@ -96,6 +99,7 @@ export const allocationSectionSchema = z.object({
     name: z.string(),
     type: sectionTypeEnum,
     masterId: z.string().uuid(),
+    timetableRoomId: z.string().optional(),
 });
 
 export const masterAllocationSchema = z.object({
@@ -150,4 +154,19 @@ export const getLatestSemesterQuerySchema = z.object({
 
 export const getInstructorDetailsQuerySchema = z.object({
     email: z.string().email(),
+});
+
+export const courseGroupSchema = z.object({
+    // id: z.string().uuid(),
+    name: z.string().nonempty(),
+    description: z.string().nonempty(),
+});
+
+export const courseGroupCourseAddSchema = z.object({
+    courseCodes: z.string().nonempty().array(),
+    removedCourseCodes: z.string().nonempty().array().optional(),
+});
+
+export const courseGroupInsertQueryParamSchema = z.object({
+    courses: z.coerce.boolean().optional(),
 });

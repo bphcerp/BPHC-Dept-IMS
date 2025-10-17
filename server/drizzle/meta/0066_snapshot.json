@@ -1,5 +1,5 @@
 {
-  "id": "3bbae4b0-b9c8-4ee2-834a-3a684792d9c5",
+  "id": "4d7ec13b-8d3f-4fff-9cf7-badbb202e465",
   "prevId": "96c25830-af7b-48e6-bcf5-c65b95e034d8",
   "version": "7",
   "dialect": "postgresql",
@@ -266,6 +266,13 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "current_status": {
+          "name": "current_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Awaiting QE Application'"
         }
       },
       "indexes": {},
@@ -6600,8 +6607,7 @@
         },
         "status": {
           "name": "status",
-          "type": "statusEnum",
-          "typeSchema": "public",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
@@ -7800,15 +7806,6 @@
         "October",
         "November",
         "December"
-      ]
-    },
-    "public.statusEnum": {
-      "name": "statusEnum",
-      "schema": "public",
-      "values": [
-        "APPROVED",
-        "REJECTED",
-        "ARCHIVED"
       ]
     },
     "public.qp_status_enum": {

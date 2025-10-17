@@ -1,4 +1,3 @@
-// server/src/api/meeting/getMeetingDetails.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -19,7 +18,22 @@ router.get(
         const meeting = await db.query.meetings.findFirst({
             where: eq(meetings.id, meetingId),
             with: {
-                participants: true,
+                organizer: {
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
+                participants: {
+                    with: {
+                        participant: {
+                            columns: {
+                                name: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
                 timeSlots: {
                     with: {
                         availability: {
@@ -42,7 +56,7 @@ router.get(
 
         const isParticipantOrOrganizer =
             meeting.organizerEmail === userEmail ||
-            meeting.participants.some((p) => p.participantEmail === userEmail);
+            meeting.participants.some((p) => p.participant.email === userEmail);
 
         if (!isParticipantOrOrganizer) {
             throw new HttpError(
@@ -52,8 +66,10 @@ router.get(
         }
 
         const finalizationTime = meeting.finalizedSlots[0]?.createdAt;
+
         const classifiedParticipants = meeting.participants.map((p) => ({
-            ...p,
+            participantEmail: p.participant.email,
+            participantName: p.participant.name,
             type:
                 finalizationTime && p.createdAt > finalizationTime
                     ? "other"
@@ -70,7 +86,6 @@ router.get(
             const userAvailability =
                 slot.availability.find((a) => a.participantEmail === userEmail)
                     ?.availability ?? null;
-
             return {
                 ...slot,
                 availableCount,
@@ -81,7 +96,7 @@ router.get(
 
         const response = {
             ...meeting,
-            participants: classifiedParticipants, 
+            participants: classifiedParticipants,
             timeSlots: augmentedTimeSlots,
         };
 

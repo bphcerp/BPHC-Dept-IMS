@@ -30,6 +30,41 @@ interface ExcelData {
     sheets: SheetData[];
 }
 
+interface InstructorColumnInfo {
+    sheetName: string;
+    hasInstructorColumn: boolean;
+    instructorColumnName?: string;
+    instructorColumnIndex?: number;
+}
+
+function detectInstructorColumn(columnHeaders: ColumnHeader[]): {
+    hasInstructorColumn: boolean;
+    instructorColumnName?: string;
+    instructorColumnIndex?: number;
+} {
+    const instructorKeywords = ['instructor', 'teacher', 'professor', 'faculty', 'supervisor', 'mentor', 'guide'];
+
+    for (let i = 0; i < columnHeaders.length; i++) {
+        const header = columnHeaders[i];
+        const headerLower = header.name.toLowerCase().trim();
+
+        if (instructorKeywords.some(keyword =>
+            headerLower.includes(keyword) ||
+            headerLower === keyword ||
+            headerLower.startsWith(keyword) ||
+            headerLower.endsWith(keyword)
+        )) {
+            return {
+                hasInstructorColumn: true,
+                instructorColumnName: header.name,
+                instructorColumnIndex: i,
+            };
+        }
+    }
+
+    return { hasInstructorColumn: false };
+}
+
 function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
     headerRow: number;
     dataStartRow: number;
@@ -57,10 +92,10 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
             if (!cell || typeof cell !== 'string') return false;
             const cellStr = cell.toString().toLowerCase().trim();
             return cellStr.startsWith('column') ||
-                cellStr.match(/^col\d+$/) ||
-                cellStr.match(/^field\d+$/) ||
+                /^col\d+$/.exec(cellStr) ||
+                /^field\d+$/.exec(cellStr) ||
                 cellStr === '' ||
-                cellStr.match(/^\d+$/);
+                /^\d+$/.exec(cellStr);
         });
 
         const hasHeaders = matchingCells.length >= 2 && !hasGenericColumns;
@@ -73,8 +108,8 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
                 const isGeneric = !headerName ||
                     headerName === '' ||
                     lower.startsWith('column') ||
-                    /^(col|field)\d+$/.test(lower) ||
-                    /^\d+$/.test(headerName);
+                    /^(col|field)\d+$/.exec(lower) ||
+                    /^\d+$/.exec(headerName);
                 if (isGeneric) {
                     headerName = `Column_${index + 1}`;
                 }
@@ -141,7 +176,7 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
                 headerRow: i,
                 dataStartRow: i + 1,
                 columnHeaders,
-                gradeOptions: Array.from(gradeOptions).sort()
+                gradeOptions: Array.from(gradeOptions).sort((a, b) => a.localeCompare(b))
             };
         }
     }
@@ -154,7 +189,7 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
             let headerName = cell?.toString().trim();
 
             const lower = headerName?.toLowerCase() || '';
-            const isGeneric = !headerName || headerName === '' || lower.startsWith('column') || /^(col|field)\d+$/.test(lower) || /^\d+$/.test(headerName);
+            const isGeneric = !headerName || headerName === '' || lower.startsWith('column') || /^(col|field)\d+$/.exec(lower) || /^\d+$/.exec(headerName);
             if (isGeneric) headerName = `Column_${index + 1}`;
 
             let type: ColumnHeader['type'] = 'text';
@@ -203,7 +238,7 @@ function detectTableStructure(sheet: XLSX.WorkSheet, sheetName?: string): {
         headerRow: 0,
         dataStartRow: 1,
         columnHeaders: fallbackHeaders,
-        gradeOptions: Array.from(gradeOptions).sort()
+        gradeOptions: Array.from(gradeOptions).sort((a, b) => a.localeCompare(b))
     };
 }
 
@@ -279,6 +314,7 @@ router.post(
             };
 
             const allGradeOptions = new Set<string>();
+            const instructorColumnInfo: InstructorColumnInfo[] = [];
 
             for (const sheetName of workbook.SheetNames) {
                 const sheet = workbook.Sheets[sheetName];
@@ -286,6 +322,7 @@ router.post(
 
                 const { headerRow, dataStartRow, columnHeaders, gradeOptions } = detectTableStructure(sheet, sheetName);
                 const studentData = parseStudentData(sheet, headerRow, dataStartRow, columnHeaders);
+                const instructorInfo = detectInstructorColumn(columnHeaders);
 
                 gradeOptions.forEach(grade => allGradeOptions.add(grade));
 
@@ -301,6 +338,13 @@ router.post(
                 };
 
                 excelData.sheets.push(sheetData);
+
+                instructorColumnInfo.push({
+                    sheetName,
+                    hasInstructorColumn: instructorInfo.hasInstructorColumn,
+                    instructorColumnName: instructorInfo.instructorColumnName,
+                    instructorColumnIndex: instructorInfo.instructorColumnIndex,
+                });
             }
 
             if (excelData.sheets.length === 0) {
@@ -310,10 +354,12 @@ router.post(
             res.json({
                 success: true,
                 data: excelData,
-                gradeOptions: Array.from(allGradeOptions).sort()
+                gradeOptions: Array.from(allGradeOptions).sort((a, b) => a.localeCompare(b)),
+                instructorColumnInfo
             });
 
         } catch (error) {
+            logger.error("Error processing Excel file:", error);
             return next(new HttpError(HttpCode.INTERNAL_SERVER_ERROR, "Error processing Excel file"));
         }
     })

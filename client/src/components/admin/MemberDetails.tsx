@@ -310,6 +310,16 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                   </p>
                 </div>
               </div>
+              {data.type === "phd" && data.currentStatus && (
+                <div className="rounded-md border bg-blue-50 p-4">
+                  <p className="text-sm font-medium text-blue-800">
+                    Current Progress Status
+                  </p>
+                  <p className="mt-1 font-semibold text-blue-900">
+                    {data.currentStatus}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {Object.entries(data).map(([key, value]) => {
                   if (key === "name" || key === "type") return null;

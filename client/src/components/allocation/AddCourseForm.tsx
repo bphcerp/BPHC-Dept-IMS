@@ -73,7 +73,6 @@ const AddCourseForm = ({
       name: values.name.trim(),
       code: values.code.trim().toUpperCase(),
     };
-    console.log("Submitting new course:", newCourse);
     addCourse(newCourse);
   };
 
@@ -152,7 +151,7 @@ const AddCourseForm = ({
                         <Checkbox
                           checked={field.value === "CDC"}
                           onCheckedChange={(checked) =>
-                            field.onChange(checked ? "CDC" : "Elective")
+                            field.onChange(checked ? "CDC" : "DEL")
                           }
                         />
                       </FormControl>

@@ -61,9 +61,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     AllocationStatus[]
   >([...allocationStatusOptions]);
 
-  const [sortField, setSortField] = useState<
-    "default" | "allocation" | "name" | "code"
-  >("default");
+  const [sortField, setSortField] = useState<"allocation" | "name" | "code">(
+    "code"
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const { data: allocationStatusData } = useQuery({
@@ -101,9 +101,6 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         return allocationStatusFilters.includes(status);
       });
 
-  // If user hasn't selected a client-side sort, preserve server/default order
-  if (sortField === "default") return base;
-
     return base.sort((a, b) => {
       if (sortField === "name") {
         const res = a.name.localeCompare(b.name);
@@ -134,7 +131,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     switch (courseType) {
       case "CDC":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "Elective":
+      case "DEL":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
   };
@@ -147,6 +144,8 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "HD":
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
+      case "PhD":
+        return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200";
     }
   };
 
@@ -167,7 +166,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     setDegreeFilters([...allocationSchemas.degreeTypes]);
     setCourseTypeFilters([...allocationSchemas.courseTypes]);
     setAllocationStatusFilters([...allocationStatusOptions]);
-    setSortField("default");
+    setSortField("code");
     setSortOrder("asc");
   };
 
@@ -258,18 +257,18 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                   CDC
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem
-                  checked={courseTypeFilters.includes("Elective")}
+                  checked={courseTypeFilters.includes("DEL")}
                   onCheckedChange={(checked) => {
                     setCourseTypeFilters((prev) => {
-                      const has = prev.includes("Elective");
-                      if (checked && !has) return [...prev, "Elective"];
+                      const has = prev.includes("DEL");
+                      if (checked && !has) return [...prev, "DEL"];
                       if (!checked && has)
-                        return prev.filter((d) => d !== "Elective");
+                        return prev.filter((d) => d !== "DEL");
                       return prev;
                     });
                   }}
                 >
-                  Elective
+                  DEL
                 </DropdownMenuCheckboxItem>
 
                 <DropdownMenuSeparator />
@@ -330,12 +329,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 <DropdownMenuRadioGroup
                   value={sortField}
                   onValueChange={(v) =>
-                    setSortField(v as "default" | "allocation" | "name" | "code")
+                    setSortField(v as "allocation" | "name" | "code")
                   }
                 >
-                  <DropdownMenuRadioItem value="default">
-                    Default (server order)
-                  </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="allocation">
                     Allocation Status
                   </DropdownMenuRadioItem>
@@ -355,11 +351,6 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 >
                   {sortOrder === "asc" ? "Ascending" : "Descending"}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <div className="px-3 pb-2 text-xs text-muted-foreground">
-                  The default sorting order is HD-CDC, HD-Elective, FD-CDC, and
-                  FD-Elective
-                </div>
               </DropdownMenuContent>
             </DropdownMenu>
             {courseTypeFilters.length !==
@@ -367,7 +358,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             degreeFilters.length !== allocationSchemas.degreeTypes.length ||
             allocationStatusFilters.length !== allocationStatusOptions.length ||
             searchTerm !== "" ||
-            sortField !== "default" ||
+            sortField !== "code" ||
             sortOrder !== "asc" ? (
               <Button
                 variant="ghost"
@@ -382,7 +373,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         </div>
       </div>
 
-  <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
         <div className="space-y-2 p-3 pr-2">
           {isLoading || !allocationStatusData ? (
             <div className="flex items-center justify-center py-8">

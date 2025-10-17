@@ -141,10 +141,10 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
       <div className="flex items-center justify-between gap-4">
         {/* Course Info */}
         <div className="flex items-center gap-3">
-          <div className="text-lg font-semibold">{selectedCourse.code}</div>
           <Badge variant="outline" className="text-xs">
-            {selectedCourse.name}
+            {selectedCourse.code}
           </Badge>
+          <div className="text-sm font-semibold">{selectedCourse.name}</div>
         </div>
 
         {/* IC Selection and Action */}
@@ -190,6 +190,8 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                         placeholder="Search instructors..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
                         className="h-8 pl-8"
                       />
                     </div>

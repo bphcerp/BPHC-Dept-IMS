@@ -8,6 +8,7 @@ import {
     phdRequests,
     phdRequestReviews,
 } from "@/config/db/schema/phdRequest.ts";
+import { phd } from "@/config/db/schema/admin.ts";
 import {
     createTodos,
     completeTodo,
@@ -19,7 +20,7 @@ import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
-router.post(
+export default router.post(
     "/:id",
     checkAccess("phd-request:hod:review"),
     asyncHandler(async (req, res) => {
@@ -77,6 +78,7 @@ router.post(
                     completionEvent: `phd-request:student-resubmit-final-thesis:${requestId}`,
                     link: `/phd/requests/${requestId}`,
                 });
+
                 emailsToSend.push({
                     to: request.studentEmail,
                     subject: `Final Thesis Reverted by HOD`,
@@ -87,7 +89,6 @@ router.post(
                     .update(phdRequests)
                     .set({ status: targetStatus })
                     .where(eq(phdRequests.id, requestId));
-
                 if (todosToCreate.length > 0)
                     await createTodos(todosToCreate, tx);
                 if (emailsToSend.length > 0) await sendBulkEmails(emailsToSend);
@@ -96,6 +97,11 @@ router.post(
                     .update(phdRequests)
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
+
+                await tx
+                    .update(phd)
+                    .set({ currentStatus: "PhD Journey Completed" })
+                    .where(eq(phd.email, request.studentEmail));
 
                 await createNotifications(
                     [
@@ -115,7 +121,6 @@ router.post(
                     false,
                     tx
                 );
-
                 await sendBulkEmails([
                     {
                         to: request.studentEmail,
@@ -137,5 +142,3 @@ router.post(
         });
     })
 );
-
-export default router;

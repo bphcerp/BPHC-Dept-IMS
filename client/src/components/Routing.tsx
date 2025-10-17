@@ -91,7 +91,6 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
-import HelpPage from "@/views/Wiki";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ProjectDetails from "@/views/Project/[id]";
@@ -114,7 +113,8 @@ import SendMail from "@/views/Wilp/SendMail";
 import GradesLayout from "@/layouts/Grades";
 import UploadExcel from "@/views/Grades/UploadExcel";
 import ManageGrades from "@/views/Grades/ManageGrades";
-import SupervisorGradesView from "@/views/Grades/Supervisor";
+import AssignGradesView from "@/views/Grades/AssignGrades";
+import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
@@ -131,6 +131,9 @@ import FormResponse from "@/views/Allocation/FormResponse";
 import SemesterList from "@/views/Allocation/SemesterList";
 import AllocationModern from "@/views/Allocation/AllocationModern";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
+import HelpButton from "./HelpButton";
+import CourseGroups from "@/views/Allocation/CourseGroups";
+import { AllocationMatrixView } from "@/views/Allocation/AllocationMatrixView";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -264,7 +267,7 @@ const Routing = () => {
       icon: <ListOrderedIcon />,
       url: "/allocation",
       requiredPermissions: courseLoadAllocationModulePermissions,
-    }
+    },
   ];
 
   return (
@@ -287,10 +290,6 @@ const Routing = () => {
             }
           />
           <Route path="/contributors" element={<ContributorsPage />} />
-          <Route
-            path="/help"
-            element={authState ? <HelpPage /> : <Navigate to="/" replace />}
-          />
           {!authState && <Route path="*" element={<Navigate to="/" />} />}
           {authState && <Route path="/profile" element={<ProfilePage />} />}
           {checkAccessAnyOne(adminModulePermissions) && (
@@ -814,10 +813,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(gradesModulePermissions) && (
             <Route path="/grades" element={<GradesLayout />}>
-              <Route
-                index
-                element={<Navigate to="/grades/upload" replace={true} />}
-              />
+              <Route index element={<GradesDefaultRedirect />} />
               {checkAccess(permissions["/grades/upload"]) && (
                 <Route path="upload" element={<UploadExcel />} />
               )}
@@ -825,7 +821,7 @@ const Routing = () => {
                 <Route path="manage" element={<ManageGrades />} />
               )}
               {checkAccess(permissions["/grades/supervisor"]) && (
-                <Route path="supervisor" element={<SupervisorGradesView />} />
+                <Route path="assign-grades" element={<AssignGradesView />} />
               )}
             </Route>
           )}
@@ -839,7 +835,7 @@ const Routing = () => {
                     to={
                       checkAccess("allocation:write")
                         ? "/allocation/overview"
-                        : "/allocation/personal"
+                        : "/allocation/submit"
                     }
                     replace={true}
                   />
@@ -852,11 +848,19 @@ const Routing = () => {
                 </>
               )}
 
-              {checkAccessAnyOne(["allocation:view", "allocation:write"]) && (
-                <Route
-                  path="/allocation/summary"
-                  element={<AllocationSummary />}
-                />
+              {checkAccess("allocation:write") && (
+                <Route path="creditmatrix" element={<AllocationMatrixView />} />
+              )}
+
+              {checkAccess("allocation:view") && (
+                <>
+                  {checkAccess("allocation:summary:view") && (
+                    <Route
+                      path="/allocation/summary"
+                      element={<AllocationSummary />}
+                    />
+                  )}
+                </>
               )}
 
               {/* summary moved to a top-level unprotected route */}
@@ -876,12 +880,17 @@ const Routing = () => {
               )}
 
               {checkAccessAnyOne([
-                "allocation:builder:form:view",
+                "allocation:form:response:view",
                 "allocation:write",
               ]) && (
                 <>
                   <Route path="forms" element={<FormList />} />
                   <Route path="forms/:id/preview" element={<FormResponse />} />
+                </>
+              )}
+
+              {checkAccess("allocation:form:response:submit") && (
+                <>
                   <Route
                     path="forms/:id/responses"
                     element={<FormResponsesView />}
@@ -889,6 +898,10 @@ const Routing = () => {
                   <Route
                     path="forms/:id/submit"
                     element={<FormResponse preview={false} />}
+                  />
+                  <Route
+                    path="submit"
+                    element={<FormResponse preview={false} latest={true} />}
                   />
                 </>
               )}
@@ -901,6 +914,11 @@ const Routing = () => {
                 "allocation:courses:view",
                 "allocation:write",
               ]) && <Route path="courses" element={<CoursesPage />} />}
+
+              {checkAccessAnyOne([
+                "allocation:courses:write",
+                "allocation:write",
+              ]) && <Route path="course-groups" element={<CourseGroups />} />}
 
               {checkAccessAnyOne([
                 "allocation:semesters:view",
@@ -918,6 +936,9 @@ const Routing = () => {
           )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <div className="fixed bottom-0 right-0 p-4">
+          <HelpButton />
+        </div>
       </BrowserRouter>
       <TestingPopup />
     </>

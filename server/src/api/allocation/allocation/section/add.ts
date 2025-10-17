@@ -23,7 +23,7 @@ router.post(
         if (!masterAllocation) return next(new HttpError(HttpCode.BAD_REQUEST, "Allocation not found. masterId is invalid"));
         
         if (sectionType === 'PRACTICAL' && !masterAllocation.course.practicalUnits) return next(new HttpError(HttpCode.BAD_REQUEST, "This course doesnt have a practical section"))     
-        if (sectionType === 'TUTORIAL' && masterAllocation.course.offeredAs === 'Elective') return next(new HttpError(HttpCode.BAD_REQUEST, "This course is an elective and therefore doesn't have tutorial section"))    
+        if (sectionType === 'TUTORIAL' && masterAllocation.course.offeredAs === 'DEL') return next(new HttpError(HttpCode.BAD_REQUEST, "This course is an elective and therefore doesn't have tutorial section"))    
         if (sectionType === 'TUTORIAL' && masterAllocation.course.offeredTo === 'HD') return next(new HttpError(HttpCode.BAD_REQUEST, "This is a Higher Degree Course and therefore doesn't have tutorial section"))    
 
         await db.insert(allocationSection).values({

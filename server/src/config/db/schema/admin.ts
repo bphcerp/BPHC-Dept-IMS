@@ -55,7 +55,7 @@ export const users = pgTable("users", {
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
-        testerRollbackRoles: integer("tester_rollback_roles")
+    testerRollbackRoles: integer("tester_rollback_roles")
         .array()
         .notNull()
         .default(sql`'{}'::integer[]`),
@@ -105,7 +105,7 @@ export const phd = pgTable("phd", {
         onDelete: "set null",
     }),
     idNumber: text("id_number"),
-    erpId: text("erp_id"),
+    erpId: text("erp_id").unique(),
     name: text("name"),
     instituteEmail: text("institute_email"),
     mobile: text("mobile"),
@@ -121,6 +121,9 @@ export const phd = pgTable("phd", {
     qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
     hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
     qualificationDate: timestamp("qualification_date", { withTimezone: true }),
+    currentStatus: text("current_status")
+        .default("Awaiting QE Application")
+        .notNull(),
 });
 
 export const staff = pgTable("staff", {
