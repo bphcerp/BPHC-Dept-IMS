@@ -519,6 +519,13 @@
       "when": 1760600092819,
       "tag": "0073_tranquil_white_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1760699868701,
+      "tag": "0074_green_scrambler",
+      "breakpoints": true
     }
   ]
 }

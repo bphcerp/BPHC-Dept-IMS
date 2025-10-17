@@ -7,7 +7,7 @@ import {
     publicationsTable,
     researgencePublications,
 } from "@/config/db/schema/publications.ts";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, not, or } from "drizzle-orm";
 import type { publicationsSchemas } from "lib";
 
 const router = express.Router();
@@ -19,44 +19,88 @@ router.get(
         const data: publicationsSchemas.ValidatedResponse = {
             validated: (
                 await db
-                    .select()
+                    .select({ researgence: researgencePublications })
                     .from(researgencePublications)
                     .innerJoin(
                         publicationsTable,
                         eq(
                             researgencePublications.publicationTitle,
-                            publicationsTable.title
-                        )
+                            publicationsTable.title,
+                        ),
+                    )
+                    .innerJoin(
+                        authorPublicationsTable,
+                        and(
+                            eq(
+                                authorPublicationsTable.citationId,
+                                publicationsTable.citationId,
+                            ),
+                            or(
+                                not(eq(
+                                    authorPublicationsTable.status,
+                                    "ARCHIVED",
+                                )),
+                                isNull(authorPublicationsTable.status),
+                            ),
+                        ),
                     )
             ).map((row) => row.researgence),
 
             nonValidated: (
                 await db
-                    .select()
+                    .select({ publications: publicationsTable })
                     .from(publicationsTable)
+                    .innerJoin(
+                        authorPublicationsTable,
+                        and(
+                            eq(
+                                authorPublicationsTable.citationId,
+                                publicationsTable.citationId,
+                            ),
+                            or(
+                                not(eq(
+                                    authorPublicationsTable.status,
+                                    "ARCHIVED",
+                                )),
+                                isNull(authorPublicationsTable.status),
+                            ),
+                        ),
+                    )
                     .leftJoin(
                         researgencePublications,
                         eq(
                             researgencePublications.publicationTitle,
-                            publicationsTable.title
-                        )
+                            publicationsTable.title,
+                        ),
                     )
                     .where(isNull(researgencePublications.authors))
             ).map((row) => row.publications),
         };
         res.status(200).json(data);
-    })
+    }),
 );
 
 router.get(
     "/",
     checkAccess(),
     asyncHandler(async (_req, res) => {
-        const response: publicationsSchemas.PublicationResponse = await db
-            .select()
-            .from(publicationsTable);
+        const response: publicationsSchemas.PublicationResponse = (await db
+            .select({ publication: publicationsTable })
+            .from(publicationsTable).innerJoin(
+                authorPublicationsTable,
+                and(
+                    eq(
+                        authorPublicationsTable.citationId,
+                        publicationsTable.citationId,
+                    ),
+                    or(
+                        not(eq(authorPublicationsTable.status, "ARCHIVED")),
+                        isNull(authorPublicationsTable.status),
+                    ),
+                ),
+            )).map((row) => row.publication);
         res.status(200).json(response);
-    })
+    }),
 );
 
 router.get(
@@ -76,8 +120,8 @@ router.get(
                 publicationsTable,
                 eq(
                     authorPublicationsTable.citationId,
-                    publicationsTable.citationId
-                )
+                    publicationsTable.citationId,
+                ),
             );
 
         if (!allData.length) {
@@ -111,10 +155,10 @@ router.get(
             }
         }
 
-        const data: publicationsSchemas.PublicationWithMetaResponse =
-            Array.from(publicationsMap.values());
+        const data: publicationsSchemas.PublicationWithMetaResponse = Array
+            .from(publicationsMap.values());
         res.status(200).json(data);
-    })
+    }),
 );
 
 export default router;

@@ -7,7 +7,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { useMutation } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { publicationsSchemas } from "lib";
-import { Check, X, Filter, ArrowUpDown } from "lucide-react";
+import { Check, X, Filter, ArrowUpDown, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -97,7 +97,7 @@ const PublicationsView = () => {
     mutationFn: async (data: {
       citationId: string;
       authorId: string;
-      status: boolean;
+      status: publicationsSchemas.status;
       comments: string | null;
     }) => {
       await api.post("/publications/updateStatus", data);
@@ -116,7 +116,7 @@ const PublicationsView = () => {
   function handleApproveClick(
     citationId: string,
     authorId: string,
-    status: boolean,
+    status: publicationsSchemas.status,
     comments?: string
   ) {
     const updatedPublications = publications.map((pub) => {
@@ -143,8 +143,8 @@ const PublicationsView = () => {
     .filter((pub) => {
       // Status filter
       if (statusFilter === "all") return true;
-      if (statusFilter === "approved") return pub.status === true;
-      if (statusFilter === "rejected") return pub.status === false;
+      if (statusFilter === "approved") return pub.status === "APPROVED";
+      if (statusFilter === "rejected") return pub.status === "REJECTED";
       return true;
     })
     .filter((pub) => {
@@ -181,7 +181,7 @@ const PublicationsView = () => {
       Month: pub.month ?? "-",
       Year: pub.year,
       Link: pub.link,
-      Status: pub.status ? "Approved" : "Rejected",
+      Status: pub.status,
       Citations: pub.citations,
       CitationID: pub.citationId,
       CoAuthors: pub.coAuthors
@@ -368,7 +368,7 @@ const PublicationsView = () => {
                       {", "} &quot;{pub.title}
                       ,&quot; <em>{pub.journal}</em>
                       {pub.volume && `, vol. ${pub.volume}`}
-                      {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : '' }{pub.year}.
+                      {pub.issue && `, no. ${pub.issue}`}, {pub.month ? `${pub.month} ,` : ''}{pub.year}.
                     </p>
                     <div className="row mt-2 flex gap-2">
                       {pub.status === null ? (
@@ -377,13 +377,22 @@ const PublicationsView = () => {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              handleApproveClick(pub.citationId, authorId, true)
+                              handleApproveClick(pub.citationId, authorId, "APPROVED")
                             }
                           >
                             <Check className="mr-1 h-4 w-4" />
                             Approve
                           </Button>
-
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleApproveClick(pub.citationId, authorId, "ARCHIVED")
+                            }
+                          >
+                            <Archive className="mr-1 h-4 w-4" />
+                            Archive
+                          </Button>
                           {/* Approve with comments dialog */}
                           <Dialog>
                             <DialogTrigger asChild>
@@ -434,7 +443,7 @@ const PublicationsView = () => {
                                       handleApproveClick(
                                         pub.citationId,
                                         authorId,
-                                        true,
+                                        "APPROVED",
                                         approveComment
                                       );
                                     }}
@@ -498,7 +507,7 @@ const PublicationsView = () => {
                                       handleApproveClick(
                                         pub.citationId,
                                         authorId,
-                                        false,
+                                        "REJECTED",
                                         rejectComment
                                       );
                                     }}
@@ -510,15 +519,18 @@ const PublicationsView = () => {
                             </DialogContent>
                           </Dialog>
                         </>
-                      ) : pub.status === true ? (
-                        <div className="flex items-center text-green-600">
-                          <Check className="mr-1 h-4 w-4" />
-                          <span>Approved</span>
-                        </div>
                       ) : (
-                        <div className="flex items-center text-red-600">
-                          <X className="mr-1 h-4 w-4" />
-                          <span>Rejected</span>
+                        <div className={`flex items-center ${pub.status === "APPROVED" ? "text-green-600" : pub.status === "REJECTED" ? "text-red-500" : "text-gray-500"}`}>
+                          {pub.status === "APPROVED" && (
+                            <Check className="mr-1 h-4 w-4" />
+                          )}
+                          {pub.status === "REJECTED" && (
+                            <X className="mr-1 h-4 w-4" />
+                          )}
+                          {pub.status === "ARCHIVED" && (
+                            <Archive className="mr-1 h-4 w-4" />
+                          )}
+                          <span>{pub.status}</span>
                         </div>
                       )}
                     </div>

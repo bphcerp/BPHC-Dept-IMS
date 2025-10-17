@@ -34,7 +34,7 @@ const AllPublications = () => {
   } = useQuery({
     queryKey: ["publications", "all"],
     queryFn: async () => {
-      
+
       return {
         all: (await api.get<publicationsSchemas.PublicationResponse>("/publications/all/")).data,
         ...(await api.get<publicationsSchemas.ValidatedResponse>("/publications/all/validated")).data
@@ -52,8 +52,8 @@ const AllPublications = () => {
     onSuccess: () => {
       setErrorMessage(null);
       toast.success("Publications updated successfully");
-      void queryClient.invalidateQueries({ queryKey: ["publications/all"] });
-      void queryClient.invalidateQueries({ queryKey: ["publications/edit"] });
+      void queryClient.invalidateQueries({ queryKey: ["publications"] });
+      queryClient.refetchQueries({ queryKey: ["publications"] });
     },
     onError: () => {
       setErrorMessage("Failed to update publications");
@@ -100,7 +100,7 @@ const AllPublications = () => {
       header: 'Title',
       cell: (info) => <div>{info.getValue() as string}</div>,
       minSize: 1000,
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
@@ -115,21 +115,21 @@ const AllPublications = () => {
     {
       accessorKey: 'homeAuthors',
       header: 'Home Authors',
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
     {
       accessorKey: 'homeAuthorDepartment',
       header: 'Home Author Dept.',
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
     {
       accessorKey: 'homeAuthorInstitute',
       header: 'Home Author Institute',
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
@@ -144,49 +144,49 @@ const AllPublications = () => {
     {
       accessorKey: 'sci',
       header: 'SCI',
-      meta : {
+      meta: {
         filterType: "multiselect"
       }
     },
     {
       accessorKey: 'sourcePublication',
       header: 'Source Publication',
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
     {
       accessorKey: 'level',
       header: 'Level',
-      meta : {
+      meta: {
         filterType: "dropdown"
       }
     },
     {
       accessorKey: 'type',
       header: 'Article Type',
-      meta : {
+      meta: {
         filterType: "multiselect"
       }
     },
     {
       accessorKey: 'year',
       header: 'Year',
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
     {
       accessorKey: 'month',
       header: 'Month',
-      meta : {
+      meta: {
         filterType: "multiselect"
       }
     },
     {
       accessorKey: 'homeAuthorLocation',
       header: 'Home Author Location',
-      meta : {
+      meta: {
         filterType: "multiselect"
       }
     },
@@ -209,28 +209,28 @@ const AllPublications = () => {
     {
       accessorKey: 'snip',
       header: 'SNIP',
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
     {
       accessorKey: 'sjr',
       header: 'SJR',
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
     {
       accessorKey: 'if',
       header: 'IF',
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
     {
       accessorKey: 'citeScore',
       header: 'Cite Score',
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
@@ -264,7 +264,7 @@ const AllPublications = () => {
     }
   ];
 
-   const pubColumns: ColumnDef<publicationsSchemas.Publication>[] = [
+  const pubColumns: ColumnDef<publicationsSchemas.Publication>[] = [
     {
       accessorFn: () => "S.No",
       header: "S.No",
@@ -274,7 +274,7 @@ const AllPublications = () => {
       accessorKey: "title",
       header: "Title",
       cell: (info) => <div>{info.getValue() as string}</div>,
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
@@ -285,7 +285,7 @@ const AllPublications = () => {
     {
       accessorKey: "journal",
       header: "Journal",
-      meta : {
+      meta: {
         filterType: "search"
       }
     },
@@ -300,14 +300,14 @@ const AllPublications = () => {
     {
       accessorKey: "month",
       header: "Month",
-      meta : {
+      meta: {
         filterType: "multiselect"
       }
     },
     {
       accessorKey: "year",
       header: "Year",
-      meta : {
+      meta: {
         filterType: "number-range"
       }
     },
@@ -399,7 +399,7 @@ const AllPublications = () => {
                               key={pub.citationId}
                             >
                               <span className="font-medium">[{globalIndex}]</span>{" "}
-                              <a href={pub.link??undefined} target="_blank">
+                              <a href={pub.link ?? undefined} target="_blank">
                                 {pub.authorNames.replace(/,?\s*\.\.\.$/, "").trim()}
                                 {", "} &quot;{pub.title}
                                 ,&quot; <em>{pub.journal}</em>
@@ -423,57 +423,57 @@ const AllPublications = () => {
             <div className="space-y-4 w-full overflow-x-auto">
               <Collapsible title={
                 <h2 className="border-border pb-2 text-2xl font-semibold text-primary">
-                    Validated
+                  Validated
                 </h2>
               }>
-              <DataTable<publicationsSchemas.ReseargencePublication>
-                data={publicationsData.validated}
-                columns={resColumns}
-                mainSearchColumn="authors"
-              />
+                <DataTable<publicationsSchemas.ReseargencePublication>
+                  data={publicationsData.validated}
+                  columns={resColumns}
+                  mainSearchColumn="authors"
+                />
               </Collapsible>
               <Collapsible title={
                 <h2 className="border-border pb-2 text-2xl font-semibold text-primary">
-                    Not Validated
+                  Not Validated
                 </h2>
               }>
-              <DataTable<publicationsSchemas.Publication>
-                data={publicationsData.nonValidated}
-                idColumn="citationId"
-                exportFunction={
-                  checkAccess(permissions["/publications/export"])
-                    ? (citIDs, columnsVisible) => {
-                      if (!citIDs || !citIDs.length)
-                        return toast.warning("No data to export");
+                <DataTable<publicationsSchemas.Publication>
+                  data={publicationsData.nonValidated}
+                  idColumn="citationId"
+                  exportFunction={
+                    checkAccess(permissions["/publications/export"])
+                      ? (citIDs, columnsVisible) => {
+                        if (!citIDs || !citIDs.length)
+                          return toast.warning("No data to export");
 
-                      api
-                        .post(
-                          "/publications/export",
-                          { citIDs, columnsVisible },
-                          { responseType: "blob" }
-                        )
-                        .then((response) => {
-                          const blob = new Blob([response.data], {
-                            type: response.headers["content-type"],
+                        api
+                          .post(
+                            "/publications/export",
+                            { citIDs, columnsVisible },
+                            { responseType: "blob" }
+                          )
+                          .then((response) => {
+                            const blob = new Blob([response.data], {
+                              type: response.headers["content-type"],
+                            });
+                            const link = document.createElement("a");
+                            link.href = URL.createObjectURL(blob);
+                            link.download = `${DEPARTMENT_NAME} Department - Export Publications.xlsx`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(link.href);
+                            toast.success("File downloaded successfully!");
+                          })
+                          .catch((error) => {
+                            console.error("Error:", error);
+                            toast.error("Failed to download file");
                           });
-                          const link = document.createElement("a");
-                          link.href = URL.createObjectURL(blob);
-                          link.download = `${DEPARTMENT_NAME} Department - Export Publications.xlsx`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          URL.revokeObjectURL(link.href);
-                          toast.success("File downloaded successfully!");
-                        })
-                        .catch((error) => {
-                          console.error("Error:", error);
-                          toast.error("Failed to download file");
-                        });
-                    } : undefined
-                }
-                columns={pubColumns}
-                mainSearchColumn="authorNames"
-              />
+                      } : undefined
+                  }
+                  columns={pubColumns}
+                  mainSearchColumn="authorNames"
+                />
               </Collapsible>
             </div>
           )
