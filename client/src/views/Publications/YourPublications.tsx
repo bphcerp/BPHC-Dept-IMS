@@ -521,7 +521,15 @@ const PublicationsView = () => {
                         </>
                       ) : (
                         <div className={`flex items-center ${pub.status === "APPROVED" ? "text-green-600" : pub.status === "REJECTED" ? "text-red-500" : "text-gray-500"}`}>
-                          <Check className="mr-1 h-4 w-4" />
+                          {pub.status === "APPROVED" && (
+                            <Check className="mr-1 h-4 w-4" />
+                          )}
+                          {pub.status === "REJECTED" && (
+                            <X className="mr-1 h-4 w-4" />
+                          )}
+                          {pub.status === "ARCHIVED" && (
+                            <Archive className="mr-1 h-4 w-4" />
+                          )}
                           <span>{pub.status}</span>
                         </div>
                       )}

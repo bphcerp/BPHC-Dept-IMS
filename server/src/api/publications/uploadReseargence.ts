@@ -172,6 +172,13 @@ router.post(
                         );
                 }
 
+                if (!matchedPub) {
+                    return_data.push({
+                        Reason: "Could Not Find Match.",
+                        ...parsedRow,
+                    });
+                }
+
                 if (existingPub) continue;
 
                 let [newEntry] = await db
@@ -179,13 +186,6 @@ router.post(
                     .values(parsedRow)
                     .returning();
                 if (newEntry) results.successful++;
-
-                if (!matchedPub) {
-                    return_data.push({
-                        Reason: "Could Not Find Match.",
-                        ...parsedRow,
-                    });
-                }
             } catch (error) {
                 results.failed++;
                 results.errors.push(

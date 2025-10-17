@@ -68,9 +68,9 @@ export default function UploadReseargence() {
             "Content-Type": "multipart/form-data",
           },
           params: {
-            return_type: "xlsx",
+            return_type: (feedbackExcel ? 'xlsx' : 'data'),
           },
-          responseType: "blob",
+          responseType: (feedbackExcel ? "blob" : undefined),
         },
       );
 
