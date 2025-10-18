@@ -110,7 +110,7 @@ const vendorColumns: ColumnDef<Vendor>[] = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: "vendorId",
+    accessorFn: (row) => row.vendorId.toString(),
     header: "Vendor ID",
     meta: { filterType: "search" as TableFilterType },
   },
