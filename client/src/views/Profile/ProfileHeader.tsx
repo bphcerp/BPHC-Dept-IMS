@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -94,6 +94,8 @@ export const ProfileHeader = ({
 
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const toArray = useCallback((v: string) => v.split(",").map((s) => s.trim()).filter(Boolean), []);
+
   return (
     <Card className="bg-background">
       <CardContent className="p-8">
@@ -138,13 +140,11 @@ export const ProfileHeader = ({
               {description && <div><span className="font-semibold">Description:</span> {description}</div>}
               {(education && education.length) && <div><span className="font-semibold">Education:</span> {education.join(", ")}</div>}
               {(researchInterests && researchInterests.length) && <div><span className="font-semibold">Research Interests:</span> {researchInterests.join(", ")}</div>}
-              {(courses && courses.length) && <div><span className="font-semibold">Courses:</span> {courses.join(", ")}</div>}
-              {linkedin && <div><span className="font-semibold">LinkedIn:</span> {linkedin}</div>}
+              {courses?.length && <div><span className="font-semibold">Courses:</span> {courses.join(", ")}</div>}              {linkedin && <div><span className="font-semibold">LinkedIn:</span> {linkedin}</div>}
               {orchidID && <div><span className="font-semibold">ORCID:</span> {orchidID}</div>}
               {scopusID && <div><span className="font-semibold">Scopus ID:</span> {scopusID}</div>}
               {googleScholar && <div><span className="font-semibold">Google Scholar:</span> {googleScholar}</div>}
-              {(additionalLinks && additionalLinks.length) && <div><span className="font-semibold">Additional Links:</span> {additionalLinks.join(", ")}</div>}
-            </div>
+              {additionalLinks?.length && <div><span className="font-semibold">Additional Links:</span> {additionalLinks.join(", ")}</div>}            </div>
           </DialogContent>
         </Dialog>
             <div className="pt-2 flex gap-3">
@@ -224,7 +224,6 @@ export const ProfileHeader = ({
                     if (editState.description !== (description ?? "")) payload.description = editState.description;
                     if (editState.designation !== (designation ?? "")) payload.designation = editState.designation;
                     if (editState.department !== (department ?? "")) payload.department = editState.department;
-                    const toArray = (v: string) => v.split(",").map((s) => s.trim()).filter(Boolean);
                     const eduArr = toArray(editState.education);
                     const riArr = toArray(editState.researchInterests);
                     const coursesArr = toArray(editState.courses);

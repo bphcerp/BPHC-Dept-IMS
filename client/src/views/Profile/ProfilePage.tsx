@@ -94,6 +94,44 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
 
   const isLoading = isLoadingProfile || isLoadingImage;
 
+  // Type guards for runtime validation
+  function isProjectItem(item: unknown): item is ProjectItem {
+    if (typeof item !== "object" || item === null) return false;
+    const obj = item as Record<string, unknown>;
+    return (
+      typeof obj.title === "string" &&
+      (typeof obj.year === "string" || typeof obj.year === "number")
+    );
+  }
+
+  function isPatentItem(item: unknown): item is PatentItem {
+    if (typeof item !== "object" || item === null) return false;
+    const obj = item as Record<string, unknown>;
+    return (
+      typeof obj.title === "string" &&
+      typeof obj.patentNumber === "string"
+    );
+  }
+
+  function isPublicationItem(item: unknown): item is PublicationItem {
+    if (typeof item !== "object" || item === null) return false;
+    const obj = item as Record<string, unknown>;
+    return (
+      typeof obj.title === "string" &&
+      typeof obj.journal === "string"
+    );
+  }
+
+  function filterProjectItems(arr: unknown[]): ProjectItem[] {
+    return arr.filter(isProjectItem);
+  }
+  function filterPatentItems(arr: unknown[]): PatentItem[] {
+    return arr.filter(isPatentItem);
+  }
+  function filterPublicationItems(arr: unknown[]): PublicationItem[] {
+    return arr.filter(isPublicationItem);
+  }
+
   return (
     <>
       <AppSidebar items={sidebarItems ?? []} />
@@ -132,9 +170,9 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
                   onImageChange={handleImageChange}
                 />
                 <TabSwitcher
-                  projects={Array.isArray(profile?.projects) ? (profile.projects as ProjectItem[]) : []}
-                  patents={Array.isArray(profile?.patents) ? (profile.patents as PatentItem[]) : []}
-                  publications={Array.isArray(profile?.publications) ? (profile.publications as PublicationItem[]) : []}
+                  projects={Array.isArray(profile?.projects) ? filterProjectItems(profile.projects) : []}
+                  patents={Array.isArray(profile?.patents) ? filterPatentItems(profile.patents) : []}
+                  publications={Array.isArray(profile?.publications) ? filterPublicationItems(profile.publications) : []}
                 />
               </>
             )}
