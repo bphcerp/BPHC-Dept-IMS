@@ -211,32 +211,53 @@ async function updateStudentProgress(filePath: string) {
                     `Upserted data for ${studentData.email} with status: ${currentStatus}`
                 );
 
-                if (
-                    qeStatus &&
-                    (String(qeStatus).toLowerCase() === "true" ||
-                        qeStatus === true)
-                ) {
+                // Check if student passed QE based on either column
+                const hasPassed =
+                    (qeStatus &&
+                        (String(qeStatus).toLowerCase() === "true" ||
+                            qeStatus === true)) ||
+                    studentData["qualification date if passed"];
+
+                if (hasPassed) {
                     const qeDateValue =
                         studentData["qualification date if passed"];
-                    if (qeDateValue) {
-                        let qualificationDate: Date | undefined;
-                        if (typeof qeDateValue === "number")
-                            qualificationDate = excelDateToJSDate(qeDateValue);
-                        else qualificationDate = new Date(qeDateValue);
+                    let qualificationDate: Date | undefined;
+                    let updateData: {
+                        hasPassedQe: boolean;
+                        qualificationDate?: Date;
+                    } = { hasPassedQe: true };
 
+                    if (qeDateValue) {
+                        if (typeof qeDateValue === "number") {
+                            qualificationDate = excelDateToJSDate(qeDateValue);
+                        } else {
+                            // Try parsing as ISO string or common date formats
+                            qualificationDate = new Date(qeDateValue);
+                        }
+
+                        // Check if the parsed date is valid
                         if (
                             qualificationDate &&
                             !isNaN(qualificationDate.getTime())
                         ) {
-                            await tx
-                                .update(phd)
-                                .set({
-                                    hasPassedQe: true,
-                                    qualificationDate: qualificationDate,
-                                })
-                                .where(eq(phd.email, studentData.email));
+                            updateData.qualificationDate = qualificationDate;
+                        } else {
+                            console.warn(
+                                `Student ${studentData.email}: Invalid or missing qualification date ('${qeDateValue}') despite being marked as passed. Only marking hasPassedQe.`
+                            );
                         }
+                    } else {
+                        // QE status might be true, but date is missing
+                        console.warn(
+                            `Student ${studentData.email}: Marked as passed QE but no qualification date provided in Excel. Only marking hasPassedQe.`
+                        );
                     }
+
+                    // Perform the update
+                    await tx
+                        .update(phd)
+                        .set(updateData)
+                        .where(eq(phd.email, studentData.email));
                 }
 
                 const latestSemester = await tx.query.phdSemesters.findFirst({
