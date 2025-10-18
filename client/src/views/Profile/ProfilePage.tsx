@@ -1,4 +1,3 @@
-import React from "react";
 import { AppSidebar, type SidebarMenuGroup } from "@/components/AppSidebar";
 import { ProfileHeader } from "./ProfileHeader";
 import TabSwitcher from "./TabSwitcher";
