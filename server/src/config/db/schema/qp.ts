@@ -7,7 +7,7 @@ import {
     boolean,
     pgEnum,
 } from "drizzle-orm/pg-core";
-import { fileFields } from "./form.ts";
+import { files } from "./form.ts";
 import { users } from "./admin.ts";
 import { jsonb } from "drizzle-orm/pg-core";
 import { qpSchemas } from "lib";
@@ -32,23 +32,23 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     courseName: text("course_name").notNull(),
     courseCode: text("course_code").notNull(),
     midSemQpFilePath: integer("midSem_qp_file_path").references(
-        () => fileFields.id,
+        () => files.id,
         {
             onDelete: "set null",
         }
     ),
     midSemSolFilePath: integer("midSem_sol_file_path").references(
-        () => fileFields.id,
+        () => files.id,
         {}
     ),
     compreQpFilePath: integer("compre_qp_file_path").references(
-        () => fileFields.id,
+        () => files.id,
         {
             onDelete: "set null",
         }
     ),
     compreSolFilePath: integer("compre_sol_file_path").references(
-        () => fileFields.id,
+        () => files.id,
         {
             onDelete: "set null",
         }
