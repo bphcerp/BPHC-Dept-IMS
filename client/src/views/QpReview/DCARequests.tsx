@@ -47,8 +47,13 @@ interface CreateRequestData {
   icEmail: string;
   courseName: string;
   courseCode: string;
-  requestType: "Mid Sem" | "Comprehensive" | "Both";
   category: "HD" | "FD";
+}
+
+interface CreateRequestResponse {
+  success: boolean;
+  created: number;
+  message?: string;
 }
 
 export const DCAConvenercourses: React.FC = () => {
@@ -74,7 +79,7 @@ export const DCAConvenercourses: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // ... (keep all existing mutations - updateICMutation, updateReviewerMutation, etc.)
+  // Update IC Mutation
   const updateICMutation = useMutation({
     mutationFn: async ({
       id,
@@ -103,6 +108,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+  // Update Reviewer Mutation
   const updateReviewerMutation = useMutation({
     mutationFn: async ({
       id,
@@ -135,6 +141,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+  // Bulk Update Reviewer Mutation
   const bulkUpdateReviewerMutation = useMutation({
     mutationFn: async ({
       ids,
@@ -169,31 +176,43 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+  // FIXED: Create Request Mutation - Now handles array of courses
   const createRequestMutation = useMutation({
-    mutationFn: async (data: CreateRequestData) => {
-      const response = await api.post<{ success: boolean }>(
+    mutationFn: async ({
+      courses,
+      requestType,
+    }: {
+      courses: CreateRequestData[];
+      requestType: "Mid Sem" | "Comprehensive" | "Both";
+    }) => {
+      const response = await api.post<CreateRequestResponse>(
         "/qp/createRequest",
         {
-          icEmail: data.icEmail,
-          courseName: data.courseName,
-          courseCode: data.courseCode,
-          requestType: data.requestType,
-          category: data.category,
+          courses,
+          requestType,
         }
       );
       return response.data;
     },
     onSuccess: async () => {
-      toast.success("Request created successfully");
+      toast.success(`Successfully created requests`);
       await queryClient.invalidateQueries({
         queryKey: ["*"],
       });
     },
-    onError: () => {
-      toast.error("Failed to create request");
+    onError: (error) => {
+      console.error("Create request error:", error);
+      if (isAxiosError(error) && error.response) {
+        const errorMessage =
+          error.response.data?.message || "Failed to create requests";
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to create requests. Please try again.");
+      }
     },
   });
 
+  // Send Reminders Mutation
   const sendRemindersMutation = useMutation({
     mutationFn: async (reminderData: {
       selectedCourseIds: string[];
@@ -226,6 +245,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+  // Fetch All Courses Query
   const {
     data: courses,
     isLoading,
@@ -246,6 +266,7 @@ export const DCAConvenercourses: React.FC = () => {
     },
   });
 
+  // Filter courses effect
   useEffect(() => {
     if (!courses) return;
 
@@ -289,7 +310,7 @@ export const DCAConvenercourses: React.FC = () => {
     courses,
   ]);
 
-  // ... (keep all existing handler functions)
+  // Handler: Pencil click for editing
   const handlePencilClick = (courseId: string, isReviewer: boolean) => {
     setCurrentcourseId(courseId);
     setIsBulkAssign(false);
@@ -300,6 +321,7 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+  // Handler: Assign IC
   const handleAssignIC = (email: string, sendEmail: boolean) => {
     if (!currentcourseId) {
       toast.error("No course selected");
@@ -315,6 +337,7 @@ export const DCAConvenercourses: React.FC = () => {
     setIsICDialogOpen(false);
   };
 
+  // Handler: Assign Reviewer
   const handleAssignReviewer = (email: string, sendEmail: boolean) => {
     if (isBulkAssign) {
       if (selectedcourses.length === 0) {
@@ -343,10 +366,40 @@ export const DCAConvenercourses: React.FC = () => {
     setIsReviewerDialogOpen(false);
   };
 
-  const handleCreateRequest = (data: CreateRequestData) => {
-    createRequestMutation.mutate(data);
+  // FIXED: Handler: Create Request - Now handles array properly
+  const handleCreateRequest = (
+    coursesData: CreateRequestData[],
+    requestType: string
+  ) => {
+    console.log("handleCreateRequest called with:", {
+      coursesCount: coursesData.length,
+      requestType,
+    });
+
+    // Validate data
+    if (!coursesData || coursesData.length === 0) {
+      toast.error("No course data provided");
+      return;
+    }
+
+    // Validate request type
+    if (
+      requestType !== "Mid Sem" &&
+      requestType !== "Comprehensive" &&
+      requestType !== "Both"
+    ) {
+      toast.error("Invalid request type");
+      return;
+    }
+
+    // Call mutation with proper structure
+    createRequestMutation.mutate({
+      courses: coursesData,
+      requestType: requestType as "Mid Sem" | "Comprehensive" | "Both",
+    });
   };
 
+  // Handler: Send Reminders
   const handleSendReminders = () => {
     const selectedCoursesData = filteredCourses.filter((course) =>
       selectedcourses.includes(course.id)
@@ -380,7 +433,7 @@ export const DCAConvenercourses: React.FC = () => {
     sendRemindersMutation.mutate(reminderData);
   };
 
-  // UPDATED: Enhanced download function for ZIP/PDF handling
+  // Handler: Download Reviews
   const handleDownloadReviews = async () => {
     const selectedCoursesData = filteredCourses.filter((course) =>
       selectedcourses.includes(course.id)
@@ -517,6 +570,7 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+  // Handler: Select course
   const handleSelectcourse = (courseId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedcourses((prev) => [...prev, courseId]);
@@ -525,6 +579,7 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+  // Handler: Select all courses
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
       const allIds = filteredCourses.map((course) => course.id);
@@ -534,6 +589,7 @@ export const DCAConvenercourses: React.FC = () => {
     }
   };
 
+  // Handler: Bulk assign reviewer
   const handleBulkAssignReviewer = () => {
     if (selectedcourses.length === 0) {
       toast.error("No courses selected");
@@ -616,22 +672,18 @@ export const DCAConvenercourses: React.FC = () => {
                     trigger={
                       <Button
                         className="flex items-center gap-2"
-                        disabled={sendRemindersMutation.isLoading}
                       >
                         <Mail className="h-4 w-4" />
-                        {sendRemindersMutation.isLoading
-                          ? `Sending... (${selectedcourses.length})`
-                          : `Send Reminders (${selectedcourses.length})`}
+                        {`Send Reminders (${selectedcourses.length})`}
                       </Button>
                     }
                     onConfirm={handleSendReminders}
                     recipientCount={recipientCount}
                     disabled={
-                      recipientCount === 0 || sendRemindersMutation.isLoading
+                      recipientCount === 0 
                     }
                   />
 
-                  {/* UPDATED: Enhanced download button */}
                   <Button
                     onClick={() => void handleDownloadReviews()}
                     className="flex items-center gap-2"
@@ -832,7 +884,6 @@ export const DCAConvenercourses: React.FC = () => {
         isOpen={isCreateRequestDialogOpen}
         setIsOpen={setIsCreateRequestDialogOpen}
         onSubmit={handleCreateRequest}
-        isLoading={createRequestMutation.isLoading}
       />
     </div>
   );
