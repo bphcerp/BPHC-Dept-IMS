@@ -216,7 +216,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       />
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Select Internal DAC Members (from BITS)</Label>
+          <Label>Select Internal DAC Members (from your department)</Label>
           <Combobox
             options={facultyList}
             selectedValues={selectedDac
@@ -230,7 +230,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="external-dac-name">Add External DAC Member</Label>
+          <Label htmlFor="external-dac-name">Add External DAC Member (from other department) </Label>
           <div className="flex gap-2">
             <Input
               id="external-dac-name"

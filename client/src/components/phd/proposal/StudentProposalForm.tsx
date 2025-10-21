@@ -335,7 +335,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       <div className="space-y-4 rounded-md border p-4">
         <Label className="font-semibold">Co-Supervisors</Label>
         <div className="space-y-2">
-          <Label>Internal Co-Supervisors (from BITS)</Label>
+          <Label>Internal Co-Supervisors (from your department)</Label>
           <Combobox
             options={facultyList}
             selectedValues={internalCoSupervisors}
@@ -369,7 +369,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           )}
         </div>
         <div className="space-y-2">
-          <Label>External Co-Supervisors</Label>
+          <Label>External Co-Supervisors (from other deparment)</Label>
           <div className="flex gap-2">
             <Input
               placeholder="Name"
