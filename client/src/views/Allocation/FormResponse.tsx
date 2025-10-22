@@ -91,7 +91,7 @@ const FormResponse = ({
               "Something went wrong"
           );
           console.error("Error fetching form details:", error);
-          navigate("/allocation");
+          navigate("/");
         });
     };
 
