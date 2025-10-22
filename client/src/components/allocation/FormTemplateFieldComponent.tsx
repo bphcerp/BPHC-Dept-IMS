@@ -123,6 +123,7 @@ export const FormTemplateFieldComponent = ({
                     <Label>
                       Preference {i + 1} (
                       {formatPreferenceType(field.preferenceType)})
+                      { (i < field.noOfRequiredPreferences!) && <span className="text-red-500 text-lg">*</span> }
                     </Label>
                     {form ? (
                       <>
@@ -130,7 +131,7 @@ export const FormTemplateFieldComponent = ({
                           name={`${field.id}_preference_${i}`}
                           control={form.control}
                           rules={{
-                            required: "Please select a course",
+                            required: (!!field.noOfRequiredPreferences && i < field.noOfRequiredPreferences) ? "Please select a course" : false,
                           }}
                           render={({ field: controllerField }) => (
                             <Select

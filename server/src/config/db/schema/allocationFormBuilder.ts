@@ -102,6 +102,7 @@ export const allocationFormTemplateField = pgTable(
         }),
         viewableByRoleId: integer("viewable_by_role_id").references(() => roles.id, {
             onDelete: "set null",
-        })
+        }),
+        noOfRequiredPreferences: integer("no_of_required_preferences"),
     }
 );

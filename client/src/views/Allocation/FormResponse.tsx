@@ -150,10 +150,12 @@ const FormResponse = ({
 
   if (
     !preview &&
-    form &&
-    form.allocationDeadline &&
-    currentSemester &&
-    currentSemester.allocationStatus !== "formCollection"
+    ((!!id && form && form.allocationDeadline && (new Date(form.allocationDeadline)) < new Date()) ||
+      (latest &&
+        form &&
+        form.allocationDeadline &&
+        currentSemester &&
+        currentSemester.allocationStatus !== "formCollection"))
   )
     return (
       <div className="mx-auto flex max-w-4xl items-center justify-center py-10">
