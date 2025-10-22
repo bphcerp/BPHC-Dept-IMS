@@ -18,8 +18,6 @@ import {
 } from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios-instance";
 import { Skeleton } from "../ui/skeleton";
 import { Role } from "../admin/RoleList";
 
@@ -38,11 +36,6 @@ const formatPreferenceType = (
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
-const fetchCourses = async () => {
-  const response = await api.get<Course[]>("/allocation/course/get");
-  return response.data;
-};
-
 export const FormTemplateFieldComponent = ({
   field,
   create,
@@ -56,11 +49,11 @@ export const FormTemplateFieldComponent = ({
   preview?: boolean;
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
-  const { data: allCourses } = useQuery(["courses"], fetchCourses);
-
   const filteredCourses = field.groupId
-    ? allCourses?.filter((course: Course) => course.groupId === field.groupId)
-    : allCourses;
+    ? courses?.filter((course: Course) =>
+        course.groups?.some((group) => group.id, field.groupId)
+      )
+    : courses;
 
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 

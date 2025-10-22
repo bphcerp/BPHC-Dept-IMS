@@ -13,9 +13,20 @@ router.get(
             where: (course, { eq }) =>
                 unmarked ? undefined : eq(course.markedForAllocation, true),
             orderBy: (course, { asc }) => [asc(course.code)],
+            with: {
+                groups: {
+                    columns: {},
+                    with: {
+                        group: true
+                    }
+                }
+            }
         });
 
-        res.status(200).json(result);
+        res.status(200).json(result.map((course) => ({
+            ...course,
+            groups: course.groups.map((group) => group.group)
+        })));
     })
 );
 

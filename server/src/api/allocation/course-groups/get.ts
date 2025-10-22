@@ -11,11 +11,27 @@ router.get(
         const groups = await db.query.allocationCourseGroup.findMany({
             with: {
                 courses: courses
-                    ? { columns: { name: true, code: true } }
+                    ? {
+                          columns: {},
+                          with: {
+                              course: true,
+                          },
+                      }
                     : undefined,
             },
         });
-        res.json(groups);
+
+        if (!courses) {
+            res.json(groups);
+            return;
+        }
+
+        res.json(
+            groups.map((group) => ({
+                ...group,
+                courses: (group.courses as Extract<typeof group.courses[number], { course: any }>[]).map((courseMap) => courseMap.course),
+            }))
+        );
     })
 );
 

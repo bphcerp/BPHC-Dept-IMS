@@ -1,11 +1,11 @@
 import db from "@/config/db/index.ts";
 import {
     allocationCourseGroup,
-    course,
+    allocationCourseGroupMapping,
 } from "@/config/db/schema/allocation.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { inArray, eq } from "drizzle-orm";
+import { inArray, eq, and } from "drizzle-orm";
 import { Router } from "express";
 import { courseGroupCourseAddSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
@@ -37,16 +37,30 @@ router.post(
             );
         }
 
-        await db
-            .update(course)
-            .set({ groupId })
-            .where(inArray(course.code, courseCodes));
+        const insertValues = courseCodes.map((code) => ({
+            groupId,
+            courseCode: code,
+        }));
 
-        if (removedCourseCodes && removedCourseCodes.length > 0) {
+        if (courseCodes && courseCodes.length) {
             await db
-                .update(course)
-                .set({ groupId: null })
-                .where(inArray(course.code, removedCourseCodes));
+                .insert(allocationCourseGroupMapping)
+                .values(insertValues)
+                .onConflictDoNothing();
+        }
+
+        if (removedCourseCodes && removedCourseCodes.length) {
+            await db
+                .delete(allocationCourseGroupMapping)
+                .where(
+                    and(
+                        eq(allocationCourseGroupMapping.groupId, groupId),
+                        inArray(
+                            allocationCourseGroupMapping.courseCode,
+                            removedCourseCodes
+                        )
+                    )
+                );
         }
 
         res.send("Courses added to group successfully");

@@ -40,7 +40,7 @@ export type Course = NewCourse & {
     fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
-    groupId? : string | null
+    groups? : Omit<CourseGroup, 'courses'>[] | null
 };
 
 export type SemesterAllocationStatusEnumType =
