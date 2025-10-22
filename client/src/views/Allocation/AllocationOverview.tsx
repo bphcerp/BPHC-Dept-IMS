@@ -304,11 +304,6 @@ Hyderabad Campus<span>
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
                                 className="w-52"
-                                min={new Date(
-                                  Date.now() + 7 * 24 * 60 * 60 * 1000
-                                )
-                                  .toISOString()
-                                  .slice(0, 16)}
                                 onChange={(e) => {
                                   field.handleChange(e.target.value);
                                   setEmailPreviewed(false);
