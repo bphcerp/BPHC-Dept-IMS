@@ -51,7 +51,7 @@ export const FormTemplateFieldComponent = ({
 }) => {
   const filteredCourses = field.groupId
     ? courses?.filter((course: Course) =>
-        course.groups?.some((group) => group.id, field.groupId)
+        course.groups?.some((group) => group.id === field.groupId)
       )
     : courses;
 
@@ -174,7 +174,7 @@ export const FormTemplateFieldComponent = ({
                     ) : (
                       <Select
                         value={
-                          courses.find(
+                          filteredCourses.find(
                             (c) => c.code === field.preferences?.[i]?.courseCode
                           )?.code || ""
                         }

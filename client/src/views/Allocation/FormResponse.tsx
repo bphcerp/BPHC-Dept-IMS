@@ -86,9 +86,12 @@ const FormResponse = ({
           }
         })
         .catch((error) => {
-          toast.error(((error as AxiosError).response?.data as string) ?? "Something went wrong")
+          toast.error(
+            ((error as AxiosError).response?.data as string) ??
+              "Something went wrong"
+          );
           console.error("Error fetching form details:", error);
-          navigate('/allocation')
+          navigate("/allocation");
         });
     };
 
@@ -146,8 +149,10 @@ const FormResponse = ({
   };
 
   if (
+    !preview &&
     form &&
-    form.allocationDeadline && currentSemester &&
+    form.allocationDeadline &&
+    currentSemester &&
     currentSemester.allocationStatus !== "formCollection"
   )
     return (
