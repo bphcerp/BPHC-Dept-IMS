@@ -1,25 +1,25 @@
+// server/scripts/sendProposalReminders.ts
 import db from "@/config/db/index.ts";
 import logger from "@/config/logger.ts";
 import { phdProposals, phdProposalSemesters } from "@/config/db/schema/phd.ts";
-import { todos } from "@/config/db/schema/todos.ts";
+// REMOVED: import { todos } from "@/config/db/schema/todos.ts"; // No longer needed for reviewer logic
 import { and, gte, inArray, or, sql, eq } from "drizzle-orm";
-// FIX: Removed unused 'getUsersWithPermission' import
 import { sendBulkEmails } from "@/lib/common/email.ts";
-import { modules } from "lib";
 import environment from "@/config/environment.ts";
+import { getUsersWithPermission } from "@/lib/common/index.ts"; // Needed for DRC role
 
 const REMINDER_DAYS = [1, 2, 5];
 
 /**
- * Calculates the target dates for sending reminders.
+ * Calculates the target dates for sending reminders (T+1, T+2, T+5).
  * @param now The current date.
- * @returns An array of Date objects for T-1, T-2, and T-5 days.
+ * @returns An array of Date objects normalized to the start of the day.
  */
 function getReminderTargetDates(now: Date): Date[] {
     return REMINDER_DAYS.map((days) => {
         const targetDate = new Date(now);
         targetDate.setDate(targetDate.getDate() + days);
-        targetDate.setHours(0, 0, 0, 0); // Normalize to the beginning of the day for comparison
+        targetDate.setHours(0, 0, 0, 0); // Normalize to the beginning of the day
         return targetDate;
     });
 }
@@ -56,60 +56,72 @@ async function handleStudentReminders(
     const emailsToSend = studentEmails.map((email) => ({
         to: email,
         subject: "Reminder: PhD Proposal Submission Deadline Approaching",
-        text: `This is a reminder that your PhD proposal is due on ${deadline}. Please ensure you submit it on the portal before the deadline.`,
+        text: `This is a reminder that your PhD proposal is due on ${deadline}. Please ensure you submit it on the portal before the deadline. Link: ${environment.FRONTEND_URL}/phd/phd-student/proposals`,
     }));
 
-    await sendBulkEmails(emailsToSend);
-    logger.info(`Sent ${emailsToSend.length} reminder emails to students.`);
+    try {
+        await sendBulkEmails(emailsToSend);
+        logger.info(`Sent ${emailsToSend.length} reminder emails to students.`);
+    } catch (error) {
+        logger.error(
+            `Failed to send student reminder emails for semester ${semester.id}:`,
+            error
+        );
+    }
 }
 
 type ReviewerRole = "supervisor" | "drc" | "dac";
 
 /**
- * Finds pending proposal reviews for Supervisors, DRC, or DAC members and sends a batched reminder email.
+ * Finds pending proposal reviews for Supervisors, DRC, or DAC members
+ * based *directly* on proposal status and assignments, and sends reminders.
  */
 async function handleReviewerReminders(
     semester: typeof phdProposalSemesters.$inferSelect,
     role: ReviewerRole
 ) {
     let reviewStatus: (typeof phdProposals.$inferSelect)["status"];
-    let completionEventPrefix: string;
     let deadline: Date;
+    let linkPath: string; // Base path for the link in the email
 
-    // FIX: Removed unused 'permission' variable declaration
     switch (role) {
         case "supervisor":
             reviewStatus = "supervisor_review";
-            completionEventPrefix = `proposal:supervisor-review:`;
             deadline = semester.facultyReviewDate;
+            linkPath = "/phd/supervisor/proposal/"; // Append proposal ID later
             break;
         case "drc":
             reviewStatus = "drc_review";
-            completionEventPrefix = `proposal:drc-review:`;
             deadline = semester.drcReviewDate;
+            linkPath = "/phd/drc-convenor/proposal-management/"; // Append proposal ID later
             break;
         case "dac":
             reviewStatus = "dac_review";
-            completionEventPrefix = `proposal:dac-review:`;
             deadline = semester.dacReviewDate;
+            linkPath = "/phd/dac/proposals/"; // Append proposal ID later
             break;
     }
 
     const deadlineStr = new Date(deadline).toLocaleDateString();
     logger.info(`Processing ${role} reminders for deadline: ${deadlineStr}`);
 
-    // 1. Get all proposals that are in the correct review status for this semester
+    // 1. Get proposals in the correct review status for this semester
     const proposalsForReview = await db.query.phdProposals.findMany({
         where: and(
             eq(phdProposals.proposalSemesterId, semester.id),
             eq(phdProposals.status, reviewStatus)
         ),
         with: {
-            // FIX: Added 'student' relation to solve the property access error
             student: { columns: { name: true } },
-            // FIX: Removed conditional 'when' to solve the Drizzle type error.
-            // It's safe to always include this as it will only be populated for relevant proposals.
-            dacMembers: { columns: { dacMemberEmail: true } },
+            // Include dacMembers relation only if needed
+            ...(role === "dac" && {
+                dacMembers: { columns: { dacMemberEmail: true } },
+            }),
+        },
+        // ⭐ Always include supervisorEmail in the main columns ⭐
+        columns: {
+            id: true,
+            supervisorEmail: true, // Now always selected
         },
     });
 
@@ -120,59 +132,84 @@ async function handleReviewerReminders(
         return;
     }
 
-    // 2. Find all pending todos related to these proposals for the specific role
-    const proposalIds = proposalsForReview.map((p) => p.id);
-    const pendingTodos = await db.query.todos.findMany({
-        where: and(
-            eq(todos.module, modules[3]), // PhD Proposal module
-            inArray(
-                todos.completionEvent,
-                proposalIds.map((id) => `${completionEventPrefix}${id}`)
-            )
-        ),
-    });
-
-    if (pendingTodos.length === 0) {
-        logger.info(
-            `All ${role} todos seem to be completed for this deadline.`
-        );
-        return;
-    }
-
-    // 3. Group pending tasks by the assigned reviewer's email
+    // 2. Group proposals by the reviewer who needs to be reminded
     const tasksByReviewer = new Map<
         string,
         { studentName: string; proposalId: number }[]
     >();
+    let drcConveners: { email: string }[] | null = null;
 
-    for (const todo of pendingTodos) {
-        const proposal = proposalsForReview.find(
-            (p) => todo.completionEvent === `${completionEventPrefix}${p.id}`
-        );
-        if (proposal) {
-            // This is now safe because 'student' is included in the query
-            const studentName = proposal.student.name || "A student";
-            if (!tasksByReviewer.has(todo.assignedTo)) {
-                tasksByReviewer.set(todo.assignedTo, []);
+    for (const proposal of proposalsForReview) {
+        const studentName = proposal.student.name || "A student";
+        let reviewersToNotify: string[] = [];
+
+        switch (role) {
+            case "supervisor":
+                // ⭐ Access is now safe ⭐
+                if (proposal.supervisorEmail) {
+                    reviewersToNotify.push(proposal.supervisorEmail);
+                } else {
+                    logger.warn(
+                        `Proposal ${proposal.id} is in supervisor_review but has no supervisorEmail.`
+                    );
+                }
+                break;
+            case "drc":
+                if (drcConveners === null) {
+                    drcConveners =
+                        await getUsersWithPermission("phd:drc:proposal");
+                    if (drcConveners.length === 0) {
+                        logger.warn(
+                            "DRC reminders needed, but no users found with 'phd:drc:proposal' permission."
+                        );
+                    }
+                }
+                reviewersToNotify = drcConveners?.map((drc) => drc.email) ?? []; // Handle case where drcConvenors might be empty
+                break;
+            case "dac":
+                // Type assertion needed here because it's conditionally included
+                const dacProposal = proposal as typeof proposal & {
+                    dacMembers?: { dacMemberEmail: string }[];
+                };
+                if (
+                    dacProposal.dacMembers &&
+                    dacProposal.dacMembers.length > 0
+                ) {
+                    reviewersToNotify = dacProposal.dacMembers.map(
+                        (m) => m.dacMemberEmail
+                    );
+                } else {
+                    logger.warn(
+                        `Proposal ${proposal.id} is in dac_review but has no DAC members assigned.`
+                    );
+                }
+                break;
+        }
+
+        for (const reviewerEmail of reviewersToNotify) {
+            if (!tasksByReviewer.has(reviewerEmail)) {
+                tasksByReviewer.set(reviewerEmail, []);
             }
             tasksByReviewer
-                .get(todo.assignedTo)!
+                .get(reviewerEmail)!
                 .push({ studentName, proposalId: proposal.id });
         }
     }
 
     if (tasksByReviewer.size === 0) {
-        logger.info(`No pending tasks to remind for ${role}.`);
+        logger.info(
+            `No reviewers found needing reminders for ${role} on deadline ${deadlineStr}.`
+        );
         return;
     }
 
-    // 4. Construct and send bulk emails
+    // 3. Construct and send bulk emails
     const emailsToSend = Array.from(tasksByReviewer.entries()).map(
         ([reviewerEmail, tasks]) => {
             const taskList = tasks
                 .map(
                     (task) =>
-                        `- ${task.studentName} (View at: ${environment.FRONTEND_URL}/phd/supervisor/proposal/${task.proposalId})`
+                        `- ${task.studentName} (View at: ${environment.FRONTEND_URL}${linkPath}${task.proposalId})`
                 )
                 .join("\n");
 
@@ -183,8 +220,17 @@ async function handleReviewerReminders(
         }
     );
 
-    await sendBulkEmails(emailsToSend);
-    logger.info(`Sent ${emailsToSend.length} reminder emails to ${role}s.`);
+    try {
+        await sendBulkEmails(emailsToSend);
+        logger.info(
+            `Sent ${emailsToSend.length} reminder emails to ${role}s for deadline ${deadlineStr}.`
+        );
+    } catch (error) {
+        logger.error(
+            `Failed to send ${role} reminder emails for deadline ${deadlineStr}:`,
+            error
+        );
+    }
 }
 
 /**
@@ -197,32 +243,51 @@ async function sendProposalReminders() {
     today.setHours(0, 0, 0, 0);
 
     const reminderDates = getReminderTargetDates(now);
-    const reminderDatesSQL = reminderDates.map(
-        (d) => d.toISOString().split("T")[0]
-    );
+    // Use Date objects for comparison, avoid string conversion issues
+    // const reminderDatesSQL = reminderDates.map((d) => d.toISOString().split("T")[0]);
 
-    // Find semesters with deadlines approaching in 1, 2, or 5 days
+    // Find semesters with deadlines approaching
     const upcomingSemesters = await db
         .select()
         .from(phdProposalSemesters)
         .where(
             and(
+                // Check if any deadline falls exactly on one of the target dates (T+1, T+2, T+5)
                 or(
-                    sql`DATE(${phdProposalSemesters.studentSubmissionDate}) IN ${reminderDatesSQL}`,
-                    sql`DATE(${phdProposalSemesters.facultyReviewDate}) IN ${reminderDatesSQL}`,
-                    sql`DATE(${phdProposalSemesters.drcReviewDate}) IN ${reminderDatesSQL}`,
-                    sql`DATE(${phdProposalSemesters.dacReviewDate}) IN ${reminderDatesSQL}`
+                    inArray(
+                        sql`DATE(${phdProposalSemesters.studentSubmissionDate})`,
+                        reminderDates
+                    ),
+                    inArray(
+                        sql`DATE(${phdProposalSemesters.facultyReviewDate})`,
+                        reminderDates
+                    ),
+                    inArray(
+                        sql`DATE(${phdProposalSemesters.drcReviewDate})`,
+                        reminderDates
+                    ),
+                    inArray(
+                        sql`DATE(${phdProposalSemesters.dacReviewDate})`,
+                        reminderDates
+                    )
                 ),
-                gte(phdProposalSemesters.dacReviewDate, today) // Ensure the cycle is still active
+                gte(phdProposalSemesters.dacReviewDate, today) // Ensure the overall cycle is still active/relevant
             )
         );
 
     if (upcomingSemesters.length === 0) {
-        logger.info("No upcoming proposal deadlines to send reminders for.");
+        logger.info(
+            "No upcoming proposal deadlines match reminder schedule (T+1, T+2, T+5 days)."
+        );
         return;
     }
 
+    logger.info(
+        `Found ${upcomingSemesters.length} semester cycles with upcoming deadlines matching reminder schedule.`
+    );
+
     for (const semester of upcomingSemesters) {
+        // Helper to check if a specific date matches one of the target reminder dates
         const checkDate = (date: Date) =>
             reminderDates.some(
                 (rd) => new Date(date).setHours(0, 0, 0, 0) === rd.getTime()
@@ -241,12 +306,19 @@ async function sendProposalReminders() {
             await handleReviewerReminders(semester, "dac");
         }
     }
+    logger.info("Finished processing reminders for upcoming deadlines.");
 }
 
+// --- Script Execution ---
 sendProposalReminders()
     .catch((e) => {
-        logger.error("Error in sendProposalReminders job:", e);
+        logger.error("Unhandled Error in sendProposalReminders job:", e);
+        process.exitCode = 1; // Indicate failure
     })
-    .finally(() => {
-        process.exit(0);
+    .finally(async () => {
+        // Optional: Add a small delay if needed for logs to flush, though usually not necessary
+        // await new Promise(resolve => setTimeout(resolve, 1000));
+        logger.info("Exiting sendProposalReminders script.");
+        // process.exit() can sometimes cut off logging, prefer setting exitCode
+        // process.exit(process.exitCode ?? 0);
     });
