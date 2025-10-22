@@ -22,7 +22,9 @@ router.get(
             where: (cols, { eq }) => eq(cols.id, proposalId),
             with: {
                 student: true,
-                supervisor: true,
+                supervisor: {
+                    columns: { name: true, email: true },
+                },
                 coSupervisors: {
                     with: {
                         coSupervisor: true,
@@ -84,6 +86,7 @@ router.get(
                     ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
                     : null,
             currentUserReview,
+            supervisor: proposal.supervisor,
         };
         res.status(200).json(response);
     })

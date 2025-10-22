@@ -112,9 +112,10 @@ const DacViewProposal: React.FC = () => {
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
             Submitted by: {proposal.student.name} ({proposal.student.email})
-            <br />
-            Supervisor: {proposal.supervisor.name} ({proposal.supervisor.email})
-            <br />
+            <p>
+              Supervisor: {proposal.supervisor?.name ?? "N/A"} (
+              {proposal.supervisor?.email ?? "N/A"})
+            </p>
             Status:{" "}
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}

@@ -16,7 +16,6 @@ router.get(
             where: (cols, { eq }) => eq(cols.id, proposalId),
             with: {
                 student: true,
-                supervisor: true,
                 coSupervisors: { with: { coSupervisor: true } },
                 dacMembers: { with: { dacMember: true } },
                 dacReviews: {
@@ -33,6 +32,9 @@ router.get(
                 outsideCoSupervisorFormatFile: true,
                 outsideSupervisorBiodataFile: true,
                 proposalSemester: true,
+                supervisor: {
+                    columns: { name: true, email: true },
+                },
             },
         });
         if (!proposal)
@@ -53,6 +55,7 @@ router.get(
                 proposal.outsideSupervisorBiodataFileId
                     ? `${environment.SERVER_URL}/f/${proposal.outsideSupervisorBiodataFileId}`
                     : null,
+            supervisor: proposal.supervisor,
         };
         res.status(200).json(response);
     })
