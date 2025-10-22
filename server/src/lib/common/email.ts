@@ -55,7 +55,7 @@ if (!environment.PROD) {
     })();
 }
 
-const emailWorker = new Worker<SendMailOptions>(
+export const emailWorker = new Worker<SendMailOptions>(
     QUEUE_NAME,
     async (job) => {
         if (!environment.PROD) {
