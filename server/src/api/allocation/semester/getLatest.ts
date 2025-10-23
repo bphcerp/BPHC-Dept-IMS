@@ -122,6 +122,10 @@ router.get(
                             }
                         }
                         return response;
+                    })
+                    .sort((a, b) => {
+                        if (a.submittedBy.type === b.submittedBy.type) return 0;
+                        return a.submittedBy.type === "faculty" ? -1 : 1;
                     });
 
                 if (stats) {
@@ -146,6 +150,7 @@ router.get(
                                 },
                                 staff: { columns: { name: true } },
                             },
+                            orderBy: (users, { asc }) => asc(users.type),
                         })
                     )
                         .filter((nr) =>
@@ -163,10 +168,6 @@ router.get(
                                       : user.type === "staff"
                                         ? user.staff?.name || user.name
                                         : user.name,
-                            type:
-                                user.type === "phd"
-                                    ? "phd full time"
-                                    : user.type,
                         }));
 
                     const semesterDataWithStats = {
