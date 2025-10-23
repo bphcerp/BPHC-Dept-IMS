@@ -28,7 +28,7 @@ const emailQueue = new Queue(QUEUE_NAME, {
             count: 1000,
         },
         removeOnFail: {
-            age: 24 * 3600,
+            age: 24 * 3600 * 30,
             count: 5000,
         },
     },
