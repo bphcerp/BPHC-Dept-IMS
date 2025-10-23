@@ -241,8 +241,8 @@ const AllocationModern = () => {
   }
 
   if (
-    currentSemester.form.allocationDeadline &&
-    new Date(currentSemester.form.allocationDeadline) > new Date()
+    currentSemester.form.formDeadline &&
+    new Date(currentSemester.form.formDeadline) > new Date()
   ) {
     return (
       <div className="flex h-96 items-center justify-center">

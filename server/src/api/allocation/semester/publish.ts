@@ -21,7 +21,7 @@ router.post(
     asyncHandler(async (req, res) => {
         assert(req.user);
         const { id } = req.params;
-        const { allocationDeadline, emailBody, isPublishedToRoleId } =
+        const { formDeadline, emailBody, isPublishedToRoleId } =
             allocationFormPublishSchema.parse(req.body);
 
         const semesterUpdated = await db.transaction(async (tx) => {
@@ -35,7 +35,7 @@ router.post(
                 .update(allocationForm)
                 .set({
                     publishedDate: new Date(),
-                    allocationDeadline,
+                    formDeadline,
                     isPublishedToRoleId,
                 })
                 .where(eq(allocationForm.id, semesterUpdated[0].formId!));
@@ -65,7 +65,7 @@ router.post(
                 assignedTo: el,
                 link: `/allocation/submit`,
                 completionEvent: `preference submission by ${el}`,
-                deadline: allocationDeadline,
+                deadline: formDeadline,
                 createdBy: req.user!.email,
             })
         );

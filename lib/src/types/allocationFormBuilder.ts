@@ -91,7 +91,7 @@ export type AllocationForm = NewAllocationForm & {
 	id: string;
 	template: AllocationFormTemplate;
 	publishedDate: Date | null
-	allocationDeadline: Date | null
+	formDeadline: Date | null
 	createdAt: Date;
 	updatedAt: Date;
 	createdBy: Pick<MemberDetailsResponse, 'name' | 'email'>

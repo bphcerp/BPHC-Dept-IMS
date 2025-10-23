@@ -514,10 +514,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/delete": "allocation:builder:template:write",
     "/allocation/builder/template/get": "allocation:builder:template:view",
     "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
+    "/allocation/builder/form/delete": "allocation:builder:form:write",
     "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":

@@ -131,16 +131,16 @@ export const AllocationOverview = () => {
 
   const publishFormMutation = useMutation({
     mutationFn: ({
-      allocationDeadline,
+      formDeadline,
       emailBody,
       isPublishedToRoleId,
     }: {
-      allocationDeadline: string;
+      formDeadline: string;
       emailBody: string;
       isPublishedToRoleId: string;
     }) =>
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
-        allocationDeadline,
+        formDeadline,
         emailBody,
         isPublishedToRoleId,
       }),
@@ -174,13 +174,13 @@ export const AllocationOverview = () => {
     reset: resetPublishForm,
   } = useForm({
     defaultValues: {
-      allocationDeadline: "",
+      formDeadline: "",
       emailBody: "",
       isPublishedToRoleId: "",
     },
     onSubmit: ({ value }) => {
       if (
-        value.allocationDeadline &&
+        value.formDeadline &&
         latestSemester?.form?.id &&
         value.isPublishedToRoleId
       ) {
@@ -189,13 +189,13 @@ export const AllocationOverview = () => {
     },
   });
 
-  const getEmailBody = (allocationDeadline: string) => `Dear Professor/Mr./Ms.,
+  const getEmailBody = (formDeadline: string) => `Dear Professor/Mr./Ms.,
 
 Please fill your course options for the ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}. Ignore this email if you have already filled your preferences.
 
 You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(allocationDeadline).toLocaleString(
+**PLEASE FILL THE FORM BEFORE ${new Date(formDeadline).toLocaleString(
     "en-IN",
     {
       timeZoneName: "short",
@@ -211,10 +211,10 @@ Hyderabad Campus<span>
 `;
 
   const calculateTimeLeft = useCallback(() => {
-    if (!latestSemester?.form?.allocationDeadline) return;
+    if (!latestSemester?.form?.formDeadline) return;
 
     const now = new Date().getTime();
-    const end = new Date(latestSemester.form.allocationDeadline).getTime();
+    const end = new Date(latestSemester.form.formDeadline).getTime();
     const distance = end - now;
 
     if (distance <= 0) return "00:00:00";
@@ -292,7 +292,7 @@ Hyderabad Campus<span>
                       }}
                     >
                       <div className="grid grid-rows-2 gap-4">
-                        <PublishFormField name="allocationDeadline">
+                        <PublishFormField name="formDeadline">
                           {(field) => (
                             <div className="flex items-center justify-between space-x-3">
                               <Label htmlFor={field.name}>
@@ -404,13 +404,13 @@ Hyderabad Campus<span>
                     <DialogFooter>
                       <PublishFormSubscribe
                         selector={(state) => [
-                          state.values.allocationDeadline,
+                          state.values.formDeadline,
                           state.values.isPublishedToRoleId,
                           state.isValid,
                         ]}
                       >
                         {([
-                          allocationDeadline,
+                          formDeadline,
                           isPublishedToRoleId,
                           isValid,
                         ]) => (
@@ -420,7 +420,7 @@ Hyderabad Campus<span>
                               variant="outline"
                               disabled={
                                 !isValid ||
-                                !allocationDeadline ||
+                                !formDeadline ||
                                 !isPublishedToRoleId ||
                                 publishFormMutation.isLoading
                               }
@@ -435,7 +435,7 @@ Hyderabad Campus<span>
                               form="publish-form"
                               disabled={
                                 !isValid ||
-                                !allocationDeadline ||
+                                !formDeadline ||
                                 !isPublishedToRoleId ||
                                 !emailFormState.values.emailBody ||
                                 publishFormMutation.isLoading ||
@@ -725,9 +725,9 @@ Hyderabad Campus<span>
           <div>
             <span>Allocation Form Deadline:</span>{" "}
             <span>
-              {latestSemester.form?.allocationDeadline ? (
+              {latestSemester.form?.formDeadline ? (
                 new Date(
-                  latestSemester.form?.allocationDeadline
+                  latestSemester.form?.formDeadline
                 ).toLocaleString("en-IN")
               ) : (
                 <span className="text-secondary">Not Set</span>

@@ -52,14 +52,6 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorKey: "allocationDeadline",
-    header: "Allocation Deadline",
-    meta: {
-      filterType: "date-range",
-    },
-  },
-
-  {
     accessorKey: "startDate",
     header: "Start Date",
     cell: ({ getValue }) => new Date(getValue() as string).toLocaleDateString('en-IN'),

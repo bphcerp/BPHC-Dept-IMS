@@ -12,7 +12,8 @@ router.get(
     checkAccess("allocation:form:response:submit"),
     asyncHandler(async (req, res, next) => {
         let { id } = req.params;
-        const { checkUserResponse, isPreview } = allocationFormGetQuerySchema.parse(req.query);
+        const { checkUserResponse, isPreview } =
+            allocationFormGetQuerySchema.parse(req.query);
 
         if (id === "latest") {
             const latestSem = await getLatestSemesterMinimal();
@@ -77,16 +78,14 @@ router.get(
         }))!;
 
         const userPermsSet = new Set(req.user?.permissions.allowed);
+        const hasPreviewPerms =
+            isPreview &&
+            (userPermsSet.has("*") ||
+                userPermsSet.has("allocation:form:response:view") ||
+                userPermsSet.has("allocation:write"));
 
         form.template.fields = form.template.fields.filter((field) => {
-            if (
-                !field.viewableByRoleId ||
-                (isPreview &&
-                    (userPermsSet.has("*") ||
-                        userPermsSet.has("allocation:form:response:view") ||
-                        userPermsSet.has("allocation:write")))
-            )
-                return true;
+            if (!field.viewableByRoleId || hasPreviewPerms) return true;
             return userRoles.includes(field.viewableByRoleId);
         });
 

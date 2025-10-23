@@ -71,18 +71,13 @@ export const deleteAllocationFormTemplateSchema = z.object({
 });
 
 export const allocationFormSchema = z.object({
-    // id: z.string().uuid().optional(),
     templateId: z.string().uuid(),
     title: z.string(),
     description: z.string(),
-    // allocationDeadline: z.date().optional(),
-    // createdAt: z.date().optional(),
-    // updatedAt: z.date().optional(),
-    // publishedDate: z.coerce.date().optional(),
 });
 
 export const allocationFormPublishSchema = z.object({
-    allocationDeadline: z.coerce.date().optional(),
+    formDeadline: z.coerce.date().optional(),
     emailBody: z.string(),
     isPublishedToRoleId: z.coerce.number(),
 });
