@@ -199,7 +199,7 @@ const FormResponsesView = () => {
                           })),
                       }}
                       create={false}
-                      preview={true}
+                      disableInformation={personal === 'true'}
                       courses={courses}
                     />
                   </CardContent>
