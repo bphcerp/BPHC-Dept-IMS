@@ -71,10 +71,10 @@ router.post(
         });
 
         if (
-            form.allocationDeadline &&
+            form.formDeadline &&
             formSemester &&
             formSemester.allocationStatus !== "formCollection" &&
-            Date.now() > new Date(form.allocationDeadline).getTime()
+            Date.now() > new Date(form.formDeadline).getTime()
         ) {
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "Form Deadline is Over")

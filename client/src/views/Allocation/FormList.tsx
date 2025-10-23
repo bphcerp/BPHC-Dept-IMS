@@ -2,7 +2,6 @@ import { DataTable } from "@/components/shared/datatable/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import {
   AllocationForm,
   AllocationFormTemplate,
@@ -29,83 +28,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useForm, Controller } from "react-hook-form";
-
-const columns: ColumnDef<AllocationForm>[] = [
-  {
-    accessorKey: "title",
-    header: "Title",
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-  },
-  {
-    accessorKey: "createdBy.name",
-    header: "Created By: ",
-  },
-  {
-    accessorKey: "template.name",
-    header: "Template Used ",
-    cell: ({ row }) => (
-      <Link className="hover:underline text-primary" to={`/allocation/templates/${row.original.template.id}`}>
-        {row.original.template.name}
-      </Link>
-    ),
-  },
-  {
-    id: "actions",
-    header: "Actions",
-    accessorFn: () => "",
-    cell: ({ row }) => {
-      return (
-        <div className="flex flex-row gap-2">
-          <Button asChild>
-            <Link to={`/allocation/forms/${row.original.id}/preview`}> View </Link>
-          </Button>
-          <Button asChild>
-            <Link to={`/allocation/forms/${row.original.id}/responses`}>
-              View Responses
-            </Link>
-          </Button>
-        </div>
-      );
-    },
-  },
-];
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 const FormList = () => {
-  const [forms, setForms] = useState<AllocationForm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [templates, setTemplates] = useState<AllocationFormTemplate[]>([]);
-
   const { checkAccessAnyOne } = useAuth();
+  const queryClient = useQueryClient();
 
-  const fetchTemplates = async () => {
-    try {
-      const response = await api.get("/allocation/builder/template/getAll");
-      setTemplates(response.data ?? []);
-    } catch (error) {
-      toast.error("Error in fetching templates!");
-      console.error("Error in getting templates: ", error);
-    }
-  };
+  const { data: templates, isLoading: isTemplateQueryLoading } = useQuery({
+    queryKey: ["form-builder", "templates"],
+    queryFn: async () =>
+      api<AllocationFormTemplate[]>("/allocation/builder/template/getAll")
+        .then(({ data }) => data)
+        .catch((e) => {
+          toast.error("Error in fetching templates!");
+          console.error("Error in getting templates: ", e);
+          return [];
+        }),
+  });
 
-  const fetchForms = async () => {
-    try {
-      const response = await api.get("/allocation/builder/form/getAll");
-      setForms(response.data ?? []);
-    } catch (error) {
-      toast.error("Error in fetching forms!");
-      console.error("Error in getting forms: ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: forms, isLoading: isFormQueryLoading } = useQuery({
+    queryKey: ["form-builder", "forms"],
+    queryFn: async () =>
+      api<AllocationForm[]>("/allocation/builder/form/getAll")
+        .then(({ data }) => data)
+        .catch((e) => {
+          toast.error("Error in fetching forms!");
+          console.error("Error in getting forms: ", e);
+          return [];
+        }),
+  });
 
-  useEffect(() => {
-    fetchForms();
-    fetchTemplates();
-  }, []);
+  const { mutate: deleteFormMutation, isLoading: isDeleteFormMutationLoading } =
+    useMutation({
+      mutationKey: ["allocation-form", "delete"],
+      mutationFn: (formId: string) =>
+        api
+          .delete(`/allocation/builder/form/delete/${formId}`)
+          .then(() => {
+            queryClient.invalidateQueries(["allocation-forms"]);
+          })
+          .catch((e) => {
+            toast.error(
+              ((e as AxiosError).response?.data as string) ??
+                "Something went wrong"
+            );
+            console.error(
+              `Something went wrong while deleting form ${formId}`,
+              e
+            );
+          }),
+    });
 
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -120,7 +94,7 @@ const FormList = () => {
       .post("/allocation/builder/form/create", data)
       .then(() => {
         toast.success("Form created successfully!");
-        fetchForms();
+        queryClient.invalidateQueries(["form-builder", "forms"]);
         reset();
       })
       .catch((error) => {
@@ -129,14 +103,71 @@ const FormList = () => {
       });
   };
 
-  if (loading) {
-    return <div> Loading... </div>;
-  }
+  const columns: ColumnDef<AllocationForm>[] = [
+    {
+      accessorKey: "title",
+      header: "Title",
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "createdBy.name",
+      header: "Created By: ",
+    },
+    {
+      accessorKey: "template.name",
+      header: "Template Used ",
+      cell: ({ row }) => (
+        <Link
+          className="text-primary hover:underline"
+          to={`/allocation/templates/${row.original.template.id}`}
+        >
+          {row.original.template.name}
+        </Link>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      accessorFn: () => "",
+      cell: ({ row }) => {
+        return (
+          <div className="flex flex-row gap-2">
+            <Button asChild>
+              <Link to={`/allocation/forms/${row.original.id}/preview`}>
+                {" "}
+                View{" "}
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to={`/allocation/forms/${row.original.id}/responses`}>
+                View Responses
+              </Link>
+            </Button>
+            {checkAccessAnyOne([
+              "allocation:write",
+              "allocation:builder:form:write",
+            ]) && (
+              <Button
+                variant="destructive"
+                disabled={isDeleteFormMutationLoading}
+                onClick={() => deleteFormMutation(row.original.id)}
+              >
+                Delete {isDeleteFormMutationLoading && <LoadingSpinner />}
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="p-4">
       <h1 className="mb-4 text-2xl font-bold"> Forms </h1>
-      {loading ? (
+      {isTemplateQueryLoading || isFormQueryLoading || !templates || !forms ? (
         <Skeleton className="h-10 w-full" />
       ) : (
         <DataTable

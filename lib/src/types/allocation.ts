@@ -96,7 +96,7 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
-    type: "faculty" | "phd full time";
+    type: "faculty" | "phd";
 };
 
 export type SemesterWithStats = Semester & {

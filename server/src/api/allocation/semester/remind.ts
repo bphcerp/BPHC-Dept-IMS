@@ -71,7 +71,7 @@ router.post(
                 assignedTo: el,
                 link: `/allocation/submit`,
                 completionEvent: `preference submission by ${el}`,
-                deadline: latestSemester.form!.allocationDeadline,
+                deadline: latestSemester.form!.formDeadline,
                 createdBy: req.user!.email,
             })
         );

@@ -540,6 +540,13 @@
       "when": 1761154892281,
       "tag": "0076_ancient_namor",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1761201697784,
+      "tag": "0077_flowery_grandmaster",
+      "breakpoints": true
     }
   ]
 }

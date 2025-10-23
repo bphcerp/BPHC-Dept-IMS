@@ -40,13 +40,13 @@ export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,
-  preview = false,
+  disableInformation = false,
   form,
 }: {
   field: AllocationClientField;
   create: boolean;
   courses: Course[];
-  preview?: boolean;
+  disableInformation?: boolean
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
   const filteredCourses = field.groupId
@@ -103,7 +103,7 @@ export const FormTemplateFieldComponent = ({
               %
             </span>
           </div>
-          {(!form || create) && !!field.viewableByRole && (
+          {(!form || create) && !!field.viewableByRole && !disableInformation && (
             <span className="text-xs text-destructive">
               This field will not be visible to members without the "
               {field.viewableByRole.roleName}" role
@@ -223,7 +223,7 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
-          {(!form || create) && !preview && (
+          {(!form || create) && !disableInformation && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
               {field.viewableByRole ? (
                 <span className="text-destructive">
@@ -236,7 +236,6 @@ export const FormTemplateFieldComponent = ({
                   this form
                 </span>
               )}
-              <p>The list of courses will be populated automatically.</p>
             </div>
           )}
           <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">
