@@ -36,11 +36,12 @@ router.post(
     asyncHandler(async (req, res) => {
         const result = createRequestSchema.safeParse(req.body);
         if (!result.success) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Validation failed",
                 errors: result.error.errors,
             });
+            return;
         }
 
         const { courses, requestType } = result.data;
@@ -53,7 +54,7 @@ router.post(
                 }))
             );
 
-            return res.status(201).json({
+            res.status(201).json({
                 success: true,
                 message: "Requests created successfully",
                 data: { courses, requestType },
@@ -61,7 +62,7 @@ router.post(
         } catch (error) {
             logger.error("Database insert failed:", error);
 
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
                 message: "Failed to create review requests",
                 error: error instanceof Error ? error.message : error,
@@ -69,6 +70,5 @@ router.post(
         }
     })
 );
-
 
 export default router;
