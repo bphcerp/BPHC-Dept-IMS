@@ -12,8 +12,12 @@ import { emailWorker } from "./lib/common/email.ts";
 
 logger.info("Initializing BullMQ Workers...");
 emailWorker.on("ready", () => logger.info("Email worker ready."));
+emailWorker.on("error", (error) => logger.error("Email worker error:", error));
 proposalReminderWorker.on("ready", () =>
     logger.info("Proposal reminder worker ready.")
+);
+proposalReminderWorker.on("error", (error) =>
+    logger.error("Proposal reminder worker error:", error)
 );
 
 try {

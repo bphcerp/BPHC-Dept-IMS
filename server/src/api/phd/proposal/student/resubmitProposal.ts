@@ -17,10 +17,36 @@ import { sendEmail } from "@/lib/common/email.ts";
 import { eq, and } from "drizzle-orm";
 import env from "@/config/environment.ts";
 import logger from "@/config/logger.ts";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { fromError } from "zod-validation-error";
 
 const router = express.Router();
+
+// Local schema override to allow empty/null names from client
+const resubmitSchema = phdSchemas.phdProposalSubmissionSchema
+    .omit({ proposalCycleId: true })
+    .extend({
+        externalCoSupervisors: z.preprocess(
+            (val) => {
+                if (typeof val === "string") {
+                    try {
+                        return JSON.parse(val);
+                    } catch {
+                        return [];
+                    }
+                }
+                return val;
+            },
+            z
+                .array(
+                    z.object({
+                        name: z.string().optional(), // Allow name to be optional or empty
+                        email: z.string().email(),
+                    })
+                )
+                .optional()
+        ),
+    });
 
 router.post(
     "/:id",
@@ -84,9 +110,8 @@ router.post(
 
         let parsedBody;
         try {
-            parsedBody = phdSchemas.phdProposalSubmissionSchema
-                .omit({ proposalCycleId: true })
-                .parse(req.body);
+            // Use the local, more lenient schema
+            parsedBody = resubmitSchema.parse(req.body);
         } catch (error) {
             if (error instanceof ZodError) {
                 const validationError = fromError(error);
@@ -162,14 +187,15 @@ router.post(
                 "drc_revert",
                 "dac_revert",
             ];
+            // Do not allow submission if status is 'draft_expired'
             if (!allowedStatuses.includes(proposal.status)) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
-                    "This proposal cannot be resubmitted at its current stage."
+                    "This proposal cannot be resubmitted at its current stage. It may be expired or already processed."
                 );
             }
 
-            // Deadline check only for 'draft' status
+            // **FIX**: Deadline check only for 'draft' status. Reverts are allowed.
             if (proposal.status === "draft") {
                 if (
                     new Date(proposal.proposalSemester.studentSubmissionDate) <
@@ -225,19 +251,14 @@ router.post(
                     .where(eq(phdProposalDacReviews.proposalId, proposalId));
             }
 
-            // *** CORRECTED STATUS LOGIC ***
             let nextStatus: (typeof phdSchemas.phdProposalStatuses)[number];
 
             if (submissionType === "final") {
-                // If submitting, always go to supervisor review
                 nextStatus = "supervisor_review";
             } else {
-                // If saving as draft, *keep* the current status if it's a revert status,
-                // otherwise (if it was 'draft' already) keep it as 'draft'.
                 nextStatus =
                     proposal.status === "draft" ? "draft" : proposal.status;
             }
-            // *** END OF CORRECTION ***
 
             await tx
                 .update(phdProposals)
@@ -264,7 +285,7 @@ router.post(
                     comments:
                         nextStatus === "supervisor_review"
                             ? null
-                            : proposal.comments, // Clear comments only on final submit
+                            : proposal.comments,
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
@@ -282,13 +303,20 @@ router.post(
                     }))
                 );
             }
+
+            // **FIX**: Filter out externals with empty/null names
             if (externalCoSupervisors) {
                 coSupervisorsToInsert.push(
-                    ...externalCoSupervisors.map((ext) => ({
-                        proposalId,
-                        coSupervisorEmail: ext.email,
-                        coSupervisorName: ext.name,
-                    }))
+                    ...externalCoSupervisors
+                        .filter(
+                            (ext) =>
+                                ext.name && ext.name.trim() !== "" && ext.email
+                        )
+                        .map((ext) => ({
+                            proposalId,
+                            coSupervisorEmail: ext.email,
+                            coSupervisorName: ext.name,
+                        }))
                 );
             }
             if (coSupervisorsToInsert.length > 0) {
@@ -297,7 +325,6 @@ router.post(
                     .values(coSupervisorsToInsert);
             }
 
-            // Only complete the todo if it's a *final* submission
             if (submissionType === "final") {
                 await completeTodo(
                     {

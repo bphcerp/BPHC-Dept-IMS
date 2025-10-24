@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
+import { getProposalStatusVariant, formatStatus } from "@/lib/utils"; // Import color/format utility
 
 interface ProposalSemester {
   id: number;
@@ -32,14 +33,16 @@ interface ProposalSemester {
   dacReviewDate: string;
   semester: { year: string; semesterNumber: number };
 }
+
 interface Proposal {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: { name: string; email: string };
+  student: { name: string | null; email: string }; // Allow name to be null
   proposalSemester: ProposalSemester | null;
 }
+
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -87,6 +90,7 @@ const SupervisorProposal: React.FC = () => {
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null
   );
+
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
@@ -96,19 +100,22 @@ const SupervisorProposal: React.FC = () => {
       return response.data;
     },
   });
+
   useEffect(() => {
     if (semesters && semesters.length > 0 && !selectedSemesterId) {
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
+
   const {
-    data: proposals,
+    data: proposals = [], // Default to empty array
     isLoading,
     isError,
     error,
   } = useQuery({
     queryKey: ["supervisor-proposals", selectedSemesterId],
     queryFn: async () => {
+      if (!selectedSemesterId) return []; // Return empty if no semester selected
       const response = await api.get<Proposal[]>(
         `/phd/proposal/supervisor/getProposals/${selectedSemesterId}`
       );
@@ -116,7 +123,11 @@ const SupervisorProposal: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
-  const semesterDeadlines = proposals?.[0]?.proposalSemester;
+
+  const semesterDeadlines = proposals?.find(
+    (p) => p.proposalSemester
+  )?.proposalSemester;
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -125,7 +136,9 @@ const SupervisorProposal: React.FC = () => {
           Review and manage PhD proposal submissions for your students.
         </p>
       </div>
+
       <ProposalStatusTimeline role="supervisor" />
+
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -141,12 +154,14 @@ const SupervisorProposal: React.FC = () => {
           />
         </CardContent>
       </Card>
+
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="facultyReviewDate"
         />
       )}
+
       <Card>
         <CardHeader>
           <CardTitle>Proposals</CardTitle>
@@ -173,7 +188,7 @@ const SupervisorProposal: React.FC = () => {
                       ?.data || "Failed to load proposals"}
                   </TableCell>
                 </TableRow>
-              ) : isLoading || !proposals || proposals.length === 0 ? (
+              ) : isLoading || proposals.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
                     <div className="py-8 text-center">
@@ -200,12 +215,15 @@ const SupervisorProposal: React.FC = () => {
                     </TableCell>
                     <TableCell>{proposal.title}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {proposal.status.replace(/_/g, " ").toUpperCase()}
+                      {/* Apply color coding */}
+                      <Badge
+                        className={getProposalStatusVariant(proposal.status)}
+                      >
+                        {formatStatus(proposal.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" title="View Details">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -219,4 +237,5 @@ const SupervisorProposal: React.FC = () => {
     </div>
   );
 };
+
 export default SupervisorProposal;

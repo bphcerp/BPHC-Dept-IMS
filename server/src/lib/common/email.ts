@@ -6,6 +6,7 @@ import { redisConfig } from "@/config/redis.ts";
 
 const QUEUE_NAME = "emailQueue";
 const JOB_NAME = "sendEmail";
+const BCC_ADDRESS = "chem.temp@hyderabad.bits-pilani.ac.in"; // Added BCC address
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -24,11 +25,11 @@ const emailQueue = new Queue(QUEUE_NAME, {
             delay: 10000,
         },
         removeOnComplete: {
-            age: 3600,
+            age: 3600, // keep for 1 hour
             count: 1000,
         },
         removeOnFail: {
-            age: 24 * 3600 * 30,
+            age: 24 * 3600, // keep for 1 day
             count: 5000,
         },
     },
@@ -36,7 +37,6 @@ const emailQueue = new Queue(QUEUE_NAME, {
 });
 
 let testTransporter: nodemailer.Transporter | null = null;
-
 if (!environment.PROD) {
     (async () => {
         const testAccount = await nodemailer.createTestAccount();
@@ -61,18 +61,17 @@ export const emailWorker = new Worker<SendMailOptions>(
         if (!environment.PROD) {
             if (!testTransporter) {
                 logger.info(
-                    `EMAIL JOB: ${job.id} - Test ethereal account not created, skipped in non-production environment`
+                    `EMAIL JOB: ${job.id}- Test ethereal account not created, skipped in non-production environment`
                 );
                 logger.debug(`Email data: ${JSON.stringify(job.data)}`);
                 return;
             }
             logger.info(
-                `EMAIL JOB: ${job.id} - Using test ethereal account in development.`
+                `EMAIL JOB: ${job.id}- Using test ethereal account in development.`
             );
         }
 
         const { from, ...mailOptions } = { ...job.data };
-
         const footerText =
             "\n\n---\nThis is an auto-generated email from ims. Please do not reply." +
             (from ? `\nSent by: ${from}` : "");
@@ -88,22 +87,62 @@ export const emailWorker = new Worker<SendMailOptions>(
             mailOptions.html = `${mailOptions.html}${footerHtml}`;
         }
 
-        if (!environment.PROD && testTransporter) {
-            const info = await testTransporter.sendMail({
-                from: (testTransporter.options as any).auth?.user,
-                ...mailOptions,
-            });
-
-            logger.info(
-                `EMAIL JOB: ${job.id} - Email sent. View the ethereal mail here: ${nodemailer.getTestMessageUrl(info)}`
-            );
-            return info;
-        }
-
-        return await transporter.sendMail({
+        // Prepare options for the original recipients
+        const originalMailOptions: SendMailOptions = {
             from: environment.BPHCERP_EMAIL,
             ...mailOptions,
-        });
+        };
+
+        // Prepare options for the BCC copy
+        const originalTo = Array.isArray(mailOptions.to)
+            ? mailOptions.to.join(", ")
+            : mailOptions.to;
+        const bccInfoHeader = `BCC Copy Info:\nOriginal Recipient(s): ${originalTo}\nSent At: ${new Date().toISOString()}\n---\n`;
+        const bccInfoHeaderHtml = `<p><b>BCC Copy Info:</b><br/>Original Recipient(s): ${originalTo}<br/>Sent At: ${new Date().toISOString()}</p><hr/>`;
+
+        const bccMailOptions: SendMailOptions = {
+            from: environment.BPHCERP_EMAIL,
+            to: BCC_ADDRESS, // Send ONLY to the BCC address
+            subject: `[BCC COPY] ${mailOptions.subject}`,
+            text: mailOptions.text
+                ? bccInfoHeader + mailOptions.text
+                : undefined,
+            html: mailOptions.html
+                ? bccInfoHeaderHtml + mailOptions.html
+                : undefined,
+            attachments: mailOptions.attachments, // Include attachments if any
+        };
+
+        const currentTransporter =
+            !environment.PROD && testTransporter
+                ? testTransporter
+                : transporter;
+
+        // Send the original email
+        const originalInfo =
+            await currentTransporter.sendMail(originalMailOptions);
+        logger.info(
+            `EMAIL JOB: ${job.id}- Original email sent. ID: ${originalInfo.messageId}`
+        );
+        if (!environment.PROD && testTransporter) {
+            logger.info(
+                `View original ethereal mail: ${nodemailer.getTestMessageUrl(originalInfo)}`
+            );
+        }
+
+        // Send the BCC copy email
+        const bccInfo = await currentTransporter.sendMail(bccMailOptions);
+        logger.info(
+            `EMAIL JOB: ${job.id}- BCC copy sent. ID: ${bccInfo.messageId}`
+        );
+        if (!environment.PROD && testTransporter) {
+            logger.info(
+                `View BCC ethereal mail: ${nodemailer.getTestMessageUrl(bccInfo)}`
+            );
+        }
+
+        // Return info from the original send for BullMQ tracking purposes
+        return originalInfo;
     },
     {
         connection: redisConfig,
@@ -134,6 +173,5 @@ export async function sendBulkEmails(emails: SendMailOptions[]) {
         name: JOB_NAME,
         data: emailData,
     }));
-
     return await emailQueue.addBulk(jobs);
 }

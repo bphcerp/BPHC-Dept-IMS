@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatStatus } from "@/lib/utils";
 
 interface CoSupervisor {
   coSupervisorEmail: string;
@@ -32,11 +33,17 @@ interface Proposal {
   outsideSupervisorBiodataFileUrl?: string | null;
 }
 
-const ProposalPreview: React.FC<{
+interface ProposalPreviewProps {
   proposal: Proposal;
-  onSubmit: () => void;
+  onSubmit?: () => void; // Optional function prop
   isSubmitting?: boolean;
-}> = ({ proposal, onSubmit, isSubmitting = false }) => {
+}
+
+const ProposalPreview: React.FC<ProposalPreviewProps> = ({
+  proposal,
+  onSubmit, // Can be undefined
+  isSubmitting = false,
+}) => {
   const documentFiles = [
     { label: "Appendix I", url: proposal.appendixFileUrl },
     { label: "Summary of Research Proposal", url: proposal.summaryFileUrl },
@@ -50,7 +57,7 @@ const ProposalPreview: React.FC<{
       label: "Outside Supervisor's Biodata",
       url: proposal.outsideSupervisorBiodataFileUrl,
     },
-  ].filter((file) => file.url);
+  ].filter((file): file is { label: string; url: string } => Boolean(file.url));
 
   return (
     <div className="space-y-6">
@@ -59,9 +66,7 @@ const ProposalPreview: React.FC<{
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
             Status:{" "}
-            <Badge variant="outline">
-              {proposal.status.replace(/_/g, " ").toUpperCase()}
-            </Badge>
+            <Badge variant="outline">{formatStatus(proposal.status)}</Badge>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,9 +92,12 @@ const ProposalPreview: React.FC<{
         </CardContent>
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
-      <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
-        {isSubmitting ? "Submitting..." : "Final Submit"}
-      </Button>
+      {/* Conditionally render the button only if onSubmit is provided */}
+      {onSubmit && (
+        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+          {isSubmitting ? "Submitting..." : "Final Submit"}
+        </Button>
+      )}
     </div>
   );
 };
