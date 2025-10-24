@@ -129,7 +129,7 @@ import FormList from "@/views/Allocation/FormList";
 import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
 import SemesterList from "@/views/Allocation/SemesterList";
-import AllocationModern from "@/views/Allocation/AllocationModern";
+import AllocationCourseWiseView from "@/views/Allocation/AllocationCourseWiseView";
 import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 import HelpButton from "./HelpButton";
 import CourseGroups from "@/views/Allocation/CourseGroups";
@@ -907,7 +907,7 @@ const Routing = () => {
               )}
 
               {checkAccess("allocation:write") && (
-                <Route path="allocate" element={<AllocationModern />} />
+                <Route path="allocate" element={<AllocationCourseWiseView />} />
               )}
 
               {checkAccessAnyOne([

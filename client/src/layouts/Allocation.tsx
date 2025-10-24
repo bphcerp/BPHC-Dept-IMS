@@ -38,12 +38,16 @@ const AllocationLayout = () => {
                 url: "/allocation/overview",
                 requiredPermissions: ["allocation:write"],
               },
-              {
-                title: "Matrix",
-                icon: <Grid3X3Icon />,
-                url: "/allocation/creditmatrix",
-                requiredPermissions: ["allocation:write"],
-              },
+              ...(currentSemester?.allocationStatus === "inAllocation"
+                ? [
+                    {
+                      title: "Matrix",
+                      icon: <Grid3X3Icon />,
+                      url: "/allocation/creditmatrix",
+                      requiredPermissions: ["allocation:write"],
+                    },
+                  ]
+                : []),
               {
                 title: "Courses",
                 icon: <DatabaseIcon />,

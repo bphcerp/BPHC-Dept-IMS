@@ -11,7 +11,7 @@ import AllocationHeader from "@/components/Allocation/AllocationHeader";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 import { Button } from "@/components/ui/button";
 
-const AllocationModern = () => {
+const AllocationCourseWiseView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCourse, setSelectedCourse] =
     useState<allocationTypes.Course | null>(null);
@@ -76,7 +76,6 @@ const AllocationModern = () => {
   const {
     data: allocationData,
     isLoading: allocationLoading,
-    refetch: refetchAllocation,
   } = useQuery({
     queryKey: ["allocation", selectedCourse?.code, currentSemester?.id],
     queryFn: async () => {
@@ -168,8 +167,8 @@ const AllocationModern = () => {
     }
   };
 
-  const handleCreateAllocation = () => {
-    void refetchAllocation();
+  const handleCreateAllocation = async () => {
+    await queryClient.invalidateQueries(["allocation"])
   };
 
   if (semesterLoading) {
@@ -218,7 +217,7 @@ const AllocationModern = () => {
             Semester Form Not Linked
           </h2>
           <p className="text-muted-foreground">
-            Please publish link a form to the ongoing semester
+            Please link a form to the ongoing semester
           </p>
         </div>
       </div>
@@ -415,4 +414,4 @@ const AllocationModern = () => {
   );
 };
 
-export default AllocationModern;
+export default AllocationCourseWiseView;
