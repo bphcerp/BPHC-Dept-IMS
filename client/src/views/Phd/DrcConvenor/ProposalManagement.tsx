@@ -30,6 +30,8 @@ import {
   Filter,
   ArrowUpDown,
   Users,
+  X,
+  Check,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
@@ -77,6 +79,11 @@ interface DacMemberInfo {
   } | null;
 }
 
+interface DacReviewInfo {
+  dacMemberEmail: string;
+  approved: boolean;
+}
+
 interface ProposalListItem {
   id: number;
   title: string;
@@ -92,6 +99,7 @@ interface ProposalListItem {
     email: string;
   } | null;
   dacMembers: DacMemberInfo[];
+  dacReviews: DacReviewInfo[] | null; // Now includes reviews
   proposalSemester: ProposalSemester | null;
 }
 
@@ -259,6 +267,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download notice."),
   });
+
   const downloadPackagesMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -280,6 +289,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download packages."),
   });
+
   const finalizeProposalsMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post("/phd/proposal/drcConvener/finalizeProposals", { proposalIds }),
@@ -358,7 +368,6 @@ const DrcProposalManagement: React.FC = () => {
     [proposals, selectedProposalIds]
   );
 
-  // FIX: Use the state variable selectedProposals to derive button states
   const canRequestSeminar = selectedProposals.some((p) =>
     ["seminar_pending", "dac_accepted"].includes(p.status)
   );
@@ -377,7 +386,6 @@ const DrcProposalManagement: React.FC = () => {
     filteredAndSortedProposals.length > 0 &&
     selectedProposalIds.length === filteredAndSortedProposals.length;
 
-  // FIX: Add the missing handleSort function
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -387,8 +395,21 @@ const DrcProposalManagement: React.FC = () => {
     }
   };
 
-  // FIX: Add the missing allStatuses variable
   const allStatuses = phdSchemas.phdProposalStatuses;
+
+  const getDacMemberReviewStatus = (
+    memberEmail: string,
+    reviews: DacReviewInfo[] | null
+  ): "approved" | "reverted" | "pending" => {
+    if (!reviews) {
+      return "pending";
+    }
+    const review = reviews.find((r) => r.dacMemberEmail === memberEmail);
+    if (!review) {
+      return "pending";
+    }
+    return review.approved ? "approved" : "reverted";
+  };
 
   return (
     <div className="space-y-6">
@@ -459,7 +480,7 @@ const DrcProposalManagement: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Input
-                placeholder="Search student, supervisor, title..."
+                placeholder="Search student, supervisor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-auto flex-grow md:w-[250px]"
@@ -486,6 +507,7 @@ const DrcProposalManagement: React.FC = () => {
                             : prev.filter((s) => s !== status)
                         );
                       }}
+                      onSelect={(e) => e.preventDefault()} // Keep menu open
                     >
                       {formatStatus(status)}
                     </DropdownMenuCheckboxItem>
@@ -621,7 +643,10 @@ const DrcProposalManagement: React.FC = () => {
                   <TableHead className="w-12">
                     <Checkbox
                       onCheckedChange={handleSelectAll}
-                      checked={isAllVisibleSelected}
+                      checked={
+                        isAllVisibleSelected &&
+                        filteredAndSortedProposals.length > 0
+                      }
                       disabled={
                         !proposals || filteredAndSortedProposals.length === 0
                       }
@@ -731,14 +756,35 @@ const DrcProposalManagement: React.FC = () => {
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <ul className="list-disc pl-4 text-sm">
-                                  {proposal.dacMembers.map((m) => (
-                                    <li key={m.dacMemberEmail}>
-                                      {m.dacMember?.name ??
-                                        m.dacMemberName ??
-                                        m.dacMemberEmail}
-                                    </li>
-                                  ))}
+                                <ul className="list-inside space-y-1 px-2 py-1 text-sm">
+                                  {proposal.dacMembers.map((m) => {
+                                    const reviewStatus =
+                                      getDacMemberReviewStatus(
+                                        m.dacMemberEmail,
+                                        proposal.dacReviews
+                                      );
+                                    return (
+                                      <li
+                                        key={m.dacMemberEmail}
+                                        className="flex items-center gap-2"
+                                      >
+                                        {reviewStatus === "approved" && (
+                                          <Check className="h-4 w-4 text-green-500" />
+                                        )}
+                                        {reviewStatus === "reverted" && (
+                                          <X className="h-4 w-4 text-red-500" />
+                                        )}
+                                        {reviewStatus === "pending" && (
+                                          <Clock className="h-4 w-4 text-gray-400" />
+                                        )}
+                                        <span>
+                                          {m.dacMember?.name ??
+                                            m.dacMemberName ??
+                                            m.dacMemberEmail}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
                                 </ul>
                               </TooltipContent>
                             </Tooltip>

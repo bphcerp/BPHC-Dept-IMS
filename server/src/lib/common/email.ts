@@ -6,7 +6,7 @@ import { redisConfig } from "@/config/redis.ts";
 
 const QUEUE_NAME = "emailQueue";
 const JOB_NAME = "sendEmail";
-const BCC_ADDRESS = "chem.temp@hyderabad.bits-pilani.ac.in"; // Added BCC address
+const BCC_ADDRESS = "chem.temp@hyderabad.bits-pilani.ac.in";
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -19,17 +19,17 @@ const transporter = nodemailer.createTransport({
 const emailQueue = new Queue(QUEUE_NAME, {
     connection: redisConfig,
     defaultJobOptions: {
-        attempts: 2,
+        attempts: 3,
         backoff: {
             type: "exponential",
-            delay: 10000,
+            delay: 15000,
         },
         removeOnComplete: {
-            age: 3600, // keep for 1 hour
+            age: 3600,
             count: 1000,
         },
         removeOnFail: {
-            age: 24 * 3600, // keep for 1 day
+            age: 24 * 3600,
             count: 5000,
         },
     },
@@ -39,39 +39,49 @@ const emailQueue = new Queue(QUEUE_NAME, {
 let testTransporter: nodemailer.Transporter | null = null;
 if (!environment.PROD) {
     (async () => {
-        const testAccount = await nodemailer.createTestAccount();
-        testTransporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: testAccount.user, // generated ethereal user
-                pass: testAccount.pass, // generated ethereal password
-            },
-        });
-        logger.info(
-            `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
-        );
+        try {
+            const testAccount = await nodemailer.createTestAccount();
+            testTransporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+            logger.info(
+                `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
+            );
+        } catch (error) {
+            logger.error("Failed to create Ethereal test account:", error);
+        }
     })();
 }
 
-export const emailWorker = new Worker<SendMailOptions>(
+export const emailWorker = new Worker<SendMailOptions & { body?: string }>( // Allow 'body' property
     QUEUE_NAME,
     async (job) => {
-        if (!environment.PROD) {
-            if (!testTransporter) {
-                logger.info(
-                    `EMAIL JOB: ${job.id}- Test ethereal account not created, skipped in non-production environment`
-                );
-                logger.debug(`Email data: ${JSON.stringify(job.data)}`);
-                return;
-            }
+        const isDevelopment = !environment.PROD;
+        const currentTransporter =
+            isDevelopment && testTransporter ? testTransporter : transporter;
+
+        if (isDevelopment && !testTransporter) {
             logger.info(
-                `EMAIL JOB: ${job.id}- Using test ethereal account in development.`
+                `EMAIL JOB: ${job.id} - Test transporter not ready, skipped in non-production.`
             );
+            logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+            return;
         }
 
-        const { from, ...mailOptions } = { ...job.data };
+        if (!currentTransporter) {
+            logger.error(
+                `EMAIL JOB: ${job.id} - Transporter is not available.`
+            );
+            throw new Error("Email transporter not configured.");
+        }
+
+        const { from, body, ...mailOptions } = { ...job.data };
         const footerText =
             "\n\n---\nThis is an auto-generated email from ims. Please do not reply." +
             (from ? `\nSent by: ${from}` : "");
@@ -80,79 +90,61 @@ export const emailWorker = new Worker<SendMailOptions>(
             (from ? `<br /><i>Sent by: ${from}</i>` : "") +
             "</p>";
 
-        if (mailOptions.text) {
-            mailOptions.text = `${mailOptions.text}${footerText}`;
+        // *** FIX: Check for 'body' property if 'text' and 'html' are missing ***
+        if (!mailOptions.text && !mailOptions.html && body) {
+            mailOptions.text = body; // Assign 'body' to 'text'
         }
-        if (mailOptions.html && typeof mailOptions.html === "string") {
-            mailOptions.html = `${mailOptions.html}${footerHtml}`;
-        }
+        // *** END OF FIX ***
 
-        // Prepare options for the original recipients
-        const originalMailOptions: SendMailOptions = {
+        const mailOptionsWithDefaults: SendMailOptions = {
             from: environment.BPHCERP_EMAIL,
             ...mailOptions,
-        };
-
-        // Prepare options for the BCC copy
-        const originalTo = Array.isArray(mailOptions.to)
-            ? mailOptions.to.join(", ")
-            : mailOptions.to;
-        const bccInfoHeader = `BCC Copy Info:\nOriginal Recipient(s): ${originalTo}\nSent At: ${new Date().toISOString()}\n---\n`;
-        const bccInfoHeaderHtml = `<p><b>BCC Copy Info:</b><br/>Original Recipient(s): ${originalTo}<br/>Sent At: ${new Date().toISOString()}</p><hr/>`;
-
-        const bccMailOptions: SendMailOptions = {
-            from: environment.BPHCERP_EMAIL,
-            to: BCC_ADDRESS, // Send ONLY to the BCC address
-            subject: `[BCC COPY] ${mailOptions.subject}`,
             text: mailOptions.text
-                ? bccInfoHeader + mailOptions.text
+                ? `${mailOptions.text}${footerText}`
                 : undefined,
             html: mailOptions.html
-                ? bccInfoHeaderHtml + mailOptions.html
+                ? `${mailOptions.html}${footerHtml}`
                 : undefined,
-            attachments: mailOptions.attachments, // Include attachments if any
+            bcc: [mailOptions.bcc, BCC_ADDRESS].filter(Boolean).join(", "),
         };
 
-        const currentTransporter =
-            !environment.PROD && testTransporter
-                ? testTransporter
-                : transporter;
-
-        // Send the original email
-        const originalInfo =
-            await currentTransporter.sendMail(originalMailOptions);
-        logger.info(
-            `EMAIL JOB: ${job.id}- Original email sent. ID: ${originalInfo.messageId}`
-        );
-        if (!environment.PROD && testTransporter) {
-            logger.info(
-                `View original ethereal mail: ${nodemailer.getTestMessageUrl(originalInfo)}`
-            );
+        if (!mailOptionsWithDefaults.bcc) {
+            delete mailOptionsWithDefaults.bcc;
         }
 
-        // Send the BCC copy email
-        const bccInfo = await currentTransporter.sendMail(bccMailOptions);
-        logger.info(
-            `EMAIL JOB: ${job.id}- BCC copy sent. ID: ${bccInfo.messageId}`
-        );
-        if (!environment.PROD && testTransporter) {
-            logger.info(
-                `View BCC ethereal mail: ${nodemailer.getTestMessageUrl(bccInfo)}`
+        try {
+            const info = await currentTransporter.sendMail(
+                mailOptionsWithDefaults
             );
+            logger.info(
+                `EMAIL JOB: ${job.id} - Email sent. ID: ${info.messageId}`
+            );
+            if (isDevelopment && testTransporter) {
+                logger.info(
+                    `View ethereal mail: ${nodemailer.getTestMessageUrl(info)}`
+                );
+            }
+            return info;
+        } catch (error) {
+            logger.error(`EMAIL JOB: ${job.id} - Failed to send email:`, error);
+            throw error;
         }
-
-        // Return info from the original send for BullMQ tracking purposes
-        return originalInfo;
     },
     {
         connection: redisConfig,
-        concurrency: 10,
+        concurrency: 5,
         prefix: QUEUE_NAME,
     }
 );
 
 emailWorker.on("failed", (job, err) => {
-    logger.error(`Email job failed: ${job?.id}`, err);
+    logger.error(
+        `Email job ${job?.id} failed after ${job?.attemptsMade} attempts: ${err.message}`,
+        err
+    );
+});
+emailWorker.on("error", (err) => {
+    logger.error("Email worker encountered an error:", err);
 });
 
 const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
@@ -163,11 +155,19 @@ const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
 export async function sendEmail(emailData: SendMailOptions, blocking = false) {
     const job = await emailQueue.add(JOB_NAME, emailData);
     if (!blocking) return job;
-    const completedJob = await job.waitUntilFinished(emailQueueEvents);
-    return completedJob;
+
+    try {
+        const result = await job.waitUntilFinished(emailQueueEvents, 30000);
+        return result;
+    } catch (error) {
+        logger.error(`Error waiting for email job ${job.id} to finish:`, error);
+        throw error;
+    }
 }
 
-export async function sendBulkEmails(emails: SendMailOptions[]) {
+export async function sendBulkEmails(
+    emails: (SendMailOptions & { body?: string })[]
+) {
     if (!emails.length) return [];
     const jobs = emails.map((emailData) => ({
         name: JOB_NAME,

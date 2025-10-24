@@ -1,4 +1,3 @@
-// client/src/components/phd/proposal/StaffProposalDeadline.tsx
 import React, { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -34,13 +33,13 @@ import {
 import NotifyProposalDeadlineDialog, {
   type ViewData,
 } from "./NotifyProposalDeadlineDialog";
+import { formatDateForInputLocal } from "@/lib/utils"; // Import the utility
 
 interface Semester {
   id: number;
   year: string;
   semesterNumber: number;
 }
-
 interface ProposalDeadline {
   id: number;
   studentSubmissionDate: string;
@@ -65,10 +64,13 @@ const DeadlineForm = ({
     drcReviewDate: "",
     dacReviewDate: "",
   });
+
   useEffect(() => {
     if (deadlineToEdit) {
+      // Use the local date formatter
       const format = (dateStr: string) =>
-        dateStr ? new Date(dateStr).toISOString().slice(0, 16) : "";
+        dateStr ? formatDateForInputLocal(new Date(dateStr)) : "";
+
       setDeadlines({
         studentSubmissionDate: format(deadlineToEdit.studentSubmissionDate),
         facultyReviewDate: format(deadlineToEdit.facultyReviewDate),
@@ -84,6 +86,7 @@ const DeadlineForm = ({
       });
     }
   }, [deadlineToEdit]);
+
   const mutation = useMutation({
     mutationFn: (
       newDeadlines: { id?: number; semesterId: number } & typeof deadlines
@@ -120,6 +123,7 @@ const DeadlineForm = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDeadlines((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-4">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -178,12 +182,14 @@ const DeadlineForm = ({
     </form>
   );
 };
+
 const StaffProposalDeadline: React.FC = () => {
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [editingDeadline, setEditingDeadline] =
     useState<ProposalDeadline | null>(null);
   const [viewData, setViewData] = useState<ViewData | null>(null);
+
   const { data: currentSemesterData, isLoading: isLoadingCurrentSemester } =
     useQuery({
       queryKey: ["current-phd-semester"],
@@ -194,7 +200,9 @@ const StaffProposalDeadline: React.FC = () => {
         return response.data;
       },
     });
+
   const currentSemesterId = currentSemesterData?.semester?.id;
+
   const { data: deadlinesData } = useQuery<{ deadlines: ProposalDeadline[] }>({
     queryKey: ["proposal-deadlines", currentSemesterId],
     queryFn: async () => {
@@ -206,6 +214,7 @@ const StaffProposalDeadline: React.FC = () => {
     },
     enabled: !!currentSemesterId,
   });
+
   const handleFormSuccess = (updatedDeadline: ProposalDeadline) => {
     setIsFormDialogOpen(false);
     if (currentSemesterData?.semester) {
@@ -217,14 +226,17 @@ const StaffProposalDeadline: React.FC = () => {
       setIsNotifyDialogOpen(true);
     }
   };
+
   const handleEdit = (deadline: ProposalDeadline) => {
     setEditingDeadline(deadline);
     setIsFormDialogOpen(true);
   };
+
   const handleAdd = () => {
     setEditingDeadline(null);
     setIsFormDialogOpen(true);
   };
+
   if (isLoadingCurrentSemester) {
     return (
       <div className="flex justify-center py-8">
@@ -232,6 +244,7 @@ const StaffProposalDeadline: React.FC = () => {
       </div>
     );
   }
+
   if (!currentSemesterData?.semester) {
     return (
       <Card>
@@ -246,7 +259,9 @@ const StaffProposalDeadline: React.FC = () => {
       </Card>
     );
   }
+
   const semester = currentSemesterData.semester;
+
   return (
     <>
       <div className="space-y-6">
@@ -254,7 +269,7 @@ const StaffProposalDeadline: React.FC = () => {
           <CardHeader>
             <CardTitle>Current Academic Semester</CardTitle>
             <CardDescription>
-              Deadlines will be set for:{semester.year}- Semester
+              Deadlines will be set for: {semester.year} - Semester{" "}
               {semester.semesterNumber}
             </CardDescription>
           </CardHeader>
@@ -295,7 +310,8 @@ const StaffProposalDeadline: React.FC = () => {
                   <TableHead>Supervisor Deadline</TableHead>
                   <TableHead>DRC Deadline</TableHead>
                   <TableHead>DAC Deadline</TableHead>
-                  <TableHead>Status</TableHead> <TableHead>Action</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -353,4 +369,5 @@ const StaffProposalDeadline: React.FC = () => {
     </>
   );
 };
+
 export default StaffProposalDeadline;

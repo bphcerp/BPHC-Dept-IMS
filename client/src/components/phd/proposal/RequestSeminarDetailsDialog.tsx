@@ -58,7 +58,6 @@ const bulkReminderSchema = z.object({
 });
 type BulkReminderPayload = z.infer<typeof bulkReminderSchema>;
 
-// Helper to get faculty names
 const getFacultyNames = async (
   emails: string[]
 ): Promise<Map<string, string | null>> => {
@@ -66,14 +65,14 @@ const getFacultyNames = async (
     return new Map();
   }
   try {
-    const res = await api.post<{ email: string; name: string | null }[]>(
+    const facultyRes = await api.post<{ email: string; name: string | null }[]>(
       "/phd/proposal/drcConvener/getBulkDetails",
       { emails }
     );
-    return new Map(res.data.map((f) => [f.email, f.name]));
-  } catch (error) {
-    console.error("Failed to fetch faculty names:", error);
-    return new Map(emails.map((email) => [email, email])); // Fallback to email
+    return new Map(facultyRes.data.map((f) => [f.email, f.name]));
+  } catch (facultyError) {
+    console.error("Failed to fetch faculty names:", facultyError);
+    return new Map(emails.map((email) => [email, email]));
   }
 };
 
@@ -91,21 +90,25 @@ const getRecipients = async (
   try {
     switch (firstStatus) {
       case "draft":
-      case "supervisor_revert": // Student is recipient
-      case "drc_revert": // Student is recipient
-      case "dac_revert": // Student is recipient
+      case "supervisor_revert":
+      case "drc_revert":
+      case "dac_revert":
         description = "Selected Student(s)";
         proposals.forEach((p) => {
-          emailsSet.add(p.student.email);
-          namesSet.add(p.student.name || p.student.email);
+          if (p.status === firstStatus) {
+            emailsSet.add(p.student.email);
+            namesSet.add(p.student.name || p.student.email);
+          }
         });
         break;
       case "supervisor_review":
         description = "Selected Supervisor(s)";
         const supervisorEmails = proposals
+          .filter((p) => p.status === firstStatus)
           .map((p) => p.supervisorEmail)
           .filter(Boolean);
         supervisorEmails.forEach((email) => emailsSet.add(email));
+
         const supervisorNameMap = await getFacultyNames(supervisorEmails);
         supervisorEmails.forEach((email) =>
           namesSet.add(supervisorNameMap.get(email) || email)
@@ -125,7 +128,11 @@ const getRecipients = async (
         description = "Pending DAC Member(s)";
         const pendingDacEmails = new Set<string>();
         const pendingDacNames = new Set<string>();
-        const proposalDetailsPromises = proposals.map((p) =>
+
+        const proposalsInDacReview = proposals.filter(
+          (p) => p.status === firstStatus
+        );
+        const proposalDetailsPromises = proposalsInDacReview.map((p) =>
           api.get(`/phd/proposal/drcConvener/viewProposal/${p.id}`)
         );
         const results = await Promise.all(proposalDetailsPromises);
@@ -155,6 +162,7 @@ const getRecipients = async (
       case "dac_accepted":
         description = "Selected Supervisor(s)";
         const seminarSupervisorEmails = proposals
+          .filter((p) => p.status === firstStatus)
           .map((p) => p.supervisorEmail)
           .filter(Boolean);
         seminarSupervisorEmails.forEach((email) => emailsSet.add(email));
@@ -211,6 +219,7 @@ const RequestSeminarDetailsDialog: React.FC<
       return "request_seminar_details";
     }
 
+    // type is "reminder"
     const firstStatus = proposals[0]?.status;
     if (firstStatus === "draft") return "reminder_student_draft";
     if (firstStatus === "supervisor_review")
@@ -225,7 +234,8 @@ const RequestSeminarDetailsDialog: React.FC<
       return "reminder_seminar_details";
     }
 
-    return "reminder_seminar_details"; // Fallback for reminder
+    // Fallback for reminder if no specific status matches
+    return "reminder_seminar_details";
   }, [type, proposals]);
 
   const template = useMemo(
@@ -260,28 +270,35 @@ const RequestSeminarDetailsDialog: React.FC<
     if (!isOpen || proposals.length === 0) return;
 
     const firstProposal = proposals[0];
-    const studentLink = `${FRONTEND_URL}/phd/phd-student/proposals`;
-    const supervisorLink = `${FRONTEND_URL}/phd/supervisor/proposal/${firstProposal.id}`;
-    const drcLink = `${FRONTEND_URL}/phd/drc-convenor/proposal-management/${firstProposal.id}`;
-    const dacLink = `${FRONTEND_URL}/phd/dac/proposals/${firstProposal.id}`;
 
-    // Determine the correct link based on the recipient
-    let link = studentLink; // Default
+    let link = FRONTEND_URL;
+    if (templateName.includes("student"))
+      link = `${FRONTEND_URL}/phd/phd-student/proposals`;
     if (
       templateName.includes("supervisor") ||
       templateName.includes("seminar_details")
     )
-      link = supervisorLink;
-    if (templateName.includes("drc")) link = drcLink;
-    if (templateName.includes("dac")) link = dacLink;
+      link = `${FRONTEND_URL}/phd/supervisor/proposal/`;
+    if (templateName.includes("drc"))
+      link = `${FRONTEND_URL}/phd/drc-convenor/proposal-management/`;
+    if (templateName.includes("dac"))
+      link = `${FRONTEND_URL}/phd/dac/proposals/`;
+
+    if (
+      proposals.length === 1 &&
+      !templateName.includes("draft") &&
+      !templateName.includes("review") // Don't append ID for generic review reminders
+    ) {
+      link = `${link}${firstProposal.id}`;
+    }
 
     const view = {
       supervisorName: "Supervisor",
-      studentName: firstProposal.student.name || "the student",
+      studentName: firstProposal.student.name || "Student",
       dacMemberName: "DAC Member",
       drcConvenerName: "DRC Convenor",
-      proposalTitle: firstProposal.title || "the proposal",
-      link: link, // Use the dynamically determined link
+      proposalTitle: firstProposal.title || "your proposal",
+      link: link,
     };
 
     if (template) {
@@ -308,11 +325,7 @@ const RequestSeminarDetailsDialog: React.FC<
           ? `Dear Supervisor,\n\nPlease set the seminar details for your student, ${
               firstProposal.student.name || "N/A"
             }.\n\nLink: ${view.link}`
-          : `Dear Recipient,\n\nThis is a reminder regarding the PhD proposal process for ${proposals
-              .map((p) => p.student.name || p.student.email)
-              .join(
-                ", "
-              )}.\n\nPlease log in to the portal to take the necessary action.`
+          : `Dear Recipient,\n\nThis is a reminder regarding the PhD proposal process.\n\nPlease log in to the portal to take the necessary action.`
       );
     }
   }, [template, templateName, proposals, type, isOpen]);
@@ -322,13 +335,13 @@ const RequestSeminarDetailsDialog: React.FC<
       return api.post(data.endpoint, data.payload);
     },
     onSuccess: (_, variables) => {
-      if (!(variables.payload.targetEmails && proposals.length > 1)) {
+      if (!(variables.payload.targetEmails && proposals.length > 0)) {
         toast.success(
           `${type === "request" ? "Request" : "Reminder"} sent successfully!`
         );
       }
       onSuccess();
-      if (!(variables.payload.targetEmails && proposals.length > 1)) {
+      if (!(variables.payload.targetEmails && proposals.length > 0)) {
         setIsOpen(false);
       }
     },
