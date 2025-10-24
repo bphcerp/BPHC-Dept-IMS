@@ -95,7 +95,11 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
 
         <Form {...form}>
           <form
-            onSubmit={() => void form.handleSubmit(handleSubmit)()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void form.handleSubmit(handleSubmit)(e);
+            }}
             className="space-y-4"
           >
             <FormField

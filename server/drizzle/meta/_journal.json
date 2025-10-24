@@ -547,6 +547,13 @@
       "when": 1761201697784,
       "tag": "0077_flowery_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1761316848809,
+      "tag": "0078_parched_lionheart",
+      "breakpoints": true
     }
   ]
 }
