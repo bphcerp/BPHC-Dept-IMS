@@ -1,5 +1,4 @@
-// client/src/views/Phd/DrcConvenor/ProposalManagement.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
@@ -28,6 +27,8 @@ import {
   BellRing,
   CheckCircle,
   Calendar,
+  Filter,
+  ArrowUpDown,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
@@ -37,6 +38,18 @@ import RequestSeminarDetailsDialog from "@/components/phd/proposal/RequestSemina
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
+import { phdSchemas } from "lib";
+import { getProposalStatusVariant, formatStatus } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { LoadingSpinner } from "@/components/ui/spinner"; // Assuming LoadingSpinner exists
 
 interface ProposalSemester {
   id: number;
@@ -45,15 +58,13 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: {
-    year: string;
-    semesterNumber: number;
-  };
+  semester: { year: string; semesterNumber: number };
 }
+
 interface ProposalListItem {
   id: number;
   title: string;
-  status: string;
+  status: (typeof phdSchemas.phdProposalStatuses)[number];
   updatedAt: string;
   supervisorEmail: string;
   student: {
@@ -62,6 +73,9 @@ interface ProposalListItem {
   };
   proposalSemester: ProposalSemester | null;
 }
+
+type SortField = "studentName" | "updatedAt";
+type SortDirection = "asc" | "desc";
 
 const DeadlinesCard = ({
   deadlines,
@@ -94,10 +108,14 @@ const DeadlinesCard = ({
             className="rounded-lg border border-primary bg-primary/10 p-3 shadow-md transition-all"
           >
             <p className="font-semibold text-muted-foreground">{label}</p>
-            <p className="mt-1">
+            <p className="mt-1 font-medium">
               {new Date(
                 deadlines[key as keyof ProposalSemester] as string
-              ).toLocaleDateString()}
+              ).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
             </p>
           </div>
         ))}
@@ -117,6 +135,10 @@ const DrcProposalManagement: React.FC = () => {
   const [proposalsForDialog, setProposalsForDialog] = useState<
     ProposalListItem[]
   >([]);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [sortField, setSortField] = useState<SortField>("updatedAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
@@ -135,7 +157,7 @@ const DrcProposalManagement: React.FC = () => {
   }, [semesters, selectedSemesterId]);
 
   const {
-    data: proposals,
+    data: proposals = [],
     isLoading,
     isError,
     error,
@@ -143,6 +165,7 @@ const DrcProposalManagement: React.FC = () => {
   } = useQuery({
     queryKey: ["drc-proposals", selectedSemesterId],
     queryFn: async () => {
+      if (!selectedSemesterId) return [];
       const response = await api.get<ProposalListItem[]>(
         `/phd/proposal/drcConvener/getProposals/${selectedSemesterId}`
       );
@@ -150,6 +173,46 @@ const DrcProposalManagement: React.FC = () => {
     },
     enabled: !!selectedSemesterId,
   });
+
+  const filteredAndSortedProposals = useMemo(() => {
+    let filtered = proposals;
+
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((p) => statusFilter.includes(p.status));
+    }
+
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.student.name?.toLowerCase().includes(lowerSearchTerm) ||
+          p.student.email?.toLowerCase().includes(lowerSearchTerm) || // Added email search
+          p.title.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+
+    return [...filtered].sort((a, b) => {
+      // Use spread to avoid mutating original data
+      let compareA: string | number | Date;
+      let compareB: string | number | Date;
+
+      if (sortField === "studentName") {
+        compareA = (a.student.name || a.student.email).toLowerCase();
+        compareB = (b.student.name || b.student.email).toLowerCase();
+      } else {
+        compareA = new Date(a.updatedAt);
+        compareB = new Date(b.updatedAt);
+      }
+
+      if (compareA < compareB) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (compareA > compareB) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [proposals, statusFilter, sortField, sortDirection, searchTerm]);
 
   const downloadNoticeMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
@@ -169,11 +232,11 @@ const DrcProposalManagement: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url); // Clean up blob URL
       toast.success("Seminar notice downloaded successfully.");
     },
     onError: () => toast.error("Failed to download notice."),
   });
-
   const downloadPackagesMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -189,12 +252,12 @@ const DrcProposalManagement: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url); // Clean up blob URL
       toast.success("Packages downloaded.");
       void refetch();
     },
     onError: () => toast.error("Failed to download packages."),
   });
-
   const finalizeProposalsMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post("/phd/proposal/drcConvener/finalizeProposals", { proposalIds }),
@@ -218,8 +281,14 @@ const DrcProposalManagement: React.FC = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = proposals?.map((p) => p.id) ?? [];
-      setSelectedProposalIds(allIds);
+      const visibleSelectableIds = filteredAndSortedProposals
+        .filter((p) =>
+          ["seminar_pending", "dac_accepted", "finalising_documents"].includes(
+            p.status
+          )
+        )
+        .map((p) => p.id);
+      setSelectedProposalIds(visibleSelectableIds);
     } else {
       setSelectedProposalIds([]);
     }
@@ -242,12 +311,25 @@ const DrcProposalManagement: React.FC = () => {
     }
   };
 
+  const openGeneralReminderDialog = () => {
+    const selected =
+      proposals?.filter((p) => selectedProposalIds.includes(p.id)) ?? [];
+    if (selected.length === 0) {
+      toast.info("Please select at least one proposal to send a reminder.");
+      return;
+    }
+    setProposalsForDialog(selected);
+    setIsReminderDialogOpen(true);
+  };
+
   const openReminderDialog = (proposal: ProposalListItem) => {
     setProposalsForDialog([proposal]);
     setIsReminderDialogOpen(true);
   };
 
-  const semesterDeadlines = proposals?.[0]?.proposalSemester;
+  const semesterDeadlines = proposals?.find(
+    (p) => p.proposalSemester
+  )?.proposalSemester;
   const getSelectedProposalsByStatus = (statuses: string[]) => {
     return (
       proposals?.filter(
@@ -256,10 +338,33 @@ const DrcProposalManagement: React.FC = () => {
     );
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const allStatuses = phdSchemas.phdProposalStatuses;
+  const selectableProposals = filteredAndSortedProposals.filter((p) =>
+    ["seminar_pending", "dac_accepted", "finalising_documents"].includes(
+      p.status
+    )
+  );
+
+  const isAllVisibleSelected =
+    selectableProposals.length > 0 &&
+    selectedProposalIds.length === selectableProposals.length &&
+    selectableProposals.every((p) => selectedProposalIds.includes(p.id));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="text-center">
+        <div>
+          {" "}
+          {/* Removed text-center */}
           <h1 className="text-3xl font-bold">PhD Proposal Management</h1>
           <p className="mt-2 text-gray-600">
             Monitor and manage all PhD proposals for the selected semester.
@@ -271,7 +376,9 @@ const DrcProposalManagement: React.FC = () => {
           </Link>
         </Button>
       </div>
+
       <ProposalStatusTimeline role="drc" />
+
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -283,16 +390,23 @@ const DrcProposalManagement: React.FC = () => {
         <CardContent>
           <ProposalSemesterSelector
             selectedSemesterId={selectedSemesterId}
-            onSemesterChange={setSelectedSemesterId}
+            onSemesterChange={(id) => {
+              setSelectedSemesterId(id);
+              setSelectedProposalIds([]);
+              setStatusFilter([]);
+              setSearchTerm("");
+            }}
           />
         </CardContent>
       </Card>
+
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="drcReviewDate"
         />
       )}
+
       <Alert>
         <Info className="h-4 w-4" />
         <AlertTitle>Action Required for Proposals</AlertTitle>
@@ -300,74 +414,150 @@ const DrcProposalManagement: React.FC = () => {
           To proceed with proposals marked as DAC ACCEPTED or SEMINAR PENDING,
           please select them from the table below and click the Request Seminar
           Details button. This will send a notification to the supervisor to
-          provide seminar details.
+          provide seminar details. Use the general reminder for other statuses.
         </AlertDescription>
       </Alert>
+
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <CardTitle>All Student Proposals</CardTitle>
               <CardDescription>
-                Select proposals to perform bulk actions.
+                Select proposals to perform bulk actions. Filter and sort as
+                needed.
               </CardDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={openRequestDialog}
-                disabled={
-                  getSelectedProposalsByStatus([
-                    "seminar_pending",
-                    "dac_accepted",
-                  ]).length === 0
-                }
-              >
-                <Send className="mr-2 h-4 w-4" /> Request Seminar Details (
-                {
-                  getSelectedProposalsByStatus([
-                    "seminar_pending",
-                    "dac_accepted",
-                  ]).length
-                }
-                )
-              </Button>
-              <Button
-                onClick={() =>
-                  downloadPackagesMutation.mutate(selectedProposalIds)
-                }
-                disabled={
-                  getSelectedProposalsByStatus(["finalising_documents"])
-                    .length === 0 || downloadPackagesMutation.isLoading
-                }
-              >
-                <Download className="mr-2 h-4 w-4" /> Download Forms (
-                {getSelectedProposalsByStatus(["finalising_documents"]).length})
-              </Button>
-              <Button
-                onClick={() =>
-                  finalizeProposalsMutation.mutate(selectedProposalIds)
-                }
-                disabled={
-                  getSelectedProposalsByStatus(["finalising_documents"])
-                    .length === 0 || finalizeProposalsMutation.isLoading
-                }
-              >
-                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Complete (
-                {getSelectedProposalsByStatus(["finalising_documents"]).length})
-              </Button>
-              <Button
-                onClick={() =>
-                  downloadNoticeMutation.mutate(selectedProposalIds)
-                }
-                disabled={
-                  selectedProposalIds.length === 0 ||
-                  downloadNoticeMutation.isLoading
-                }
-              >
-                <Download className="mr-2 h-4 w-4" /> Generate Notice (
-                {selectedProposalIds.length})
-              </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                placeholder="Search name, email, or title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-9 w-auto flex-grow md:w-[250px]"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="h-9">
+                    <Filter className="mr-2 h-4 w-4" />
+                    Status (
+                    {statusFilter.length > 0 ? statusFilter.length : "All"})
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {allStatuses.map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked
+                            ? [...prev, status]
+                            : prev.filter((s) => s !== status)
+                        );
+                      }}
+                    >
+                      {formatStatus(status)}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-center"
+                    onClick={() => setStatusFilter([])}
+                    disabled={statusFilter.length === 0}
+                  >
+                    Clear Filters
+                  </Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+            <Button
+              onClick={openRequestDialog}
+              disabled={
+                getSelectedProposalsByStatus([
+                  "seminar_pending",
+                  "dac_accepted",
+                ]).length === 0
+              }
+              size="sm"
+            >
+              <Send className="mr-2 h-4 w-4" /> Request Seminar Details (
+              {
+                getSelectedProposalsByStatus([
+                  "seminar_pending",
+                  "dac_accepted",
+                ]).length
+              }
+              )
+            </Button>
+            <Button
+              onClick={openGeneralReminderDialog}
+              disabled={selectedProposalIds.length === 0}
+              variant="outline"
+              size="sm"
+            >
+              <BellRing className="mr-2 h-4 w-4" /> Send General Reminder (
+              {selectedProposalIds.length})
+            </Button>
+            <Button
+              onClick={() =>
+                downloadPackagesMutation.mutate(selectedProposalIds)
+              }
+              disabled={
+                getSelectedProposalsByStatus(["finalising_documents"])
+                  .length === 0 || downloadPackagesMutation.isLoading
+              }
+              variant="outline"
+              size="sm"
+            >
+              {downloadPackagesMutation.isLoading ? (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}{" "}
+              Download Forms (
+              {getSelectedProposalsByStatus(["finalising_documents"]).length})
+            </Button>
+            <Button
+              onClick={() =>
+                finalizeProposalsMutation.mutate(selectedProposalIds)
+              }
+              disabled={
+                getSelectedProposalsByStatus(["finalising_documents"])
+                  .length === 0 || finalizeProposalsMutation.isLoading
+              }
+              variant="outline"
+              size="sm"
+            >
+              {finalizeProposalsMutation.isLoading ? (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              ) : (
+                <CheckCircle className="mr-2 h-4 w-4" />
+              )}{" "}
+              Mark as Complete (
+              {getSelectedProposalsByStatus(["finalising_documents"]).length})
+            </Button>
+            <Button
+              onClick={() => downloadNoticeMutation.mutate(selectedProposalIds)}
+              disabled={
+                selectedProposalIds.length === 0 ||
+                downloadNoticeMutation.isLoading
+              }
+              variant="outline"
+              size="sm"
+            >
+              {downloadNoticeMutation.isLoading ? (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}{" "}
+              Generate Notice ({selectedProposalIds.length})
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -377,17 +567,33 @@ const DrcProposalManagement: React.FC = () => {
                 <TableHead className="w-12">
                   <Checkbox
                     onCheckedChange={handleSelectAll}
-                    checked={
-                      proposals?.length
-                        ? selectedProposalIds.length === proposals.length
-                        : false
-                    }
-                    disabled={!proposals || proposals.length === 0}
+                    checked={isAllVisibleSelected}
+                    disabled={selectableProposals.length === 0}
                   />
                 </TableHead>
-                <TableHead>Student</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("studentName")}
+                    className="px-1"
+                  >
+                    Student
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSort("updatedAt")}
+                    className="px-1"
+                  >
+                    Status / Updated
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -403,79 +609,93 @@ const DrcProposalManagement: React.FC = () => {
                       ?.data || "Failed to load proposals"}
                   </TableCell>
                 </TableRow>
-              ) : isLoading || !proposals || proposals.length === 0 ? (
+              ) : isLoading || filteredAndSortedProposals.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
                     <div className="py-8 text-center">
                       <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                       <h3 className="mb-2 text-lg font-medium">
                         {selectedSemesterId
-                          ? "No proposals found for this semester."
-                          : "Please select a semester to view proposals."}
+                          ? "No proposals match the current filters."
+                          : "Please select a semester."}
                       </h3>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                proposals.map((proposal) => (
-                  <TableRow key={proposal.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedProposalIds.includes(proposal.id)}
-                        onCheckedChange={(checked) =>
-                          handleSelectProposal(proposal.id, checked as boolean)
-                        }
-                        disabled={
-                          ![
-                            "seminar_pending",
-                            "dac_accepted",
-                            "finalising_documents",
-                          ].includes(proposal.status)
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">{proposal.student.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {proposal.student.email}
-                      </div>
-                    </TableCell>
-                    <TableCell>{proposal.title}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {proposal.status.replace(/_/g, " ").toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="flex justify-end gap-2 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          navigate(
-                            `/phd/drc-convenor/proposal-management/${proposal.id}`
-                          )
-                        }
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {(proposal.status === "seminar_pending" ||
-                        proposal.status === "dac_accepted") && (
+                filteredAndSortedProposals.map((proposal) => {
+                  const canSelect = [
+                    "seminar_pending",
+                    "dac_accepted",
+                    "finalising_documents",
+                  ].includes(proposal.status);
+                  return (
+                    <TableRow key={proposal.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedProposalIds.includes(proposal.id)}
+                          onCheckedChange={(checked) =>
+                            handleSelectProposal(
+                              proposal.id,
+                              checked as boolean
+                            )
+                          }
+                          disabled={!canSelect}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {proposal.student.name ?? proposal.student.email}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {proposal.student.email}
+                        </div>
+                      </TableCell>
+                      <TableCell>{proposal.title}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={getProposalStatusVariant(proposal.status)}
+                        >
+                          {formatStatus(proposal.status)}
+                        </Badge>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {new Date(proposal.updatedAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell className="flex justify-end gap-2 text-right">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openReminderDialog(proposal)}
+                          onClick={() =>
+                            navigate(
+                              `/phd/drc-convenor/proposal-management/${proposal.id}`
+                            )
+                          }
+                          title="View Details"
                         >
-                          <BellRing className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                        {(proposal.status === "seminar_pending" ||
+                          proposal.status === "dac_accepted") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openReminderDialog(proposal)}
+                            title="Send Seminar Details Reminder"
+                          >
+                            <BellRing className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
       {isRequestDialogOpen && (
         <RequestSeminarDetailsDialog
           isOpen={isRequestDialogOpen}
@@ -488,16 +708,20 @@ const DrcProposalManagement: React.FC = () => {
           }}
         />
       )}
+
       {isReminderDialogOpen && (
         <RequestSeminarDetailsDialog
           isOpen={isReminderDialogOpen}
           setIsOpen={setIsReminderDialogOpen}
           proposals={proposalsForDialog}
           type="reminder"
-          onSuccess={() => void refetch()}
+          onSuccess={() => {
+            void refetch();
+          }}
         />
       )}
     </div>
   );
 };
+
 export default DrcProposalManagement;
