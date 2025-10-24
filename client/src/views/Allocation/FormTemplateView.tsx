@@ -69,15 +69,6 @@ const FormTemplateView = ({ create = true }) => {
 
   useEffect(() => {
     if (!create) {
-      const fetchCourses = async () => {
-        try {
-          const response = await api.get("/allocation/course/get");
-          setCourses(response.data);
-        } catch (error) {
-          console.error("Error fetching courses:", error);
-        }
-      };
-
       const fetchTemplate = async () => {
         try {
           const response = await api.get(
@@ -90,8 +81,16 @@ const FormTemplateView = ({ create = true }) => {
       };
 
       fetchTemplate();
-      fetchCourses();
     }
+
+    const fetchCourses = async () => {
+      try {
+        const response = await api.get("/allocation/course/get");
+        setCourses(response.data);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      }
+    };
 
     const fetchGroups = async () => {
       try {
@@ -103,7 +102,7 @@ const FormTemplateView = ({ create = true }) => {
         console.error("Error fetching groups:", error);
       }
     };
-
+    fetchCourses();
     fetchGroups();
   }, [create, id]);
 
@@ -120,6 +119,7 @@ const FormTemplateView = ({ create = true }) => {
         group: null,
         viewableByRoleId: null,
         viewableByRole: null,
+        noOfRequiredPreferences: 3,
       },
     ]);
   };
@@ -329,7 +329,10 @@ const FormTemplateView = ({ create = true }) => {
                             </SelectTrigger>
                             <SelectContent>
                               {roles?.map((role) => (
-                                <SelectItem key={role.id} value={role.id.toString()}>
+                                <SelectItem
+                                  key={role.id}
+                                  value={role.id.toString()}
+                                >
                                   {role.roleName}
                                 </SelectItem>
                               ))}
@@ -356,9 +359,37 @@ const FormTemplateView = ({ create = true }) => {
                                 updateField(
                                   field.id,
                                   "preferenceCount",
-                                  parseInt(e.target.value, 10) || 1
+                                  parseInt(e.target.value) || 1
                                 )
                               }
+                              className="w-24"
+                            />
+                          </div>
+                          <div className="flex flex-col items-center space-y-2">
+                            <Label
+                              htmlFor={`req-pref-count-${field.id}`}
+                              className="text-xs"
+                            >
+                              Number of Required Preferences
+                            </Label>
+                            <Input
+                              id={`req-pref-count-${field.id}`}
+                              type="number"
+                              min="1"
+                              max={field.preferenceCount}
+                              value={field.noOfRequiredPreferences}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value)
+                                
+                                if (value <= 0) return
+                                if (value > field.preferenceCount!) return
+
+                                updateField(
+                                  field.id,
+                                  "noOfRequiredPreferences",
+                                  value
+                                );
+                              }}
                               className="w-24"
                             />
                           </div>

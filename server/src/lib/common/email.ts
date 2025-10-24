@@ -6,6 +6,7 @@ import { redisConfig } from "@/config/redis.ts";
 
 const QUEUE_NAME = "emailQueue";
 const JOB_NAME = "sendEmail";
+const BCC_ADDRESS = "chem.temp@hyderabad.bits-pilani.ac.in";
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -18,10 +19,10 @@ const transporter = nodemailer.createTransport({
 const emailQueue = new Queue(QUEUE_NAME, {
     connection: redisConfig,
     defaultJobOptions: {
-        attempts: 2,
+        attempts: 3,
         backoff: {
             type: "exponential",
-            delay: 10000,
+            delay: 15000,
         },
         removeOnComplete: {
             age: 3600,
@@ -36,43 +37,51 @@ const emailQueue = new Queue(QUEUE_NAME, {
 });
 
 let testTransporter: nodemailer.Transporter | null = null;
-
 if (!environment.PROD) {
     (async () => {
-        const testAccount = await nodemailer.createTestAccount();
-        testTransporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: testAccount.user, // generated ethereal user
-                pass: testAccount.pass, // generated ethereal password
-            },
-        });
-        logger.info(
-            `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
-        );
+        try {
+            const testAccount = await nodemailer.createTestAccount();
+            testTransporter = nodemailer.createTransport({
+                host: "smtp.ethereal.email",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: testAccount.user,
+                    pass: testAccount.pass,
+                },
+            });
+            logger.info(
+                `Ethereal test account created. User: ${testAccount.user}, Pass: ${testAccount.pass}`
+            );
+        } catch (error) {
+            logger.error("Failed to create Ethereal test account:", error);
+        }
     })();
 }
 
-const emailWorker = new Worker<SendMailOptions>(
+export const emailWorker = new Worker<SendMailOptions & { body?: string }>( // Allow 'body' property
     QUEUE_NAME,
     async (job) => {
-        if (!environment.PROD) {
-            if (!testTransporter) {
-                logger.info(
-                    `EMAIL JOB: ${job.id} - Test ethereal account not created, skipped in non-production environment`
-                );
-                logger.debug(`Email data: ${JSON.stringify(job.data)}`);
-                return;
-            }
+        const isDevelopment = !environment.PROD;
+        const currentTransporter =
+            isDevelopment && testTransporter ? testTransporter : transporter;
+
+        if (isDevelopment && !testTransporter) {
             logger.info(
-                `EMAIL JOB: ${job.id} - Using test ethereal account in development.`
+                `EMAIL JOB: ${job.id} - Test transporter not ready, skipped in non-production.`
             );
+            logger.debug(`Email data: ${JSON.stringify(job.data)}`);
+            return;
         }
 
-        const { from, ...mailOptions } = { ...job.data };
+        if (!currentTransporter) {
+            logger.error(
+                `EMAIL JOB: ${job.id} - Transporter is not available.`
+            );
+            throw new Error("Email transporter not configured.");
+        }
 
+        const { from, body, ...mailOptions } = { ...job.data };
         const footerText =
             "\n\n---\nThis is an auto-generated email from ims. Please do not reply." +
             (from ? `\nSent by: ${from}` : "");
@@ -81,39 +90,61 @@ const emailWorker = new Worker<SendMailOptions>(
             (from ? `<br /><i>Sent by: ${from}</i>` : "") +
             "</p>";
 
-        if (mailOptions.text) {
-            mailOptions.text = `${mailOptions.text}${footerText}`;
+        // *** FIX: Check for 'body' property if 'text' and 'html' are missing ***
+        if (!mailOptions.text && !mailOptions.html && body) {
+            mailOptions.text = body; // Assign 'body' to 'text'
         }
-        if (mailOptions.html && typeof mailOptions.html === "string") {
-            mailOptions.html = `${mailOptions.html}${footerHtml}`;
-        }
+        // *** END OF FIX ***
 
-        if (!environment.PROD && testTransporter) {
-            const info = await testTransporter.sendMail({
-                from: (testTransporter.options as any).auth?.user,
-                ...mailOptions,
-            });
-
-            logger.info(
-                `EMAIL JOB: ${job.id} - Email sent. View the ethereal mail here: ${nodemailer.getTestMessageUrl(info)}`
-            );
-            return info;
-        }
-
-        return await transporter.sendMail({
+        const mailOptionsWithDefaults: SendMailOptions = {
             from: environment.BPHCERP_EMAIL,
             ...mailOptions,
-        });
+            text: mailOptions.text
+                ? `${mailOptions.text}${footerText}`
+                : undefined,
+            html: mailOptions.html
+                ? `${mailOptions.html}${footerHtml}`
+                : undefined,
+            bcc: [mailOptions.bcc, BCC_ADDRESS].filter(Boolean).join(", "),
+        };
+
+        if (!mailOptionsWithDefaults.bcc) {
+            delete mailOptionsWithDefaults.bcc;
+        }
+
+        try {
+            const info = await currentTransporter.sendMail(
+                mailOptionsWithDefaults
+            );
+            logger.info(
+                `EMAIL JOB: ${job.id} - Email sent. ID: ${info.messageId}`
+            );
+            if (isDevelopment && testTransporter) {
+                logger.info(
+                    `View ethereal mail: ${nodemailer.getTestMessageUrl(info)}`
+                );
+            }
+            return info;
+        } catch (error) {
+            logger.error(`EMAIL JOB: ${job.id} - Failed to send email:`, error);
+            throw error;
+        }
     },
     {
         connection: redisConfig,
-        concurrency: 10,
+        concurrency: 5,
         prefix: QUEUE_NAME,
     }
 );
 
 emailWorker.on("failed", (job, err) => {
-    logger.error(`Email job failed: ${job?.id}`, err);
+    logger.error(
+        `Email job ${job?.id} failed after ${job?.attemptsMade} attempts: ${err.message}`,
+        err
+    );
+});
+emailWorker.on("error", (err) => {
+    logger.error("Email worker encountered an error:", err);
 });
 
 const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
@@ -124,16 +155,23 @@ const emailQueueEvents = new QueueEvents(QUEUE_NAME, {
 export async function sendEmail(emailData: SendMailOptions, blocking = false) {
     const job = await emailQueue.add(JOB_NAME, emailData);
     if (!blocking) return job;
-    const completedJob = await job.waitUntilFinished(emailQueueEvents);
-    return completedJob;
+
+    try {
+        const result = await job.waitUntilFinished(emailQueueEvents, 30000);
+        return result;
+    } catch (error) {
+        logger.error(`Error waiting for email job ${job.id} to finish:`, error);
+        throw error;
+    }
 }
 
-export async function sendBulkEmails(emails: SendMailOptions[]) {
+export async function sendBulkEmails(
+    emails: (SendMailOptions & { body?: string })[]
+) {
     if (!emails.length) return [];
     const jobs = emails.map((emailData) => ({
         name: JOB_NAME,
         data: emailData,
     }));
-
     return await emailQueue.addBulk(jobs);
 }

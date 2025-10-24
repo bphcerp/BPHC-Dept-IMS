@@ -133,7 +133,8 @@ export const allPermissions = {
     "grades:supervisor:view": "Supervisors can view their students and grades",
     "grades:supervisor:save": "Supervisors can save/update student grades",
     "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
-    "grades:instructor:view": "Instructors can view their assigned students and grades",
+    "grades:instructor:view":
+        "Instructors can view their assigned students and grades",
     "grades:instructor:save": "Instructors can save/update student grades",
     "grades:assign": "Assign instructors to students",
     "grades:notifications:send": "Send grade notifications to instructors",
@@ -293,6 +294,8 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
     "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/sendBulkReminder": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/getBulkDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
     "/phd/proposal/drcConvener/finalizeDac": "phd:drc:proposal",
     "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
@@ -316,6 +319,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
     "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
     "/phd/proposal/supervisor/getAvailableSlots": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetailsCustom": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
@@ -494,7 +498,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/allocation/update": "allocation:write",
     "/allocation/allocation/getStatus": "allocation:write",
 
-
     "/allocation/course/get": "allocation:courses:view",
     "/allocation/course/getAll": "allocation:courses:view",
     "/allocation/course/create": "allocation:courses:write",
@@ -514,10 +517,12 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/delete": "allocation:builder:template:write",
     "/allocation/builder/template/get": "allocation:builder:template:view",
     "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
+    "/allocation/builder/form/delete": "allocation:builder:form:write",
     "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":

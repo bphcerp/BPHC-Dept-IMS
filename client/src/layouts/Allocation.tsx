@@ -38,12 +38,16 @@ const AllocationLayout = () => {
                 url: "/allocation/overview",
                 requiredPermissions: ["allocation:write"],
               },
-              {
-                title: "Matrix",
-                icon: <Grid3X3Icon />,
-                url: "/allocation/creditmatrix",
-                requiredPermissions: ["allocation:write"],
-              },
+              ...(currentSemester?.allocationStatus === "inAllocation"
+                ? [
+                    {
+                      title: "Matrix",
+                      icon: <Grid3X3Icon />,
+                      url: "/allocation/creditmatrix",
+                      requiredPermissions: ["allocation:write"],
+                    },
+                  ]
+                : []),
               {
                 title: "Courses",
                 icon: <DatabaseIcon />,
@@ -70,31 +74,37 @@ const AllocationLayout = () => {
               },
             ],
           },
-          {
-            title: "Course Allocation",
-            items: [
-              {
-                title: "Summary",
-                icon: <TableOfContentsIcon />,
-                url: "/allocation/summary",
-                requiredPermissions: [
-                  currentSemester?.summaryHidden
-                    ? "allocation:write"
-                    : "allocation:summary:view",
-                ],
-              },
-              ...(currentSemester?.allocationStatus === "formCollection"
-                ? [
+          ...(!!currentSemester
+            ? [
+                {
+                  title: "Course Allocation",
+                  items: [
                     {
-                      title: "Submit Your Preferences",
-                      icon: <SendIcon />,
-                      url: `/allocation/forms/${currentSemester.formId}/submit`,
-                      requiredPermissions: ["allocation:form:response:submit"],
+                      title: "Summary",
+                      icon: <TableOfContentsIcon />,
+                      url: "/allocation/summary",
+                      requiredPermissions: [
+                        currentSemester?.summaryHidden
+                          ? "allocation:write"
+                          : "allocation:summary:view",
+                      ],
                     },
-                  ]
-                : []),
-            ],
-          },
+                    ...(currentSemester?.allocationStatus === "formCollection"
+                      ? [
+                          {
+                            title: "Submit Your Preferences",
+                            icon: <SendIcon />,
+                            url: `/allocation/submit`,
+                            requiredPermissions: [
+                              "allocation:form:response:submit",
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+            : []),
           {
             title: "Forms",
             items: [

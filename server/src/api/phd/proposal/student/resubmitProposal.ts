@@ -1,4 +1,3 @@
-// server/src/api/phd/proposal/student/resubmitProposal.ts
 import db from "@/config/db/index.ts";
 import {
     phdProposals,
@@ -7,7 +6,7 @@ import {
 } from "@/config/db/schema/phd.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import { pdfUpload } from "@/config/multer.ts";
+import { pdfUpload, pdfLimits } from "@/config/multer.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
@@ -16,8 +15,38 @@ import multer from "multer";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { eq, and } from "drizzle-orm";
+import env from "@/config/environment.ts";
+import logger from "@/config/logger.ts";
+import { z, ZodError } from "zod";
+import { fromError } from "zod-validation-error";
 
 const router = express.Router();
+
+// Local schema override to allow empty/null names from client
+const resubmitSchema = phdSchemas.phdProposalSubmissionSchema
+    .omit({ proposalCycleId: true })
+    .extend({
+        externalCoSupervisors: z.preprocess(
+            (val) => {
+                if (typeof val === "string") {
+                    try {
+                        return JSON.parse(val);
+                    } catch {
+                        return [];
+                    }
+                }
+                return val;
+            },
+            z
+                .array(
+                    z.object({
+                        name: z.string().optional(), // Allow name to be optional or empty
+                        email: z.string().email(),
+                    })
+                )
+                .optional()
+        ),
+    });
 
 router.post(
     "/:id",
@@ -28,16 +57,86 @@ router.post(
             res,
             (err) => {
                 if (err instanceof multer.MulterError) {
-                    throw new HttpError(HttpCode.BAD_REQUEST, err.message);
+                    logger.error(
+                        `Multer error for proposal ${req.params.id}: ${err.message}`,
+                        { code: err.code, field: err.field }
+                    );
+                    let userMessage = "File upload error.";
+                    if (err.code === "LIMIT_FILE_SIZE") {
+                        userMessage = `File too large. Maximum size is ${
+                            pdfLimits?.fileSize
+                                ? (pdfLimits.fileSize / 1024 / 1024).toFixed(
+                                      1
+                                  ) + "MB"
+                                : "unknown"
+                        }.`;
+                    } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
+                        userMessage = `Unexpected file field: ${err.field}. Please check uploaded files.`;
+                    }
+                    return next(
+                        new HttpError(HttpCode.BAD_REQUEST, userMessage)
+                    );
+                } else if (err) {
+                    logger.error(
+                        `Non-multer error during file upload for proposal ${req.params.id}:`,
+                        err
+                    );
+                    return next(
+                        new HttpError(
+                            HttpCode.INTERNAL_SERVER_ERROR,
+                            "An unexpected error occurred during file upload."
+                        )
+                    );
                 }
-                next(err);
+                next();
             }
         )
     ),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req, res, next) => {
         const proposalId = parseInt(req.params.id);
         if (isNaN(proposalId)) {
-            throw new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID");
+            return next(
+                new HttpError(HttpCode.BAD_REQUEST, "Invalid proposal ID")
+            );
+        }
+
+        logger.info(`Received resubmit request for proposal ID: ${proposalId}`);
+        logger.debug("Raw req.body:", req.body);
+        if (req.files) {
+            logger.debug("Received files:", Object.keys(req.files));
+        } else {
+            logger.debug("No files received in req.files");
+        }
+
+        let parsedBody;
+        try {
+            // Use the local, more lenient schema
+            parsedBody = resubmitSchema.parse(req.body);
+        } catch (error) {
+            if (error instanceof ZodError) {
+                const validationError = fromError(error);
+                logger.error(
+                    `Zod validation failed for proposal ${proposalId}: ${validationError.message}`,
+                    error.issues
+                );
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        `Validation Error: ${validationError.message}`
+                    )
+                );
+            } else {
+                logger.error(
+                    `Unexpected error during body parsing for proposal ${proposalId}:`,
+                    error
+                );
+                return next(
+                    new HttpError(
+                        HttpCode.INTERNAL_SERVER_ERROR,
+                        "Error processing request data."
+                    )
+                );
+            }
         }
 
         const {
@@ -47,9 +146,7 @@ router.post(
             submissionType,
             internalCoSupervisors,
             externalCoSupervisors,
-        } = phdSchemas.phdProposalSubmissionSchema
-            .omit({ proposalCycleId: true })
-            .parse(req.body);
+        } = parsedBody;
 
         const userEmail = req.user!.email;
         let supervisorEmail: string | null = null;
@@ -57,9 +154,11 @@ router.post(
         let facultyReviewDate: Date | null = null;
 
         if (submissionType === "final" && !declaration) {
-            throw new HttpError(
-                HttpCode.BAD_REQUEST,
-                "You must accept the declaration to submit."
+            return next(
+                new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "You must accept the declaration to submit."
+                )
             );
         }
 
@@ -82,27 +181,31 @@ router.post(
                 );
             }
 
-            if (
-                new Date(proposal.proposalSemester.studentSubmissionDate) <
-                new Date()
-            ) {
-                throw new HttpError(
-                    HttpCode.FORBIDDEN,
-                    "The resubmission deadline for this cycle has passed."
-                );
-            }
-
             const allowedStatuses = [
                 "draft",
                 "supervisor_revert",
                 "drc_revert",
                 "dac_revert",
             ];
+            // Do not allow submission if status is 'draft_expired'
             if (!allowedStatuses.includes(proposal.status)) {
                 throw new HttpError(
                     HttpCode.BAD_REQUEST,
-                    "This proposal cannot be resubmitted at its current stage."
+                    "This proposal cannot be resubmitted at its current stage. It may be expired or already processed."
                 );
+            }
+
+            // **FIX**: Deadline check only for 'draft' status. Reverts are allowed.
+            if (proposal.status === "draft") {
+                if (
+                    new Date(proposal.proposalSemester.studentSubmissionDate) <
+                    new Date()
+                ) {
+                    throw new HttpError(
+                        HttpCode.FORBIDDEN,
+                        "The submission deadline for this cycle has passed."
+                    );
+                }
             }
 
             supervisorEmail = proposal.supervisorEmail;
@@ -141,14 +244,21 @@ router.post(
                     ] = file.id;
                 });
             }
+
             if (proposal.status === "dac_revert") {
                 await tx
                     .delete(phdProposalDacReviews)
                     .where(eq(phdProposalDacReviews.proposalId, proposalId));
             }
 
-            const nextStatus =
-                submissionType === "draft" ? "draft" : "supervisor_review";
+            let nextStatus: (typeof phdSchemas.phdProposalStatuses)[number];
+
+            if (submissionType === "final") {
+                nextStatus = "supervisor_review";
+            } else {
+                nextStatus =
+                    proposal.status === "draft" ? "draft" : proposal.status;
+            }
 
             await tx
                 .update(phdProposals)
@@ -172,7 +282,10 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile ??
                         proposal.outsideSupervisorBiodataFileId,
                     status: nextStatus,
-                    comments: null,
+                    comments:
+                        nextStatus === "supervisor_review"
+                            ? null
+                            : proposal.comments,
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
@@ -190,13 +303,20 @@ router.post(
                     }))
                 );
             }
+
+            // **FIX**: Filter out externals with empty/null names
             if (externalCoSupervisors) {
                 coSupervisorsToInsert.push(
-                    ...externalCoSupervisors.map((ext) => ({
-                        proposalId,
-                        coSupervisorEmail: ext.email,
-                        coSupervisorName: ext.name,
-                    }))
+                    ...externalCoSupervisors
+                        .filter(
+                            (ext) =>
+                                ext.name && ext.name.trim() !== "" && ext.email
+                        )
+                        .map((ext) => ({
+                            proposalId,
+                            coSupervisorEmail: ext.email,
+                            coSupervisorName: ext.name,
+                        }))
                 );
             }
             if (coSupervisorsToInsert.length > 0) {
@@ -205,14 +325,16 @@ router.post(
                     .values(coSupervisorsToInsert);
             }
 
-            await completeTodo(
-                {
-                    module: modules[3],
-                    completionEvent: `proposal:student-resubmit:${proposalId}`,
-                    assignedTo: userEmail,
-                },
-                tx
-            );
+            if (submissionType === "final") {
+                await completeTodo(
+                    {
+                        module: modules[3],
+                        completionEvent: `proposal:student-resubmit:${proposalId}`,
+                        assignedTo: userEmail,
+                    },
+                    tx
+                );
+            }
         });
 
         if (supervisorEmail && submissionType === "final") {
@@ -220,8 +342,10 @@ router.post(
                 {
                     assignedTo: supervisorEmail,
                     createdBy: userEmail,
-                    title: `Resubmitted PhD Proposal for ${studentName}`,
-                    description: `Your student, ${studentName}, has resubmitted their PhD proposal for your review.`,
+                    title: `Resubmitted PhD Proposal for ${studentName || userEmail}`,
+                    description: `Your student, ${
+                        studentName || userEmail
+                    }, has resubmitted their PhD proposal titled "${title}" for your review.`,
                     module: modules[3],
                     completionEvent: `proposal:supervisor-review:${proposalId}`,
                     link: `/phd/supervisor/proposal/${proposalId}`,
@@ -230,13 +354,21 @@ router.post(
             ]);
             await sendEmail({
                 to: supervisorEmail,
-                subject: `Resubmitted PhD Proposal from ${studentName}`,
-                text: `Dear Supervisor,\n\nYour student, ${studentName}, has resubmitted their PhD proposal titled "${title}".\n\nPlease log in to the portal to review the changes.`,
+                subject: `Resubmitted PhD Proposal from ${studentName || userEmail}`,
+                text: `Dear Supervisor,\n\nYour student, ${
+                    studentName || userEmail
+                }, has resubmitted their PhD proposal titled "${title}".\n\nPlease log in to the portal (${
+                    env.FRONTEND_URL
+                }) to review the changes.`,
             });
         }
         res.status(200).send({
             success: true,
-            message: `Proposal ${submissionType === "draft" ? "draft saved" : "resubmitted successfully"}.`,
+            message: `Proposal ${
+                submissionType === "draft"
+                    ? "draft saved"
+                    : "resubmitted successfully"
+            }.`,
         });
     })
 );

@@ -100,11 +100,11 @@ const DrcViewProposal: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p>
-                This proposal is currently at the 
+                This proposal is currently at the
                 <strong>
                   {proposal.status.replace(/_/g, " ").toUpperCase()}
                 </strong>
-                 stage and does not require your direct action on this page.
+                stage and does not require your direct action on this page.
                 Please use the main dashboard for bulk actions.
               </p>
             </CardContent>
@@ -122,6 +122,10 @@ const DrcViewProposal: React.FC = () => {
           <div className="pt-2 text-sm text-muted-foreground">
             <p>
               Submitted by: {proposal.student.name} ({proposal.student.email})
+            </p>
+            <p>
+              Supervisor: {proposal.supervisor?.name ?? "N/A"} (
+              {proposal.supervisor?.email ?? "N/A"})
             </p>
             <div className="mt-1 flex items-center gap-2">
               <span>Status:</span>

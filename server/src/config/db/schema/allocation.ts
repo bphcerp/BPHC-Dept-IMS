@@ -8,6 +8,7 @@ import {
     unique,
     index,
     boolean,
+    primaryKey,
 } from "drizzle-orm/pg-core";
 import { faculty, users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
@@ -64,7 +65,7 @@ export const allocationSection = pgTable(
             .notNull()
             .references(() => masterAllocation.id, { onDelete: "cascade" }),
         createdAt: timestamp("created_at").notNull().defaultNow(),
-        timetableRoomId: text("td_room_id")
+        timetableRoomId: text("td_room_id"),
     },
     (table) => [index().on(table.masterId)]
 );
@@ -106,9 +107,6 @@ export const course = pgTable("allocation_course", {
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
-    groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
-        onDelete: "set null",
-    }),
 });
 
 export const semester = pgTable(
@@ -154,3 +152,20 @@ export const allocationCourseGroup = pgTable("allocation_course_group", {
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
+
+export const allocationCourseGroupMapping = pgTable(
+    "allocation_course_group_course_mapping",
+    {
+        courseCode: text("course_code")
+            .notNull()
+            .references(() => course.code),
+        groupId: uuid("group_id")
+            .notNull()
+            .references(() => allocationCourseGroup.id),
+    },
+    (t) => [
+        primaryKey({
+            columns: [t.courseCode, t.groupId],
+        }),
+    ]
+);

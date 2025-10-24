@@ -18,8 +18,6 @@ import {
 } from "node_modules/lib/src/types/allocation";
 import { Controller, FieldValues, UseFormReturn } from "react-hook-form";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import api from "@/lib/axios-instance";
 import { Skeleton } from "../ui/skeleton";
 import { Role } from "../admin/RoleList";
 
@@ -38,29 +36,24 @@ const formatPreferenceType = (
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
 };
 
-const fetchCourses = async () => {
-  const response = await api.get<Course[]>("/allocation/course/get");
-  return response.data;
-};
-
 export const FormTemplateFieldComponent = ({
   field,
   create,
   courses,
-  preview = false,
+  disableInformation = false,
   form,
 }: {
   field: AllocationClientField;
   create: boolean;
   courses: Course[];
-  preview?: boolean;
+  disableInformation?: boolean
   form?: UseFormReturn<FieldValues, any, undefined>;
 }) => {
-  const { data: allCourses } = useQuery(["courses"], fetchCourses);
-
   const filteredCourses = field.groupId
-    ? allCourses?.filter((course: Course) => course.groupId === field.groupId)
-    : allCourses;
+    ? courses?.filter((course: Course) =>
+        course.groups?.some((group) => group.id === field.groupId)
+      )
+    : courses;
 
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
@@ -110,7 +103,7 @@ export const FormTemplateFieldComponent = ({
               %
             </span>
           </div>
-          {(!form || create) && !!field.viewableByRole && (
+          {(!form || create) && !!field.viewableByRole && !disableInformation && (
             <span className="text-xs text-destructive">
               This field will not be visible to members without the "
               {field.viewableByRole.roleName}" role
@@ -130,6 +123,7 @@ export const FormTemplateFieldComponent = ({
                     <Label>
                       Preference {i + 1} (
                       {formatPreferenceType(field.preferenceType)})
+                      { (i < field.noOfRequiredPreferences!) && <span className="text-red-500 text-lg">*</span> }
                     </Label>
                     {form ? (
                       <>
@@ -137,7 +131,7 @@ export const FormTemplateFieldComponent = ({
                           name={`${field.id}_preference_${i}`}
                           control={form.control}
                           rules={{
-                            required: "Please select a course",
+                            required: (!!field.noOfRequiredPreferences && i < field.noOfRequiredPreferences) ? "Please select a course" : false,
                           }}
                           render={({ field: controllerField }) => (
                             <Select
@@ -181,7 +175,7 @@ export const FormTemplateFieldComponent = ({
                     ) : (
                       <Select
                         value={
-                          courses.find(
+                          filteredCourses.find(
                             (c) => c.code === field.preferences?.[i]?.courseCode
                           )?.code || ""
                         }
@@ -229,7 +223,7 @@ export const FormTemplateFieldComponent = ({
               </div>
             ))}
           </div>
-          {(!form || create) && !preview && (
+          {(!form || create) && !disableInformation && (
             <div className="flex w-fit flex-col space-y-2 rounded-sm border p-2 text-xs italic text-muted-foreground">
               {field.viewableByRole ? (
                 <span className="text-destructive">
@@ -242,7 +236,6 @@ export const FormTemplateFieldComponent = ({
                   this form
                 </span>
               )}
-              <p>The list of courses will be populated automatically.</p>
             </div>
           )}
           <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">

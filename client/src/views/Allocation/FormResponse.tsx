@@ -26,6 +26,7 @@ import { fieldTypes } from "./FormTemplateView";
 import NotFoundPage from "@/layouts/404";
 import { Course, SemesterMinimal } from "node_modules/lib/src/types/allocation";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/Auth";
 
 const FormResponse = ({
   preview = true,
@@ -41,12 +42,18 @@ const FormResponse = ({
   const navigate = useNavigate();
   const formController = useForm();
 
+  const { checkAccessAnyOne } = useAuth();
+
+  const checkFormDeadlineByPass = () =>
+    checkAccessAnyOne(["allocation:write", "allocation:builder:form:write"]);
+
   const { data: currentSemester } = useQuery({
     queryKey: ["allocation", "semester", "latest"],
     queryFn: () =>
       api
         .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
         .then(({ data }) => data),
+    enabled: !id,
   });
 
   useEffect(() => {
@@ -86,9 +93,12 @@ const FormResponse = ({
           }
         })
         .catch((error) => {
-          toast.error(((error as AxiosError).response?.data as string) ?? "Something went wrong")
+          toast.error(
+            ((error as AxiosError).response?.data as string) ??
+              "Something went wrong"
+          );
           console.error("Error fetching form details:", error);
-          navigate('/allocation')
+          navigate("/");
         });
     };
 
@@ -146,9 +156,17 @@ const FormResponse = ({
   };
 
   if (
-    form &&
-    form.allocationDeadline && currentSemester &&
-    currentSemester.allocationStatus !== "formCollection"
+    !checkFormDeadlineByPass() &&
+    !preview &&
+    ((!!id &&
+      form &&
+      form.formDeadline &&
+      new Date(form.formDeadline) < new Date()) ||
+      (latest &&
+        form &&
+        form.formDeadline &&
+        currentSemester &&
+        currentSemester.allocationStatus !== "formCollection"))
   )
     return (
       <div className="mx-auto flex max-w-4xl items-center justify-center py-10">
@@ -164,9 +182,13 @@ const FormResponse = ({
     <div className="mx-auto max-w-4xl space-y-8 p-4 md:p-6">
       {form ? (
         <>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{form.title}</h1>
-            <p className="text-muted-foreground">{form.description}</p>
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-primary">{form.title}</h1>
+            <span className="text-muted-foreground">Description: {form.description}</span>
+            { form?.formDeadline && <span className="text-sm"><strong>Form Deadline:</strong> {new Date(form.formDeadline).toLocaleString()}</span> }
+            {checkFormDeadlineByPass() && (
+              <span className="text-sm text-destructive font-bold">You're viewing this form as admin. This bypasses any deadline set for this</span>
+            )}
           </div>
 
           <Separator />

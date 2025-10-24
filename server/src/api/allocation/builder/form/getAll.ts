@@ -18,6 +18,11 @@ router.get(
                         name: true,
                         email: true,
                     },
+                    with: {
+                        faculty: { columns: { name: true } },
+                        phd: { columns: { name: true } },
+                        staff: { columns: { name: true } },
+                    },
                 },
                 template: {
                     columns: {
@@ -37,7 +42,13 @@ router.get(
                           )
                     : undefined,
         });
-        res.status(200).json(forms);
+        res.status(200).json(forms.map((form) => ({
+            ...form,
+            createdBy: {
+                ...form.createdBy,
+                name: form.createdBy.name ?? form.createdBy.faculty.name ?? form.createdBy.staff.name ?? form.createdBy.phd.name
+            }
+        })));
     })
 );
 

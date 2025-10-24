@@ -131,16 +131,16 @@ export const AllocationOverview = () => {
 
   const publishFormMutation = useMutation({
     mutationFn: ({
-      allocationDeadline,
+      formDeadline,
       emailBody,
       isPublishedToRoleId,
     }: {
-      allocationDeadline: string;
+      formDeadline: string;
       emailBody: string;
       isPublishedToRoleId: string;
     }) =>
       api.post(`/allocation/semester/publish/${latestSemester?.id}`, {
-        allocationDeadline,
+        formDeadline,
         emailBody,
         isPublishedToRoleId,
       }),
@@ -174,13 +174,13 @@ export const AllocationOverview = () => {
     reset: resetPublishForm,
   } = useForm({
     defaultValues: {
-      allocationDeadline: "",
+      formDeadline: "",
       emailBody: "",
       isPublishedToRoleId: "",
     },
     onSubmit: ({ value }) => {
       if (
-        value.allocationDeadline &&
+        value.formDeadline &&
         latestSemester?.form?.id &&
         value.isPublishedToRoleId
       ) {
@@ -189,13 +189,13 @@ export const AllocationOverview = () => {
     },
   });
 
-  const getEmailBody = (allocationDeadline: string) => `Dear Professor/Mr./Ms.,
+  const getEmailBody = (formDeadline: string) => `Dear Professor/Mr./Ms.,
 
 Please fill your course options for the ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}. Ignore this email if you have already filled your preferences.
 
-You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
+You may access the portal using the following link: [${DEPARTMENT_NAME} IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(allocationDeadline).toLocaleString(
+**PLEASE FILL THE FORM BEFORE ${new Date(formDeadline).toLocaleString(
     "en-IN",
     {
       timeZoneName: "short",
@@ -211,10 +211,10 @@ Hyderabad Campus<span>
 `;
 
   const calculateTimeLeft = useCallback(() => {
-    if (!latestSemester?.form?.allocationDeadline) return;
+    if (!latestSemester?.form?.formDeadline) return;
 
     const now = new Date().getTime();
-    const end = new Date(latestSemester.form.allocationDeadline).getTime();
+    const end = new Date(latestSemester.form.formDeadline).getTime();
     const distance = end - now;
 
     if (distance <= 0) return "00:00:00";
@@ -248,14 +248,17 @@ Hyderabad Campus<span>
   ) : (
     <div className="courseAllocationOverviewRootContainer flex flex-col space-y-8 p-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-primary">
-          Course Load Allocation Overview
-        </h1>
+        <h1 className="text-3xl font-bold text-primary">Overview</h1>
         <div className="flex space-x-2">
           {latestSemester.form &&
             latestSemester.allocationStatus === "notStarted" && (
               <>
-                <Button onClick={() => unlinkFormMutation.mutate()} variant="destructive">Unlink Form</Button>
+                <Button
+                  onClick={() => unlinkFormMutation.mutate()}
+                  variant="destructive"
+                >
+                  Unlink Form
+                </Button>
                 <Dialog
                   open={isPublishDialogOpen}
                   onOpenChange={(open) => {
@@ -289,7 +292,7 @@ Hyderabad Campus<span>
                       }}
                     >
                       <div className="grid grid-rows-2 gap-4">
-                        <PublishFormField name="allocationDeadline">
+                        <PublishFormField name="formDeadline">
                           {(field) => (
                             <div className="flex items-center justify-between space-x-3">
                               <Label htmlFor={field.name}>
@@ -301,11 +304,6 @@ Hyderabad Campus<span>
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
                                 className="w-52"
-                                min={new Date(
-                                  Date.now() + 7 * 24 * 60 * 60 * 1000
-                                )
-                                  .toISOString()
-                                  .slice(0, 16)}
                                 onChange={(e) => {
                                   field.handleChange(e.target.value);
                                   setEmailPreviewed(false);
@@ -406,13 +404,13 @@ Hyderabad Campus<span>
                     <DialogFooter>
                       <PublishFormSubscribe
                         selector={(state) => [
-                          state.values.allocationDeadline,
+                          state.values.formDeadline,
                           state.values.isPublishedToRoleId,
                           state.isValid,
                         ]}
                       >
                         {([
-                          allocationDeadline,
+                          formDeadline,
                           isPublishedToRoleId,
                           isValid,
                         ]) => (
@@ -422,7 +420,7 @@ Hyderabad Campus<span>
                               variant="outline"
                               disabled={
                                 !isValid ||
-                                !allocationDeadline ||
+                                !formDeadline ||
                                 !isPublishedToRoleId ||
                                 publishFormMutation.isLoading
                               }
@@ -437,7 +435,7 @@ Hyderabad Campus<span>
                               form="publish-form"
                               disabled={
                                 !isValid ||
-                                !allocationDeadline ||
+                                !formDeadline ||
                                 !isPublishedToRoleId ||
                                 !emailFormState.values.emailBody ||
                                 publishFormMutation.isLoading ||
@@ -691,6 +689,18 @@ Hyderabad Campus<span>
           Division. This data reflects the semester information as of{" "}
           {new Date(latestSemester.createdAt).toLocaleDateString("en-IN")}
         </h4>
+        {latestSemester.formId && (
+          <div className="text-sm">
+            <span>
+              Using Form:{" "}
+              <Button className="m-0 h-fit p-0 italic" variant="link">
+                <Link to={`/allocation/forms/${latestSemester.formId}/preview`}>
+                  {latestSemester.form.title}
+                </Link>
+              </Button>
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4 text-base font-medium text-muted-foreground md:grid-cols-3">
           <div>
             <span>Semester:</span>{" "}
@@ -715,9 +725,9 @@ Hyderabad Campus<span>
           <div>
             <span>Allocation Form Deadline:</span>{" "}
             <span>
-              {latestSemester.form?.allocationDeadline ? (
+              {latestSemester.form?.formDeadline ? (
                 new Date(
-                  latestSemester.form?.allocationDeadline
+                  latestSemester.form?.formDeadline
                 ).toLocaleString("en-IN")
               ) : (
                 <span className="text-secondary">Not Set</span>

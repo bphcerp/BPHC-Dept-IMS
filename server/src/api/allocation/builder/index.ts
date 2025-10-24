@@ -1,23 +1,26 @@
 import { Router } from "express";
-import formBuilder from "./form/create.ts";
-import getForm from "./form/get.ts";
-import templateBuilder from "./template/create.ts";
-import getTemplate from "./template/get.ts";
-import getAllTemplates from "./template/getAll.ts";
-import getAllForms from "./form/getAll.ts";
+import formCreateRouter from "./form/create.ts";
+import getFormRouter from "./form/get.ts";
+import getAllFormsRouter from "./form/getAll.ts";
 import registerResponseRouter from "./form/response/index.ts";
+import formDeleteRouter from "./form/delete.ts";
+
+import templateCreateRouter from "./template/create.ts";
+import templateDeleteRouter from "./template/delete.ts";
+import getTemplateRouter from "./template/get.ts";
+import getAllTemplatesRouter from "./template/getAll.ts";
 
 const router = Router();
 
-router.use("/form/create", formBuilder);
-router.use("/form/get", getForm);
-router.use("/form/getAll", getAllForms);
+router.use("/form/create", formCreateRouter);
+router.use("/form/get", getFormRouter);
+router.use("/form/getAll", getAllFormsRouter);
 router.use("/form/response", registerResponseRouter);
+router.use("/form/delete", formDeleteRouter);
 
-
-router.use("/template/get", getTemplate);
-router.use("/template/getAll", getAllTemplates);
-router.use("/template/create", templateBuilder);
-
+router.use("/template/get", getTemplateRouter);
+router.use("/template/getAll", getAllTemplatesRouter);
+router.use("/template/create", templateCreateRouter);
+router.use("/template/delete", templateDeleteRouter);
 
 export default router;

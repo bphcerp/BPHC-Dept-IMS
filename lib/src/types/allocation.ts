@@ -40,7 +40,7 @@ export type Course = NewCourse & {
     fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
-    groupId? : string | null
+    groups? : Omit<CourseGroup, 'courses'>[] | null
 };
 
 export type SemesterAllocationStatusEnumType =
@@ -96,7 +96,7 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
-    type: "faculty" | "phd full time";
+    type: "faculty" | "phd";
 };
 
 export type SemesterWithStats = Semester & {

@@ -28,10 +28,11 @@ export const phdProposalStatuses = [
     "seminar_pending",
     "finalising_documents",
     "completed",
+    "draft_expired",
 ] as const;
 
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
-    ["deleted", "completed"];
+    ["deleted", "completed", "draft_expired"];
 
 export const resultStatusEnum = z.enum(["pass", "fail"]);
 
@@ -313,11 +314,11 @@ export const dacReviewFormSchema = z.object({
     q1a: z.boolean(),
     q1b: z.boolean(),
     q1c: z.boolean(),
-    q1d: z.array(z.enum(["product", "process", "frontier"])), 
+    q1d: z.array(z.enum(["product", "process", "frontier"])),
     q2a: z.boolean(),
     q2b: z.boolean(),
     q2c: z.boolean(),
-    q2d: z.array(z.enum(["improve", "academic", "industry"])), 
+    q2d: z.array(z.enum(["improve", "academic", "industry"])),
     q3a: z.boolean(),
     q3b: z.boolean(),
     q3c: z.boolean(),

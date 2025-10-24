@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_form" RENAME COLUMN "allocation_deadline" TO "form_deadline";

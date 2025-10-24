@@ -29,18 +29,12 @@ interface Faculty {
 }
 
 const templateLinks: Record<string, string> = {
-  appendixFile:
-    "https://www.bits-pilani.ac.in/uploads/Appendix_I_and_II_for_PhD_students_w.e.f._I_Sem_2020-21.doc",
-  summaryFile:
-    "https://www.bits-pilani.ac.in/uploads/SUMMARY_OF_RESEARCH_PROPOSAL_w.e.f._I_Sem_2020-21.doc",
-  outlineFile:
-    "https://www.bits-pilani.ac.in/uploads/OUTLINE_OF_PROPOSED_TOPIC_OF_RESEARCH_w.e.f._I_Sem_2020-21.doc",
-  outsideSupervisorBiodataFile:
-    "https://www.bits-pilani.ac.in/uploads/BIODATA_OF_PROPOSED_SUPERVISOR_w.e.f._I_Sem_2020-21.doc",
-  outsideCoSupervisorFormatFile:
-    "https://www.bits-pilani.ac.in/uploads/Format_for_Proposed_Outside_Co-supervisor_w.e.f_2020-21.doc",
-  placeOfResearchFile:
-    "https://www.bits-pilani.ac.in/uploads/FORMAT_FOR_PLACE_OF_RESEARCH_WORK_w.e.f._I_Sem_2020-21.doc",
+  appendixFile: "https://example.com/appendix-template.pdf", // Placeholder URL
+  summaryFile: "https://example.com/summary-template.pdf", // Placeholder URL
+  outlineFile: "https://example.com/outline-template.pdf", // Placeholder URL
+  outsideSupervisorBiodataFile: "https://example.com/biodata-template.pdf", // Placeholder URL
+  outsideCoSupervisorFormatFile: "https://example.com/format-template.pdf", // Placeholder URL
+  placeOfResearchFile: "https://example.com/research-place-template.pdf", // Placeholder URL
 };
 
 const FileField = ({
@@ -60,15 +54,17 @@ const FileField = ({
         {field.label}
         {field.required && "*"}
       </Label>
-      <a
-        href={templateLinks[field.key]}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Download Template"
-        className="text-primary hover:underline"
-      >
-        <Download className="h-4 w-4" />
-      </a>
+      {templateLinks[field.key] && (
+        <a
+          href={templateLinks[field.key]}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Download Template"
+          className="text-primary hover:underline"
+        >
+          <Download className="h-4 w-4" />
+        </a>
+      )}
     </div>
     {existingFileUrl && !currentFile ? (
       <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
@@ -166,10 +162,12 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         proposalData.coSupervisors
           ?.filter(
             (s: any) =>
-              !facultyList.some((f) => f.value === s.coSupervisorEmail)
+              !facultyList.some((f) => f.value === s.coSupervisorEmail) &&
+              s.coSupervisorName && // *** FIX: Only include externals with a name
+              s.coSupervisorName.trim() !== ""
           )
           .map((s: any) => ({
-            name: s.coSupervisorName || "",
+            name: s.coSupervisorName,
             email: s.coSupervisorEmail,
           })) ?? [];
       setInternalCoSupervisors(internals);
@@ -241,14 +239,19 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
-    formData.append("submissionType", "draft"); // Always save as draft from edit form
+    formData.append("submissionType", "draft");
     formData.append(
       "internalCoSupervisors",
       JSON.stringify(internalCoSupervisors)
     );
+
+    // *** FIX: Filter out externals with empty names before saving
+    const validExternalCoSupervisors = externalCoSupervisors.filter(
+      (ext) => ext.name.trim() !== "" && ext.email.trim() !== ""
+    );
     formData.append(
       "externalCoSupervisors",
-      JSON.stringify(externalCoSupervisors)
+      JSON.stringify(validExternalCoSupervisors)
     );
 
     Object.keys(files).forEach((key) => {
@@ -256,7 +259,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         formData.append(key, files[key] as File);
       }
     });
-
     mutation.mutate(formData);
   };
 
@@ -302,7 +304,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           </AlertDescription>
         </Alert>
       )}
-
       <div>
         <Label htmlFor="title">Proposal Title</Label>
         <Input
@@ -335,7 +336,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       <div className="space-y-4 rounded-md border p-4">
         <Label className="font-semibold">Co-Supervisors</Label>
         <div className="space-y-2">
-          <Label>Internal Co-Supervisors (from BITS)</Label>
+          <Label>Internal Co-Supervisors (from your department)</Label>
           <Combobox
             options={facultyList}
             selectedValues={internalCoSupervisors}
@@ -369,7 +370,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           )}
         </div>
         <div className="space-y-2">
-          <Label>External Co-Supervisors</Label>
+          <Label>External Co-Supervisors (from other department)</Label>
           <div className="flex gap-2">
             <Input
               placeholder="Name"
@@ -448,7 +449,6 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           the best of my knowledge.
         </Label>
       </div>
-
       <div className="flex justify-end">
         <Button
           type="button"

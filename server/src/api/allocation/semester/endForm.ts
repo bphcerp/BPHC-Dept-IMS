@@ -42,7 +42,7 @@ router.post(
             await tx
             .update(allocationForm)
             .set({
-                allocationDeadline: new Date(),
+                formDeadline: new Date(),
             })
             .where(eq(allocationForm.id, semesterUpdated[0].formId!));
         })

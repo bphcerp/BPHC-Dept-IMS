@@ -526,6 +526,27 @@
       "when": 1760699868701,
       "tag": "0074_green_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1761120788018,
+      "tag": "0075_clean_mercury",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1761154892281,
+      "tag": "0076_ancient_namor",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1761201697784,
+      "tag": "0077_flowery_grandmaster",
+      "breakpoints": true
     }
   ]
 }

@@ -105,7 +105,9 @@ const CourseGroups = () => {
   };
 
   const isChecked = (groupId: string, course: Course) => {
-    const originallyAssigned = course.groupId === groupId;
+    const originallyAssigned = course.groups?.some(
+      (group) => group.id === groupId
+    );
     const removedForGroup = removedCourseCodes[groupId] || [];
     const addedForGroup = selectedToAdd[groupId] || [];
     if (originallyAssigned) {
@@ -116,7 +118,9 @@ const CourseGroups = () => {
 
   const handleCourseToggle = (groupId: string, course: Course) => {
     const currentlyChecked = isChecked(groupId, course);
-    const originallyAssigned = course.groupId === groupId;
+    const originallyAssigned = course.groups?.some(
+      (group) => group.id === groupId
+    );
     if (originallyAssigned) {
       if (currentlyChecked) {
         setRemovedCourseCodes((prev) => ({
@@ -165,7 +169,7 @@ const CourseGroups = () => {
   const handleSelectAll = (groupId: string, filteredCourses: Course[]) => {
     const selectedCodes = filteredCourses.map((c) => c.code);
     const alreadyAssigned = courses
-      .filter((c) => c.groupId === groupId)
+      .filter((c) => c.groups?.some((group) => group.id === groupId))
       .map((c) => c.code);
     setRemovedCourseCodes((prev) => ({ ...prev, [groupId]: [] }));
     const newAdds = selectedCodes.filter(
@@ -182,7 +186,9 @@ const CourseGroups = () => {
       accessorFn: () => "No. of Courses",
       header: "No. of Courses",
       cell: ({ row }) =>
-        courses.filter((c) => c.groupId === row.original.id).length,
+        courses.filter((c) =>
+          c.groups?.some((group) => group.id === row.original.id)
+        ).length,
     },
     {
       accessorFn: () => "Actions",

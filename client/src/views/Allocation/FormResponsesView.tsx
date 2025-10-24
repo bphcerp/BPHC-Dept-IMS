@@ -36,7 +36,7 @@ const FormResponsesView = () => {
   useEffect(() => {
     const fetchFormDetails = async () => {
       try {
-        const response = await api.get(`/allocation/builder/form/get/${id}`);
+        const response = await api.get(`/allocation/builder/form/get/${id}?isPreview=true`);
         setForm(response.data);
       } catch (error) {
         console.error("Error fetching form details:", error);
@@ -199,7 +199,7 @@ const FormResponsesView = () => {
                           })),
                       }}
                       create={false}
-                      preview={true}
+                      disableInformation={personal === 'true'}
                       courses={courses}
                     />
                   </CardContent>

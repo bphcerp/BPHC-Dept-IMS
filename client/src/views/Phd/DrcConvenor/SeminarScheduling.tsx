@@ -1,4 +1,3 @@
-// client/src/views/Phd/DrcConvenor/SeminarScheduling.tsx
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -24,6 +23,41 @@ import {
 } from "@/components/ui/table";
 import BackButton from "@/components/BackButton";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom"; // Import Link
+
+interface SeminarSlot {
+  id: number;
+  venue: string;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+  proposal: {
+    student: {
+      name: string | null;
+      email: string;
+    };
+  } | null;
+}
+
+interface ManualSlot {
+  id: number;
+  seminarDate: string | null;
+  seminarTime: string | null;
+  seminarVenue: string | null;
+  student: {
+    name: string | null;
+    email: string;
+  };
+  supervisor: {
+    name: string | null;
+    email: string;
+  } | null;
+}
+
+interface SlotQueryResponse {
+  bookedSlots: SeminarSlot[];
+  manuallyScheduled: ManualSlot[];
+}
 
 const SeminarScheduling: React.FC = () => {
   const queryClient = useQueryClient();
@@ -32,8 +66,8 @@ const SeminarScheduling: React.FC = () => {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
 
-  const { data: slots, isLoading: isLoadingSlots } = useQuery({
-    queryKey: ["seminar-slots"],
+  const { data, isLoading: isLoadingSlots } = useQuery<SlotQueryResponse>({
+    queryKey: ["seminar-slots-all"],
     queryFn: async () => {
       const res = await api.get("/phd/proposal/drcConvener/seminarSlots");
       return res.data;
@@ -46,7 +80,7 @@ const SeminarScheduling: React.FC = () => {
     }) => api.post("/phd/proposal/drcConvener/seminarSlots", newSlots),
     onSuccess: () => {
       toast.success("Seminar slots created successfully.");
-      void queryClient.invalidateQueries({ queryKey: ["seminar-slots"] });
+      void queryClient.invalidateQueries({ queryKey: ["seminar-slots-all"] });
       setVenue("");
       setDate("");
     },
@@ -65,11 +99,10 @@ const SeminarScheduling: React.FC = () => {
       toast.error("Start time must be before end time.");
       return;
     }
-
     const slotsToCreate = [];
     let current = start;
     while (current < end) {
-      const next = new Date(current.getTime() + 30 * 60000); // 30 minutes
+      const next = new Date(current.getTime() + 30 * 60000); // 30-minute slots
       slotsToCreate.push({
         venue,
         startTime: current.toISOString(),
@@ -77,7 +110,6 @@ const SeminarScheduling: React.FC = () => {
       });
       current = next;
     }
-
     if (slotsToCreate.length > 0) {
       createSlotsMutation.mutate({ slots: slotsToCreate });
     }
@@ -154,7 +186,10 @@ const SeminarScheduling: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Seminar Slots</CardTitle>
+          <CardTitle>System-Booked Slots</CardTitle>
+          <CardDescription>
+            Slots booked by supervisors through the selection tool.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingSlots ? (
@@ -170,8 +205,8 @@ const SeminarScheduling: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {slots?.length > 0 ? (
-                  slots.map((slot: any) => (
+                {data?.bookedSlots && data.bookedSlots.length > 0 ? (
+                  data.bookedSlots.map((slot) => (
                     <TableRow key={slot.id}>
                       <TableCell>
                         {new Date(slot.startTime).toLocaleDateString()}
@@ -181,7 +216,7 @@ const SeminarScheduling: React.FC = () => {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
-                        -
+                        -{" "}
                         {new Date(slot.endTime).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -189,7 +224,7 @@ const SeminarScheduling: React.FC = () => {
                       </TableCell>
                       <TableCell>{slot.venue}</TableCell>
                       <TableCell>
-                        {slot.isBooked ? (
+                        {slot.isBooked && slot.proposal ? (
                           <Badge>Booked by {slot.proposal.student.name}</Badge>
                         ) : (
                           <Badge variant="outline">Available</Badge>
@@ -200,7 +235,68 @@ const SeminarScheduling: React.FC = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center">
-                      No slots created yet.
+                      No system-created slots found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Manually Scheduled Seminars</CardTitle>
+          <CardDescription>
+            Proposals where supervisors set a custom date and time.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingSlots ? (
+            <LoadingSpinner />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Supervisor</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Venue</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data?.manuallyScheduled &&
+                data.manuallyScheduled.length > 0 ? (
+                  data.manuallyScheduled.map((slot) => (
+                    <TableRow key={slot.id}>
+                      <TableCell>
+                        <Link
+                          to={`/phd/drc-convenor/proposal-management/${slot.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {slot.student.name || slot.student.email}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {slot.supervisor?.name ||
+                          slot.supervisor?.email ||
+                          "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {slot.seminarDate
+                          ? new Date(slot.seminarDate).toLocaleDateString()
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>{slot.seminarTime || "N/A"}</TableCell>
+                      <TableCell>{slot.seminarVenue || "N/A"}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      No manually scheduled seminars found.
                     </TableCell>
                   </TableRow>
                 )}
