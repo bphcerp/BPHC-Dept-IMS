@@ -251,14 +251,8 @@ router.post(
                     .where(eq(phdProposalDacReviews.proposalId, proposalId));
             }
 
-            let nextStatus: (typeof phdSchemas.phdProposalStatuses)[number];
-
-            if (submissionType === "final") {
-                nextStatus = "supervisor_review";
-            } else {
-                nextStatus =
-                    proposal.status === "draft" ? "draft" : proposal.status;
-            }
+            const nextStatus =
+                submissionType === "draft" ? "draft" : "supervisor_review";
 
             await tx
                 .update(phdProposals)
@@ -282,10 +276,7 @@ router.post(
                         insertedFileIds.outsideSupervisorBiodataFile ??
                         proposal.outsideSupervisorBiodataFileId,
                     status: nextStatus,
-                    comments:
-                        nextStatus === "supervisor_review"
-                            ? null
-                            : proposal.comments,
+                    comments: null,
                     updatedAt: new Date(),
                 })
                 .where(eq(phdProposals.id, proposalId));
@@ -325,16 +316,14 @@ router.post(
                     .values(coSupervisorsToInsert);
             }
 
-            if (submissionType === "final") {
-                await completeTodo(
-                    {
-                        module: modules[3],
-                        completionEvent: `proposal:student-resubmit:${proposalId}`,
-                        assignedTo: userEmail,
-                    },
-                    tx
-                );
-            }
+            await completeTodo(
+                {
+                    module: modules[3],
+                    completionEvent: `proposal:student-resubmit:${proposalId}`,
+                    assignedTo: userEmail,
+                },
+                tx
+            );
         });
 
         if (supervisorEmail && submissionType === "final") {

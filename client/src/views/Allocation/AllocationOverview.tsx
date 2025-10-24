@@ -193,7 +193,7 @@ export const AllocationOverview = () => {
 
 Please fill your course options for the ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}. Ignore this email if you have already filled your preferences.
 
-You may access the portal using the following link: [EEE IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
+You may access the portal using the following link: [${DEPARTMENT_NAME} IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
 **PLEASE FILL THE FORM BEFORE ${new Date(formDeadline).toLocaleString(
     "en-IN",
