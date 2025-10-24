@@ -58,6 +58,25 @@ const bulkReminderSchema = z.object({
 });
 type BulkReminderPayload = z.infer<typeof bulkReminderSchema>;
 
+// Helper to get faculty names
+const getFacultyNames = async (
+  emails: string[]
+): Promise<Map<string, string | null>> => {
+  if (emails.length === 0) {
+    return new Map();
+  }
+  try {
+    const res = await api.post<{ email: string; name: string | null }[]>(
+      "/phd/proposal/drcConvener/getBulkDetails",
+      { emails }
+    );
+    return new Map(res.data.map((f) => [f.email, f.name]));
+  } catch (error) {
+    console.error("Failed to fetch faculty names:", error);
+    return new Map(emails.map((email) => [email, email])); // Fallback to email
+  }
+};
+
 const getRecipients = async (
   proposals: ProposalLite[]
 ): Promise<{ emails: string[]; description: string; names?: string[] }> => {
@@ -72,6 +91,9 @@ const getRecipients = async (
   try {
     switch (firstStatus) {
       case "draft":
+      case "supervisor_revert": // Student is recipient
+      case "drc_revert": // Student is recipient
+      case "dac_revert": // Student is recipient
         description = "Selected Student(s)";
         proposals.forEach((p) => {
           emailsSet.add(p.student.email);
@@ -84,26 +106,10 @@ const getRecipients = async (
           .map((p) => p.supervisorEmail)
           .filter(Boolean);
         supervisorEmails.forEach((email) => emailsSet.add(email));
-        if (supervisorEmails.length > 0) {
-          try {
-            const facultyRes = await api.post<
-              { email: string; name: string | null }[]
-            >("/phd/proposal/drcConvener/getBulkDetails", {
-              emails: supervisorEmails,
-            });
-            const facultyMap = new Map(
-              facultyRes.data.map((f) => [f.email, f.name])
-            );
-            supervisorEmails.forEach((email) =>
-              namesSet.add(facultyMap.get(email) || email)
-            );
-          } catch (facultyError) {
-            console.error("Failed to fetch supervisor names:", facultyError);
-            namesSet = new Set(supervisorEmails);
-          }
-        } else {
-          namesSet = new Set(supervisorEmails);
-        }
+        const supervisorNameMap = await getFacultyNames(supervisorEmails);
+        supervisorEmails.forEach((email) =>
+          namesSet.add(supervisorNameMap.get(email) || email)
+        );
         break;
       case "drc_review":
         description = "DRC Convenor(s)";
@@ -138,7 +144,7 @@ const getRecipients = async (
               member.dacMember?.name || member.dacMemberName || memberEmail;
             if (memberEmail && !reviewedEmails.has(memberEmail)) {
               pendingDacEmails.add(memberEmail);
-              pendingDacNames.add(memberName);
+              pendingDacNames.add(memberName || memberEmail);
             }
           });
         });
@@ -152,26 +158,12 @@ const getRecipients = async (
           .map((p) => p.supervisorEmail)
           .filter(Boolean);
         seminarSupervisorEmails.forEach((email) => emailsSet.add(email));
-        if (seminarSupervisorEmails.length > 0) {
-          try {
-            const facultyRes = await api.post<
-              { email: string; name: string | null }[]
-            >("/phd/proposal/drcConvener/getBulkDetails", {
-              emails: seminarSupervisorEmails,
-            });
-            const facultyMap = new Map(
-              facultyRes.data.map((f) => [f.email, f.name])
-            );
-            seminarSupervisorEmails.forEach((email) =>
-              namesSet.add(facultyMap.get(email) || email)
-            );
-          } catch (facultyError) {
-            console.error("Failed to fetch supervisor names:", facultyError);
-            namesSet = new Set(seminarSupervisorEmails);
-          }
-        } else {
-          namesSet = new Set(seminarSupervisorEmails);
-        }
+        const seminarSupervisorNameMap = await getFacultyNames(
+          seminarSupervisorEmails
+        );
+        seminarSupervisorEmails.forEach((email) =>
+          namesSet.add(seminarSupervisorNameMap.get(email) || email)
+        );
         break;
       default:
         description = `Recipient group for status "${formatStatus(firstStatus)}"`;
@@ -179,7 +171,7 @@ const getRecipients = async (
     }
   } catch (error) {
     toast.error("Could not determine recipients accurately.");
-    console.error("Error fetching recipients:", error); // Use console.error
+    console.error("Error fetching recipients:", error);
     description = "Error fetching recipients";
   }
 
@@ -218,18 +210,22 @@ const RequestSeminarDetailsDialog: React.FC<
     if (type === "request") {
       return "request_seminar_details";
     }
-    // If type is not 'request', it must be 'reminder' based on the prop type
+
     const firstStatus = proposals[0]?.status;
-    if (firstStatus === "draft") return "reminder_student_submit";
+    if (firstStatus === "draft") return "reminder_student_draft";
     if (firstStatus === "supervisor_review")
       return "reminder_supervisor_review";
     if (firstStatus === "drc_review") return "reminder_drc_review";
     if (firstStatus === "dac_review") return "reminder_dac_review";
+    if (firstStatus === "supervisor_revert")
+      return "reminder_supervisor_revert_student";
+    if (firstStatus === "drc_revert") return "reminder_drc_revert_student";
+    if (firstStatus === "dac_revert") return "reminder_dac_revert_student";
     if (["seminar_pending", "dac_accepted"].includes(firstStatus ?? "")) {
       return "reminder_seminar_details";
     }
-    // Default fallback for 'reminder' if no specific status matches
-    return "reminder_seminar_details";
+
+    return "reminder_seminar_details"; // Fallback for reminder
   }, [type, proposals]);
 
   const template = useMemo(
@@ -264,13 +260,28 @@ const RequestSeminarDetailsDialog: React.FC<
     if (!isOpen || proposals.length === 0) return;
 
     const firstProposal = proposals[0];
+    const studentLink = `${FRONTEND_URL}/phd/phd-student/proposals`;
+    const supervisorLink = `${FRONTEND_URL}/phd/supervisor/proposal/${firstProposal.id}`;
+    const drcLink = `${FRONTEND_URL}/phd/drc-convenor/proposal-management/${firstProposal.id}`;
+    const dacLink = `${FRONTEND_URL}/phd/dac/proposals/${firstProposal.id}`;
+
+    // Determine the correct link based on the recipient
+    let link = studentLink; // Default
+    if (
+      templateName.includes("supervisor") ||
+      templateName.includes("seminar_details")
+    )
+      link = supervisorLink;
+    if (templateName.includes("drc")) link = drcLink;
+    if (templateName.includes("dac")) link = dacLink;
+
     const view = {
       supervisorName: "Supervisor",
       studentName: firstProposal.student.name || "the student",
       dacMemberName: "DAC Member",
       drcConvenerName: "DRC Convenor",
       proposalTitle: firstProposal.title || "the proposal",
-      link: `${FRONTEND_URL}/phd/supervisor/proposal/${firstProposal.id}`,
+      link: link, // Use the dynamically determined link
     };
 
     if (template) {
@@ -360,44 +371,27 @@ const RequestSeminarDetailsDialog: React.FC<
         payload: parsed.data,
       });
     } else if (type === "reminder") {
-      if (proposals.length === 1) {
-        const parsed = phdSchemas.remindSeminarDetailsSchema.safeParse({
-          proposalId: proposals[0].id,
-          subject,
-          body,
-          deadline: deadlineDate,
-        });
-        if (!parsed.success) {
-          toast.error(`Invalid data: ${parsed.error.errors[0]?.message}`);
-          return;
-        }
-        mutation.mutate({
-          endpoint: "/phd/proposal/drcConvener/remindSeminarDetails",
-          payload: parsed.data,
-        });
-      } else {
-        const bulkReminderData: BulkReminderPayload = {
-          targetEmails: recipients,
-          proposalIds: proposals.map((p) => p.id),
-          subject,
-          body,
-          deadline: deadlineDate,
-        };
-        const parsed = bulkReminderSchema.safeParse(bulkReminderData);
-        if (!parsed.success) {
-          toast.error(`Invalid bulk data: ${parsed.error.errors[0]?.message}`);
-          return;
-        }
-
-        mutation.mutate({
-          endpoint: "/phd/proposal/drcConvener/sendBulkReminder",
-          payload: parsed.data,
-        });
-
-        toast.info(`Initiated sending ${proposals.length} reminders...`);
-        onSuccess();
-        setIsOpen(false);
+      const bulkReminderData: BulkReminderPayload = {
+        targetEmails: recipients,
+        proposalIds: proposals.map((p) => p.id),
+        subject,
+        body,
+        deadline: deadlineDate,
+      };
+      const parsed = bulkReminderSchema.safeParse(bulkReminderData);
+      if (!parsed.success) {
+        toast.error(`Invalid bulk data: ${parsed.error.errors[0]?.message}`);
+        return;
       }
+
+      mutation.mutate({
+        endpoint: "/phd/proposal/drcConvener/sendBulkReminder",
+        payload: parsed.data,
+      });
+
+      toast.info(`Initiated sending ${recipients.length} reminder(s)...`);
+      onSuccess();
+      setIsOpen(false);
     }
   };
 

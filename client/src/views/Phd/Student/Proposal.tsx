@@ -50,7 +50,7 @@ import {
 import { toast } from "sonner";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline.tsx";
 import { phdSchemas } from "lib";
-import ProposalPreview from "@/components/phd/proposal/ProposalPreview"; // Ensure this accepts onSubmit?
+import ProposalPreview from "@/components/phd/proposal/ProposalPreview";
 import { getProposalStatusVariant, formatStatus } from "@/lib/utils";
 
 interface ProposalSemester {
@@ -264,25 +264,29 @@ const StudentProposal: React.FC = () => {
     );
     formData.append("declaration", "true");
     formData.append("submissionType", "final");
-    formData.append(
-      "internalCoSupervisors",
-      JSON.stringify(
-        proposalForPreview.coSupervisors
-          ?.filter((s: any) => !s.coSupervisorName && s.coSupervisorEmail)
-          .map((s: any) => s.coSupervisorEmail) || []
-      )
-    );
-    formData.append(
-      "externalCoSupervisors",
-      JSON.stringify(
-        proposalForPreview.coSupervisors
-          ?.filter((s: any) => s.coSupervisorName && s.coSupervisorEmail)
-          .map((s: any) => ({
-            name: s.coSupervisorName,
-            email: s.coSupervisorEmail,
-          })) || []
-      )
-    );
+
+    // **FIX**: Filter arrays before stringifying
+    const internalEmails =
+      proposalForPreview.coSupervisors
+        ?.filter((s: any) => !s.coSupervisorName && s.coSupervisorEmail)
+        .map((s: any) => s.coSupervisorEmail) || [];
+
+    const externalObjects =
+      proposalForPreview.coSupervisors
+        ?.filter(
+          (s: any) =>
+            s.coSupervisorName &&
+            s.coSupervisorName.trim() !== "" &&
+            s.coSupervisorEmail
+        )
+        .map((s: any) => ({
+          name: s.coSupervisorName,
+          email: s.coSupervisorEmail,
+        })) || [];
+
+    formData.append("internalCoSupervisors", JSON.stringify(internalEmails));
+    formData.append("externalCoSupervisors", JSON.stringify(externalObjects));
+
     finalSubmitMutation.mutate(formData);
   };
 
@@ -453,6 +457,7 @@ const StudentProposal: React.FC = () => {
                           "supervisor_revert",
                           "drc_revert",
                           "dac_revert",
+                          "draft_expired", // Also block view if expired
                         ].includes(p.status) && (
                           <Button
                             size="sm"
@@ -576,7 +581,7 @@ const StudentProposal: React.FC = () => {
                     setSelectedCycleId(value);
                     setProposalForForm((prev: any) => ({
                       ...prev,
-                      proposalCycleId: Number(value) || undefined, // Ensure it's number or undefined
+                      proposalCycleId: Number(value) || undefined,
                     }));
                   }}
                 >
@@ -627,7 +632,6 @@ const StudentProposal: React.FC = () => {
             <ProposalPreview
               proposal={proposalForPreview}
               onSubmit={
-                // Conditionally pass the function reference
                 [
                   "draft",
                   "supervisor_revert",
@@ -635,7 +639,7 @@ const StudentProposal: React.FC = () => {
                   "dac_revert",
                 ].includes(proposalForPreview?.status)
                   ? handleFinalSubmit
-                  : undefined // Pass undefined when not applicable
+                  : undefined
               }
               isSubmitting={finalSubmitMutation.isLoading}
             />

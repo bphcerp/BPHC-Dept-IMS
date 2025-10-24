@@ -28,6 +28,28 @@ router.get(
                         email: true,
                     },
                 },
+                supervisor: {
+                    // Include supervisor details
+                    columns: {
+                        name: true,
+                        email: true,
+                    },
+                },
+                dacMembers: {
+                    // Include DAC members
+                    with: {
+                        dacMember: {
+                            columns: {
+                                name: true,
+                                email: true,
+                            },
+                        },
+                    },
+                    columns: {
+                        dacMemberEmail: true,
+                        dacMemberName: true, // For external members
+                    },
+                },
                 proposalSemester: true,
             },
             columns: {
@@ -35,6 +57,7 @@ router.get(
                 title: true,
                 status: true,
                 updatedAt: true,
+                supervisorEmail: true, // Keep supervisorEmail for dialog logic
             },
         });
         res.status(200).json(proposals);
