@@ -63,6 +63,29 @@ export const submitQpReviewSchema = z.object({
     review: z.record(z.string(), reviewFieldSchema),
 });
 
+export const CourseSchema = z.object({
+    icEmail: z.string().email("Invalid email address"),
+    courseName: z.preprocess(
+        (val) => String(val).trim(),
+        z.string().min(1, "Course name is required")
+    ),
+    courseCode: z.preprocess(
+        (val) => String(val).trim(),
+        z.string().min(1, "Course code is required")
+    ),
+    category: z.enum(["HD", "FD"], {
+        required_error: "Category must be either HD or FD",
+    }),
+});
+
+export const createRequestSchema = z.object({
+    courses: z.array(CourseSchema).nonempty("At least one course is required"),
+    requestType: z.enum(["Mid Sem", "Comprehensive", "Both"], {
+        required_error: "Request type is required",
+    }),
+});
+
+
 export type SubmitQpReview = z.infer<typeof submitQpReviewSchema>;
 export const qpReviewResponseSchema = z
     .object({

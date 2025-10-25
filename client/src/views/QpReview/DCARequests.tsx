@@ -119,7 +119,6 @@ export const DCAConvenercourses: React.FC = () => {
       reviewerEmail: string;
       sendEmail: boolean;
     }) => {
-      console.log("Updating reviewer:", { id, reviewerEmail, sendEmail });
       const response = await api.post<{ success: boolean }>(
         "/qp/assignFaculty",
         {
@@ -371,10 +370,7 @@ export const DCAConvenercourses: React.FC = () => {
     coursesData: CreateRequestData[],
     requestType: string
   ) => {
-    console.log("handleCreateRequest called with:", {
-      coursesCount: coursesData.length,
-      requestType,
-    });
+ 
 
     // Validate data
     if (!coursesData || coursesData.length === 0) {
@@ -449,7 +445,6 @@ export const DCAConvenercourses: React.FC = () => {
       return;
     }
 
-    console.log("Downloading reviews for courses:", reviewedCourses);
     setIsDownloading(true);
 
     try {
@@ -478,7 +473,6 @@ export const DCAConvenercourses: React.FC = () => {
         }
       );
 
-      console.log("File response received:", response);
 
       // Dismiss loading toast
       toast.dismiss("pdf-generation");

@@ -5,30 +5,10 @@ import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import logger from "@/config/logger.ts";
+import { createRequestSchema } from "node_modules/lib/src/schemas/Qp.ts";
 
 const router = express.Router();
 
-export const CourseSchema = z.object({
-    icEmail: z.string().email("Invalid email address"),
-    courseName: z.preprocess(
-        (val) => String(val).trim(),
-        z.string().min(1, "Course name is required")
-    ),
-    courseCode: z.preprocess(
-        (val) => String(val).trim(),
-        z.string().min(1, "Course code is required")
-    ),
-    category: z.enum(["HD", "FD"], {
-        required_error: "Category must be either HD or FD",
-    }),
-});
-
-export const createRequestSchema = z.object({
-    courses: z.array(CourseSchema).nonempty("At least one course is required"),
-    requestType: z.enum(["Mid Sem", "Comprehensive", "Both"], {
-        required_error: "Request type is required",
-    }),
-});
 
 router.post(
     "/",
