@@ -73,49 +73,49 @@ const defaultTemplates = [
     {
         name: "reminder_student_draft",
         subject: "Reminder: Complete Your PhD Proposal Draft",
-        body: `Dear Student,\n\nThis is a reminder that you have one or more PhD proposals still in 'Draft' status. Please complete and submit them for supervisor review before the deadline.\n\nYou can continue your submission here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear Student,\n\nThis is a reminder that you have one or more PhD proposals still in 'Draft' status. Please complete and submit them for supervisor review before the deadline.\n\nYou can continue your submission here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to students to remind them to finalize their draft proposal(s).",
     },
     {
         name: "reminder_supervisor_review",
         subject: "Reminder: PhD Proposal Review(s) Awaiting Action",
-        body: `Dear Supervisor,\n\nThis is a reminder that one or more PhD proposals submitted by your student(s) are awaiting your review and DAC member suggestions.\n\nYou can review the proposals here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear Supervisor,\n\nThis is a reminder that one or more PhD proposals submitted by your student(s) are awaiting your review and DAC member suggestions.\n\nYou can review the proposals here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to a supervisor to remind them to review submitted proposal(s).",
     },
     {
         name: "reminder_drc_review",
         subject: "Reminder: PhD Proposal DRC Review(s) Awaiting Action",
-        body: `Dear {{drcConvenerName}},\n\nThis is a reminder that one or more PhD proposals are awaiting your review to finalize the DAC members.\n\nYou can review the proposals here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear {{drcConvenerName}},\n\nThis is a reminder that one or more PhD proposals are awaiting your review to finalize the DAC members.\n\nYou can review the proposals here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to the DRC convenor to remind them to finalize DAC(s).",
     },
     {
         name: "reminder_dac_review",
         subject: "Reminder: PhD Proposal DAC Evaluation(s) Awaiting Action",
-        body: `Dear {{dacMemberName}},\n\nThis is a friendly reminder to please submit your evaluation for one or more PhD proposals assigned to you.\n\nYour feedback is required to move the process forward.\n\nYou can submit your review here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear {{dacMemberName}},\n\nThis is a friendly reminder to please submit your evaluation for one or more PhD proposals assigned to you.\n\nYour feedback is required to move the process forward.\n\nYou can submit your review here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to a DAC member to remind them to submit evaluation(s).",
     },
     {
         name: "reminder_supervisor_revert_student",
         subject: "Reminder: Action Required on Your PhD Proposal",
-        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by your supervisor with comments.\n\nPlease review the feedback and resubmit your proposal.\n\nYou can view the comments and resubmit here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by your supervisor with comments.\n\nPlease review the feedback and resubmit your proposal.\n\nYou can view the comments and resubmit here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to a student when their proposal was reverted by their supervisor.",
     },
     {
         name: "reminder_drc_revert_student",
         subject: "Reminder: Action Required on Your PhD Proposal",
-        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by the DRC with comments.\n\nPlease review the feedback and resubmit your proposal.\n\nYou can view the comments and resubmit here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by the DRC with comments.\n\nPlease review the feedback and resubmit your proposal.\n\nYou can view the comments and resubmit here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to a student when their proposal was reverted by the DRC.",
     },
     {
         name: "reminder_dac_revert_student",
         subject: "Reminder: Action Required on Your PhD Proposal",
-        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by the DAC with comments.\n\nPlease review the feedback from the committee and resubmit your proposal.\n\nYou can view the comments and resubmit here: [Click Here]({{link}})\n\nBest regards,\nDRC Committee`,
+        body: `Dear Student,\n\nThis is a reminder that your PhD proposal was reverted by the DAC with comments.\n\nPlease review the feedback from the committee and resubmit your proposal.\n\nYou can view the comments and resubmit here:\n{{link}}\n\nBest regards,\nDRC Committee`,
         description:
             "Sent to a student when their proposal was reverted by the DAC.",
     },
