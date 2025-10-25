@@ -162,7 +162,7 @@ const getRecipients = async (
       case "dac_accepted":
         description = "Selected Supervisor(s)";
         const seminarSupervisorEmails = proposals
-          .filter((p) => p.status === firstStatus)
+          .filter((p) => ["seminar_pending", "dac_accepted"].includes(p.status)) // Ensure we only get relevant ones
           .map((p) => p.supervisorEmail)
           .filter(Boolean);
         seminarSupervisorEmails.forEach((email) => emailsSet.add(email));
@@ -219,7 +219,6 @@ const RequestSeminarDetailsDialog: React.FC<
       return "request_seminar_details";
     }
 
-    // type is "reminder"
     const firstStatus = proposals[0]?.status;
     if (firstStatus === "draft") return "reminder_student_draft";
     if (firstStatus === "supervisor_review")
@@ -234,7 +233,6 @@ const RequestSeminarDetailsDialog: React.FC<
       return "reminder_seminar_details";
     }
 
-    // Fallback for reminder if no specific status matches
     return "reminder_seminar_details";
   }, [type, proposals]);
 
@@ -274,20 +272,20 @@ const RequestSeminarDetailsDialog: React.FC<
     let link = FRONTEND_URL;
     if (templateName.includes("student"))
       link = `${FRONTEND_URL}/phd/phd-student/proposals`;
-    if (
+    else if (
       templateName.includes("supervisor") ||
       templateName.includes("seminar_details")
     )
       link = `${FRONTEND_URL}/phd/supervisor/proposal/`;
-    if (templateName.includes("drc"))
+    else if (templateName.includes("drc"))
       link = `${FRONTEND_URL}/phd/drc-convenor/proposal-management/`;
-    if (templateName.includes("dac"))
+    else if (templateName.includes("dac"))
       link = `${FRONTEND_URL}/phd/dac/proposals/`;
 
     if (
       proposals.length === 1 &&
       !templateName.includes("draft") &&
-      !templateName.includes("review") // Don't append ID for generic review reminders
+      !templateName.includes("review")
     ) {
       link = `${link}${firstProposal.id}`;
     }
@@ -335,13 +333,15 @@ const RequestSeminarDetailsDialog: React.FC<
       return api.post(data.endpoint, data.payload);
     },
     onSuccess: (_, variables) => {
-      if (!(variables.payload.targetEmails && proposals.length > 0)) {
+      // Only show generic success toast if it wasn't a bulk reminder
+      if (!variables.payload.targetEmails) {
         toast.success(
           `${type === "request" ? "Request" : "Reminder"} sent successfully!`
         );
       }
       onSuccess();
-      if (!(variables.payload.targetEmails && proposals.length > 0)) {
+      // Only close if it wasn't a bulk reminder (which closes itself)
+      if (!variables.payload.targetEmails) {
         setIsOpen(false);
       }
     },

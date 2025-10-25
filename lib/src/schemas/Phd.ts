@@ -1,3 +1,4 @@
+// lib/src/schemas/Phd.ts
 import z from "zod";
 
 const optionalString = z
@@ -15,9 +16,11 @@ export const phdExamApplicationStatuses = [
     "resubmit",
 ] as const;
 
+// Added "rejected" status for explicit rejection by DRC
 export const phdProposalStatuses = [
     "draft",
-    "deleted",
+    "deleted", // User deleted
+    "rejected", // DRC explicitly rejected
     "supervisor_review",
     "supervisor_revert",
     "drc_review",
@@ -28,11 +31,11 @@ export const phdProposalStatuses = [
     "seminar_pending",
     "finalising_documents",
     "completed",
-    "draft_expired",
+    "draft_expired", // System expired draft
 ] as const;
 
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
-    ["deleted", "completed", "draft_expired"];
+    ["deleted", "completed", "draft_expired", "rejected"];
 
 export const resultStatusEnum = z.enum(["pass", "fail"]);
 
@@ -236,7 +239,7 @@ export const phdProposalSubmissionSchema = z.object({
         .number()
         .int()
         .positive("A proposal cycle must be selected"),
-    submissionType: z.enum(["draft", "final"]), // Added
+    submissionType: z.enum(["draft", "final"]),
     internalCoSupervisors: z.preprocess((val) => {
         if (typeof val === "string") {
             try {
@@ -260,7 +263,10 @@ export const phdProposalSubmissionSchema = z.object({
         },
         z
             .array(
-                z.object({ name: z.string().min(1), email: z.string().email() })
+                z.object({
+                    name: z.string().min(1),
+                    email: z.string().email(),
+                })
             )
             .optional()
     ),
@@ -288,7 +294,10 @@ export const proposalRevertSchema = z.object({
 export const supervisorProposalAcceptSchema = z.object({
     dacMembers: z
         .array(
-            z.object({ email: z.string().email(), name: z.string().optional() })
+            z.object({
+                email: z.string().email(),
+                name: z.string().optional(), // Only for external members
+            })
         )
         .min(2, "Minimum 2 DAC members required")
         .max(4, "Maximum 4 DAC members allowed"),
@@ -309,6 +318,14 @@ export const drcProposalAcceptSchema = z.object({
         .length(2, "Exactly 2 DAC members must be selected"),
     comments: z.string().trim().optional(),
 });
+
+// Added schema for explicit rejection by DRC
+export const drcProposalRejectSchema = z.object({
+    comments: z.string().trim().min(1, "Comments are required for rejection."),
+});
+
+// Added schema for enabling a rejected proposal
+export const drcProposalReenableSchema = z.object({}); // No body needed, just the ID in path
 
 export const dacReviewFormSchema = z.object({
     q1a: z.boolean(),
@@ -358,17 +375,66 @@ export const setSeminarDetailsSchema = z.object({
 });
 export type SetSeminarDetailsBody = z.infer<typeof setSeminarDetailsSchema>;
 
-export const createSeminarSlotsSchema = z.object({
-    slots: z
-        .array(
-            z.object({
-                venue: z.string().min(1),
-                startTime: z.string().datetime(),
-                endTime: z.string().datetime(),
-            })
-        )
-        .min(1),
+// Updated schema for seminar slots generation
+export const createSeminarSlotsSchema = z
+    .object({
+        venue: z.string().min(1, "Venue is required"),
+        startDate: z.string().date("Invalid start date"),
+        endDate: z.string().date("Invalid end date"),
+        startTime: z
+            .string()
+            .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid start time (HH:MM)"),
+        endTime: z
+            .string()
+            .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid end time (HH:MM)"),
+        durationMinutes: z.coerce.number().int().min(15).max(180).default(60),
+    })
+    .refine(
+        (data) => {
+            const startDateTime = new Date(
+                `${data.startDate}T${data.startTime}`
+            );
+            const endDateTime = new Date(`${data.endDate}T${data.endTime}`);
+            return endDateTime > startDateTime;
+        },
+        { message: "End date/time must be after start date/time" }
+    );
+export type CreateSeminarSlotsBody = z.infer<typeof createSeminarSlotsSchema>;
+
+// Schema for deleting seminar slots
+export const deleteSeminarSlotsSchema = z.object({
+    slotIds: z
+        .array(z.number().int().positive())
+        .min(1, "At least one slot ID must be provided."),
 });
+export type DeleteSeminarSlotsBody = z.infer<typeof deleteSeminarSlotsSchema>;
+
+// Schema for editing a single seminar slot
+export const editSeminarSlotPathSchema = z.object({
+    slotId: z.coerce.number().int().positive(),
+});
+export const editSeminarSlotBodySchema = z
+    .object({
+        venue: z.string().min(1, "Venue is required").optional(),
+        startTime: z.string().datetime().optional(),
+        endTime: z.string().datetime().optional(),
+    })
+    .refine((data) => data.venue || data.startTime || data.endTime, {
+        message:
+            "At least one field (venue, startTime, endTime) must be provided for update.",
+    })
+    .refine(
+        (data) =>
+            !data.startTime ||
+            !data.endTime ||
+            new Date(data.endTime) > new Date(data.startTime),
+        {
+            message: "End time must be after start time if both are provided.",
+            path: ["endTime"],
+        }
+    );
+export type EditSeminarSlotPath = z.infer<typeof editSeminarSlotPathSchema>;
+export type EditSeminarSlotBody = z.infer<typeof editSeminarSlotBodySchema>;
 
 export const bookSeminarSlotSchema = z.object({
     slotId: z.number().int().positive(),
@@ -385,12 +451,17 @@ export const uploadProposalSchema = z.object({
     coSupervisor1: z.string().email(),
     coSupervisor2: z.string().email(),
 });
-
 export type uploadProposalBody = z.infer<typeof uploadProposalSchema>;
+
 export const updatePhdGradeBodySchema = z.object({
     studentEmail: z.string(),
     courses: z
-        .array(z.object({ courseId: z.string(), grade: z.string().nullable() }))
+        .array(
+            z.object({
+                courseId: z.string(),
+                grade: z.string().nullable(),
+            })
+        )
         .nonempty(),
 });
 export type UpdatePhdGradeBody = z.infer<typeof updatePhdGradeBodySchema>;
@@ -497,6 +568,7 @@ export const editCoSupervisorsBodySchema = z
         "Specify either add or remove"
     );
 export type EditCoSupervisorsBody = z.infer<typeof editCoSupervisorsBodySchema>;
+
 export const editDacMembersBodySchema = editCoSupervisorsBodySchema;
 export type EditDacMembersBody = z.infer<typeof editDacMembersBodySchema>;
 
@@ -547,6 +619,7 @@ export const downloadBulkPackageSchema = z.object({
     proposalIds: z.array(z.number().int().positive()).min(1),
 });
 
+// Interfaces remain largely the same, no schema changes needed here immediately
 export interface PhdStudent {
     email: string;
     name: string | null;
@@ -557,7 +630,6 @@ export interface PhdStudent {
     coSupervisor1: string | null;
     coSupervisor2: string | null;
 }
-
 export interface QualifyingExamApplication {
     id: number;
     examId: number;
@@ -614,7 +686,6 @@ export interface VerifiedApplication {
     qualificationDate: string | null;
     supervisorTodoExists: boolean;
 }
-
 export interface QualifyingExamApplicationsResponse {
     exam: {
         id: number;
@@ -639,6 +710,7 @@ export interface QualifyingExamApplicationsResponse {
     };
     applications: Array<QualifyingExamApplication>;
 }
+
 const timetableSlotItemSchema = z.object({
     id: z.number(),
     examId: z.number(),

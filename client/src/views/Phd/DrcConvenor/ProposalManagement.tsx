@@ -1,3 +1,4 @@
+// client/src/views/Phd/DrcConvenor/ProposalManagement.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -32,6 +33,9 @@ import {
   Users,
   X,
   Check,
+  Trash2,
+  RotateCcw,
+  Info, // Added Info
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
@@ -39,7 +43,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import RequestSeminarDetailsDialog from "@/components/phd/proposal/RequestSeminarDetailsDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
 import { phdSchemas } from "lib";
 import { getProposalStatusVariant, formatStatus } from "@/lib/utils";
@@ -52,6 +55,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; // Added Label
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -59,7 +63,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"; // Removed AlertDialogTrigger as it's not used directly here
 
+// Interfaces remain the same
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -67,7 +82,10 @@ interface ProposalSemester {
   facultyReviewDate: string;
   drcReviewDate: string;
   dacReviewDate: string;
-  semester: { year: string; semesterNumber: number };
+  semester: {
+    year: string;
+    semesterNumber: number;
+  };
 }
 
 interface DacMemberInfo {
@@ -99,13 +117,14 @@ interface ProposalListItem {
     email: string;
   } | null;
   dacMembers: DacMemberInfo[];
-  dacReviews: DacReviewInfo[] | null; // Now includes reviews
+  dacReviews: DacReviewInfo[] | null;
   proposalSemester: ProposalSemester | null;
 }
 
 type SortField = "studentName" | "updatedAt";
 type SortDirection = "asc" | "desc";
 
+// DeadlinesCard component remains the same
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -168,6 +187,9 @@ const DrcProposalManagement: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchTerm, setSearchTerm] = useState("");
+  const [proposalToReject, setProposalToReject] =
+    useState<ProposalListItem | null>(null);
+  const [rejectComments, setRejectComments] = useState("");
 
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
@@ -180,7 +202,8 @@ const DrcProposalManagement: React.FC = () => {
   });
 
   useEffect(() => {
-    if (semesters && semesters.length > 0 && !selectedSemesterId) {
+    if (semesters && semesters.length > 0 && selectedSemesterId === null) {
+      // Added null check
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
@@ -194,22 +217,63 @@ const DrcProposalManagement: React.FC = () => {
   } = useQuery({
     queryKey: ["drc-proposals", selectedSemesterId],
     queryFn: async () => {
-      if (!selectedSemesterId) return [];
+      if (selectedSemesterId === null) return []; // Check for null
       const response = await api.get<ProposalListItem[]>(
         `/phd/proposal/drcConvener/getProposals/${selectedSemesterId}`
       );
       return response.data;
     },
-    enabled: !!selectedSemesterId,
+    enabled: selectedSemesterId !== null, // Check for null
+  });
+
+  // Mutation for rejecting a proposal
+  const rejectProposalMutation = useMutation({
+    mutationFn: ({
+      proposalId,
+      comments,
+    }: {
+      proposalId: number;
+      comments: string;
+    }) =>
+      api.post(`/phd/proposal/drcConvener/reviewProposal/${proposalId}`, {
+        action: "reject",
+        comments,
+      }),
+    onSuccess: (_, variables) => {
+      toast.success(`Proposal ${variables.proposalId} rejected successfully.`);
+      setProposalToReject(null);
+      setRejectComments("");
+      void refetch();
+    },
+    onError: (err) => {
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to reject proposal."
+      );
+    },
+  });
+
+  // Mutation for re-enabling a proposal
+  const reenableProposalMutation = useMutation({
+    mutationFn: (proposalId: number) =>
+      api.post(`/phd/proposal/drcConvener/reenableProposal/${proposalId}`, {}),
+    onSuccess: (_, proposalId) => {
+      toast.success(`Proposal ${proposalId} re-enabled successfully.`);
+      void refetch();
+    },
+    onError: (err, proposalId) => {
+      toast.error(
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || `Failed to re-enable proposal ${proposalId}.`
+      );
+    },
   });
 
   const filteredAndSortedProposals = useMemo(() => {
     let filtered = proposals;
-
     if (statusFilter.length > 0) {
       filtered = filtered.filter((p) => statusFilter.includes(p.status));
     }
-
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       filtered = filtered.filter(
@@ -221,19 +285,17 @@ const DrcProposalManagement: React.FC = () => {
           p.supervisor?.email?.toLowerCase().includes(lowerSearchTerm)
       );
     }
-
     return [...filtered].sort((a, b) => {
       let compareA: string | number | Date;
       let compareB: string | number | Date;
-
       if (sortField === "studentName") {
         compareA = (a.student.name || a.student.email).toLowerCase();
         compareB = (b.student.name || b.student.email).toLowerCase();
       } else {
+        // updatedAt
         compareA = new Date(a.updatedAt);
         compareB = new Date(b.updatedAt);
       }
-
       if (compareA < compareB) {
         return sortDirection === "asc" ? -1 : 1;
       }
@@ -285,7 +347,8 @@ const DrcProposalManagement: React.FC = () => {
       link.parentNode?.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success("Packages downloaded.");
-      void refetch();
+      // No need to refetch immediately for download usually
+      // void refetch();
     },
     onError: () => toast.error("Failed to download packages."),
   });
@@ -300,7 +363,7 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: (err) =>
       toast.error(
-        (err as { response: { data: { message: string } } }).response?.data
+        (err as { response?: { data?: { message?: string } } }).response?.data
           ?.message || "Failed to finalize."
       ),
   });
@@ -310,16 +373,18 @@ const DrcProposalManagement: React.FC = () => {
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
+  const handleSelectAll = (checked: boolean | "indeterminate") => {
+    // Accept indeterminate state
+    if (checked === true) {
       const visibleSelectableIds = filteredAndSortedProposals.map((p) => p.id);
       setSelectedProposalIds(visibleSelectableIds);
     } else {
+      // checked is false or indeterminate
       setSelectedProposalIds([]);
     }
   };
 
+  // Helper to get selected proposals by status (remains the same)
   const getSelectedProposalsByStatus = (statuses: string[]) => {
     return (
       proposals?.filter(
@@ -342,7 +407,6 @@ const DrcProposalManagement: React.FC = () => {
       );
     }
   };
-
   const openGeneralReminderDialog = () => {
     const selected =
       proposals?.filter((p) => selectedProposalIds.includes(p.id)) ?? [];
@@ -353,7 +417,6 @@ const DrcProposalManagement: React.FC = () => {
     setProposalsForDialog(selected);
     setIsReminderDialogOpen(true);
   };
-
   const openReminderDialog = (proposal: ProposalListItem) => {
     setProposalsForDialog([proposal]);
     setIsReminderDialogOpen(true);
@@ -362,12 +425,10 @@ const DrcProposalManagement: React.FC = () => {
   const semesterDeadlines = proposals?.find(
     (p) => p.proposalSemester
   )?.proposalSemester;
-
   const selectedProposals = useMemo(
     () => proposals.filter((p) => selectedProposalIds.includes(p.id)),
     [proposals, selectedProposalIds]
   );
-
   const canRequestSeminar = selectedProposals.some((p) =>
     ["seminar_pending", "dac_accepted"].includes(p.status)
   );
@@ -382,9 +443,19 @@ const DrcProposalManagement: React.FC = () => {
   );
   const canSendGeneralReminder = selectedProposalIds.length > 0;
 
-  const isAllVisibleSelected =
-    filteredAndSortedProposals.length > 0 &&
-    selectedProposalIds.length === filteredAndSortedProposals.length;
+  // Correct calculation for checkbox states
+  const numVisibleProposals = filteredAndSortedProposals.length;
+  const numSelectedVisibleProposals = filteredAndSortedProposals.filter((p) =>
+    selectedProposalIds.includes(p.id)
+  ).length;
+  const isAllVisibleSelectedState: boolean | "indeterminate" =
+    numVisibleProposals === 0
+      ? false
+      : numSelectedVisibleProposals === numVisibleProposals
+        ? true
+        : numSelectedVisibleProposals > 0
+          ? "indeterminate"
+          : false;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -396,7 +467,6 @@ const DrcProposalManagement: React.FC = () => {
   };
 
   const allStatuses = phdSchemas.phdProposalStatuses;
-
   const getDacMemberReviewStatus = (
     memberEmail: string,
     reviews: DacReviewInfo[] | null
@@ -411,8 +481,28 @@ const DrcProposalManagement: React.FC = () => {
     return review.approved ? "approved" : "reverted";
   };
 
+  // Handler to initiate rejection process
+  const startRejectProposal = (proposal: ProposalListItem) => {
+    setProposalToReject(proposal);
+    setRejectComments(""); // Reset comments when opening dialog
+  };
+
+  // Handler to confirm rejection
+  const confirmRejectProposal = () => {
+    if (!proposalToReject) return;
+    if (!rejectComments.trim()) {
+      toast.error("Rejection comments cannot be empty.");
+      return;
+    }
+    rejectProposalMutation.mutate({
+      proposalId: proposalToReject.id,
+      comments: rejectComments,
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header and Timeline */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">PhD Proposal Management</h1>
@@ -429,6 +519,7 @@ const DrcProposalManagement: React.FC = () => {
 
       <ProposalStatusTimeline role="drc" />
 
+      {/* Semester Selector and Deadlines */}
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -442,14 +533,13 @@ const DrcProposalManagement: React.FC = () => {
             selectedSemesterId={selectedSemesterId}
             onSemesterChange={(id) => {
               setSelectedSemesterId(id);
-              setSelectedProposalIds([]);
+              setSelectedProposalIds([]); // Reset selection on semester change
               setStatusFilter([]);
               setSearchTerm("");
             }}
           />
         </CardContent>
       </Card>
-
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
@@ -457,6 +547,7 @@ const DrcProposalManagement: React.FC = () => {
         />
       )}
 
+      {/* Action Alert */}
       <Alert>
         <Info className="h-4 w-4" />
         <AlertTitle>Action Required for Proposals</AlertTitle>
@@ -470,6 +561,7 @@ const DrcProposalManagement: React.FC = () => {
 
       <Card>
         <CardHeader>
+          {/* Filtering and Search UI */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <CardTitle>All Student Proposals</CardTitle>
@@ -488,12 +580,11 @@ const DrcProposalManagement: React.FC = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="h-9">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Status (
+                    <Filter className="mr-2 h-4 w-4" /> Status (
                     {statusFilter.length > 0 ? statusFilter.length : "All"})
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent className="max-h-72 w-56 overflow-y-auto">
                   <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {allStatuses.map((status) => (
@@ -507,7 +598,7 @@ const DrcProposalManagement: React.FC = () => {
                             : prev.filter((s) => s !== status)
                         );
                       }}
-                      onSelect={(e) => e.preventDefault()} // Keep menu open
+                      onSelect={(e) => e.preventDefault()}
                     >
                       {formatStatus(status)}
                     </DropdownMenuCheckboxItem>
@@ -526,6 +617,8 @@ const DrcProposalManagement: React.FC = () => {
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Bulk Action Buttons */}
           <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
             <Button
               onClick={openRequestDialog}
@@ -643,10 +736,7 @@ const DrcProposalManagement: React.FC = () => {
                   <TableHead className="w-12">
                     <Checkbox
                       onCheckedChange={handleSelectAll}
-                      checked={
-                        isAllVisibleSelected &&
-                        filteredAndSortedProposals.length > 0
-                      }
+                      checked={isAllVisibleSelectedState} // Use calculated state
                       disabled={
                         !proposals || filteredAndSortedProposals.length === 0
                       }
@@ -659,8 +749,7 @@ const DrcProposalManagement: React.FC = () => {
                       onClick={() => handleSort("studentName")}
                       className="px-1"
                     >
-                      Student
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                      Student <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead>Supervisor</TableHead>
@@ -672,8 +761,7 @@ const DrcProposalManagement: React.FC = () => {
                       onClick={() => handleSort("updatedAt")}
                       className="px-1"
                     >
-                      Status / Updated
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                      Status / Updated <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead className="text-right">Action</TableHead>
@@ -687,7 +775,7 @@ const DrcProposalManagement: React.FC = () => {
                       className="h-24 text-center text-red-600"
                     >
                       Error:{" "}
-                      {(error as { response: { data: string } })?.response
+                      {(error as { response?: { data?: string } })?.response
                         ?.data || "Failed to load proposals"}
                     </TableCell>
                   </TableRow>
@@ -703,7 +791,7 @@ const DrcProposalManagement: React.FC = () => {
                       <div className="py-8 text-center">
                         <FileText className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                         <h3 className="mb-2 text-lg font-medium">
-                          {selectedSemesterId
+                          {selectedSemesterId !== null
                             ? "No proposals match the current filters."
                             : "Please select a semester."}
                         </h3>
@@ -794,6 +882,7 @@ const DrcProposalManagement: React.FC = () => {
                             </span>
                           )}
                         </TableCell>
+
                         <TableCell>
                           <Badge
                             className={getProposalStatusVariant(
@@ -806,7 +895,7 @@ const DrcProposalManagement: React.FC = () => {
                             {new Date(proposal.updatedAt).toLocaleDateString()}
                           </div>
                         </TableCell>
-                        <TableCell className="flex justify-end gap-2 text-right">
+                        <TableCell className="flex justify-end gap-1 text-right">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -830,6 +919,40 @@ const DrcProposalManagement: React.FC = () => {
                               <BellRing className="h-4 w-4" />
                             </Button>
                           )}
+                          {/* Reject Button: Show if not already rejected, completed, or deleted */}
+                          {!phdSchemas.inactivePhdProposalStatuses.includes(
+                            proposal.status
+                          ) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => startRejectProposal(proposal)}
+                              title="Reject Proposal"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {/* Re-enable Button: Show only if rejected */}
+                          {proposal.status === "rejected" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-green-600 hover:text-green-700"
+                              onClick={() =>
+                                reenableProposalMutation.mutate(proposal.id)
+                              }
+                              title="Re-enable Proposal"
+                              disabled={reenableProposalMutation.isLoading}
+                            >
+                              {reenableProposalMutation.isLoading && (
+                                <LoadingSpinner className="h-4 w-4" />
+                              )}
+                              {!reenableProposalMutation.isLoading && (
+                                <RotateCcw className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -841,6 +964,7 @@ const DrcProposalManagement: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Dialogs */}
       {isRequestDialogOpen && (
         <RequestSeminarDetailsDialog
           isOpen={isRequestDialogOpen}
@@ -853,7 +977,6 @@ const DrcProposalManagement: React.FC = () => {
           }}
         />
       )}
-
       {isReminderDialogOpen && (
         <RequestSeminarDetailsDialog
           isOpen={isReminderDialogOpen}
@@ -865,6 +988,70 @@ const DrcProposalManagement: React.FC = () => {
           }}
         />
       )}
+
+      {/* Rejection Confirmation Dialog */}
+      <AlertDialog
+        open={!!proposalToReject}
+        onOpenChange={(open) => {
+          if (!open) {
+            setProposalToReject(null);
+            setRejectComments("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Reject Proposal: {proposalToReject?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will mark the proposal as rejected and notify the
+              student and supervisor. Please provide clear comments for the
+              rejection. This action can be reversed using the 'Re-enable'
+              button later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="reject-comments">
+              Rejection Comments (Required)
+            </Label>
+            <Input
+              id="reject-comments"
+              value={rejectComments}
+              onChange={(e) => setRejectComments(e.target.value)}
+              placeholder="Reason for rejection..."
+              // Basic validation visualization
+              className={
+                !rejectComments.trim() && rejectProposalMutation.isError
+                  ? "border-destructive"
+                  : ""
+              }
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setProposalToReject(null);
+                setRejectComments("");
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRejectProposal}
+              disabled={
+                !rejectComments.trim() || rejectProposalMutation.isLoading
+              }
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {rejectProposalMutation.isLoading && (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              )}
+              Confirm Rejection
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
