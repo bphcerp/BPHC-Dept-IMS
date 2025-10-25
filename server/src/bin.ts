@@ -5,28 +5,17 @@ import env from "./config/environment.ts";
 import logger from "./config/logger.ts";
 
 import {
-    scheduleDailyProposalReminders,
+    scheduleHourlyProposalReminders,
     proposalReminderWorker,
 } from "./lib/jobs/proposalReminderJobs.ts";
 import { emailWorker } from "./lib/common/email.ts";
 
-logger.info("Initializing BullMQ Workers...");
-emailWorker.on("ready", () => logger.info("Email worker ready."));
-emailWorker.on("error", (error) => logger.error("Email worker error:", error));
-proposalReminderWorker.on("ready", () =>
-    logger.info("Proposal reminder worker ready.")
-);
-proposalReminderWorker.on("error", (error) =>
-    logger.error("Proposal reminder worker error:", error)
-);
+emailWorker.on("error", (_error) => {});
+proposalReminderWorker.on("error", (_error) => {});
 
 try {
-    scheduleDailyProposalReminders().catch((err) => {
-        logger.error("Failed to schedule daily proposal reminders:", err);
-    });
-} catch (error) {
-    logger.error("Error during initial job scheduling:", error);
-}
+    scheduleHourlyProposalReminders().catch((_err) => {});
+} catch (error: any) {}
 
 app.set("port", env.SERVER_PORT);
 
