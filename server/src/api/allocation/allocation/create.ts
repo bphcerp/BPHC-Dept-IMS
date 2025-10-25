@@ -9,6 +9,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { courseAllocateSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 
 const router = express.Router();
 
@@ -48,10 +49,13 @@ router.post(
                               ic: ic,
                           },
                       })
-                : await tx.insert(masterAllocation).values({
-                      courseCode,
-                      semesterId,
-                  }).returning()
+                : await tx
+                      .insert(masterAllocation)
+                      .values({
+                          courseCode,
+                          semesterId,
+                      })
+                      .returning();
             for (const { type, instructors } of sections) {
                 const [section] = await tx
                     .insert(allocationSection)
@@ -67,6 +71,17 @@ router.post(
                     }))
                 );
             }
+            const courseDetails = await tx.query.course.findFirst({
+                where: (course, { eq }) => eq(course.code, courseCode),
+            });
+
+            if (courseDetails && courseDetails.offeredTo != "PhD")
+                await tx.insert(courseHandoutRequests).values({
+                    courseCode,
+                    courseName: courseDetails.name ?? "",
+                    icEmail: ic ?? null,
+                    category: courseDetails.offeredTo,
+                });
         });
 
         res.status(201).json({ success: true });
