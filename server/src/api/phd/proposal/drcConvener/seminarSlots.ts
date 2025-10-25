@@ -3,7 +3,11 @@ import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
-import { phdSeminarSlots, phdProposals } from "@/config/db/schema/phd.ts";
+import {
+    phdSeminarSlots,
+    phdProposals,
+    phdProposalSemesters,
+} from "@/config/db/schema/phd.ts"; // Added phdProposalSemesters
 import { phdSchemas } from "lib";
 import {
     desc,
@@ -13,35 +17,111 @@ import {
     notInArray,
     eq,
     isNull,
-} from "drizzle-orm";
+    gte,
+    lte,
+} from "drizzle-orm"; // Added gte, lte
 import assert from "assert";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { z } from "zod"; // Added z
 
 const router = express.Router();
 
-// GET all slots and manually scheduled proposals (existing functionality)
+// Schema for the GET query parameter
+const getSlotsQuerySchema = z.object({
+    proposalSemesterId: z.coerce.number().int().positive().optional(),
+});
+
+// GET slots and manually scheduled proposals, filtered by proposalSemesterId
 router.get(
     "/",
     checkAccess("phd:drc:proposal"),
-    asyncHandler(async (_req, res) => {
-        // Fetch slots created via the tool
+    asyncHandler(async (req, res) => {
+        const queryParseResult = getSlotsQuerySchema.safeParse(req.query);
+        if (!queryParseResult.success) {
+            throw new HttpError(
+                HttpCode.BAD_REQUEST,
+                "Invalid query parameter: " +
+                    queryParseResult.error.errors[0]?.message
+            );
+        }
+        const { proposalSemesterId: requestedProposalSemesterId } =
+            queryParseResult.data;
+
+        let targetProposalSemesterId: number | undefined =
+            requestedProposalSemesterId;
+        let semesterStartDate: Date | undefined;
+        let semesterEndDate: Date | undefined;
+
+        // Determine the semester dates to filter by
+        if (targetProposalSemesterId) {
+            const proposalSemester =
+                await db.query.phdProposalSemesters.findFirst({
+                    where: eq(
+                        phdProposalSemesters.id,
+                        targetProposalSemesterId
+                    ),
+                    with: { semester: true },
+                });
+            if (!proposalSemester) {
+                throw new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "Selected proposal semester not found."
+                );
+            }
+            semesterStartDate = proposalSemester.semester.startDate;
+            semesterEndDate = proposalSemester.semester.endDate;
+        } else {
+            // Fallback: Get the latest proposal semester
+            const latestProposalSemester =
+                await db.query.phdProposalSemesters.findFirst({
+                    orderBy: desc(phdProposalSemesters.id),
+                    with: { semester: true },
+                });
+            if (latestProposalSemester) {
+                targetProposalSemesterId = latestProposalSemester.id;
+                semesterStartDate = latestProposalSemester.semester.startDate;
+                semesterEndDate = latestProposalSemester.semester.endDate;
+            } else {
+                // No proposal semesters exist at all
+                res.status(200).json({
+                    bookedSlots: [],
+                    manuallyScheduled: [],
+                });
+                return;
+            }
+        }
+
+        // Ensure dates are valid Date objects for filtering
+        if (!semesterStartDate || !semesterEndDate) {
+            throw new HttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "Could not determine semester date range."
+            );
+        }
+
+        // Adjust end date to be inclusive for the whole day
+        const inclusiveEndDate = new Date(semesterEndDate);
+        inclusiveEndDate.setHours(23, 59, 59, 999);
+
+        // Fetch slots created via the tool within the semester range
         const bookedSlots = await db.query.phdSeminarSlots.findMany({
+            where: and(
+                gte(phdSeminarSlots.startTime, semesterStartDate),
+                lte(phdSeminarSlots.startTime, inclusiveEndDate) // Use inclusive end date
+            ),
             orderBy: desc(phdSeminarSlots.startTime),
             with: {
                 proposal: {
                     with: {
                         student: {
-                            columns: {
-                                name: true,
-                                email: true,
-                            },
+                            columns: { name: true, email: true },
                         },
                     },
                 },
             },
         });
 
-        // Fetch proposals scheduled manually (status finalized, not linked to a booked slot)
+        // Fetch proposals scheduled manually within the semester range
         const bookedSlotProposalIds = await db
             .selectDistinct({ id: phdSeminarSlots.bookedByProposalId })
             .from(phdSeminarSlots)
@@ -59,7 +139,11 @@ router.get(
                 ]),
                 bookedIds.length > 0
                     ? notInArray(phdProposals.id, bookedIds)
-                    : undefined
+                    : undefined,
+                // Filter by seminarDate within the semester range
+                isNotNull(phdProposals.seminarDate), // Ensure seminarDate exists
+                gte(phdProposals.seminarDate, semesterStartDate),
+                lte(phdProposals.seminarDate, inclusiveEndDate) // Use inclusive end date
             ),
             with: {
                 student: { columns: { name: true, email: true } },
@@ -78,7 +162,7 @@ router.get(
     })
 );
 
-// POST Create new slots based on date range and duration
+// POST Create new slots (no change needed for filtering)
 router.post(
     "/",
     checkAccess("phd:drc:proposal"),
@@ -96,10 +180,9 @@ router.post(
         const slotsToInsert = [];
         let currentDay = new Date(startDate);
         const lastDay = new Date(endDate);
-        lastDay.setHours(23, 59, 59, 999); // Ensure end date is inclusive
+        lastDay.setHours(23, 59, 59, 999);
 
         while (currentDay <= lastDay) {
-            // Skip weekends (Saturday=6, Sunday=0)
             const dayOfWeek = currentDay.getDay();
             if (dayOfWeek === 0 || dayOfWeek === 6) {
                 currentDay.setDate(currentDay.getDate() + 1);
@@ -119,25 +202,25 @@ router.post(
                 const currentSlotEnd = new Date(
                     currentSlotStart.getTime() + durationMinutes * 60000
                 );
-                // Ensure slot doesn't exceed the day's end time
                 if (currentSlotEnd > dayEndTime) break;
 
                 slotsToInsert.push({
                     drcConvenerEmail: req.user!.email,
                     venue,
-                    startTime: new Date(currentSlotStart), // Ensure it's a new Date object
+                    startTime: new Date(currentSlotStart),
                     endTime: currentSlotEnd,
                 });
-                currentSlotStart = currentSlotEnd; // Move to the next slot start time
+                currentSlotStart = currentSlotEnd;
             }
-            currentDay.setDate(currentDay.getDate() + 1); // Move to the next day
+            currentDay.setDate(currentDay.getDate() + 1);
         }
 
         if (slotsToInsert.length > 0) {
+            // Consider adding a check here for conflicts before inserting
             await db
                 .insert(phdSeminarSlots)
                 .values(slotsToInsert)
-                .onConflictDoNothing(); // Avoid inserting duplicates if run again
+                .onConflictDoNothing();
         }
 
         res.status(201).json({
@@ -147,7 +230,7 @@ router.post(
     })
 );
 
-// DELETE multiple slots
+// DELETE multiple slots (no change needed for filtering)
 router.delete(
     "/",
     checkAccess("phd:drc:proposal"),
@@ -159,7 +242,7 @@ router.delete(
             .where(
                 and(
                     inArray(phdSeminarSlots.id, slotIds),
-                    isNull(phdSeminarSlots.bookedByProposalId) // Only delete unbooked slots
+                    isNull(phdSeminarSlots.bookedByProposalId)
                 )
             )
             .returning({ id: phdSeminarSlots.id });
@@ -179,7 +262,7 @@ router.delete(
     })
 );
 
-// PUT Edit a single slot
+// PUT Edit a single slot (no change needed for filtering)
 router.put(
     "/:slotId",
     checkAccess("phd:drc:proposal"),
@@ -203,13 +286,11 @@ router.put(
             );
         }
 
-        // Prepare update data, converting dates if necessary
         const updateData: Partial<typeof phdSeminarSlots.$inferInsert> = {};
         if (body.venue) updateData.venue = body.venue;
         if (body.startTime) updateData.startTime = new Date(body.startTime);
         if (body.endTime) updateData.endTime = new Date(body.endTime);
 
-        // Ensure endTime > startTime if both are updated
         const finalStartTime = updateData.startTime ?? slot.startTime;
         const finalEndTime = updateData.endTime ?? slot.endTime;
         if (finalEndTime <= finalStartTime) {

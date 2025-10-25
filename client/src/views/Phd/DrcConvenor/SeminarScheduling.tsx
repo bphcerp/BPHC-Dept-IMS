@@ -1,5 +1,5 @@
 // client/src/views/Phd/DrcConvenor/SeminarScheduling.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ import {
 import BackButton from "@/components/BackButton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Checkbox } from "@/components/ui/checkbox"; // Added Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -33,10 +33,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"; // Added Dialog components
-import { Edit, Trash2 } from "lucide-react"; // Added Edit, Trash2
-import { phdSchemas } from "lib"; // Assuming schemas are here
+} from "@/components/ui/dialog";
+import { Edit, Trash2 } from "lucide-react";
+import { phdSchemas } from "lib";
+import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector"; // Import selector
 
+// Interfaces remain the same
 interface SeminarSlot {
   id: number;
   venue: string;
@@ -71,20 +73,35 @@ interface SlotQueryResponse {
   manuallyScheduled: ManualSlot[];
 }
 
-// Interface for Edit Dialog state
 interface EditingSlotState extends Partial<SeminarSlot> {
   startTimeStr?: string;
   endTimeStr?: string;
 }
 
+// Interface for proposal semester data (needed for selector initialization)
+interface ProposalSemesterInfo {
+  id: number;
+  semesterId: number;
+  studentSubmissionDate: string;
+  semester: {
+    year: string;
+    semesterNumber: number;
+  };
+}
+
 const SeminarScheduling: React.FC = () => {
+  // State for proposal cycle selection
+  const [selectedProposalSemesterId, setSelectedProposalSemesterId] = useState<
+    number | null
+  >(null);
+
   // State for creating slots
   const [venue, setVenue] = useState("");
-  const [startDate, setStartDate] = useState(""); // Changed from date
-  const [endDate, setEndDate] = useState(""); // Added endDate
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
-  const [duration, setDuration] = useState("60"); // Default to 60 minutes
+  const [duration, setDuration] = useState("60");
 
   // State for selecting slots to delete
   const [selectedSlotIds, setSelectedSlotIds] = useState<number[]>([]);
@@ -93,20 +110,49 @@ const SeminarScheduling: React.FC = () => {
   const [editingSlot, setEditingSlot] = useState<EditingSlotState | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Fetch existing slots
+  // Fetch proposal semesters to initialize the selector
+  const { data: proposalSemesters } = useQuery<ProposalSemesterInfo[]>({
+    queryKey: ["proposal-semesters"], // Use the same key as the selector component
+    queryFn: async () => {
+      const response = await api.get("/phd/proposal/getProposalSemesters");
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 mins
+  });
+
+  // Effect to set the initial selected proposal semester ID to the latest one
+  useEffect(() => {
+    if (
+      proposalSemesters &&
+      proposalSemesters.length > 0 &&
+      selectedProposalSemesterId === null
+    ) {
+      setSelectedProposalSemesterId(proposalSemesters[0].id); // Select the first (latest)
+    }
+  }, [proposalSemesters, selectedProposalSemesterId]);
+
+  // Fetch existing slots based on selected proposal semester
   const {
     data,
     isLoading: isLoadingSlots,
     refetch,
   } = useQuery<SlotQueryResponse>({
-    queryKey: ["seminar-slots-all"],
+    // Include selectedProposalSemesterId in the query key
+    queryKey: ["seminar-slots-all", selectedProposalSemesterId],
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/drcConvener/seminarSlots");
+      if (selectedProposalSemesterId === null)
+        return { bookedSlots: [], manuallyScheduled: [] }; // Don't fetch if no semester selected
+      // Pass the ID as a query parameter
+      const res = await api.get(
+        `/phd/proposal/drcConvener/seminarSlots?proposalSemesterId=${selectedProposalSemesterId}`
+      );
       return res.data;
     },
+    // Only run the query when a proposal semester ID is selected
+    enabled: selectedProposalSemesterId !== null,
   });
 
-  // Mutation for creating slots
+  // --- Mutations (create, delete, edit) remain the same ---
   const createSlotsMutation = useMutation({
     mutationFn: (newSlotsData: phdSchemas.CreateSeminarSlotsBody) =>
       api.post("/phd/proposal/drcConvener/seminarSlots", newSlotsData),
@@ -120,17 +166,13 @@ const SeminarScheduling: React.FC = () => {
       setEndDate("");
       setStartTime("09:00");
       setEndTime("17:00");
-      setDuration("60");
+      setDuration("60"); // Reset form
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to create slots. Check for conflicts or invalid range."
-      );
+      toast.error(error.response?.data?.message || "Failed to create slots.");
     },
   });
 
-  // Mutation for deleting slots
   const deleteSlotsMutation = useMutation({
     mutationFn: (slotIds: number[]) =>
       api.delete("/phd/proposal/drcConvener/seminarSlots", {
@@ -138,18 +180,14 @@ const SeminarScheduling: React.FC = () => {
       }),
     onSuccess: () => {
       toast.success("Selected unbooked slots deleted.");
-      setSelectedSlotIds([]); // Clear selection
+      setSelectedSlotIds([]);
       void refetch();
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to delete slots. Some might be booked."
-      );
+      toast.error(error.response?.data?.message || "Failed to delete slots.");
     },
   });
 
-  // Mutation for editing a slot
   const editSlotMutation = useMutation({
     mutationFn: ({
       slotId,
@@ -160,19 +198,16 @@ const SeminarScheduling: React.FC = () => {
     }) => api.put(`/phd/proposal/drcConvener/seminarSlots/${slotId}`, data),
     onSuccess: () => {
       toast.success("Slot updated successfully.");
-      setIsEditDialogOpen(false); // Close dialog
+      setIsEditDialogOpen(false);
       setEditingSlot(null);
       void refetch();
     },
     onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to update slot. Check for conflicts."
-      );
+      toast.error(error.response?.data?.message || "Failed to update slot.");
     },
   });
 
-  // Handler for creating slots
+  // --- Handlers (handleSubmitCreate, handleDeleteSelected, handleOpenEditDialog, handleSaveChanges, handleSelectSlot, handleSelectAll) remain the same ---
   const handleSubmitCreate = (e: React.FormEvent) => {
     e.preventDefault();
     const payload: phdSchemas.CreateSeminarSlotsBody = {
@@ -188,11 +223,9 @@ const SeminarScheduling: React.FC = () => {
       toast.error(validation.error.errors[0]?.message || "Invalid input.");
       return;
     }
-
     createSlotsMutation.mutate(validation.data);
   };
 
-  // Handler for deleting selected slots
   const handleDeleteSelected = () => {
     if (selectedSlotIds.length === 0) {
       toast.info("No slots selected for deletion.");
@@ -201,11 +234,9 @@ const SeminarScheduling: React.FC = () => {
     deleteSlotsMutation.mutate(selectedSlotIds);
   };
 
-  // Handler for opening the edit dialog
   const handleOpenEditDialog = (slot: SeminarSlot) => {
     setEditingSlot({
       ...slot,
-      // Convert dates to string format suitable for datetime-local input
       startTimeStr: slot.startTime
         ? new Date(
             new Date(slot.startTime).getTime() -
@@ -226,36 +257,55 @@ const SeminarScheduling: React.FC = () => {
     setIsEditDialogOpen(true);
   };
 
-  // Handler for saving edited slot
   const handleSaveChanges = () => {
     if (!editingSlot || !editingSlot.id) return;
-
     const payload: phdSchemas.EditSeminarSlotBody = {};
-    if (editingSlot.venue) payload.venue = editingSlot.venue;
-    // Convert local datetime string back to ISO string for backend
-    if (editingSlot.startTimeStr)
-      payload.startTime = new Date(editingSlot.startTimeStr).toISOString();
-    if (editingSlot.endTimeStr)
-      payload.endTime = new Date(editingSlot.endTimeStr).toISOString();
+    if (
+      editingSlot.venue &&
+      editingSlot.venue !==
+        data?.bookedSlots.find((s) => s.id === editingSlot.id)?.venue
+    )
+      payload.venue = editingSlot.venue;
+    if (editingSlot.startTimeStr) {
+      const newStartTime = new Date(editingSlot.startTimeStr).toISOString();
+      if (
+        newStartTime !==
+        data?.bookedSlots.find((s) => s.id === editingSlot.id)?.startTime
+      )
+        payload.startTime = newStartTime;
+    }
+    if (editingSlot.endTimeStr) {
+      const newEndTime = new Date(editingSlot.endTimeStr).toISOString();
+      if (
+        newEndTime !==
+        data?.bookedSlots.find((s) => s.id === editingSlot.id)?.endTime
+      )
+        payload.endTime = newEndTime;
+    }
 
     const validation = phdSchemas.editSeminarSlotBodySchema.safeParse(payload);
     if (!validation.success) {
       toast.error(validation.error.errors[0]?.message || "Invalid edit data.");
       return;
     }
+    if (Object.keys(validation.data).length === 0) {
+      toast.info("No changes detected.");
+      setIsEditDialogOpen(false);
+      setEditingSlot(null);
+      return;
+    }
 
     editSlotMutation.mutate({ slotId: editingSlot.id, data: validation.data });
   };
 
-  // Handle selection changes
   const handleSelectSlot = (id: number, checked: boolean) => {
     setSelectedSlotIds((prev) =>
       checked ? [...prev, id] : prev.filter((slotId) => slotId !== id)
     );
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
+  const handleSelectAll = (checked: boolean | "indeterminate") => {
+    if (checked === true) {
       const unbookedIds =
         data?.bookedSlots.filter((s) => !s.isBooked).map((s) => s.id) ?? [];
       setSelectedSlotIds(unbookedIds);
@@ -264,10 +314,16 @@ const SeminarScheduling: React.FC = () => {
     }
   };
 
+  // Calculate checkbox state based on *currently displayed* data
   const allUnbookedSlots = data?.bookedSlots.filter((s) => !s.isBooked) ?? [];
-  const isAllSelected =
-    allUnbookedSlots.length > 0 &&
-    selectedSlotIds.length === allUnbookedSlots.length;
+  const isAllSelected: boolean | "indeterminate" =
+    allUnbookedSlots.length === 0
+      ? false
+      : selectedSlotIds.length === allUnbookedSlots.length
+        ? true
+        : selectedSlotIds.length > 0
+          ? "indeterminate"
+          : false;
 
   return (
     <div className="space-y-6">
@@ -275,11 +331,33 @@ const SeminarScheduling: React.FC = () => {
       <div className="text-center">
         <h1 className="text-3xl font-bold">Seminar Slot Management</h1>
         <p className="mt-2 text-gray-600">
-          Create and view available time slots for PhD proposal seminars.
+          Create, view, edit, and delete available time slots for PhD proposal
+          seminars for the selected proposal cycle.
         </p>
       </div>
 
-      {/* Create Slots Card */}
+      {/* Proposal Cycle Selector */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Select Proposal Cycle</CardTitle>
+          <CardDescription>
+            Manage seminar slots relevant to a specific proposal submission
+            cycle.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProposalSemesterSelector
+            selectedSemesterId={selectedProposalSemesterId}
+            onSemesterChange={(id) => {
+              setSelectedProposalSemesterId(id);
+              setSelectedSlotIds([]); // Clear selection when cycle changes
+            }}
+            className="max-w-md" // Optional: constrain width
+          />
+        </CardContent>
+      </Card>
+
+      {/* Create Slots Card (remains the same structure) */}
       <Card>
         <CardHeader>
           <CardTitle>Create New Seminar Slots</CardTitle>
@@ -369,10 +447,10 @@ const SeminarScheduling: React.FC = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>System-Managed Slots</CardTitle>
+            <CardTitle>System-Managed Slots for Selected Cycle</CardTitle>
             <CardDescription>
-              Slots created via this tool. Supervisors can book available slots.
-              Unbooked slots can be edited or deleted.
+              Slots created via this tool within the selected semester. Unbooked
+              slots can be edited or deleted.
             </CardDescription>
           </div>
           <Button
@@ -393,7 +471,9 @@ const SeminarScheduling: React.FC = () => {
         </CardHeader>
         <CardContent>
           {isLoadingSlots ? (
-            <LoadingSpinner />
+            <div className="flex justify-center p-8">
+              <LoadingSpinner />
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -409,8 +489,7 @@ const SeminarScheduling: React.FC = () => {
                   <TableHead>Time</TableHead>
                   <TableHead>Venue</TableHead>
                   <TableHead>Status / Booked By</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>{" "}
-                  {/* Added Actions column */}
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -423,7 +502,7 @@ const SeminarScheduling: React.FC = () => {
                           onCheckedChange={(checked) =>
                             handleSelectSlot(slot.id, checked as boolean)
                           }
-                          disabled={slot.isBooked} // Cannot delete booked slots
+                          disabled={slot.isBooked}
                         />
                       </TableCell>
                       <TableCell>
@@ -464,10 +543,8 @@ const SeminarScheduling: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
-                      {" "}
-                      {/* Updated colSpan */}
-                      No system-created slots found.
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No system-created slots found for this cycle.
                     </TableCell>
                   </TableRow>
                 )}
@@ -477,17 +554,20 @@ const SeminarScheduling: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Manually Scheduled Card (remains the same) */}
+      {/* Manually Scheduled Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Manually Scheduled Seminars</CardTitle>
+          <CardTitle>Manually Scheduled Seminars in Selected Cycle</CardTitle>
           <CardDescription>
-            Proposals where supervisors set a custom date and time.
+            Proposals where supervisors set a custom date and time within this
+            semester.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingSlots ? (
-            <LoadingSpinner />
+            <div className="flex justify-center p-8">
+              <LoadingSpinner />
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -528,8 +608,8 @@ const SeminarScheduling: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
-                      No manually scheduled seminars found.
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No manually scheduled seminars found for this cycle.
                     </TableCell>
                   </TableRow>
                 )}
@@ -539,14 +619,19 @@ const SeminarScheduling: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Slot Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      {/* Edit Slot Dialog (remains the same structure) */}
+      <Dialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditingSlot(null);
+          setIsEditDialogOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Seminar Slot</DialogTitle>
             <DialogDescription>
-              Modify the details for this unbooked slot. Changes might affect
-              supervisor choices.
+              Modify the details for this unbooked slot.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -586,7 +671,7 @@ const SeminarScheduling: React.FC = () => {
                     prev ? { ...prev, endTimeStr: e.target.value } : null
                   )
                 }
-                min={editingSlot?.startTimeStr} // Basic validation
+                min={editingSlot?.startTimeStr}
               />
             </div>
           </div>
