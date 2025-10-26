@@ -1,7 +1,6 @@
 // server/scripts/emailTemplates.ts
 import db from "@/config/db/index.ts";
 import { phdEmailTemplates } from "@/config/db/schema/phd.ts";
-import { sql } from "drizzle-orm";
 import environment from "@/config/environment.ts";
 
 const createLoginPrompt = (context?: string) =>
@@ -121,18 +120,10 @@ const defaultTemplates = [
 ];
 
 export const seedEmailTemplates = async () => {
-    console.log("Seeding/Updating email templates...");
+    console.log("Seeding email templates (if they don't exist)...");
     await db
         .insert(phdEmailTemplates)
         .values(defaultTemplates)
-        .onConflictDoUpdate({
-            target: phdEmailTemplates.name,
-            set: {
-                subject: sql`excluded.subject`,
-                body: sql`excluded.body`,
-                description: sql`excluded.description`,
-                updatedAt: new Date(),
-            },
-        });
+        .onConflictDoNothing({ target: phdEmailTemplates.name });
     console.log("Email templates seeding complete.");
 };
