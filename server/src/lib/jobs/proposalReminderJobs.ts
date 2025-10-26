@@ -8,14 +8,17 @@ import {
     phdProposalSemesters,
     phdProposalDacReviews,
 } from "@/config/db/schema/phd.ts";
-import { and, gte, inArray, or, eq } from "drizzle-orm"; // Removed unused imports
+import { and, gte, inArray, or, eq, lte } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { phdSchemas } from "lib";
+import { phdSchemas } from "lib"; // Assuming phdSchemas contains the statuses
 
 const QUEUE_NAME = "proposalReminderQueue";
-const JOB_NAME = "twiceDailyProposalReminderCheck";
+// Keep job name for the scheduler
+const SCHEDULER_JOB_NAME = "twiceDailyProposalReminderScheduler";
+// Add job name for the actual reminder sending task
+const REMINDER_SEND_JOB_NAME = "sendSpecificProposalReminder";
 const TWICE_DAILY_CRON_PATTERN = "30 11,23 * * *"; // 11:30 and 23:30 UTC (5 PM / 5 AM IST)
 
 type ReviewerRole = "supervisor" | "drc" | "dac";
@@ -26,11 +29,12 @@ export const proposalReminderQueue = new Queue(QUEUE_NAME, {
     defaultJobOptions: {
         attempts: 2,
         backoff: { type: "exponential", delay: 10000 },
-        removeOnComplete: { age: 3600 * 24 * 7 },
-        removeOnFail: { age: 3600 * 24 * 14 },
+        removeOnComplete: { age: 3600 * 24 * 7 }, // Keep successful jobs for 7 days
+        removeOnFail: { age: 3600 * 24 * 14 }, // Keep failed jobs for 14 days
     },
 });
 
+// Reminder intervals remain the same
 const REMINDER_INTERVALS = [
     { days: 5, hours: 0, minutes: 0, label: "T-5d" },
     { days: 2, hours: 0, minutes: 0, label: "T-2d" },
@@ -43,7 +47,7 @@ const REMINDER_INTERVALS = [
     { days: 0, hours: 0, minutes: 15, label: "T-15m" },
 ] as const;
 
-// --- Added definition ---
+// Helper to calculate reminder times
 const calculateReminderTime = (
     deadline: Date,
     interval: (typeof REMINDER_INTERVALS)[number]
@@ -55,7 +59,7 @@ const calculateReminderTime = (
     return reminderTime;
 };
 
-// --- Added definition ---
+// Map status to the next expected action/deadline
 const statusDeadlineMap: Record<
     (typeof phdSchemas.phdProposalStatuses)[number],
     { role: TargetRole; deadlineKey: keyof typeof deadlineColumnMap } | null
@@ -67,9 +71,9 @@ const statusDeadlineMap: Record<
     supervisor_revert: {
         role: "student",
         deadlineKey: "studentSubmissionDate",
-    }, // Reverted proposals need student action before the original student deadline
-    drc_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Same logic
-    dac_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Same logic
+    },
+    drc_revert: { role: "student", deadlineKey: "studentSubmissionDate" },
+    dac_revert: { role: "student", deadlineKey: "studentSubmissionDate" },
     dac_accepted: null,
     seminar_pending: null,
     finalising_documents: null,
@@ -79,7 +83,6 @@ const statusDeadlineMap: Record<
     draft_expired: null,
 };
 
-// --- Added definition ---
 const deadlineColumnMap = {
     studentSubmissionDate: phdProposalSemesters.studentSubmissionDate,
     facultyReviewDate: phdProposalSemesters.facultyReviewDate,
@@ -87,27 +90,89 @@ const deadlineColumnMap = {
     dacReviewDate: phdProposalSemesters.dacReviewDate,
 } as const;
 
+// Interface for the specific reminder job data
+interface SpecificReminderJobData {
+    semesterId: number;
+    role: TargetRole;
+    deadlineType: keyof typeof deadlineColumnMap;
+    deadlineTimestamp: number; // Storing timestamp for quick checks
+    reminderLabel: string;
+}
+
 export const proposalReminderWorker = new Worker(
     QUEUE_NAME,
-    async (job: Job<unknown, any, string>) => {
-        if (job.name === JOB_NAME) {
-            logger.info(`Running job: ${JOB_NAME}`);
+    async (job: Job<SpecificReminderJobData | unknown, any, string>) => {
+        // Handle the scheduling job
+        if (job.name === SCHEDULER_JOB_NAME) {
+            logger.info(`Running job: ${SCHEDULER_JOB_NAME}`);
             try {
-                await runTwiceDailyReminderChecks();
-                logger.info(`Finished job: ${JOB_NAME}`);
+                await runTwiceDailyReminderChecksAndScheduleSpecifics();
+                logger.info(`Finished job: ${SCHEDULER_JOB_NAME}`);
             } catch (error) {
-                logger.error(`Error during ${JOB_NAME}:`, error);
+                logger.error(`Error during ${SCHEDULER_JOB_NAME}:`, error);
+                throw error;
+            }
+        }
+        // Handle the specific reminder sending job
+        else if (job.name === REMINDER_SEND_JOB_NAME) {
+            const data = job.data as SpecificReminderJobData;
+            logger.info(
+                `Running job: ${REMINDER_SEND_JOB_NAME} for ${data.role} - ${data.reminderLabel} (Deadline: ${new Date(data.deadlineTimestamp).toLocaleString()})`
+            );
+            try {
+                // Fetch semester again inside the job to ensure latest data
+                const semester = await db.query.phdProposalSemesters.findFirst({
+                    where: eq(phdProposalSemesters.id, data.semesterId),
+                });
+                if (!semester) {
+                    logger.warn(
+                        `[${REMINDER_SEND_JOB_NAME}] Semester ${data.semesterId} not found. Skipping.`
+                    );
+                    return;
+                }
+                const deadlineDate = semester[data.deadlineType];
+                if (!deadlineDate || deadlineDate < new Date()) {
+                    logger.info(
+                        `[${REMINDER_SEND_JOB_NAME}] Deadline for ${data.role} (${data.deadlineType}) has passed or is invalid. Skipping.`
+                    );
+                    return;
+                }
+
+                // Execute reminder logic (send emails)
+                if (data.role === "student") {
+                    await handleStudentReminders(
+                        semester,
+                        data.deadlineType,
+                        data.reminderLabel
+                    );
+                } else {
+                    await handleReviewerReminders(
+                        semester,
+                        data.role as ReviewerRole,
+                        data.deadlineType,
+                        data.reminderLabel
+                    );
+                }
+                logger.info(
+                    `Finished job: ${REMINDER_SEND_JOB_NAME} for ${data.role} - ${data.reminderLabel}`
+                );
+            } catch (error) {
+                logger.error(
+                    `Error during ${REMINDER_SEND_JOB_NAME} for ${data.role} (${data.reminderLabel}):`,
+                    error
+                );
                 throw error;
             }
         } else {
             logger.warn(`Unknown job name in ${QUEUE_NAME}: ${job.name}`);
         }
     },
-    { connection: redisConfig, concurrency: 1 }
+    { connection: redisConfig, concurrency: 5 } // Increase concurrency slightly if needed
 );
 
-export async function scheduleTwiceDailyProposalReminders() {
-    const jobKey = `${JOB_NAME}:::${JOB_NAME}::pattern:${TWICE_DAILY_CRON_PATTERN}`;
+// Renamed scheduling function to reflect its purpose
+export async function scheduleTwiceDailyReminderScheduler() {
+    const jobKey = `${SCHEDULER_JOB_NAME}:::${SCHEDULER_JOB_NAME}::pattern:${TWICE_DAILY_CRON_PATTERN}`; // Use scheduler job name
     try {
         const repeatableJobs = await proposalReminderQueue.getRepeatableJobs();
         const existingJob = repeatableJobs.find((j) => j.key === jobKey);
@@ -123,292 +188,349 @@ export async function scheduleTwiceDailyProposalReminders() {
     }
 
     await proposalReminderQueue.add(
-        JOB_NAME,
+        SCHEDULER_JOB_NAME, // Schedule the scheduler job
         {},
         {
             repeat: { pattern: TWICE_DAILY_CRON_PATTERN },
-            jobId: JOB_NAME,
+            jobId: SCHEDULER_JOB_NAME, // Use scheduler job name
             removeOnComplete: true,
             removeOnFail: { age: 3600 * 24 * 7 },
         }
     );
     logger.info(
-        `Scheduled repeatable job: ${JOB_NAME} with pattern "${TWICE_DAILY_CRON_PATTERN}"`
+        `Scheduled repeatable job: ${SCHEDULER_JOB_NAME} with pattern "${TWICE_DAILY_CRON_PATTERN}"`
     );
 }
 
-async function runTwiceDailyReminderChecks() {
-    logger.info(`[${JOB_NAME}] Starting twice-daily reminder checks.`);
+// This function now *schedules* specific reminder jobs, it doesn't send emails directly
+async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
+    logger.info(
+        `[${SCHEDULER_JOB_NAME}] Starting checks to schedule specific reminders.`
+    );
     const now = new Date();
-    const checkStartTime = new Date(now);
-    const checkEndTime = new Date(now);
-    checkEndTime.setHours(checkEndTime.getHours() + 12);
 
-    const potentiallyRelevantSemesters =
-        await db.query.phdProposalSemesters.findMany({
-            where: or(
-                gte(phdProposalSemesters.studentSubmissionDate, checkStartTime),
-                gte(phdProposalSemesters.facultyReviewDate, checkStartTime),
-                gte(phdProposalSemesters.drcReviewDate, checkStartTime),
-                gte(phdProposalSemesters.dacReviewDate, checkStartTime)
+    // Look for semesters with deadlines in the relevant future (e.g., next 7 days)
+    const checkEndDate = new Date(now);
+    checkEndDate.setDate(checkEndDate.getDate() + 7); // Schedule reminders for the upcoming week
+
+    const relevantSemesters = await db.query.phdProposalSemesters.findMany({
+        where: or(
+            and(
+                gte(phdProposalSemesters.studentSubmissionDate, now),
+                lte(phdProposalSemesters.studentSubmissionDate, checkEndDate)
             ),
-        });
+            and(
+                gte(phdProposalSemesters.facultyReviewDate, now),
+                lte(phdProposalSemesters.facultyReviewDate, checkEndDate)
+            ),
+            and(
+                gte(phdProposalSemesters.drcReviewDate, now),
+                lte(phdProposalSemesters.drcReviewDate, checkEndDate)
+            ),
+            and(
+                gte(phdProposalSemesters.dacReviewDate, now),
+                lte(phdProposalSemesters.dacReviewDate, checkEndDate)
+            )
+        ),
+    });
 
-    if (potentiallyRelevantSemesters.length === 0) {
+    if (relevantSemesters.length === 0) {
         logger.info(
-            `[${JOB_NAME}] No potentially relevant semester deadlines found in the upcoming window.`
+            `[${SCHEDULER_JOB_NAME}] No relevant upcoming deadlines found within the next 7 days.`
         );
         return;
     }
 
     logger.info(
-        `[${JOB_NAME}] Found ${potentiallyRelevantSemesters.length} semesters with potentially relevant deadlines.`
+        `[${SCHEDULER_JOB_NAME}] Found ${relevantSemesters.length} semesters with upcoming deadlines. Scheduling specific reminders...`
     );
+    let scheduledCount = 0;
 
-    const emailsToSend: { to: string; subject: string; text: string }[] = [];
-    let drcConvenersCache: { email: string }[] | null = null;
-
-    for (const semester of potentiallyRelevantSemesters) {
-        // Corrected loop variable name
+    for (const semester of relevantSemesters) {
         for (const deadlineKeyStr of Object.keys(deadlineColumnMap)) {
             const deadlineKey =
-                deadlineKeyStr as keyof typeof deadlineColumnMap; // Type assertion
+                deadlineKeyStr as keyof typeof deadlineColumnMap;
             const deadlineDate = semester[deadlineKey];
-            if (!deadlineDate || deadlineDate < now) continue;
+            if (!deadlineDate || deadlineDate < now) continue; // Skip past deadlines
+
+            // Find the role associated with this deadline
+            const targetInfo = Object.values(statusDeadlineMap).find(
+                (v) => v?.deadlineKey === deadlineKey
+            );
+            if (!targetInfo) continue;
+            const targetRole = targetInfo.role;
 
             for (const interval of REMINDER_INTERVALS) {
                 const reminderTime = calculateReminderTime(
                     deadlineDate,
                     interval
                 );
+                const delay = reminderTime.getTime() - now.getTime();
 
-                if (reminderTime >= now && reminderTime < checkEndTime) {
-                    const timeDiffMillis =
-                        deadlineDate.getTime() - now.getTime();
-                    const intervalMillis =
-                        interval.days * 24 * 60 * 60 * 1000 +
-                        interval.hours * 60 * 60 * 1000 +
-                        interval.minutes * 60 * 1000;
-
-                    const toleranceMillis = 30 * 60 * 1000;
-                    if (
-                        Math.abs(timeDiffMillis - intervalMillis) >
-                        toleranceMillis
-                    ) {
-                        continue;
-                    }
-
-                    logger.info(
-                        `[${JOB_NAME}] Match found: ${interval.label} reminder for ${deadlineKey} (Deadline: ${deadlineDate.toISOString()}) should trigger now.`
-                    );
-
-                    const targetStatusInfo = Object.entries(
-                        statusDeadlineMap
-                    ).find(([, v]) => v?.deadlineKey === deadlineKey);
-                    if (!targetStatusInfo || !targetStatusInfo[1]) continue;
-
-                    const targetStatus =
-                        targetStatusInfo[0] as (typeof phdSchemas.phdProposalStatuses)[number];
-                    const targetRole = targetStatusInfo[1].role;
-
-                    logger.info(
-                        `[${JOB_NAME}] Checking for proposals in status '${targetStatus}' for semester ${semester.id}`
-                    );
-
-                    const proposals = await db.query.phdProposals.findMany({
-                        where: and(
-                            eq(phdProposals.proposalSemesterId, semester.id),
-                            eq(phdProposals.status, targetStatus)
-                        ),
-                        with: {
-                            student: { columns: { name: true } },
-                            ...(targetRole === "dac" && {
-                                dacMembers: {
-                                    columns: { dacMemberEmail: true },
-                                },
-                            }),
-                        },
-                        columns: {
-                            id: true,
-                            studentEmail: true,
-                            supervisorEmail: true,
-                        },
-                    });
-
-                    if (proposals.length === 0) {
-                        logger.info(
-                            `[${JOB_NAME}] No proposals found in status '${targetStatus}' requiring ${interval.label} reminder.`
-                        );
-                        continue;
-                    }
-
-                    logger.info(
-                        `[${JOB_NAME}] Found ${proposals.length} proposals in status '${targetStatus}' requiring ${interval.label} reminder.`
-                    );
-
-                    // --- Determine Recipients ---
-                    let recipientsMap = new Map<
-                        string,
-                        { studentName: string; proposalId: number }[]
-                    >();
-
-                    if (targetRole === "student") {
-                        proposals.forEach((p) => {
-                            if (!recipientsMap.has(p.studentEmail))
-                                recipientsMap.set(p.studentEmail, []);
-                            recipientsMap.get(p.studentEmail)!.push({
-                                studentName: p.student.name || p.studentEmail,
-                                proposalId: p.id,
-                            });
-                        });
-                    } else if (targetRole === "supervisor") {
-                        proposals.forEach((p) => {
-                            if (p.supervisorEmail) {
-                                if (!recipientsMap.has(p.supervisorEmail))
-                                    recipientsMap.set(p.supervisorEmail, []);
-                                recipientsMap.get(p.supervisorEmail)!.push({
-                                    studentName:
-                                        p.student.name || p.studentEmail,
-                                    proposalId: p.id,
-                                });
-                            } else {
-                                logger.warn(
-                                    `[${JOB_NAME}] Proposal ${p.id} awaiting supervisor action has no supervisor email.`
-                                );
-                            }
-                        });
-                    } else if (targetRole === "drc") {
-                        if (drcConvenersCache === null) {
-                            drcConvenersCache =
-                                await getUsersWithPermission(
-                                    "phd:drc:proposal"
-                                );
-                            if (drcConvenersCache.length === 0)
-                                logger.warn(
-                                    `[${JOB_NAME}] DRC reminders needed, but no users found with 'phd:drc:proposal' permission.`
-                                );
-                        }
-                        proposals.forEach((p) => {
-                            drcConvenersCache?.forEach((drc) => {
-                                if (!recipientsMap.has(drc.email))
-                                    recipientsMap.set(drc.email, []);
-                                recipientsMap.get(drc.email)!.push({
-                                    studentName:
-                                        p.student.name || p.studentEmail,
-                                    proposalId: p.id,
-                                });
-                            });
-                        });
-                    } else if (targetRole === "dac") {
-                        for (const p of proposals) {
-                            const proposalWithDac = p as typeof p & {
-                                dacMembers?: { dacMemberEmail: string }[];
-                            };
-                            if (
-                                !proposalWithDac.dacMembers ||
-                                proposalWithDac.dacMembers.length === 0
-                            ) {
-                                logger.warn(
-                                    `[${JOB_NAME}] Proposal ${p.id} is in dac_review but has no DAC members.`
-                                );
-                                continue;
-                            }
-                            const assignedDacEmails =
-                                proposalWithDac.dacMembers.map(
-                                    (m) => m.dacMemberEmail
-                                );
-                            const reviewsSubmitted = await db
-                                .select({
-                                    dacMemberEmail:
-                                        phdProposalDacReviews.dacMemberEmail,
-                                })
-                                .from(phdProposalDacReviews)
-                                .where(
-                                    and(
-                                        eq(
-                                            phdProposalDacReviews.proposalId,
-                                            p.id
-                                        ),
-                                        inArray(
-                                            phdProposalDacReviews.dacMemberEmail,
-                                            assignedDacEmails
-                                        )
-                                    )
-                                );
-                            const reviewedEmails = new Set(
-                                reviewsSubmitted.map((r) => r.dacMemberEmail)
-                            );
-                            const pendingDacEmails = assignedDacEmails.filter(
-                                (email) => !reviewedEmails.has(email)
-                            );
-
-                            pendingDacEmails.forEach((email) => {
-                                if (!recipientsMap.has(email))
-                                    recipientsMap.set(email, []);
-                                recipientsMap.get(email)!.push({
-                                    studentName:
-                                        p.student.name || p.studentEmail,
-                                    proposalId: p.id,
-                                });
-                            });
-                        }
-                    }
-
-                    // --- Generate and Add Emails ---
-                    const linkPaths: Record<TargetRole, string> = {
-                        student: "/phd/phd-student/proposals",
-                        supervisor: "/phd/supervisor/proposal/",
-                        drc: "/phd/drc-convenor/proposal-management/",
-                        dac: "/phd/dac/proposals/",
+                // Only schedule if the reminder time is in the future
+                if (delay > 0) {
+                    const deadlineTimestamp = deadlineDate.getTime();
+                    const jobId = `${REMINDER_SEND_JOB_NAME}-${semester.id}-${targetRole}-${deadlineKey}-${interval.label}`;
+                    const jobData: SpecificReminderJobData = {
+                        semesterId: semester.id,
+                        role: targetRole,
+                        deadlineType: deadlineKey,
+                        deadlineTimestamp,
+                        reminderLabel: interval.label,
                     };
 
-                    for (const [
-                        recipientEmail,
-                        tasks,
-                    ] of recipientsMap.entries()) {
-                        if (tasks.length > 0) {
-                            const taskList = tasks
-                                .map(
-                                    (task) =>
-                                        `- ${task.studentName} (ID: ${task.proposalId})`
-                                )
-                                .join("\n");
-                            const firstProposalId = tasks[0].proposalId;
-                            const link = `${environment.FRONTEND_URL}${linkPaths[targetRole]}${targetRole === "student" ? "" : firstProposalId}`;
-
-                            const subject = `Reminder: PhD Proposal Action Due Soon (${interval.label})`;
-                            const body = `This is a reminder that action is required on one or more PhD proposals by ${deadlineDate.toLocaleString()}.\n\nPending Tasks:\n${taskList}\n\nPlease log in to the portal to take action:\n${link}\n\nThank you.`;
-
-                            emailsToSend.push({
-                                to: recipientEmail,
-                                subject,
-                                text: body,
-                            });
+                    // Add the specific job with delay
+                    await proposalReminderQueue.add(
+                        REMINDER_SEND_JOB_NAME,
+                        jobData,
+                        {
+                            delay,
+                            jobId, // Use unique ID to prevent duplicates if scheduler runs > once per interval
+                            removeOnComplete: { age: 3600 * 24 },
+                            removeOnFail: { age: 3600 * 24 * 7 },
                         }
-                    }
-                    break;
+                    );
+                    scheduledCount++;
+                    // logger.debug(`[${SCHEDULER_JOB_NAME}] Scheduled job ${jobId} with delay ${delay}ms`);
                 }
             }
         }
     }
+    logger.info(
+        `[${SCHEDULER_JOB_NAME}] Finished scheduling potentially ${scheduledCount} specific reminder jobs.`
+    );
+}
 
-    if (emailsToSend.length > 0) {
+// --- Functions to HANDLE the specific reminder job (sending emails) ---
+
+async function handleStudentReminders(
+    semester: typeof phdProposalSemesters.$inferSelect,
+    deadlineType: keyof typeof deadlineColumnMap, // Added deadlineType
+    reminderLabel: string // Added reminderLabel
+) {
+    const deadline = new Date(semester[deadlineType]); // Use the correct deadline
+    logger.info(
+        `[${REMINDER_SEND_JOB_NAME}] Sending student reminders (${reminderLabel}) for deadline: ${deadline.toLocaleString()}`
+    );
+
+    // Find proposals STILL in draft or relevant reverted status for this semester
+    const relevantStatuses: (typeof phdSchemas.phdProposalStatuses)[number][] =
+        ["draft"];
+    if (deadlineType === "studentSubmissionDate") {
+        // Only add revert statuses if it's the student deadline
+        relevantStatuses.push("supervisor_revert", "drc_revert", "dac_revert");
+    }
+
+    const proposalsToRemind = await db.query.phdProposals.findMany({
+        where: and(
+            eq(phdProposals.proposalSemesterId, semester.id),
+            inArray(phdProposals.status, relevantStatuses)
+        ),
+        columns: { studentEmail: true, id: true }, // Include ID for link
+        with: { student: { columns: { name: true } } },
+    });
+
+    if (proposalsToRemind.length === 0) {
         logger.info(
-            `[${JOB_NAME}] Sending ${emailsToSend.length} reminder emails.`
+            `[${REMINDER_SEND_JOB_NAME}] No student proposals found needing reminder (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}.`
         );
-        try {
-            await sendBulkEmails(emailsToSend);
-            logger.info(
-                `[${JOB_NAME}] Successfully sent ${emailsToSend.length} reminder emails.`
-            );
-        } catch (error) {
-            logger.error(
-                `[${JOB_NAME}] Failed to send bulk reminder emails:`,
-                error
-            );
+        return;
+    }
+
+    // const studentEmails = proposalsToRemind.map((p) => p.studentEmail);
+    const emailsToSend = proposalsToRemind.map((p) => ({
+        // Send one email per proposal for accurate links
+        to: p.studentEmail,
+        subject: `Reminder (${reminderLabel}): PhD Proposal Action Needed`,
+        text: `This is a reminder regarding your PhD proposal. Action is required before the deadline on ${deadline.toLocaleString()}.\n\nPlease ensure your proposal is submitted or resubmitted as needed.\n\nView Proposal: ${environment.FRONTEND_URL}/phd/phd-student/proposals/${p.id}`, // Link to specific proposal
+    }));
+
+    try {
+        await sendBulkEmails(emailsToSend);
+        logger.info(
+            `[${REMINDER_SEND_JOB_NAME}] Sent ${emailsToSend.length} reminder emails to students (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}.`
+        );
+    } catch (error) {
+        logger.error(
+            `[${REMINDER_SEND_JOB_NAME}] Failed to send student reminder emails (${reminderLabel}) for semester ${semester.id}:`,
+            error
+        );
+    }
+}
+
+async function handleReviewerReminders(
+    semester: typeof phdProposalSemesters.$inferSelect,
+    role: ReviewerRole,
+    _deadlineType: keyof typeof deadlineColumnMap, // Added deadlineType
+    reminderLabel: string // Added reminderLabel
+) {
+    let reviewStatus: (typeof phdSchemas.phdProposalStatuses)[number];
+    let deadline: Date;
+    let linkPath: string;
+
+    switch (role) {
+        case "supervisor":
+            reviewStatus = "supervisor_review";
+            deadline = semester.facultyReviewDate;
+            linkPath = "/phd/supervisor/proposal/";
+            break;
+        case "drc":
+            reviewStatus = "drc_review";
+            deadline = semester.drcReviewDate;
+            linkPath = "/phd/drc-convenor/proposal-management/";
+            break;
+        case "dac":
+            reviewStatus = "dac_review";
+            deadline = semester.dacReviewDate;
+            linkPath = "/phd/dac/proposals/";
+            break;
+        default:
+            logger.error(`[${REMINDER_SEND_JOB_NAME}] Invalid role: ${role}`);
+            return;
+    }
+
+    logger.info(
+        `[${REMINDER_SEND_JOB_NAME}] Sending ${role} reminders (${reminderLabel}) for deadline: ${deadline.toLocaleString()}`
+    );
+
+    // Find proposals STILL needing review for this semester and status
+    const proposalsForReview = await db.query.phdProposals.findMany({
+        where: and(
+            eq(phdProposals.proposalSemesterId, semester.id),
+            eq(phdProposals.status, reviewStatus)
+        ),
+        with: {
+            student: { columns: { name: true } },
+            ...(role === "dac" && {
+                dacMembers: { columns: { dacMemberEmail: true } },
+            }),
+        },
+        columns: { id: true, supervisorEmail: true },
+    });
+
+    if (proposalsForReview.length === 0) {
+        logger.info(
+            `[${REMINDER_SEND_JOB_NAME}] No proposals found awaiting ${role} review (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}.`
+        );
+        return;
+    }
+
+    const tasksByReviewer = new Map<
+        string,
+        { studentName: string; proposalId: number }[]
+    >();
+    let drcConvenersCache: { email: string }[] | null = null; // Use cache
+
+    for (const proposal of proposalsForReview) {
+        const studentName = proposal.student.name || "A student";
+        let reviewersToNotify: string[] = [];
+
+        switch (role) {
+            case "supervisor":
+                if (proposal.supervisorEmail)
+                    reviewersToNotify.push(proposal.supervisorEmail);
+                else
+                    logger.warn(
+                        `[${REMINDER_SEND_JOB_NAME}] Proposal ${proposal.id} missing supervisorEmail.`
+                    );
+                break;
+            case "drc":
+                if (drcConvenersCache === null)
+                    drcConvenersCache =
+                        await getUsersWithPermission("phd:drc:proposal");
+                reviewersToNotify =
+                    drcConvenersCache?.map((drc) => drc.email) ?? [];
+                if (reviewersToNotify.length === 0)
+                    logger.warn(
+                        `[${REMINDER_SEND_JOB_NAME}] No DRC convenors found.`
+                    );
+                break;
+            case "dac":
+                const dacProposal = proposal as typeof proposal & {
+                    dacMembers?: { dacMemberEmail: string }[];
+                };
+                if (
+                    dacProposal.dacMembers &&
+                    dacProposal.dacMembers.length > 0
+                ) {
+                    const assignedDacEmails = dacProposal.dacMembers.map(
+                        (m) => m.dacMemberEmail
+                    );
+                    const reviewsSubmitted = await db
+                        .select({
+                            dacMemberEmail:
+                                phdProposalDacReviews.dacMemberEmail,
+                        })
+                        .from(phdProposalDacReviews)
+                        .where(
+                            and(
+                                eq(
+                                    phdProposalDacReviews.proposalId,
+                                    proposal.id
+                                ),
+                                inArray(
+                                    phdProposalDacReviews.dacMemberEmail,
+                                    assignedDacEmails
+                                )
+                            )
+                        );
+                    const reviewedEmails = new Set(
+                        reviewsSubmitted.map((r) => r.dacMemberEmail)
+                    );
+                    reviewersToNotify = assignedDacEmails.filter(
+                        (email) => !reviewedEmails.has(email)
+                    );
+                    if (reviewersToNotify.length === 0)
+                        logger.info(
+                            `[${REMINDER_SEND_JOB_NAME}] All DAC members reviewed proposal ${proposal.id}.`
+                        );
+                } else {
+                    logger.warn(
+                        `[${REMINDER_SEND_JOB_NAME}] Proposal ${proposal.id} in dac_review has no DAC members.`
+                    );
+                }
+                break;
         }
-    } else {
-        logger.info(`[${JOB_NAME}] No reminders to send in this check.`);
+
+        for (const reviewerEmail of reviewersToNotify) {
+            if (!tasksByReviewer.has(reviewerEmail))
+                tasksByReviewer.set(reviewerEmail, []);
+            tasksByReviewer
+                .get(reviewerEmail)!
+                .push({ studentName, proposalId: proposal.id });
+        }
+    }
+
+    if (tasksByReviewer.size === 0) {
+        logger.info(
+            `[${REMINDER_SEND_JOB_NAME}] No ${role}s found needing reminders (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}.`
+        );
+        return;
+    }
+
+    const emailsToSend = Array.from(tasksByReviewer.entries()).map(
+        ([reviewerEmail, tasks]) => {
+            const taskList = tasks
+                .map((task) => `- ${task.studentName} (ID: ${task.proposalId})`)
+                .join("\n");
+            const firstProposalId = tasks[0].proposalId;
+            const link = `${environment.FRONTEND_URL}${linkPath}${firstProposalId}`;
+            const subject = `Reminder (${reminderLabel}): PhD Proposal Reviews Due Soon`;
+            const body = `This is a reminder that action is required on one or more PhD proposals by ${deadline.toLocaleString()}.\n\nPending Tasks:\n${taskList}\n\nPlease log in to the portal to take action:\n${link}\n\nThank you.`;
+            return { to: reviewerEmail, subject, text: body };
+        }
+    );
+
+    try {
+        await sendBulkEmails(emailsToSend);
+        logger.info(
+            `[${REMINDER_SEND_JOB_NAME}] Sent ${emailsToSend.length} reminder emails to ${role}s (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}.`
+        );
+    } catch (error) {
+        logger.error(
+            `[${REMINDER_SEND_JOB_NAME}] Failed to send ${role} reminder emails (${reminderLabel}) for deadline ${deadline.toLocaleDateString()}:`,
+            error
+        );
     }
 }
 
@@ -422,4 +544,4 @@ proposalReminderWorker.on("error", (err) => {
     logger.error(`[${QUEUE_NAME}] Worker error: ${err.message}`, err);
 });
 
-
+// Call scheduleTwiceDailyReminderScheduler() once on application start (e.g., in bin.ts)
