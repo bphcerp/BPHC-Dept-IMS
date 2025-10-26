@@ -8,9 +8,8 @@ import {
     scheduleTwiceDailyProposalReminders,
     proposalReminderWorker,
 } from "./lib/jobs/proposalReminderJobs.ts";
-import { emailWorker } from "./lib/common/email.ts";
 
-emailWorker.on("error", (_error) => {});
+
 proposalReminderWorker.on("error", (_error) => {});
 
 try {
