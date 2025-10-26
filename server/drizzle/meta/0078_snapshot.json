@@ -5715,7 +5715,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "CASE WHEN status IN('deleted', 'completed', 'draft_expired')THEN NULL ELSE true END",
+            "as": "CASE WHEN status IN('deleted', 'completed', 'draft_expired', 'rejected')THEN NULL ELSE true END",
             "type": "stored"
           }
         }
@@ -7963,6 +7963,7 @@
       "values": [
         "draft",
         "deleted",
+        "rejected",
         "supervisor_review",
         "supervisor_revert",
         "drc_review",

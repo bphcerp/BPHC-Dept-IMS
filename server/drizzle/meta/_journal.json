@@ -554,20 +554,6 @@
       "when": 1761316848809,
       "tag": "0078_parched_lionheart",
       "breakpoints": true
-    },
-    {
-      "idx": 79,
-      "version": "7",
-      "when": 1761451333148,
-      "tag": "0079_first_joseph",
-      "breakpoints": true
-    },
-    {
-      "idx": 80,
-      "version": "7",
-      "when": 1761451662985,
-      "tag": "0080_melodic_jane_foster",
-      "breakpoints": true
     }
   ]
 }

@@ -279,20 +279,20 @@ export const phdProposals = pgTable(
         outsideSupervisorBiodataFileId: integer(
             "outside_supervisor_biodata_file_id"
         ).references(() => files.id, { onDelete: "cascade" }),
-        // active: boolean("active").generatedAlwaysAs(
-        //     sql.raw(
-        //         `CASE WHEN status IN(` +
-        //             phdSchemas.inactivePhdProposalStatuses
-        //                 .map((s) => `'${s}'`)
-        //                 .join(", ") +
-        //             `)THEN NULL ELSE true END`
-        //     )
-        // ),
+        active: boolean("active").generatedAlwaysAs(
+            sql.raw(
+                `CASE WHEN status IN(` +
+                    phdSchemas.inactivePhdProposalStatuses
+                        .map((s) => `'${s}'`)
+                        .join(", ") +
+                    `)THEN NULL ELSE true END`
+            )
+        ),
     },
     (table) => [
         index().on(table.studentEmail),
         index().on(table.supervisorEmail),
-        // unique().on(table.studentEmail, table.active),
+        unique().on(table.studentEmail, table.active),
     ]
 );
 
