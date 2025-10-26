@@ -1,6 +1,6 @@
 {
-  "id": "58aa2819-3b04-42b7-81e2-a113d6a26c28",
-  "prevId": "8d92986c-620b-4117-899e-21f89de4dd2a",
+  "id": "86eb72c5-b36d-4845-a315-6e85797db743",
+  "prevId": "58aa2819-3b04-42b7-81e2-a113d6a26c28",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -5715,7 +5715,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "CASE WHEN status IN('deleted', 'completed')THEN NULL ELSE true END",
+            "as": "CASE WHEN status IN('deleted', 'completed', 'draft_expired', 'rejected')THEN NULL ELSE true END",
             "type": "stored"
           }
         }
@@ -7963,6 +7963,7 @@
       "values": [
         "draft",
         "deleted",
+        "rejected",
         "supervisor_review",
         "supervisor_revert",
         "drc_review",
@@ -7972,7 +7973,8 @@
         "dac_accepted",
         "seminar_pending",
         "finalising_documents",
-        "completed"
+        "completed",
+        "draft_expired"
       ]
     },
     "public.drc_assignment_status": {

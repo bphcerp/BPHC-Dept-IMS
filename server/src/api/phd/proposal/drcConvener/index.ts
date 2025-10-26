@@ -10,6 +10,7 @@ import remindSeminarDetails from './remindSeminarDetails.ts';
 import seminarSlots from './seminarSlots.ts';
 import sendBulkReminder from './sendBulkReminder.ts';
 import getBulkDetails from "./getBulkDetails.ts";
+import reenableProposal from "./reenableProposal.ts";
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.use('/downloadProposalNotice', downloadProposalNotice);
 router.use('/seminarSlots', seminarSlots);
 router.use('/sendBulkReminder', sendBulkReminder);
 router.use("/getBulkDetails", getBulkDetails);
+router.use("/reenableProposal", reenableProposal);
 
 export default router;

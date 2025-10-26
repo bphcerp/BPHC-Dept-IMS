@@ -90,12 +90,9 @@ export const emailWorker = new Worker<SendMailOptions & { body?: string }>( // A
             (from ? `<br /><i>Sent by: ${from}</i>` : "") +
             "</p>";
 
-        // *** FIX: Check for 'body' property if 'text' and 'html' are missing ***
         if (!mailOptions.text && !mailOptions.html && body) {
-            mailOptions.text = body; // Assign 'body' to 'text'
+            mailOptions.text = body; 
         }
-        // *** END OF FIX ***
-
         const mailOptionsWithDefaults: SendMailOptions = {
             from: environment.BPHCERP_EMAIL,
             ...mailOptions,

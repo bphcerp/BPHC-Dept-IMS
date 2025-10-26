@@ -1,48 +1,51 @@
+import express from "express";
 import db from "@/config/db/index.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import express from "express";
-import { z } from "zod";
+import logger from "@/config/logger.ts";
+import { qpSchemas } from "lib";
 
 const router = express.Router();
-
-const createRequestSchema = z.object({
-    icEmail: z.string().email(),
-    courseName: z.string(),
-    courseCode: z.string(),
-    requestType: z.enum(["Mid Sem", "Comprehensive", "Both"]),
-    category: z.enum(["HD", "FD"]),
-});
 
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const result = createRequestSchema.safeParse(req.body);
+        const result = qpSchemas.createRequestSchema.safeParse(req.body);
         if (!result.success) {
-            res.status(400).json({ errors: result.error.errors });
+            res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                errors: result.error.errors,
+            });
             return;
         }
 
-        const createdRequest = await db.insert(qpReviewRequests).values({
-            icEmail: result.data.icEmail,
-            courseName: result.data.courseName,
-            courseCode: result.data.courseCode,
-            requestType: result.data.requestType,
-            category: result.data.category,
-        });
+        const { courses, requestType } = result.data;
 
-        if (!createdRequest) {
-            res.status(500).json({ message: "Failed to create request" });
-            return;
+        try {
+            await db.insert(qpReviewRequests).values(
+                courses.map((course) => ({
+                    ...course,
+                    requestType,
+                }))
+            );
+
+            res.status(201).json({
+                success: true,
+                message: "Requests created successfully",
+                data: { courses, requestType },
+            });
+        } catch (error) {
+            logger.error("Database insert failed:", error);
+
+            res.status(500).json({
+                success: false,
+                message: "Failed to create review requests",
+                error: error instanceof Error ? error.message : error,
+            });
         }
-
-        res.status(200).json({
-            success: true,
-            message: "Request created successfully",
-            data: result.data,
-        });
     })
 );
 
