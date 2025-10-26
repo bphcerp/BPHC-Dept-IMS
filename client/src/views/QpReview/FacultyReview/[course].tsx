@@ -34,7 +34,8 @@ const FIELDS = [
   },
   {
     key: "mixOfQuestions",
-    label: "Has good mix of questions representing different order of thinking skills",
+    label:
+      "Has good mix of questions representing different order of thinking skills",
   },
   { key: "coverLearning", label: "Questions cover important learning aspects" },
   {
@@ -58,31 +59,34 @@ export default function FacultyReview() {
   const [currentSection, setCurrentSection] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [courseInfo, setCourseInfo] = useState({ courseName: "", courseCode: "" });
+  const [courseInfo, setCourseInfo] = useState({
+    courseName: "",
+    courseCode: "",
+  });
   const navigate = useNavigate();
-  
+
   const location = useLocation();
   const requestId = location.state?.requestId;
 
   // Determine which sections to show based on available files
   const getAvailableSections = () => {
     const sections = [];
-    
+
     // Check if MidSem documents exist
     const hasMidSem = files["midSemQp"] || files["midSemSol"];
     if (hasMidSem) {
       sections.push("MidSem");
     }
-    
+
     // Check if Compre documents exist
     const hasCompre = files["compreQp"] || files["compreSol"];
     if (hasCompre) {
       sections.push("Compre");
     }
-    
+
     // Always include Others section
     sections.push("Others");
-    
+
     return sections;
   };
 
@@ -115,23 +119,25 @@ export default function FacultyReview() {
         setFiles(filesResponse.data.data);
 
         // After files are loaded, determine available sections
-        const availableSections = getAvailableSectionsFromFiles(filesResponse.data.data);
-        
+        const availableSections = getAvailableSectionsFromFiles(
+          filesResponse.data.data
+        );
+
         // Fetch existing review data
         const reviewResponse = await api.get(`/qp/getReviews/${requestId}`);
-        
+
         if (reviewResponse.data.success && reviewResponse.data.data) {
           const responseData = reviewResponse.data.data;
-          
+
           // Set course information
           setCourseInfo({
             courseName: responseData.courseName || "",
             courseCode: responseData.courseCode || "",
           });
-          
+
           // Initialize form data with available sections
           const initializedData = initializeFormData(availableSections);
-          
+
           // Populate form data with existing review data
           if (responseData.review) {
             availableSections.forEach((section) => {
@@ -140,15 +146,17 @@ export default function FacultyReview() {
                 initializedData[section] = {
                   language: responseData.review[section].language || "",
                   length: responseData.review[section].length || "",
-                  mixOfQuestions: responseData.review[section].mixOfQuestions || "",
-                  coverLearning: responseData.review[section].coverLearning || "",
+                  mixOfQuestions:
+                    responseData.review[section].mixOfQuestions || "",
+                  coverLearning:
+                    responseData.review[section].coverLearning || "",
                   solution: responseData.review[section].solution || "",
                   remarks: responseData.review[section].remarks || "",
                 };
               }
             });
           }
-          
+
           setFormData(initializedData);
         } else {
           // Initialize fresh form if no data exists
@@ -164,40 +172,42 @@ export default function FacultyReview() {
     }
 
     fetchData();
-  }, [requestId ]);
+  }, [requestId]);
 
   // Helper function to determine sections from files data
-  const getAvailableSectionsFromFiles = (filesData: Record<string, string | null>) => {
+  const getAvailableSectionsFromFiles = (
+    filesData: Record<string, string | null>
+  ) => {
     const sections = [];
-    
+
     // Check if MidSem documents exist
     const hasMidSem = filesData["midSemQp"] || filesData["midSemSol"];
     if (hasMidSem) {
       sections.push("MidSem");
     }
-    
+
     // Check if Compre documents exist
     const hasCompre = filesData["compreQp"] || filesData["compreSol"];
     if (hasCompre) {
       sections.push("Compre");
     }
-    
+
     // Always include Others section
     sections.push("Others");
-    
+
     return sections;
   };
 
   // Validate and handle input changes for numeric fields
   const handleInputChange = (section: string, field: string, value: string) => {
     // Remove any non-digit characters
-    const numericValue = value.replace(/\D/g, '');
-    
+    const numericValue = value.replace(/\D/g, "");
+
     // Convert to number and validate range
     const numValue = parseInt(numericValue);
-    
+
     // Only update if empty, or if it's a valid number between 0-10
-    if (numericValue === '' || (numValue >= 0 && numValue <= 10)) {
+    if (numericValue === "" || (numValue >= 0 && numValue <= 10)) {
       setFormData((prev) => ({
         ...prev,
         [section]: { ...prev[section], [field]: numericValue },
@@ -207,7 +217,7 @@ export default function FacultyReview() {
 
   // Handle key press to prevent form submission on Enter
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
     }
   };
@@ -219,7 +229,7 @@ export default function FacultyReview() {
     try {
       const payload = {
         requestId: Number(requestId),
-        email : "test@test.com", 
+        email: "test@test.com",
         review: formData,
       };
 
@@ -246,7 +256,7 @@ export default function FacultyReview() {
     try {
       const payload = {
         requestId: Number(requestId),
-        email : "test@test.com", // Email is now optional and handled server-side
+        email: "test@test.com", // Email is now optional and handled server-side
         review: formData,
       };
 
@@ -254,7 +264,7 @@ export default function FacultyReview() {
 
       if (response.data.success) {
         toast.success("Review submitted successfully");
-        navigate(`/qpReview/facultyReview`)
+        navigate(`/qpReview/facultyReview`);
       } else {
         toast.error(response.data.message || "Failed to submit review");
       }
@@ -280,13 +290,17 @@ export default function FacultyReview() {
   };
 
   // Filter tabs to only show those with valid document URLs
-  const availableTabs = tabItems.filter(tab => files[tab.value]);
-  
+  const availableTabs = tabItems.filter((tab) => files[tab.value]);
+
   // Get sections to display in the evaluation form
   const sectionsToShow = getAvailableSections();
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -298,21 +312,26 @@ export default function FacultyReview() {
         </div>
 
         {/* Horizontal Layout Container */}
-        <div className="flex gap-4 h-[85vh]">
+        <div className="flex h-[85vh] gap-4">
           {/* Left Panel - Documents Section */}
-          <div className="flex-1 overflow-hidden rounded-md border">
+          <div className="flex-1 overflow-scroll rounded-md border">
             <div className="flex items-center justify-between border-b p-4">
               <h2 className="text-lg font-semibold">Review Documents</h2>
             </div>
 
             {availableTabs.length === 0 ? (
               <div className="flex h-full items-center justify-center bg-gray-100">
-                <p className="text-gray-500">No documents available for review</p>
+                <p className="text-gray-500">
+                  No documents available for review
+                </p>
               </div>
             ) : (
               <div className="h-full">
-                <Tabs defaultValue={availableTabs[0]?.value} className="w-full h-full flex flex-col">
-                  <div className="border-b px-4 flex-shrink-0">
+                <Tabs
+                  defaultValue={availableTabs[0]?.value}
+                  className="flex h-full w-full flex-col"
+                >
+                  <div className="flex-shrink-0 border-b px-4">
                     <TabsList className="h-12 bg-transparent">
                       {availableTabs.map((tab) => (
                         <TabsTrigger
@@ -327,7 +346,11 @@ export default function FacultyReview() {
                   </div>
 
                   {availableTabs.map((tab) => (
-                    <TabsContent key={tab.value} value={tab.value} className="m-0 flex-1">
+                    <TabsContent
+                      key={tab.value}
+                      value={tab.value}
+                      className="m-0 flex-1"
+                    >
                       <DocumentPreview documentUrl={files[tab.value]} />
                     </TabsContent>
                   ))}
@@ -337,51 +360,64 @@ export default function FacultyReview() {
           </div>
 
           {/* Right Panel - Evaluation Form Section */}
-          <div className="flex-1 overflow-hidden rounded-md border">
-            <div className="border-b p-4 flex-shrink-0">
+          <div className="flex-1 overflow-scroll rounded-md border">
+            <div className="flex-shrink-0 border-b p-4">
               <h2 className="text-xl font-semibold">
-                {courseInfo.courseCode ? `${courseInfo.courseCode}` : "Course"} Evaluation Form
+                {courseInfo.courseCode ? `${courseInfo.courseCode}` : "Course"}{" "}
+                Evaluation Form
               </h2>
               {courseInfo.courseName && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="mt-1 text-sm text-gray-500">
                   {courseInfo.courseName}
                 </p>
               )}
-              <p className="text-sm text-gray-600 mt-1">
-                Showing evaluation for: {sectionsToShow.filter(s => s !== "Others").join(", ") || "General review"}
+              <p className="mt-1 text-sm text-gray-600">
+                Showing evaluation for:{" "}
+                {sectionsToShow.filter((s) => s !== "Others").join(", ") ||
+                  "General review"}
               </p>
-              
+
               {/* Rating Instructions */}
-              <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
                 <div className="flex items-start gap-2">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Rating Instructions:</p>
+                    <p className="mb-1 font-medium">Rating Instructions:</p>
                     <ul className="space-y-1 text-sm">
-                      <li>• Rate each criterion on a scale of <strong>0 to 10</strong></li>
-                      <li>• <strong>10</strong> = Excellent/Best quality</li>
-                      <li>• <strong>0</strong> = Poor/Worst quality</li>
-                      <li>• Only <strong>whole numbers</strong> (integers) are allowed</li>
+                      <li>
+                        • Rate each criterion on a scale of{" "}
+                        <strong>0 to 10</strong>
+                      </li>
+                      <li>
+                        • <strong>10</strong> = Excellent/Best quality
+                      </li>
+                      <li>
+                        • <strong>0</strong> = Poor/Worst quality
+                      </li>
+                      <li>
+                        • Only <strong>whole numbers</strong> (integers) are
+                        allowed
+                      </li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div className="p-4 h-full overflow-auto">
+
+            <div className="h-full overflow-auto p-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Vertical Table Layout - Criteria as rows, sections as columns */}
                 <div className="overflow-x-auto rounded-md border">
                   <Table className="text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-1/2 font-medium text-sm">
+                        <TableHead className="w-1/2 text-sm font-medium">
                           Evaluation Criteria
                         </TableHead>
                         {sectionsToShow.map((section) => (
                           <TableHead
                             key={section}
-                            className="text-center font-medium text-sm min-w-24"
+                            className="min-w-24 text-center text-sm font-medium"
                           >
                             {section}
                           </TableHead>
@@ -392,7 +428,7 @@ export default function FacultyReview() {
                       {/* Each field becomes a row */}
                       {FIELDS.map((field) => (
                         <TableRow key={field.key}>
-                          <TableCell className="font-medium text-sm bg-gray-50 p-3">
+                          <TableCell className="bg-gray-50 p-3 text-sm font-medium">
                             {field.label}
                           </TableCell>
                           {sectionsToShow.map((section) => (
@@ -401,7 +437,7 @@ export default function FacultyReview() {
                                 type="text"
                                 inputMode="numeric"
                                 pattern="[0-9]*"
-                                className="text-center text-sm h-10 font-medium"
+                                className="h-10 text-center text-sm font-medium"
                                 value={formData[section]?.[field.key] || ""}
                                 onChange={(e) =>
                                   handleInputChange(
@@ -421,10 +457,10 @@ export default function FacultyReview() {
                           ))}
                         </TableRow>
                       ))}
-                      
+
                       {/* Remarks row */}
                       <TableRow>
-                        <TableCell className="font-medium text-sm bg-gray-50 p-3">
+                        <TableCell className="bg-gray-50 p-3 text-sm font-medium">
                           Remarks
                         </TableCell>
                         {sectionsToShow.map((section) => (
@@ -434,7 +470,7 @@ export default function FacultyReview() {
                               value={formData[section]?.remarks || ""}
                               readOnly
                               placeholder="Click to add"
-                              className="cursor-pointer hover:bg-gray-100 text-sm h-10"
+                              className="h-10 cursor-pointer text-sm hover:bg-gray-100"
                               onClick={() => openRemarksModal(section)}
                               onKeyPress={handleKeyPress}
                             />
@@ -444,23 +480,23 @@ export default function FacultyReview() {
                     </TableBody>
                   </Table>
                 </div>
-                
+
                 {/* Action Buttons */}
-                <div className="flex gap-3 justify-center pt-4">
-                  <Button 
+                <div className="flex justify-center gap-3 pt-4">
+                  <Button
                     type="button"
                     variant="outline"
                     onClick={handleSave}
                     className="px-6 py-2 text-sm"
                     disabled={saving || submitting}
                   >
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="mr-2 h-4 w-4" />
                     {saving ? "Saving..." : "Save Review"}
                   </Button>
-                  
-                  <Button 
-                    type="submit" 
-                    className="px-6 py-2 text-sm" 
+
+                  <Button
+                    type="submit"
+                    className="px-6 py-2 text-sm"
                     disabled={submitting || saving}
                   >
                     {submitting ? "Submitting..." : "Submit Review"}
@@ -496,8 +532,13 @@ function DocumentPreview({ documentUrl }: { documentUrl: string | null }) {
   return (
     <div className="relative h-full bg-gray-100">
       {/* Download Button - Top Right Corner */}
-      <div className="absolute top-4 right-4 z-10">
-        <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
+      <div className="absolute right-4 top-4 z-10">
+        <a
+          href={documentUrl}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button size="sm" className="flex gap-2 shadow-lg">
             <Download className="h-4 w-4" />
             Download
@@ -508,16 +549,21 @@ function DocumentPreview({ documentUrl }: { documentUrl: string | null }) {
       {/* PDF Preview */}
       <iframe
         src={documentUrl}
-        className="w-full h-full border-0"
+        className="h-full w-full border-0"
         title="Document Preview"
         loading="lazy"
       >
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4 text-gray-600">
               Your browser doesn't support PDF preview
             </p>
-            <a href={documentUrl} download target="_blank" rel="noopener noreferrer">
+            <a
+              href={documentUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button className="flex gap-2">
                 <Download className="h-4 w-4" />
                 Download PDF
