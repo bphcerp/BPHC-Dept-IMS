@@ -5715,7 +5715,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "CASE WHEN status IN('deleted', 'completed',  'rejected')THEN NULL ELSE true END",
+            "as": "CASE WHEN status IN('deleted', 'completed')THEN NULL ELSE true END",
             "type": "stored"
           }
         }
