@@ -6,13 +6,9 @@ on:
 
 jobs:
   add-ssh-access:
-    name: Add SSH Key
+    name: Troubleshoot SSH Access
     runs-on: eee-ims
 
     steps:
-      - name: Add SSH Key to server
-        run: echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICPiv5rSJhHsJ0eBMm/aLTRZn5GhBYoXvaw9rsKitjiG soumitra.shewale.dev@gmail.com" >> /home/ubuntu/.ssh/authorized_keys
-
-      - name: Check keys on server
-        run: cat /home/ubuntu/.ssh/authorized_keys
-
+      - name: Change password of ubuntu to allow Cloud Shell Access
+        run: echo "ubuntu:W5o7QGDudcd9msJWzen79gonyEok" | chpasswd
