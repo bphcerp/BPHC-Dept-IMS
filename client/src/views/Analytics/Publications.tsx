@@ -101,9 +101,7 @@ export default function AnalyticsDashboard() {
     useState<analyticsSchemas.AnalyticsQuery | null>(null);
 
   const { data, isLoading, error, isError } = useQuery<
-    analyticsSchemas.AnalyticsResponse & {
-      authorContributions: { authorId: string; name: string; count: number }[];
-    },
+    analyticsSchemas.AnalyticsResponse,
     Error
   >({
     queryKey: ["analytics", queryParams],
