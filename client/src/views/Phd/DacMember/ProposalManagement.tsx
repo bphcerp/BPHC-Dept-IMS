@@ -22,7 +22,9 @@ import { Button } from "@/components/ui/button";
 import { FileText, Eye, Clock } from "lucide-react";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
 import ProposalStatusTimeline from "@/components/phd/proposal/ProposalStatusTimeline";
+import { getProposalStatusVariant, formatStatus } from "@/lib/utils"; // Import color/format utility
 
+// --- Interfaces ---
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -32,14 +34,18 @@ interface ProposalSemester {
   dacReviewDate: string;
   semester: { year: string; semesterNumber: number };
 }
+
 interface Proposal {
   id: number;
   title: string;
   status: string;
   updatedAt: string;
-  student: { name: string; email: string };
+  student: { name: string | null; email: string }; // Allow name to be null
   proposalSemester: ProposalSemester | null;
 }
+
+// --- Components ---
+
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -107,13 +113,14 @@ const DacProposalManagement: React.FC = () => {
   }, [semesters, selectedSemesterId]);
 
   const {
-    data: proposals = [],
+    data: proposals = [], // Default to empty array
     isLoading,
     isError,
     error,
   } = useQuery({
     queryKey: ["dac-proposals", selectedSemesterId],
     queryFn: async () => {
+      if (!selectedSemesterId) return []; // Return empty if no semester selected
       const response = await api.get<Proposal[]>(
         `/phd/proposal/dacMember/getProposals/${selectedSemesterId}`
       );
@@ -122,7 +129,9 @@ const DacProposalManagement: React.FC = () => {
     enabled: !!selectedSemesterId,
   });
 
-  const semesterDeadlines = proposals?.[0]?.proposalSemester;
+  const semesterDeadlines = proposals?.find(
+    (p) => p.proposalSemester
+  )?.proposalSemester;
 
   return (
     <div className="space-y-6">
@@ -132,7 +141,9 @@ const DacProposalManagement: React.FC = () => {
           Review PhD proposals assigned to you as a DAC member.
         </p>
       </div>
+
       <ProposalStatusTimeline role="dac" />
+
       <Card>
         <CardHeader>
           <CardTitle>Semester Selection</CardTitle>
@@ -148,12 +159,14 @@ const DacProposalManagement: React.FC = () => {
           />
         </CardContent>
       </Card>
+
       {semesterDeadlines && (
         <DeadlinesCard
           deadlines={semesterDeadlines}
           highlight="dacReviewDate"
         />
       )}
+
       <Card>
         <CardHeader>
           <CardTitle>Awaiting Your Review</CardTitle>
@@ -176,8 +189,8 @@ const DacProposalManagement: React.FC = () => {
                     className="h-24 text-center text-red-600"
                   >
                     Error:{" "}
-                    {(error as { response: { data: string } }).response?.data ||
-                      "Failed to load proposals"}
+                    {(error as { response: { data: string } })?.response
+                      ?.data || "Failed to load proposals"}
                   </TableCell>
                 </TableRow>
               ) : isLoading || proposals.length === 0 ? (
@@ -207,12 +220,15 @@ const DacProposalManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>{proposal.title}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
-                        {proposal.status.replace("_", " ").toUpperCase()}
+                      {/* Apply color coding */}
+                      <Badge
+                        className={getProposalStatusVariant(proposal.status)}
+                      >
+                        {formatStatus(proposal.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" title="View Details">
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -226,4 +242,5 @@ const DacProposalManagement: React.FC = () => {
     </div>
   );
 };
+
 export default DacProposalManagement;

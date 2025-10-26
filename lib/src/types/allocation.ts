@@ -17,6 +17,7 @@ import {
     AllocationFormResponse,
     AllocationFormTemplatePreferenceFieldType,
 } from "./allocationFormBuilder.ts";
+import { courseGroupSchema } from "../schemas/Allocation.js";
 
 export type NewAllocation = z.infer<typeof allocationSchema>;
 export type UpdateAllocation = Partial<NewAllocation>;
@@ -28,6 +29,10 @@ export type Allocation = NewAllocation & {
     semester: Semester;
     instructor: MemberDetailsResponse;
 };
+export type CourseAllocationStatusResponse = Record<
+    string,
+    "Allocated" | "Pending" | "Not Started"
+>;
 
 export type NewCourse = z.infer<typeof courseSchema>;
 export type UpdateCourse = Partial<NewCourse>;
@@ -35,6 +40,7 @@ export type Course = NewCourse & {
     fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
+    groups? : Omit<CourseGroup, 'courses'>[] | null
 };
 
 export type SemesterAllocationStatusEnumType =
@@ -46,7 +52,7 @@ export const semesterStatusMap: Record<
 > = {
     completed: "Completed",
     notStarted: "Not Started",
-    ongoing: "Ongoing",
+    formCollection: "Collecting Responses",
     inAllocation: "In Allocation",
 };
 
@@ -70,6 +76,7 @@ export type SemesterMinimal = NewSemester & {
     formId: string;
     createdAt: Date;
     updatedAt: Date;
+    summaryHidden: boolean;
 };
 
 export type Semester = SemesterMinimal & {
@@ -89,7 +96,7 @@ export type Semester = SemesterMinimal & {
 type SemesterResponseStat = {
     email: string;
     name: string | null;
-    type: (typeof userTypes)[number]
+    type: "faculty" | "phd";
 };
 
 export type SemesterWithStats = Semester & {
@@ -134,19 +141,13 @@ export type TTDDepartment = {
     name: string;
     hodName: string;
     hodPsrn: string;
-    dcaConvener: {
-        name: string;
-        psrn: string;
-    };
-    delegated: {
-        _id: string;
-        psrn: string;
-        name: string;
-    };
+    dcaConvener: string;
+    delegated: string;
+    freezeStatus: boolean;
 };
 
 export type AllocationType = {
-    ic: MemberDetailsResponse;
+    ic: MemberDetailsResponse | null;
     sections: {
         type: AllocationFormTemplatePreferenceFieldType;
         number: string;
@@ -163,8 +164,9 @@ export type AllocationResponse = {
     ic: {
         email: string;
         name: string | null;
-    };
+    } | null;
     courseCode: string;
+    course: Pick<Course, "name">;
     sections: {
         id: string;
         type: (typeof sectionTypes)[number];
@@ -173,9 +175,21 @@ export type AllocationResponse = {
         instructors: {
             name: string | null;
             email: string;
+            type: "faculty" | "phd";
         }[];
     }[];
 } | null;
+
+export type AllocationSummaryType = (NonNullable<AllocationResponse> & {
+    course: Course;
+})[];
+
+export type InstructorWithPreference = {
+    email: string;
+    name: string | null;
+    preference?: number | null;
+    type: "faculty" | "phd";
+};
 
 export type InstructorAllocationSection = {
     id: string;
@@ -199,7 +213,7 @@ export type InstructorAllocationSection = {
 export type InstructorAllocationMaster = {
     id: string;
     semesterId: string;
-    ic: string;
+    ic: string | null;
     courseCode: string;
     course: {
         code: string;
@@ -207,7 +221,7 @@ export type InstructorAllocationMaster = {
         lectureUnits: number;
         practicalUnits: number;
         totalUnits: number | null;
-        offeredAs: "CDC" | "Elective";
+        offeredAs: "CDC" | "DEL";
         offeredTo: "FD" | "HD";
         offeredAlsoBy: string[] | null;
         createdAt: Date | null;
@@ -219,20 +233,35 @@ export type InstructorAllocationMaster = {
     >;
 };
 
-export type InstructorAllocationSections = Record<
+export type InstructorAllocationDetails = Record<
     (typeof sectionTypes)[number],
     {
+        id: string;
         type: (typeof sectionTypes)[number];
         createdAt: Date;
+        instructors: {
+            email: string
+            name: string | null;
+            type: (typeof userTypes)[number];
+        }[];
         master: {
             id: string;
-            courseCode: string;
-            ic: string;
+            course: {
+                name: string;
+                lectureUnits: number;
+                practicalUnits: number;
+                code: string;
+            }
+            ic: string | null;
         };
     }[]
 >;
 
-export type InstructorAllocationDetails = {
-    allAllocationsOfCoursesAllocatedToUser: InstructorAllocationMaster[];
-    userAllocatedSections: InstructorAllocationSections;
-};
+export type NewCourseGroup = z.infer<typeof courseGroupSchema>;
+export type CourseGroup = NewCourseGroup & {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    courses: Pick<Course, 'name' | 'code'>[]
+}
+export type CourseGroupMinimal = Omit<CourseGroup, 'courses'>

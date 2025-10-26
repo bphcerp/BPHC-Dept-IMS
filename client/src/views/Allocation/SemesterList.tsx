@@ -28,7 +28,7 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorKey: "hodAtStartOfSem",
+    accessorKey: "hodAtStartOfSem.name",
     header: "HoD*",
     meta: {
       filterType: "dropdown",
@@ -36,7 +36,7 @@ const columns: ColumnDef<Semester>[] = [
   },
 
   {
-    accessorKey: "dcaConvenerAtStartOfSem",
+    accessorKey: "dcaConvenerAtStartOfSem.name",
     header: "DCA Convener*",
     meta: {
       filterType: "dropdown",
@@ -48,14 +48,6 @@ const columns: ColumnDef<Semester>[] = [
     header: "Allocation Status",
     meta: {
       filterType: "dropdown",
-    },
-  },
-
-  {
-    accessorKey: "allocationDeadline",
-    header: "Allocation Deadline",
-    meta: {
-      filterType: "date-range",
     },
   },
 
@@ -106,7 +98,7 @@ const SemesterList = () => {
         columns={columns}
         data={semesters}
         additionalButtons={
-          semesters.some(semester => semester.allocationStatus === 'ongoing') ? <></> : <Button>
+          semesters.some(semester => ['inAllocation', 'formCollection'].includes(semester.allocationStatus)) ? <></> : <Button>
             <Link to="new">New Semester</Link>
           </Button>
         }

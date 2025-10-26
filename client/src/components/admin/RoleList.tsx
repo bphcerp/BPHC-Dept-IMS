@@ -20,6 +20,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface Role {
+  id: string
   roleName: string;
   memberCount: number;
 }

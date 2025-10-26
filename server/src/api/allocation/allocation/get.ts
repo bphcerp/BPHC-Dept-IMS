@@ -4,19 +4,27 @@ import express from "express";
 import { allocationSchemas } from "lib";
 import { getLatestSemester } from "../semester/getLatest.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:courses:view"),
     asyncHandler(async (req, res, next) => {
         let { code, semesterId } = allocationSchemas.courseCodeSchema.parse(
             req.query
         );
 
-        if (!semesterId){
-            semesterId = (await getLatestSemester())?.id
-            if (!semesterId) return next(new HttpError(HttpCode.BAD_REQUEST, "No allocation going on"))
+        if (!semesterId) {
+            semesterId = (await getLatestSemester())?.id;
+            if (!semesterId)
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "No allocation going on"
+                    )
+                );
         }
 
         const allocation = await db.query.masterAllocation.findFirst({
@@ -32,7 +40,7 @@ router.get(
                         instructors: {
                             with: {
                                 instructor: {
-                                    columns: { email: true },
+                                    columns: { email: true, type: true },
                                     with: {
                                         faculty: {
                                             columns: {
@@ -40,7 +48,7 @@ router.get(
                                                 email: true,
                                             },
                                         },
-                                        staff: {
+                                        phd: {
                                             columns: {
                                                 name: true,
                                                 email: true,
@@ -53,6 +61,9 @@ router.get(
                     },
                 },
                 ic: true,
+                course: {
+                    columns: { name: true },
+                },
             },
         });
 
@@ -63,16 +74,15 @@ router.get(
                       sections: allocation.sections.map((s) => ({
                           ...s,
                           instructors: s.instructors.map((i) => {
-                              const { email, ...rest } = i.instructor;
+                              const { email, type, ...rest } = i.instructor;
                               const instructor = Object.values(rest).filter(
                                   (v) => !!v
                               )[0];
-                              return instructor
-                                  ? {
-                                        email: instructor.email,
-                                        name: instructor.name,
-                                    }
-                                  : { email, name: "Not found" };
+                              return {
+                                  email,
+                                  type,
+                                  name: instructor?.name ?? "Not Provided",
+                              };
                           }),
                       })),
                   }

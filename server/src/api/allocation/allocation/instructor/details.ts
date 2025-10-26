@@ -21,13 +21,55 @@ router.get(
                         columns: {},
                         with: {
                             section: {
-                                columns: { type: true, createdAt: true },
+                                columns: {
+                                    type: true,
+                                    createdAt: true,
+                                    id: true,
+                                },
                                 with: {
+                                    instructors: {
+                                        with: {
+                                            instructor: {
+                                                with: {
+                                                    faculty: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
+                                                    staff: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
+                                                    phd: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
+                                                },
+                                                columns: { name: true, email: true, type: true },
+                                            },
+                                        },
+                                    },
                                     master: {
+                                        with: {
+                                            course: {
+                                                columns: { name: true, lectureUnits: true, practicalUnits: true, code: true },
+                                            },
+                                            ic: {
+                                                with: {
+                                                    faculty: {
+                                                        columns: {
+                                                            name: true,
+                                                        },
+                                                    },
+                                                },
+                                                columns: { name: true },
+                                            },
+                                        },
                                         columns: {
                                             id: true,
                                             courseCode: true,
-                                            ic: true,
                                         },
                                     },
                                 },
@@ -42,61 +84,36 @@ router.get(
             return;
         }
 
-        const uniqueMasterIdsOfCoursesAllocatedToUser = Array.from(
-            new Set(userAllocatedSections.map((s) => s.section.master.id))
-        );
-
-        const allAllocationsOfCoursesAllocatedToUser = (
-            await db.query.masterAllocation.findMany({
-                where: (cols, { inArray }) =>
-                    inArray(cols.id, uniqueMasterIdsOfCoursesAllocatedToUser),
-                with: {
-                    course: true,
-                    sections: {
-                        with: {
-                            instructors: {
-                                with: {
-                                    instructor: true,
-                                },
-                            },
-                        },
-                    },
-                },
-            })
-        ).map((m) => {
-            const sections = m.sections.reduce(
-                (accum, cur) => {
-                    const sectionType = cur.type;
-                    if (!accum[sectionType]) {
-                        accum[sectionType] = [];
-                    }
-                    accum[sectionType].push(cur);
-                    return accum;
-                },
-                {} as Record<
-                    (typeof allocationSchemas.sectionTypes)[number],
-                    allocationTypes.InstructorAllocationSection[]
-                >
-            );
-            Object.keys(sections).forEach((sectionType) => {
-                sections[sectionType as keyof typeof sections].sort(
-                    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-                );
-            });
-            return { ...m, sections };
-        });
-
         const userAllocatedSectionsGrouped = userAllocatedSections.reduce(
             (accum, cur) => {
                 const sectionType = cur.section.type;
                 if (!accum[sectionType]) {
                     accum[sectionType] = [];
                 }
-                accum[sectionType].push(cur.section);
+                accum[sectionType].push({
+                    ...cur.section,
+                    instructors: cur.section.instructors.map((i) => ({
+                        email: i.instructor.email,
+                        type: i.instructor.type,
+                        name:
+                            i.instructor.name ??
+                            i.instructor.faculty?.name ??
+                            i.instructor.phd?.name ??
+                            i.instructor.staff?.name ??
+                            "Not Provided",
+                    })),
+                    master: {
+                        ...cur.section.master,
+                        ic:
+                            cur.section.master.ic?.name ??
+                            cur.section.master.ic?.faculty.name ??
+                            null,
+                    },
+                });
 
                 return accum;
             },
-            {} as allocationTypes.InstructorAllocationSections
+            {} as allocationTypes.InstructorAllocationDetails
         );
 
         Object.keys(userAllocatedSectionsGrouped).forEach((sectionType) => {
@@ -105,12 +122,7 @@ router.get(
             ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         });
 
-        const result: allocationTypes.InstructorAllocationDetails = {
-            userAllocatedSections: userAllocatedSectionsGrouped,
-            allAllocationsOfCoursesAllocatedToUser,
-        };
-
-        res.status(200).json(result);
+        res.status(200).json(userAllocatedSectionsGrouped);
     })
 );
 

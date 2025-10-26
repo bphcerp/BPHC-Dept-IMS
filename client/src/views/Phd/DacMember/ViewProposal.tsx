@@ -1,3 +1,4 @@
+// client/src/views/Phd/DacMember/ViewProposal.tsx
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
@@ -15,11 +16,14 @@ import BackButton from "@/components/BackButton";
 import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocumentsViewer";
 import { DacReviewForm } from "@/components/phd/proposal/DacReviewForm";
 import { CheckCircle } from "lucide-react";
+import { DacReviewFormData } from "../../../../../lib/src/schemas/Phd";
+
 interface CoSupervisor {
   coSupervisorEmail: string;
   coSupervisorName: string | null;
   coSupervisor: { name: string | null; email: string } | null;
 }
+
 interface ProposalDetails {
   id: number;
   title: string;
@@ -34,13 +38,19 @@ interface ProposalDetails {
   placeOfResearchFileUrl?: string | null;
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
-  currentUserReview: { approved: boolean; comments: string } | null;
+  currentUserReview: {
+    approved: boolean;
+    comments: string;
+    reviewForm: { formData: DacReviewFormData } | null;
+  } | null;
   proposalSemester: { dacReviewDate: string };
 }
+
 const DacViewProposal: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const proposalId = Number(id);
   const queryClient = useQueryClient();
+
   const {
     data: proposal,
     isLoading,
@@ -91,8 +101,8 @@ const DacViewProposal: React.FC = () => {
     },
   ].filter((file) => file.url);
 
-  const canReview =
-    proposal.status === "dac_review" && !proposal.currentUserReview;
+  // const canReview = proposal.status === "dac_review";
+  const hasReviewed = !!proposal.currentUserReview;
 
   return (
     <div className="space-y-6">
@@ -102,10 +112,11 @@ const DacViewProposal: React.FC = () => {
           <CardTitle>{proposal.title}</CardTitle>
           <CardDescription>
             Submitted by: {proposal.student.name} ({proposal.student.email})
-            <br />
-            Supervisor: {proposal.supervisor.name} ({proposal.supervisor.email})
-            <br />
-            Status:
+            <p>
+              Supervisor: {proposal.supervisor?.name ?? "N/A"} (
+              {proposal.supervisor?.email ?? "N/A"})
+            </p>
+            Status:{" "}
             <Badge variant="outline">
               {proposal.status.replace("_", " ").toUpperCase()}
             </Badge>
@@ -119,7 +130,7 @@ const DacViewProposal: React.FC = () => {
                 <li key={index}>
                   {coSup.coSupervisor?.name ??
                     coSup.coSupervisorName ??
-                    "External"}
+                    "External"}{" "}
                   ({coSup.coSupervisorEmail})
                 </li>
               ))}
@@ -128,24 +139,27 @@ const DacViewProposal: React.FC = () => {
         )}
       </Card>
       <ProposalDocumentsViewer files={documentFiles} />
-      {canReview && (
+
+      {proposal.status === "dac_review" && !proposal.currentUserReview && (
         <DacReviewForm
           onSubmit={submitReviewMutation.mutate}
           isSubmitting={submitReviewMutation.isLoading}
           deadline={proposal.proposalSemester.dacReviewDate}
+          existingReview={proposal.currentUserReview}
+          hasReviewed={hasReviewed}
         />
       )}
+
       {proposal.currentUserReview && (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" /> You Have Reviewed This
-              Proposal
+              <CheckCircle className="h-5 w-5" /> You Have Submitted Your Review
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p>
-              Your Decision:
+              Your Decision:{" "}
               <strong
                 className={
                   proposal.currentUserReview.approved
@@ -165,7 +179,8 @@ const DacViewProposal: React.FC = () => {
           </CardContent>
         </Card>
       )}
-      {!canReview && !proposal.currentUserReview && (
+
+      {proposal.status !== "dac_review" && !proposal.currentUserReview && (
         <Card>
           <CardHeader>
             <CardTitle>Review Status</CardTitle>
@@ -180,4 +195,5 @@ const DacViewProposal: React.FC = () => {
     </div>
   );
 };
+
 export default DacViewProposal;

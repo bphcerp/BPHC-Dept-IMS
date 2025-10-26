@@ -8,6 +8,7 @@ import {
     meetingParticipants,
     meetingAvailability,
     meetingTimeSlots,
+    finalizedMeetingSlots,
 } from "@/config/db/schema/meeting.ts";
 import { eq, and, sql, ne } from "drizzle-orm";
 
@@ -18,6 +19,7 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res) => {
         const userEmail = req.user!.email;
+
         const participantCountsSq = db
             .select({
                 meetingId: meetingParticipants.meetingId,
@@ -44,6 +46,19 @@ router.get(
             .groupBy(meetingTimeSlots.meetingId)
             .as("response_counts");
 
+        const finalizedSlotsSq = db
+            .select({
+                meetingId: finalizedMeetingSlots.meetingId,
+                finalizedTimes: sql<
+                    string[]
+                >`array_agg(${finalizedMeetingSlots.startTime} order by ${finalizedMeetingSlots.startTime})`.as(
+                    "finalized_times"
+                ),
+            })
+            .from(finalizedMeetingSlots)
+            .groupBy(finalizedMeetingSlots.meetingId)
+            .as("finalized_slots");
+
         const organizedMeetings = await db
             .select({
                 id: meetings.id,
@@ -58,6 +73,7 @@ router.get(
                     sql<number>`coalesce(${responseCountsSq.count}, 0)`.mapWith(
                         Number
                     ),
+                finalizedTimes: finalizedSlotsSq.finalizedTimes,
             })
             .from(meetings)
             .leftJoin(
@@ -67,6 +83,10 @@ router.get(
             .leftJoin(
                 responseCountsSq,
                 eq(meetings.id, responseCountsSq.meetingId)
+            )
+            .leftJoin(
+                finalizedSlotsSq,
+                eq(meetings.id, finalizedSlotsSq.meetingId)
             )
             .where(
                 and(
@@ -91,6 +111,7 @@ router.get(
                     sql<number>`coalesce(${responseCountsSq.count}, 0)`.mapWith(
                         Number
                     ),
+                finalizedTimes: finalizedSlotsSq.finalizedTimes,
             })
             .from(meetings)
             .innerJoin(
@@ -104,6 +125,10 @@ router.get(
             .leftJoin(
                 responseCountsSq,
                 eq(meetings.id, responseCountsSq.meetingId)
+            )
+            .leftJoin(
+                finalizedSlotsSq,
+                eq(meetings.id, finalizedSlotsSq.meetingId)
             )
             .where(
                 and(

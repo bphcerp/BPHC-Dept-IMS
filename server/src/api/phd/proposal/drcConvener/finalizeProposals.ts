@@ -3,6 +3,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import db from "@/config/db/index.ts";
 import { phdProposals } from "@/config/db/schema/phd.ts";
+import { phd } from "@/config/db/schema/admin.ts";
 import { inArray } from "drizzle-orm";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { completeTodo } from "@/lib/todos/index.ts";
@@ -19,13 +20,25 @@ export default router.post(
             .update(phdProposals)
             .set({ status: "completed" })
             .where(inArray(phdProposals.id, proposalIds))
-            .returning();
+            .returning({ studentEmail: phdProposals.studentEmail });
+
         if (result.length === 0) {
             throw new HttpError(
                 HttpCode.NOT_FOUND,
                 "No proposals found or already processed."
             );
         }
+
+        const studentEmails = result.map((p) => p.studentEmail);
+
+        await db
+            .update(phd)
+            .set({
+                currentStatus:
+                    "Proposal Completed, Awaiting Pre-Submission Request",
+            })
+            .where(inArray(phd.email, studentEmails));
+
         await completeTodo({
             module: modules[3],
             completionEvent: proposalIds.map(

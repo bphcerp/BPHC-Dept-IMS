@@ -10,6 +10,10 @@ const storage = multer.diskStorage({
     destination: FILES_DIR,
 });
 
+export const pdfLimits = {
+    fileSize: 1024 * 1024 * 2, 
+};
+
 export const pdfUpload = multer({
     storage,
     limits: {

@@ -647,6 +647,7 @@ export const DCAConvenercourses: React.FC = () => {
             <div className="mt-2 flex gap-2">
               <Button
                 variant="default"
+                type="button"
                 className="bg-primary text-white"
                 onClick={() => setIsCreateRequestDialogOpen(true)}
               >
@@ -656,6 +657,7 @@ export const DCAConvenercourses: React.FC = () => {
                 <div className="flex gap-2">
                   <Button
                     variant="default"
+                    type="button"
                     className="bg-primary text-white"
                     onClick={handleBulkAssignReviewer}
                   >
@@ -665,6 +667,7 @@ export const DCAConvenercourses: React.FC = () => {
                   <SendReminderDialog
                     trigger={
                       <Button
+                        type="button"
                         className="flex items-center gap-2"
                       >
                         <Mail className="h-4 w-4" />
@@ -682,6 +685,7 @@ export const DCAConvenercourses: React.FC = () => {
                     onClick={() => void handleDownloadReviews()}
                     className="flex items-center gap-2"
                     variant={reviewableCoursesCount > 0 ? "default" : "outline"}
+                    type="button"
                     disabled={isDownloading || reviewableCoursesCount === 0}
                   >
                     <Download

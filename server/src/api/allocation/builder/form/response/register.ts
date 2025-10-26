@@ -48,9 +48,33 @@ router.post(
             );
         }
 
+        const { roles: userRoles } = (await db.query.users.findFirst({
+            where: (user, { eq }) => eq(user.email, req.user!.email),
+            columns: {
+                roles: true,
+            },
+        }))!;
+
         if (
-            form.allocationDeadline &&
-            Date.now() > new Date(form.allocationDeadline).getTime()
+            form.isPublishedToRoleId &&
+            !userRoles?.includes(form.isPublishedToRoleId)) {
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "You do not have permission to submit this form"
+                )
+            );
+        }
+
+        const formSemester = await db.query.semester.findFirst({
+            where: (s, { eq }) => eq(s.formId, form.id),
+        });
+
+        if (
+            form.formDeadline &&
+            formSemester &&
+            formSemester.allocationStatus !== "formCollection" &&
+            Date.now() > new Date(form.formDeadline).getTime()
         ) {
             return next(
                 new HttpError(HttpCode.BAD_REQUEST, "Form Deadline is Over")

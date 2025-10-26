@@ -29,21 +29,14 @@ interface Faculty {
 }
 
 const templateLinks: Record<string, string> = {
-  appendixFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/1.-Appendix-I-to-be-attached-with-research-Proposals.pdf",
-  summaryFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/2.-Summary-of-Research-Proposal.pdf",
-  outlineFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/3.-Outline-of-the-Proposed-topic-of-Research.pdf",
-  outsideSupervisorBiodataFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/5.-Format-For-Outside-Supervisors-Biodata.pdf",
-  outsideCoSupervisorFormatFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/7.-Format-for-Proposed-out-side-Co-Supervisor.pdf",
-  placeOfResearchFile:
-    "https://www.bits-pilani.ac.in/wp-content/uploads/6.-Format-for-proposed-as-Place-of-Research-Work.pdf",
+  appendixFile: "https://example.com/appendix-template.pdf", // Placeholder URL
+  summaryFile: "https://example.com/summary-template.pdf", // Placeholder URL
+  outlineFile: "https://example.com/outline-template.pdf", // Placeholder URL
+  outsideSupervisorBiodataFile: "https://example.com/biodata-template.pdf", // Placeholder URL
+  outsideCoSupervisorFormatFile: "https://example.com/format-template.pdf", // Placeholder URL
+  placeOfResearchFile: "https://example.com/research-place-template.pdf", // Placeholder URL
 };
 
-// A helper component to render each file field, reducing repetition
 const FileField = ({
   field,
   existingFileUrl,
@@ -61,15 +54,17 @@ const FileField = ({
         {field.label}
         {field.required && "*"}
       </Label>
-      <a
-        href={templateLinks[field.key]}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Download Template"
-        className="text-primary hover:underline"
-      >
-        <Download className="h-4 w-4" />
-      </a>
+      {templateLinks[field.key] && (
+        <a
+          href={templateLinks[field.key]}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Download Template"
+          className="text-primary hover:underline"
+        >
+          <Download className="h-4 w-4" />
+        </a>
+      )}
     </div>
     {existingFileUrl && !currentFile ? (
       <div className="mt-1 flex items-center justify-between gap-2 rounded-md border bg-blue-50 p-3">
@@ -167,10 +162,12 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         proposalData.coSupervisors
           ?.filter(
             (s: any) =>
-              !facultyList.some((f) => f.value === s.coSupervisorEmail)
+              !facultyList.some((f) => f.value === s.coSupervisorEmail) &&
+              s.coSupervisorName && // *** FIX: Only include externals with a name
+              s.coSupervisorName.trim() !== ""
           )
           .map((s: any) => ({
-            name: s.coSupervisorName || "",
+            name: s.coSupervisorName,
             email: s.coSupervisorEmail,
           })) ?? [];
       setInternalCoSupervisors(internals);
@@ -197,11 +194,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       return api.post(`/phd/proposal/student/submitProposal`, formData);
     },
     onSuccess: () => {
-      toast.success(
-        `Proposal ${
-          proposalData?.id ? "resubmitted" : "submitted"
-        } successfully!`
-      );
+      toast.success(`Proposal changes saved successfully!`);
       onSuccess();
     },
     onError: (error: any) => {
@@ -241,61 +234,24 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
     setExternalCoSupervisors((prev) => prev.filter((e) => e.email !== email));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!proposalData?.proposalCycleId && !proposalData?.id) {
-      toast.error("Please select a proposal submission cycle.");
-      return;
-    }
-    if (
-      !title ||
-      (!files.appendixFile && !proposalData?.appendixFileUrl) ||
-      (!files.summaryFile && !proposalData?.summaryFileUrl) ||
-      (!files.outlineFile && !proposalData?.outlineFileUrl)
-    ) {
-      toast.error(
-        "Please fill in the title and upload all mandatory documents."
-      );
-      return;
-    }
-    if (
-      profileData?.phdType === "part-time" &&
-      !files.placeOfResearchFile &&
-      !proposalData?.placeOfResearchFileUrl
-    ) {
-      toast.error(
-        "Part-time students must upload the 'Place of Research' document."
-      );
-      return;
-    }
-    if (
-      hasOutsideCoSupervisor &&
-      !files.outsideCoSupervisorFormatFile &&
-      !proposalData?.outsideCoSupervisorFormatFileUrl &&
-      !files.outsideSupervisorBiodataFile &&
-      !proposalData?.outsideSupervisorBiodataFileUrl
-    ) {
-      toast.error(
-        "Please upload both documents for the outside co-supervisor."
-      );
-      return;
-    }
-    if (!declaration) {
-      toast.error("You must agree to the declaration.");
-      return;
-    }
-
+  const handleSaveChanges = () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("hasOutsideCoSupervisor", String(hasOutsideCoSupervisor));
     formData.append("declaration", String(declaration));
+    formData.append("submissionType", "draft");
     formData.append(
       "internalCoSupervisors",
       JSON.stringify(internalCoSupervisors)
     );
+
+    // *** FIX: Filter out externals with empty names before saving
+    const validExternalCoSupervisors = externalCoSupervisors.filter(
+      (ext) => ext.name.trim() !== "" && ext.email.trim() !== ""
+    );
     formData.append(
       "externalCoSupervisors",
-      JSON.stringify(externalCoSupervisors)
+      JSON.stringify(validExternalCoSupervisors)
     );
 
     Object.keys(files).forEach((key) => {
@@ -313,11 +269,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       label: "Summary of Research Proposal",
       required: true,
     },
-    {
-      key: "outlineFile",
-      label: "Outline of Proposed Topic",
-      required: true,
-    },
+    { key: "outlineFile", label: "Outline of Proposed Topic", required: true },
   ];
 
   const partTimeFileField = {
@@ -341,18 +293,17 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-6 pt-4">
       {proposalData?.id && (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>Resubmitting Proposal</AlertTitle>
+          <AlertTitle>Editing Proposal</AlertTitle>
           <AlertDescription>
             The form fields have been pre-filled with your previous submission.
             Please review the details and upload any corrected documents below.
           </AlertDescription>
         </Alert>
       )}
-
       <div>
         <Label htmlFor="title">Proposal Title</Label>
         <Input
@@ -385,7 +336,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
       <div className="space-y-4 rounded-md border p-4">
         <Label className="font-semibold">Co-Supervisors</Label>
         <div className="space-y-2">
-          <Label>Internal Co-Supervisors (from BITS)</Label>
+          <Label>Internal Co-Supervisors (from your department)</Label>
           <Combobox
             options={facultyList}
             selectedValues={internalCoSupervisors}
@@ -419,7 +370,7 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           )}
         </div>
         <div className="space-y-2">
-          <Label>External Co-Supervisors</Label>
+          <Label>External Co-Supervisors (from other department)</Label>
           <div className="flex gap-2">
             <Input
               placeholder="Name"
@@ -462,6 +413,20 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
         </div>
       </div>
 
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="hasOutsideCoSupervisor"
+          checked={hasOutsideCoSupervisor}
+          onCheckedChange={(checked) =>
+            setHasOutsideCoSupervisor(checked as boolean)
+          }
+        />
+        <Label htmlFor="hasOutsideCoSupervisor">
+          I have an outside co-supervisor (from outside of BITS Pilani
+          campuses).
+        </Label>
+      </div>
+
       {hasOutsideCoSupervisor &&
         outsideSupervisorFileFields.map((field) => (
           <FileField
@@ -473,43 +438,27 @@ export const StudentProposalForm: React.FC<StudentProposalFormProps> = ({
           />
         ))}
 
-      <div className="space-y-2 rounded-md border p-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="hasOutsideCoSupervisor"
-            checked={hasOutsideCoSupervisor}
-            onCheckedChange={(checked) =>
-              setHasOutsideCoSupervisor(checked as boolean)
-            }
-          />
-          <Label htmlFor="hasOutsideCoSupervisor">
-            I have an outside co-supervisor (from outside of BITS Pilani
-            campuses) and have attached the required forms.
-          </Label>
-        </div>
-      </div>
-
       <div className="flex items-center space-x-2">
         <Checkbox
           id="declaration"
           checked={declaration}
           onCheckedChange={(checked) => setDeclaration(checked as boolean)}
-          required
         />
         <Label htmlFor="declaration">
           I hereby declare that all the information I have filled is correct to
-          the best of my knowledge. *
+          the best of my knowledge.
         </Label>
       </div>
-      <Button type="submit" className="w-full" disabled={mutation.isLoading}>
-        {mutation.isLoading ? (
-          <LoadingSpinner />
-        ) : proposalData?.id ? (
-          "Resubmit Proposal"
-        ) : (
-          "Submit Proposal"
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          className="w-full"
+          disabled={mutation.isLoading}
+          onClick={handleSaveChanges}
+        >
+          {mutation.isLoading ? <LoadingSpinner /> : "Save Changes"}
+        </Button>
+      </div>
     </form>
   );
 };

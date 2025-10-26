@@ -8,14 +8,16 @@ import {
   DatabaseIcon,
   FrameIcon,
   SendIcon,
-  UserRoundIcon,
+  TableOfContentsIcon,
+  GroupIcon,
+  Grid3X3Icon,
 } from "lucide-react";
 import { SemesterMinimal } from "node_modules/lib/src/types/allocation";
 import { Outlet } from "react-router-dom";
 
 const AllocationLayout = () => {
   const { data: currentSemester } = useQuery({
-    queryKey: ["allocation", "semester", "latest"],
+    queryKey: ["semester", "latest"],
     queryFn: () =>
       api
         .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
@@ -33,14 +35,30 @@ const AllocationLayout = () => {
               {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
-                url: "/allocation/ongoing",
+                url: "/allocation/overview",
                 requiredPermissions: ["allocation:write"],
               },
+              ...(currentSemester?.allocationStatus === "inAllocation"
+                ? [
+                    {
+                      title: "Matrix",
+                      icon: <Grid3X3Icon />,
+                      url: "/allocation/creditmatrix",
+                      requiredPermissions: ["allocation:write"],
+                    },
+                  ]
+                : []),
               {
                 title: "Courses",
                 icon: <DatabaseIcon />,
                 url: "/allocation/courses",
                 requiredPermissions: ["allocation:courses:view"],
+              },
+              {
+                title: "Course Groups",
+                icon: <GroupIcon />,
+                url: "/allocation/course-groups",
+                requiredPermissions: ["allocation:courses:write"],
               },
               {
                 title: "Semesters",
@@ -56,27 +74,37 @@ const AllocationLayout = () => {
               },
             ],
           },
-          {
-            title: "Course Allocation",
-            items: [
-              {
-                title: "Your Allocations",
-                icon: <UserRoundIcon />,
-                url: "/allocation/personal",
-                requiredPermissions: ["allocation:view"],
-              },
-              ...(currentSemester?.allocationStatus === 'ongoing'
-                ? [
+          ...(!!currentSemester
+            ? [
+                {
+                  title: "Course Allocation",
+                  items: [
                     {
-                      title: "Submit Your Preferences",
-                      icon: <SendIcon />,
-                      url: `/allocation/forms/${currentSemester.formId}/submit`,
-                      requiredPermissions: ["allocation:form:response:submit"],
+                      title: "Summary",
+                      icon: <TableOfContentsIcon />,
+                      url: "/allocation/summary",
+                      requiredPermissions: [
+                        currentSemester?.summaryHidden
+                          ? "allocation:write"
+                          : "allocation:summary:view",
+                      ],
                     },
-                  ]
-                : []),
-            ],
-          },
+                    ...(currentSemester?.allocationStatus === "formCollection"
+                      ? [
+                          {
+                            title: "Submit Your Preferences",
+                            icon: <SendIcon />,
+                            url: `/allocation/submit`,
+                            requiredPermissions: [
+                              "allocation:form:response:submit",
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+            : []),
           {
             title: "Forms",
             items: [
@@ -84,19 +112,25 @@ const AllocationLayout = () => {
                 title: "Templates",
                 icon: <FrameIcon />,
                 url: "/allocation/templates",
-                requiredPermissions: ["allocation:write", "allocation:builder:template:view"],
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:template:view",
+                ],
               },
               {
                 title: "Forms",
                 icon: <ClipboardCheckIcon />,
                 url: "/allocation/forms",
-                requiredPermissions: ["allocation:write", "allocation:builder:form:view"],
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:form:view",
+                ],
               },
             ],
           },
         ]}
       />
-      <div className="w-full overflow-y-auto">
+      <div className="h-screen w-full overflow-y-auto">
         <Outlet />
       </div>
     </>

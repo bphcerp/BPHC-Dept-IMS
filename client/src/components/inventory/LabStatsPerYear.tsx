@@ -46,7 +46,6 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
         response.data.forEach((lab: Laboratory) => (labMap[lab.id] = { lab }));
 
         data.forEach(({ labId, year, totalQuantity, totalPrice }) => {
-          console.log(labMap, labId, year, data);
           labMap[labId][year] = {
             totalQuantity: Number(totalQuantity),
             totalPrice: Number(totalPrice),
@@ -56,7 +55,6 @@ const LabStatsPerYear: FunctionComponent<LabStatsPerYearProps> = ({ data }) => {
         return 0;
       } catch (error) {
         console.error("Error fetching labs:", error);
-        console.log(data);
         return 0;
       }
     },

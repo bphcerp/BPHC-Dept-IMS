@@ -6,8 +6,8 @@
 
 import fs from "fs";
 import {
-    publicationsTable,
     authorPublicationsTable,
+    publicationsTable,
     researgencePublications,
 } from "@/config/db/schema/publications.ts";
 import { faculty } from "@/config/db/schema/admin.ts";
@@ -26,7 +26,7 @@ const ENABLE_LOG_FILES = false;
 const ENABLE_LOG_CONSOLE = true;
 
 const parsePublicationDetails = (publicationText: string | null) => {
-    if (!publicationText)
+    if (!publicationText) {
         return {
             type: "Unknown",
             journal: null,
@@ -34,6 +34,7 @@ const parsePublicationDetails = (publicationText: string | null) => {
             issue: null,
             year: null,
         };
+    }
 
     const pubRegex = /^(.+) (\d+)\s*\((\d+)\),\s*(?:([\d\-]+),\s*)?(\d{4})$/;
     const pubMatch = pubRegex.exec(publicationText);
@@ -59,13 +60,14 @@ const parsePublicationDetails = (publicationText: string | null) => {
 
 const getPublicationsFromAuthor = async (
     author_id: string,
-    author_name: string
+    author_name: string,
 ) => {
     console.log(
-        `\n--- Fetching publications for author: ${author_name} (${author_id}) ---`
+        `\n--- Fetching publications for author: ${author_name} (${author_id}) ---`,
     );
 
-    const url = `https://serpapi.com/search.json?engine=google_scholar_author&author_id=${author_id}&num=${100}&api_key=${API_KEY}`;
+    const url =
+        `https://serpapi.com/search.json?engine=google_scholar_author&author_id=${author_id}&num=${100}&api_key=${API_KEY}`;
 
     try {
         const response = await fetch(url);
@@ -86,8 +88,9 @@ const getPublicationsFromAuthor = async (
         let newPublications = 0;
         const total = publications.length;
         for (const pub of publications) {
-            if (ENABLE_LOG_CONSOLE)
+            if (ENABLE_LOG_CONSOLE) {
                 console.log(`Processing publication: ${pub.title}`);
+            }
             const pubDetails = parsePublicationDetails(pub.publication ?? "");
 
             const publication = {
@@ -123,20 +126,26 @@ const getPublicationsFromAuthor = async (
                     .select()
                     .from(publicationsTable)
                     .where(
-                        eq(publicationsTable.citationId, publication.citationId)
+                        eq(
+                            publicationsTable.citationId,
+                            publication.citationId,
+                        ),
                     );
 
                 if (!existingPub) {
                     // Publication doesn't exist, insert it and update with researgence data
 
                     const [inReseargence] = await db
-                    .select()
-                    .from(researgencePublications)
-                    .where(
-                        eq( sql`lower(${publication.title})`, sql`lower(${researgencePublications.publicationTitle})`)
-                    );
+                        .select()
+                        .from(researgencePublications)
+                        .where(
+                            eq(
+                                sql`regexp_replace(lower(${publication.title}), '[[:space:][:punct:]]+', '', 'g')`,
+                                sql`regexp_replace(lower(${researgencePublications.publicationTitle}), '[[:space:][:punct:]]+', '', 'g')`,
+                            ),
+                        );
 
-                    if(inReseargence) {
+                    if (inReseargence) {
                         Object.assign(publication, {
                             type: inReseargence.type,
                             journal: inReseargence.sourcePublication,
@@ -146,14 +155,15 @@ const getPublicationsFromAuthor = async (
                             year: inReseargence.year.toString(),
                             link: inReseargence.link,
                             authorNames: inReseargence.authors,
-                        })
+                        });
                     }
                     await db.insert(publicationsTable).values(publication);
                     newPublications++;
-                    if (ENABLE_LOG_CONSOLE)
+                    if (ENABLE_LOG_CONSOLE) {
                         console.log(
-                            `[${count} of ${total}] Inserted publication: ${publication.title}`
+                            `[${count} of ${total}] Inserted publication: ${publication.title}`,
                         );
+                    }
                 } else {
                     // Publication exists, only update if citation count changed
                     const currentCitations = existingPub.citations;
@@ -166,18 +176,20 @@ const getPublicationsFromAuthor = async (
                             .where(
                                 eq(
                                     publicationsTable.citationId,
-                                    publication.citationId
-                                )
+                                    publication.citationId,
+                                ),
                             );
-                        if (ENABLE_LOG_CONSOLE)
+                        if (ENABLE_LOG_CONSOLE) {
                             console.log(
-                                `[${count} of ${total}] Updated citation count for: ${publication.title} (${currentCitations} → ${publication.citations})`
+                                `[${count} of ${total}] Updated citation count for: ${publication.title} (${currentCitations} → ${publication.citations})`,
                             );
+                        }
                     } else {
-                        if (ENABLE_LOG_CONSOLE)
+                        if (ENABLE_LOG_CONSOLE) {
                             console.log(
-                                `[${count} of ${total}] Publication exists (no updates needed): ${publication.title}`
+                                `[${count} of ${total}] Publication exists (no updates needed): ${publication.title}`,
                             );
+                        }
                     }
                 }
 
@@ -190,9 +202,9 @@ const getPublicationsFromAuthor = async (
                             eq(authorPublicationsTable.authorId, author_id),
                             eq(
                                 authorPublicationsTable.citationId,
-                                publication.citationId
-                            )
-                        )
+                                publication.citationId,
+                            ),
+                        ),
                     );
 
                 if (existingLink.length === 0) {
@@ -200,21 +212,24 @@ const getPublicationsFromAuthor = async (
                     await db
                         .insert(authorPublicationsTable)
                         .values(authorPublication);
-                    if (ENABLE_LOG_CONSOLE)
+                    if (ENABLE_LOG_CONSOLE) {
                         console.log(
-                            `Linked author ${author_name} to publication ${publication.title}`
+                            `Linked author ${author_name} to publication ${publication.title}`,
                         );
+                    }
                 } else {
-                    if (ENABLE_LOG_CONSOLE)
+                    if (ENABLE_LOG_CONSOLE) {
                         console.log(
-                            `Author ${author_name} already linked to publication ${publication.title}`
+                            `Author ${author_name} already linked to publication ${publication.title}`,
                         );
+                    }
                 }
             } catch (err: any) {
-                if (ENABLE_LOG_CONSOLE)
+                if (ENABLE_LOG_CONSOLE) {
                     console.error(
-                        `[${count} of ${total}] Error processing publication ${publication.title}: ${err}`
+                        `[${count} of ${total}] Error processing publication ${publication.title}: ${err}`,
                     );
+                }
             }
             count++;
         }
@@ -231,7 +246,8 @@ const getPublicationsFromAuthor = async (
                     {
                         module: "Publications",
                         title: `New publications added`,
-                        content: `${newPublications} new publications have been added to your profile.`,
+                        content:
+                            `${newPublications} new publications have been added to your profile.`,
                         userEmail: emailId[0]?.email,
                     },
                 ]);
@@ -251,7 +267,7 @@ export async function runPublicationSync() {
         if (!user.authorId) continue;
         await getPublicationsFromAuthor(user.authorId, user.name!);
         console.log(
-            `\nProcessed ${count} of ${total} authors: ${user.name} (${user.authorId})`
+            `\nProcessed ${count} of ${total} authors: ${user.name} (${user.authorId})`,
         );
         count++;
     }
@@ -263,7 +279,7 @@ export async function runPublicationSync() {
     if (ENABLE_LOG_FILES) {
         fs.writeFileSync(
             "logs/db_insert_publications.json",
-            JSON.stringify(logs, null, 2)
+            JSON.stringify(logs, null, 2),
         );
     }
 

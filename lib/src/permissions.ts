@@ -44,6 +44,20 @@ export const allPermissions = {
     "phd:dac:proposal": "DAC Member operations on proposals",
     "phd:proposal": "Common proposal for dac, drc, student, faculty",
 
+    // phd requests
+    "phd-request:supervisor:create": "Create a new PhD request for a student",
+    "phd-request:supervisor:view": "View PhD requests for their students",
+    "phd-request:student:submit-final-thesis":
+        "Allow student to submit final thesis documents",
+    "phd-request:drc-convener:view": "View all PhD requests for review",
+    "phd-request:drc-convener:review": "Review and assign PhD requests",
+    "phd-request:drc-member:view": "View assigned PhD requests",
+    "phd-request:drc-member:review":
+        "Submit review for an assigned PhD request",
+    "phd-request:hod:view": "View PhD requests for final approval",
+    "phd-request:hod:review": "Submit final approval for a PhD request",
+    "phd-request:staff:view": "View all PhD requests",
+    "phd-request:common": "View PhD request details",
     //meeting
     "meeting:use": "Access and use the meeting module",
 
@@ -119,6 +133,12 @@ export const allPermissions = {
     "grades:supervisor:view": "Supervisors can view their students and grades",
     "grades:supervisor:save": "Supervisors can save/update student grades",
     "grades:supervisor:upload-doc": "Supervisors can upload midsem documents",
+    "grades:instructor:view":
+        "Instructors can view their assigned students and grades",
+    "grades:instructor:save": "Instructors can save/update student grades",
+    "grades:assign": "Assign instructors to students",
+    "grades:notifications:send": "Send grade notifications to instructors",
+    "grades:submit": "Submit grades and complete phase transitions",
     "phd:examiner:qe": "View and respond to examiner assignments",
 
     // ANALYTICS
@@ -151,11 +171,14 @@ export const allPermissions = {
     "allocation:settings:end": "End the current course load allocation",
 
     "allocation:courses:write": "Create or Modify a new course",
+    "allocation:courses:mark": "Mark Courses For Allocation",
     "allocation:courses:view": "View all existing courses",
     "allocation:courses:sync": "Sync all courses of the department from TTD",
 
     "allocation:write": "Have read and write access to the allocation module",
     "allocation:view": "Have readonly access to the allocation module",
+
+    "allocation:summary:view": "View the summary of allocations",
 
     "allocation:preference:write":
         "Create or Modify a new form for allocation data retrieval",
@@ -271,6 +294,9 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd/proposal/drcConvener/getProposals": "phd:drc:proposal",
     "/phd/proposal/drcConvener/viewProposal": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/sendBulkReminder": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/getBulkDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/reenableProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/sendToDac": "phd:drc:proposal",
     "/phd/proposal/drcConvener/finalizeDac": "phd:drc:proposal",
     "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
@@ -291,6 +317,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/supervisor/updateCoSupervisors": "phd:faculty:proposal",
     "/phd/proposal/supervisor/updateDacMembers": "phd:faculty:proposal",
     "/phd/proposal/supervisor/approveAndSign": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/getAvailableSlots": "phd:faculty:proposal",
+    "/phd/proposal/supervisor/setSeminarDetailsCustom": "phd:faculty:proposal",
 
     "/phd/proposal/coSupervisor/getProposals": "phd:faculty:proposal",
     "/phd/proposal/coSupervisor/viewProposal": "phd:faculty:proposal",
@@ -301,10 +331,34 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/drcConvener/reviewProposal": "phd:drc:proposal",
     "/phd/proposal/drcConvener/setSeminarDetails": "phd:drc:proposal",
     "/phd/proposal/drcConvener/downloadProposalNotice": "phd:drc:proposal",
-    "/phd/proposal/supervisor/reviewProposal": "phd:faculty:proposal",
-    "/phd/proposal/supervisor/setSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:faculty:proposal",
-    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:faculty:proposal",
+    "/phd/proposal/drcConvener/remindSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/requestSeminarDetails": "phd:drc:proposal",
+    "/phd/proposal/drcConvener/seminarSlots": "phd:drc:proposal",
+
+    // PhD Requests
+    "/phd-request/supervisor/create": "phd-request:supervisor:create",
+    "/phd-request/supervisor/resubmit": "phd-request:supervisor:create",
+    "/phd-request/supervisor/my-students": "phd-request:supervisor:view",
+    "/phd-request/supervisor/review-final-thesis":
+        "phd-request:supervisor:view",
+
+    "/phd-request/student/submit-final-thesis":
+        "phd-request:student:submit-final-thesis",
+
+    "/phd-request/drc-convener/requests": "phd-request:drc-convener:view",
+    "/phd-request/drc-convener/review": "phd-request:drc-convener:review",
+
+    "/phd-request/drc-member/requests": "phd-request:drc-member:view",
+    "/phd-request/drc-member/review": "phd-request:drc-member:review",
+
+    "/phd-request/hod/requests": "phd-request:hod:view",
+    "/phd-request/hod/review": "phd-request:hod:review",
+
+    "/phd-request/staff/getAllRequests": "phd-request:staff:view",
+
+    "/phd-request/details": "phd-request:common",
+    "/phd-request/history": "phd-request:common",
+    "/phd-request/download-packages": "phd-request:common",
 
     //meeting
     "/meeting/create": "meeting:use",
@@ -412,6 +466,14 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/grades/supervisor": "grades:supervisor:view",
     "/grades/supervisor/save": "grades:supervisor:save",
     "/grades/supervisor/uploadDoc": "grades:supervisor:upload-doc",
+    "/grades/instructor": "grades:instructor:view",
+    "/grades/instructor/save": "grades:instructor:save",
+    "/grades/assign-student-instructor": "grades:assign",
+    "/grades/instructor-assignments": "grades:assign",
+    "/grades/debug-instructor-assignments": "grades:assign",
+    "/grades/notifications/send-midsem": "grades:notifications:send",
+    "/grades/notifications/send-endsem": "grades:notifications:send",
+    "/grades/submit-grades": "grades:submit",
 
     // Analytics
     "/analytics/publications": "analytics:publications",
@@ -435,35 +497,37 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Course Load Allocation
     "/allocation/allocation/delete": "allocation:write",
     "/allocation/allocation/update": "allocation:write",
+    "/allocation/allocation/getStatus": "allocation:write",
 
+    "/allocation/course/get": "allocation:courses:view",
+    "/allocation/course/getAll": "allocation:courses:view",
     "/allocation/course/create": "allocation:courses:write",
+    "/allocation/course/mark": "allocation:courses:mark",
     "/allocation/course/delete": "allocation:courses:write",
     "/allocation/course/sync": "allocation:courses:sync",
     "/allocation/course/update": "allocation:courses:write",
 
-    "/allocation/coursePreferences/delete": "allocation:preference:write",
-    "/allocation/coursePreferences/update": "allocation:preference:write",
-
     "/allocation/semester/create": "allocation:semesters:write",
     "/allocation/semester/get": "allocation:semesters:view",
-    "/allocation/semester/getLatest": "allocation:semesters:view",
     "/allocation/semester/delete": "allocation:semesters:write",
     "/allocation/semester/update": "allocation:semesters:write",
     "/allocation/semester/linkForm": "allocation:semesters:write",
+    "/allocation/semester/unlinkForm": "allocation:semesters:write",
 
-    "/allocation/allocation/getPreferredFaculty": "allocation:write",
+    "/allocation/allocation/getPrefsCourse": "allocation:write",
     "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
+    "/allocation/builder/template/delete": "allocation:builder:template:write",
     "/allocation/builder/template/get": "allocation:builder:template:view",
     "/allocation/builder/template/getAll": "allocation:builder:template:view",
 
     "/allocation/builder/form/create": "allocation:builder:form:write",
-    "/allocation/builder/form/get": "allocation:builder:form:view",
+    "/allocation/builder/form/delete": "allocation:builder:form:write",
     "/allocation/builder/form/getAll": "allocation:builder:form:view",
 
     "/allocation/builder/form/response/register":
         "allocation:form:response:submit",
     "/allocation/builder/form/response/view": "allocation:form:response:view",
-    "/allocation/builder/form/response/get": "allocation:form:response:view",
+    "/allocation/builder/form/response/getAll": "allocation:form:response:view",
 } as const;

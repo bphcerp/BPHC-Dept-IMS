@@ -442,6 +442,125 @@
       "when": 1759214780932,
       "tag": "0062_acoustic_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1759319663160,
+      "tag": "0063_melodic_thaddeus_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1759398326920,
+      "tag": "0064_fine_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1760273165817,
+      "tag": "0065_moaning_groot",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1760414806023,
+      "tag": "0066_military_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1760441576612,
+      "tag": "0067_perfect_vapor",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1760462312082,
+      "tag": "0068_pretty_black_tarantula",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1760485962754,
+      "tag": "0069_daffy_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1760526065015,
+      "tag": "0070_little_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1760532876742,
+      "tag": "0071_thankful_jubilee",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1760534909966,
+      "tag": "0072_confused_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1760600092819,
+      "tag": "0073_tranquil_white_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1760699868701,
+      "tag": "0074_green_scrambler",
+      "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1761120788018,
+      "tag": "0075_clean_mercury",
+      "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1761154892281,
+      "tag": "0076_ancient_namor",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1761201697784,
+      "tag": "0077_flowery_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1761316848809,
+      "tag": "0078_parched_lionheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1761452951740,
+      "tag": "0079_wooden_tigra",
+      "breakpoints": true
     }
   ]
 }

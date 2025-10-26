@@ -13,6 +13,7 @@ export const modules = [
     "Publications",
     "Meeting",
     "Course Allocation",
+    "Grades",
 ] as const;
 
 export const applicationStatuses = ["pending", "approved", "rejected"] as const;
@@ -33,11 +34,11 @@ export type numberFieldResponse =
 export type dateFieldResponse = textFieldResponse;
 export type fileFieldResponse =
     | (baseFieldResponse & {
-          file: {
-              originalName: string;
-              mimetype: string;
-              size: number;
-              filePath: string;
-          };
-      })
+        file: {
+            originalName: string;
+            mimetype: string;
+            size: number;
+            filePath: string;
+        };
+    })
     | null;

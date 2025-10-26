@@ -24,12 +24,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Meeting {
   id: number;
   title: string;
   status: string;
-  finalizedTime: string | null;
+  finalizedTimes: string[] | null;
   organizerEmail: string;
   participantCount: number;
   responseCount: number;
@@ -94,6 +99,7 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Scheduled Time</TableHead>
               <TableHead>Responses</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -105,8 +111,30 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
                   <TableCell>{m.title}</TableCell>
                   <TableCell>{getStatusBadge(m.status)}</TableCell>
                   <TableCell>
-                    {`${m.responseCount}/${m.participantCount}`}
+                    {!m.finalizedTimes || m.finalizedTimes.length === 0 ? (
+                      "Meeting is not yet scheduled yet"
+                    ) : m.finalizedTimes.length === 1 ? (
+                      new Date(m.finalizedTimes[0]).toLocaleString()
+                    ) : (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="link" className="p-0">
+                            {m.finalizedTimes.length} scheduled times
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto">
+                          <ul className="list-disc space-y-1 pl-4 text-sm">
+                            {m.finalizedTimes.map((time) => (
+                              <li key={time}>
+                                {new Date(time).toLocaleString()}
+                              </li>
+                            ))}
+                          </ul>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </TableCell>
+                  <TableCell>{`${m.responseCount}/${m.participantCount}`}</TableCell>
                   <TableCell className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -162,7 +190,7 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No meetings found.
                 </TableCell>
               </TableRow>

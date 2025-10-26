@@ -15,9 +15,13 @@ export const months = [
     "December",
 ] as const;
 
+export const statusTypes = ["APPROVED", "REJECTED", "ARCHIVED"] as const;
+
+export type status = (typeof statusTypes)[number];
 export type month = (typeof months)[number];
 
 const monthEnum = z.enum(months);
+const statusEnum = z.enum(statusTypes);
 
 export const PublicationSchema = z.object({
     citationId: z.string(),
@@ -74,12 +78,12 @@ export const CoAuthorSchema = z.object({
 export const updatePublicationStatusSchema = z.object({
     citationId: z.string(),
     authorId: z.string(),
-    status: z.boolean(),
+    status: statusEnum,
     comments: z.string().nullable(),
 });
 
 export const PublicationWithMetaSchema = PublicationSchema.extend({
-    status: z.boolean().nullable(),
+    status: statusEnum.nullable(),
     comments: z.string().nullable(),
     coAuthors: z.array(CoAuthorSchema),
 });

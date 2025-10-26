@@ -13,6 +13,7 @@ import * as wilpProjectSchemas from "./schemas/WilpProject.ts";
 import * as profileSchemas from "./schemas/Profile.ts";
 import * as meetingSchemas from "./schemas/Meeting.ts";
 import * as analyticsSchemas from "./schemas/Analytics.ts";
+import * as phdRequestSchemas from "./schemas/PhdRequest.ts";
 import * as allocationSchemas from "./schemas/Allocation.ts";
 import * as allocationFormBuilderSchemas from "./schemas/AllocationFormBuilder.ts";
 
@@ -47,4 +48,5 @@ export {
     profileSchemas,
     meetingSchemas,
     analyticsSchemas,
+    phdRequestSchemas,
 };

@@ -23,15 +23,18 @@ interface SupervisorReviewFormProps {
   }[];
   isPostDacRevert?: boolean;
 }
+
 interface Faculty {
   value: string;
   label: string;
 }
+
 interface DacMember {
   email: string;
   name?: string;
   isExternal: boolean;
 }
+
 export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   proposalId,
   onSuccess,
@@ -45,17 +48,21 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
   const [externalDacName, setExternalDacName] = useState("");
   const [externalDacEmail, setExternalDacEmail] = useState("");
   const [isEditingDac, setIsEditingDac] = useState(!isPostDacRevert);
+
   const isDeadlinePassed = new Date(deadline) < new Date();
+
   const { data: facultyList = [] } = useQuery<Faculty[]>({
-    queryKey: ["facultyList"],
+    queryKey: ["facultyList", "dac"], // Use a specific query key for DAC members
     queryFn: async () => {
-      const res = await api.get("/phd/proposal/getFacultyList");
+      // Add the ?role=dac query parameter
+      const res = await api.get("/phd/proposal/getFacultyList?role=dac");
       return res.data.map((f: { name: string; email: string }) => ({
-        label: `${f.name}(${f.email})`,
+        label: `${f.name} (${f.email})`,
         value: f.email,
       }));
     },
   });
+
   React.useEffect(() => {
     if (facultyList.length > 0 && initialDacMembers.length > 0) {
       const initialMembers = initialDacMembers.map((m) => ({
@@ -68,6 +75,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       setSelectedDac(initialMembers);
     }
   }, [initialDacMembers, facultyList]);
+
   const mutation = useMutation({
     mutationFn: (
       data: z.infer<typeof phdSchemas.supervisorProposalActionSchema>
@@ -87,6 +95,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       toast.error(error.response?.data?.message || "Failed to submit review.");
     },
   });
+
   const handleAddExternalDac = () => {
     const emailCheck = z.string().email().safeParse(externalDacEmail);
     if (!externalDacName.trim() || !emailCheck.success) {
@@ -104,9 +113,11 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     setExternalDacName("");
     setExternalDacEmail("");
   };
+
   const handleRemoveDac = (emailToRemove: string) => {
     setSelectedDac((prev) => prev.filter((d) => d.email !== emailToRemove));
   };
+
   const handleInternalDacSelect = (values: string[]) => {
     const newSelections = values.map((email) => {
       const faculty = facultyList.find((f) => f.value === email);
@@ -115,6 +126,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     const externals = selectedDac.filter((d) => d.isExternal);
     setSelectedDac([...externals, ...newSelections]);
   };
+
   const handleRevert = () => {
     if (!comments.trim()) {
       toast.error("Comments are required to revert a proposal.");
@@ -122,6 +134,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
     }
     mutation.mutate({ action: "revert", comments });
   };
+
   const handleAccept = () => {
     if (selectedDac.length < 2 || selectedDac.length > 4) {
       toast.error("Please select between 2 and 4 DAC members.");
@@ -137,11 +150,12 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       dacMembers: dacMembersForApi,
     });
   };
+
   if (isPostDacRevert && !isEditingDac) {
     return (
       <div className="space-y-4">
         <div>
-          <Label>Comments(Optional)</Label>
+          <Label>Comments (Optional)</Label>
           <Textarea
             placeholder="Add optional comments for the DAC members..."
             value={comments}
@@ -155,7 +169,9 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
           <div className="space-y-2 rounded-md border p-3">
             {selectedDac.map((member) => (
               <p key={member.email} className="text-sm">
-                {member.name ? `${member.name}(${member.email})` : member.email}
+                {member.name
+                  ? `${member.name} (${member.email})`
+                  : member.email}
               </p>
             ))}
           </div>
@@ -187,11 +203,12 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       </div>
     );
   }
+
   return (
     <div className="space-y-4">
       <Label>Your Review</Label>
       <Textarea
-        placeholder="Add your comments here...(Required if reverting)"
+        placeholder="Add your comments here... (Required if reverting)"
         value={comments}
         onChange={(e) => setComments(e.target.value)}
         rows={4}
@@ -199,7 +216,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
       />
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Select Internal DAC Members (from BITS)</Label>
+          <Label>Select Internal DAC Members (from your department)</Label>
           <Combobox
             options={facultyList}
             selectedValues={selectedDac
@@ -213,7 +230,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="external-dac-name">Add External DAC Member</Label>
+          <Label htmlFor="external-dac-name">Add External DAC Member (from other department) </Label>
           <div className="flex gap-2">
             <Input
               id="external-dac-name"
@@ -251,7 +268,7 @@ export const SupervisorReviewForm: React.FC<SupervisorReviewFormProps> = ({
                 >
                   <span>
                     {member.name
-                      ? `${member.name}(${member.email})`
+                      ? `${member.name} (${member.email})`
                       : member.email}
                     {member.isExternal && (
                       <Badge variant="outline" className="ml-2">

@@ -1,19 +1,24 @@
 import { relations } from "drizzle-orm";
-import { allocationSectionInstructors } from "./allocation.ts";
-import { course } from "./allocation.ts";
-import { semester } from "./allocation.ts";
-import { users } from "./admin.ts";
-import { masterAllocation, allocationSection } from "./allocation.ts";
+import { faculty, users } from "./admin.ts";
 import { allocationForm } from "./allocationFormBuilder.ts";
+import {
+    semester,
+    masterAllocation,
+    course,
+    allocationSection,
+    allocationSectionInstructors,
+    allocationCourseGroup,
+    allocationCourseGroupMapping,
+} from "./allocation.ts";
 
 export const semesterRelations = relations(semester, ({ one }) => ({
-    dcaConvenerAtStartOfSem: one(users, {
+    dcaConvenerAtStartOfSem: one(faculty, {
         fields: [semester.dcaConvenerAtStartOfSemEmail],
-        references: [users.email],
+        references: [faculty.email],
     }),
-    hodAtStartOfSem: one(users, {
+    hodAtStartOfSem: one(faculty, {
         fields: [semester.hodAtStartOfSemEmail],
-        references: [users.email],
+        references: [faculty.email],
     }),
     form: one(allocationForm, {
         fields: [semester.formId],
@@ -60,3 +65,25 @@ export const allocationSectionInstructorsRelations = relations(
         }),
     })
 );
+
+export const courseGroupRelations = relations(
+    allocationCourseGroup,
+    ({ many }) => ({
+        courses: many(allocationCourseGroupMapping),
+    })
+);
+
+export const coursesRelations = relations(course, ({ many }) => ({
+    groups: many(allocationCourseGroupMapping),
+}));
+
+export const coursesToGroupsRelations = relations(allocationCourseGroupMapping, ({ one }) => ({
+  group: one(allocationCourseGroup, {
+    fields: [allocationCourseGroupMapping.groupId],
+    references: [allocationCourseGroup.id],
+  }),
+  course: one(course, {
+    fields: [allocationCourseGroupMapping.courseCode],
+    references: [course.code],
+  }),
+}));

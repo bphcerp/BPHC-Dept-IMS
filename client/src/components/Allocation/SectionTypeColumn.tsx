@@ -18,7 +18,6 @@ import { toast } from "sonner";
 
 interface SectionTypeColumnProps {
   sectionType: (typeof allocationSchemas.sectionTypes)[number];
-  selectedCourse: allocationTypes.Course;
   allocationData: allocationTypes.AllocationResponse;
   isLoading: boolean;
   onAssignInstructor: (sectionId: string) => void;
@@ -26,7 +25,6 @@ interface SectionTypeColumnProps {
 
 const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
   sectionType,
-  selectedCourse,
   allocationData,
   isLoading,
   onAssignInstructor,
@@ -43,7 +41,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Section added successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {
@@ -64,7 +62,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Section removed successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {
@@ -88,7 +86,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     onSuccess: () => {
       toast.success("Instructor dismissed successfully");
       void queryClient.invalidateQueries({
-        queryKey: ["allocation", selectedCourse.code],
+        queryKey: ["allocation"],
       });
     },
     onError: (error) => {
@@ -238,7 +236,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">
-                              {selectedCourse.code} - {getSectionLabel(index)}
+                              {getSectionLabel(index)}
                             </span>
                             <Badge variant="outline" className="text-xs">
                               {section.instructors?.length || 0} instructors
@@ -280,11 +278,8 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                                     className="flex items-center justify-between rounded-md border bg-card p-2 text-sm transition-colors hover:bg-accent"
                                   >
                                     <div className="flex flex-col">
-                                      <span className="font-medium">
-                                        {instructor.name || "Unknown Name"}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {instructor.email}
+                                      <span className={allocationData.ic?.email === instructor.email ? "font-semibold" : "font-medium"}>
+                                        {instructor.name ?? "Unknown Name"} - {instructor.type === 'faculty' ? 'Faculty' : 'PhD'}
                                       </span>
                                     </div>
                                     <Button

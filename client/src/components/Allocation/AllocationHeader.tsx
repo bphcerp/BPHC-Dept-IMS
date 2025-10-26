@@ -12,29 +12,29 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Search } from "lucide-react";
+import { AlertTriangleIcon, Search } from "lucide-react";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
-
-interface Instructor {
-  email: string;
-  name: string | null;
-}
+import { InstructorWithPreference } from "node_modules/lib/src/types/allocation";
 
 interface AllocationHeaderProps {
   selectedCourse: allocationTypes.Course;
   semesterId: string;
   allocationData: allocationTypes.AllocationResponse | null;
   onAllocationChange: () => void;
+  userTypeViewMode?: "faculty" | "phd";
 }
 
 const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   selectedCourse,
   semesterId,
   allocationData,
+  userTypeViewMode,
   onAllocationChange,
 }) => {
-  const [selectedIC, setSelectedIC] = useState<Instructor | null>(null);
+  const [selectedIC, setSelectedIC] = useState<
+    NonNullable<allocationTypes.AllocationResponse>["ic"] | null
+  >(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Set initial IC when allocation data changes
@@ -48,10 +48,10 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
 
   // Fetch instructor list
   const { data: instructors = [], isLoading: instructorsLoading } = useQuery({
-    queryKey: ["allocation", "instructors"],
+    queryKey: ["allocation", "instructors", selectedCourse.code],
     queryFn: async () => {
-      const response = await api.get<Instructor[]>(
-        "/allocation/allocation/getInstructorList"
+      const response = await api.get<InstructorWithPreference[]>(
+        `/allocation/allocation/getInstructorListWithPref?code=${selectedCourse.code}&sectionType=LECTURE`
       );
       return response.data;
     },
@@ -63,14 +63,10 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
   // Create allocation mutation
   const createAllocationMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedIC) {
-        throw new Error("IC is required");
-      }
-
       const payload = {
         semesterId,
         courseCode: selectedCourse.code,
-        ic: selectedIC.email,
+        ic: selectedIC?.email,
         sections: [],
       };
 
@@ -127,7 +123,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
       if (!selectedIC) {
         throw new Error("Please select a value from the dropdown");
       }
-      if (selectedIC.email === allocationData.ic.email) {
+      if (selectedIC.email === allocationData.ic?.email) {
         toast.info("Selected IC is the same as the current one");
         return;
       }
@@ -145,106 +141,121 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
       <div className="flex items-center justify-between gap-4">
         {/* Course Info */}
         <div className="flex items-center gap-3">
-          <div className="text-lg font-semibold">{selectedCourse.code}</div>
           <Badge variant="outline" className="text-xs">
-            {selectedCourse.name}
+            {selectedCourse.code}
           </Badge>
+          <div className="text-sm font-semibold">{selectedCourse.name}</div>
         </div>
 
         {/* IC Selection and Action */}
-        <div className="flex items-center gap-3">
-          {/* IC Dropdown */}
-          <div className="w-80">
-            <Select
-              value={selectedIC?.email}
-              onValueChange={(email) => {
-                const instructor = instructors.find(
-                  (instructor) => instructor.email === email
-                );
-                setSelectedIC(instructor || { name: "Not found", email });
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Instructor in Charge">
-                  {selectedInstructor ? (
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">
-                        {selectedInstructor.name || "No Name"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {selectedInstructor.email}
-                      </span>
-                    </div>
-                  ) : (
-                    "Select Instructor in Charge"
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {/* Search Input */}
-                <div className="p-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search instructors..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-8 pl-8"
-                    />
-                  </div>
-                </div>
-
-                {/* Instructors List */}
-                <div className="max-h-60 overflow-auto">
-                  {instructorsLoading ? (
-                    <div className="flex items-center justify-center p-4">
-                      <LoadingSpinner />
-                    </div>
-                  ) : filteredInstructors.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      {searchTerm
-                        ? "No instructors found"
-                        : "No instructors available"}
-                    </div>
-                  ) : (
-                    filteredInstructors.map((instructor) => (
-                      <SelectItem
-                        key={instructor.email}
-                        value={instructor.email}
-                      >
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">
-                            {instructor.name || "No Name"}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {instructor.email}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </div>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Create/Update Button */}
-          <Button
-            onClick={handleCreateOrUpdate}
-            disabled={!selectedIC || isLoading_mutation}
-            className="gap-2"
-            variant={allocationData ? "outline" : "default"}
-          >
-            {isLoading_mutation ? (
-              <LoadingSpinner />
-            ) : allocationData ? (
-              <Edit className="h-4 w-4" />
-            ) : (
-              <Plus className="h-4 w-4" />
+        {userTypeViewMode === "faculty" && (
+          <div className="flex items-center gap-3">
+            {/* IC Dropdown */}
+            {allocationData && !allocationData.ic && (
+              <AlertTriangleIcon className="size-8 text-yellow-300" />
             )}
-            {allocationData ? "Update IC" : "Create Allocation"}
-          </Button>
-        </div>
+            <div className="w-80">
+              <Select
+                value={selectedIC?.email}
+                onValueChange={(email) => {
+                  const instructor = instructors.find(
+                    (instructor) => instructor.email === email
+                  );
+                  setSelectedIC(instructor || { name: "Not found", email });
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Instructor in Charge">
+                    {selectedInstructor ? (
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">
+                          {selectedInstructor.name || "No Name"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Preference Given:{" "}
+                          {selectedInstructor.preference ?? "Not Given"}
+                        </span>
+                      </div>
+                    ) : (
+                      "Select Instructor in Charge"
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Search Input */}
+                  <div className="p-2">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search instructors..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
+                        className="h-8 pl-8"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Instructors List */}
+                  <div className="max-h-60 overflow-auto">
+                    {instructorsLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <LoadingSpinner />
+                      </div>
+                    ) : filteredInstructors.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        {searchTerm
+                          ? "No instructors found"
+                          : "No instructors available"}
+                      </div>
+                    ) : (
+                      filteredInstructors.map((instructor) => (
+                        <SelectItem
+                          key={instructor.email}
+                          value={instructor.email}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">
+                              {instructor.name || "No Name"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Preference Given:{" "}
+                              {instructor.preference ?? "Not Given"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Type:{" "}
+                              {instructor.type === "phd" ? "PhD" : "Faculty"}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </div>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {!allocationData ||
+            !allocationData?.ic ||
+            (selectedIC && selectedIC.email !== allocationData.ic.email) ? (
+              <Button
+                onClick={handleCreateOrUpdate}
+                disabled={isLoading_mutation}
+                className="gap-2"
+                variant={allocationData ? "outline" : "default"}
+              >
+                {allocationData
+                  ? !!allocationData.ic
+                    ? "Update IC"
+                    : "Set IC"
+                  : "Begin Allocation"}
+              </Button>
+            ) : (
+              <></>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

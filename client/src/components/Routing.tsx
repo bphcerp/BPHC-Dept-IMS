@@ -47,6 +47,7 @@ import ManageEmailTemplates from "@/views/Phd/Staff/ManageEmailTemplates";
 import QualifyingExams from "@/views/Phd/Student/QualifyingExams";
 import QualifyingExamManagement from "@/views/Phd/DrcConvenor/QualifyingExamManagement";
 import DrcProposalManagement from "@/views/Phd/DrcConvenor/ProposalManagement";
+import FinalThesisDashboard from "@/views/Phd/Student/FinalThesisDashboard";
 import DrcViewProposal from "@/views/Phd/DrcConvenor/ViewProposal";
 import DacProposalManagement from "@/views/Phd/DacMember/ProposalManagement";
 import DacViewProposal from "@/views/Phd/DacMember/ViewProposal";
@@ -54,6 +55,14 @@ import ExaminerSuggestions from "@/views/Phd/Supervisor/ExaminerSuggestions";
 import Proposal from "@/views/Phd/Student/Proposal";
 import SupervisorProposal from "@/views/Phd/Supervisor/Proposal";
 import SupervisorViewProposal from "@/views/Phd/Supervisor/ViewProposal";
+import PhdRequestsArchive from "@/views/Phd/Staff/PhdRequestsArchive";
+import SeminarScheduling from "@/views/Phd/DrcConvenor/SeminarScheduling";
+import MyStudents from "@/views/Phd/Supervisor/MyStudents";
+import DrcConvenerPhdRequestsDashboard from "@/views/Phd/DrcConvenor/PhdRequestsDashboard";
+import DrcMemberPhdRequestsDashboard from "@/views/Phd/DrcMember/PhdRequestsDashboard";
+import HodPhdRequestsDashboard from "@/views/Phd/Hod/PhdRequestsDashboard";
+import StudentHistory from "@/views/Phd/Supervisor/StudentHistory";
+import ViewPhdRequest from "@/views/Phd/Common/ViewPhdRequest";
 import NotFoundPage from "@/layouts/404";
 import ConferenceLayout from "@/layouts/Conference";
 import ConferenceApplyView from "@/views/Conference/Apply";
@@ -82,7 +91,6 @@ import BulkAddView from "@/views/Inventory/BulkAddView";
 import Stats from "@/views/Inventory/Stats";
 import ProfilePage from "@/views/Profile/ProfilePage";
 import ContributorsPage from "@/views/Contributors";
-import HelpPage from "@/views/Wiki";
 import ProjectLayout from "@/layouts/Project";
 import AddProject from "@/views/Project/AddProject";
 import ProjectDetails from "@/views/Project/[id]";
@@ -105,7 +113,8 @@ import SendMail from "@/views/Wilp/SendMail";
 import GradesLayout from "@/layouts/Grades";
 import UploadExcel from "@/views/Grades/UploadExcel";
 import ManageGrades from "@/views/Grades/ManageGrades";
-import SupervisorGradesView from "@/views/Grades/Supervisor";
+import AssignGradesView from "@/views/Grades/AssignGrades";
+import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import TestingView from "@/views/Admin/Testing";
@@ -119,9 +128,12 @@ import RegisterNewSemester from "@/views/Allocation/RegisterNewSemester";
 import FormList from "@/views/Allocation/FormList";
 import FormResponsesView from "@/views/Allocation/FormResponsesView";
 import FormResponse from "@/views/Allocation/FormResponse";
-import AllocateCourse from "@/views/Allocation/AllocateCourse";
 import SemesterList from "@/views/Allocation/SemesterList";
-import AllocationModern from "@/views/Allocation/AllocationModern";
+import AllocationCourseWiseView from "@/views/Allocation/AllocationCourseWiseView";
+import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
+import HelpButton from "./HelpButton";
+import CourseGroups from "@/views/Allocation/CourseGroups";
+import { AllocationMatrixView } from "@/views/Allocation/AllocationMatrixView";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -278,10 +290,6 @@ const Routing = () => {
             }
           />
           <Route path="/contributors" element={<ContributorsPage />} />
-          <Route
-            path="/help"
-            element={authState ? <HelpPage /> : <Navigate to="/" replace />}
-          />
           {!authState && <Route path="*" element={<Navigate to="/" />} />}
           {authState && <Route path="/profile" element={<ProfilePage />} />}
           {checkAccessAnyOne(adminModulePermissions) && (
@@ -461,6 +469,7 @@ const Routing = () => {
                 permissions["/phd/staff/getAllSem"],
                 permissions["/phd/staff/qualifyingExams"],
                 permissions["/phd/staff/emailTemplates"],
+                permissions["/phd-request/staff/getAllRequests"],
               ]) && (
                 <Route path="staff" element={<Outlet />}>
                   {checkAccess(permissions["/phd/staff/getAllSem"]) && (
@@ -487,6 +496,14 @@ const Routing = () => {
                       element={<ManageEmailTemplates />}
                     />
                   )}
+                  {checkAccess(
+                    permissions["/phd-request/staff/getAllRequests"]
+                  ) && (
+                    <Route
+                      path="all-requests"
+                      element={<PhdRequestsArchive />}
+                    />
+                  )}
                 </Route>
               )}
 
@@ -497,6 +514,10 @@ const Routing = () => {
                   <Route
                     path="qualifying-exams"
                     element={<QualifyingExams />}
+                  />
+                  <Route
+                    path="thesis-submission"
+                    element={<FinalThesisDashboard />}
                   />
                 </Route>
               )}
@@ -525,6 +546,10 @@ const Routing = () => {
                       <Route
                         path="proposal-management/:id"
                         element={<DrcViewProposal />}
+                      />
+                      <Route
+                        path="seminar-scheduling"
+                        element={<SeminarScheduling />}
                       />
                     </>
                   )}
@@ -565,6 +590,10 @@ const Routing = () => {
                       element={<ExaminerSuggestions />}
                     />
                   )}
+                  <Route
+                    path="student-history/:studentEmail"
+                    element={<StudentHistory />}
+                  />
                 </Route>
               )}
               {checkAccess(permissions["/phd/examiner/assignments"]) && (
@@ -572,6 +601,44 @@ const Routing = () => {
                   <Route path="assignments" element={<ExaminerAssignments />} />
                 </Route>
               )}
+              {/* Supervisor Routes */}
+              {checkAccess("phd-request:supervisor:view") && (
+                <Route path="supervisor/my-students" element={<MyStudents />} />
+              )}
+
+              {/* DRC Convener Routes */}
+              {checkAccess("phd-request:drc-convener:view") && (
+                <Route
+                  path="drc-convener/requests"
+                  element={<DrcConvenerPhdRequestsDashboard />}
+                />
+              )}
+
+              {/* DRC Member Routes */}
+              {checkAccess("phd-request:drc-member:view") && (
+                <Route
+                  path="drc-member/requests"
+                  element={<DrcMemberPhdRequestsDashboard />}
+                />
+              )}
+
+              {/* HOD Routes */}
+              {checkAccess("phd-request:hod:view") && (
+                <Route
+                  path="hod/requests"
+                  element={<HodPhdRequestsDashboard />}
+                />
+              )}
+
+              {/* Universal Request Viewer Route for all roles */}
+              {checkAccessAnyOne([
+                "phd-request:supervisor:view",
+                "phd-request:drc-convener:view",
+                "phd-request:drc-member:view",
+                "phd-request:hod:view",
+                "phd-request:student:submit-final-thesis",
+                "phd-request:staff:view",
+              ]) && <Route path="requests/:id" element={<ViewPhdRequest />} />}
             </Route>
           )}
           {checkAccessAnyOne(publicationsPermissions) && (
@@ -746,10 +813,7 @@ const Routing = () => {
           )}
           {checkAccessAnyOne(gradesModulePermissions) && (
             <Route path="/grades" element={<GradesLayout />}>
-              <Route
-                index
-                element={<Navigate to="/grades/upload" replace={true} />}
-              />
+              <Route index element={<GradesDefaultRedirect />} />
               {checkAccess(permissions["/grades/upload"]) && (
                 <Route path="upload" element={<UploadExcel />} />
               )}
@@ -757,7 +821,7 @@ const Routing = () => {
                 <Route path="manage" element={<ManageGrades />} />
               )}
               {checkAccess(permissions["/grades/supervisor"]) && (
-                <Route path="supervisor" element={<SupervisorGradesView />} />
+                <Route path="assign-grades" element={<AssignGradesView />} />
               )}
             </Route>
           )}
@@ -770,8 +834,8 @@ const Routing = () => {
                   <Navigate
                     to={
                       checkAccess("allocation:write")
-                        ? "/allocation/ongoing"
-                        : "/allocation/personal"
+                        ? "/allocation/overview"
+                        : "/allocation/submit"
                     }
                     replace={true}
                   />
@@ -779,10 +843,27 @@ const Routing = () => {
               />
               {checkAccess("allocation:write") && (
                 <>
-                  <Route path="ongoing" element={<AllocationOverview />} />
+                  <Route path="overview" element={<AllocationOverview />} />
                   <Route path="responses" element={<div />} />
                 </>
               )}
+
+              {checkAccess("allocation:write") && (
+                <Route path="creditmatrix" element={<AllocationMatrixView />} />
+              )}
+
+              {checkAccess("allocation:view") && (
+                <>
+                  {checkAccess("allocation:summary:view") && (
+                    <Route
+                      path="/allocation/summary"
+                      element={<AllocationSummary />}
+                    />
+                  )}
+                </>
+              )}
+
+              {/* summary moved to a top-level unprotected route */}
 
               {checkAccessAnyOne([
                 "allocation:builder:template:view",
@@ -799,12 +880,17 @@ const Routing = () => {
               )}
 
               {checkAccessAnyOne([
-                "allocation:builder:form:view",
+                "allocation:form:response:view",
                 "allocation:write",
               ]) && (
                 <>
                   <Route path="forms" element={<FormList />} />
                   <Route path="forms/:id/preview" element={<FormResponse />} />
+                </>
+              )}
+
+              {checkAccess("allocation:form:response:submit") && (
+                <>
                   <Route
                     path="forms/:id/responses"
                     element={<FormResponsesView />}
@@ -813,18 +899,26 @@ const Routing = () => {
                     path="forms/:id/submit"
                     element={<FormResponse preview={false} />}
                   />
+                  <Route
+                    path="submit"
+                    element={<FormResponse preview={false} latest={true} />}
+                  />
                 </>
               )}
 
               {checkAccess("allocation:write") && (
-                <Route path="allocate" element={<AllocationModern />} />
+                <Route path="allocate" element={<AllocationCourseWiseView />} />
               )}
-              <Route path="allocate/:id" element={<AllocateCourse />} />
 
               {checkAccessAnyOne([
                 "allocation:courses:view",
                 "allocation:write",
               ]) && <Route path="courses" element={<CoursesPage />} />}
+
+              {checkAccessAnyOne([
+                "allocation:courses:write",
+                "allocation:write",
+              ]) && <Route path="course-groups" element={<CourseGroups />} />}
 
               {checkAccessAnyOne([
                 "allocation:semesters:view",
@@ -842,6 +936,9 @@ const Routing = () => {
           )}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <div className="fixed bottom-0 right-0 p-4">
+          <HelpButton />
+        </div>
       </BrowserRouter>
       <TestingPopup />
     </>

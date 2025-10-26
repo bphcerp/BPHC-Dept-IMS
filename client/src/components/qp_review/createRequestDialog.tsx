@@ -78,7 +78,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
   // Handle file selection and parsing
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    
+
     if (!file) {
       return;
     }
@@ -88,7 +88,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel",
     ];
-    
+
     if (!validTypes.includes(file.type)) {
       toast.error("Please upload a valid Excel file (.xlsx or .xls)");
       return;
@@ -125,30 +125,29 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
           const rowNumber = index + 2; // +2 because Excel is 1-indexed and has header
 
           // Check required fields (case-insensitive column names)
-          const icEmail = 
-            row.icEmail || 
-            row.IcEmail || 
-            row.ICEmail || 
-            row["IC Email"] || 
-            row["ic email"] || 
+          const icEmail =
+            row.icEmail ||
+            row.IcEmail ||
+            row.ICEmail ||
+            row["IC Email"] ||
+            row["ic email"] ||
             "";
-          
-          const courseName = 
-            row.courseName || 
-            row.CourseName || 
-            row["Course Name"] || 
-            row["course name"] || 
+
+          const courseName =
+            row.courseName ||
+            row.CourseName ||
+            row["Course Name"] ||
+            row["course name"] ||
             "";
-          
-          const courseCode = 
-            row.courseCode || 
-            row.CourseCode || 
-            row["Course Code"] || 
-            row["course code"] || 
+
+          const courseCode =
+            row.courseCode ||
+            row.CourseCode ||
+            row["Course Code"] ||
+            row["course code"] ||
             "";
-          
-          const category = 
-            (row.category || row.Category || "").toUpperCase();
+
+          const category = (row.category || row.Category || "").toUpperCase();
 
           // Validate data
           if (!icEmail || !courseName || !courseCode || !category) {
@@ -161,7 +160,9 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
           // Validate email format
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(icEmail)) {
-            errors.push(`Row ${rowNumber}: Invalid email format for ${icEmail}`);
+            errors.push(
+              `Row ${rowNumber}: Invalid email format for ${icEmail}`
+            );
             return;
           }
 
@@ -237,9 +238,11 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
     setParsedData([]);
     setPreviewData([]);
     form.setValue("file", null);
-    
+
     // Reset file input
-    const fileInput = document.getElementById("excel-file-input") as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "excel-file-input"
+    ) as HTMLInputElement;
     if (fileInput) {
       fileInput.value = "";
     }
@@ -266,14 +269,16 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create New Request(s) from Excel</DialogTitle>
           <DialogDescription>
-            Upload an Excel file containing course data and select the request type.
+            Upload an Excel file containing course data and select the request
+            type.
             <br />
             <span className="text-xs text-muted-foreground">
-              Required columns: icEmail, courseName, courseCode, category (HD/FD)
+              Required columns: icEmail, courseName, courseCode, category
+              (HD/FD)
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -298,13 +303,15 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                       {!selectedFile ? (
                         <label
                           htmlFor="excel-file-input"
-                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-gray-50 transition-colors"
+                          className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-primary hover:bg-gray-50"
                         >
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-10 h-10 mb-2 text-gray-400" />
+                          <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                            <Upload className="mb-2 h-10 w-10 text-gray-400" />
                             <p className="mb-2 text-sm text-gray-500">
-                              <span className="font-semibold">Click to upload</span> or
-                              drag and drop
+                              <span className="font-semibold">
+                                Click to upload
+                              </span>{" "}
+                              or drag and drop
                             </p>
                             <p className="text-xs text-gray-500">
                               Excel files only (.xlsx, .xls)
@@ -319,9 +326,9 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                           />
                         </label>
                       ) : (
-                        <div className="flex items-center justify-between p-4 border-2 border-green-300 bg-green-50 rounded-lg">
+                        <div className="flex items-center justify-between rounded-lg border-2 border-green-300 bg-green-50 p-4">
                           <div className="flex items-center gap-3">
-                            <FileSpreadsheet className="w-8 h-8 text-green-600" />
+                            <FileSpreadsheet className="h-8 w-8 text-green-600" />
                             <div>
                               <p className="text-sm font-medium text-gray-900">
                                 {selectedFile.name}
@@ -336,9 +343,9 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                             variant="ghost"
                             size="sm"
                             onClick={handleRemoveFile}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-100"
+                            className="text-red-600 hover:bg-red-100 hover:text-red-700"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="h-4 w-4" />
                           </Button>
                         </div>
                       )}
@@ -353,7 +360,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
             {previewData.length > 0 && (
               <div className="space-y-2">
                 <FormLabel>Data Preview (First 5 rows)</FormLabel>
-                <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-hidden rounded-lg border">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-100">
@@ -380,7 +387,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                             <td className="px-3 py-2 text-xs">{row.icEmail}</td>
                             <td className="px-3 py-2">
                               <span
-                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                className={`rounded px-2 py-1 text-xs font-medium ${
                                   row.category === "HD"
                                     ? "bg-blue-100 text-blue-800"
                                     : "bg-purple-100 text-purple-800"
@@ -395,7 +402,7 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                     </table>
                   </div>
                   {parsedData.length > 5 && (
-                    <div className="px-3 py-2 bg-gray-50 text-xs text-gray-600 text-center">
+                    <div className="bg-gray-50 px-3 py-2 text-center text-xs text-gray-600">
                       ...and {parsedData.length - 5} more row(s)
                     </div>
                   )}
@@ -419,7 +426,10 @@ export const CreateRequestDialog: React.FC<CreateRequestDialogProps> = ({
                       {REQUEST_TYPES.map((type) => (
                         <div key={type} className="flex items-center space-x-3">
                           <RadioGroupItem id={type} value={type} />
-                          <FormLabel htmlFor={type} className="font-normal cursor-pointer">
+                          <FormLabel
+                            htmlFor={type}
+                            className="cursor-pointer font-normal"
+                          >
                             {type}
                           </FormLabel>
                         </div>

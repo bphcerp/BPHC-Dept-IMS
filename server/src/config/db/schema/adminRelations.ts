@@ -21,12 +21,11 @@ import {
     phdProposalDacMembers,
     phdProposals,
 } from "./phd.ts";
+import { phdRequests } from "./phdRequest.ts"; 
 import { allocationSectionInstructors } from "./allocation.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
-    refreshTokens: many(refreshTokens, {
-        relationName: "user",
-    }),
+    refreshTokens: many(refreshTokens, { relationName: "user" }),
     faculty: one(faculty, {
         fields: [users.email],
         references: [faculty.email],
@@ -45,24 +44,14 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     conferenceAppliaction: many(conferenceApprovalApplications, {
         relationName: "conferenceApprovalApplicationUser",
     }),
-    applications: many(applications, {
-        relationName: "applications",
-    }),
+    applications: many(applications, { relationName: "applications" }),
     applicationStatuses: many(applicationStatus, {
         relationName: "applicationStatusUser",
     }),
-    textFields: many(textFields, {
-        relationName: "textFieldsUser",
-    }),
-    numberFileds: many(numberFields, {
-        relationName: "numberFieldsUser",
-    }),
-    dateFields: many(dateFields, {
-        relationName: "dateFieldsUser",
-    }),
-    fileFields: many(fileFields, {
-        relationName: "fileFieldsUser",
-    }),
+    textFields: many(textFields, { relationName: "textFieldsUser" }),
+    numberFileds: many(numberFields, { relationName: "numberFieldsUser" }),
+    dateFields: many(dateFields, { relationName: "dateFieldsUser" }),
+    fileFields: many(fileFields, { relationName: "fileFieldsUser" }),
     textFieldStatuses: many(textFieldStatus, {
         relationName: "textFieldStatus",
     }),
@@ -126,9 +115,8 @@ export const phdAdminRelations = relations(phd, ({ one, many }) => ({
     qeApplications: many(phdExamApplications, {
         relationName: "phdQualifyingExamApplications",
     }),
-    proposals: many(phdProposals, {
-        relationName: "studentProposals",
-    }),
+    proposals: many(phdProposals, { relationName: "studentProposals" }),
+    requests: many(phdRequests, { relationName: "studentRequests" }),
     supervisor: one(faculty, {
         fields: [phd.supervisorEmail],
         references: [faculty.email],

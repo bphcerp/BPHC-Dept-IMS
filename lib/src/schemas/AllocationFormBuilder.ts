@@ -11,6 +11,11 @@ export const allocationFormTemplatePreferenceTypeEnum = z.enum([
     "PRACTICAL",
 ]);
 
+export const allocationFormGetQuerySchema = z.object({
+    checkUserResponse: z.coerce.boolean().optional(),
+    isPreview: z.coerce.boolean().optional()
+})
+
 export const allocationFormResponsesClientSchema = z.object({
     teachingAllocation: z.number().int().optional(),
     templateFieldId: z.string().uuid().optional(),
@@ -32,6 +37,9 @@ export const allocationFormTemplateFieldSchema = z.object({
     preferenceCount: z.number().int().optional(),
     preferenceType: allocationFormTemplatePreferenceTypeEnum.optional(),
     type: allocationFormTemplateFieldTypeEnum,
+    groupId: z.string().uuid().optional().nullable(),
+    viewableByRoleId: z.coerce.number().optional().nullable(),
+    noOfRequiredPreferences: z.number().optional()
 });
 
 export const updateAllocationFormTemplateFieldSchema =
@@ -63,19 +71,15 @@ export const deleteAllocationFormTemplateSchema = z.object({
 });
 
 export const allocationFormSchema = z.object({
-    // id: z.string().uuid().optional(),
     templateId: z.string().uuid(),
     title: z.string(),
     description: z.string(),
-    // allocationDeadline: z.date().optional(),
-    // createdAt: z.date().optional(),
-    // updatedAt: z.date().optional(),
-    // publishedDate: z.coerce.date().optional(),
 });
 
 export const allocationFormPublishSchema = z.object({
-    allocationDeadline: z.coerce.date().optional(),
+    formDeadline: z.coerce.date().optional(),
     emailBody: z.string(),
+    isPublishedToRoleId: z.coerce.number(),
 });
 
 export const updateAllocationFormSchema = allocationFormSchema

@@ -24,9 +24,9 @@ const GradesLayout = () => {
                                 requiredPermissions: [permissions["/grades/manage"]],
                             },
                             {
-                                title: "Supervisor",
+                                title: "Assign Grades",
                                 icon: <Users />,
-                                url: "/grades/supervisor",
+                                url: "/grades/assign-grades",
                                 requiredPermissions: [permissions["/grades/supervisor"]],
                             },
                         ],

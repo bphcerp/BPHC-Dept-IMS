@@ -6,7 +6,7 @@ import db from "@/config/db/index.ts";
 import { users } from "@/config/db/schema/admin.ts";
 import { eq } from "drizzle-orm";
 import { optionalAuth } from "@/middleware/optionalAuth.ts";
-import { investigators, projects } from "@/config/db/schema/project.ts";
+import { getProjectDataByEmail, getPatentsDataByEmail, getPublicationsDataByEmail } from "./myProfile.ts";
 
 const router = express.Router();
 
@@ -32,16 +32,21 @@ router.get(
             return;
         }
 
-        const projectsData = await db
-            .select({
-                project: projects,
-            })
-            .from(projects)
-            .rightJoin(investigators, eq(investigators.id, projects.piId))
-            .where(eq(investigators.email, userEmail));
-        const parsedProjectsData = projectsData.map((item) => item.project);
+        // projects
+        const parsedProjectsData = await getProjectDataByEmail(userEmail);
+        // patents
+        const parsedPatentsData = await getPatentsDataByEmail(userEmail);
+        // publications
+        const parsedPublicationsData =
+            await getPublicationsDataByEmail(userEmail);
 
-        var parsedData = { ...data[0], projects: parsedProjectsData };
+        // add all the data together
+        var parsedData = {
+            ...data[0],
+            projects: parsedProjectsData,
+            patents: parsedPatentsData,
+            publications: parsedPublicationsData,
+        };
         if (!req.user) parsedData.phone = null;
         else if (
             parsedData.email !== req.user.email &&

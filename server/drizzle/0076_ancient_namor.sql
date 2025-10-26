@@ -1,0 +1,1 @@
+ALTER TABLE "allocation_form_template_field" ADD COLUMN "no_of_required_preferences" integer;

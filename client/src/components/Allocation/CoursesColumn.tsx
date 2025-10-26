@@ -1,16 +1,36 @@
-import React, { useState } from "react";
-import { allocationTypes } from "lib";
+import React, { useState, useEffect, useRef } from "react";
+import { allocationTypes, allocationSchemas } from "lib";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import { Search, BookOpen, GraduationCap, Clock } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  GraduationCap,
+  Clock,
+  FilterIcon,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/axios-instance";
+import { Button } from "../ui/button";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 interface CoursesColumnProps {
   courses: allocationTypes.Course[];
   isLoading: boolean;
-  semesterId: string;
   selectedCourse: allocationTypes.Course | null;
   onCourseSelect: (course: allocationTypes.Course) => void;
 }
@@ -20,41 +40,150 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
   isLoading,
   selectedCourse,
   onCourseSelect,
-  // semesterId - will be used later for API calls
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [degreeFilters, setDegreeFilters] = useState<
+    Array<(typeof allocationSchemas.degreeTypes)[number]>
+  >([...allocationSchemas.degreeTypes]);
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const [courseTypeFilters, setCourseTypeFilters] = useState<
+    Array<(typeof allocationSchemas.courseTypes)[number]>
+  >([...allocationSchemas.courseTypes]);
+
+  type AllocationStatus =
+    allocationTypes.CourseAllocationStatusResponse[keyof allocationTypes.CourseAllocationStatusResponse];
+  const allocationStatusOptions: AllocationStatus[] = [
+    "Allocated",
+    "Pending",
+    "Not Started",
+  ];
+  const [allocationStatusFilters, setAllocationStatusFilters] = useState<
+    AllocationStatus[]
+  >([...allocationStatusOptions]);
+
+  const [sortField, setSortField] = useState<"allocation" | "name" | "code">(
+    "code"
   );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  const getCourseTypeColor = (courseType: string) => {
+  const { data: allocationStatusData } = useQuery({
+    queryKey: ["allocation", "status"],
+    queryFn: async () => {
+      const response =
+        await api.get<allocationTypes.CourseAllocationStatusResponse>(
+          "/allocation/allocation/getStatus"
+        );
+      return response.data;
+    },
+  });
+
+  const filteredCourses = (() => {
+    const base = courses
+      .filter(
+        (course) =>
+          course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((course) => {
+        if (!degreeFilters || degreeFilters.length === 0) return false;
+        if (!degreeFilters.includes(course.offeredTo)) return false;
+
+        if (!courseTypeFilters || courseTypeFilters.length === 0) return false;
+        if (!courseTypeFilters.includes(course.offeredAs)) return false;
+
+        if (!allocationStatusData) return true;
+        const status = allocationStatusData[
+          course.code
+        ] as allocationTypes.CourseAllocationStatusResponse[keyof allocationTypes.CourseAllocationStatusResponse];
+        if (!status) return false;
+        if (!allocationStatusFilters || allocationStatusFilters.length === 0)
+          return false;
+        return allocationStatusFilters.includes(status);
+      });
+
+    return base.sort((a, b) => {
+      if (sortField === "name") {
+        const res = a.name.localeCompare(b.name);
+        return sortOrder === "asc" ? res : -res;
+      }
+
+      if (sortField === "code") {
+        const res = a.code.localeCompare(b.code);
+        return sortOrder === "asc" ? res : -res;
+      }
+
+      const order = { Allocated: 0, Pending: 1, "Not Started": 2 } as Record<
+        string,
+        number
+      >;
+      const sa = allocationStatusData ? allocationStatusData[a.code] : "";
+      const sb = allocationStatusData ? allocationStatusData[b.code] : "";
+      const oa = order[sa] ?? 3;
+      const ob = order[sb] ?? 3;
+      const res = oa - ob;
+      return sortOrder === "asc" ? res : -res;
+    });
+  })();
+
+  const getCourseTypeColor = (
+    courseType: (typeof allocationSchemas.courseTypes)[number]
+  ) => {
     switch (courseType) {
       case "CDC":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "Elective":
+      case "DEL":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
-  const getDegreeTypeColor = (degreeType: string) => {
+  const getDegreeTypeColor = (
+    degreeType: (typeof allocationSchemas.degreeTypes)[number]
+  ) => {
     switch (degreeType) {
       case "FD":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
       case "HD":
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "PhD":
+        return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200";
     }
   };
 
+  const getAllocationStatusColor = (courseCode: string) => {
+    if (!allocationStatusData) return;
+    switch (allocationStatusData[courseCode]) {
+      case "Allocated":
+        return "border-l-success";
+      case "Pending":
+        return "border-l-yellow-500";
+      case "Not Started":
+        return "border-l-red-600";
+    }
+  };
+
+  const handleReset = () => {
+    setSearchTerm("");
+    setDegreeFilters([...allocationSchemas.degreeTypes]);
+    setCourseTypeFilters([...allocationSchemas.courseTypes]);
+    setAllocationStatusFilters([...allocationStatusOptions]);
+    setSortField("code");
+    setSortOrder("asc");
+  };
+
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedCourse || !scrollAreaRef.current) return;
+
+    const selector = `[data-course-code="${selectedCourse.code}"]`;
+    const el = scrollAreaRef.current.querySelector(selector) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedCourse]);
+
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="flex-shrink-0 border-b bg-background p-3">
         <div className="mb-3 flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
@@ -63,22 +192,190 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
           </span>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input
-            placeholder="Search courses..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex w-full space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+            <Input
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-10">
+                  <FilterIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Degree</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
+                  checked={degreeFilters.includes("HD")}
+                  onCheckedChange={(checked) => {
+                    setDegreeFilters((prev) => {
+                      const has = prev.includes("HD");
+                      if (checked && !has) return [...prev, "HD"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "HD");
+                      return prev;
+                    });
+                  }}
+                >
+                  HD
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={degreeFilters.includes("FD")}
+                  onCheckedChange={(checked) => {
+                    setDegreeFilters((prev) => {
+                      const has = prev.includes("FD");
+                      if (checked && !has) return [...prev, "FD"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "FD");
+                      return prev;
+                    });
+                  }}
+                >
+                  FD
+                </DropdownMenuCheckboxItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Course Type</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
+                  checked={courseTypeFilters.includes("CDC")}
+                  onCheckedChange={(checked) => {
+                    setCourseTypeFilters((prev) => {
+                      const has = prev.includes("CDC");
+                      if (checked && !has) return [...prev, "CDC"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "CDC");
+                      return prev;
+                    });
+                  }}
+                >
+                  CDC
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={courseTypeFilters.includes("DEL")}
+                  onCheckedChange={(checked) => {
+                    setCourseTypeFilters((prev) => {
+                      const has = prev.includes("DEL");
+                      if (checked && !has) return [...prev, "DEL"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "DEL");
+                      return prev;
+                    });
+                  }}
+                >
+                  DEL
+                </DropdownMenuCheckboxItem>
+
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Allocation Status</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem
+                  checked={allocationStatusFilters.includes("Allocated")}
+                  onCheckedChange={(checked) => {
+                    setAllocationStatusFilters((prev) => {
+                      const has = prev.includes("Allocated");
+                      if (checked && !has) return [...prev, "Allocated"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "Allocated");
+                      return prev;
+                    });
+                  }}
+                >
+                  Allocated
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={allocationStatusFilters.includes("Pending")}
+                  onCheckedChange={(checked) => {
+                    setAllocationStatusFilters((prev) => {
+                      const has = prev.includes("Pending");
+                      if (checked && !has) return [...prev, "Pending"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "Pending");
+                      return prev;
+                    });
+                  }}
+                >
+                  Pending
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={allocationStatusFilters.includes("Not Started")}
+                  onCheckedChange={(checked) => {
+                    setAllocationStatusFilters((prev) => {
+                      const has = prev.includes("Not Started");
+                      if (checked && !has) return [...prev, "Not Started"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "Not Started");
+                      return prev;
+                    });
+                  }}
+                >
+                  Not Started
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-10">
+                  A
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Sort Field</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={sortField}
+                  onValueChange={(v) =>
+                    setSortField(v as "allocation" | "name" | "code")
+                  }
+                >
+                  <DropdownMenuRadioItem value="allocation">
+                    Allocation Status
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="name">
+                    Course Name
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="code">
+                    Course Code
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Order</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setSortOrder((s) => (s === "asc" ? "desc" : "asc"))
+                  }
+                >
+                  {sortOrder === "asc" ? "Ascending" : "Descending"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {courseTypeFilters.length !==
+              allocationSchemas.courseTypes.length ||
+            degreeFilters.length !== allocationSchemas.degreeTypes.length ||
+            allocationStatusFilters.length !== allocationStatusOptions.length ||
+            searchTerm !== "" ||
+            sortField !== "code" ||
+            sortOrder !== "asc" ? (
+              <Button
+                variant="ghost"
+                className="w-10"
+                onClick={handleReset}
+                title="Reset Filters"
+              >
+                <ReloadIcon />
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      {/* Scrollable Course List */}
-      <ScrollArea className="flex-1">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 bg-white">
         <div className="space-y-2 p-3 pr-2">
-          {isLoading ? (
+          {isLoading || !allocationStatusData ? (
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner />
             </div>
@@ -90,17 +387,18 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
             filteredCourses.map((course) => (
               <Card
                 key={course.code}
-                className={`cursor-pointer border-l-4 transition-all duration-200 hover:shadow-md ${
+                data-course-code={course.code}
+                className={`cursor-pointer border-l-8 transition-all duration-200 hover:shadow-md ${
                   selectedCourse?.code === course.code
-                    ? "border-l-primary bg-primary/5 shadow-md"
-                    : "border-l-primary/30"
+                    ? "border-l-primary bg-primary/15 shadow-md"
+                    : `${getAllocationStatusColor(course.code)}`
                 }`}
                 onClick={() => onCourseSelect(course)}
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-sm font-semibold">
-                      {course.code}
+                      {course.name}
                     </CardTitle>
                     <div className="flex gap-1">
                       <Badge
@@ -121,7 +419,7 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 <CardContent className="pt-0">
                   <div className="space-y-2">
                     <h4 className="text-xs font-medium leading-tight">
-                      {course.name}
+                      {course.code}
                     </h4>
 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">

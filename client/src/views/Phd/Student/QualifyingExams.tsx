@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import QualifyingExamApplication from "@/components/phd/StudentQualifyingExam/QualifyingExamApplication";
 import { toast } from "sonner";
-import { AlertCircle, Edit } from "lucide-react";
+import { AlertCircle, Edit, Eye } from "lucide-react";
 
 interface QualifyingExam {
   id: number;
@@ -51,9 +51,10 @@ interface ApplicationStatus {
 
 const QualifyingExams = () => {
   const [selectedExam, setSelectedExam] = useState<QualifyingExam | null>(null);
-  const [selectedApplicationForEdit, setSelectedApplicationForEdit] =
+  const [selectedApplication, setSelectedApplication] =
     useState<ApplicationStatus | null>(null);
-  const [showApplicationDialog, setShowApplicationDialog] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const {
     data: examsData,
@@ -117,6 +118,28 @@ const QualifyingExams = () => {
     }
   };
 
+  const openEditDialog = (
+    exam: QualifyingExam,
+    application: ApplicationStatus | null
+  ) => {
+    if (new Date(exam.submissionDeadline) < new Date()) {
+      toast.error("The deadline for editing has passed.");
+      return;
+    }
+    setSelectedExam(exam);
+    setSelectedApplication(application);
+    setIsEditOpen(true);
+  };
+
+  const openPreviewDialog = (application: ApplicationStatus) => {
+    setSelectedApplication(application);
+    const examForPreview = examsData?.exams.find(
+      (e) => e.id === application.examId
+    );
+    setSelectedExam(examForPreview || null);
+    setIsPreviewOpen(true);
+  };
+
   const handleApplyClick = (exam: QualifyingExam) => {
     const existingApplication = applicationsData?.applications?.find(
       (app) => app.examId === exam.id
@@ -125,72 +148,27 @@ const QualifyingExams = () => {
       toast.error("You have already submitted an application for this exam");
       return;
     }
-    setSelectedExam(exam);
-    setSelectedApplicationForEdit(null);
-    setShowApplicationDialog(true);
+    openEditDialog(exam, existingApplication || null);
   };
 
-  const handleResubmitClick = (application: ApplicationStatus) => {
-    // Corrected Logic: Check the deadline directly from the application object.
-    if (new Date(application.submissionDeadline) < new Date()) {
-      toast.error("The deadline for resubmission has passed.");
+  const handleFinalSubmit = async () => {
+    if (!selectedApplication?.id) {
+      toast.error("Cannot submit, application ID is missing.");
       return;
     }
-    // Reconstruct a valid `QualifyingExam` object for the form component.
-    const examForResubmission: QualifyingExam = {
-      id: application.examId,
-      examName: application.examName,
-      submissionDeadline: application.submissionDeadline,
-      examStartDate: application.examStartDate,
-      examEndDate: application.examEndDate,
-      vivaDate: application.vivaDate,
-      semester: application.semester,
-    };
-    setSelectedExam(examForResubmission);
-    setSelectedApplicationForEdit(application);
-    setShowApplicationDialog(true);
-  };
-
-  const handleEditDraftClick = (application: ApplicationStatus) => {
-    // Check if deadline has passed
-    if (new Date(application.submissionDeadline) < new Date()) {
-      toast.error("The deadline for editing has passed.");
-      return;
-    }
-
-    // Create exam object for the form
-    const examForEdit: QualifyingExam = {
-      id: application.examId,
-      examName: application.examName,
-      submissionDeadline: application.submissionDeadline,
-      examStartDate: application.examStartDate,
-      examEndDate: application.examEndDate,
-      vivaDate: application.vivaDate,
-      semester: application.semester,
-    };
-    setSelectedExam(examForEdit);
-    setSelectedApplicationForEdit(application);
-    setShowApplicationDialog(true);
-  };
-
-  const handleFinalSubmitClick = async (application: ApplicationStatus) => {
-    // Check if deadline has passed
-    if (new Date(application.submissionDeadline) < new Date()) {
+    if (new Date(selectedApplication.submissionDeadline) < new Date()) {
       toast.error("The submission deadline has passed.");
       return;
     }
-
     try {
-      const response = await api.post<{
-        success: boolean;
-        message: string;
-      }>("/phd/student/finalSubmitQeApplication", {
-        applicationId: application.id,
-      });
-
+      const response = await api.post<{ success: boolean; message: string }>(
+        "/phd/student/finalSubmitQeApplication",
+        { applicationId: selectedApplication.id }
+      );
       if (response.data.success) {
         toast.success("Application submitted successfully!");
-        void refetchApplications();
+        setIsPreviewOpen(false);
+        await refetchApplications();
       }
     } catch (error) {
       toast.error(
@@ -200,13 +178,11 @@ const QualifyingExams = () => {
     }
   };
 
-  const handleApplicationSuccess = () => {
-    setShowApplicationDialog(false);
-    setSelectedExam(null);
-    setSelectedApplicationForEdit(null);
-    void refetchExams();
-    void refetchApplications();
-    toast.success("Application submitted successfully!");
+  const handleApplicationSuccess = async () => {
+    setIsEditOpen(false);
+    await refetchExams();
+    await refetchApplications();
+    toast.success("Changes saved successfully!");
   };
 
   if (isLoadingExams || isLoadingApplications) {
@@ -247,8 +223,9 @@ const QualifyingExams = () => {
                     );
                   const hasApplied =
                     existingApplication &&
-                    existingApplication.status !== "draft";
-                  const hasDraft = existingApplication?.status === "draft";
+                    existingApplication.status !== "draft" &&
+                    existingApplication.status !== "resubmit";
+
                   return (
                     <div
                       key={exam.id}
@@ -263,14 +240,6 @@ const QualifyingExams = () => {
                             {hasApplied && (
                               <Badge className="bg-green-100 text-green-800">
                                 Applied
-                              </Badge>
-                            )}
-                            {hasDraft && (
-                              <Badge
-                                variant="outline"
-                                className="border-gray-400 text-gray-600"
-                              >
-                                Draft Saved
                               </Badge>
                             )}
                             {isDeadlinePassed && (
@@ -328,13 +297,7 @@ const QualifyingExams = () => {
                         </div>
                         <div className="ml-6">
                           <Button
-                            onClick={() => {
-                              if (hasDraft && existingApplication) {
-                                handleEditDraftClick(existingApplication);
-                              } else {
-                                handleApplyClick(exam);
-                              }
-                            }}
+                            onClick={() => handleApplyClick(exam)}
                             disabled={isDeadlinePassed || hasApplied}
                             className={
                               isDeadlinePassed || hasApplied
@@ -342,11 +305,7 @@ const QualifyingExams = () => {
                                 : ""
                             }
                           >
-                            {hasApplied
-                              ? "Already Applied"
-                              : hasDraft
-                                ? "Continue Draft"
-                                : "Apply"}
+                            {hasApplied ? "Already Applied" : "Apply"}
                           </Button>
                         </div>
                       </div>
@@ -412,121 +371,153 @@ const QualifyingExams = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {applicationsData.applications.map((application) => (
-                      <tr
-                        key={application.id}
-                        className="border-b hover:bg-gray-50"
-                      >
-                        <td className="px-4 py-3">{application.examName}</td>
-                        <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            <div className="text-sm">
-                              {application.qualifyingArea1}
+                    {applicationsData.applications.map((application) => {
+                      const exam = examsData?.exams.find(
+                        (e) => e.id === application.examId
+                      );
+                      return (
+                        <tr
+                          key={application.id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="px-4 py-3">{application.examName}</td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <div className="text-sm">
+                                {application.qualifyingArea1}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {application.qualifyingArea2}
+                              </div>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {application.qualifyingArea2}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {getStatusBadge(application.status)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {formatDate(application.createdAt)}
-                        </td>
-                        <td className="px-4 py-3">
-                          {application.status === "resubmit" ? (
-                            <div className="flex flex-col items-start gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleResubmitClick(application)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit & Resubmit
-                              </Button>
-                              {application.comments && (
-                                <div className="flex items-start rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-600">
-                                  <AlertCircle className="mr-2 h-4 w-4 flex-shrink-0" />
-                                  <p>
-                                    <strong>DRC Comments:</strong>{" "}
-                                    {application.comments}
-                                  </p>
+                          </td>
+                          <td className="px-4 py-3">
+                            {getStatusBadge(application.status)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {formatDate(application.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {(application.status === "resubmit" ||
+                              application.status === "draft") && (
+                              <div className="flex flex-col items-start gap-2">
+                                {application.status === "resubmit" &&
+                                  application.comments && (
+                                    <div className="flex items-start rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-600">
+                                      <AlertCircle className="mr-2 h-4 w-4 flex-shrink-0" />
+                                      <p>
+                                        <strong>DRC Comments:</strong>{" "}
+                                        {application.comments}
+                                      </p>
+                                    </div>
+                                  )}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      openEditDialog(exam!, application)
+                                    }
+                                  >
+                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      openPreviewDialog(application)
+                                    }
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" /> Preview &
+                                    Submit
+                                  </Button>
                                 </div>
-                              )}
-                            </div>
-                          ) : application.status === "draft" ? (
-                            <div className="flex flex-col items-start gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  handleEditDraftClick(application)
-                                }
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Draft
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  void handleFinalSubmitClick(application)
-                                }
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                Final Submit
-                              </Button>
-                            </div>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             ) : (
               <div className="py-8 text-center">
-                {/* ... No Applications Yet SVG and text ... */}
+                <p>No applications submitted yet.</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Dialog
-        open={showApplicationDialog}
-        onOpenChange={setShowApplicationDialog}
-      >
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedApplicationForEdit?.status === "resubmit"
-                ? `Resubmit Application for ${selectedExam?.examName}`
-                : selectedApplicationForEdit?.status === "draft"
-                  ? `Edit Draft Application for ${selectedExam?.examName}`
-                  : `Apply for ${selectedExam?.examName}`}
+              {selectedApplication ? "Edit Application" : "Apply for"}{" "}
+              {selectedExam?.examName}
             </DialogTitle>
-            {/* DRC comments */}
-            {selectedApplicationForEdit?.status === "resubmit" ? (
-              <DialogDescription>
-                <div className="flex items-start rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-600">
-                  <AlertCircle className="mr-2 h-5 w-5 flex-shrink-0" />
-                  <p>
-                    <strong>Comments:</strong>{" "}
-                    {selectedApplicationForEdit.comments}
-                  </p>
-                </div>
-              </DialogDescription>
-            ) : null}
           </DialogHeader>
           {selectedExam && (
             <QualifyingExamApplication
               exam={selectedExam}
-              existingApplication={selectedApplicationForEdit}
+              existingApplication={selectedApplication}
               onSuccess={handleApplicationSuccess}
-              onCancel={() => setShowApplicationDialog(false)}
+              onCancel={() => setIsEditOpen(false)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Preview Application</DialogTitle>
+            <DialogDescription>
+              Review your application details below. If everything is correct,
+              you can submit it.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedApplication && (
+            <div className="space-y-4 py-4">
+              <p>
+                <strong>Qualifying Area 1:</strong>{" "}
+                {selectedApplication.qualifyingArea1}
+              </p>
+              <p>
+                <strong>Qualifying Area 2:</strong>{" "}
+                {selectedApplication.qualifyingArea2}
+              </p>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Uploaded Documents</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {Object.entries(selectedApplication.files)
+                      .filter(([, url]) => url)
+                      .map(([key, url]) => (
+                        <li key={key}>
+                          <a
+                            href={url!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {key.replace(/([A-Z])/g, " $1").trim()}
+                          </a>
+                        </li>
+                      ))}
+                  </ul>
+                </CardContent>
+              </Card>
+              <Button
+                onClick={handleFinalSubmit}
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                Final Submit
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>

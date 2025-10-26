@@ -1,0 +1,1 @@
+ALTER TABLE "phd" ADD COLUMN "current_status" text DEFAULT 'Awaiting QE Application' NOT NULL;

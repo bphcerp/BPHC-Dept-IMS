@@ -2,9 +2,7 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { desc, eq, 
-    gte
- } from "drizzle-orm";
+import { desc, eq, gte } from "drizzle-orm";
 import {
     phdProposals,
     phdProposalSemesters,
@@ -66,8 +64,11 @@ router.get(
         const activeDeadline = await db.query.phdProposalSemesters.findFirst({
             where: gte(phdProposalSemesters.studentSubmissionDate, now),
         });
-        const canApply = student?.hasPassedQe && !proposals.some((p) => p.active) && !!activeDeadline;
-    
+        const canApply =
+            student?.hasPassedQe &&
+            !proposals.some((p) => p.active) &&
+            !!activeDeadline;
+        // const canApply = true;
         res.status(200).json({ proposals: proposalsWithDacFeedback, canApply });
     })
 );

@@ -56,11 +56,11 @@ import OverflowHandler from "./OverflowHandler";
 import { ActionItemsMenu } from "./ActionItemsMenu";
 import { useSearchParams } from "react-router-dom";
 
-const HEADER_COLOR = "#E8E8F0"
-const ROW_COLOR_ODD = "#F7F7FB"
-const ROW_COLOR_EVEN = "white"
+const HEADER_COLOR = "#E8E8F0";
+const ROW_COLOR_ODD = "#F7F7FB";
+const ROW_COLOR_EVEN = "white";
 
-type BaseTableProps<T> =  {
+type BaseTableProps<T> = {
   data: T[];
   columns: ColumnDef<T>[];
   initialState?: InitialTableState;
@@ -69,20 +69,21 @@ type BaseTableProps<T> =  {
   exportFunction?: (itemIds: string[], columnsVisible: string[]) => void;
   isTableHeaderFixed?: boolean;
   tableElementRefProp?: MutableRefObject<HTMLTableElement | null>;
-  mainSearchColumn? : keyof T;
-}
+  mainSearchColumn?: keyof T;
+};
 
 type AltTableProps1<T> = {
-  exportFunction?: ((itemIds: (T[keyof T])[], columnsVisible: string[]) => void);
+  exportFunction?: (itemIds: T[keyof T][], columnsVisible: string[]) => void;
   idColumn: keyof T;
-}
+};
 
 type AltTableProps2 = {
   exportFunction?: never;
-  idColumn?: never
-}
+  idColumn?: never;
+};
 
-type DataTableProps<T> = BaseTableProps<T> & (AltTableProps1<T> | AltTableProps2  )
+type DataTableProps<T> = BaseTableProps<T> &
+  (AltTableProps1<T> | AltTableProps2);
 
 export type TableFilterType =
   | "dropdown"
@@ -91,7 +92,6 @@ export type TableFilterType =
   | "number-range"
   | "date-range";
 
-// Extend ColumnMeta interface to add custom properties
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
     calculateSum?: (rows: TData[]) => string;
@@ -141,31 +141,53 @@ export function DataTable<T>({
   }, []);
 
   useEffect(() => {
-    const handleResize = () =>
-      setAvailableWindowWidth(containerElementRef.current?.offsetWidth);
+    const element = containerElementRef.current;
+    if (!element) return;
 
-    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setAvailableWindowWidth(entry.contentRect.width);
+      }
+    });
 
-    return () => window.removeEventListener("resize", handleResize);
+    resizeObserver.observe(element);
+
+    return () => resizeObserver.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (containerElementRef.current)
-      setAvailableWindowWidth(containerElementRef.current.offsetWidth);
-  }, [containerElementRef.current]);
 
   const initialColumnFilters = useMemo(() => {
     const filters: ColumnFiltersState = [];
     searchParams.forEach((value, key) => {
       if (key.startsWith("filter_")) {
+        let parsedValue: any = value;
+        try {
+          if (value.startsWith("[") || value.startsWith("{")) {
+            parsedValue = JSON.parse(value);
+          }
+        } catch (e) {
+          console.warn("Failed to parse filter from URL search param:", e);
+          parsedValue = value;
+        }
+
         filters.push({
           id: key.replace("filter_", ""),
-          value,
+          value: parsedValue,
         });
       }
     });
     return filters;
   }, [searchParams]);
+
+  const initialSorting = useMemo(() => {
+    const sortParam = searchParams.get("sort");
+    if (!sortParam) return [];
+    const [id, desc] = sortParam.split(".");
+    return [{ id, desc: desc === "desc" }] as SortingState;
+  }, [searchParams]);
+
+  const [columnFilters, setColumnFilters] =
+    useState<ColumnFiltersState>(initialColumnFilters);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting);
 
   const getCommonPinningStyles = (column: Column<T>): CSSProperties => {
     const isPinned = column.getIsPinned();
@@ -184,48 +206,71 @@ export function DataTable<T>({
     };
   };
 
-  const initialSorting = useMemo(() => {
-    const sortParam = searchParams.get("sort");
-    if (!sortParam) return [];
-    // e.g. ?sort=age.desc
-    const [id, desc] = sortParam.split(".");
-    return [{ id, desc: desc === "desc" }] as SortingState;
-  }, [searchParams]);
-
   const isWithinRange = (row: Row<T>, columnId: string, value: any) => {
-    const date = new Date(row.getValue(columnId));
-    const [startDateString, endDateString] = value;
-    const [start, end] = [
-      startDateString ? new Date(startDateString) : undefined,
-      endDateString ? new Date(endDateString) : undefined,
+    const [startDateString, endDateString] = value as [
+      string | undefined,
+      string | undefined,
     ];
 
-    // value => two date input values
-    //If one filter defined and date is null filter it
-    if ((start || end) && !date) return false;
-    if (start && !end) {
-      return date.getTime() >= start.getTime();
-    } else if (!start && end) {
-      return date.getTime() <= end.getTime();
-    } else if (start && end) {
-      return (
-        date.getTime() >= start.getTime() && date.getTime() <= end.getTime()
-      );
-    } else return true;
+    if (!startDateString && !endDateString) return true;
+
+    const rawDate = row.getValue(columnId);
+
+    if (!rawDate) {
+      return false;
+    }
+
+    const date = new Date(rawDate as string | number | Date);
+
+    if (isNaN(date.getTime())) {
+      return false;
+    }
+
+    const cellTime = date.getTime();
+
+    let startTime = -Infinity;
+    if (startDateString) {
+      const start = new Date(startDateString);
+      start.setHours(0, 0, 0, 0);
+      startTime = start.getTime();
+    }
+
+    let endTime = Infinity;
+    if (endDateString) {
+      const end = new Date(endDateString);
+      end.setHours(23, 59, 59, 999);
+      endTime = end.getTime();
+    }
+
+    return cellTime >= startTime && cellTime <= endTime;
   };
 
   const isWithinRangeNumber = (row: Row<T>, columnId: string, value: any) => {
-    const cellValue = Number(row.getValue(columnId));
-    const [start, end] = value;
+    const rawValue = row.getValue(columnId);
 
-    if ((start || end) && !cellValue) return false;
-    if (start && !end) {
-      return cellValue >= start;
-    } else if (!start && end) {
-      return cellValue <= end;
-    } else if (start && end) {
-      return cellValue >= start && cellValue <= end;
-    } else return true;
+    const [startNum, endNum] = value as [
+      number | undefined,
+      number | undefined,
+    ];
+
+    if (startNum === undefined && endNum === undefined) {
+      return true;
+    }
+
+    if (rawValue === null || rawValue === undefined || rawValue === "") {
+      return false;
+    }
+
+    const cellValue = Number(rawValue);
+
+    if (isNaN(cellValue)) {
+      return false;
+    }
+
+    const min = startNum ?? -Infinity;
+    const max = endNum ?? Infinity;
+
+    return cellValue >= min && cellValue <= max;
   };
 
   const multiFilterFn = (row: Row<T>, columnId: string, filterValue: any) => {
@@ -235,7 +280,6 @@ export function DataTable<T>({
 
   const getLSPageSizeKey = () => `${location.pathname}-table-page-size`;
 
-  //save selected pageSize to localStorage
   const setPageSize = (pageSize: number) => {
     table.setPageSize(pageSize);
     localStorage.setItem(getLSPageSizeKey(), pageSize.toString());
@@ -274,42 +318,11 @@ export function DataTable<T>({
     onRowSelectionChange: setRowSelection,
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getFacetedMinMaxValues: getFacetedMinMaxValues(),
-    onColumnFiltersChange: (updater) => {
-      let newFilters =
-        typeof updater === "function"
-          ? updater(table.getState().columnFilters)
-          : updater;
-
-      // update search params
-      const params = new URLSearchParams(searchParams);
-      // remove old filters
-      [...params.keys()]
-        .filter((k) => k.startsWith("filter_"))
-        .forEach((k) => params.delete(k));
-      // add new ones
-      newFilters.forEach((f) => {
-        params.set(`filter_${f.id}`, f.value as string);
-      });
-      setSearchParams(params);
-    },
-    onSortingChange: (updater) => {
-      let newSorting =
-        typeof updater === "function"
-          ? updater(table.getState().sorting)
-          : updater;
-
-      const params = new URLSearchParams(searchParams);
-      if (newSorting.length > 0) {
-        const s = newSorting[0];
-        params.set("sort", `${s.id}.${s.desc ? "desc" : "asc"}`);
-      } else {
-        params.delete("sort");
-      }
-      setSearchParams(params);
-    },
+    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
     state: {
-      sorting: initialSorting,
-      columnFilters: initialColumnFilters,
+      sorting,
+      columnFilters,
       columnVisibility,
       rowSelection,
     },
@@ -321,6 +334,46 @@ export function DataTable<T>({
         Object.keys(rowSelection).map((row) => table.getRow(row).original)
       );
   }, [rowSelection]);
+
+  const saveFiltersToUrl = () => {
+    setSearchParams(
+      (prevParams) => {
+        const newParams = new URLSearchParams(prevParams);
+        [...newParams.keys()]
+          .filter((k) => k.startsWith("filter_"))
+          .forEach((k) => newParams.delete(k));
+        newParams.delete("sort");
+
+        columnFilters.forEach((f) => {
+          let valueToStore: string | undefined;
+
+          if (Array.isArray(f.value)) {
+            if (
+              f.value.every((v) => v === undefined || v === null || v === "")
+            ) {
+              valueToStore = undefined;
+            } else {
+              valueToStore = JSON.stringify(f.value);
+            }
+          } else {
+            valueToStore = f.value as string;
+          }
+
+          if (valueToStore) {
+            newParams.set(`filter_${f.id}`, valueToStore);
+          }
+        });
+
+        if (sorting.length > 0) {
+          const s = sorting[0];
+          newParams.set("sort", `${s.id}.${s.desc ? "desc" : "asc"}`);
+        }
+
+        return newParams;
+      },
+      { replace: true }
+    );
+  };
 
   const renderFilter = (column: Column<T>) => {
     const filterType = column.columnDef.meta?.filterType;
@@ -383,7 +436,7 @@ export function DataTable<T>({
           <Input
             placeholder="Search"
             className="w-32"
-            value={column.getFilterValue() as string}
+            value={(column.getFilterValue() as string) ?? ""}
             onChange={(event) => column.setFilterValue(event.target.value)}
           />
         );
@@ -394,20 +447,13 @@ export function DataTable<T>({
               type="number"
               value={(column.getFilterValue() as [number, number])?.[0] ?? ""}
               onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
+                const prevFilterValue = (column.getFilterValue() as [
                   number,
                   number,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([undefined, prevFilterValue[1]]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [, max] = prevFilterValue;
-                  column.setFilterValue([event.target.value, max]);
-                } else {
-                  column.setFilterValue([event.target.value, undefined]);
-                }
+                ]) ?? [undefined, undefined];
+                const newValue = event.target.value;
+                const min = newValue === "" ? undefined : Number(newValue);
+                column.setFilterValue([min, prevFilterValue[1]]);
               }}
               placeholder="Min"
             />
@@ -415,20 +461,13 @@ export function DataTable<T>({
               type="number"
               value={(column.getFilterValue() as [number, number])?.[1] ?? ""}
               onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
+                const prevFilterValue = (column.getFilterValue() as [
                   number,
                   number,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([prevFilterValue[0], undefined]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [min] = prevFilterValue;
-                  column.setFilterValue([min, event.target.value]);
-                } else {
-                  column.setFilterValue([undefined, event.target.value]);
-                }
+                ]) ?? [undefined, undefined];
+                const newValue = event.target.value;
+                const max = newValue === "" ? undefined : Number(newValue);
+                column.setFilterValue([prevFilterValue[0], max]);
               }}
               placeholder="Max"
             />
@@ -441,40 +480,26 @@ export function DataTable<T>({
               type="date"
               value={(column.getFilterValue() as [string, string])?.[0] ?? ""}
               onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
+                const prevFilterValue = (column.getFilterValue() as [
                   string,
                   string,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([undefined, prevFilterValue[1]]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [, max] = prevFilterValue;
-                  column.setFilterValue([event.target.value, max]);
-                } else {
-                  column.setFilterValue([event.target.value, undefined]);
-                }
+                ]) ?? [undefined, undefined];
+                const newValue = event.target.value;
+                const min = newValue === "" ? undefined : newValue;
+                column.setFilterValue([min, prevFilterValue[1]]);
               }}
             />
             <Input
               type="date"
               value={(column.getFilterValue() as [string, string])?.[1] ?? ""}
               onChange={(event) => {
-                const prevFilterValue = column.getFilterValue() as [
+                const prevFilterValue = (column.getFilterValue() as [
                   string,
                   string,
-                ];
-                if (!event.target.value) {
-                  column.setFilterValue([prevFilterValue[0], undefined]);
-                  return;
-                }
-                if (prevFilterValue) {
-                  const [min] = prevFilterValue;
-                  column.setFilterValue([min, event.target.value]);
-                } else {
-                  column.setFilterValue([undefined, event.target.value]);
-                }
+                ]) ?? [undefined, undefined];
+                const newValue = event.target.value;
+                const max = newValue === "" ? undefined : newValue;
+                column.setFilterValue([prevFilterValue[0], max]);
               }}
             />
           </div>
@@ -485,25 +510,31 @@ export function DataTable<T>({
   };
 
   const resetFiltersAndSorting = () => {
-    const params = new URLSearchParams(searchParams);
-    [...params.keys()]
-      .filter((k) => k.startsWith("filter_"))
-      .forEach((k) => params.delete(k));
-    params.delete("sort");
-    setSearchParams(params);
+    table.resetColumnFilters();
+    table.resetSorting();
 
-    // Reset table state
-    table.reset()
+    setSearchParams(
+      (prevParams) => {
+        const newParams = new URLSearchParams(prevParams);
+        [...newParams.keys()]
+          .filter((k) => k.startsWith("filter_"))
+          .forEach((k) => newParams.delete(k));
+        newParams.delete("sort");
+        return newParams;
+      },
+      { replace: true }
+    );
   };
 
-  const camelToTitle = (str: string) => str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
+  const camelToTitle = (str: string) =>
+    str.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
 
   const handleExport = (selected: boolean) => {
-    // Export function just returns the ids of the rows and visible columns, data fetching and excel
-    // generation is handled by the backend
-    if(!idColumn) return;
+    if (!idColumn) return;
 
-    const rowModel = selected ? table.getSelectedRowModel() : table.getPrePaginationRowModel();
+    const rowModel = selected
+      ? table.getSelectedRowModel()
+      : table.getPrePaginationRowModel();
     const itemIds = rowModel.rows.map((row) => row.original[idColumn]);
     const columnsVisible = table
       .getVisibleFlatColumns()
@@ -587,7 +618,6 @@ export function DataTable<T>({
                             key={column.id}
                             className="capitalize"
                             checked={column.getIsVisible()}
-                            //To stop the dropdown from closing on click (onSelect)
                             onSelect={(e) => e.preventDefault()}
                             onCheckedChange={(value) =>
                               column.toggleVisibility(!!value)
@@ -601,14 +631,15 @@ export function DataTable<T>({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            <Button variant="outline" onClick={saveFiltersToUrl}>Save Filters to URL</Button>
             {mainSearchColumn && (
               <Input
                 placeholder={`Search ${String(camelToTitle(mainSearchColumn.toString()))}..`}
                 className="w-128"
                 value={
-                  table
+                  (table
                     .getColumn(String(mainSearchColumn))
-                    ?.getFilterValue() as string
+                    ?.getFilterValue() as string) ?? ""
                 }
                 onChange={(event) =>
                   table
@@ -635,9 +666,8 @@ export function DataTable<T>({
                     : undefined
                 }
               >
-                {/* Sticky first column (checkbox for select all) */}
                 <TableHead
-                  className="z-[3] sticky left-0 w-2"
+                  className="sticky left-0 z-[3] w-2"
                   style={{ backgroundColor: HEADER_COLOR }}
                 >
                   <Checkbox
@@ -652,7 +682,6 @@ export function DataTable<T>({
                   />
                 </TableHead>
 
-                {/* Other headers */}
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -660,7 +689,10 @@ export function DataTable<T>({
                     id={header.column.id}
                     onClick={header.column.getToggleSortingHandler()}
                     className={`${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
-                    style={{ ...getCommonPinningStyles(header.column), backgroundColor: HEADER_COLOR }}
+                    style={{
+                      ...getCommonPinningStyles(header.column),
+                      backgroundColor: HEADER_COLOR,
+                    }}
                   >
                     <div className="flex w-max flex-col items-start gap-y-2 py-2 text-center">
                       <div className="flex space-x-2">
@@ -692,7 +724,6 @@ export function DataTable<T>({
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
               >
-                {/* Sticky first column (row checkbox) */}
                 <TableCell
                   className="sticky left-0 z-10 w-2"
                   style={{
@@ -706,7 +737,6 @@ export function DataTable<T>({
                   />
                 </TableCell>
 
-                {/* Other cells */}
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
@@ -750,12 +780,9 @@ export function DataTable<T>({
               </TableRow>
             ))}
 
-            {/* Sum row (sticky first column) */}
             {columns.some((column) => column.meta?.calculateSum) && (
               <TableRow>
-                <TableCell className="sticky left-0 z-10 w-2 bg-white opacity-100">
-                  {/* empty cell for checkbox column */}
-                </TableCell>
+                <TableCell className="sticky left-0 z-10 w-2 bg-white opacity-100"></TableCell>
                 {table.getVisibleLeafColumns().map((column) => (
                   <TableCell
                     key={column.id}

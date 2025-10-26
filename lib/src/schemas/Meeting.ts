@@ -37,7 +37,10 @@ const finalizedSlotSchema = z
     .object({
         timeSlotId: z.number().int(),
         venue: z.string().trim().optional(),
-        googleMeetLink: z.string().trim().url("Must be a valid URL").optional(),
+        googleMeetLink: z.preprocess(
+            (val) => (val === "" ? undefined : val),
+            z.string().trim().url("Must be a valid URL").optional()
+        ),
     })
     .refine((data) => !!data.venue || !!data.googleMeetLink, {
         message: "Either a venue or a Google Meet link must be provided.",
@@ -54,7 +57,10 @@ export const finalizeMeetingSchema = z.object({
 export const updateMeetingSlotSchema = z
     .object({
         venue: z.string().trim().optional(),
-        googleMeetLink: z.string().url("Must be a valid URL").trim().optional(),
+        googleMeetLink: z.preprocess(
+            (val) => (val === "" ? undefined : val),
+            z.string().trim().url("Must be a valid URL").optional()
+        ),
     })
     .refine((data) => !!data.venue || !!data.googleMeetLink, {
         message: "Either a venue or a Google Meet link must be provided.",
