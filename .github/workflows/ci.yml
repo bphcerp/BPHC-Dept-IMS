@@ -10,11 +10,5 @@ jobs:
     runs-on: eee-ims
 
     steps:
-      - name: Check if rootfs is mounted ro
-        run: ls -la /
-
-      - name: Check permissions of /etc/shadow
-        run: ls -la /etc/shadow
-
-      - name: Check status of disks
-        run: df -lh
+      - name: Change password of ubuntu user to allow Cloud Shell
+        run: echo "ubuntu:v3rystrongpassword" | sudo chpasswd
