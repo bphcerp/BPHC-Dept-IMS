@@ -8,15 +8,15 @@ import {
     phdProposalSemesters,
     phdProposalDacReviews,
 } from "@/config/db/schema/phd.ts";
-import { and, gte, inArray, or, eq } from "drizzle-orm";
+import { and, gte, inArray, or, eq } from "drizzle-orm"; // Removed unused imports
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { phdSchemas } from "lib"; // Assuming phdSchemas contains the statuses
+import { phdSchemas } from "lib";
 
 const QUEUE_NAME = "proposalReminderQueue";
-const JOB_NAME = "hourlyProposalReminderCheck"; // Changed job name for clarity
-const HOURLY_CRON_PATTERN = "0 * * * *"; // Run every hour at the start of the hour
+const JOB_NAME = "twiceDailyProposalReminderCheck";
+const TWICE_DAILY_CRON_PATTERN = "30 11,23 * * *"; // 11:30 and 23:30 UTC (5 PM / 5 AM IST)
 
 type ReviewerRole = "supervisor" | "drc" | "dac";
 type TargetRole = ReviewerRole | "student";
@@ -26,12 +26,11 @@ export const proposalReminderQueue = new Queue(QUEUE_NAME, {
     defaultJobOptions: {
         attempts: 2,
         backoff: { type: "exponential", delay: 10000 },
-        removeOnComplete: { age: 3600 * 24 * 7 }, // Keep successful jobs for 7 days
-        removeOnFail: { age: 3600 * 24 * 14 }, // Keep failed jobs for 14 days
+        removeOnComplete: { age: 3600 * 24 * 7 },
+        removeOnFail: { age: 3600 * 24 * 14 },
     },
 });
 
-// Define reminder intervals relative to the deadline
 const REMINDER_INTERVALS = [
     { days: 5, hours: 0, minutes: 0, label: "T-5d" },
     { days: 2, hours: 0, minutes: 0, label: "T-2d" },
@@ -44,7 +43,7 @@ const REMINDER_INTERVALS = [
     { days: 0, hours: 0, minutes: 15, label: "T-15m" },
 ] as const;
 
-// Helper to calculate reminder times
+// --- Added definition ---
 const calculateReminderTime = (
     deadline: Date,
     interval: (typeof REMINDER_INTERVALS)[number]
@@ -56,7 +55,7 @@ const calculateReminderTime = (
     return reminderTime;
 };
 
-// Map status to the next expected action/deadline
+// --- Added definition ---
 const statusDeadlineMap: Record<
     (typeof phdSchemas.phdProposalStatuses)[number],
     { role: TargetRole; deadlineKey: keyof typeof deadlineColumnMap } | null
@@ -65,14 +64,12 @@ const statusDeadlineMap: Record<
     supervisor_review: { role: "supervisor", deadlineKey: "facultyReviewDate" },
     drc_review: { role: "drc", deadlineKey: "drcReviewDate" },
     dac_review: { role: "dac", deadlineKey: "dacReviewDate" },
-    // Reverted states might need reminders based on original deadlines, handled separately if needed
     supervisor_revert: {
         role: "student",
         deadlineKey: "studentSubmissionDate",
-    }, // Or maybe facultyReviewDate? Depends on process.
-    drc_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Or maybe drcReviewDate?
-    dac_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Or maybe dacReviewDate?
-    // Other states usually don't need deadline reminders
+    }, // Reverted proposals need student action before the original student deadline
+    drc_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Same logic
+    dac_revert: { role: "student", deadlineKey: "studentSubmissionDate" }, // Same logic
     dac_accepted: null,
     seminar_pending: null,
     finalising_documents: null,
@@ -82,6 +79,7 @@ const statusDeadlineMap: Record<
     draft_expired: null,
 };
 
+// --- Added definition ---
 const deadlineColumnMap = {
     studentSubmissionDate: phdProposalSemesters.studentSubmissionDate,
     facultyReviewDate: phdProposalSemesters.facultyReviewDate,
@@ -95,11 +93,11 @@ export const proposalReminderWorker = new Worker(
         if (job.name === JOB_NAME) {
             logger.info(`Running job: ${JOB_NAME}`);
             try {
-                await runHourlyReminderChecks();
+                await runTwiceDailyReminderChecks();
                 logger.info(`Finished job: ${JOB_NAME}`);
             } catch (error) {
                 logger.error(`Error during ${JOB_NAME}:`, error);
-                throw error; // Re-throw to let BullMQ handle retries/failure
+                throw error;
             }
         } else {
             logger.warn(`Unknown job name in ${QUEUE_NAME}: ${job.name}`);
@@ -108,10 +106,9 @@ export const proposalReminderWorker = new Worker(
     { connection: redisConfig, concurrency: 1 }
 );
 
-export async function scheduleHourlyProposalReminders() {
-    const jobKey = `${JOB_NAME}:::${JOB_NAME}::pattern:${HOURLY_CRON_PATTERN}`;
+export async function scheduleTwiceDailyProposalReminders() {
+    const jobKey = `${JOB_NAME}:::${JOB_NAME}::pattern:${TWICE_DAILY_CRON_PATTERN}`;
     try {
-        // Remove potentially existing job with the same key
         const repeatableJobs = await proposalReminderQueue.getRepeatableJobs();
         const existingJob = repeatableJobs.find((j) => j.key === jobKey);
         if (existingJob) {
@@ -129,42 +126,37 @@ export async function scheduleHourlyProposalReminders() {
         JOB_NAME,
         {},
         {
-            repeat: { pattern: HOURLY_CRON_PATTERN },
-            jobId: JOB_NAME, // Use a fixed jobId to prevent duplicates if scheduler restarts
-            removeOnComplete: true, // Keep job history minimal for recurring jobs
-            removeOnFail: { age: 3600 * 24 * 7 }, // Keep failed history for a week
+            repeat: { pattern: TWICE_DAILY_CRON_PATTERN },
+            jobId: JOB_NAME,
+            removeOnComplete: true,
+            removeOnFail: { age: 3600 * 24 * 7 },
         }
     );
     logger.info(
-        `Scheduled repeatable job: ${JOB_NAME} with pattern "${HOURLY_CRON_PATTERN}"`
+        `Scheduled repeatable job: ${JOB_NAME} with pattern "${TWICE_DAILY_CRON_PATTERN}"`
     );
 }
 
-async function runHourlyReminderChecks() {
-    logger.info(`[${JOB_NAME}] Starting hourly reminder checks.`);
+async function runTwiceDailyReminderChecks() {
+    logger.info(`[${JOB_NAME}] Starting twice-daily reminder checks.`);
     const now = new Date();
-    const currentHourStart = new Date(now);
-    currentHourStart.setMinutes(0, 0, 0);
-    const nextHourStart = new Date(currentHourStart);
-    nextHourStart.setHours(nextHourStart.getHours() + 1);
+    const checkStartTime = new Date(now);
+    const checkEndTime = new Date(now);
+    checkEndTime.setHours(checkEndTime.getHours() + 12);
 
     const potentiallyRelevantSemesters =
         await db.query.phdProposalSemesters.findMany({
-            // Fetch semesters whose deadlines might fall within a reasonable future window for reminders
             where: or(
-                gte(
-                    phdProposalSemesters.studentSubmissionDate,
-                    currentHourStart
-                ),
-                gte(phdProposalSemesters.facultyReviewDate, currentHourStart),
-                gte(phdProposalSemesters.drcReviewDate, currentHourStart),
-                gte(phdProposalSemesters.dacReviewDate, currentHourStart)
+                gte(phdProposalSemesters.studentSubmissionDate, checkStartTime),
+                gte(phdProposalSemesters.facultyReviewDate, checkStartTime),
+                gte(phdProposalSemesters.drcReviewDate, checkStartTime),
+                gte(phdProposalSemesters.dacReviewDate, checkStartTime)
             ),
         });
 
     if (potentiallyRelevantSemesters.length === 0) {
         logger.info(
-            `[${JOB_NAME}] No potentially relevant semester deadlines found.`
+            `[${JOB_NAME}] No potentially relevant semester deadlines found in the upcoming window.`
         );
         return;
     }
@@ -174,14 +166,15 @@ async function runHourlyReminderChecks() {
     );
 
     const emailsToSend: { to: string; subject: string; text: string }[] = [];
-    let drcConvenersCache: { email: string }[] | null = null; // Cache DRC convenors
+    let drcConvenersCache: { email: string }[] | null = null;
 
     for (const semester of potentiallyRelevantSemesters) {
-        for (const deadlineKey of Object.keys(deadlineColumnMap)) {
-            const deadlineDate = semester[
-                deadlineKey as keyof typeof semester
-            ] as Date | null;
-            if (!deadlineDate) continue;
+        // Corrected loop variable name
+        for (const deadlineKeyStr of Object.keys(deadlineColumnMap)) {
+            const deadlineKey =
+                deadlineKeyStr as keyof typeof deadlineColumnMap; // Type assertion
+            const deadlineDate = semester[deadlineKey];
+            if (!deadlineDate || deadlineDate < now) continue;
 
             for (const interval of REMINDER_INTERVALS) {
                 const reminderTime = calculateReminderTime(
@@ -189,20 +182,30 @@ async function runHourlyReminderChecks() {
                     interval
                 );
 
-                // Check if this reminder time falls within the current hour
-                if (
-                    reminderTime >= currentHourStart &&
-                    reminderTime < nextHourStart
-                ) {
+                if (reminderTime >= now && reminderTime < checkEndTime) {
+                    const timeDiffMillis =
+                        deadlineDate.getTime() - now.getTime();
+                    const intervalMillis =
+                        interval.days * 24 * 60 * 60 * 1000 +
+                        interval.hours * 60 * 60 * 1000 +
+                        interval.minutes * 60 * 1000;
+
+                    const toleranceMillis = 30 * 60 * 1000;
+                    if (
+                        Math.abs(timeDiffMillis - intervalMillis) >
+                        toleranceMillis
+                    ) {
+                        continue;
+                    }
+
                     logger.info(
                         `[${JOB_NAME}] Match found: ${interval.label} reminder for ${deadlineKey} (Deadline: ${deadlineDate.toISOString()}) should trigger now.`
                     );
 
-                    // Fetch proposals currently in the relevant status for this deadline
                     const targetStatusInfo = Object.entries(
                         statusDeadlineMap
                     ).find(([, v]) => v?.deadlineKey === deadlineKey);
-                    if (!targetStatusInfo || !targetStatusInfo[1]) continue; // No status directly maps to this deadline for reminders
+                    if (!targetStatusInfo || !targetStatusInfo[1]) continue;
 
                     const targetStatus =
                         targetStatusInfo[0] as (typeof phdSchemas.phdProposalStatuses)[number];
@@ -314,7 +317,6 @@ async function runHourlyReminderChecks() {
                                 proposalWithDac.dacMembers.map(
                                     (m) => m.dacMemberEmail
                                 );
-                            // Check who hasn't reviewed yet
                             const reviewsSubmitted = await db
                                 .select({
                                     dacMemberEmail:
@@ -371,8 +373,8 @@ async function runHourlyReminderChecks() {
                                         `- ${task.studentName} (ID: ${task.proposalId})`
                                 )
                                 .join("\n");
-                            const firstProposalId = tasks[0].proposalId; // Link to the first relevant proposal
-                            const link = `${environment.FRONTEND_URL}${linkPaths[targetRole]}${targetRole === "student" ? "" : firstProposalId}`; // Student link is general
+                            const firstProposalId = tasks[0].proposalId;
+                            const link = `${environment.FRONTEND_URL}${linkPaths[targetRole]}${targetRole === "student" ? "" : firstProposalId}`;
 
                             const subject = `Reminder: PhD Proposal Action Due Soon (${interval.label})`;
                             const body = `This is a reminder that action is required on one or more PhD proposals by ${deadlineDate.toLocaleString()}.\n\nPending Tasks:\n${taskList}\n\nPlease log in to the portal to take action:\n${link}\n\nThank you.`;
@@ -384,7 +386,7 @@ async function runHourlyReminderChecks() {
                             });
                         }
                     }
-                    break; // Only send one reminder type per deadline per hour cycle
+                    break;
                 }
             }
         }
@@ -404,15 +406,11 @@ async function runHourlyReminderChecks() {
                 `[${JOB_NAME}] Failed to send bulk reminder emails:`,
                 error
             );
-            // Don't re-throw here, let the job complete, log the error
         }
     } else {
-        logger.info(`[${JOB_NAME}] No reminders to send in this hourly check.`);
+        logger.info(`[${JOB_NAME}] No reminders to send in this check.`);
     }
 }
-
-// Ensure the worker is started and the initial repeatable job is scheduled in bin.ts or similar startup script
-// Example: scheduleHourlyProposalReminders(); // Call this once on application start
 
 proposalReminderWorker.on("failed", (job, err) => {
     logger.error(
@@ -423,3 +421,5 @@ proposalReminderWorker.on("failed", (job, err) => {
 proposalReminderWorker.on("error", (err) => {
     logger.error(`[${QUEUE_NAME}] Worker error: ${err.message}`, err);
 });
+
+
