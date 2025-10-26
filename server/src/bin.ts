@@ -5,7 +5,7 @@ import env from "./config/environment.ts";
 import logger from "./config/logger.ts";
 
 import {
-    scheduleTwiceDailyReminderScheduler,
+    scheduleReminderSchedulerJob,
     proposalReminderWorker,
 } from "./lib/jobs/proposalReminderJobs.ts";
 
@@ -13,7 +13,7 @@ import {
 proposalReminderWorker.on("error", (_error) => {});
 
 try {
-    scheduleTwiceDailyReminderScheduler().catch((_err) => {});
+    scheduleReminderSchedulerJob().catch((_err) => {});
 } catch (error: any) {}
 
 app.set("port", env.SERVER_PORT);

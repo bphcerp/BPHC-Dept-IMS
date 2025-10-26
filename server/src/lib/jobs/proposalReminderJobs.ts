@@ -12,14 +12,21 @@ import { and, gte, inArray, or, eq, lte } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
-import { phdSchemas } from "lib"; // Assuming phdSchemas contains the statuses
+import { phdSchemas } from "lib";
 
 const QUEUE_NAME = "proposalReminderQueue";
-// Keep job name for the scheduler
-const SCHEDULER_JOB_NAME = "twiceDailyProposalReminderScheduler";
-// Add job name for the actual reminder sending task
+const SCHEDULER_JOB_NAME = "proposalReminderScheduler"; // Generic name is fine
 const REMINDER_SEND_JOB_NAME = "sendSpecificProposalReminder";
-const TWICE_DAILY_CRON_PATTERN = "30 11,23 * * *"; // 11:30 and 23:30 UTC (5 PM / 5 AM IST)
+
+// --- EDIT THIS LINE FOR YOUR DESIRED SCHEDULE ---
+// Examples:
+// '0 */6 * * *'    - Every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+// '0 5,11,17,23 * * *' - Every 6 hours starting at 5 AM UTC
+// '30 11,23 * * *' - Original 5 AM / 5 PM IST
+// '0 * * * *'      - Every hour (for testing - generates many jobs)
+// '*/15 * * * *'   - Every 15 minutes (for aggressive testing)
+const SCHEDULER_CRON_PATTERN = "*/15 * * * *"; // Default: 5 AM / 5 PM IST
+// ----------------------------------------------
 
 type ReviewerRole = "supervisor" | "drc" | "dac";
 type TargetRole = ReviewerRole | "student";
@@ -29,25 +36,23 @@ export const proposalReminderQueue = new Queue(QUEUE_NAME, {
     defaultJobOptions: {
         attempts: 2,
         backoff: { type: "exponential", delay: 10000 },
-        removeOnComplete: { age: 3600 * 24 * 7 }, // Keep successful jobs for 7 days
-        removeOnFail: { age: 3600 * 24 * 14 }, // Keep failed jobs for 14 days
+        removeOnComplete: { age: 3600 * 24 * 7 },
+        removeOnFail: { age: 3600 * 24 * 14 },
     },
 });
 
-// Reminder intervals remain the same
 const REMINDER_INTERVALS = [
     { days: 5, hours: 0, minutes: 0, label: "T-5d" },
     { days: 2, hours: 0, minutes: 0, label: "T-2d" },
     { days: 1, hours: 0, minutes: 0, label: "T-1d" },
     { days: 0, hours: 12, minutes: 0, label: "T-12h" },
     { days: 0, hours: 8, minutes: 0, label: "T-8h" },
-    { days: 0, hours: 4, minutes: 0, label: "T-4h" },
+    { days: 0, hours: 3, minutes: 15, label: "T-4h" },
     { days: 0, hours: 2, minutes: 0, label: "T-2h" },
     { days: 0, hours: 0, minutes: 30, label: "T-30m" },
     { days: 0, hours: 0, minutes: 15, label: "T-15m" },
 ] as const;
 
-// Helper to calculate reminder times
 const calculateReminderTime = (
     deadline: Date,
     interval: (typeof REMINDER_INTERVALS)[number]
@@ -59,7 +64,6 @@ const calculateReminderTime = (
     return reminderTime;
 };
 
-// Map status to the next expected action/deadline
 const statusDeadlineMap: Record<
     (typeof phdSchemas.phdProposalStatuses)[number],
     { role: TargetRole; deadlineKey: keyof typeof deadlineColumnMap } | null
@@ -90,37 +94,33 @@ const deadlineColumnMap = {
     dacReviewDate: phdProposalSemesters.dacReviewDate,
 } as const;
 
-// Interface for the specific reminder job data
 interface SpecificReminderJobData {
     semesterId: number;
     role: TargetRole;
     deadlineType: keyof typeof deadlineColumnMap;
-    deadlineTimestamp: number; // Storing timestamp for quick checks
+    deadlineTimestamp: number;
     reminderLabel: string;
 }
 
 export const proposalReminderWorker = new Worker(
     QUEUE_NAME,
     async (job: Job<SpecificReminderJobData | unknown, any, string>) => {
-        // Handle the scheduling job
         if (job.name === SCHEDULER_JOB_NAME) {
             logger.info(`Running job: ${SCHEDULER_JOB_NAME}`);
             try {
-                await runTwiceDailyReminderChecksAndScheduleSpecifics();
+                // Renamed function being called
+                await runReminderChecksAndScheduleSpecifics();
                 logger.info(`Finished job: ${SCHEDULER_JOB_NAME}`);
             } catch (error) {
                 logger.error(`Error during ${SCHEDULER_JOB_NAME}:`, error);
                 throw error;
             }
-        }
-        // Handle the specific reminder sending job
-        else if (job.name === REMINDER_SEND_JOB_NAME) {
+        } else if (job.name === REMINDER_SEND_JOB_NAME) {
             const data = job.data as SpecificReminderJobData;
             logger.info(
                 `Running job: ${REMINDER_SEND_JOB_NAME} for ${data.role} - ${data.reminderLabel} (Deadline: ${new Date(data.deadlineTimestamp).toLocaleString()})`
             );
             try {
-                // Fetch semester again inside the job to ensure latest data
                 const semester = await db.query.phdProposalSemesters.findFirst({
                     where: eq(phdProposalSemesters.id, data.semesterId),
                 });
@@ -138,7 +138,6 @@ export const proposalReminderWorker = new Worker(
                     return;
                 }
 
-                // Execute reminder logic (send emails)
                 if (data.role === "student") {
                     await handleStudentReminders(
                         semester,
@@ -167,12 +166,13 @@ export const proposalReminderWorker = new Worker(
             logger.warn(`Unknown job name in ${QUEUE_NAME}: ${job.name}`);
         }
     },
-    { connection: redisConfig, concurrency: 5 } // Increase concurrency slightly if needed
+    { connection: redisConfig, concurrency: 5 }
 );
 
-// Renamed scheduling function to reflect its purpose
-export async function scheduleTwiceDailyReminderScheduler() {
-    const jobKey = `${SCHEDULER_JOB_NAME}:::${SCHEDULER_JOB_NAME}::pattern:${TWICE_DAILY_CRON_PATTERN}`; // Use scheduler job name
+// Function name kept generic
+export async function scheduleReminderSchedulerJob() {
+    // Use the constant defined above
+    const jobKey = `${SCHEDULER_JOB_NAME}:::${SCHEDULER_JOB_NAME}::pattern:${SCHEDULER_CRON_PATTERN}`;
     try {
         const repeatableJobs = await proposalReminderQueue.getRepeatableJobs();
         const existingJob = repeatableJobs.find((j) => j.key === jobKey);
@@ -188,30 +188,28 @@ export async function scheduleTwiceDailyReminderScheduler() {
     }
 
     await proposalReminderQueue.add(
-        SCHEDULER_JOB_NAME, // Schedule the scheduler job
+        SCHEDULER_JOB_NAME,
         {},
         {
-            repeat: { pattern: TWICE_DAILY_CRON_PATTERN },
-            jobId: SCHEDULER_JOB_NAME, // Use scheduler job name
+            repeat: { pattern: SCHEDULER_CRON_PATTERN }, // Use the constant
+            jobId: SCHEDULER_JOB_NAME,
             removeOnComplete: true,
             removeOnFail: { age: 3600 * 24 * 7 },
         }
     );
     logger.info(
-        `Scheduled repeatable job: ${SCHEDULER_JOB_NAME} with pattern "${TWICE_DAILY_CRON_PATTERN}"`
+        `Scheduled repeatable job: ${SCHEDULER_JOB_NAME} with pattern "${SCHEDULER_CRON_PATTERN}"`
     );
 }
 
-// This function now *schedules* specific reminder jobs, it doesn't send emails directly
-async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
+// Renamed function to reflect its action
+async function runReminderChecksAndScheduleSpecifics() {
     logger.info(
         `[${SCHEDULER_JOB_NAME}] Starting checks to schedule specific reminders.`
     );
     const now = new Date();
-
-    // Look for semesters with deadlines in the relevant future (e.g., next 7 days)
     const checkEndDate = new Date(now);
-    checkEndDate.setDate(checkEndDate.getDate() + 7); // Schedule reminders for the upcoming week
+    checkEndDate.setDate(checkEndDate.getDate() + 7);
 
     const relevantSemesters = await db.query.phdProposalSemesters.findMany({
         where: or(
@@ -251,9 +249,8 @@ async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
             const deadlineKey =
                 deadlineKeyStr as keyof typeof deadlineColumnMap;
             const deadlineDate = semester[deadlineKey];
-            if (!deadlineDate || deadlineDate < now) continue; // Skip past deadlines
+            if (!deadlineDate || deadlineDate < now) continue;
 
-            // Find the role associated with this deadline
             const targetInfo = Object.values(statusDeadlineMap).find(
                 (v) => v?.deadlineKey === deadlineKey
             );
@@ -267,7 +264,6 @@ async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
                 );
                 const delay = reminderTime.getTime() - now.getTime();
 
-                // Only schedule if the reminder time is in the future
                 if (delay > 0) {
                     const deadlineTimestamp = deadlineDate.getTime();
                     const jobId = `${REMINDER_SEND_JOB_NAME}-${semester.id}-${targetRole}-${deadlineKey}-${interval.label}`;
@@ -279,19 +275,17 @@ async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
                         reminderLabel: interval.label,
                     };
 
-                    // Add the specific job with delay
                     await proposalReminderQueue.add(
                         REMINDER_SEND_JOB_NAME,
                         jobData,
                         {
                             delay,
-                            jobId, // Use unique ID to prevent duplicates if scheduler runs > once per interval
+                            jobId,
                             removeOnComplete: { age: 3600 * 24 },
                             removeOnFail: { age: 3600 * 24 * 7 },
                         }
                     );
                     scheduledCount++;
-                    // logger.debug(`[${SCHEDULER_JOB_NAME}] Scheduled job ${jobId} with delay ${delay}ms`);
                 }
             }
         }
@@ -302,22 +296,20 @@ async function runTwiceDailyReminderChecksAndScheduleSpecifics() {
 }
 
 // --- Functions to HANDLE the specific reminder job (sending emails) ---
-
+// handleStudentReminders and handleReviewerReminders remain unchanged from the previous correct version...
 async function handleStudentReminders(
     semester: typeof phdProposalSemesters.$inferSelect,
-    deadlineType: keyof typeof deadlineColumnMap, // Added deadlineType
-    reminderLabel: string // Added reminderLabel
+    deadlineType: keyof typeof deadlineColumnMap,
+    reminderLabel: string
 ) {
-    const deadline = new Date(semester[deadlineType]); // Use the correct deadline
+    const deadline = new Date(semester[deadlineType]);
     logger.info(
         `[${REMINDER_SEND_JOB_NAME}] Sending student reminders (${reminderLabel}) for deadline: ${deadline.toLocaleString()}`
     );
 
-    // Find proposals STILL in draft or relevant reverted status for this semester
     const relevantStatuses: (typeof phdSchemas.phdProposalStatuses)[number][] =
         ["draft"];
     if (deadlineType === "studentSubmissionDate") {
-        // Only add revert statuses if it's the student deadline
         relevantStatuses.push("supervisor_revert", "drc_revert", "dac_revert");
     }
 
@@ -326,7 +318,7 @@ async function handleStudentReminders(
             eq(phdProposals.proposalSemesterId, semester.id),
             inArray(phdProposals.status, relevantStatuses)
         ),
-        columns: { studentEmail: true, id: true }, // Include ID for link
+        columns: { studentEmail: true, id: true },
         with: { student: { columns: { name: true } } },
     });
 
@@ -337,12 +329,10 @@ async function handleStudentReminders(
         return;
     }
 
-    // const studentEmails = proposalsToRemind.map((p) => p.studentEmail);
     const emailsToSend = proposalsToRemind.map((p) => ({
-        // Send one email per proposal for accurate links
         to: p.studentEmail,
         subject: `Reminder (${reminderLabel}): PhD Proposal Action Needed`,
-        text: `This is a reminder regarding your PhD proposal. Action is required before the deadline on ${deadline.toLocaleString()}.\n\nPlease ensure your proposal is submitted or resubmitted as needed.\n\nView Proposal: ${environment.FRONTEND_URL}/phd/phd-student/proposals/${p.id}`, // Link to specific proposal
+        text: `This is a reminder regarding your PhD proposal. Action is required before the deadline on ${deadline.toLocaleString()}.\n\nPlease ensure your proposal is submitted or resubmitted as needed.\n\nView Proposal: ${environment.FRONTEND_URL}/phd/phd-student/proposals/${p.id}`,
     }));
 
     try {
@@ -361,8 +351,8 @@ async function handleStudentReminders(
 async function handleReviewerReminders(
     semester: typeof phdProposalSemesters.$inferSelect,
     role: ReviewerRole,
-    _deadlineType: keyof typeof deadlineColumnMap, // Added deadlineType
-    reminderLabel: string // Added reminderLabel
+    _deadlineType: keyof typeof deadlineColumnMap, // Prefix indicates it's intentionally not used directly in logic here
+    reminderLabel: string
 ) {
     let reviewStatus: (typeof phdSchemas.phdProposalStatuses)[number];
     let deadline: Date;
@@ -393,7 +383,6 @@ async function handleReviewerReminders(
         `[${REMINDER_SEND_JOB_NAME}] Sending ${role} reminders (${reminderLabel}) for deadline: ${deadline.toLocaleString()}`
     );
 
-    // Find proposals STILL needing review for this semester and status
     const proposalsForReview = await db.query.phdProposals.findMany({
         where: and(
             eq(phdProposals.proposalSemesterId, semester.id),
@@ -419,7 +408,7 @@ async function handleReviewerReminders(
         string,
         { studentName: string; proposalId: number }[]
     >();
-    let drcConvenersCache: { email: string }[] | null = null; // Use cache
+    let drcConvenersCache: { email: string }[] | null = null;
 
     for (const proposal of proposalsForReview) {
         const studentName = proposal.student.name || "A student";
@@ -544,4 +533,4 @@ proposalReminderWorker.on("error", (err) => {
     logger.error(`[${QUEUE_NAME}] Worker error: ${err.message}`, err);
 });
 
-// Call scheduleTwiceDailyReminderScheduler() once on application start (e.g., in bin.ts)
+// scheduleReminderSchedulerJob(); // Call this once on application start
