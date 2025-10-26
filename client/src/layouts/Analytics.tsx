@@ -17,6 +17,12 @@ const AnalyticsLayout = () => {
                 url: "/analytics/publications",
                 requiredPermissions: [permissions["/analytics/publications"]],
               },
+              {
+                title: "Publications Multi-graph",
+                icon: <LibraryBig />,
+                url: "/analytics/publications2",
+                requiredPermissions: [permissions["/analytics/publications"]],
+              },
             ],
           },
         ]}
