@@ -7973,7 +7973,8 @@
         "dac_accepted",
         "seminar_pending",
         "finalising_documents",
-        "completed"
+        "completed",
+        "draft_expired"
       ]
     },
     "public.drc_assignment_status": {
