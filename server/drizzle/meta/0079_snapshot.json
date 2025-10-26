@@ -5715,7 +5715,7 @@
           "primaryKey": false,
           "notNull": false,
           "generated": {
-            "as": "CASE WHEN status IN('deleted', 'completed', 'draft_expired', 'rejected')THEN NULL ELSE true END",
+            "as": "CASE WHEN status IN('deleted', 'completed',  'rejected')THEN NULL ELSE true END",
             "type": "stored"
           }
         }
@@ -7973,8 +7973,7 @@
         "dac_accepted",
         "seminar_pending",
         "finalising_documents",
-        "completed",
-        "draft_expired"
+        "completed"
       ]
     },
     "public.drc_assignment_status": {
