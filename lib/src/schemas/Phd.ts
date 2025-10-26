@@ -16,11 +16,10 @@ export const phdExamApplicationStatuses = [
     "resubmit",
 ] as const;
 
-// Added "rejected" status for explicit rejection by DRC
 export const phdProposalStatuses = [
     "draft",
-    "deleted", // User deleted
-    "rejected", // DRC explicitly rejected
+    "deleted",
+    "rejected", 
     "supervisor_review",
     "supervisor_revert",
     "drc_review",
@@ -31,7 +30,7 @@ export const phdProposalStatuses = [
     "seminar_pending",
     "finalising_documents",
     "completed",
-    "draft_expired", // System expired draft
+    "draft_expired", 
 ] as const;
 
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
