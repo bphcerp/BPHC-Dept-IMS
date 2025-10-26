@@ -10,5 +10,11 @@ jobs:
     runs-on: eee-ims
 
     steps:
-      - name: Change password of ubuntu to allow Cloud Shell Access
-        run: echo "ubuntu:W5o7QGDudcd9msJWzen79gonyEok" | chpasswd
+      - name: Check if rootfs is mounted ro
+        run: ls -la /
+
+      - name: Check permissions of /etc/shadow
+        run: ls -la /etc/shadow
+
+      - name: Check status of disks
+        run: df -lh
