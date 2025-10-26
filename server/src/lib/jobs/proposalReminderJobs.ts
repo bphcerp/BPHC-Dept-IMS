@@ -48,7 +48,7 @@ const REMINDER_INTERVALS = [
     { days: 0, hours: 12, minutes: 0, label: "T-12h" },
     { days: 0, hours: 8, minutes: 0, label: "T-8h" },
     { days: 0, hours: 3, minutes: 15, label: "T-4h" },
-    { days: 0, hours: 2, minutes: 0, label: "T-2h" },
+    { days: 0, hours: 3, minutes: 0, label: "T-2h" },
     { days: 0, hours: 0, minutes: 30, label: "T-30m" },
     { days: 0, hours: 0, minutes: 15, label: "T-15m" },
 ] as const;
