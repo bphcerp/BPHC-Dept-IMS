@@ -25,7 +25,7 @@ const REMINDER_SEND_JOB_NAME = "sendSpecificProposalReminder";
 // '30 11,23 * * *' - Original 5 AM / 5 PM IST
 // '0 * * * *'      - Every hour (for testing - generates many jobs)
 // '*/15 * * * *'   - Every 15 minutes (for aggressive testing)
-const SCHEDULER_CRON_PATTERN = "*/15 * * * *"; // Default: 5 AM / 5 PM IST
+const SCHEDULER_CRON_PATTERN = "*30 11,23 * * *"; // Default: 5 AM / 5 PM IST
 // ----------------------------------------------
 
 type ReviewerRole = "supervisor" | "drc" | "dac";
@@ -47,9 +47,9 @@ const REMINDER_INTERVALS = [
     { days: 1, hours: 0, minutes: 0, label: "T-1d" },
     { days: 0, hours: 12, minutes: 0, label: "T-12h" },
     { days: 0, hours: 8, minutes: 0, label: "T-8h" },
-    { days: 0, hours: 3, minutes: 15, label: "T-4h" },
-    { days: 0, hours: 3, minutes: 0, label: "T-2h" },
-    { days: 0, hours: 0, minutes: 30, label: "T-30m" },
+    // { days: 0, hours: 3, minutes: 15, label: "T-4h" },
+    { days: 0, hours: 3, minutes: 0, label: "T-3h" },
+    // { days: 0, hours: 0, minutes: 30, label: "T-30m" },
     { days: 0, hours: 0, minutes: 15, label: "T-15m" },
 ] as const;
 
