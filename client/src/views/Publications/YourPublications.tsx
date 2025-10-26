@@ -391,7 +391,7 @@ const PublicationsView = () => {
                             }
                           >
                             <Archive className="mr-1 h-4 w-4" />
-                            Archive
+                            Not affiliated with BITS
                           </Button>
                           {/* Approve with comments dialog */}
                           <Dialog>
