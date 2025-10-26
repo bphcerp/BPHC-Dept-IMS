@@ -1,20 +1,18 @@
 import express from "express";
-import { z } from "zod";
 import db from "@/config/db/index.ts";
 import { qpReviewRequests } from "@/config/db/schema/qp.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import logger from "@/config/logger.ts";
-import { createRequestSchema } from "node_modules/lib/src/schemas/Qp.ts";
+import { qpSchemas } from "lib";
 
 const router = express.Router();
-
 
 router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const result = createRequestSchema.safeParse(req.body);
+        const result = qpSchemas.createRequestSchema.safeParse(req.body);
         if (!result.success) {
             res.status(400).json({
                 success: false,
