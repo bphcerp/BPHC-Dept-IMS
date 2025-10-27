@@ -73,4 +73,6 @@ COPY --chown=node:node ./server/drizzle.config.ts ./server/drizzle.config.ts
 
 RUN pnpm --filter server run build
 
-CMD ["pnpm", "--filter", "server", "start"]
+WORKDIR /usr/local/app/server
+
+CMD ["pnpm", "start"]
