@@ -363,7 +363,7 @@ const SeminarScheduling: React.FC = () => {
           <CardTitle>Create New Seminar Slots</CardTitle>
           <CardDescription>
             Define a date range, venue, time range, and duration to generate
-            slots. Weekends are skipped.
+            slots.
           </CardDescription>
         </CardHeader>
         <CardContent>
