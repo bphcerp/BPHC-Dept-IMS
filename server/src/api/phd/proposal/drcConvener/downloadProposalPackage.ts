@@ -1,3 +1,4 @@
+// server/src/api/phd/proposal/drcConvener/downloadProposalPackage.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -22,6 +23,7 @@ const ImageModule = require("docxtemplater-image-module-free");
 const execAsync = promisify(exec);
 
 const convertDocxToPdf = async (docxPath: string, outputDir: string) => {
+    // Added space before ${docxPath}
     const command = `libreoffice --headless --nologo --convert-to pdf --outdir ${outputDir} ${docxPath}`;
     try {
         await execAsync(command);
@@ -106,21 +108,22 @@ router.post(
             }),
         ]);
 
-        // --- NEW: Image Store Map ---
-        // This map will hold all our image buffers, referenced by simple string keys.
         const imageStore = new Map<string, Buffer>();
         imageStore.set("checked", checkedImageBuffer);
-        imageStore.set("unchecked", transparentPixelBuffer); // Use transparent pixel for unchecked/null states
+        imageStore.set("unchecked", transparentPixelBuffer);
 
         const drcSignatureBuffer = drcUser?.signatureFile
             ? await fs
                   .readFile(drcUser.signatureFile.filePath)
                   .catch(() => null)
             : null;
-
         if (drcSignatureBuffer) {
             imageStore.set("drc_signature_key", drcSignatureBuffer);
         }
+
+        // Helper to map boolean OR string to 'checked' or 'unchecked'
+        const getBoxKey = (condition: boolean) =>
+            condition ? "checked" : "unchecked";
 
         try {
             for (const proposal of proposalsToPackage) {
@@ -133,7 +136,6 @@ router.post(
                 if (!studentFolder)
                     throw new Error("Could not create student folder in zip.");
 
-                // Add student proposal files to the zip
                 const filesToInclude = [
                     { name: "1_Appendix_I.pdf", file: proposal.appendixFile },
                     { name: "2_Summary.pdf", file: proposal.summaryFile },
@@ -151,6 +153,7 @@ router.post(
                         file: proposal.outsideSupervisorBiodataFile,
                     },
                 ];
+
                 for (const fileData of filesToInclude) {
                     if (fileData.file) {
                         try {
@@ -168,10 +171,9 @@ router.post(
 
                 for (const review of proposal.dacReviews) {
                     if (review.reviewForm) {
-                        const formData = review.reviewForm
-                            .formData as phdSchemas.DacReviewFormData;
+                        // Cast to 'any' to handle both old (boolean) and new (string) formats
+                        const formData = review.reviewForm.formData as any;
 
-                        // Load DAC signature and add to the image store with a unique key for this review
                         const dacSignatureBuffer = review.dacMember
                             .signatureFile
                             ? await fs
@@ -185,9 +187,7 @@ router.post(
                             imageStore.set(dacSignatureKey, dacSignatureBuffer);
                         }
 
-                        const getBoxKey = (condition: boolean) =>
-                            condition ? "checked" : "unchecked";
-
+                        // --- BACKWARD-COMPATIBLE MAPPING ---
                         const templateData = {
                             department_name:
                                 environment.DEPARTMENT_NAME ||
@@ -199,8 +199,6 @@ router.post(
                             student_name: proposal.student.name,
                             student_id: proposal.student.idNumber || "N/A",
                             supervisor_name: proposal.supervisor.name,
-
-                            // MODIFIED: Pass string keys instead of buffers
                             drc_signature: drcSignatureBuffer
                                 ? "drc_signature_key"
                                 : "unchecked",
@@ -208,62 +206,166 @@ router.post(
                                 ? dacSignatureKey
                                 : "unchecked",
 
-                            q1a_yes_box: getBoxKey(formData.q1a),
-                            q1a_no_box: getBoxKey(!formData.q1a),
-                            q1b_yes_box: getBoxKey(formData.q1b),
-                            q1b_no_box: getBoxKey(!formData.q1b),
-                            q1c_yes_box: getBoxKey(formData.q1c),
-                            q1c_no_box: getBoxKey(!formData.q1c),
-                            q2a_yes_box: getBoxKey(formData.q2a),
-                            q2a_no_box: getBoxKey(!formData.q2a),
-                            q2b_yes_box: getBoxKey(formData.q2b),
-                            q2b_no_box: getBoxKey(!formData.q2b),
-                            q2c_yes_box: getBoxKey(formData.q2c),
-                            q2c_no_box: getBoxKey(!formData.q2c),
-                            q3a_yes_box: getBoxKey(formData.q3a),
-                            q3a_no_box: getBoxKey(!formData.q3a),
-                            q3b_yes_box: getBoxKey(formData.q3b),
-                            q3b_no_box: getBoxKey(!formData.q3b),
-                            q3c_yes_box: getBoxKey(formData.q3c),
-                            q3c_no_box: getBoxKey(!formData.q3c),
-                            q4a_yes_box: getBoxKey(formData.q4a),
-                            q4a_no_box: getBoxKey(!formData.q4a),
-                            q4b_yes_box: getBoxKey(formData.q4b),
-                            q4b_no_box: getBoxKey(!formData.q4b),
-                            q4c_yes_box: getBoxKey(formData.q4c),
-                            q4c_no_box: getBoxKey(!formData.q4c),
-                            q4d_yes_box: getBoxKey(formData.q4d),
-                            q4d_no_box: getBoxKey(!formData.q4d),
-                            q4e_yes_box: getBoxKey(formData.q4e),
-                            q4e_no_box: getBoxKey(!formData.q4e),
-                            q4f_yes_box: getBoxKey(formData.q4f),
-                            q4f_no_box: getBoxKey(!formData.q4f),
-                            q4g_yes_box: getBoxKey(formData.q4g),
-                            q4g_no_box: getBoxKey(!formData.q4g),
-                            q5a_yes_box: getBoxKey(formData.q5a),
-                            q5a_no_box: getBoxKey(!formData.q5a),
-                            q5b_yes_box: getBoxKey(formData.q5b),
-                            q5b_no_box: getBoxKey(!formData.q5b),
-                            q5c_yes_box: getBoxKey(formData.q5c),
-                            q5c_no_box: getBoxKey(!formData.q5c),
+                            // Q1: Check for new string "yes" OR old boolean true
+                            q1a_yes_box: getBoxKey(
+                                formData.q1a === "yes" || formData.q1a === true
+                            ),
+                            q1a_no_box: getBoxKey(
+                                formData.q1a === "no" || formData.q1a === false
+                            ),
+                            q1b_yes_box: getBoxKey(
+                                formData.q1b === "yes" || formData.q1b === true
+                            ),
+                            q1b_no_box: getBoxKey(
+                                formData.q1b === "no" || formData.q1b === false
+                            ),
+                            q1c_yes_box: getBoxKey(
+                                formData.q1c === "yes" || formData.q1c === true
+                            ),
+                            q1c_no_box: getBoxKey(
+                                formData.q1c === "no" || formData.q1c === false
+                            ),
                             q1d_product_box: getBoxKey(
-                                formData.q1d.includes("product")
+                                formData.q1d?.includes("product")
                             ),
                             q1d_process_box: getBoxKey(
-                                formData.q1d.includes("process")
+                                formData.q1d?.includes("process")
                             ),
                             q1d_frontier_box: getBoxKey(
-                                formData.q1d.includes("frontier")
+                                formData.q1d?.includes("frontier")
+                            ),
+
+                            // Q2
+                            q2a_yes_box: getBoxKey(
+                                formData.q2a === "yes" || formData.q2a === true
+                            ),
+                            q2a_no_box: getBoxKey(
+                                formData.q2a === "no" || formData.q2a === false
+                            ),
+                            q2b_yes_box: getBoxKey(
+                                formData.q2b === "yes" || formData.q2b === true
+                            ),
+                            q2b_no_box: getBoxKey(
+                                formData.q2b === "no" || formData.q2b === false
+                            ),
+                            q2c_yes_box: getBoxKey(
+                                formData.q2c === "yes" || formData.q2c === true
+                            ),
+                            q2c_no_box: getBoxKey(
+                                formData.q2c === "no" || formData.q2c === false
                             ),
                             q2d_improve_box: getBoxKey(
-                                formData.q2d.includes("improve")
+                                formData.q2d?.includes("improve")
                             ),
                             q2d_academic_box: getBoxKey(
-                                formData.q2d.includes("academic")
+                                formData.q2d?.includes("academic")
                             ),
                             q2d_industry_box: getBoxKey(
-                                formData.q2d.includes("industry")
+                                formData.q2d?.includes("industry")
                             ),
+
+                            // Q3
+                            q3a_yes_box: getBoxKey(
+                                formData.q3a === "yes" || formData.q3a === true
+                            ),
+                            q3a_no_box: getBoxKey(
+                                formData.q3a === "no" || formData.q3a === false
+                            ),
+                            q3b_yes_box: getBoxKey(
+                                formData.q3b === "yes" || formData.q3b === true
+                            ),
+                            q3b_no_box: getBoxKey(
+                                formData.q3b === "no" || formData.q3b === false
+                            ),
+                            q3c_yes_box: getBoxKey(
+                                formData.q3c === "yes" || formData.q3c === true
+                            ),
+                            q3c_no_box: getBoxKey(
+                                formData.q3c === "no" || formData.q3c === false
+                            ),
+
+                            // Q4
+                            q4a_yes_box: getBoxKey(
+                                formData.q4a === "yes" || formData.q4a === true
+                            ),
+                            q4a_no_box: getBoxKey(
+                                formData.q4a === "no" || formData.q4a === false
+                            ),
+                            q4b_yes_box: getBoxKey(
+                                formData.q4b === "yes" || formData.q4b === true
+                            ),
+                            q4b_no_box: getBoxKey(
+                                formData.q4b === "no" || formData.q4b === false
+                            ),
+                            q4b_notapp_box: getBoxKey(
+                                formData.q4b === "notapp"
+                            ),
+                            q4c_yes_box: getBoxKey(
+                                formData.q4c === "yes" || formData.q4c === true
+                            ),
+                            q4c_no_box: getBoxKey(
+                                formData.q4c === "no" || formData.q4c === false
+                            ),
+                            q4c_notiden_box: getBoxKey(
+                                formData.q4c === "notiden"
+                            ),
+                            q4c_noapp_box: getBoxKey(formData.q4c === "noapp"),
+                            q4d_yes_box: getBoxKey(
+                                formData.q4d === "yes" || formData.q4d === true
+                            ),
+                            q4d_no_box: getBoxKey(
+                                formData.q4d === "no" || formData.q4d === false
+                            ),
+                            q4d_notyet_box: getBoxKey(
+                                formData.q4d === "notyet"
+                            ),
+                            q4d_notapp_box: getBoxKey(
+                                formData.q4d === "notapp"
+                            ),
+                            q4e_yes_box: getBoxKey(
+                                formData.q4e === "yes" || formData.q4e === true
+                            ),
+                            q4e_no_box: getBoxKey(
+                                formData.q4e === "no" || formData.q4e === false
+                            ),
+                            q4f_yes_box: getBoxKey(
+                                formData.q4f === "yes" || formData.q4f === true
+                            ),
+                            q4f_judge_box: getBoxKey(formData.q4f === "judge"),
+                            q4f_notapp_box: getBoxKey(
+                                formData.q4f === "notapp"
+                            ),
+                            q4g_yes_box: getBoxKey(
+                                formData.q4g === "yes" || formData.q4g === true
+                            ),
+                            q4g_no_box: getBoxKey(
+                                formData.q4g === "no" || formData.q4g === false
+                            ),
+
+                            // Q5
+                            q5a_yes_box: getBoxKey(
+                                formData.q5a === "yes" || formData.q5a === true
+                            ),
+                            q5a_no_box: getBoxKey(
+                                formData.q5a === "no" || formData.q5a === false
+                            ),
+                            q5b_yes_box: getBoxKey(
+                                formData.q5b === "yes" || formData.q5b === true
+                            ),
+                            q5b_no_box: getBoxKey(
+                                formData.q5b === "no" || formData.q5b === false
+                            ),
+                            q5b_partially_box: getBoxKey(
+                                formData.q5b === "partially"
+                            ),
+                            q5c_yes_box: getBoxKey(
+                                formData.q5c === "yes" || formData.q5c === true
+                            ),
+                            q5c_no_box: getBoxKey(
+                                formData.q5c === "no" || formData.q5c === false
+                            ),
+
+                            // Q6
                             q6_accepted_box: getBoxKey(
                                 formData.q6 === "accepted"
                             ),
@@ -271,9 +373,12 @@ router.post(
                             q6_revision_box: getBoxKey(
                                 formData.q6 === "revision"
                             ),
-                            q7_reasons: formData.q7_reasons,
+
+                            // Q7 & Q8
+                            q7_reasons: formData.q7_reasons || "", // Handle potentially undefined
                             q8_comments: formData.q8_comments || "",
                         };
+                        // --- END OF MAPPING ---
 
                         const imageModule = new ImageModule({
                             centered: false,
@@ -284,10 +389,8 @@ router.post(
                                 tag: string,
                                 _value: unknown
                             ): [number, number] => {
-                                if (tag.includes("signature")) {
-                                    return [150, 50]; 
-                                }
-                                return [12, 12]; 
+                                if (tag.includes("signature")) return [150, 50];
+                                return [12, 12];
                             },
                         });
 
@@ -336,7 +439,6 @@ router.post(
                 );
 
             const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
-
             res.setHeader("Content-Type", "application/zip");
             res.setHeader(
                 "Content-Disposition",
