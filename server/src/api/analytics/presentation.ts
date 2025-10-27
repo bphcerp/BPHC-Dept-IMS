@@ -5,10 +5,9 @@ import * as PptxGenJSImport from "pptxgenjs";
 const PptxGenJS = (PptxGenJSImport as any).default || PptxGenJSImport;
 import { imageUpload } from "@/config/multer.ts";
 
-const app = express();
-app.use(express.json({ limit: "50mb" }));
+const router = express.Router();
 
-app.post(
+router.post(
     "/",
     checkAccess(),
     imageUpload.fields([{ name: "image" }]),
@@ -26,18 +25,15 @@ app.post(
 
             const pptx = new PptxGenJS();
 
-            pptx.addSlide().addText(
-                title,
-                {
-                    x: 0,
-                    y: 1,
-                    w: "100%",
-                    h: 2,
-                    align: "center",
-                    color: "0088CC",
-                    fontSize: 48,
-                },
-            );
+            pptx.addSlide().addText(title, {
+                x: 0,
+                y: 1,
+                w: "100%",
+                h: 2,
+                align: "center",
+                color: "0088CC",
+                fontSize: 48,
+            });
 
             for (const file of files.image) {
                 const slide = pptx.addSlide();
@@ -56,11 +52,11 @@ app.post(
 
             res.setHeader(
                 "Content-Disposition",
-                'attachment; filename="presentation.pptx"',
+                'attachment; filename="presentation.pptx"'
             );
             res.setHeader(
                 "Content-Type",
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation"
             );
 
             res.send(buffer);
@@ -68,9 +64,7 @@ app.post(
             console.error(err);
             res.status(500).send("Failed to create presentation");
         }
-    }),
+    })
 );
 
-app.listen(3000, () => console.log("Server running on port 3000"));
-
-export default app;
+export default router;
