@@ -117,6 +117,7 @@ import AssignGradesView from "@/views/Grades/AssignGrades";
 import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
+import PresentationCreator from "@/views/Analytics/Presentation";
 import PublicationsAnalytics2 from "@/views/Analytics/Publications2";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
@@ -807,6 +808,10 @@ const Routing = () => {
                   <Route
                     path="publications"
                     element={<PublicationsAnalytics />}
+                  />
+                  <Route
+                    path="presentation"
+                    element={<PresentationCreator />}
                   />
                   <Route
                     path="publications2"

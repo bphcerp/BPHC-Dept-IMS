@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { LibraryBig } from "lucide-react";
+import { LibraryBig, Presentation } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
@@ -25,6 +25,17 @@ const AnalyticsLayout = () => {
               },
             ],
           },
+          {
+            title: "Create Slides",
+            items: [
+              {
+                title: "Generate Presentation",
+                icon: <Presentation />,
+                url: "/analytics/presentation",
+                requiredPermissions: [permissions["/analytics/publications"]],
+              }
+            ]
+          }
         ]}
       />
       <Outlet />
