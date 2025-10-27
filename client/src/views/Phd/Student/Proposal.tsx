@@ -448,7 +448,7 @@ const StudentProposal: React.FC = () => {
                               title="Preview and Final Submit"
                               disabled={fetchProposalDetailsMutation.isLoading}
                             >
-                              <Eye className="mr-2 h-4 w-4" /> Preview
+                              <Eye className="mr-2 h-4 w-4" /> Preview and submit
                             </Button>
                           </>
                         )}
