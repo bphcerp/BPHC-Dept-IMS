@@ -433,7 +433,7 @@ const DrcProposalManagement: React.FC = () => {
     ["seminar_pending", "dac_accepted"].includes(p.status)
   );
   const canDownloadForms = selectedProposals.some((p) =>
-    ["finalising_documents", "completed", "dac_accepted"].includes(p.status)
+    ["finalising_documents", "completed"].includes(p.status)
   );
   const canGenerateNotice = selectedProposals.some((p) =>
     ["finalising_documents", "completed"].includes(p.status)
@@ -662,7 +662,7 @@ const DrcProposalManagement: React.FC = () => {
               size="sm"
               title={
                 !canDownloadForms
-                  ? "Select proposals with 'Finalising Documents', 'Completed' or 'Dac accepted' status"
+                  ? "Select proposals with 'Finalising Documents' or 'Completed' status"
                   : "Download forms"
               }
             >
