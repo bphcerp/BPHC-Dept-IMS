@@ -12,6 +12,14 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import multer from "multer";
 import fs from "fs/promises";
 
+const removeFileIfExists = async (path: string) => {
+    try {
+        await fs.unlink(path);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException)?.code !== "ENOENT") throw error;
+    }
+};
+
 export const getProfileImage = async (email: string) => {
     const user = await getUserDetails(email);
     if (!user?.profileFileId) {
@@ -68,7 +76,7 @@ export const updateProfileImage = async (
                 .delete(files)
                 .where(eq(files.id, user.profileFileId!))
                 .returning();
-            if (deleted.length) await fs.unlink(deleted[0].filePath);
+            if (deleted.length) await removeFileIfExists(deleted[0].filePath);
         });
     }
     await db
@@ -94,7 +102,7 @@ export const deleteProfileImage = async (email: string) => {
                 .update(toUpdate)
                 .set({ profileFileId: null })
                 .where(eq(toUpdate.email, user.email));
-            await fs.unlink(deleted[0].filePath);
+            await removeFileIfExists(deleted[0].filePath);
         }
     });
 };
