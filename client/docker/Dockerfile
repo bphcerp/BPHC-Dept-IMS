@@ -1,23 +1,18 @@
-FROM node:20-alpine
-WORKDIR /usr/local/app
-
-COPY ./lib ./lib
+FROM node:22.21-alpine
 
 RUN npm install -g pnpm
 
-WORKDIR /usr/local/app/client
-
-COPY ./client/package.json ./
-COPY ./server/tsconfig*.json ./
-
 WORKDIR /usr/local/app
+
+COPY ./client/package.json ./client/
+COPY ./client/tsconfig*.json ./client/
+
+COPY ./lib/package.json ./lib/
 COPY ./pnpm-lock.yaml ./
 COPY ./pnpm-workspace.yaml ./
-RUN pnpm install -r
 
-WORKDIR /usr/local/app/client
-COPY . .
+RUN pnpm install -r
 
 EXPOSE 5173
 
-CMD ["pnpm", "dev", "--host"]
+CMD ["pnpm", "--filter", "client", "dev", "--host"]

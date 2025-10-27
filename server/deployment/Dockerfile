@@ -1,8 +1,10 @@
-FROM node:22.15-slim
+FROM node:22.21-slim
 
 ENV NODE_ENV=development
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
+
+RUN npm install -g pnpm
 
 RUN apt update && apt install -y --no-install-recommends \
     fonts-liberation \
@@ -34,10 +36,8 @@ RUN apt update && apt install -y --no-install-recommends \
 
 WORKDIR /usr/local/app
 
-COPY ./lib ./lib
+COPY ./lib/package.json ./lib/
 COPY ./patches ./patches
-
-RUN npm install -g pnpm
 
 WORKDIR /usr/local/app/server
 
@@ -49,8 +49,9 @@ WORKDIR /usr/local/app
 COPY ./package.json ./
 COPY ./pnpm-lock.yaml ./
 COPY ./pnpm-workspace.yaml ./
+
 RUN pnpm install -r
 
 WORKDIR /usr/local/app/server
 
-CMD ["pnpm", "tsx", "watch", "--clear-screen=false", "src/bin.ts"]
+CMD ["pnpm", "--filter", "server", "run", "dev"]
