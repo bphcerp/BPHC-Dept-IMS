@@ -1,8 +1,10 @@
-FROM node:22.15-slim
+FROM node:22.21-slim
 
 ENV NODE_ENV=production
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH="/usr/bin/chromium"
+
+RUN npm install -g pnpm
 
 RUN apt update && apt install -y --no-install-recommends \
     fonts-liberation \
@@ -38,7 +40,6 @@ WORKDIR /usr/local/app
 
 RUN chown -R node /usr/local/app
 RUN chgrp -R node /usr/local/app
-RUN npm install -g pnpm
 
 RUN mkdir -p /usr/local/app/server/files && chown -R node:node /usr/local/app/server/files
 RUN mkdir -p /usr/local/app/server/logs && chown -R node:node /usr/local/app/server/logs
@@ -47,7 +48,7 @@ RUN mkdir -p /usr/local/app/server/node_modules /usr/local/app/node_modules \
 
 USER node
 
-COPY --chown=node:node ./lib ./lib
+COPY --chown=node:node ./lib/package.json ./lib/
 COPY --chown=node:node ./patches ./patches
 
 
@@ -63,14 +64,15 @@ COPY --chown=node:node ./pnpm-lock.yaml ./
 COPY --chown=node:node ./pnpm-workspace.yaml ./
 RUN pnpm install -r
 
+COPY --chown=node:node ./lib ./lib
 COPY --chown=node:node ./server/drizzle ./server/drizzle
 COPY --chown=node:node ./server/scripts ./server/scripts
 COPY --chown=node:node ./server/src ./server/src
 COPY --chown=node:node ./server/static ./server/static
 COPY --chown=node:node ./server/drizzle.config.ts ./server/drizzle.config.ts
 
+RUN pnpm --filter server run build
+
 WORKDIR /usr/local/app/server
 
-RUN pnpm tsc --build
-
-CMD ["pnpm", "tsx", "src/bin.ts"]
+CMD ["pnpm", "start"]

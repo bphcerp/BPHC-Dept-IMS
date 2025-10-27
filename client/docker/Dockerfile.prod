@@ -1,10 +1,13 @@
-FROM node:20-alpine AS build-stage
-ENV NODE_ENV production
-WORKDIR /usr/local/app
+FROM node:22.21-alpine AS build-stage
+ENV NODE_ENV=production
 
 RUN npm install -g pnpm
 
-COPY ./lib ./lib
+WORKDIR /usr/local/app
+
+COPY ./lib/package.json ./lib/
+COPY ./pnpm-lock.yaml ./
+COPY ./pnpm-workspace.yaml ./
 
 WORKDIR /usr/local/app/client
 
@@ -18,19 +21,16 @@ COPY --chown=node:node client/index.html ./
 COPY --chown=node:node .env ./
 COPY --chown=node:node client/package.json ./
 
-
 WORKDIR /usr/local/app
-COPY ./pnpm-lock.yaml ./
-COPY ./pnpm-workspace.yaml ./
+
 RUN pnpm install -r
 
-WORKDIR /usr/local/app/client
+COPY --chown=node:node client/src ./client/src
+COPY --chown=node:node lib ./lib
 
-COPY --chown=node:node client/src ./src
+RUN pnpm --filter client run build
 
-RUN pnpm run build
-
-FROM nginx:1.25.3-alpine-slim
+FROM nginx:1.28-alpine-slim
 WORKDIR /usr/share/nginx/html
 
 RUN mkdir /usr/log

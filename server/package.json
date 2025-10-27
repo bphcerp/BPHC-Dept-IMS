@@ -5,13 +5,14 @@
   "description": "IMS express server",
   "scripts": {
     "start": "tsx src/bin.ts",
+    "build": "tsc --build",
+    "dev": "tsx watch --clear-screen=false src/bin.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed.ts",
-    "db:publications": "tsx scripts/publications.ts",
-    "build": "tsc --build"
+    "db:publications": "tsx scripts/publications.ts"
   },
   "dependencies": {
     "@types/jszip": "^3.4.1",
