@@ -33,18 +33,27 @@ router.get(
 
         const map = new Map<
             string,
-            { sections: { id?: string; instructorsCount: number }[]; hasIC: boolean }
+            {
+                sections: { id?: string; instructorsCount: number }[];
+                hasIC: boolean;
+                hasAllPracticalRoomsSet: boolean;
+            }
         >();
 
         for (const m of masterAllocations) {
             const code = m.course?.code;
+            let hasAllPracticalRoomsSet = true;
             if (!code) continue;
-            const sections = (m.sections || []).map((s) => ({
-                id: (s as any).id,
-                instructorsCount: ((s as any).instructors || []).length,
-            }));
+            const sections = (m.sections || []).map((s) => {
+                if (!s.timetableRoomId) hasAllPracticalRoomsSet = false;
+
+                return {
+                    id: (s as any).id,
+                    instructorsCount: ((s as any).instructors || []).length,
+                };
+            });
             const hasIC = Boolean((m as any).ic); // true if IC is set, false if null/undefined/empty
-            map.set(code, { sections, hasIC });
+            map.set(code, { sections, hasIC, hasAllPracticalRoomsSet });
         }
 
         const allCourses = await db.query.course.findMany();
@@ -60,7 +69,7 @@ router.get(
                 continue;
             }
 
-            if (!entry.hasIC) {
+            if (!entry.hasIC || !entry.hasAllPracticalRoomsSet) {
                 result[code] = "Pending";
                 continue;
             }

@@ -133,6 +133,8 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "DEL":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "HEL":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
     }
   };
 
@@ -176,7 +178,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     if (!selectedCourse || !scrollAreaRef.current) return;
 
     const selector = `[data-course-code="${selectedCourse.code}"]`;
-    const el = scrollAreaRef.current.querySelector(selector) as HTMLElement | null;
+    const el = scrollAreaRef.current.querySelector(
+      selector
+    ) as HTMLElement | null;
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -269,6 +273,20 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                   }}
                 >
                   DEL
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={courseTypeFilters.includes("HEL")}
+                  onCheckedChange={(checked) => {
+                    setCourseTypeFilters((prev) => {
+                      const has = prev.includes("HEL");
+                      if (checked && !has) return [...prev, "HEL"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "HEL");
+                      return prev;
+                    });
+                  }}
+                >
+                  HEL
                 </DropdownMenuCheckboxItem>
 
                 <DropdownMenuSeparator />
@@ -418,19 +436,12 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2">
-                    <h4 className="text-xs font-medium leading-tight">
-                      {course.code}
-                    </h4>
-
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-3 w-3" />
-                        <span>L: {course.lectureUnits}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>P: {course.practicalUnits}</span>
-                      </div>
+                      <h4 className="text-xs font-medium leading-tight">
+                        {course.code}
+                      </h4>
+                      <span>L: {course.lectureUnits}</span>
+                      <span>P: {course.practicalUnits}</span>
                       <div className="font-semibold">
                         Total: {course.totalUnits}
                       </div>

@@ -140,6 +140,11 @@ export const removeSectionsBodySchema = z.object({
     sectionId: z.union([z.array(z.string().uuid()), z.string().uuid()]),
 });
 
+export const setSectionRoomBodySchema = z.object({
+    sectionId: z.string().uuid(),
+    roomId: z.string()
+})
+
 export const assignInstructorBodySchema = z.object({
     sectionId: z.string().uuid(),
     instructorEmail: z.string().email(),

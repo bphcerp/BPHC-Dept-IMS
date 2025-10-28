@@ -46,7 +46,6 @@ export const masterAllocation = pgTable(
             }),
 
         ic: text("instructor_email").references(() => users.email),
-
         courseCode: text("course_code")
             .notNull()
             .references(() => course.code),

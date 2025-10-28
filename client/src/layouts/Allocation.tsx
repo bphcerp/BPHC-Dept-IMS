@@ -27,11 +27,18 @@ const AllocationLayout = () => {
   return (
     <>
       <AppSidebar
+        sort={false}
         items={[
           // This section should be visible to all users with allocation write permissions
           {
             title: "Admin Control",
             items: [
+              {
+                title: "Semesters",
+                icon: <BookIcon />,
+                url: "/allocation/semesters",
+                requiredPermissions: ["allocation:semesters:view"],
+              },
               {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
@@ -61,16 +68,33 @@ const AllocationLayout = () => {
                 requiredPermissions: ["allocation:courses:write"],
               },
               {
-                title: "Semesters",
-                icon: <BookIcon />,
-                url: "/allocation/semesters",
-                requiredPermissions: ["allocation:semesters:view"],
-              },
-              {
                 title: "Allocation",
                 icon: <ClipboardCheckIcon />,
                 url: "/allocation/allocate",
                 requiredPermissions: ["allocation:write"],
+              },
+            ],
+          },
+          {
+            title: "Forms",
+            items: [
+              {
+                title: "Templates",
+                icon: <FrameIcon />,
+                url: "/allocation/templates",
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:template:view",
+                ],
+              },
+              {
+                title: "Forms",
+                icon: <ClipboardCheckIcon />,
+                url: "/allocation/forms",
+                requiredPermissions: [
+                  "allocation:write",
+                  "allocation:builder:form:view",
+                ],
               },
             ],
           },
@@ -105,29 +129,6 @@ const AllocationLayout = () => {
                 },
               ]
             : []),
-          {
-            title: "Forms",
-            items: [
-              {
-                title: "Templates",
-                icon: <FrameIcon />,
-                url: "/allocation/templates",
-                requiredPermissions: [
-                  "allocation:write",
-                  "allocation:builder:template:view",
-                ],
-              },
-              {
-                title: "Forms",
-                icon: <ClipboardCheckIcon />,
-                url: "/allocation/forms",
-                requiredPermissions: [
-                  "allocation:write",
-                  "allocation:builder:form:view",
-                ],
-              },
-            ],
-          },
         ]}
       />
       <div className="h-screen w-full overflow-y-auto">

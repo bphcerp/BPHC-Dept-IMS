@@ -40,7 +40,7 @@ export type Course = NewCourse & {
     fetchedFromTTD: boolean;
     createdAt: Date;
     updatedAt: Date;
-    groups? : Omit<CourseGroup, 'courses'>[] | null
+    groups?: Omit<CourseGroup, "courses">[] | null;
 };
 
 export type SemesterAllocationStatusEnumType =
@@ -158,6 +158,23 @@ export type AllocationType = {
     courseCode: string;
 };
 
+export type TTDRoom = {
+    id: string
+    block: string;
+    roomNumber: string;
+    classCapacity: number;
+    examCapacity: number;
+    roomType: string;
+    departmentSpecification: string[];
+    impartus: boolean;
+    mic: boolean;
+    speaker: boolean;
+    projector: boolean;
+    smartBoard: boolean;
+    smartMonitor: boolean;
+    biometric: boolean;
+};
+
 export type AllocationResponse = {
     id: string;
     semesterId: string;
@@ -177,6 +194,7 @@ export type AllocationResponse = {
             email: string;
             type: "faculty" | "phd";
         }[];
+        timetableRoomId: string
     }[];
 } | null;
 
@@ -191,48 +209,6 @@ export type InstructorWithPreference = {
     type: "faculty" | "phd";
 };
 
-export type InstructorAllocationSection = {
-    id: string;
-    type: (typeof sectionTypes)[number];
-    masterId: string;
-    createdAt: Date;
-    instructors: {
-        sectionId: string;
-        instructorEmail: string;
-        createdAt: Date;
-        instructor: {
-            email: string;
-            name: string | null;
-            phone: string | null;
-            designation: string | null;
-            department: string | null;
-        };
-    }[];
-};
-
-export type InstructorAllocationMaster = {
-    id: string;
-    semesterId: string;
-    ic: string | null;
-    courseCode: string;
-    course: {
-        code: string;
-        name: string;
-        lectureUnits: number;
-        practicalUnits: number;
-        totalUnits: number | null;
-        offeredAs: "CDC" | "DEL";
-        offeredTo: "FD" | "HD";
-        offeredAlsoBy: string[] | null;
-        createdAt: Date | null;
-        updatedAt: Date | null;
-    };
-    sections: Record<
-        (typeof sectionTypes)[number],
-        InstructorAllocationSection[]
-    >;
-};
-
 export type InstructorAllocationDetails = Record<
     (typeof sectionTypes)[number],
     {
@@ -240,7 +216,7 @@ export type InstructorAllocationDetails = Record<
         type: (typeof sectionTypes)[number];
         createdAt: Date;
         instructors: {
-            email: string
+            email: string;
             name: string | null;
             type: (typeof userTypes)[number];
         }[];
@@ -251,7 +227,7 @@ export type InstructorAllocationDetails = Record<
                 lectureUnits: number;
                 practicalUnits: number;
                 code: string;
-            }
+            };
             ic: string | null;
         };
     }[]
@@ -262,6 +238,6 @@ export type CourseGroup = NewCourseGroup & {
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    courses: Pick<Course, 'name' | 'code'>[]
-}
-export type CourseGroupMinimal = Omit<CourseGroup, 'courses'>
+    courses: Pick<Course, "name" | "code">[];
+};
+export type CourseGroupMinimal = Omit<CourseGroup, "courses">;

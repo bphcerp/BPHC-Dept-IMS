@@ -240,7 +240,7 @@ export const FormTemplateFieldComponent = ({
           )}
           <div className="flex flex-col space-y-2 text-xs italic text-muted-foreground">
             <p>
-              Check the box if you have been the course's In-Charge more than 2
+              Check the box if you have been the course's In-Charge more than 3
               times consecutively.
             </p>
 

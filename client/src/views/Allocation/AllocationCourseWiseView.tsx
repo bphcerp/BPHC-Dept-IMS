@@ -10,6 +10,8 @@ import SectionTypeColumn from "@/components/Allocation/SectionTypeColumn";
 import AllocationHeader from "@/components/Allocation/AllocationHeader";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { TTD_DEPARTMENT_NAME } from "@/lib/constants";
 
 const AllocationCourseWiseView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,10 +75,21 @@ const AllocationCourseWiseView = () => {
     }
   }, [searchParams, courses, selectedCourse]);
 
-  const {
-    data: allocationData,
-    isLoading: allocationLoading,
-  } = useQuery({
+  const { data: timetableRooms } = useQuery({
+    queryKey: ["timetable", "rooms"],
+    queryFn: async () => {
+      if (!selectedCourse || !currentSemester) return null;
+      const response = await axios<allocationTypes.TTDRoom[]>(
+        `${import.meta.env.VITE_TTD_API_URL}/${currentSemester.semesterType}/rooms`
+      );
+      return response.data.filter((room) =>
+        room.departmentSpecification.includes(TTD_DEPARTMENT_NAME)
+      );
+    },
+    enabled: !!selectedCourse && !!currentSemester,
+  });
+
+  const { data: allocationData, isLoading: allocationLoading } = useQuery({
     queryKey: ["allocation", selectedCourse?.code, currentSemester?.id],
     queryFn: async () => {
       if (!selectedCourse || !currentSemester) return null;
@@ -168,7 +181,7 @@ const AllocationCourseWiseView = () => {
   };
 
   const handleCreateAllocation = async () => {
-    await queryClient.invalidateQueries(["allocation"])
+    await queryClient.invalidateQueries(["allocation"]);
   };
 
   if (semesterLoading) {
@@ -266,7 +279,7 @@ const AllocationCourseWiseView = () => {
           ? selectedCourse?.offeredAs === "CDC" &&
             selectedCourse?.offeredTo === "FD"
           : type === "LECTURE"
-            ? userTypeViewMode === "faculty"
+            ? selectedCourse?.lectureUnits && userTypeViewMode === "faculty"
             : true
     );
 
@@ -275,18 +288,15 @@ const AllocationCourseWiseView = () => {
       {/* Header */}
       <div className="flex-shrink-0 border-b bg-background p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Course Load Allocation</h1>
-            <p className="text-muted-foreground">
-              Allocate sections and instructors to courses
-            </p>
-          </div>
+          <h1 className="text-2xl font-bold text-primary">
+            Teaching Allocation
+          </h1>
           {currentSemester && (
             <div className="flex space-x-2">
               {semesterLoading ||
                 allocationLoading ||
                 (coursesLoading && <LoadingSpinner />)}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 rounded-md border-2 border-dashed border-primary/50 p-2">
                 <div className="mr-2 text-sm text-muted-foreground">View:</div>
                 <Button
                   variant={userTypeViewMode === "faculty" ? "default" : "ghost"}
@@ -304,9 +314,11 @@ const AllocationCourseWiseView = () => {
                 </Button>
               </div>
 
-              <Button variant="link">
-                <Link to="/allocation/summary">View Current Allocation</Link>
-              </Button>
+              <div className="flex items-center justify-center">
+                <Button variant="link">
+                  <Link to="/allocation/summary">View Current Allocation</Link>
+                </Button>
+              </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">
                   Current Semester
@@ -354,6 +366,7 @@ const AllocationCourseWiseView = () => {
                     allocationData={allocationData}
                     isLoading={allocationLoading}
                     onAssignInstructor={handleOpenAssignDialog}
+                    rooms={timetableRooms}
                   />
                 ))}
               </div>

@@ -185,12 +185,13 @@ export const AllocationSummary = () => {
                 {/* Right Side (Sections & Instructors) */}
                 <div className="divide-y">
                   {data.sections.map((section) => (
-                    <div key={section.id} className="grid grid-cols-[40px_1fr]">
+                    <div key={section.id} className="grid grid-cols-[120px_1fr]">
                       {/* Section Name (like L1, T1, etc.) */}
                       <div className="row-span-full flex items-center justify-center border-b border-r p-2">
                         <p className="text-sm font-medium">
                           {section.type.charAt(0)}
                           {getSectionNumber(data, section.id, section.type)}
+                          {section.type === 'PRACTICAL' && section.timetableRoomId && ` - ${section.timetableRoomId}`}
                         </p>
                       </div>
 
