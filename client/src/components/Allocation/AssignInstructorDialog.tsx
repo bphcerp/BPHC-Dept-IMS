@@ -455,7 +455,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                                         </div>
                                       ))}
                                     </div>
-                                    <Badge
+                                    { userTypeViewMode === 'faculty' && <Badge
                                       variant="outline"
                                       className="w-fit text-sm"
                                     >
@@ -464,16 +464,16 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                                         instructorDetails,
                                         sectionType as (typeof sectionTypes)[number]
                                       )}
-                                    </Badge>
+                                    </Badge> }
                                   </div>
                                 )
                               )}
-                              <Badge variant="outline" className="text-md">
+                              { userTypeViewMode === 'faculty' && <Badge variant="outline" className="text-md">
                                 <span>
                                   <strong>Total Allocated Load</strong>:{" "}
                                   {getAllocatedCourseLoad(instructorDetails)}
                                 </span>
-                              </Badge>
+                              </Badge> }
                             </CardContent>
                           </Card>
                         )}
