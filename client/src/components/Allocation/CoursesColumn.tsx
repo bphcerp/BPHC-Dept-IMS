@@ -8,8 +8,6 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Search,
   BookOpen,
-  GraduationCap,
-  Clock,
   FilterIcon,
 } from "lucide-react";
 import {
