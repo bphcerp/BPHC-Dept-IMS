@@ -24,5 +24,9 @@
     "ts-node": "^10.9.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@types/multer": "^1.4.12",
+    "zod": "^3.24.1"
   }
 }

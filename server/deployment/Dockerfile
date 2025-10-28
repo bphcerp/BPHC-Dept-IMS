@@ -36,12 +36,8 @@ RUN apt update && apt install -y --no-install-recommends \
 
 WORKDIR /usr/local/app
 
+COPY ./lib/package.json ./lib/
 COPY ./patches ./patches
-
-WORKDIR /usr/local/app/lib
-
-COPY ./lib/package.json ./
-COPY ./lib/tsconfig.json ./
 
 WORKDIR /usr/local/app/server
 
