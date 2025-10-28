@@ -170,7 +170,7 @@ export const AllocationSummary = () => {
               <div className="grid grid-cols-[500px_1fr] border-b">
                 {/* Left Side (Course Info) */}
                 <div className="row-span-full flex items-center justify-center border-r p-4">
-                  <div className="text-center">
+                  <div className="text-center text-ellipsis">
                     <Link
                       to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
                     >

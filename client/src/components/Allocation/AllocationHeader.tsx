@@ -51,7 +51,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
     queryKey: ["allocation", "instructors", selectedCourse.code],
     queryFn: async () => {
       const response = await api.get<InstructorWithPreference[]>(
-        `/allocation/allocation/getInstructorListWithPref?code=${selectedCourse.code}&sectionType=LECTURE`
+        `/allocation/allocation/getInstructorListWithPref?code=${selectedCourse.code}&sectionType=LECTURE&userType=faculty`
       );
       return response.data;
     },

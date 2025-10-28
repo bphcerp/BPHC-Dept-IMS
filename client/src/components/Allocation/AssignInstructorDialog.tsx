@@ -35,7 +35,7 @@ interface AssignInstructorDialogProps {
   courseCode?: string | null;
   selectedSectionId: string;
   allocationData: allocationTypes.AllocationResponse | null;
-  onAssignInstructor: (instructorEmail: string) => void;
+  onAssignInstructor: (instructorEmail: string, close?: boolean) => void;
   isAssigning: boolean;
   userTypeViewMode?: "faculty" | "phd";
   viewModeInstructorEmail?: string | null;
@@ -66,7 +66,9 @@ export const getAllocatedCourseLoad = (
               ? section.master.course.lectureUnits
               : section.type === "PRACTICAL"
                 ? section.master.course.practicalUnits
-                : 1) / section.instructors.filter((inst) => inst.type === 'faculty').length;
+                : 1) /
+            section.instructors.filter((inst) => inst.type === "faculty")
+              .length;
 
           return acc + courseWiseLoad;
         }, 0)
@@ -116,23 +118,24 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
 
   // Fetch instructor list
   const { data: instructors = [], isLoading: instructorsLoading } = useQuery({
-    queryKey: ["instructor-list"],
+    queryKey: [
+      "instructor-list",
+      courseCode,
+      selectedSection?.type,
+      userTypeViewMode,
+    ],
     queryFn: async () => {
       const response = await api.get<InstructorWithPreference[]>(
-        `/allocation/allocation/getInstructorListWithPref?code=${courseCode}&sectionType=${selectedSection?.type}`
+        `/allocation/allocation/getInstructorListWithPref?code=${courseCode}&sectionType=${selectedSection?.type}&userType=${userTypeViewMode}`
       );
       return response.data;
     },
-    enabled: isOpen && !!selectedSection && !!courseCode,
+    enabled: isOpen && !!selectedSection && !!courseCode && !!userTypeViewMode,
   });
-
-  const visibleInstructors = userTypeViewMode
-    ? instructors.filter((i) => i.type === userTypeViewMode)
-    : instructors;
 
   const { data: courseSectionPrefs } = useQuery({
     queryKey: [
-      "course faculty response",
+      "course instructor response",
       selectedViewOtherResponsesInfo?.courseCode,
       selectedViewOtherResponsesInfo?.sectionType,
     ],
@@ -146,20 +149,20 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
       } catch (error) {
         toast.error(
           ((error as AxiosError).response?.data as string) ??
-            "Failed to get faculty with preference"
+            "Failed to get instructor with preference"
         );
         throw error;
       }
     },
-    enabled: !!selectedViewOtherResponsesInfo && userTypeViewMode !== "phd",
+    enabled: !!selectedViewOtherResponsesInfo,
   });
 
-  const { data: facultyPrefs } = useQuery({
-    queryKey: [`faculty-prefs`, courseCode, selectedInstructorEmail],
+  const { data: instructorPrefs } = useQuery({
+    queryKey: [`instructor-prefs`, courseCode, selectedInstructorEmail],
     queryFn: async () => {
       try {
         const res = await api.get<PreferredFaculty[]>(
-          `/allocation/allocation/getFacultyPrefs?email=${selectedInstructorEmail}`
+          `/allocation/allocation/getInstructorPrefs?email=${selectedInstructorEmail}`
         );
         return res.data;
       } catch (error) {
@@ -170,7 +173,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
         throw error;
       }
     },
-    enabled: !!selectedInstructorEmail && userTypeViewMode !== "phd",
+    enabled: !!selectedInstructorEmail,
   });
 
   // Fetch selected instructor details
@@ -185,11 +188,11 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
           );
         return response.data;
       },
-      enabled: !!selectedInstructorEmail && userTypeViewMode !== "phd",
+      enabled: !!selectedInstructorEmail,
     });
 
   const filteredInstructors = useMemo(() => {
-    return visibleInstructors.filter((instructor) => {
+    return instructors.filter((instructor) => {
       const matchesSearch =
         instructor.name
           ?.toLowerCase()
@@ -211,9 +214,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
     });
   }, [instructors, instructorSearchValue, selectedSection]);
 
-  const handleAssignInstructor = () => {
+  const handleAssignInstructor = (close: boolean = false) => {
     if (selectedInstructorEmail) {
-      onAssignInstructor(selectedInstructorEmail);
+      onAssignInstructor(selectedInstructorEmail, close);
       setSelectedInstructorEmail(null);
       setInstructorSearchValue("");
     }
@@ -274,9 +277,9 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                 </Badge>
                 <div>
                   <Button
-                    onClick={handleAssignInstructor}
+                    onClick={() => handleAssignInstructor()}
                     disabled={isAssigning}
-                    className="absolute -top-2 right-5"
+                    className="absolute -top-2 right-52"
                   >
                     {isAssigning ? (
                       <>
@@ -285,6 +288,21 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                       </>
                     ) : (
                       "Assign Instructor"
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleAssignInstructor(true)}
+                    disabled={isAssigning}
+                    className="absolute -top-2 right-5"
+                    variant='secondary'
+                  >
+                    {isAssigning ? (
+                      <>
+                        <LoadingSpinner className="mr-2 h-4 w-4" />
+                        Assigning...
+                      </>
+                    ) : (
+                      "Assign Instructor & Close"
                     )}
                   </Button>
                 </div>
@@ -487,7 +505,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                     Instructor Response
                   </h2>
                   <div className="flex h-full flex-col space-y-2 overflow-y-auto p-2">
-                    {facultyPrefs?.map((pref) => (
+                    {instructorPrefs?.map((pref) => (
                       <Card>
                         <CardHeader>
                           <CardTitle className="flex items-center justify-between gap-2">

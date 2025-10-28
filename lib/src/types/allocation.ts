@@ -159,7 +159,7 @@ export type AllocationType = {
 };
 
 export type TTDRoom = {
-    id: string
+    id: string;
     block: string;
     roomNumber: string;
     classCapacity: number;
@@ -192,9 +192,10 @@ export type AllocationResponse = {
         instructors: {
             name: string | null;
             email: string;
+            psrn?: string;
             type: "faculty" | "phd";
         }[];
-        timetableRoomId: string
+        timetableRoomId: string;
     }[];
 } | null;
 
