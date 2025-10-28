@@ -45,7 +45,7 @@ router.get(
             let hasAllPracticalRoomsSet = true;
             if (!code) continue;
             const sections = (m.sections || []).map((s) => {
-                if (!s.timetableRoomId) hasAllPracticalRoomsSet = false;
+                if (section.type === 'PRACTICAL' && !s.timetableRoomId) hasAllPracticalRoomsSet = false;
 
                 return {
                     id: (s as any).id,
