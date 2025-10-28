@@ -8,7 +8,7 @@ import {
     phdProposalSemesters,
     phdProposalDacReviews,
 } from "@/config/db/schema/phd.ts";
-import { and, gte, inArray, or, eq, lte } from "drizzle-orm";
+import { and, gte, inArray, or, eq, lte, sql } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -169,6 +169,50 @@ export const proposalReminderWorker = new Worker(
     { connection: redisConfig, concurrency: 5 }
 );
 
+async function checkOverdueDacAccepted(now: Date) {
+    logger.info(
+        `[${SCHEDULER_JOB_NAME}] Checking for overdue DAC-accepted proposals...`
+    );
+
+    // Find proposals where status is 'dac_accepted' AND the dacReviewDate has passed
+    const overdueProposals = await db.query.phdProposals.findMany({
+        where: and(
+            eq(phdProposals.status, "dac_accepted"),
+            // Join with proposalSemester to get the date
+            sql`${phdProposals.proposalSemesterId} IN (SELECT id FROM ${phdProposalSemesters} WHERE ${phdProposalSemesters.dacReviewDate} < ${now})`
+        ),
+        with: {
+            student: { columns: { name: true, email: true } },
+            // We need proposalSemester to check the date, but the SQL where clause already did.
+            // Re-querying with join for simplicity
+            proposalSemester: true,
+        },
+    });
+
+    // Filter again just to be 100% sure (or rely on the SQL query)
+    const proposalsToFlag = overdueProposals.filter(
+        (p) => p.proposalSemester.dacReviewDate < now
+    );
+
+    if (proposalsToFlag.length === 0) {
+        logger.info(
+            `[${SCHEDULER_JOB_NAME}] No overdue DAC-accepted proposals found.`
+        );
+        return;
+    }
+
+    const proposalIdsToUpdate = proposalsToFlag.map((p) => p.id);
+
+    await db
+        .update(phdProposals)
+        .set({ status: "seminar_pending" })
+        .where(inArray(phdProposals.id, proposalIdsToUpdate));
+
+    logger.info(
+        `[${SCHEDULER_JOB_NAME}] Updated ${proposalsToFlag.length} proposals from 'dac_accepted' to 'seminar_pending'.`
+    );
+}
+
 // Function name kept generic
 export async function scheduleReminderSchedulerJob() {
     // Use the constant defined above
@@ -289,6 +333,15 @@ async function runReminderChecksAndScheduleSpecifics() {
                 }
             }
         }
+    }
+    try {
+        await checkOverdueDacAccepted(now);
+    } catch (error) {
+        logger.error(
+            `[${SCHEDULER_JOB_NAME}] Error during checkOverdueDacAccepted:`,
+            error
+        );
+        // Do not re-throw; allow reminder scheduling to be the main task
     }
     logger.info(
         `[${SCHEDULER_JOB_NAME}] Finished scheduling potentially ${scheduledCount} specific reminder jobs.`
