@@ -3,5 +3,9 @@
 		"patchedDependencies": {
 			"drizzle-orm@0.40.0": "patches/drizzle-orm@0.40.0.patch"
 		}
+	},
+	"dependencies": {
+		"@types/multer": "^1.4.12",
+		"zod": "^3.24.1"
 	}
 }
