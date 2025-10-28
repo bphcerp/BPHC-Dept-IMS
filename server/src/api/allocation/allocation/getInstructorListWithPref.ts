@@ -28,7 +28,6 @@ router.get(
                     eq(users.deactivated, false)
                 ),
             columns: { email: true, type: true, name: true },
-            orderBy: (cols, { asc }) => asc(cols.name),
             with: {
                 phd: {
                     columns: { name: true, phdType: true },
@@ -55,6 +54,14 @@ router.get(
             })
         ).filter((pref) => pref.templateField?.preferenceType === sectionType);
 
+        const facultyPrefEmailsMap = facultiesPrefs.reduce(
+            (acc, pref) => {
+                acc[pref.submittedByEmail] = pref.preference!;
+                return acc;
+            },
+            {} as Record<string, number>
+        );
+
         res.status(200).json(
             results
                 .filter((user) =>
@@ -65,13 +72,11 @@ router.get(
                 .map((user) => ({
                     email: user.email,
                     name:
-                        (user.name ?? user.type === "phd")
+                        user.name ??
+                        (user.type === "phd"
                             ? (user.phd?.name ?? null)
-                            : (user.faculty?.name ?? null),
-                    preference:
-                        facultiesPrefs.find(
-                            (pref) => pref.submittedByEmail === user.email
-                        )?.preference ?? null,
+                            : (user.faculty?.name ?? null)),
+                    preference: facultyPrefEmailsMap[user.email] ?? null,
                     type: user.type,
                 }))
                 .sort((facultyA, facultyB) =>
