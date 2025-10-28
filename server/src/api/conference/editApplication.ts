@@ -36,7 +36,7 @@ router.post(
         )
     ),
     asyncHandler(async (req, res, next) => {
-        const newFileIds: Partial<Record<string, number | null>> = {};
+        const newFileIds: Record<string, number | null> = {};
 
         const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
@@ -127,7 +127,7 @@ router.post(
             );
 
             insertedFiles.forEach((file) => {
-                newFileIds[file.fieldName! + "FileId"] = file.id;
+                newFileIds[file.fieldName! + "FileId"] = file.id!;
             });
 
             await tx

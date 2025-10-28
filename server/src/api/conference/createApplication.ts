@@ -16,8 +16,6 @@ import multer from "multer";
 
 const router = express.Router();
 
-type FileField = (typeof conferenceSchemas.fileFieldNames)[number];
-
 router.post(
     "/",
     checkAccess(),
@@ -55,7 +53,7 @@ router.post(
         // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
-            const insertedFileIds: Partial<Record<FileField, number>> = {};
+            const insertedFileIds: Record<string, number> = {};
 
             if (req.files && Object.entries(req.files).length) {
                 const insertedFiles = await tx
@@ -76,7 +74,7 @@ router.post(
                     )
                     .returning();
                 insertedFiles.forEach((file) => {
-                    insertedFileIds[file.fieldName! as FileField] = file.id;
+                    insertedFileIds[`${file.fieldName!}FileId`] = file.id;
                 });
             }
 
