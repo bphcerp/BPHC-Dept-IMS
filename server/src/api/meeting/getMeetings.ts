@@ -1,4 +1,3 @@
-// server/src/api/meeting/getMeetings.ts
 import express from "express";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -10,15 +9,26 @@ import {
     meetingTimeSlots,
     finalizedMeetingSlots,
 } from "@/config/db/schema/meeting.ts";
-import { eq, and, sql, ne } from "drizzle-orm";
+import { eq, and, sql, notInArray, inArray } from "drizzle-orm";
+import { z } from "zod";
 
 const router = express.Router();
+
+const getMeetingsQuerySchema = z.object({
+    view: z.enum(["upcoming", "archived"]).default("upcoming"),
+});
 
 router.get(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
         const userEmail = req.user!.email;
+        const query = getMeetingsQuerySchema.parse(req.query);
+
+        const statusFilter =
+            query.view === "upcoming"
+                ? notInArray(meetings.status, ["completed", "cancelled"])
+                : inArray(meetings.status, ["completed", "cancelled"]);
 
         const participantCountsSq = db
             .select({
@@ -88,13 +98,7 @@ router.get(
                 finalizedSlotsSq,
                 eq(meetings.id, finalizedSlotsSq.meetingId)
             )
-            .where(
-                and(
-                    eq(meetings.organizerEmail, userEmail),
-                    ne(meetings.status, "completed"),
-                    ne(meetings.status, "cancelled")
-                )
-            )
+            .where(and(eq(meetings.organizerEmail, userEmail), statusFilter))
             .orderBy(meetings.createdAt);
 
         const invitedMeetings = await db
@@ -133,8 +137,7 @@ router.get(
             .where(
                 and(
                     eq(meetingParticipants.participantEmail, userEmail),
-                    ne(meetings.status, "completed"),
-                    ne(meetings.status, "cancelled")
+                    statusFilter
                 )
             )
             .orderBy(meetings.createdAt);
