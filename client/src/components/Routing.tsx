@@ -26,6 +26,7 @@ import {
   File,
   ChartNoAxesCombined,
   ListOrderedIcon,
+  PenTool,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -110,6 +111,10 @@ import BulkUploadWilp from "@/views/Wilp/BulkUploadWilp";
 import WilpProjectDetails from "@/views/Wilp/[id]";
 import Statistics from "@/views/Wilp/Stats";
 import SendMail from "@/views/Wilp/SendMail";
+import SigningLayout from "@/layouts/Signing";
+import SigningDashboard from "@/views/Signing/Dashboard";
+import UploadDocument from "@/views/Signing/UploadDocument";
+import PendingSignatures from "@/views/Signing/PendingSignatures";
 import GradesLayout from "@/layouts/Grades";
 import UploadExcel from "@/views/Grades/UploadExcel";
 import ManageGrades from "@/views/Grades/ManageGrades";
@@ -183,6 +188,10 @@ const courseLoadAllocationModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("allocation:"));
 
+const signingModulePermissions: string[] = Object.keys(allPermissions).filter(
+  (permission) => permission.startsWith("signing:")
+);
+
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
   const modules = [
@@ -245,6 +254,12 @@ const Routing = () => {
       icon: <BookOpen />,
       url: "/wilp",
       requiredPermissions: wilpModulePermissions,
+    },
+    {
+      title: "Sign Documents",
+      icon: <PenTool />,
+      url: "/signing",
+      requiredPermissions: signingModulePermissions,
     },
     {
       title: "Grade Management",
@@ -793,6 +808,18 @@ const Routing = () => {
                 <Route path="view-stats" element={<Statistics />} />
               )}
               <Route path=":id" element={<WilpProjectDetails />} />
+            </Route>
+          )}
+          {checkAccessAnyOne(signingModulePermissions) && (
+            <Route path="/signing" element={<SigningLayout />}>
+              <Route
+                index
+                element={<Navigate to="/signing/dashboard" replace={true} />}
+              />
+              <Route path="dashboard" element={<SigningDashboard />} />
+              <Route path="upload" element={<UploadDocument />} />
+              <Route path="my-documents" element={<SigningDashboard />} />
+              <Route path="pending" element={<PendingSignatures />} />
             </Route>
           )}
           {checkAccessAnyOne(analyticsModulePermissions) && (
