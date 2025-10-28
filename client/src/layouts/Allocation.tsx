@@ -103,16 +103,20 @@ const AllocationLayout = () => {
                 {
                   title: "Course Allocation",
                   items: [
-                    {
-                      title: "Summary",
-                      icon: <TableOfContentsIcon />,
-                      url: "/allocation/summary",
-                      requiredPermissions: [
-                        currentSemester?.summaryHidden
-                          ? "allocation:write"
-                          : "allocation:summary:view",
-                      ],
-                    },
+                    ...(currentSemester?.allocationStatus === "inAllocation"
+                      ? [
+                          {
+                            title: "Summary",
+                            icon: <TableOfContentsIcon />,
+                            url: "/allocation/summary",
+                            requiredPermissions: [
+                              currentSemester?.summaryHidden
+                                ? "allocation:write"
+                                : "allocation:summary:view",
+                            ],
+                          },
+                        ]
+                      : []),
                     ...(currentSemester?.allocationStatus === "formCollection"
                       ? [
                           {

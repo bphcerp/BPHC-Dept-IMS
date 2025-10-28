@@ -117,23 +117,25 @@ const AllocationCourseWiseView = () => {
         setIsAssignInstructorDialogOpen(true);
       }
     }
-  }, [searchParams, allocationData]);
+  }, [searchParams]);
 
   // Assign instructor mutation
   const assignInstructorMutation = useMutation({
     mutationFn: async (data: {
       sectionId: string;
       instructorEmail: string;
+      close?: boolean;
     }) => {
-      await api.put("/allocation/allocation/section/assignInstructor", data);
-    },
-    onSuccess: () => {
-      toast.success("Instructor assigned successfully");
-      void queryClient.invalidateQueries({
-        queryKey: ["allocation"],
-      });
-      setIsAssignInstructorDialogOpen(false);
-      setSelectedSectionId("");
+      const { close, ...body } = data
+      await api
+        .put("/allocation/allocation/section/assignInstructor", body)
+        .then(() => {
+          toast.success("Instructor assigned successfully");
+          void queryClient.invalidateQueries({
+            queryKey: ["allocation"],
+          });
+          if (close) handleCloseAssignDialog(false)
+        });
     },
     onError: (error) => {
       toast.error(
@@ -152,11 +154,12 @@ const AllocationCourseWiseView = () => {
     }
   };
 
-  const handleAssignInstructor = (instructorEmail: string) => {
+  const handleAssignInstructor = (instructorEmail: string, close?: boolean) => {
     if (selectedSectionId) {
       assignInstructorMutation.mutate({
         sectionId: selectedSectionId,
         instructorEmail,
+        close,
       });
     }
   };
@@ -171,13 +174,13 @@ const AllocationCourseWiseView = () => {
   };
 
   const handleCloseAssignDialog = (open: boolean) => {
-    setIsAssignInstructorDialogOpen(open);
     if (!open) {
       setSelectedSectionId("");
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("assignSection");
       setSearchParams(newParams);
     }
+    setIsAssignInstructorDialogOpen(open);
   };
 
   const handleCreateAllocation = async () => {
