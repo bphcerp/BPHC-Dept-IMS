@@ -1,120 +1,124 @@
 {
   "professors": [
     {
-      "id": "Mechanical Department",
+      "department": "EEE Department",
+      "name": "Prof. Harish V Dixit",
+      "imageUrl": "/contributors_images/hvd.jpg"
+    },
+    {
+      "department": "Mechanical Department",
       "name": "Prof. Supradeepan K",
-      "imageUrl": "/contributors_images/default.webp",
-      "url": "https://example.com/dr-smith"
+      "imageUrl": "/contributors_images/supradeepan.webp"
     }
   ],
-  "students": [
-    {
+  "students": {
+    "Shiv-Patil": {
       "id": "2023B4AA0740H",
       "name": "Shiv Patil",
       "imageUrl": "/contributors_images/shiv.webp",
-      "url": "https://github.com/Shiv-Patil"
+      "githubUsername": "Shiv-Patil"
     },
-    {
+    "soumitradev": {
       "id": "2021B3A70781H",
       "name": "Soumitra Shewale",
       "imageUrl": "/contributors_images/soumitra.webp",
-      "url": "https://github.com/soumitradev"
+      "githubUsername": "soumitradev"
     },
-    {
+    "satansin123": {
       "id": "2022A3PS0607H",
       "name": "Sanchay Ketan Sinha",
       "imageUrl": "/contributors_images/sanchay.webp",
-      "url": "https://github.com/satansin123"
+      "githubUsername": "satansin123"
     },
-    {
+    "kishan1735": {
       "id": "2022A7PS0037H",
       "name": "Kishan Abijay",
       "imageUrl": "/contributors_images/kishan.webp",
-      "url": "https://github.com/kishan1735"
+      "githubUsername": "kishan1735"
     },
-    {
+    "achaljhawar": {
       "id": "2023A3CP2163H",
       "name": "Achal Jhawar",
       "imageUrl": "/contributors_images/achal.webp",
-      "url": "https://github.com/achaljhawar"
+      "githubUsername": "achaljhawar"
     },
-    {
+    "Samirkhairati": {
       "id": "2023A7PS0101H",
       "name": "Samir Khairati",
       "imageUrl": "/contributors_images/samir.webp",
-      "url": "https://github.com/Samirkhairati"
+      "githubUsername": "Samirkhairati"
     },
-    {
+    "Shre-D": {
       "id": "2022B3AA0869H",
       "name": "Shreyash Dash",
       "imageUrl": "/contributors_images/shreyash.webp",
-      "url": "https://github.com/Shre-D"
+      "githubUsername": "Shre-D"
     },
-    {
+    "HarshitBansal9": {
       "id": "2023AAPS1126H",
       "name": "Harshit Bansal",
       "imageUrl": "/contributors_images/harshit.webp",
-      "url": "https://github.com/HarshitBansal9"
+      "githubUsername": "HarshitBansal9"
     },
-    {
+    "imshrishk": {
       "id": "2022A7PS1295H",
       "name": "Shrish Kumar",
       "imageUrl": "/contributors_images/shrish.webp",
-      "url": "https://github.com/imshrishk"
+      "githubUsername": "imshrishk"
     },
-    {
+    "catfo435": {
       "id": "2022AAPS0274H",
       "name": "Pranav Poluri",
       "imageUrl": "/contributors_images/pranav.webp",
-      "url": "https://github.com/catfo435"
+      "githubUsername": "catfo435"
     },
-    {
+    "Vansh-Bh": {
       "id": "2023B1AA0994H",
       "name": "Vansh Bhardwaj",
       "imageUrl": "/contributors_images/vansh.webp",
-      "url": "https://github.com/Vansh-Bh"
+      "githubUsername": "Vansh-Bh"
     },
-    {
+    "sighwalker": {
       "id": "2022A3PS0610H",
       "name": "Tanay Garde",
       "imageUrl": "/contributors_images/tanay.webp",
-      "url": "https://github.com/sighwalker"
+      "githubUsername": "sighwalker"
     },
-    {
+    "Radian6405": {
       "id": "2023A8PS0449H",
       "name": "B Sai Sri Vardhan",
       "imageUrl": "/contributors_images/sai.webp",
-      "url": "https://github.com/Radian6405"
+      "githubUsername": "Radian6405"
     },
-    {
+    "atikx": {
       "id": "2024A8PS0500H",
       "name": "Atiksh Gupta",
       "imageUrl": "/contributors_images/atiksh.webp",
-      "url": "https://github.com/atikx"
+      "githubUsername": "atikx"
     },
-    {
+    "Ade-eb": {
       "id": "2022AAPS1475H",
       "name": "Mohammed Adeeb Ulla",
       "imageUrl": "/contributors_images/adeeb.webp",
-      "url": "https://github.com/Ade-eb"
+      "githubUsername": "Ade-eb"
     },
-    {
+    "Pegasus47": {
       "id": "2023A7PS0158H",
       "name": "Arpit Kudre",
       "imageUrl": "/contributors_images/arpit.webp",
-      "url": "https://github.com/Pegasus47"
+      "githubUsername": "Pegasus47"
     },
-    {
+    "Aaryan503": {
       "id": "2024A7PS0029H",
       "name": "Aaryan Mehta",
       "imageUrl": "/contributors_images/aaryan.webp",
-      "url": "https://github.com/Aaryan503"
+      "githubUsername": "Aaryan503"
     },
-    {
+    "hans772": {
       "id": "2024A7PS0008H",
       "name": "Tobit K Joshy",
       "imageUrl": "/contributors_images/tobit.webp",
-      "url": "https://github.com/hans772"
-    }     
-  ]
+      "githubUsername": "hans772"
+    }
+  }
 }
