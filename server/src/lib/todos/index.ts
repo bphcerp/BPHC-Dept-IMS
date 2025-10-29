@@ -41,7 +41,7 @@ export async function completeTodo(
     }: {
         module: (typeof modules)[number];
         completionEvent: string | string[];
-        assignedTo?: string;
+        assignedTo?: string | string[];
     },
     tx: typeof db | Tx = db
 ) {
@@ -53,7 +53,11 @@ export async function completeTodo(
                 Array.isArray(completionEvent)
                     ? inArray(todos.completionEvent, completionEvent)
                     : eq(todos.completionEvent, completionEvent),
-                assignedTo ? eq(todos.assignedTo, assignedTo) : undefined
+                assignedTo
+                    ? Array.isArray(assignedTo)
+                        ? inArray(todos.assignedTo, assignedTo)
+                        : eq(todos.assignedTo, assignedTo)
+                    : undefined
             )
         );
 

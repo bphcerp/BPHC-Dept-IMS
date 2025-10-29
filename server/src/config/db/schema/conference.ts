@@ -23,26 +23,27 @@ export const conferenceGlobal = pgTable("conference_global", {
     value: text("value").notNull(),
 });
 
-export const conferenceMemberReviews = pgTable(
-    "conference_member_reviews",
+export const conferenceApplicationMembers = pgTable(
+    "conference_application_members",
     {
         applicationId: integer("application_id")
             .notNull()
             .references(() => conferenceApprovalApplications.id, {
                 onDelete: "cascade",
             }),
-        reviewerEmail: text("reviewer_email")
+        memberEmail: text("member_email")
             .notNull()
             .references(() => users.email, { onDelete: "cascade" }),
-        status: boolean("status").notNull(),
-        comments: text("review"),
-        createdAt: timestamp("created_at", { withTimezone: true })
+        reviewStatus: boolean("review_status"),
+        comments: text("comments"),
+        updatedAt: timestamp("updated_at", { withTimezone: true })
             .notNull()
-            .defaultNow(),
+            .defaultNow()
+            .$onUpdate(() => new Date()),
     },
     (table) => [
         primaryKey({
-            columns: [table.applicationId, table.reviewerEmail],
+            columns: [table.applicationId, table.memberEmail],
         }),
     ]
 );

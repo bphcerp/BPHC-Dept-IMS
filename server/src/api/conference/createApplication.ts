@@ -88,25 +88,25 @@ router.post(
                 })
                 .returning();
 
-            const todoAssignees = await getUsersWithPermission(
-                isDirect
-                    ? "conference:application:review-application-convener"
-                    : "conference:application:review-application-member",
-                tx
-            );
+            if (isDirect) {
+                const conveners = await getUsersWithPermission(
+                    "conference:application:convener",
+                    tx
+                );
 
-            await createTodos(
-                todoAssignees.map((assignee) => ({
-                    module: modules[0],
-                    title: "Conference Application",
-                    createdBy: req.user!.email,
-                    completionEvent: `review ${inserted.id} ${isDirect ? "convener" : "member"}`,
-                    description: `Review conference application id ${inserted.id} by ${req.user!.email}`,
-                    assignedTo: assignee.email,
-                    link: `/conference/view/${inserted.id}`,
-                })),
-                tx
-            );
+                await createTodos(
+                    conveners.map((assignee) => ({
+                        module: modules[0],
+                        title: "Conference Application",
+                        createdBy: req.user!.email,
+                        completionEvent: `review ${inserted.id} convener`,
+                        description: `Review conference application id ${inserted.id} by ${req.user!.email}`,
+                        assignedTo: assignee.email,
+                        link: `/conference/view/${inserted.id}`,
+                    })),
+                    tx
+                );
+            }
         });
 
         res.status(200).send();

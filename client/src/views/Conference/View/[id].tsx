@@ -268,15 +268,9 @@ const ConferenceViewApplicationView = () => {
   const { id } = useParams<{ id: string }>();
   const { checkAccess } = useAuth();
   const queryClient = useQueryClient();
-  const canReviewAsMember = checkAccess(
-    "conference:application:review-application-member"
-  );
-  const canReviewAsHod = checkAccess(
-    "conference:application:review-application-hod"
-  );
-  const canReviewAsConvener = checkAccess(
-    "conference:application:review-application-convener"
-  );
+  const canReviewAsMember = checkAccess("conference:application:member");
+  const canReviewAsHod = checkAccess("conference:application:hod");
+  const canReviewAsConvener = checkAccess("conference:application:convener");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["conference", "applications", parseInt(id!)],

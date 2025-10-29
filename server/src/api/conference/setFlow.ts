@@ -2,7 +2,6 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceGlobal,
-    conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -51,14 +50,6 @@ router.post(
                     .where(
                         eq(conferenceApprovalApplications.state, "DRC Member")
                     );
-                await tx
-                    .delete(conferenceMemberReviews)
-                    .where(
-                        inArray(
-                            conferenceMemberReviews.applicationId,
-                            memberApplications
-                        )
-                    );
                 const convenerApplications = await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
@@ -80,7 +71,7 @@ router.post(
                         tx
                     );
                     const todoAssignees = await getUsersWithPermission(
-                        "conference:application:review-application-convener",
+                        "conference:application:convener",
                         tx
                     );
                     const todos: Parameters<typeof createTodos>[0] = [];
@@ -106,14 +97,6 @@ router.post(
                     })
                     .from(conferenceApprovalApplications)
                     .where(eq(conferenceApprovalApplications.state, "HoD"));
-                await tx
-                    .delete(conferenceMemberReviews)
-                    .where(
-                        inArray(
-                            conferenceMemberReviews.applicationId,
-                            hodApplications
-                        )
-                    );
                 const completedApplications = await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "Completed" })
@@ -139,7 +122,34 @@ router.post(
                     );
                 }
             }
-            // If we are moving to normal flow, everything can stay as it is
+            // If we are moving to normal flow, move all DRC Convener states to DRC Member state for applications that dont have members selected
+            // or for those applications where there are pending member reviews
+            else {
+                const applications =
+                    await tx.query.conferenceApprovalApplications.findMany({
+                        where: (cols, { eq }) => eq(cols.state, "DRC Convener"),
+                        with: {
+                            members: true,
+                        },
+                    });
+                const toBeUpdated = applications
+                    .filter(
+                        (app) =>
+                            app.members.length === 0 ||
+                            app.members.some(
+                                (member) => member.reviewStatus === null
+                            )
+                    )
+                    .map((app) => app.id);
+                await db
+                    .update(conferenceApprovalApplications)
+                    .set({
+                        state: "DRC Member",
+                    })
+                    .where(
+                        inArray(conferenceApprovalApplications.id, toBeUpdated)
+                    );
+            }
 
             return await tx.update(conferenceGlobal).set({
                 key: "directFlow",

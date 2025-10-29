@@ -180,7 +180,7 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
         name: convenerName,
     } = await getAuthorityDetails(
         applicationData.id,
-        "conference:application:review-application-convener"
+        "conference:application:convener"
     );
 
     const {
@@ -189,7 +189,7 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
         name: hodName,
     } = await getAuthorityDetails(
         applicationData.id,
-        "conference:application:review-application-hod"
+        "conference:application:hod"
     );
 
     const logoBase64 = await encodeImageToBase64({
@@ -203,8 +203,8 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
     const template = await fs.readFile(templatePath, "utf-8");
 
     const data = generateTemplateData({
-        ...userData, // user data has to be spread first as both userData and applicationData 
-                     // have description field and we want the one from applicationData to override userData 
+        ...userData, // user data has to be spread first as both userData and applicationData
+        // have description field and we want the one from applicationData to override userData
         ...applicationData,
         drcReviews,
         logoBase64,

@@ -153,6 +153,21 @@ export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
 
 export type ReviewApplicationBody = z.infer<typeof reviewApplicationBodySchema>;
 
+export const setMembersBodySchema = z.object({
+    memberEmails: z
+        .array(z.string().email())
+        .min(1, "At least one member must be assigned")
+        .refine(
+            (emails) => new Set(emails).size === emails.length,
+            "Member emails must be unique"
+        ),
+});
+
+export type GetMembersResponse = {
+    members: string[];
+    allMembers: { email: string; name: string | null }[];
+};
+
 export const textFieldNames = [
     "purpose",
     "contentTitle",
