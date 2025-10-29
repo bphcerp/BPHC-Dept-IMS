@@ -39,39 +39,44 @@ type Contributor = {
 };
 
 const ContributorsPage = () => {
+  // First 5 top contributors and then sorted by ID
   const { professors, students } = peopleData as PeopleData;
 
   const { data: contributors = [] } = useQuery({
     queryKey: ["contributors"],
     queryFn: async () => {
-      // Students are sorted by year first and then contributions.
-      const { data: githubUsers } =
-        await api.get<GitHubUser[]>("/contributors");
-      const contributors: Contributor[] = Object.values(students).map(
-        (student) => {
-          const user = githubUsers.find(
-            (u) =>
-              u.login.toLowerCase() === student.githubUsername.toLowerCase()
-          );
-          return {
-            id: student.id,
-            name: student.name,
-            imageUrl: student.imageUrl,
-            githubUsername: student.githubUsername,
-            githubUrl: user
-              ? user.html_url
-              : `https://github.com/${student.githubUsername}`,
-            contributions: user?.contributions ?? 0,
-          };
-        }
-      );
-
-      return contributors.sort((a, b) => {
-        const yearA = parseInt(a.id.slice(0, 4), 10);
-        const yearB = parseInt(b.id.slice(0, 4), 10);
-        if (yearA !== yearB) return yearA - yearB;
-        return (b.contributions ?? 0) - (a.contributions ?? 0);
+      const { data: githubUsers } = await api.get<GitHubUser[]>("/contributors");
+      const contributors: Contributor[] = Object.values(students).map((student) => {
+        const user = githubUsers.find(
+          (u) => u.login.toLowerCase() === student.githubUsername.toLowerCase()
+        );
+        return {
+          id: student.id,
+          name: student.name,
+          imageUrl: student.imageUrl,
+          githubUsername: student.githubUsername,
+          githubUrl: user
+            ? user.html_url
+            : `https://github.com/${student.githubUsername}`,
+          contributions: user?.contributions ?? 0,
+        };
       });
+
+      const sortedByContributions = [...contributors]
+        .sort((a, b) => (b.contributions ?? 0) - (a.contributions ?? 0))
+        .slice(0, 5);
+
+      const remaining = contributors
+        .filter(
+          (c) =>
+            !sortedByContributions.some(
+              (top) =>
+                top.githubUsername.toLowerCase() === c.githubUsername.toLowerCase()
+            )
+        )
+        .sort((a, b) => a.id.localeCompare(b.id));
+
+      return [...sortedByContributions, ...remaining];
     },
     staleTime: 1000 * 60 * 60,
   });
@@ -94,7 +99,7 @@ const ContributorsPage = () => {
                 Engineering and Mechanical Engineering, BITS Pilani Hyderabad
                 Campus
               </h2>
-              <h3 className="mt-4 font-semibold text-xl text-foreground">
+              <h3 className="mt-4 text-xl font-semibold text-foreground">
                 Conceptualized and Designed by
               </h3>
             </div>
