@@ -199,6 +199,9 @@ export const allPermissions = {
     "allocation:builder:form:view": "View form details",
     "allocation:form:response:submit": "Can submit responses to forms",
     "allocation:form:response:view": "Can view responses to forms",
+
+    "sign:post": "can add things to the document",
+    "sign:get": "can get documents"
 } as const;
 
 export const permissions: { [key: string]: keyof typeof allPermissions } = {
@@ -532,4 +535,13 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
         "allocation:form:response:submit",
     "/allocation/builder/form/response/view": "allocation:form:response:view",
     "/allocation/builder/form/response/getAll": "allocation:form:response:view",
+
+    "/sign/addSignFields": "sign:post",
+    "/sign/getDocumentsToBeSigned": "sign:get",
+    "/sign/uploadSignature": "sign:post",
+    "/sign/getFullPreview": "sign:get",
+    "/sign/getMyDocuments": "sign:get",
+    "/sign/previewFields": "sign:get",
+    "/sign/signField": "sign:post",
+    "/sign/uploadDocuments": "sign:post"
 } as const;

@@ -25,7 +25,7 @@ import publicProfileRouter from "./profile/[id].ts";
 import meetingRouter from "./meeting/index.ts";
 import phdRequestRouter from "./phd-request/index.ts";
 import { testingMiddleware } from "@/middleware/testing.ts";
-
+import signRouter from "./sign/index.ts";
 const favicon = Buffer.from(
     "AAABAAEAEBAQAAAAAAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQAAAAAAEAAAEAAAAAEAAAABAAAAEAAAAAAQAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAEAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AAD8HwAA++8AAPf3AADv+wAA7/sAAP//AAD//wAA+98AAP//AAD//wAA//8AAP//AAD//wAA",
     "base64"
@@ -80,5 +80,6 @@ router.use("/wilpProject", wilpProjectRouter);
 router.use("/grades", gradesRouter);
 router.use("/meeting", meetingRouter);
 router.use("/phd-request", phdRequestRouter);
+router.use("/sign", signRouter);
 
 export default router;
