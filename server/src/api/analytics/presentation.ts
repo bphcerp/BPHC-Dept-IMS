@@ -28,14 +28,14 @@ router.post(
 
             const titleSlide = pptx.addSlide()
             titleSlide.addImage({
-                path: path.join(STATIC_DIR, "analytics/TitleBG.jpg"),
+                path: path.join(STATIC_DIR, "analytics", "TitleBG.jpg"),
                 x: 0,
                 y: 0,
                 w: "100%",
                 h: "100%"
             })
             titleSlide.addImage({
-                path: path.join(STATIC_DIR, "analytics/Logo.png"),
+                path: path.join(STATIC_DIR, "analytics", "Logo.png"),
                 x: 0,
                 y: 3.492,
                 w: 7.822,
@@ -55,7 +55,7 @@ router.post(
                 const slide = pptx.addSlide();
                 const imageBase64 = file.buffer.toString("base64");
                 slide.addImage({
-                path: path.join(STATIC_DIR, "analytics/SlideBG.png"),
+                path: path.join(STATIC_DIR, "analytics", "SlideBG.png"),
                 x: 0,
                 y: 0,
                 w: "100%",
