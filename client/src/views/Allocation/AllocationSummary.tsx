@@ -168,15 +168,20 @@ export const AllocationSummary = () => {
           <Card key={data.id} className="w-full overflow-hidden rounded-none">
             <CardContent className="p-0">
               <div className="grid grid-cols-[500px_1fr] border-b">
-                {/* Left Side (Course Info) */}
-                <div className="row-span-full flex items-center justify-center border-r p-4">
-                  <div className="text-center">
+                <div className="row-span-full flex items-center border-r p-4">
+                  <div className="w-full">
                     <Link
                       to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
+                      className="block w-full"
                     >
-                      <Button variant="link" className="text-lg font-semibold">
-                        {data.courseCode} -{" "}
-                        {data.course.name ?? "Unnamed Course"}
+                      <Button
+                        variant="link"
+                        className="block w-full text-lg font-semibold"
+                      >
+                        <span className="block w-full truncate">
+                          {data.courseCode} -{" "}
+                          {data.course.name ?? "Unnamed Course"}
+                        </span>
                       </Button>
                     </Link>
                   </div>
@@ -185,12 +190,18 @@ export const AllocationSummary = () => {
                 {/* Right Side (Sections & Instructors) */}
                 <div className="divide-y">
                   {data.sections.map((section) => (
-                    <div key={section.id} className="grid grid-cols-[40px_1fr]">
+                    <div
+                      key={section.id}
+                      className="grid grid-cols-[120px_1fr]"
+                    >
                       {/* Section Name (like L1, T1, etc.) */}
                       <div className="row-span-full flex items-center justify-center border-b border-r p-2">
                         <p className="text-sm font-medium">
                           {section.type.charAt(0)}
                           {getSectionNumber(data, section.id, section.type)}
+                          {section.type === "PRACTICAL" &&
+                            section.timetableRoomId &&
+                            ` - ${section.timetableRoomId}`}
                         </p>
                       </div>
 

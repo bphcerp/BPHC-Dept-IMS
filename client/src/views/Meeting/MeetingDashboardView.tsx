@@ -1,5 +1,4 @@
-// client/src/views/Meeting/MeetingDashboardView.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -16,9 +15,11 @@ interface MeetingsData {
 
 const MeetingDashboardView: React.FC = () => {
   const queryClient = useQueryClient();
+  const [view, setView] = useState<"upcoming" | "archived">("upcoming");
+
   const { data, isLoading, isError, error } = useQuery<MeetingsData>({
-    queryKey: ["meetings"],
-    queryFn: () => api.get("/meeting/all").then((res) => res.data),
+    queryKey: ["meetings", view],
+    queryFn: () => api.get(`/meeting/all?view=${view}`).then((res) => res.data),
   });
 
   const remindMutation = useMutation({
@@ -43,6 +44,10 @@ const MeetingDashboardView: React.FC = () => {
       toast.error(error.response?.data?.message || "Failed to cancel meeting.");
     },
   });
+
+  const handleToggleView = () => {
+    setView((prev) => (prev === "upcoming" ? "archived" : "upcoming"));
+  };
 
   if (isLoading) {
     return (
@@ -78,6 +83,8 @@ const MeetingDashboardView: React.FC = () => {
       onDelete={deleteMutation.mutate}
       isReminding={remindMutation.isLoading}
       isDeleting={deleteMutation.isLoading}
+      currentView={view}
+      onToggleView={handleToggleView}
     />
   );
 };

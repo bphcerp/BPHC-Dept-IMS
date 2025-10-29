@@ -1,4 +1,3 @@
-// client/src/components/meeting/MeetingDashboard.tsx
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Eye, Plus, Send, Trash2 } from "lucide-react";
+import { Eye, Plus, Send, Trash2, History } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
   AlertDialog,
@@ -47,6 +46,8 @@ interface MeetingDashboardProps {
   onDelete: (meetingId: number) => void;
   isReminding: boolean;
   isDeleting: boolean;
+  currentView: "upcoming" | "archived";
+  onToggleView: () => void;
 }
 
 export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
@@ -56,6 +57,8 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
   onDelete,
   isReminding,
   isDeleting,
+  currentView,
+  onToggleView,
 }) => {
   const navigate = useNavigate();
 
@@ -79,6 +82,10 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
         );
       case "pending_responses":
         return <Badge variant="secondary">Pending Responses</Badge>;
+      case "completed":
+        return <Badge variant="outline">Completed</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -157,7 +164,7 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
                         <Send className="mr-2 h-4 w-4" /> Remind
                       </Button>
                     )}
-                    {isOrganizer && (
+                    {isOrganizer && currentView === "upcoming" && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -203,16 +210,28 @@ export const MeetingDashboard: React.FC<MeetingDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Meeting Dashboard</h1>
           <p className="text-muted-foreground">
-            Organize and view your meetings.
+            {currentView === "upcoming"
+              ? "Organize and view your upcoming meetings."
+              : "View your past and cancelled meetings."}
           </p>
         </div>
-        <Button onClick={() => navigate("/meeting/create")}>
-          <Plus className="mr-2 h-4 w-4" /> Create Meeting
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onToggleView}>
+            <History className="mr-2 h-4 w-4" />
+            {currentView === "upcoming"
+              ? "Switch to Archived"
+              : "Switch to Upcoming"}
+          </Button>
+          {currentView === "upcoming" && (
+            <Button onClick={() => navigate("/meeting/create")}>
+              <Plus className="mr-2 h-4 w-4" /> Create Meeting
+            </Button>
+          )}
+        </div>
       </div>
       {renderTable("Meetings You've Organized", organizedMeetings, true)}
       {renderTable("Meetings You're Invited To", invitedMeetings, false)}

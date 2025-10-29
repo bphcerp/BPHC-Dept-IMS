@@ -68,12 +68,10 @@ export const fileFields = pgTable("file_fields", {
 });
 
 export const files = pgTable("files", {
-    ...{
-        ...baseField,
-        userEmail: text("user_email").references(() => users.email, {
-            onDelete: "cascade",
-        }),
-    },
+    ...baseField,
+    userEmail: text("user_email").references(() => users.email, {
+        onDelete: "cascade",
+    }),
     originalName: text("original_name"),
     mimetype: text("mimetype"),
     filePath: text("file_path").notNull(),

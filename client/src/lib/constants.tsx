@@ -18,3 +18,4 @@ export const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL as string;
 export const DEPARTMENT_NAME = import.meta.env.VITE_DEPARTMENT_NAME as string;
 export const DEPARTMENT_NAME_FULL = import.meta.env
   .VITE_DEPARTMENT_NAME_FULL as string;
+export const TTD_DEPARTMENT_NAME = import.meta.env.VITE_TTD_DEPARTMENT_NAME as string
