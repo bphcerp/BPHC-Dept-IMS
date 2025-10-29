@@ -16,8 +16,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { courseSchema } from "../../../../lib/src/schemas/Allocation";
@@ -25,6 +30,7 @@ import { NewCourse } from "../../../../lib/src/types/allocation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
+import { TTD_DEPARTMENT_NAME } from "@/lib/constants";
 
 interface AddCourseFormProps {
   children: React.ReactNode;
@@ -43,14 +49,15 @@ const AddCourseForm = ({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       offeredAs: "CDC",
+      markedForAllocation: true,
     },
   });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const { mutate: addCourse, isLoading } = useMutation({
-    mutationFn: (newCourse: NewCourse) =>
-      api.post("/allocation/course/create", newCourse),
+    mutationFn: async (newCourse: NewCourse) =>
+      await api.post("/allocation/course/create", newCourse),
     onSuccess: (data) => {
       if (data?.data?.success) {
         toast.success("Course added successfully!");
@@ -81,25 +88,24 @@ const AddCourseForm = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle> Add a New Course </DialogTitle>
+          <DialogTitle>Add a New Course</DialogTitle>
           <DialogDescription>
-            {" "}
-            Fill in the details of the new course{" "}
+            Fill in the details of the new course
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="flex space-x-4">
-              <div className="flex-1 space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Course Code </FormLabel>
+                      <FormLabel>Course Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. CS F211" {...field} />
+                        <Input placeholder={`e.g. ${TTD_DEPARTMENT_NAME} F211`} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,7 +116,7 @@ const AddCourseForm = ({
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Course Title </FormLabel>
+                      <FormLabel>Course Title</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g. Data Structures and Algorithms"
@@ -126,7 +132,7 @@ const AddCourseForm = ({
                   name="totalUnits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Credits </FormLabel>
+                      <FormLabel>Credits</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -141,38 +147,40 @@ const AddCourseForm = ({
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="offeredAs"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem>
+                      <FormLabel>Offered As</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value === "CDC"}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked ? "CDC" : "DEL")
-                          }
-                        />
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="CDC">CDC</SelectItem>
+                            <SelectItem value="DEL">DEL</SelectItem>
+                            <SelectItem value="HEL">HEL</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          {" "}
-                          Is this a Core Disciplinary Course (CDC)?
-                        </FormLabel>
-                      </div>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="flex-1 space-y-4">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="lectureUnits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Lecture Units </FormLabel>
+                      <FormLabel>Lecture Units</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -192,7 +200,7 @@ const AddCourseForm = ({
                   name="practicalUnits"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel> Practical Units </FormLabel>
+                      <FormLabel>Practical Units</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -207,15 +215,32 @@ const AddCourseForm = ({
                     </FormItem>
                   )}
                 />
-
+                <FormField
+                  control={form.control}
+                  name="timetableCourseId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Timetable Division Comp Code</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Enter the computer code"
+                          {...field}
+                          onChange={(event) =>
+                            field.onChange(+event.target.value)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="offeredTo"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Offered To</FormLabel>
-                      </div>
+                      <FormLabel>Offered To</FormLabel>
                       <FormControl>
                         <Select
                           value={field.value}
@@ -227,6 +252,7 @@ const AddCourseForm = ({
                           <SelectContent>
                             <SelectItem value="FD">FD</SelectItem>
                             <SelectItem value="HD">HD</SelectItem>
+                            <SelectItem value="PhD">PhD</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -236,13 +262,16 @@ const AddCourseForm = ({
                 />
               </div>
             </div>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Course"}
-            </Button>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isLoading} className="w-32">
+                {isLoading ? "Adding..." : "Add Course"}
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
 };
+
 export { AddCourseForm };

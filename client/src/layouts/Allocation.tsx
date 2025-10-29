@@ -27,11 +27,18 @@ const AllocationLayout = () => {
   return (
     <>
       <AppSidebar
+        sort={false}
         items={[
           // This section should be visible to all users with allocation write permissions
           {
             title: "Admin Control",
             items: [
+              {
+                title: "Semesters",
+                icon: <BookIcon />,
+                url: "/allocation/semesters",
+                requiredPermissions: ["allocation:semesters:view"],
+              },
               {
                 title: "Overview",
                 icon: <ClockArrowDownIcon />,
@@ -61,12 +68,6 @@ const AllocationLayout = () => {
                 requiredPermissions: ["allocation:courses:write"],
               },
               {
-                title: "Semesters",
-                icon: <BookIcon />,
-                url: "/allocation/semesters",
-                requiredPermissions: ["allocation:semesters:view"],
-              },
-              {
                 title: "Allocation",
                 icon: <ClipboardCheckIcon />,
                 url: "/allocation/allocate",
@@ -74,37 +75,6 @@ const AllocationLayout = () => {
               },
             ],
           },
-          ...(!!currentSemester
-            ? [
-                {
-                  title: "Course Allocation",
-                  items: [
-                    {
-                      title: "Summary",
-                      icon: <TableOfContentsIcon />,
-                      url: "/allocation/summary",
-                      requiredPermissions: [
-                        currentSemester?.summaryHidden
-                          ? "allocation:write"
-                          : "allocation:summary:view",
-                      ],
-                    },
-                    ...(currentSemester?.allocationStatus === "formCollection"
-                      ? [
-                          {
-                            title: "Submit Your Preferences",
-                            icon: <SendIcon />,
-                            url: `/allocation/submit`,
-                            requiredPermissions: [
-                              "allocation:form:response:submit",
-                            ],
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-              ]
-            : []),
           {
             title: "Forms",
             items: [
@@ -128,6 +98,41 @@ const AllocationLayout = () => {
               },
             ],
           },
+          ...(!!currentSemester
+            ? [
+                {
+                  title: "Course Allocation",
+                  items: [
+                    ...(currentSemester?.allocationStatus === "inAllocation"
+                      ? [
+                          {
+                            title: "Summary",
+                            icon: <TableOfContentsIcon />,
+                            url: "/allocation/summary",
+                            requiredPermissions: [
+                              currentSemester?.summaryHidden
+                                ? "allocation:write"
+                                : "allocation:summary:view",
+                            ],
+                          },
+                        ]
+                      : []),
+                    ...(currentSemester?.allocationStatus === "formCollection"
+                      ? [
+                          {
+                            title: "Submit Your Preferences",
+                            icon: <SendIcon />,
+                            url: `/allocation/submit`,
+                            requiredPermissions: [
+                              "allocation:form:response:submit",
+                            ],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+            : []),
         ]}
       />
       <div className="h-screen w-full overflow-y-auto">

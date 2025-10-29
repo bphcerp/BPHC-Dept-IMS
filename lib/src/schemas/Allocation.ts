@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { userTypes } from "./Admin.ts";
 
 export const sectionTypes = ["LECTURE", "TUTORIAL", "PRACTICAL"] as const;
 export const degreeTypes = ["FD", "HD", "PhD"] as const;
@@ -117,6 +118,7 @@ export const courseCodeSchema = z.object({
 export const getPreferenceSchema = z.object({
     code: z.string().nonempty(),
     sectionType: sectionTypeEnum.optional(),
+    userType: z.enum(userTypes).optional()
 });
 
 export const courseAllocateSchema = z.object({
@@ -139,6 +141,11 @@ export const addSectionBodySchema = z.object({
 export const removeSectionsBodySchema = z.object({
     sectionId: z.union([z.array(z.string().uuid()), z.string().uuid()]),
 });
+
+export const setSectionRoomBodySchema = z.object({
+    sectionId: z.string().uuid(),
+    roomId: z.string()
+})
 
 export const assignInstructorBodySchema = z.object({
     sectionId: z.string().uuid(),

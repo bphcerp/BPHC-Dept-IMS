@@ -41,6 +41,7 @@ router.get(
                                     with: {
                                         faculty: {
                                             columns: {
+                                                psrn: true,
                                                 name: true,
                                                 email: true,
                                             },
@@ -75,11 +76,19 @@ router.get(
                           sections: allocation.sections.map((s) => ({
                               ...s,
                               instructors: s.instructors.map((i) => {
-                                  const { email,type, ...rest } = i.instructor;
+                                  const { email, type, ...rest } = i.instructor;
                                   const instructor = Object.values(rest).filter(
                                       (v) => !!v
                                   )[0];
-                                  return { email, type, name: instructor?.name ?? "Not Provided" };
+                                  return {
+                                      email,
+                                      type,
+                                      psrn:
+                                          "psrn" in instructor
+                                              ? instructor.psrn
+                                              : null,
+                                      name: instructor?.name ?? "Not Provided",
+                                  };
                               }),
                           })),
                       }))
@@ -91,9 +100,8 @@ router.get(
 
                           const offeredToA = a.course?.offeredTo ?? "";
                           const offeredToB = b.course?.offeredTo ?? "";
-                          const offeredToCompare = offeredToA.localeCompare(
-                              offeredToB
-                          );
+                          const offeredToCompare =
+                              offeredToA.localeCompare(offeredToB);
                           if (offeredToCompare !== 0) return -offeredToCompare;
 
                           const offeredAsA = a.course?.offeredAs ?? "";

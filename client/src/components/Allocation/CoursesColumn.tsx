@@ -5,13 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import {
-  Search,
-  BookOpen,
-  GraduationCap,
-  Clock,
-  FilterIcon,
-} from "lucide-react";
+import { Search, BookOpen, FilterIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -34,6 +28,23 @@ interface CoursesColumnProps {
   selectedCourse: allocationTypes.Course | null;
   onCourseSelect: (course: allocationTypes.Course) => void;
 }
+
+const PARAMS = {
+  degrees: "degrees",
+  courseTypes: "courseTypes",
+  statuses: "statuses",
+  sortField: "sortField",
+  sortOrder: "sortOrder",
+  search: "search",
+};
+
+const arraysEqual = (a: string[], b: string[]) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+};
 
 const CoursesColumn: React.FC<CoursesColumnProps> = ({
   courses,
@@ -76,6 +87,114 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
       return response.data;
     },
   });
+
+  // Keep track of first mount so that URL -> state application does not trigger overwrite
+  const initialAppliedRef = useRef(false);
+
+  // On mount: read query params and apply to state (validate against allowed lists)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const usp = new URLSearchParams(window.location.search);
+
+    const parseArray = (key: string, allowed: string[]) => {
+      const raw = usp.get(key);
+      if (!raw) return null;
+      const parts = raw
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+      const filtered = parts.filter((p) => allowed.includes(p));
+      return filtered.length > 0 ? filtered : null;
+    };
+
+    const maybeDegrees = parseArray(
+      PARAMS.degrees,
+      allocationSchemas.degreeTypes as unknown as string[]
+    );
+    const maybeCourseTypes = parseArray(
+      PARAMS.courseTypes,
+      allocationSchemas.courseTypes as unknown as string[]
+    );
+    const maybeStatuses = parseArray(
+      PARAMS.statuses,
+      allocationStatusOptions as unknown as string[]
+    );
+
+    const search = usp.get(PARAMS.search);
+    const sf = usp.get(PARAMS.sortField) as
+      | ("allocation" | "name" | "code")
+      | null;
+    const so = usp.get(PARAMS.sortOrder) as ("asc" | "desc") | null;
+
+    if (maybeDegrees) setDegreeFilters(maybeDegrees as any);
+    if (maybeCourseTypes) setCourseTypeFilters(maybeCourseTypes as any);
+    if (maybeStatuses) setAllocationStatusFilters(maybeStatuses as any);
+    if (search) setSearchTerm(search);
+    if (sf && (sf === "allocation" || sf === "name" || sf === "code"))
+      setSortField(sf);
+    if (so && (so === "asc" || so === "desc")) setSortOrder(so);
+
+    // Mark that initial application is done; subsequent state changes should sync to URL
+    initialAppliedRef.current = true;
+  }, []);
+
+  // Sync state -> URL when filters change (skip until initialAppliedRef is true)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!initialAppliedRef.current) return;
+
+    const usp = new URLSearchParams(window.location.search);
+
+    const setOrRemove = (key: string, arr: string[], defaultArr: string[]) => {
+      if (!arr || arr.length === 0 || arraysEqual(arr, defaultArr)) {
+        usp.delete(key);
+      } else {
+        usp.set(key, arr.join(","));
+      }
+    };
+
+    setOrRemove(
+      PARAMS.degrees,
+      degreeFilters as unknown as string[],
+      allocationSchemas.degreeTypes as unknown as string[]
+    );
+    setOrRemove(
+      PARAMS.courseTypes,
+      courseTypeFilters as unknown as string[],
+      allocationSchemas.courseTypes as unknown as string[]
+    );
+    setOrRemove(
+      PARAMS.statuses,
+      allocationStatusFilters as unknown as string[],
+      allocationStatusOptions as unknown as string[]
+    );
+
+    if (searchTerm && searchTerm.trim() !== "")
+      usp.set(PARAMS.search, searchTerm.trim());
+    else usp.delete(PARAMS.search);
+
+    if (sortField && sortField !== "code") usp.set(PARAMS.sortField, sortField);
+    else usp.delete(PARAMS.sortField);
+
+    if (sortOrder && sortOrder !== "asc") usp.set(PARAMS.sortOrder, sortOrder);
+    else usp.delete(PARAMS.sortOrder);
+
+    const qs = usp.toString();
+    const newUrl = qs
+      ? `${window.location.pathname}?${qs}`
+      : window.location.pathname;
+
+    // replaceState so user doesn't get navigation in history for every toggle
+    window.history.replaceState(null, "", newUrl);
+  }, [
+    degreeFilters,
+    courseTypeFilters,
+    allocationStatusFilters,
+    searchTerm,
+    sortField,
+    sortOrder,
+  ]);
 
   const filteredCourses = (() => {
     const base = courses
@@ -133,6 +252,8 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
       case "DEL":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "HEL":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200";
     }
   };
 
@@ -168,6 +289,22 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     setAllocationStatusFilters([...allocationStatusOptions]);
     setSortField("code");
     setSortOrder("asc");
+
+    if (typeof window !== "undefined") {
+      // remove our params from the URL
+      const usp = new URLSearchParams(window.location.search);
+      usp.delete(PARAMS.degrees);
+      usp.delete(PARAMS.courseTypes);
+      usp.delete(PARAMS.statuses);
+      usp.delete(PARAMS.search);
+      usp.delete(PARAMS.sortField);
+      usp.delete(PARAMS.sortOrder);
+      const qs = usp.toString();
+      const newUrl = qs
+        ? `${window.location.pathname}?${qs}`
+        : window.location.pathname;
+      window.history.replaceState(null, "", newUrl);
+    }
   };
 
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -176,7 +313,9 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
     if (!selectedCourse || !scrollAreaRef.current) return;
 
     const selector = `[data-course-code="${selectedCourse.code}"]`;
-    const el = scrollAreaRef.current.querySelector(selector) as HTMLElement | null;
+    const el = scrollAreaRef.current.querySelector(
+      selector
+    ) as HTMLElement | null;
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
@@ -239,6 +378,20 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 >
                   FD
                 </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={degreeFilters.includes("PhD")}
+                  onCheckedChange={(checked) => {
+                    setDegreeFilters((prev) => {
+                      const has = prev.includes("PhD");
+                      if (checked && !has) return [...prev, "PhD"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "PhD");
+                      return prev;
+                    });
+                  }}
+                >
+                  PhD
+                </DropdownMenuCheckboxItem>
 
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel>Course Type</DropdownMenuLabel>
@@ -269,6 +422,20 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                   }}
                 >
                   DEL
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={courseTypeFilters.includes("HEL")}
+                  onCheckedChange={(checked) => {
+                    setCourseTypeFilters((prev) => {
+                      const has = prev.includes("HEL");
+                      if (checked && !has) return [...prev, "HEL"];
+                      if (!checked && has)
+                        return prev.filter((d) => d !== "HEL");
+                      return prev;
+                    });
+                  }}
+                >
+                  HEL
                 </DropdownMenuCheckboxItem>
 
                 <DropdownMenuSeparator />
@@ -418,19 +585,12 @@ const CoursesColumn: React.FC<CoursesColumnProps> = ({
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2">
-                    <h4 className="text-xs font-medium leading-tight">
-                      {course.code}
-                    </h4>
-
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-3 w-3" />
-                        <span>L: {course.lectureUnits}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>P: {course.practicalUnits}</span>
-                      </div>
+                      <h4 className="text-xs font-medium leading-tight">
+                        {course.code}
+                      </h4>
+                      <span>L: {course.lectureUnits}</span>
+                      <span>P: {course.practicalUnits}</span>
                       <div className="font-semibold">
                         Total: {course.totalUnits}
                       </div>

@@ -11,7 +11,14 @@ patchedDependencies:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@types/multer':
+        specifier: ^1.4.12
+        version: 1.4.12
+      zod:
+        specifier: ^3.24.1
+        version: 3.24.2
 
   client:
     dependencies:
@@ -6188,12 +6195,11 @@ packages:
   puppeteer@10.4.0:
     resolution: {integrity: sha512-2cP8mBoqnu5gzAVpbZ0fRaobBWZM8GEUF4I1F6WbgHrKV/rz7SX8PG2wMymZgD0wo0UBlg2FBPNxlF/xlqW6+w==}
     engines: {node: '>=10.18.1'}
-    deprecated: < 24.15.0 is no longer supported
+    deprecated: < 24.9.0 is no longer supported
 
   puppeteer@24.10.2:
     resolution: {integrity: sha512-+k26rCz6akFZntx0hqUoFjCojgOLIxZs6p2k53LmEicwsT8F/FMBKfRfiBw1sitjiCvlR/15K7lBqfjXa251FA==}
     engines: {node: '>=18'}
-    deprecated: < 24.15.0 is no longer supported
     hasBin: true
 
   pure-rand@6.1.0:
