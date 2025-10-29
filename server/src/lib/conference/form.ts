@@ -166,13 +166,15 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
             "Unable to retrieve user details for the application"
         );
     const drcReviews = (
-        await db.query.conferenceMemberReviews.findMany({
+        await db.query.conferenceApplicationMembers.findMany({
             columns: {
-                status: true,
+                reviewStatus: true,
             },
             where: (cols, { eq }) => eq(cols.applicationId, applicationData.id),
         })
-    ).map((review) => review.status);
+    )
+        .map((review) => review.reviewStatus)
+        .filter((status) => status !== null);
 
     const {
         signatureBase64: drcConvenerSignatureBase64,
@@ -245,16 +247,16 @@ const getAuthorityDetails = async (
         ? await encodeImageToBase64(faculty.signatureFile)
         : undefined;
     const approvalDate = (
-        await db.query.conferenceMemberReviews.findFirst({
-            columns: { createdAt: true },
+        await db.query.conferenceApplicationMembers.findFirst({
+            columns: { updatedAt: true },
             where: (cols, { eq, and }) =>
                 and(
                     eq(cols.applicationId, applicationId),
-                    eq(cols.reviewerEmail, user.email)
+                    eq(cols.memberEmail, user.email)
                 ),
-            orderBy: (cols, { desc }) => desc(cols.createdAt),
+            orderBy: (cols, { desc }) => desc(cols.updatedAt),
         })
-    )?.createdAt.toLocaleDateString();
+    )?.updatedAt.toLocaleDateString();
     const name = faculty?.name ?? undefined;
     return { signatureBase64, approvalDate, name };
 };

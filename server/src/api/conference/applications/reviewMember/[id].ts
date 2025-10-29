@@ -61,18 +61,19 @@ router.post(
                 "You have already reviewed this application"
             );
 
-        const pendingReviews = (
-            await db.query.conferenceApplicationMembers.findMany({
-                where: (cols, { eq, ne, and, isNull }) =>
-                    and(
-                        eq(cols.applicationId, id),
-                        ne(cols.memberEmail, req.user!.email),
-                        isNull(cols.reviewStatus)
-                    ),
-            })
-        ).length;
-
         await db.transaction(async (tx) => {
+            // Check for pending reviews inside transaction to prevent race conditions
+            const pendingReviews = (
+                await tx.query.conferenceApplicationMembers.findMany({
+                    where: (cols, { eq, ne, and, isNull }) =>
+                        and(
+                            eq(cols.applicationId, id),
+                            ne(cols.memberEmail, req.user!.email),
+                            isNull(cols.reviewStatus)
+                        ),
+                })
+            ).length;
+
             if (!pendingReviews) {
                 // If all DRC Members have reviewed the application, move state to DRC convener
                 await tx

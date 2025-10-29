@@ -8,6 +8,7 @@ import {
     primaryKey,
     boolean,
     jsonb,
+    index,
 } from "drizzle-orm/pg-core";
 import { files } from "./form.ts";
 import { conferenceSchemas } from "lib";
@@ -45,6 +46,8 @@ export const conferenceApplicationMembers = pgTable(
         primaryKey({
             columns: [table.applicationId, table.memberEmail],
         }),
+        index("conference_app_members_status_idx").on(table.reviewStatus),
+        index("conference_app_members_email_idx").on(table.memberEmail),
     ]
 );
 

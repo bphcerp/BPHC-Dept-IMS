@@ -10,6 +10,9 @@ const router = express.Router();
 router.get(
     "/:id",
     asyncHandler(async (req, res, next) => {
+        if (!req.user)
+            throw new HttpError(HttpCode.UNAUTHORIZED, "Unauthorized");
+
         const id = parseInt(req.params.id);
         if (isNaN(id) || id <= 0)
             return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));

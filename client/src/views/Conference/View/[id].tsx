@@ -1,6 +1,6 @@
 import api from "@/lib/axios-instance";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { conferenceSchemas } from "lib";
 import BackButton from "@/components/BackButton";
 import { useAuth } from "@/hooks/Auth";
@@ -24,6 +24,7 @@ import { isAxiosError } from "axios";
 const MemberReview = ({ id }: { id?: string }) => {
   const [action, setAction] = useState<boolean | null>(null);
   const [comments, setComments] = useState("");
+  const navigate = useNavigate();
 
   const reviewMemberMutation = useMutation({
     mutationFn: async (data: conferenceSchemas.ReviewApplicationBody) => {
@@ -34,7 +35,7 @@ const MemberReview = ({ id }: { id?: string }) => {
     },
     onSuccess: () => {
       toast.success("Review submitted successfully");
-      window.location.href = `/conference/pending`;
+      navigate("/conference/pending");
     },
   });
 
