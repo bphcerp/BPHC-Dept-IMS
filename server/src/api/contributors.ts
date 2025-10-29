@@ -15,7 +15,7 @@ const redisConfig = {
 const redis = new Redis(redisConfig);
 
 const GITHUB_OWNER = "bphcerp";
-const GITHUB_REPO = "Erp";
+const GITHUB_REPO = "BPHC-Dept-IMS";
 const CACHE_KEY = "github:contributors";
 const CACHE_TTL = 60 * 60;
 
