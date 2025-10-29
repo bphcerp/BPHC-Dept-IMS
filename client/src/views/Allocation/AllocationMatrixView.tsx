@@ -93,7 +93,7 @@ export const AllocationMatrixView = () => {
     queryKey: ["faculty"],
     queryFn: async () => {
       const res = await api.get<Faculty[]>("/admin/member/getAllFaculty");
-      return res.data.sort((a, b) =>
+      return res.data.filter((faculty) => !!faculty.psrn).sort((a, b) =>
         a.psrn && b.psrn ? a.psrn.localeCompare(b.psrn) : 0
       );
     },
