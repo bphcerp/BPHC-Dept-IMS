@@ -1,14 +1,14 @@
 {
   "professors": [
+     {
+      "department": "Mechanical Department",
+      "name": "Prof. Supradeepan K",
+      "imageUrl": "/contributors_images/supradeepan.webp"
+    },
     {
       "department": "EEE Department",
       "name": "Prof. Harish V Dixit",
       "imageUrl": "/contributors_images/hvd.jpg"
-    },
-    {
-      "department": "Mechanical Department",
-      "name": "Prof. Supradeepan K",
-      "imageUrl": "/contributors_images/supradeepan.webp"
     }
   ],
   "students": {
