@@ -161,7 +161,7 @@ router.post(
             await completeTodo({
                 module: modules[0],
                 completionEvent: `edit ${id}`,
-            });
+            }, tx);
 
             const todoAssignees = isDirect
                 ? (
@@ -171,7 +171,7 @@ router.post(
                       )
                   ).map((convener) => convener.email)
                 : (
-                      await db.query.conferenceApplicationMembers.findMany({
+                      await tx.query.conferenceApplicationMembers.findMany({
                           columns: {
                               memberEmail: true,
                           },
