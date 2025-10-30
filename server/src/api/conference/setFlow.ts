@@ -145,7 +145,7 @@ router.post(
                             (member) => member.reviewStatus === null
                         )
                 );
-                await db
+                await tx
                     .update(conferenceApprovalApplications)
                     .set({
                         state: "DRC Member",
