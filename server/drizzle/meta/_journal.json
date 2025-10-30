@@ -561,6 +561,13 @@
       "when": 1761452951740,
       "tag": "0079_wooden_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1761752717060,
+      "tag": "0080_orange_franklin_storm",
+      "breakpoints": true
     }
   ]
 }
