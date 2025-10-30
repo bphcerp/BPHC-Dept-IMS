@@ -50,7 +50,7 @@ router.post(
                     .where(
                         eq(conferenceApprovalApplications.state, "DRC Member")
                     );
-                const convenerApplications = await tx
+                await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
                     .where(
@@ -58,8 +58,13 @@ router.post(
                             conferenceApprovalApplications.id,
                             memberApplications
                         )
-                    )
-                    .returning();
+                    );
+                const convenerApplications =
+                    await tx.query.conferenceApprovalApplications.findMany({
+                        where: (cols, { inArray }) =>
+                            inArray(cols.id, memberApplications),
+                        with: { user: true },
+                    });
                 if (convenerApplications.length) {
                     await completeTodo(
                         {
@@ -82,7 +87,7 @@ router.post(
                                 title: "Conference Application",
                                 createdBy: inserted.userEmail,
                                 completionEvent: `review ${inserted.id} convener`,
-                                description: `Review conference application id ${inserted.id} by ${inserted.userEmail}`,
+                                description: `Review conference application id ${inserted.id} by ${inserted.user.name || inserted.userEmail}`,
                                 assignedTo: assignee.email,
                                 link: `/conference/view/${inserted.id}`,
                             });
@@ -130,25 +135,41 @@ router.post(
                         where: (cols, { eq }) => eq(cols.state, "DRC Convener"),
                         with: {
                             members: true,
+                            user: true,
                         },
                     });
-                const toBeUpdated = applications
-                    .filter(
-                        (app) =>
-                            app.members.length === 0 ||
-                            app.members.some(
-                                (member) => member.reviewStatus === null
-                            )
-                    )
-                    .map((app) => app.id);
+                const toBeUpdated = applications.filter(
+                    (app) =>
+                        app.members.length === 0 ||
+                        app.members.some(
+                            (member) => member.reviewStatus === null
+                        )
+                );
                 await db
                     .update(conferenceApprovalApplications)
                     .set({
                         state: "DRC Member",
                     })
                     .where(
-                        inArray(conferenceApprovalApplications.id, toBeUpdated)
+                        inArray(
+                            conferenceApprovalApplications.id,
+                            toBeUpdated.map((app) => app.id)
+                        )
                     );
+                await createTodos(
+                    toBeUpdated.flatMap((app) =>
+                        app.members.map((member) => ({
+                            module: modules[0],
+                            title: "Conference Application",
+                            createdBy: app.userEmail,
+                            completionEvent: `review ${app.id} member`,
+                            description: `Review conference application id ${app.id} by ${app.user.name || app.userEmail}`,
+                            assignedTo: member.memberEmail,
+                            link: `/conference/view/${app.id}`,
+                        }))
+                    ),
+                    tx
+                );
             }
 
             return await tx.update(conferenceGlobal).set({

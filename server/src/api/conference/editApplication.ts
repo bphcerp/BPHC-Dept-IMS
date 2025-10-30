@@ -69,6 +69,7 @@ router.post(
                     letterOfInvitation: true,
                     otherDocuments: true,
                     reviewersComments: true,
+                    user: true,
                 },
             });
         if (!application) {
@@ -184,7 +185,7 @@ router.post(
                     title: "Conference Application",
                     createdBy: req.user!.email,
                     completionEvent: `review ${id} ${isDirect ? "convener" : "member"}`,
-                    description: `Review conference application id ${id} by ${req.user!.email}`,
+                    description: `Review conference application id ${id} by ${application.user.name || application.userEmail}`,
                     assignedTo: assignee,
                     link: `/conference/view/${id}`,
                 })),

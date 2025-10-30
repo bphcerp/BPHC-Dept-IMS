@@ -43,12 +43,71 @@ const fileFieldsObject = Object.fromEntries(
   z.ZodOptional<z.ZodNullable<z.ZodUnion<[z.ZodType<File>, z.ZodString]>>>
 >;
 
-export const schema = conferenceSchemas.upsertApplicationClientSchema.merge(
+// Helper function to determine required file fields based on purpose
+const getRequiredFileFields = (
+  purpose: string
+): (typeof conferenceSchemas.fileFieldNames)[number][] => {
+  if (!purpose) return [];
+
+  const purposeLower = purpose.toLowerCase();
+
+  if (purposeLower.includes("invited speaker")) {
+    return ["letterOfInvitation"];
+  }
+
+  if (
+    purposeLower.includes("keynote lecture") ||
+    purposeLower.includes("chairing session")
+  ) {
+    return ["letterOfInvitation", "detailsOfEvent"];
+  }
+
+  if (
+    purposeLower.includes("presenting paper") ||
+    purposeLower.includes("presenting poster") ||
+    purposeLower.includes("journal page")
+  ) {
+    return [
+      "letterOfInvitation",
+      "firstPageOfPaper",
+      "reviewersComments",
+      "detailsOfEvent",
+      "otherDocuments",
+    ];
+  }
+
+  if (
+    purposeLower.includes("conference") ||
+    purposeLower.includes("workshop")
+  ) {
+    return ["detailsOfEvent"];
+  }
+
+  return [];
+};
+
+const baseSchema = conferenceSchemas.upsertApplicationClientSchema.merge(
   z.object({
     ...fileFieldsObject,
   })
 );
 
+export const schema = baseSchema.superRefine((data, ctx) => {
+  const requiredFields = getRequiredFileFields(data.purpose);
+
+  requiredFields.forEach((fieldName) => {
+    const fieldValue = data[fieldName];
+    if (!fieldValue) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "This document is required",
+        path: [fieldName],
+      });
+    }
+  });
+});
+
+export { baseSchema };
 export type Schema = z.infer<typeof schema>;
 
 const purposeOptions = [
@@ -95,6 +154,7 @@ export const ApplyForm = ({
 }) => {
   const dateTo = form.watch("dateTo");
   const dateFrom = form.watch("dateFrom");
+  const purpose = form.watch("purpose");
   const fundingSplit: FundingSplit[] = form.watch("fundingSplit") || [];
 
   const totalReimbursement =
@@ -105,6 +165,14 @@ export const ApplyForm = ({
           acc + (item?.amount ? parseFloat(item.amount) || 0 : 0),
         0
       ) ?? 0;
+
+  // Determine which file fields to show based on purpose
+  const getVisibleFileFields =
+    (): (typeof conferenceSchemas.fileFieldNames)[number][] => {
+      return getRequiredFileFields(purpose || "");
+    };
+
+  const visibleFileFields = getVisibleFileFields();
 
   useEffect(() => {
     const reimbursements = form.getValues("reimbursements") || [];
@@ -444,71 +512,82 @@ export const ApplyForm = ({
             </div>
           </div>
           <Separator />
-          Enclosures:
-          {conferenceSchemas.fileFieldNames.map((fieldName) => {
-            return (
-              <FormField
-                key={fieldName}
-                control={form.control}
-                name={fieldName}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">
-                      {conferenceSchemas.fieldsToFrontend[fieldName]}
-                      <ChangedIndicator isChanged={isFieldChanged(fieldName)} />
-                    </FormLabel>
-                    <FormControl>
-                      <>
-                        {typeof field.value === "string" ? (
-                          <>
-                            <div className="relative flex items-center justify-between gap-2">
-                              <a
-                                href={field.value}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                              >
-                                Download file
-                              </a>
-                              <Button
-                                variant="outline"
-                                type="button"
-                                onClick={() => {
-                                  form.setValue(fieldName, null);
-                                  void form.trigger(fieldName);
-                                }}
-                                className="aspect-square rounded-full p-1"
-                                aria-label="Clear file"
-                              >
-                                <XIcon />
-                              </Button>
-                            </div>
-                            <div className="relative mt-2 w-full">
-                              <iframe
-                                src={field.value}
-                                className="h-64 w-full rounded border"
-                                title="File Preview"
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <FileUploader
-                            value={field.value ? [field.value] : []}
-                            onValueChange={(val) =>
-                              field.onChange(val[0] ?? null)
-                            }
-                            disabled={isLoading}
-                            accept={{ "application/pdf": [] }}
+          {visibleFileFields.length > 0 ? (
+            <>
+              Enclosures:
+              {visibleFileFields.map((fieldName) => {
+                return (
+                  <FormField
+                    key={fieldName}
+                    control={form.control}
+                    name={fieldName}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-semibold">
+                          {conferenceSchemas.fieldsToFrontend[fieldName]}
+                          <span className="ml-1 text-red-500">*</span>
+                          <ChangedIndicator
+                            isChanged={isFieldChanged(fieldName)}
                           />
-                        )}
-                      </>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            );
-          })}
+                        </FormLabel>
+                        <FormControl>
+                          <>
+                            {typeof field.value === "string" ? (
+                              <>
+                                <div className="relative flex items-center justify-between gap-2">
+                                  <a
+                                    href={field.value}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                  >
+                                    Download file
+                                  </a>
+                                  <Button
+                                    variant="outline"
+                                    type="button"
+                                    onClick={() => {
+                                      form.setValue(fieldName, null);
+                                      void form.trigger(fieldName);
+                                    }}
+                                    className="aspect-square rounded-full p-1"
+                                    aria-label="Clear file"
+                                  >
+                                    <XIcon />
+                                  </Button>
+                                </div>
+                                <div className="relative mt-2 w-full">
+                                  <iframe
+                                    src={field.value}
+                                    className="h-64 w-full rounded border"
+                                    title="File Preview"
+                                  />
+                                </div>
+                              </>
+                            ) : (
+                              <FileUploader
+                                value={field.value ? [field.value] : []}
+                                onValueChange={(val) =>
+                                  field.onChange(val[0] ?? null)
+                                }
+                                disabled={isLoading}
+                                accept={{ "application/pdf": [] }}
+                              />
+                            )}
+                          </>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No document attachments required for this purpose.
+            </p>
+          )}
         </div>
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={isLoading}>

@@ -35,56 +35,55 @@ router.get(
             );
         }
 
-        const pendingApplications = isMember
-            ? (
-                  await db.query.conferenceApplicationMembers.findMany({
-                      where: (cols, { eq, and, isNull }) =>
-                          and(
-                              eq(cols.memberEmail, req.user!.email),
-                              isNull(cols.reviewStatus)
-                          ),
-                      with: {
-                          application: true,
-                          user: true,
-                      },
-                  })
-              )
-                  .map(({ user, application }) => ({
-                      id: application.id,
-                      state: application.state,
-                      createdAt: application.createdAt.toLocaleString(),
+        const pendingApplications =
+            isMember && !isConvener && !isHoD
+                ? (
+                      await db.query.conferenceApplicationMembers.findMany({
+                          where: (cols, { eq, and, isNull }) =>
+                              and(
+                                  eq(cols.memberEmail, req.user!.email),
+                                  isNull(cols.reviewStatus)
+                              ),
+                          with: {
+                              application: true,
+                              user: true,
+                          },
+                      })
+                  )
+                      .map(({ user, application }) => ({
+                          id: application.id,
+                          state: application.state,
+                          createdAt: application.createdAt.toLocaleString(),
+                          userEmail: user.email,
+                          userName: user.name,
+                      }))
+                      .filter(({ state }) => state === "DRC Member")
+                : (
+                      await db.query.conferenceApprovalApplications.findMany({
+                          with: {
+                              user: true,
+                              members: true,
+                          },
+                          where:
+                              isConvener && !isHoD
+                                  ? ({ state }, { eq, or }) =>
+                                        or(
+                                            eq(state, "DRC Member"),
+                                            eq(state, "DRC Convener")
+                                        )
+                                  : undefined,
+                      })
+                  ).map(({ user, ...appl }) => ({
+                      id: appl.id,
+                      state: appl.state,
+                      createdAt: appl.createdAt.toLocaleString(),
                       userEmail: user.email,
                       userName: user.name,
-                  }))
-                  .filter(({ state }) => state === "DRC Member")
-            : (
-                  await db.query.conferenceApprovalApplications.findMany({
-                      with: {
-                          user: true,
-                          members: {
-                              where: (cols, { ne }) =>
-                                  ne(cols.memberEmail, req.user!.email),
-                          },
-                      },
-                      where: ({ state }, { eq, or }) =>
-                          isConvener
-                              ? or(
-                                    eq(state, "DRC Member"),
-                                    eq(state, "DRC Convener")
-                                )
-                              : undefined,
-                  })
-              ).map(({ user, ...appl }) => ({
-                  id: appl.id,
-                  state: appl.state,
-                  createdAt: appl.createdAt.toLocaleString(),
-                  userEmail: user.email,
-                  userName: user.name,
-                  membersAssigned: appl.members.length,
-                  membersReviewed: appl.members.filter(
-                      (m) => m.reviewStatus !== null
-                  ).length,
-              }));
+                      membersAssigned: appl.members.length,
+                      membersReviewed: appl.members.filter(
+                          (m) => m.reviewStatus !== null
+                      ).length,
+                  }));
 
         const isDirect =
             (

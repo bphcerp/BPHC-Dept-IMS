@@ -16,10 +16,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useMemo, useState, useCallback, FC } from "react";
+import { useMemo, useState, useCallback, FC, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { AxiosError, isAxiosError } from "axios";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Users } from "lucide-react";
 
 // Types for component props
 interface ReviewComponentProps {
@@ -406,6 +416,217 @@ const HodReview: FC<HodReviewProps> = ({
   );
 };
 
+// Assign Members Component (for Conveners in DRC Member state)
+interface AssignMembersProps {
+  id: string;
+  onSuccess?: () => void;
+}
+
+const AssignMembers: FC<AssignMembersProps> = ({ id }) => {
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
+    new Set()
+  );
+  const [initialMembers, setInitialMembers] = useState<Set<string>>(new Set());
+  const queryClient = useQueryClient();
+
+  const { data: membersData, isLoading: isLoadingMembers } = useQuery({
+    queryKey: ["conference", "members", parseInt(id)],
+    queryFn: async () => {
+      return (
+        await api.get<conferenceSchemas.GetMembersResponse>(
+          `/conference/applications/getMembers/${id}`
+        )
+      ).data;
+    },
+  });
+
+  // Initialize selected members when data is loaded
+  useEffect(() => {
+    if (membersData?.members) {
+      const memberSet = new Set(membersData.members);
+      setSelectedMembers(memberSet);
+      setInitialMembers(memberSet);
+    }
+  }, [membersData]);
+
+  const setMembersMutation = useMutation({
+    mutationFn: async (memberEmails: string[]) => {
+      return await api.post(`/conference/applications/setMembers/${id}`, {
+        memberEmails,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Members assigned successfully");
+      setInitialMembers(new Set(selectedMembers));
+      void queryClient.invalidateQueries({
+        queryKey: ["conference", "members", parseInt(id)],
+      });
+    },
+    onError: (error) => {
+      const errorMessage =
+        isAxiosError(error) && typeof error.response?.data === "string"
+          ? error.response.data
+          : "Failed to assign members. Please try again.";
+      toast.error(errorMessage);
+    },
+  });
+
+  const handleToggleMember = useCallback((email: string) => {
+    setSelectedMembers((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(email)) {
+        newSet.delete(email);
+      } else {
+        newSet.add(email);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedMembers.size === membersData?.allMembers.length) {
+      setSelectedMembers(new Set());
+    } else {
+      setSelectedMembers(
+        new Set(membersData?.allMembers.map((m) => m.email) || [])
+      );
+    }
+  }, [selectedMembers.size, membersData?.allMembers]);
+
+  const handleSubmit = useCallback(() => {
+    if (selectedMembers.size === 0) {
+      toast.error("Please select at least one member");
+      return;
+    }
+    setMembersMutation.mutate(Array.from(selectedMembers));
+  }, [selectedMembers, setMembersMutation]);
+
+  const hasChanges = useMemo(() => {
+    if (initialMembers.size !== selectedMembers.size) return true;
+    return !Array.from(selectedMembers).every((email) =>
+      initialMembers.has(email)
+    );
+  }, [initialMembers, selectedMembers]);
+
+  const allSelected =
+    membersData?.allMembers.length === selectedMembers.size &&
+    selectedMembers.size > 0;
+
+  if (isLoadingMembers) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Assign Members
+          </CardTitle>
+          <CardDescription>Loading available members...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (!membersData?.allMembers.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Assign Members
+          </CardTitle>
+          <CardDescription className="text-destructive">
+            No DRC members available for assignment
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Assign Members for Review
+        </CardTitle>
+        <CardDescription>
+          Select DRC members who will review this application (
+          {selectedMembers.size} selected)
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Select All Checkbox */}
+        <div className="flex items-center space-x-2 rounded-lg border bg-muted/50 p-3">
+          <Checkbox
+            id="select-all"
+            checked={allSelected}
+            onCheckedChange={handleSelectAll}
+            disabled={setMembersMutation.isLoading}
+          />
+          <Label
+            htmlFor="select-all"
+            className="flex-1 cursor-pointer font-medium"
+          >
+            {allSelected ? "Deselect All" : "Select All"}
+          </Label>
+        </div>
+
+        {/* Member List */}
+        <div className="space-y-2 rounded-lg border p-4">
+          <p className="mb-3 text-sm font-medium text-muted-foreground">
+            Available Members
+          </p>
+          <div className="max-h-[300px] space-y-2 overflow-y-auto">
+            {membersData.allMembers.map((member) => (
+              <div
+                key={member.email}
+                className="flex items-center space-x-2 rounded-md p-2 transition-colors hover:bg-muted/50"
+              >
+                <Checkbox
+                  id={member.email}
+                  checked={selectedMembers.has(member.email)}
+                  onCheckedChange={() => handleToggleMember(member.email)}
+                  disabled={setMembersMutation.isLoading}
+                />
+                <Label
+                  htmlFor={member.email}
+                  className="flex flex-1 cursor-pointer flex-col"
+                >
+                  <span className="font-medium">
+                    {member.name || "Unknown"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {member.email}
+                  </span>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-sm text-muted-foreground">
+            {hasChanges && (
+              <span className="text-orange-600">Unsaved changes</span>
+            )}
+          </p>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              !hasChanges ||
+              selectedMembers.size === 0 ||
+              setMembersMutation.isLoading
+            }
+          >
+            {setMembersMutation.isLoading ? "Assigning..." : "Assign Members"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const ConferenceViewApplicationView = () => {
   const { id } = useParams<{ id: string }>();
   const { checkAccess } = useAuth();
@@ -450,6 +671,12 @@ const ConferenceViewApplicationView = () => {
     if (!data) return false;
     return data.application.state === "HoD" && canReviewAsHod;
   }, [data, canReviewAsHod]);
+
+  // Show member assignment for conveners when state is DRC Member
+  const shouldShowMemberAssignment = useMemo(() => {
+    if (!data) return false;
+    return data.application.state === "DRC Member" && canReviewAsConvener;
+  }, [data, canReviewAsConvener]);
 
   const generateFormMutation = useMutation({
     mutationFn: async () => {
@@ -508,6 +735,9 @@ const ConferenceViewApplicationView = () => {
 
           {/* Member Review - Show if user has pending review as member */}
           {shouldShowMemberReview && <MemberReview id={id} />}
+
+          {/* Member Assignment - Show to conveners when state is DRC Member */}
+          {shouldShowMemberAssignment && <AssignMembers id={id} />}
 
           {/* Convener Review - Show if state is DRC Convener */}
           {shouldShowConvenerReview && (

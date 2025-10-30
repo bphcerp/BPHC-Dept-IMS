@@ -247,16 +247,16 @@ const getAuthorityDetails = async (
         ? await encodeImageToBase64(faculty.signatureFile)
         : undefined;
     const approvalDate = (
-        await db.query.conferenceApplicationMembers.findFirst({
-            columns: { updatedAt: true },
+        await db.query.conferenceStatusLog.findFirst({
+            columns: { timestamp: true },
             where: (cols, { eq, and }) =>
                 and(
                     eq(cols.applicationId, applicationId),
-                    eq(cols.memberEmail, user.email)
+                    eq(cols.userEmail, user.email)
                 ),
-            orderBy: (cols, { desc }) => desc(cols.updatedAt),
+            orderBy: (cols, { desc }) => desc(cols.timestamp),
         })
-    )?.updatedAt.toLocaleDateString();
-    const name = faculty?.name ?? undefined;
+    )?.timestamp.toLocaleDateString();
+    const name = user.name ?? undefined;
     return { signatureBase64, approvalDate, name };
 };

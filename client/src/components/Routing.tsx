@@ -338,7 +338,11 @@ const Routing = () => {
                   />
                 </>
               )}
-              {checkAccess(permissions["/conference/applications/pending"]) && (
+              {checkAccessAnyOne([
+                permissions["/conference/applications/reviewConvener"],
+                permissions["/conference/applications/reviewHod"],
+                permissions["/conference/applications/reviewMember"],
+              ]) && (
                 <>
                   <Route
                     path="pending"

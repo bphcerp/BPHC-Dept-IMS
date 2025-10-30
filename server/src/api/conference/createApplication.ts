@@ -10,6 +10,7 @@ import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
+import assert from "assert";
 import express from "express";
 import { conferenceSchemas, modules } from "lib";
 import multer from "multer";
@@ -78,6 +79,12 @@ router.post(
                 });
             }
 
+            const user = await tx.query.users.findFirst({
+                where: (users, { eq }) => eq(users.email, req.user!.email),
+            });
+
+            assert(user);
+
             const [inserted] = await tx
                 .insert(conferenceApprovalApplications)
                 .values({
@@ -100,7 +107,7 @@ router.post(
                         title: "Conference Application",
                         createdBy: req.user!.email,
                         completionEvent: `review ${inserted.id} convener`,
-                        description: `Review conference application id ${inserted.id} by ${req.user!.email}`,
+                        description: `Review conference application id ${inserted.id} by ${user.name || req.user!.email}`,
                         assignedTo: assignee.email,
                         link: `/conference/view/${inserted.id}`,
                     })),

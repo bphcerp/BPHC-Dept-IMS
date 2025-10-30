@@ -73,7 +73,7 @@ router.post(
                     title: "Conference Application Review",
                     createdBy: req.user!.email,
                     completionEvent: `review ${id} member`,
-                    description: `Review conference application id ${id} by ${application.userEmail}`,
+                    description: `Review conference application id ${id} by ${application.user.name || application.userEmail}`,
                     assignedTo: member.memberEmail,
                     link: `/conference/view/${id}`,
                 })),
