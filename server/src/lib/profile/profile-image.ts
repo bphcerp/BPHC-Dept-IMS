@@ -1,5 +1,5 @@
 import db from "@/config/db/index.ts";
-import { getUserDetails, getUserTableByType } from "../common/index.ts";
+import { getUserDetails } from "../common/index.ts";
 import { eq } from "drizzle-orm";
 import { files } from "@/config/db/schema/form.ts";
 import { modules } from "lib";
@@ -11,6 +11,7 @@ import {
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import multer from "multer";
 import fs from "fs/promises";
+import { users } from "@/config/db/schema/admin.ts";
 
 const removeFileIfExists = async (path: string) => {
     try {
@@ -25,14 +26,13 @@ export const getProfileImage = async (email: string) => {
     if (!user?.profileFileId) {
         return null;
     }
-    const toUpdate = getUserTableByType(user.type);
     const file = await db.query.files.findFirst({
         where: eq(files.id, user.profileFileId),
     });
     if (!file) {
-        db.update(toUpdate)
+        db.update(users)
             .set({ profileFileId: null })
-            .where(eq(toUpdate.email, email));
+            .where(eq(users.email, email));
 
         return null;
     }
@@ -54,36 +54,35 @@ export const updateProfileImage = async (
     email: string,
     file: Express.Multer.File
 ) => {
-    const [insertedFile] = await db
-        .insert(files)
-        .values({
-            userEmail: email,
-            module: modules[8],
-            originalName: file.originalname,
-            mimetype: file.mimetype,
-            filePath: file.path,
-            size: file.size,
-        })
-        .returning({ id: files.id });
-    const user = await getUserDetails(email);
-    if (!user) {
-        throw new HttpError(HttpCode.NOT_FOUND, "User not found");
-    }
-    const toUpdate = getUserTableByType(user.type);
-    if (user.profileFileId) {
-        await db.transaction(async (tx) => {
+    return await db.transaction(async (tx) => {
+        const [insertedFile] = await tx
+            .insert(files)
+            .values({
+                userEmail: email,
+                module: modules[8],
+                originalName: file.originalname,
+                mimetype: file.mimetype,
+                filePath: file.path,
+                size: file.size,
+            })
+            .returning({ id: files.id });
+        const user = await getUserDetails(email, tx);
+        if (!user) {
+            throw new HttpError(HttpCode.NOT_FOUND, "User not found");
+        }
+        if (user.profileFileId) {
             const deleted = await tx
                 .delete(files)
                 .where(eq(files.id, user.profileFileId!))
                 .returning();
             if (deleted.length) await removeFileIfExists(deleted[0].filePath);
-        });
-    }
-    await db
-        .update(toUpdate)
-        .set({ profileFileId: insertedFile.id })
-        .where(eq(toUpdate.email, email));
-    return insertedFile.id;
+        }
+        await tx
+            .update(users)
+            .set({ profileFileId: insertedFile.id })
+            .where(eq(users.email, email));
+        return insertedFile.id;
+    });
 };
 
 export const deleteProfileImage = async (email: string) => {
@@ -91,7 +90,6 @@ export const deleteProfileImage = async (email: string) => {
     if (!user?.profileFileId) {
         return;
     }
-    const toUpdate = getUserTableByType(user.type);
     await db.transaction(async (tx) => {
         const deleted = await tx
             .delete(files)
@@ -99,9 +97,9 @@ export const deleteProfileImage = async (email: string) => {
             .returning();
         if (deleted.length) {
             await tx
-                .update(toUpdate)
+                .update(users)
                 .set({ profileFileId: null })
-                .where(eq(toUpdate.email, user.email));
+                .where(eq(users.email, user.email));
             await removeFileIfExists(deleted[0].filePath);
         }
     });

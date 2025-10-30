@@ -32,7 +32,9 @@ export const users = pgTable("users", {
     name: text("name"),
     phone: text("phone"),
     description: text("description"),
-    profileImage: text("profile_image"),
+    profileFileId: integer("profile_file_id").references(() => files.id, {
+        onDelete: "set null",
+    }),
     designation: text("designation"),
     department: text("department"),
     education: text("education")
@@ -87,9 +89,6 @@ export const faculty = pgTable("faculty", {
     phone: text("phone"),
     authorId: text("author_id").unique(),
     signatureFileId: integer("signature_file_id").references(() => files.id, {
-        onDelete: "set null",
-    }),
-    profileFileId: integer("profile_file_id").references(() => files.id, {
         onDelete: "set null",
     }),
 });

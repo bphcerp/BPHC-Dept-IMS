@@ -1,18 +1,6 @@
 import { relations } from "drizzle-orm";
 import { refreshTokens, users, faculty, phd, staff } from "./admin.ts";
-import {
-    applications,
-    applicationStatus,
-    dateFields,
-    dateFieldStatus,
-    fileFields,
-    fileFieldStatus,
-    files,
-    numberFields,
-    numberFieldStatus,
-    textFields,
-    textFieldStatus,
-} from "./form.ts";
+import { applications, applicationStatus, fileFields, files } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
 import { conferenceApprovalApplications } from "./conference.ts";
 import {
@@ -21,7 +9,7 @@ import {
     phdProposalDacMembers,
     phdProposals,
 } from "./phd.ts";
-import { phdRequests } from "./phdRequest.ts"; 
+import { phdRequests } from "./phdRequest.ts";
 import { allocationSectionInstructors } from "./allocation.ts";
 
 export const usersRelations = relations(users, ({ many, one }) => ({
@@ -48,22 +36,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
     applicationStatuses: many(applicationStatus, {
         relationName: "applicationStatusUser",
     }),
-    textFields: many(textFields, { relationName: "textFieldsUser" }),
-    numberFileds: many(numberFields, { relationName: "numberFieldsUser" }),
-    dateFields: many(dateFields, { relationName: "dateFieldsUser" }),
     fileFields: many(fileFields, { relationName: "fileFieldsUser" }),
-    textFieldStatuses: many(textFieldStatus, {
-        relationName: "textFieldStatus",
-    }),
-    numberFieldStatuses: many(numberFieldStatus, {
-        relationName: "numberFieldStatus",
-    }),
-    dateFieldStatuses: many(dateFieldStatus, {
-        relationName: "dateFieldStatus",
-    }),
-    fileFieldStatuses: many(fileFieldStatus, {
-        relationName: "fileFieldStatus",
-    }),
     files: many(files, {
         relationName: "files",
     }),
