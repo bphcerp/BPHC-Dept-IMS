@@ -57,11 +57,12 @@ export const AllocationOverview = () => {
   const editorTheme = useTheme();
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["semester", "latest-full-stats"],
+    queryKey: ["allocation", "semester", "latest-full-stats"],
     queryFn: () =>
       api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
         ({ data }) => data
       ),
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: roles } = useQuery({
@@ -72,7 +73,8 @@ export const AllocationOverview = () => {
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
-    enabled: !!latestSemester && latestSemester.allocationStatus === 'notStarted' 
+    enabled:
+      !!latestSemester && latestSemester.allocationStatus === "notStarted",
   });
 
   // Fetch all available forms that can be linked
@@ -82,7 +84,8 @@ export const AllocationOverview = () => {
       api<AllocationForm[]>(
         "/allocation/builder/form/getAll?checkNewSemesterValidity=true"
       ).then(({ data }) => data),
-    enabled: !!latestSemester && latestSemester.allocationStatus === 'notStarted'
+    enabled:
+      !!latestSemester && latestSemester.allocationStatus === "notStarted",
   });
 
   const linkFormMutation = useMutation({
@@ -210,7 +213,11 @@ Hyderabad Campus<span>
 `;
 
   const calculateTimeLeft = useCallback(() => {
-    if (!latestSemester?.form?.formDeadline || latestSemester.allocationStatus !== 'formCollection') return "00:00:00";
+    if (
+      !latestSemester?.form?.formDeadline ||
+      latestSemester.allocationStatus !== "formCollection"
+    )
+      return "00:00:00";
 
     const now = new Date().getTime();
     const end = new Date(latestSemester.form.formDeadline).getTime();
@@ -231,7 +238,11 @@ Hyderabad Campus<span>
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
-    if (!!latestSemester && latestSemester.allocationStatus !== 'formCollection') return
+    if (
+      !!latestSemester &&
+      latestSemester.allocationStatus !== "formCollection"
+    )
+      return;
 
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());

@@ -1,4 +1,5 @@
 import db from "@/config/db/index.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { allocationSchemas, allocationTypes } from "lib";
@@ -7,6 +8,7 @@ const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:write"),
     asyncHandler(async (req, res) => {
         let { email } = allocationSchemas.getInstructorDetailsQuerySchema.parse(
             req.query

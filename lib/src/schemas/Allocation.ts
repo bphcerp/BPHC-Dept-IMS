@@ -177,3 +177,17 @@ export const courseGroupCourseAddSchema = z.object({
 export const courseGroupInsertQueryParamSchema = z.object({
     courses: z.coerce.boolean().optional(),
 });
+
+export const bulkModifyChangeSchema = z.object({
+  sectionId: z.string().uuid(),
+  oldInstructorEmail: z.string().email().nullable(),
+  newInstructorEmail: z.string().email(),
+  courseCode: z.string(),
+  sectionType: z.enum(sectionTypes),
+  sectionNumber: z.number().int(),
+  oldInstructorName: z.string().nullable(),
+  newInstructorName: z.string().nullable(),
+  courseName: z.string().nullable(),
+});
+
+export const bulkModifySchema = z.array(bulkModifyChangeSchema);

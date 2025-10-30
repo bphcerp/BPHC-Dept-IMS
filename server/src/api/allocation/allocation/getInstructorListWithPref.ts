@@ -4,11 +4,13 @@ import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { getPreferenceSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:write"),
     asyncHandler(async (req, res, next) => {
         const { code, sectionType, userType } = getPreferenceSchema.parse(req.query);
         const currentAllocationSemester = await getLatestSemester();

@@ -3,12 +3,13 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
-    // checkAccess(),
+    checkAccess("allocation:write"),
     asyncHandler(async (req, res, next) => {
         const { email } = req.query
 

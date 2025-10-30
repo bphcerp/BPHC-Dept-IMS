@@ -4,11 +4,13 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { allocationSchemas } from "lib";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         const { masterId, sectionType } =
             allocationSchemas.addSectionBodySchema.parse(req.body);
