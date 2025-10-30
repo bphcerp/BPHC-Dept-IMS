@@ -64,6 +64,11 @@ router.get(
                         name: true,
                         email: true,
                     },
+                    with: {
+                        faculty: {
+                            columns: { name: true },
+                        },
+                    },
                 },
             },
         });
@@ -73,6 +78,10 @@ router.get(
                 ? allocations
                       .map((allocation) => ({
                           ...allocation,
+                          ic: {
+                            ...allocation.ic,
+                            name: allocation.ic?.name ?? allocation.ic?.faculty.name
+                          },
                           sections: allocation.sections.map((s) => ({
                               ...s,
                               instructors: s.instructors.map((i) => {

@@ -30,7 +30,7 @@ export const masterAllocationRelations = relations(
     masterAllocation,
     ({ one, many }) => ({
         ic: one(users, {
-            fields: [masterAllocation.ic],
+            fields: [masterAllocation.icEmail],
             references: [users.email],
         }),
         course: one(course, {
