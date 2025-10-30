@@ -13,7 +13,7 @@ DROP TABLE "number_fields" CASCADE;--> statement-breakpoint
 DROP TABLE "text_field_status" CASCADE;--> statement-breakpoint
 DROP TABLE "text_fields" CASCADE;--> statement-breakpoint
 ALTER TABLE "faculty" DROP CONSTRAINT "faculty_profile_file_id_files_id_fk";
---> statement-breakpoint\
+--> statement-breakpoint
 ALTER TABLE "users" ADD COLUMN "profile_file_id" integer;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_profile_file_id_files_id_fk" FOREIGN KEY ("profile_file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "faculty" DROP COLUMN "profile_file_id";--> statement-breakpoint
