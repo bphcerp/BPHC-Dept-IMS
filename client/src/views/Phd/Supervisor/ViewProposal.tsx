@@ -16,11 +16,11 @@ import ProposalDocumentsViewer from "@/components/phd/proposal/ProposalDocuments
 import { SupervisorReviewForm } from "@/components/phd/proposal/SupervisorReviewForm";
 import SeminarSlotSelector from "@/components/phd/proposal/SeminarSlotSelector";
 import { SeminarDetailsForm } from "@/components/phd/proposal/SeminarDetailsForm";
-import { Check, X, AlertTriangle } from "lucide-react";
+import { Check, X, AlertTriangle, Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { phdSchemas } from "lib";
-import { formatStatus } from "@/lib/utils"; // Import formatStatus
+import { formatStatus } from "@/lib/utils";
 
 interface DacReview {
   dacMember: { name: string | null; email: string };
@@ -37,7 +37,6 @@ interface CoSupervisor {
   coSupervisor: { name: string | null; email: string } | null;
 }
 
-// FIX: Added supervisor to the interface
 interface Proposal {
   id: number;
   title: string;
@@ -45,7 +44,7 @@ interface Proposal {
   comments: string | null;
   isResubmission: boolean;
   student: { email: string; name: string | null };
-  supervisor: { email: string; name: string | null } | null; // Added this line
+  supervisor: { email: string; name: string | null } | null;
   dacMembers: DacMember[];
   dacReviews: DacReview[];
   coSupervisors: CoSupervisor[];
@@ -55,6 +54,9 @@ interface Proposal {
   placeOfResearchFileUrl?: string | null;
   outsideCoSupervisorFormatFileUrl?: string | null;
   outsideSupervisorBiodataFileUrl?: string | null;
+  seminarDate?: string | null;
+  seminarTime?: string | null;
+  seminarVenue?: string | null;
   proposalSemester: { facultyReviewDate: string };
   canBookSlot?: boolean;
 }
@@ -153,6 +155,21 @@ const SupervisorViewProposal: React.FC = () => {
                 }))}
                 isPostDacRevert={isPostDacRevert}
               />
+            </CardContent>
+          </Card>
+        );
+      case "dac_review":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Seminar Scheduling</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                The proposal is currently under DAC review. Once both the dac
+                approves it, you will be able to set the seminar details. Please
+                follow up with the DAC members to complete their review.
+              </p>
             </CardContent>
           </Card>
         );
@@ -257,6 +274,24 @@ const SupervisorViewProposal: React.FC = () => {
         </Alert>
       )}
       <ProposalDocumentsViewer files={documentFiles} />
+      {proposal.seminarDate && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>Seminar Details</AlertTitle>
+          <AlertDescription>
+            The seminar is scheduled for{" "}
+            <strong>
+              {new Date(proposal.seminarDate).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </strong>{" "}
+            at <strong>{proposal.seminarTime}</strong> in{" "}
+            <strong>{proposal.seminarVenue}</strong>.
+          </AlertDescription>
+        </Alert>
+      )}
       {proposal.dacReviews && proposal.dacReviews.length > 0 && (
         <Card>
           <CardHeader>
@@ -291,5 +326,4 @@ const SupervisorViewProposal: React.FC = () => {
     </div>
   );
 };
-
 export default SupervisorViewProposal;
