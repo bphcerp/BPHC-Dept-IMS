@@ -102,27 +102,36 @@ router.get(
                             isNull(cols.reviewStatus)
                         ),
                 });
-            if (isHoD || isConvener)
+            if (isHoD || isConvener) {
                 res.status(200).send({
                     ...baseConvenerResponse,
                     pendingReviewAsMember: !!pendingReviewAsMember,
                 });
-            else if (isMember && pendingReviewAsMember)
+                return;
+            } else if (isMember && pendingReviewAsMember) {
                 res.status(200).send({
                     application,
                     pendingReviewAsMember: !!pendingReviewAsMember,
                 });
-            else throw forbiddenError;
-            return;
+                return;
+            } else if (application.userEmail !== req.user!.email)
+                throw forbiddenError;
         } else if (application.state === "DRC Convener") {
-            if (!(isConvener || isHoD)) throw forbiddenError;
-            res.status(200).send(baseConvenerResponse);
-            return;
+            if (isConvener || isHoD) {
+                res.status(200).send(baseConvenerResponse);
+                return;
+            } else if (application.userEmail !== req.user!.email) {
+                throw forbiddenError;
+            }
         } else {
-            if (!isHoD) throw forbiddenError;
-            res.status(200).send(baseConvenerResponse);
-            return;
+            if (isHoD) {
+                res.status(200).send(baseConvenerResponse);
+                return;
+            } else if (application.userEmail !== req.user!.email) {
+                throw forbiddenError;
+            }
         }
+        res.status(200).send({ application });
     })
 );
 

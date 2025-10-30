@@ -42,14 +42,19 @@ router.post(
         await db.transaction(async (tx) => {
             if (body.directFlow) {
                 // If we are moving to direct flow, DRC Member states must be set to DRC Convener, and HoD states must be set to Completed
-                const memberApplications = tx
-                    .select({
-                        applicationId: conferenceApprovalApplications.id,
-                    })
-                    .from(conferenceApprovalApplications)
-                    .where(
-                        eq(conferenceApprovalApplications.state, "DRC Member")
-                    );
+                const memberApplications = (
+                    await tx
+                        .select({
+                            applicationId: conferenceApprovalApplications.id,
+                        })
+                        .from(conferenceApprovalApplications)
+                        .where(
+                            eq(
+                                conferenceApprovalApplications.state,
+                                "DRC Member"
+                            )
+                        )
+                ).map((appl) => appl.applicationId);
                 await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
@@ -168,6 +173,15 @@ router.post(
                             link: `/conference/view/${app.id}`,
                         }))
                     ),
+                    tx
+                );
+                await completeTodo(
+                    {
+                        module: modules[0],
+                        completionEvent: toBeUpdated.map(
+                            (app) => `review ${app.id} convener`
+                        ),
+                    },
                     tx
                 );
             }
