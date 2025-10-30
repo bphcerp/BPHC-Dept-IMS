@@ -8,7 +8,12 @@ import { isAxiosError } from "axios";
 import { useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import BackButton from "@/components/BackButton";
-import { ApplyForm, schema, Schema } from "@/components/conference/ApplyForm";
+import {
+  ApplyForm,
+  schema,
+  baseSchema,
+  Schema,
+} from "@/components/conference/ApplyForm";
 import { ViewApplication } from "@/components/conference/ViewApplication";
 import { isEqual } from "date-fns";
 import { toast } from "sonner";
@@ -161,7 +166,7 @@ const ConferenceEditView: React.FC = () => {
         ),
       };
 
-      const schemaKeys = Object.keys(schema.shape) as (keyof Schema)[];
+      const schemaKeys = Object.keys(baseSchema.shape) as (keyof Schema)[];
       const filteredResetValues = schemaKeys.reduce((acc, key) => {
         acc[key] = _resetValues[key] as never;
         return acc;

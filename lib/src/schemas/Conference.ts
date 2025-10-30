@@ -153,6 +153,21 @@ export const reviewApplicationBodySchema = z.discriminatedUnion("status", [
 
 export type ReviewApplicationBody = z.infer<typeof reviewApplicationBodySchema>;
 
+export const setMembersBodySchema = z.object({
+    memberEmails: z
+        .array(z.string().email())
+        .min(1, "At least one member must be assigned")
+        .refine(
+            (emails) => new Set(emails).size === emails.length,
+            "Member emails must be unique"
+        ),
+});
+
+export type GetMembersResponse = {
+    members: string[];
+    allMembers: { email: string; name: string | null }[];
+};
+
 export const textFieldNames = [
     "purpose",
     "contentTitle",
@@ -196,6 +211,8 @@ export type pendingApplicationsResponse = {
         createdAt: string;
         userEmail: string;
         userName: string | null;
+        membersAssigned?: number;
+        membersReviewed?: number;
     }[];
     isDirect?: boolean;
 };
@@ -236,11 +253,12 @@ export type ViewApplicationResponse = {
         otherDocuments?: File;
     };
     reviews: {
-        status: boolean;
+        status: boolean | null;
         comments: string | null;
         createdAt: string;
     }[];
     isDirect?: boolean;
+    pendingReviewAsMember?: boolean;
 };
 
 export const fieldsToFrontend = {

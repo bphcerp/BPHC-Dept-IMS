@@ -10,6 +10,7 @@ import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
+import assert from "assert";
 import express from "express";
 import { conferenceSchemas, modules } from "lib";
 import multer from "multer";
@@ -78,6 +79,12 @@ router.post(
                 });
             }
 
+            const user = await tx.query.users.findFirst({
+                where: (users, { eq }) => eq(users.email, req.user!.email),
+            });
+
+            assert(user);
+
             const [inserted] = await tx
                 .insert(conferenceApprovalApplications)
                 .values({
@@ -88,25 +95,25 @@ router.post(
                 })
                 .returning();
 
-            const todoAssignees = await getUsersWithPermission(
-                isDirect
-                    ? "conference:application:review-application-convener"
-                    : "conference:application:review-application-member",
-                tx
-            );
+            if (isDirect) {
+                const conveners = await getUsersWithPermission(
+                    "conference:application:convener",
+                    tx
+                );
 
-            await createTodos(
-                todoAssignees.map((assignee) => ({
-                    module: modules[0],
-                    title: "Conference Application",
-                    createdBy: req.user!.email,
-                    completionEvent: `review ${inserted.id} ${isDirect ? "convener" : "member"}`,
-                    description: `Review conference application id ${inserted.id} by ${req.user!.email}`,
-                    assignedTo: assignee.email,
-                    link: `/conference/view/${inserted.id}`,
-                })),
-                tx
-            );
+                await createTodos(
+                    conveners.map((assignee) => ({
+                        module: modules[0],
+                        title: "Conference Application",
+                        createdBy: req.user!.email,
+                        completionEvent: `review ${inserted.id} convener`,
+                        description: `Review conference application id ${inserted.id} by ${user.name || req.user!.email}`,
+                        assignedTo: assignee.email,
+                        link: `/conference/view/${inserted.id}`,
+                    })),
+                    tx
+                );
+            }
         });
 
         res.status(200).send();

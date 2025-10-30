@@ -11,7 +11,7 @@ import multer from "multer";
 import {
     conferenceApprovalApplications,
     conferenceGlobal,
-    conferenceMemberReviews,
+    conferenceApplicationMembers,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "fs/promises";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -69,6 +69,7 @@ router.post(
                     letterOfInvitation: true,
                     otherDocuments: true,
                     reviewersComments: true,
+                    user: true,
                 },
             });
         if (!application) {
@@ -131,8 +132,12 @@ router.post(
             });
 
             await tx
-                .delete(conferenceMemberReviews)
-                .where(eq(conferenceMemberReviews.applicationId, id));
+                .update(conferenceApplicationMembers)
+                .set({
+                    reviewStatus: null,
+                    comments: null,
+                })
+                .where(eq(conferenceApplicationMembers.applicationId, id));
 
             await tx
                 .update(conferenceApprovalApplications)
@@ -156,14 +161,23 @@ router.post(
             await completeTodo({
                 module: modules[0],
                 completionEvent: `edit ${id}`,
-            });
+            }, tx);
 
-            const todoAssignees = await getUsersWithPermission(
-                isDirect
-                    ? "conference:application:review-application-convener"
-                    : "conference:application:review-application-member",
-                tx
-            );
+            const todoAssignees = isDirect
+                ? (
+                      await getUsersWithPermission(
+                          "conference:application:convener",
+                          tx
+                      )
+                  ).map((convener) => convener.email)
+                : (
+                      await tx.query.conferenceApplicationMembers.findMany({
+                          columns: {
+                              memberEmail: true,
+                          },
+                          where: (cols, { eq }) => eq(cols.applicationId, id),
+                      })
+                  ).map((member) => member.memberEmail);
 
             await createTodos(
                 todoAssignees.map((assignee) => ({
@@ -171,8 +185,8 @@ router.post(
                     title: "Conference Application",
                     createdBy: req.user!.email,
                     completionEvent: `review ${id} ${isDirect ? "convener" : "member"}`,
-                    description: `Review conference application id ${id} by ${req.user!.email}`,
-                    assignedTo: assignee.email,
+                    description: `Review conference application id ${id} by ${application.user.name || application.userEmail}`,
+                    assignedTo: assignee,
                     link: `/conference/view/${id}`,
                 })),
                 tx

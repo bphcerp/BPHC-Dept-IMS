@@ -166,13 +166,15 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
             "Unable to retrieve user details for the application"
         );
     const drcReviews = (
-        await db.query.conferenceMemberReviews.findMany({
+        await db.query.conferenceApplicationMembers.findMany({
             columns: {
-                status: true,
+                reviewStatus: true,
             },
             where: (cols, { eq }) => eq(cols.applicationId, applicationData.id),
         })
-    ).map((review) => review.status);
+    )
+        .map((review) => review.reviewStatus)
+        .filter((status) => status !== null);
 
     const {
         signatureBase64: drcConvenerSignatureBase64,
@@ -180,7 +182,7 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
         name: convenerName,
     } = await getAuthorityDetails(
         applicationData.id,
-        "conference:application:review-application-convener"
+        "conference:application:convener"
     );
 
     const {
@@ -189,7 +191,7 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
         name: hodName,
     } = await getAuthorityDetails(
         applicationData.id,
-        "conference:application:review-application-hod"
+        "conference:application:hod"
     );
 
     const logoBase64 = await encodeImageToBase64({
@@ -203,8 +205,8 @@ const generateApplicationFormHtml = async (id: number): Promise<string> => {
     const template = await fs.readFile(templatePath, "utf-8");
 
     const data = generateTemplateData({
-        ...userData, // user data has to be spread first as both userData and applicationData 
-                     // have description field and we want the one from applicationData to override userData 
+        ...userData, // user data has to be spread first as both userData and applicationData
+        // have description field and we want the one from applicationData to override userData
         ...applicationData,
         drcReviews,
         logoBase64,
@@ -245,16 +247,16 @@ const getAuthorityDetails = async (
         ? await encodeImageToBase64(faculty.signatureFile)
         : undefined;
     const approvalDate = (
-        await db.query.conferenceMemberReviews.findFirst({
-            columns: { createdAt: true },
+        await db.query.conferenceStatusLog.findFirst({
+            columns: { timestamp: true },
             where: (cols, { eq, and }) =>
                 and(
                     eq(cols.applicationId, applicationId),
-                    eq(cols.reviewerEmail, user.email)
+                    eq(cols.userEmail, user.email)
                 ),
-            orderBy: (cols, { desc }) => desc(cols.createdAt),
+            orderBy: (cols, { desc }) => desc(cols.timestamp),
         })
-    )?.createdAt.toLocaleDateString();
-    const name = faculty?.name ?? undefined;
+    )?.timestamp.toLocaleDateString();
+    const name = user.name ?? undefined;
     return { signatureBase64, approvalDate, name };
 };

@@ -12,13 +12,9 @@ export const allPermissions = {
 
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
-    "conference:application:view-pending": "View pending applications",
-    "conference:application:review-application-member":
-        "Review application as DRC Member",
-    "conference:application:review-application-convener":
-        "Review application as DRC convener",
-    "conference:application:review-application-hod":
-        "Review application as HOD",
+    "conference:application:member": "Review application as DRC Member",
+    "conference:application:convener": "Review application as DRC convener",
+    "conference:application:hod": "Review application as HOD",
     "conference:application:get-flow":
         "Get conference application approval flow",
     "conference:application:set-flow":
@@ -231,15 +227,13 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/conference/createApplication": "conference:application:create",
     "/conference/editApplication": "conference:application:submitted",
-    "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
-    "/conference/applications/view": "conference:application:submitted",
-    "/conference/applications/reviewMember":
-        "conference:application:review-application-member",
+    "/conference/applications/getMembers": "conference:application:convener",
+    "/conference/applications/setMembers": "conference:application:convener",
+    "/conference/applications/reviewMember": "conference:application:member",
     "/conference/applications/reviewConvener":
-        "conference:application:review-application-convener",
-    "/conference/applications/reviewHod":
-        "conference:application:review-application-hod",
+        "conference:application:convener",
+    "/conference/applications/reviewHod": "conference:application:hod",
     "/conference/getFlow": "conference:application:get-flow",
     "/conference/setFlow": "conference:application:set-flow",
 

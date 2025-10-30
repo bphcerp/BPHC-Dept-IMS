@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
     conferenceApprovalApplications,
-    conferenceMemberReviews,
+    conferenceApplicationMembers,
 } from "./conference.ts";
 import { files } from "./form.ts";
 import { users } from "./admin.ts";
@@ -39,19 +39,24 @@ export const conferenceApprovalApplicationRelations = relations(
             references: [files.id],
             relationName: "conferenceApprovalOtherDocuments",
         }),
-        reviews: many(conferenceMemberReviews, {
+        members: many(conferenceApplicationMembers, {
             relationName: "conferenceApprovalReviews",
         }),
     })
 );
 
-export const conferenceMemberReviewsRelations = relations(
-    conferenceMemberReviews,
+export const conferenceApplicationMembersRelations = relations(
+    conferenceApplicationMembers,
     ({ one }) => ({
-        conferenceApproval: one(conferenceApprovalApplications, {
-            fields: [conferenceMemberReviews.applicationId],
+        application: one(conferenceApprovalApplications, {
+            fields: [conferenceApplicationMembers.applicationId],
             references: [conferenceApprovalApplications.id],
             relationName: "conferenceApprovalReviews",
+        }),
+        user: one(users, {
+            fields: [conferenceApplicationMembers.memberEmail],
+            references: [users.email],
+            relationName: "conferenceApplicationMemberUser",
         }),
     })
 );

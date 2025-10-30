@@ -6,7 +6,6 @@ import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
-    conferenceMemberReviews,
     conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
@@ -56,16 +55,6 @@ router.post(
                 })
                 .where(eq(conferenceApprovalApplications.id, id));
 
-            await tx
-                .delete(conferenceMemberReviews)
-                .where(eq(conferenceMemberReviews.applicationId, id));
-
-            await tx.insert(conferenceMemberReviews).values({
-                applicationId: application.id,
-                reviewerEmail: req.user!.email,
-                status: status,
-                comments: comments,
-            });
             await tx.insert(conferenceStatusLog).values({
                 applicationId: application.id,
                 userEmail: req.user!.email,

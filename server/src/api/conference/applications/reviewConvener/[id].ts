@@ -1,13 +1,11 @@
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { authUtils, conferenceSchemas, modules } from "lib";
+import { conferenceSchemas, modules } from "lib";
 import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
-    conferenceGlobal,
-    conferenceMemberReviews,
     conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
@@ -28,31 +26,14 @@ router.post(
         const { status, comments } =
             conferenceSchemas.reviewApplicationBodySchema.parse(req.body);
 
-        const isHoD = authUtils.checkAccess(
-            "conference:application:review-application-hod",
-            req.user!.permissions
-        );
-
-        if (isHoD)
-            return next(
-                new HttpError(
-                    HttpCode.FORBIDDEN,
-                    "You are not allowed to review this application yet"
-                )
-            );
-
         // Check if we are in the direct flow
-        const current = await db.query.conferenceGlobal.findFirst({
-            where: (conferenceGlobal, { eq }) =>
-                eq(conferenceGlobal.key, "directFlow"),
-        });
-        if (!current) {
-            await db.insert(conferenceGlobal).values({
-                key: "directFlow",
-                value: "false",
-            });
-        }
-        const isDirect = current && current.value === "true";
+        const isDirect =
+            (
+                await db.query.conferenceGlobal.findFirst({
+                    where: (conferenceGlobal, { eq }) =>
+                        eq(conferenceGlobal.key, "directFlow"),
+                })
+            )?.value === "true";
 
         const application = await getApplicationById(id);
 
@@ -85,16 +66,6 @@ router.post(
                 })
                 .where(eq(conferenceApprovalApplications.id, id));
 
-            await tx
-                .delete(conferenceMemberReviews)
-                .where(eq(conferenceMemberReviews.applicationId, id));
-
-            await tx.insert(conferenceMemberReviews).values({
-                applicationId: application.id,
-                reviewerEmail: req.user!.email,
-                status: status,
-                comments: comments,
-            });
             await tx.insert(conferenceStatusLog).values({
                 applicationId: application.id,
                 userEmail: req.user!.email,
@@ -107,7 +78,7 @@ router.post(
             });
             if (!isDirect && status) {
                 const todoAssignees = await getUsersWithPermission(
-                    "conference:application:review-application-hod",
+                    "conference:application:hod",
                     tx
                 );
                 await createTodos(
@@ -116,7 +87,7 @@ router.post(
                         title: "Conference Application",
                         createdBy: req.user!.email,
                         completionEvent: `review ${id} hod`,
-                        description: `Review conference application id ${id} by ${application.userEmail}`,
+                        description: `Review conference application id ${id} by ${application.user.name || application.userEmail}`,
                         assignedTo: assignee.email,
                         link: `/conference/view/${id}`,
                     })),
