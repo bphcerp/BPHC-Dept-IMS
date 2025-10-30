@@ -10,6 +10,7 @@ import {
     semesterSchema,
     semesterTypes,
     sectionTypes,
+    degreeTypes,
 } from "../schemas/Allocation.ts";
 import { MemberDetailsResponse, userTypes } from "../schemas/Admin.ts";
 import {
@@ -99,8 +100,17 @@ type SemesterResponseStat = {
     type: "faculty" | "phd";
 };
 
+export type AllocationStat = {
+    notStarted: number;
+    pending: number;
+    completed: number;
+};
+
 export type SemesterWithStats = Semester & {
-    notResponded: SemesterResponseStat[];
+    notResponded?: SemesterResponseStat[];
+    allocationStats?: {
+        [Key in (typeof degreeTypes)[number]]: AllocationStat;
+    };
 };
 
 export type MasterAllocation = z.infer<typeof masterAllocationSchema>;

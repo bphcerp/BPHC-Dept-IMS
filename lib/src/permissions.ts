@@ -492,8 +492,16 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     // Course Load Allocation
     "/allocation/allocation/delete": "allocation:write",
-    "/allocation/allocation/update": "allocation:write",
+    "/allocation/allocation/create": "allocation:write",
     "/allocation/allocation/getStatus": "allocation:write",
+    "/allocation/allocation/bulkModify": "allocation:write",
+    "/allocation/allocation/getPrefsCourse": "allocation:write",
+
+    "/allocation/allocation/section/add": "allocation:write",
+    "/allocation/allocation/section/assignInstructor": "allocation:write",
+    "/allocation/allocation/section/dismissInstructor": "allocation:write",
+    "/allocation/allocation/section/remove": "allocation:write",
+    "/allocation/allocation/section/setRoom": "allocation:write",
 
     "/allocation/course/get": "allocation:courses:view",
     "/allocation/course/getAll": "allocation:courses:view",
@@ -509,9 +517,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/update": "allocation:semesters:write",
     "/allocation/semester/linkForm": "allocation:semesters:write",
     "/allocation/semester/unlinkForm": "allocation:semesters:write",
-
-    "/allocation/allocation/getPrefsCourse": "allocation:write",
-    "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
     "/allocation/builder/template/delete": "allocation:builder:template:write",

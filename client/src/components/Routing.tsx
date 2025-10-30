@@ -866,15 +866,11 @@ const Routing = () => {
                 <Route path="creditmatrix" element={<AllocationMatrixView />} />
               )}
 
-              {checkAccess("allocation:view") && (
-                <>
-                  {checkAccess("allocation:summary:view") && (
-                    <Route
-                      path="/allocation/summary"
-                      element={<AllocationSummary />}
-                    />
-                  )}
-                </>
+              {checkAccess("allocation:summary:view") && (
+                <Route
+                  path="/allocation/summary"
+                  element={<AllocationSummary />}
+                />
               )}
 
               {/* summary moved to a top-level unprotected route */}

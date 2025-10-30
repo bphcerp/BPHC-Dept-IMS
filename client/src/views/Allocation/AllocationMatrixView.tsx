@@ -12,6 +12,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Faculty } from "node_modules/lib/src/types/inventory";
+import { InfoCircledIcon } from "@radix-ui/react-icons";
 
 function getCourseSectionRows(allocationData: AllocationSummaryType) {
   const rows: {
@@ -66,7 +67,11 @@ function getSectionCounts(
   let allocated = 0;
   let pending = 0;
   sections.forEach((s) => {
-    if (s.instructors.length && ( s.type === 'PRACTICAL' ? !!s.timetableRoomId : true )) allocated++;
+    if (
+      s.instructors.length &&
+      (s.type === "PRACTICAL" ? !!s.timetableRoomId : true)
+    )
+      allocated++;
     else pending++;
   });
   return { allocated, pending, total: allocated + pending };
@@ -93,9 +98,9 @@ export const AllocationMatrixView = () => {
     queryKey: ["faculty"],
     queryFn: async () => {
       const res = await api.get<Faculty[]>("/admin/member/getAllFaculty");
-      return res.data.filter((faculty) => !!faculty.psrn).sort((a, b) =>
-        a.psrn && b.psrn ? a.psrn.localeCompare(b.psrn) : 0
-      );
+      return res.data
+        .filter((faculty) => !!faculty.psrn)
+        .sort((a, b) => (a.psrn && b.psrn ? a.psrn.localeCompare(b.psrn) : 0));
     },
   });
 
@@ -225,7 +230,14 @@ export const AllocationMatrixView = () => {
         )}
       </div>
 
-      <div className="mt-4">
+      <div className="mx-2 my-3 flex items-start space-x-1 text-xs text-muted">
+        <InfoCircledIcon />
+        <span>
+          This list is sorted by the faculty's PSRN in ascending order. The faculty should have their PSRN set to appear in this list
+        </span>
+      </div>
+
+      <div>
         <table
           className="min-w-full border text-sm"
           onClick={(e) => e.stopPropagation()}

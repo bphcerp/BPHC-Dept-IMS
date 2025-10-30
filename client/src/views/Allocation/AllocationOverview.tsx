@@ -57,11 +57,12 @@ export const AllocationOverview = () => {
   const editorTheme = useTheme();
 
   const { data: latestSemester } = useQuery({
-    queryKey: ["semester", "latest-full-stats"],
+    queryKey: ["allocation", "semester", "latest-full-stats"],
     queryFn: () =>
       api<SemesterWithStats>("/allocation/semester/getLatest?stats=true").then(
         ({ data }) => data
       ),
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: roles } = useQuery({
@@ -72,6 +73,8 @@ export const AllocationOverview = () => {
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
+    enabled:
+      !!latestSemester && latestSemester.allocationStatus === "notStarted",
   });
 
   // Fetch all available forms that can be linked
@@ -81,6 +84,8 @@ export const AllocationOverview = () => {
       api<AllocationForm[]>(
         "/allocation/builder/form/getAll?checkNewSemesterValidity=true"
       ).then(({ data }) => data),
+    enabled:
+      !!latestSemester && latestSemester.allocationStatus === "notStarted",
   });
 
   const linkFormMutation = useMutation({
@@ -195,12 +200,9 @@ Please fill your course options for the ${semesterTypeMap[latestSemester!.semest
 
 You may access the portal using the following link: [${DEPARTMENT_NAME} IMS Allocation Form ${semesterTypeMap[latestSemester!.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester!.year)}](${FRONTEND_URL}/allocation/submit)
 
-**PLEASE FILL THE FORM BEFORE ${new Date(formDeadline).toLocaleString(
-    "en-IN",
-    {
-      timeZoneName: "short",
-    }
-  )}**
+**PLEASE FILL THE FORM BEFORE ${new Date(formDeadline).toLocaleString("en-IN", {
+    timeZoneName: "short",
+  })}**
 
 <hr></hr>
 
@@ -211,7 +213,11 @@ Hyderabad Campus<span>
 `;
 
   const calculateTimeLeft = useCallback(() => {
-    if (!latestSemester?.form?.formDeadline) return;
+    if (
+      !latestSemester?.form?.formDeadline ||
+      latestSemester.allocationStatus !== "formCollection"
+    )
+      return "00:00:00";
 
     const now = new Date().getTime();
     const end = new Date(latestSemester.form.formDeadline).getTime();
@@ -232,6 +238,12 @@ Hyderabad Campus<span>
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
 
   useEffect(() => {
+    if (
+      !!latestSemester &&
+      latestSemester.allocationStatus !== "formCollection"
+    )
+      return;
+
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
@@ -409,11 +421,7 @@ Hyderabad Campus<span>
                           state.isValid,
                         ]}
                       >
-                        {([
-                          formDeadline,
-                          isPublishedToRoleId,
-                          isValid,
-                        ]) => (
+                        {([formDeadline, isPublishedToRoleId, isValid]) => (
                           <>
                             <Button
                               type="button"
@@ -563,7 +571,8 @@ Hyderabad Campus<span>
                             Not Responded
                           </h3>
                           <ul className="h-64 space-y-2 overflow-y-auto text-sm">
-                            {latestSemester.notResponded.length > 0 ? (
+                            {!!latestSemester.notResponded &&
+                            latestSemester.notResponded.length > 0 ? (
                               latestSemester.notResponded.map((responder) => (
                                 <li
                                   key={responder.email}
@@ -617,13 +626,38 @@ Hyderabad Campus<span>
               </div>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <div className="rounded-xl border border-primary/30 bg-white p-8 text-center shadow-md">
-                <p className="text-lg font-medium text-gray-600">
-                  In Allocation
-                  {/* Insert stats here */}
-                </p>
-              </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {(["FD", "HD", "PhD"] as const).map((degree) => {
+                const stats = latestSemester.allocationStats?.[degree];
+                return (
+                  <div
+                    key={degree}
+                    className="flex items-center justify-center space-x-4 rounded-2xl p-4 shadow-lg transition hover:shadow-xl"
+                  >
+                    <span className="text-lg font-semibold text-primary">
+                      {degree}
+                    </span>
+                    <div className="flex flex-col items-center">
+                      <span className="text-3xl font-extrabold text-gray-700">
+                        {stats?.notStarted ?? 0}
+                      </span>
+                      <span className="text-xs text-gray-500">Not Started</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-3xl font-extrabold text-orange-600">
+                        {stats?.pending ?? 0}
+                      </span>
+                      <span className="text-xs text-gray-500">Pending</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-3xl font-extrabold text-green-600">
+                        {stats?.completed ?? 0}
+                      </span>
+                      <span className="text-xs text-gray-500">Allocated</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )
         ) : (
@@ -726,9 +760,9 @@ Hyderabad Campus<span>
             <span>Allocation Form Deadline:</span>{" "}
             <span>
               {latestSemester.form?.formDeadline ? (
-                new Date(
-                  latestSemester.form?.formDeadline
-                ).toLocaleString("en-IN")
+                new Date(latestSemester.form?.formDeadline).toLocaleString(
+                  "en-IN"
+                )
               ) : (
                 <span className="text-secondary">Not Set</span>
               )}

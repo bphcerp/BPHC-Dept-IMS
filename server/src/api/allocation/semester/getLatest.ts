@@ -2,7 +2,15 @@ import db from "@/config/db/index.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import { getLatestSemesterQuerySchema } from "node_modules/lib/src/schemas/Allocation.ts";
+import {
+    degreeTypes,
+    getLatestSemesterQuerySchema,
+} from "node_modules/lib/src/schemas/Allocation.ts";
+import { getAllocationStats } from "../allocation/getStatus.ts";
+import {
+    SemesterWithStats,
+    AllocationStat,
+} from "node_modules/lib/src/types/allocation.ts";
 
 const router = express.Router();
 
@@ -128,7 +136,10 @@ router.get(
                         return a.submittedBy.type === "faculty" ? -1 : 1;
                     });
 
-                if (stats) {
+                if (
+                    semesterData.allocationStatus === "formCollection" &&
+                    stats
+                ) {
                     const notResponded = (
                         await db.query.users.findMany({
                             where: (users, { and, sql, eq, notInArray }) =>
@@ -176,6 +187,64 @@ router.get(
                     };
                     res.status(200).json(semesterDataWithStats);
                     return;
+                } else if (
+                    semesterData.allocationStatus === "inAllocation" &&
+                    stats
+                ) {
+                    const allocationResponse = await getAllocationStats(
+                        semesterData.id
+                    );
+
+                    const courses = await db.query.course.findMany({
+                        where: ((course, { eq }) => eq(course.markedForAllocation, true))
+                    });
+
+                    const statusMap = {
+                        "Not Started": "notStarted",
+                        Pending: "pending",
+                        Allocated: "completed",
+                    } as const;
+
+                    // initialize stats
+                    const emptyAllocation: AllocationStat = {
+                        notStarted: 0,
+                        pending: 0,
+                        completed: 0,
+                    };
+
+                    const allocationStats: SemesterWithStats["allocationStats"] =
+                        {
+                            FD: { ...emptyAllocation },
+                            HD: { ...emptyAllocation },
+                            PhD: { ...emptyAllocation },
+                        };
+
+                    // Build a lookup: courseId -> degreeType
+                    const courseDegreeMap: Record<
+                        string,
+                        (typeof degreeTypes)[number]
+                    > = {};
+                    courses.forEach((course) => {
+                        courseDegreeMap[course.code] = course.offeredTo;
+                    });
+
+                    // Aggregate counts
+                    Object.entries(allocationResponse).forEach(
+                        ([courseCode, status]) => {
+                            const degree = courseDegreeMap[courseCode];
+                            if (!degree) return; // skip if course not found
+
+                            const statKey = statusMap[status];
+                            allocationStats[degree][statKey] += 1;
+                        }
+                    );
+
+                    const semesterDataWithStats = {
+                        ...semesterData,
+                        allocationStats,
+                    };
+                    res.status(200).json(semesterDataWithStats);
+                    return
                 }
             }
             res.status(200).json(semesterData);

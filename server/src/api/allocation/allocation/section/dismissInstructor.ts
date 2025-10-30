@@ -1,5 +1,6 @@
 import db from "@/config/db/index.ts";
 import { allocationSectionInstructors } from "@/config/db/schema/allocation.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { and, eq } from "drizzle-orm";
 import express from "express";
@@ -9,6 +10,7 @@ const router = express.Router();
 
 router.delete(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, _next) => {
         const { sectionId, instructorEmail } =
             allocationSchemas.dismissInstructorBodySchema.parse(req.body);
