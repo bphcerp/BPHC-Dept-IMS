@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/Auth";
 import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
 import NotFoundPage from "@/layouts/404";
@@ -45,6 +45,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 import { PhdStudent } from "node_modules/lib/src/schemas/Phd";
 import { Faculty } from "node_modules/lib/src/types/inventory";
+import { useReactToPrint } from "react-to-print";
 
 type InstructorOption = {
   email: string;
@@ -66,7 +67,7 @@ type BulkChange = {
 const getSectionNumber = (
   courseAllocation: AllocationSummaryType[number],
   sectionId: string,
-  sectionType: (typeof sectionTypes)[number],
+  sectionType: (typeof sectionTypes)[number]
 ) =>
   courseAllocation.sections
     .filter((section) => section.type === sectionType)
@@ -166,8 +167,28 @@ export const AllocationSummary = () => {
   const [searchParams] = useSearchParams();
   const semesterId = searchParams.get("semesterId");
 
+  const componentRef = useRef<HTMLDivElement | null>(null);
+
   const { checkAccess } = useAuth();
   const queryClient = useQueryClient();
+
+  const { data: latestSemester } = useQuery({
+    queryKey: ["semester", "latest"],
+    queryFn: () =>
+      api
+        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
+        .then(({ data }) => data),
+  });
+
+  if (latestSemester?.summaryHidden && !checkAccess("allocation:write"))
+    return <NotFoundPage />;
+
+  const handleSummaryPrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: latestSemester
+      ? `${semesterTypeMap[latestSemester.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester.year)}`
+      : "Allocation Summary",
+  });
 
   const { data: facultyData } = useQuery({
     queryKey: ["faculty"],
@@ -175,6 +196,7 @@ export const AllocationSummary = () => {
       const res = await api.get<Faculty[]>("/admin/member/getAllFaculty");
       return res.data;
     },
+    enabled: isBulkModifyDialogOpen,
   });
 
   const { data: phdData } = useQuery({
@@ -183,6 +205,7 @@ export const AllocationSummary = () => {
       const res = await api.get<PhdStudent[]>("/admin/member/getAllPhD");
       return res.data;
     },
+    enabled: isBulkModifyDialogOpen,
   });
 
   const facultyInstructors = useMemo<InstructorOption[]>(() => {
@@ -222,7 +245,7 @@ export const AllocationSummary = () => {
     mutationFn: () =>
       api
         .post(
-          `/allocation/semester/toggleSummary${semesterId ? `?semesterId=${semesterId}` : ""}`,
+          `/allocation/semester/toggleSummary${semesterId ? `?semesterId=${semesterId}` : ""}`
         )
         .then(() => {
           toast.success("Successful");
@@ -254,17 +277,6 @@ export const AllocationSummary = () => {
     },
   });
 
-  const { data: latestSemester } = useQuery({
-    queryKey: ["semester", "latest"],
-    queryFn: () =>
-      api
-        .get<SemesterMinimal>("/allocation/semester/getLatest?minimal=true")
-        .then(({ data }) => data),
-  });
-
-  if (latestSemester?.summaryHidden && !checkAccess("allocation:write"))
-    return <NotFoundPage />;
-
   const { data: allocationData, isLoading: isLoadingAllocation } = useQuery({
     queryKey: [`allocation`, "summary", semesterId ?? "latest"],
     queryFn: async () => {
@@ -273,7 +285,7 @@ export const AllocationSummary = () => {
           ? `?semesterId=${encodeURIComponent(semesterId)}`
           : "";
         const res = await api.get<AllocationSummaryType>(
-          `/allocation/allocation/getAll${query}`,
+          `/allocation/allocation/getAll${query}`
         );
 
         return res.data;
@@ -346,7 +358,7 @@ export const AllocationSummary = () => {
             sectionNumber: getSectionNumber(
               courseAllocation,
               section.id,
-              section.type,
+              section.type
             ),
           });
         });
@@ -354,7 +366,7 @@ export const AllocationSummary = () => {
     });
 
     return Object.values(facultyMap).sort((a, b) =>
-      a.faculty.name.localeCompare(b.faculty.name),
+      a.faculty.name.localeCompare(b.faculty.name)
     );
   }, [viewMode, allocationData]);
 
@@ -366,13 +378,13 @@ export const AllocationSummary = () => {
     courseName: string | null,
     sectionType: (typeof sectionTypes)[number],
     sectionNumber: number,
-    newInstructorEmail: string,
+    newInstructorEmail: string
   ) => {
     setPendingChanges((prev) => {
       const existingChangeIndex = prev.findIndex(
         (c) =>
           c.sectionId === sectionId &&
-          c.oldInstructorEmail === oldInstructorEmail,
+          c.oldInstructorEmail === oldInstructorEmail
       );
 
       const newInstructorName =
@@ -420,21 +432,23 @@ export const AllocationSummary = () => {
 
   const getInstructorDisplayValue = (
     sectionId: string,
-    instructorEmail: string | null,
+    instructorEmail: string | null
   ) => {
     if (!isBulkModifyActive) return instructorEmail ?? "";
 
     const pendingChange = pendingChanges.find(
       (c) =>
-        c.sectionId === sectionId && c.oldInstructorEmail === instructorEmail,
+        c.sectionId === sectionId && c.oldInstructorEmail === instructorEmail
     );
-    return pendingChange ? pendingChange.newInstructorEmail : instructorEmail ?? "";
+    return pendingChange
+      ? pendingChange.newInstructorEmail
+      : (instructorEmail ?? "");
   };
 
   return isLoadingAllocation || !latestSemester || !allocationData ? (
     <Skeleton className="m-10 h-[80vh] w-full" />
   ) : (
-    <div className="allocationSummary gap-y-2 px-2 py-5">
+    <div ref={componentRef} className="allocationSummary gap-y-2 px-2 py-5">
       <AssignInstructorDialog
         isOpen={isAssignInstructorDialogOpen}
         onOpenChange={(open) => {
@@ -458,14 +472,6 @@ export const AllocationSummary = () => {
       />
       <div className="sticky left-0 top-0 z-10 flex flex-col items-center bg-background py-2">
         <h1 className="text-3xl font-bold text-primary">Allocation Summary</h1>
-        {checkAccess("allocation:write") && (
-          <Button
-            variant="link"
-            onClick={() => toggleSummaryAccessMutation.mutate()}
-          >
-            {latestSemester.summaryHidden ? "Allow" : "Revoke"} Access To All
-          </Button>
-        )}
         <div className="flex w-full justify-between px-20 text-lg">
           <div>
             <span>Semester:</span>{" "}
@@ -476,55 +482,72 @@ export const AllocationSummary = () => {
             <span>{getFormattedAY(latestSemester.year)}</span>
           </div>
         </div>
-        {checkAccess("allocation:write") && (
-          <div className="mt-4 flex flex-wrap justify-center gap-4">
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showTeachingLoad}
-                onChange={(e) => setShowTeachingLoad(e.target.checked)}
-                className="h-4 w-4"
-                disabled={isBulkModifyActive}
-              />
-              <span>Show Teaching Load</span>
-            </label>
-            <div className="flex items-center gap-2 text-sm">
-              <Button
-                variant={viewMode === "course" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("course")}
-                disabled={isBulkModifyActive}
-              >
-                Course View
-              </Button>
-              <Button
-                variant={viewMode === "faculty" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("faculty")}
-                disabled={isBulkModifyActive}
-              >
-                Faculty View
-              </Button>
-            </div>
+        <div className="flex w-full flex-col justify-center print:hidden">
+          {checkAccess("allocation:write") && (
             <Button
-              className={isBulkModifyActive ? "bg-success" : ""}
-              size="sm"
-              onClick={handleBulkModifyClick}
+              variant="link"
+              onClick={() => toggleSummaryAccessMutation.mutate()}
             >
-              {isBulkModifyActive ? "Verify & Modify" : "Begin Bulk Modify"}
+              {latestSemester.summaryHidden ? "Allow" : "Revoke"} Access To All
             </Button>
-          </div>
-        )}
-        {isBulkModifyActive && (
-          <Alert className="mt-4 w-auto">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Bulk Modify Mode</AlertTitle>
-            <AlertDescription>
-              These changes are not saved yet. If you refresh, they'll go away.
-              Click 'Verify & Modify' to save.
-            </AlertDescription>
-          </Alert>
-        )}
+          )}
+          {checkAccess("allocation:write") && (
+            <div className="mt-4 flex flex-wrap justify-center gap-4">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showTeachingLoad}
+                  onChange={(e) => setShowTeachingLoad(e.target.checked)}
+                  className="h-4 w-4"
+                  disabled={isBulkModifyActive}
+                />
+                <span>Show Teaching Load</span>
+              </label>
+              <div className="flex items-center gap-2 text-sm">
+                <Button
+                  variant={viewMode === "course" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("course")}
+                  disabled={isBulkModifyActive}
+                >
+                  Course View
+                </Button>
+                <Button
+                  variant={viewMode === "faculty" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("faculty")}
+                  disabled={isBulkModifyActive}
+                >
+                  Faculty View
+                </Button>
+                <Button
+                  className={isBulkModifyActive ? "bg-success" : ""}
+                  size="sm"
+                  onClick={handleBulkModifyClick}
+                >
+                  {isBulkModifyActive ? "Verify & Modify" : "Begin Bulk Modify"}
+                </Button>
+                <Button
+                  onClick={() => handleSummaryPrint()}
+                  size="sm"
+                  className="bg-success"
+                >
+                  Print
+                </Button>
+              </div>
+            </div>
+          )}
+          {isBulkModifyActive && (
+            <Alert className="mt-4 w-auto">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Bulk Modify Mode</AlertTitle>
+              <AlertDescription>
+                These changes are not saved yet. If you refresh, they'll go
+                away. Click 'Verify & Modify' to save.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
       </div>
       <div>
         {viewMode === "course" &&
@@ -534,29 +557,43 @@ export const AllocationSummary = () => {
                 <div className="grid grid-cols-[500px_1fr] border-b">
                   <div className="row-span-full flex items-center border-r p-4">
                     <div className="w-full">
-                      <Link
-                        to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
-                        className={`block w-full ${isBulkModifyActive ? "pointer-events-none" : ""}`}
-                        tabIndex={isBulkModifyActive ? -1 : undefined}
-                        onClick={(e) => {
-                          if (isBulkModifyActive) e.preventDefault();
-                        }}
-                      >
-                        <Button
-                          variant="link"
-                          className="block w-full text-lg font-semibold"
-                          disabled={isBulkModifyActive}
+                      {checkAccess("allocation:write") ? (
+                        <Link
+                          to={`/allocation/allocate?course=${data.courseCode.replace(" ", "+")}`}
+                          className={`block w-full ${isBulkModifyActive ? "pointer-events-none" : ""}`}
+                          tabIndex={isBulkModifyActive ? -1 : undefined}
+                          onClick={(e) => {
+                            if (isBulkModifyActive) e.preventDefault();
+                          }}
                         >
-                          <span className="block w-full truncate">
-                            {data.courseCode} -{" "}
-                            {data.course.name ?? "Unnamed Course"}
-                          </span>
-                        </Button>
-                      </Link>
+                          <Button
+                            variant="link"
+                            className="block w-full text-lg font-semibold"
+                            disabled={isBulkModifyActive}
+                          >
+                            <span className="block w-full truncate">
+                              {data.courseCode} -{" "}
+                              {data.course.name ?? "Unnamed Course"}
+                            </span>
+                          </Button>
+                        </Link>
+                      ) : (
+                        <span className="block w-full truncate">
+                          {data.courseCode} -{" "}
+                          {data.course.name ?? "Unnamed Course"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div className="divide-y">
+                    {!data.sections.length && data.ic ? (
+                      <div className="flex h-full items-center justify-center px-3 py-2 text-lg">
+                        <span className="font-medium text-primary">
+                          {data.ic.name ?? `Unnamed - ${data.ic.email}`}
+                        </span>
+                      </div>
+                    ) : null}
                     {data.sections.map((section) => {
                       const appropriateInstructorList =
                         section.type === "LECTURE"
@@ -589,7 +626,7 @@ export const AllocationSummary = () => {
                                     <Select
                                       value={getInstructorDisplayValue(
                                         section.id,
-                                        inst.email,
+                                        inst.email
                                       )}
                                       onValueChange={(newEmail) => {
                                         handleBulkChange(
@@ -602,9 +639,9 @@ export const AllocationSummary = () => {
                                           getSectionNumber(
                                             data,
                                             section.id,
-                                            section.type,
+                                            section.type
                                           ),
-                                          newEmail,
+                                          newEmail
                                         );
                                       }}
                                     >
@@ -620,7 +657,7 @@ export const AllocationSummary = () => {
                                             >
                                               {opt.name}
                                             </SelectItem>
-                                          ),
+                                          )
                                         )}
                                       </SelectContent>
                                     </Select>
@@ -638,10 +675,10 @@ export const AllocationSummary = () => {
                                         <Button
                                           onClick={() => {
                                             setSelectedInstructorEmail(
-                                              inst.email,
+                                              inst.email
                                             );
                                             setIsAssignInstructorDialogOpen(
-                                              true,
+                                              true
                                             );
                                           }}
                                           variant="link"
@@ -654,8 +691,8 @@ export const AllocationSummary = () => {
                                           {inst.name}
                                         </Button>
                                       ) : (
-                                        inst.name ??
-                                        `Unnamed Instructor - ${inst.email}`
+                                        (inst.name ??
+                                        `Unnamed Instructor - ${inst.email}`)
                                       )}
                                       {showTeachingLoad && (
                                         <span>
@@ -676,7 +713,7 @@ export const AllocationSummary = () => {
                                   <Select
                                     value={getInstructorDisplayValue(
                                       section.id,
-                                      null,
+                                      null
                                     )}
                                     onValueChange={(newEmail) => {
                                       handleBulkChange(
@@ -689,9 +726,9 @@ export const AllocationSummary = () => {
                                         getSectionNumber(
                                           data,
                                           section.id,
-                                          section.type,
+                                          section.type
                                         ),
-                                        newEmail,
+                                        newEmail
                                       );
                                     }}
                                   >
@@ -739,7 +776,7 @@ export const AllocationSummary = () => {
                         className="block w-full text-lg font-semibold"
                         onClick={() => {
                           setSelectedInstructorEmail(
-                            facultyAllocation.faculty.email,
+                            facultyAllocation.faculty.email
                           );
                           setIsAssignInstructorDialogOpen(true);
                         }}
