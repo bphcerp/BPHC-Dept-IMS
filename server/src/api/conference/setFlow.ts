@@ -127,7 +127,7 @@ router.post(
                     );
                 }
             }
-            // If we are moving to normal flow, move all DRC Convener states to DRC Member state for applications that dont have members selected
+            // If we are moving to normal flow, move all DRC Convener states to DRC Member state for applications that don't have members selected
             // or for those applications where there are pending member reviews
             else {
                 const applications =
