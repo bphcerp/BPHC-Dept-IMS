@@ -110,6 +110,7 @@ router.get(
             else if (isMember && pendingReviewAsMember)
                 res.status(200).send({
                     application,
+                    pendingReviewAsMember: !!pendingReviewAsMember,
                 });
             else throw forbiddenError;
             return;

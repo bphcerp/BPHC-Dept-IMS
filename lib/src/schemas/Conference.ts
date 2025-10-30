@@ -211,6 +211,8 @@ export type pendingApplicationsResponse = {
         createdAt: string;
         userEmail: string;
         userName: string | null;
+        membersAssigned?: number;
+        membersReviewed?: number;
     }[];
     isDirect?: boolean;
 };
@@ -251,11 +253,12 @@ export type ViewApplicationResponse = {
         otherDocuments?: File;
     };
     reviews: {
-        status: boolean;
+        status: boolean | null;
         comments: string | null;
         createdAt: string;
     }[];
     isDirect?: boolean;
+    pendingReviewAsMember?: boolean;
 };
 
 export const fieldsToFrontend = {

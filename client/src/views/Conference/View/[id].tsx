@@ -16,15 +16,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, FC } from "react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { isAxiosError } from "axios";
+import { AxiosError, isAxiosError } from "axios";
 
-const MemberReview = ({ id }: { id?: string }) => {
+// Types for component props
+interface ReviewComponentProps {
+  id: string;
+  onSuccess?: () => void;
+}
+
+interface ConvenerReviewProps extends ReviewComponentProps {
+  isDirect?: boolean;
+  reviews: conferenceSchemas.ViewApplicationResponse["reviews"];
+  onGenerateForm: () => void;
+  isGeneratingForm: boolean;
+}
+
+interface HodReviewProps extends ReviewComponentProps {
+  onGenerateForm: () => void;
+  isGeneratingForm: boolean;
+}
+
+// Member Review Component
+const MemberReview: FC<ReviewComponentProps> = ({ id, onSuccess }) => {
   const [action, setAction] = useState<boolean | null>(null);
   const [comments, setComments] = useState("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const reviewMemberMutation = useMutation({
     mutationFn: async (data: conferenceSchemas.ReviewApplicationBody) => {
@@ -35,7 +55,18 @@ const MemberReview = ({ id }: { id?: string }) => {
     },
     onSuccess: () => {
       toast.success("Review submitted successfully");
+      onSuccess?.();
+      void queryClient.invalidateQueries({
+        queryKey: ["conference"],
+      });
       navigate("/conference/pending");
+    },
+    onError: (error) => {
+      const errorMessage =
+        isAxiosError(error) && typeof error.response?.data === "string"
+          ? error.response.data
+          : "Failed to submit review. Please try again.";
+      toast.error(errorMessage);
     },
   });
 
@@ -43,62 +74,85 @@ const MemberReview = ({ id }: { id?: string }) => {
     setAction(value === "accept" ? true : value === "reject" ? false : null);
   }, []);
 
+  const handleSubmit = useCallback(() => {
+    if (action === null) return;
+    reviewMemberMutation.mutate({
+      status: action,
+      comments,
+    });
+  }, [action, comments, reviewMemberMutation]);
+
+  const isSubmitDisabled =
+    action === null ||
+    (action === false && !comments.trim()) ||
+    reviewMemberMutation.isLoading;
+
   return (
     <div className="flex flex-col gap-4">
-      <span className="text-primary">Choose an action:</span>
-      <ToggleGroup
-        type="single"
-        value={
-          action === true ? "accept" : action === false ? "reject" : undefined
-        }
-        onValueChange={handleActionChange}
-        className="flex gap-4 bg-transparent"
-      >
-        <ToggleGroupItem
-          value="accept"
-          className={buttonVariants({ variant: "outline" })}
+      <h3 className="text-lg font-semibold">Member Review</h3>
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-primary">
+          Choose an action:
+        </label>
+        <ToggleGroup
+          type="single"
+          value={
+            action === true ? "accept" : action === false ? "reject" : undefined
+          }
+          onValueChange={handleActionChange}
+          className="flex justify-start gap-4 bg-transparent"
+          disabled={reviewMemberMutation.isLoading}
         >
-          Accept
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="reject"
-          className={buttonVariants({ variant: "outline" })}
-        >
-          Reject
-        </ToggleGroupItem>
-      </ToggleGroup>
-      <Textarea
-        placeholder={action ? "Add comments... (optional)" : "Add comments..."}
-        value={comments}
-        onChange={(e) => setComments(e.target.value)}
-      />
+          <ToggleGroupItem
+            value="accept"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Accept
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="reject"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Reject
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="member-comments" className="text-sm font-medium">
+          Comments{" "}
+          {action === false && <span className="text-destructive">*</span>}
+        </label>
+        <Textarea
+          id="member-comments"
+          placeholder={
+            action === false
+              ? "Comments are required for rejection"
+              : "Add comments... (optional)"
+          }
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          disabled={reviewMemberMutation.isLoading}
+          className="min-h-[100px]"
+        />
+      </div>
       <Button
-        onClick={() =>
-          reviewMemberMutation.mutate({
-            status: action!,
-            comments,
-          })
-        }
-        disabled={action === null || (action === false && !comments.trim())}
+        onClick={handleSubmit}
+        disabled={isSubmitDisabled}
+        className="self-start"
       >
-        Send to Convener
+        {reviewMemberMutation.isLoading ? "Submitting..." : "Send to Convener"}
       </Button>
     </div>
   );
 };
 
-const ConvenerReview = ({
+// Convener Review Component
+const ConvenerReview: FC<ConvenerReviewProps> = ({
   isDirect,
   reviews,
   id,
   onGenerateForm,
   isGeneratingForm,
-}: {
-  isDirect?: boolean;
-  reviews: conferenceSchemas.ViewApplicationResponse["reviews"];
-  id?: string;
-  onGenerateForm: () => void;
-  isGeneratingForm: boolean;
 }) => {
   const [comments, setComments] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -114,91 +168,141 @@ const ConvenerReview = ({
     onSuccess: (_, variables) => {
       toast.success("Review submitted successfully");
       void queryClient.refetchQueries({
-        queryKey: ["conference", "applications", parseInt(id!)],
+        queryKey: ["conference", "applications", parseInt(id)],
       });
 
       if (variables.status && isDirect) {
         onGenerateForm();
       }
     },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        toast.error(
+          (error as AxiosError<string>)?.response?.data ||
+            "Failed to submit review. Please try again."
+        );
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    },
   });
 
-  return (
-    <div className="flex flex-col items-start gap-4">
-      <div>
-        <h3 className="pb-4 text-lg font-semibold">
-          {isDirect ? "Current flow: DIRECT" : "Member Reviews"}
-        </h3>
-        <ol className="list-decimal pl-5">
-          {reviews.map((review, index) => (
-            <li key={index} className="pl-2 text-sm">
-              <p>
-                <strong>Status:</strong>{" "}
-                {review.status ? "Accepted" : "Revision Requested"}
-              </p>
-              <p>
-                <strong>Comments:</strong> {review.comments || "No comments"}
-              </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {new Date(review.createdAt).toLocaleString()}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </div>
-      <Button
-        onClick={() =>
-          reviewConvenerMutation.mutate({
-            status: true,
-          })
-        }
-        disabled={reviewConvenerMutation.isLoading || isGeneratingForm}
-      >
-        {isDirect ? "Accept" : "Send to HoD"}
-      </Button>
+  const handleAccept = useCallback(() => {
+    reviewConvenerMutation.mutate({ status: true });
+  }, [reviewConvenerMutation]);
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="destructive">Push Back to Faculty</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Provide Comments</DialogTitle>
-          </DialogHeader>
-          <Textarea
-            placeholder="Add comments..."
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-          />
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                reviewConvenerMutation.mutate({
-                  status: false,
-                  comments,
-                });
-                setIsDialogOpen(false);
-              }}
-              disabled={!comments.trim()}
-            >
-              Push back to Faculty
+  const handleReject = useCallback(() => {
+    if (!comments.trim()) return;
+    reviewConvenerMutation.mutate({
+      status: false,
+      comments,
+    });
+    setIsDialogOpen(false);
+    setComments("");
+  }, [comments, reviewConvenerMutation]);
+
+  const validReviews = reviews.filter((review) => review.status !== null);
+  const isProcessing = reviewConvenerMutation.isLoading || isGeneratingForm;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <h3 className="text-lg font-semibold">
+        Convener Review {isDirect && "(Direct Flow)"}
+      </h3>
+
+      {validReviews.length > 0 && (
+        <div className="rounded-lg border p-4">
+          <h4 className="mb-3 font-medium">Member Reviews</h4>
+          <ol className="list-decimal space-y-3 pl-5">
+            {validReviews.map((review, index) => (
+              <li key={index} className="text-sm">
+                <div className="space-y-1">
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    <span
+                      className={
+                        review.status ? "text-green-600" : "text-yellow-600"
+                      }
+                    >
+                      {review.status ? "Accepted" : "Revision Requested"}
+                    </span>
+                  </p>
+                  {review.comments && (
+                    <p>
+                      <strong>Comments:</strong> {review.comments}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground">
+                    <strong>Date:</strong>{" "}
+                    {new Date(review.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <Button onClick={handleAccept} disabled={isProcessing}>
+          {isProcessing ? "Processing..." : isDirect ? "Accept" : "Send to HoD"}
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive" disabled={isProcessing}>
+              Push Back to Faculty
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Provide Comments</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label
+                htmlFor="convener-comments"
+                className="text-sm font-medium"
+              >
+                Comments <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                id="convener-comments"
+                placeholder="Enter reason for pushing back to faculty..."
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setComments("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleReject}
+                disabled={!comments.trim()}
+              >
+                Push Back to Faculty
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
 
-const HodReview = ({
+// HoD Review Component
+const HodReview: FC<HodReviewProps> = ({
   id,
   onGenerateForm,
   isGeneratingForm,
-}: {
-  id?: string;
-  onGenerateForm: () => void;
-  isGeneratingForm: boolean;
 }) => {
   const [comments, setComments] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -211,56 +315,93 @@ const HodReview = ({
     onSuccess: (_, variables) => {
       toast.success("Review submitted successfully");
       void queryClient.refetchQueries({
-        queryKey: ["conference", "applications", parseInt(id!)],
+        queryKey: ["conference", "applications", parseInt(id)],
       });
 
       if (variables.status) {
         onGenerateForm();
       }
     },
+    onError: (error) => {
+      if (isAxiosError(error)) {
+        toast.error(
+          (error as AxiosError<string>)?.response?.data ||
+            "Failed to submit review. Please try again."
+        );
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    },
   });
+
+  const handleAccept = useCallback(() => {
+    reviewHodMutation.mutate({ status: true });
+  }, [reviewHodMutation]);
+
+  const handleReject = useCallback(() => {
+    if (!comments.trim()) return;
+    reviewHodMutation.mutate({
+      status: false,
+      comments,
+    });
+    setIsDialogOpen(false);
+    setComments("");
+  }, [comments, reviewHodMutation]);
+
+  const isProcessing = reviewHodMutation.isLoading || isGeneratingForm;
 
   return (
     <div className="flex flex-col gap-4">
-      <Button
-        onClick={() =>
-          reviewHodMutation.mutate({
-            status: true,
-          })
-        }
-        disabled={reviewHodMutation.isLoading || isGeneratingForm}
-      >
-        Accept
-      </Button>
-      <Button variant="destructive" onClick={() => setIsDialogOpen(true)}>
-        Push Back to Faculty
-      </Button>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Provide Comments</DialogTitle>
-          </DialogHeader>
-          <Textarea
-            placeholder="Add comments..."
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-          />
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                reviewHodMutation.mutate({
-                  status: false,
-                  comments,
-                });
-                setIsDialogOpen(false);
-              }}
-              disabled={!comments.trim()}
-            >
-              Submit
+      <h3 className="text-lg font-semibold">HoD Review</h3>
+
+      <div className="flex gap-3">
+        <Button onClick={handleAccept} disabled={isProcessing}>
+          {isProcessing ? "Processing..." : "Accept"}
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="destructive" disabled={isProcessing}>
+              Push Back to Faculty
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Provide Comments</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label htmlFor="hod-comments" className="text-sm font-medium">
+                Comments <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                id="hod-comments"
+                placeholder="Enter reason for pushing back to faculty..."
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setComments("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleReject}
+                disabled={!comments.trim()}
+              >
+                Push Back to Faculty
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
@@ -272,6 +413,7 @@ const ConferenceViewApplicationView = () => {
   const canReviewAsMember = checkAccess("conference:application:member");
   const canReviewAsHod = checkAccess("conference:application:hod");
   const canReviewAsConvener = checkAccess("conference:application:convener");
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["conference", "applications", parseInt(id!)],
@@ -288,6 +430,26 @@ const ConferenceViewApplicationView = () => {
   });
 
   const isDirect = useMemo(() => data?.isDirect, [data]);
+
+  // Determine which review component to show based on state and permissions
+  const shouldShowMemberReview = useMemo(() => {
+    if (!data) return false;
+    return (
+      data.application.state === "DRC Member" &&
+      data.pendingReviewAsMember === true &&
+      canReviewAsMember
+    );
+  }, [data, canReviewAsMember]);
+
+  const shouldShowConvenerReview = useMemo(() => {
+    if (!data) return false;
+    return data.application.state === "DRC Convener" && canReviewAsConvener;
+  }, [data, canReviewAsConvener]);
+
+  const shouldShowHodReview = useMemo(() => {
+    if (!data) return false;
+    return data.application.state === "HoD" && canReviewAsHod;
+  }, [data, canReviewAsHod]);
 
   const generateFormMutation = useMutation({
     mutationFn: async () => {
@@ -306,26 +468,49 @@ const ConferenceViewApplicationView = () => {
     },
   });
 
-  const handleGenerateForm = () => {
+  const handleGenerateForm = useCallback(() => {
     generateFormMutation.mutate();
-  };
+  }, [generateFormMutation]);
+
+  if (!id) {
+    navigate("..");
+    return null;
+  }
 
   return (
     <div className="relative flex min-h-screen w-full max-w-4xl flex-col gap-6 p-8">
       <BackButton />
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Error loading application</p>}
+      {isLoading && (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading application...</p>
+        </div>
+      )}
+      {isError && (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-destructive">
+            Error loading application. Please try again.
+          </p>
+        </div>
+      )}
       {data && (
         <>
-          <h2 className="self-start text-3xl">
-            Application No. {data.application.id}
-          </h2>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold">
+              Application No. {data.application.id}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Status:{" "}
+              <span className="font-medium">{data.application.state}</span>
+            </p>
+          </div>
           <ViewApplication data={data} />
           <Separator />
-          {canReviewAsMember && data.application.state === "DRC Member" && (
-            <MemberReview id={id} />
-          )}
-          {canReviewAsConvener && data.application.state === "DRC Convener" && (
+
+          {/* Member Review - Show if user has pending review as member */}
+          {shouldShowMemberReview && <MemberReview id={id} />}
+
+          {/* Convener Review - Show if state is DRC Convener */}
+          {shouldShowConvenerReview && (
             <ConvenerReview
               id={id}
               isDirect={isDirect}
@@ -334,7 +519,9 @@ const ConferenceViewApplicationView = () => {
               isGeneratingForm={generateFormMutation.isLoading}
             />
           )}
-          {canReviewAsHod && data.application.state === "HoD" && (
+
+          {/* HoD Review - Show if state is HoD */}
+          {shouldShowHodReview && (
             <HodReview
               id={id}
               onGenerateForm={handleGenerateForm}
