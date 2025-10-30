@@ -647,7 +647,7 @@ export const AllocationSummary = () => {
                                           variant="link"
                                           className={`m-0 h-fit p-0 ${
                                             data.ic?.email === inst.email
-                                              ? "font-semibold text-primary"
+                                              ? "font-semibold text-secondary"
                                               : ""
                                           }`}
                                         >
