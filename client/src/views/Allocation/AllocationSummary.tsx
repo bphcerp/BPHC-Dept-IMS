@@ -43,20 +43,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-
-type Faculty = {
-  email: string;
-  name: string | null;
-  psrn: string | null;
-};
-
-type PhdStudent = {
-  email: string;
-  name: string | null;
-  phd: {
-    phdType: "full-time" | "part-time";
-  };
-};
+import { PhdStudent } from "node_modules/lib/src/schemas/Phd";
+import { Faculty } from "node_modules/lib/src/types/inventory";
 
 type InstructorOption = {
   email: string;
@@ -212,7 +200,7 @@ export const AllocationSummary = () => {
   const combinedInstructors = useMemo<InstructorOption[]>(() => {
     const phd =
       phdData
-        ?.filter((p) => p.phd.phdType === "full-time")
+        ?.filter((p) => p.phdType === "full-time")
         .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
         .map((p) => ({
           email: p.email,

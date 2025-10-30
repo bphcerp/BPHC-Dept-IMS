@@ -628,6 +628,7 @@ export interface PhdStudent {
     idNumber: string | null;
     coSupervisor1: string | null;
     coSupervisor2: string | null;
+    phdType: (typeof phdTypes)[number]
 }
 export interface QualifyingExamApplication {
     id: number;
