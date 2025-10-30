@@ -259,6 +259,13 @@ export type ViewApplicationResponse = {
     }[];
     isDirect?: boolean;
     pendingReviewAsMember?: boolean;
+    statusLog?: {
+        applicationId: number;
+        userEmail: string;
+        action: string;
+        timestamp: string;
+        comments: string | null;
+    }[];
 };
 
 export const fieldsToFrontend = {

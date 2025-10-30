@@ -2,6 +2,7 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceGlobal,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
@@ -94,6 +95,12 @@ router.post(
                     state: isDirect ? "DRC Convener" : "DRC Member",
                 })
                 .returning();
+
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: inserted.id,
+                userEmail: req.user!.email,
+                action: `Application created`,
+            });
 
             if (isDirect) {
                 const conveners = await getUsersWithPermission(

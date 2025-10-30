@@ -46,6 +46,11 @@ router.get(
             where: (cols, { eq }) => eq(cols.applicationId, application.id),
         });
 
+        const statusLog = await db.query.conferenceStatusLog.findMany({
+            where: (cols, { eq }) => eq(cols.applicationId, application.id),
+            orderBy: (cols, { desc }) => [desc(cols.timestamp)],
+        });
+
         const isDirect =
             (
                 await db.query.conferenceGlobal.findFirst({
@@ -74,22 +79,19 @@ router.get(
         if (application.state === "Faculty") {
             if (!(isHoD || application.userEmail === req.user!.email))
                 throw forbiddenError;
-            const rejectionLog = await db.query.conferenceStatusLog.findFirst({
-                where: (cols, { eq }) => eq(cols.applicationId, application.id),
-                orderBy: (cols, { desc }) => [desc(cols.timestamp)],
-            });
 
             res.status(200).send({
                 application,
                 reviews: [
                     {
-                        comments: rejectionLog?.comments,
+                        comments: statusLog[0]?.comments,
                         status: false,
-                        createdAt: rejectionLog
-                            ? rejectionLog.timestamp.toLocaleString()
+                        createdAt: statusLog[0]
+                            ? statusLog[0].timestamp.toLocaleString()
                             : undefined,
                     },
                 ],
+                ...(isHoD ? { statusLog } : {}),
             });
             return;
         } else if (application.state === "DRC Member") {
@@ -102,7 +104,14 @@ router.get(
                             isNull(cols.reviewStatus)
                         ),
                 });
-            if (isHoD || isConvener) {
+            if (isHoD) {
+                res.status(200).send({
+                    ...baseConvenerResponse,
+                    pendingReviewAsMember: !!pendingReviewAsMember,
+                    statusLog,
+                });
+                return;
+            } else if (isConvener) {
                 res.status(200).send({
                     ...baseConvenerResponse,
                     pendingReviewAsMember: !!pendingReviewAsMember,
@@ -117,7 +126,10 @@ router.get(
             } else if (application.userEmail !== req.user!.email)
                 throw forbiddenError;
         } else if (application.state === "DRC Convener") {
-            if (isConvener || isHoD) {
+            if (isHoD) {
+                res.status(200).send({ ...baseConvenerResponse, statusLog });
+                return;
+            } else if (isConvener) {
                 res.status(200).send(baseConvenerResponse);
                 return;
             } else if (application.userEmail !== req.user!.email) {
@@ -125,7 +137,7 @@ router.get(
             }
         } else {
             if (isHoD) {
-                res.status(200).send(baseConvenerResponse);
+                res.status(200).send({ ...baseConvenerResponse, statusLog });
                 return;
             } else if (application.userEmail !== req.user!.email) {
                 throw forbiddenError;

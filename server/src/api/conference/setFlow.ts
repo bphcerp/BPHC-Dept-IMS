@@ -163,15 +163,17 @@ router.post(
                     );
                 await createTodos(
                     toBeUpdated.flatMap((app) =>
-                        app.members.map((member) => ({
-                            module: modules[0],
-                            title: "Conference Application",
-                            createdBy: app.userEmail,
-                            completionEvent: `review ${app.id} member`,
-                            description: `Review conference application id ${app.id} by ${app.user.name || app.userEmail}`,
-                            assignedTo: member.memberEmail,
-                            link: `/conference/view/${app.id}`,
-                        }))
+                        app.members
+                            .filter((member) => member.reviewStatus === null)
+                            .map((member) => ({
+                                module: modules[0],
+                                title: "Conference Application",
+                                createdBy: app.userEmail,
+                                completionEvent: `review ${app.id} member`,
+                                description: `Review conference application id ${app.id} by ${app.user.name || app.userEmail}`,
+                                assignedTo: member.memberEmail,
+                                link: `/conference/view/${app.id}`,
+                            }))
                     ),
                     tx
                 );
