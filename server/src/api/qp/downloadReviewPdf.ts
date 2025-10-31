@@ -3,7 +3,7 @@ import express from "express";
 import {
     generateSingleReviewPDF,
     generateReviewsZip,
-} from "./functions/creteReviewPdf.ts";
+} from "./functions/createReviewPdf.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
