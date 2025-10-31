@@ -1,13 +1,13 @@
 import z from "zod";
 
 export const qpReviewStatuses = [
+    "not initiated",
     "review pending",
     "reviewed",
     "approved",
     "rejected",
     "notsubmitted",
 ] as const;
-
 
 export type QpStatus = (typeof qpReviewStatuses)[number];
 
@@ -85,6 +85,11 @@ export const createRequestSchema = z.object({
     }),
 });
 
+export const initiateRequestSchema = z.object({
+    courses: z.array(z.number()).nonempty("At least one course is required"),
+    htmlBody: z.string().nonempty("Email body cannot be empty"),
+});
+export type InitiateRequest = z.infer<typeof initiateRequestSchema>;
 
 export type SubmitQpReview = z.infer<typeof submitQpReviewSchema>;
 export const qpReviewResponseSchema = z
@@ -161,16 +166,13 @@ export const uploadDocumentsSchema = z.object({
         .refine((val) => !isNaN(Number(val)), {
             message: "Invalid request ID",
         }),
-        field: z.string()
+    field: z.string(),
 });
 
 export type UploadFICDocuments = z.infer<typeof uploadDocumentsSchema>;
 
 export const requestIdSchema = z.object({
-    requestId: z.preprocess(
-        (val) => Number(val), 
-        z.number().int().positive() 
-    ),
+    requestId: z.preprocess((val) => Number(val), z.number().int().positive()),
 });
 
 export type RequestId = z.infer<typeof requestIdSchema>;
