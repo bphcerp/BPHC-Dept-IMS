@@ -1,17 +1,5 @@
 import { relations } from "drizzle-orm";
-import {
-    textFields,
-    fileFields,
-    textFieldStatus,
-    fileFieldStatus,
-    files,
-    applications,
-    applicationStatus,
-    numberFields,
-    numberFieldStatus,
-    dateFields,
-    dateFieldStatus,
-} from "./form.ts";
+import { fileFields, files, applications, applicationStatus } from "./form.ts";
 import { users } from "./admin.ts";
 
 export const applicationsFormsRelations = relations(
@@ -44,130 +32,18 @@ export const applicationStatusFormsRelations = relations(
     })
 );
 
-export const textFieldsFormsRelations = relations(
-    textFields,
-    ({ one, many }) => ({
-        user: one(users, {
-            fields: [textFields.userEmail],
-            references: [users.email],
-            relationName: "textFieldsUser",
-        }),
-        statuses: many(textFieldStatus, {
-            relationName: "textFields",
-        }),
-    })
-);
-
-export const numberFieldsFormsRelations = relations(
-    numberFields,
-    ({ one, many }) => ({
-        user: one(users, {
-            fields: [numberFields.userEmail],
-            references: [users.email],
-            relationName: "numberFieldsUser",
-        }),
-        statuses: many(numberFieldStatus, {
-            relationName: "numberFields",
-        }),
-    })
-);
-
-export const dateFieldsFormsRelations = relations(
-    dateFields,
-    ({ one, many }) => ({
-        user: one(users, {
-            fields: [dateFields.userEmail],
-            references: [users.email],
-            relationName: "dateFieldsUser",
-        }),
-        statuses: many(dateFieldStatus, {
-            relationName: "dateFields",
-        }),
-    })
-);
-
-export const fileFieldsFormsRelations = relations(
-    fileFields,
-    ({ one, many }) => ({
-        user: one(users, {
-            fields: [fileFields.userEmail],
-            references: [users.email],
-            relationName: "fileFieldsUser",
-        }),
-        statuses: many(fileFieldStatus, {
-            relationName: "fileFields",
-        }),
-        file: one(files, {
-            fields: [fileFields.fileId],
-            references: [files.id],
-            relationName: "fileFieldsFile",
-        }),
-    })
-);
-
-export const textFieldStatusFormsRelations = relations(
-    textFieldStatus,
-    ({ one }) => ({
-        user: one(users, {
-            fields: [textFieldStatus.userEmail],
-            references: [users.email],
-            relationName: "textFieldStatus",
-        }),
-        textField: one(textFields, {
-            fields: [textFieldStatus.textField],
-            references: [textFields.id],
-            relationName: "textFields",
-        }),
-    })
-);
-
-export const numberFieldStatusFormsRelations = relations(
-    numberFieldStatus,
-    ({ one }) => ({
-        user: one(users, {
-            fields: [numberFieldStatus.userEmail],
-            references: [users.email],
-            relationName: "numberFieldStatus",
-        }),
-        numberField: one(numberFields, {
-            fields: [numberFieldStatus.numberField],
-            references: [numberFields.id],
-            relationName: "numberFields",
-        }),
-    })
-);
-
-export const dateFieldStatusFormsRelations = relations(
-    dateFieldStatus,
-    ({ one }) => ({
-        user: one(users, {
-            fields: [dateFieldStatus.userEmail],
-            references: [users.email],
-            relationName: "dateFieldStatus",
-        }),
-        dateField: one(dateFields, {
-            fields: [dateFieldStatus.dateField],
-            references: [dateFields.id],
-            relationName: "dateFields",
-        }),
-    })
-);
-
-export const fileFieldStatusFormsRelations = relations(
-    fileFieldStatus,
-    ({ one }) => ({
-        user: one(users, {
-            fields: [fileFieldStatus.userEmail],
-            references: [users.email],
-            relationName: "fileFieldStatus",
-        }),
-        fileField: one(fileFields, {
-            fields: [fileFieldStatus.fileField],
-            references: [fileFields.id],
-            relationName: "fileFields",
-        }),
-    })
-);
+export const fileFieldsFormsRelations = relations(fileFields, ({ one }) => ({
+    user: one(users, {
+        fields: [fileFields.userEmail],
+        references: [users.email],
+        relationName: "fileFieldsUser",
+    }),
+    file: one(files, {
+        fields: [fileFields.fileId],
+        references: [files.id],
+        relationName: "fileFieldsFile",
+    }),
+}));
 
 export const filesFormsRelations = relations(files, ({ one, many }) => ({
     user: one(users, {

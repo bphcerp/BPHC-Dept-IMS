@@ -29,7 +29,117 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Users } from "lucide-react";
+import { Users, Clock, User, FileText } from "lucide-react";
+
+interface StatusLogEntry {
+  applicationId: number;
+  userEmail: string;
+  action: string;
+  timestamp: string;
+  comments: string | null;
+}
+
+interface StatusLogProps {
+  statusLog: StatusLogEntry[];
+}
+
+const StatusLog: FC<StatusLogProps> = ({ statusLog }) => {
+  const getActionIcon = (action: string) => {
+    if (action.toLowerCase().includes("reject")) {
+      return <FileText className="h-4 w-4 text-red-500" />;
+    }
+    if (action.toLowerCase().includes("approve")) {
+      return <FileText className="h-4 w-4 text-green-500" />;
+    }
+    return <FileText className="h-4 w-4 text-blue-500" />;
+  };
+
+  const getActionBadgeColor = (action: string) => {
+    if (action.toLowerCase().includes("reject")) {
+      return "bg-red-100 text-red-800 border-red-200";
+    }
+    if (action.toLowerCase().includes("approve")) {
+      return "bg-green-100 text-green-800 border-green-200";
+    }
+    return "bg-blue-100 text-blue-800 border-blue-200";
+  };
+
+  const formatTimestamp = (timestamp: Date | string) => {
+    const date =
+      typeof timestamp === "string" ? new Date(timestamp) : timestamp;
+    return new Intl.DateTimeFormat("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(date);
+  };
+
+  if (!statusLog || statusLog.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Application Status History
+        </CardTitle>
+        <CardDescription>
+          Complete timeline of all actions taken on this application
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {statusLog.map((entry, index) => (
+            <div
+              key={`${entry.applicationId}-${entry.userEmail}-${entry.timestamp}`}
+              className="relative flex gap-4 pb-4"
+            >
+              {/* Timeline line */}
+              {index < statusLog.length - 1 && (
+                <div className="absolute left-5 top-8 h-full w-px bg-border" />
+              )}
+
+              {/* Icon */}
+              <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-muted/10">
+                {getActionIcon(entry.action)}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold ${getActionBadgeColor(entry.action)}`}
+                  >
+                    {entry.action}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    <User className="mr-1 inline-block h-3 w-3" />
+                    {entry.userEmail}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {formatTimestamp(entry.timestamp)}
+                </div>
+
+                {entry.comments && (
+                  <div className="rounded-md bg-muted/20 p-3 text-sm">
+                    <p className="font-medium text-foreground">Comments:</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {entry.comments}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 // Types for component props
 interface ReviewComponentProps {
@@ -167,6 +277,7 @@ const ConvenerReview: FC<ConvenerReviewProps> = ({
   const [comments, setComments] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const reviewConvenerMutation = useMutation({
     mutationFn: async (data: conferenceSchemas.ReviewApplicationBody) => {
@@ -177,13 +288,14 @@ const ConvenerReview: FC<ConvenerReviewProps> = ({
     },
     onSuccess: (_, variables) => {
       toast.success("Review submitted successfully");
-      void queryClient.refetchQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["conference", "applications", parseInt(id)],
       });
 
       if (variables.status && isDirect) {
         onGenerateForm();
       }
+      navigate("/conference/pending");
     },
     onError: (error) => {
       if (isAxiosError(error)) {
@@ -758,6 +870,17 @@ const ConferenceViewApplicationView = () => {
               isGeneratingForm={generateFormMutation.isLoading}
             />
           )}
+
+          {/* Status Log - Show for HoD when available */}
+          {canReviewAsHod &&
+            data.statusLog &&
+            Array.isArray(data.statusLog) &&
+            data.statusLog.length > 0 && (
+              <>
+                <Separator />
+                <StatusLog statusLog={data.statusLog} />
+              </>
+            )}
         </>
       )}
     </div>

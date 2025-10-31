@@ -568,6 +568,13 @@
       "when": 1761752717060,
       "tag": "0080_orange_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1761815134878,
+      "tag": "0081_red_mauler",
+      "breakpoints": true
     }
   ]
 }

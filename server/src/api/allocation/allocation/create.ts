@@ -37,7 +37,7 @@ router.post(
                       .insert(masterAllocation)
                       .values({
                           courseCode,
-                          ic,
+                          icEmail: ic,
                           semesterId,
                       })
                       .returning()
@@ -47,7 +47,7 @@ router.post(
                               masterAllocation.semesterId,
                           ],
                           set: {
-                              ic: ic,
+                              icEmail: ic,
                           },
                       })
                 : await tx.insert(masterAllocation).values({

@@ -12,6 +12,7 @@ import {
     conferenceApprovalApplications,
     conferenceGlobal,
     conferenceApplicationMembers,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "fs/promises";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -91,7 +92,6 @@ router.post(
         }
         let insertedFiles: (typeof files.$inferInsert)[] = [];
 
-        // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
             if (req.files && Object.entries(req.files).length) {
@@ -150,6 +150,12 @@ router.post(
                 .where(eq(conferenceApprovalApplications.id, id))
                 .returning();
 
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: id,
+                userEmail: req.user!.email,
+                action: `Application updated`,
+            });
+
             const deleted = await tx
                 .delete(files)
                 .where(inArray(files.id, fileIdsToDelete))
@@ -158,10 +164,13 @@ router.post(
                 void unlink(file.filePath).catch(() => undefined);
             }
 
-            await completeTodo({
-                module: modules[0],
-                completionEvent: `edit ${id}`,
-            }, tx);
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `edit ${id}`,
+                },
+                tx
+            );
 
             const todoAssignees = isDirect
                 ? (
