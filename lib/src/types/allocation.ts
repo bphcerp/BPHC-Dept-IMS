@@ -169,7 +169,7 @@ export type AllocationType = {
 };
 
 export type TTDRoom = {
-    id: string;
+    _id: string;
     block: string;
     roomNumber: string;
     classCapacity: number;

@@ -2,9 +2,7 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
-import {
-    CourseAllocationStatusResponse,
-} from "node_modules/lib/src/types/allocation.ts";
+import { CourseAllocationStatusResponse } from "node_modules/lib/src/types/allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 
@@ -45,11 +43,13 @@ export const getAllocationStats = async (semesterId: string) => {
                 instructorsCount: ((s as any).instructors || []).length,
             };
         });
-        const hasIC = Boolean((m as any).ic); // true if IC is set, false if null/undefined/empty
+        const hasIC = Boolean((m as any).icEmail); // true if IC is set, false if null/undefined/empty
         map.set(code, { sections, hasIC, hasAllPracticalRoomsSet });
     }
 
-    const allCourses = await db.query.course.findMany();
+    const allCourses = await db.query.course.findMany({
+        where: (course, { eq }) => eq(course.markedForAllocation, true),
+    });
 
     const result: CourseAllocationStatusResponse = {};
 
@@ -64,6 +64,12 @@ export const getAllocationStats = async (semesterId: string) => {
 
         if (!entry.hasIC || !entry.hasAllPracticalRoomsSet) {
             result[code] = "Pending";
+            continue;
+        }
+
+        //Project Type Courses
+        if (entry.hasIC && !c.lectureUnits && !c.practicalUnits) {
+            result[code] = "Allocated";
             continue;
         }
 
@@ -101,7 +107,9 @@ router.get(
                 new HttpError(HttpCode.BAD_REQUEST, "No allocation going on")
             );
 
-        const result = await getAllocationStats(latestSemester?.id ?? (semesterId as string));
+        const result = await getAllocationStats(
+            latestSemester?.id ?? (semesterId as string)
+        );
 
         res.status(200).json(result);
     })

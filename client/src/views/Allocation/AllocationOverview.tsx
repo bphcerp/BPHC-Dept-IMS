@@ -46,6 +46,7 @@ import { Link } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { AxiosError } from "axios";
 import { Role } from "@/components/admin/RoleList";
+import PushToTDDialog from "@/components/allocation/PushToTDDialog";
 
 export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
@@ -481,9 +482,12 @@ Hyderabad Campus<span>
             </>
           )}
           {latestSemester.allocationStatus === "inAllocation" && (
-            <Button>
-              <Link to="/allocation/summary">View Current Allocation</Link>
-            </Button>
+            <div className="flex space-x-2">
+              <Button>
+                <Link to="/allocation/summary">View Current Allocation</Link>
+              </Button>
+              <PushToTDDialog />
+            </div>
           )}
         </div>
       </header>
