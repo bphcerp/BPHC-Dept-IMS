@@ -34,6 +34,7 @@ const serverSchema = z.object({
     BPHCERP_PASSWORD: z.string(),
     SERP_API_KEY: z.string(),
     DEPARTMENT_NAME: z.string(),
+    DEPARTMENT_NAME_FULL: z.string(),
     DEPARTMENT_EMAIL: z.string().email().optional(),
     TTD_API_URL: z.string().url().min(1),
     TTD_DEPARTMENT_NAME: z.string(),
