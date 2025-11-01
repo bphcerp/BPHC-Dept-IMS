@@ -101,7 +101,7 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit, filterValues }) =>
       onSubmit(filters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [faculty, filters.authorIds.length]);
+  }, [faculty, filters.authorIds.length, filterValues]);
 
   const toggleAuthor = (id: string) => {
     setFilters((prev) => ({
@@ -142,8 +142,6 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit, filterValues }) =>
   const startDate = new Date(filters.startYear, filters.startMonth - 1);
   const endDate = new Date(filters.endYear, filters.endMonth - 1);
   const isInvalid = startDate > endDate || filters.authorIds.length === 0;
-
-  if (!filterValues) onSubmit(filters);
 
   return (
     <Card className="w-full">

@@ -262,7 +262,7 @@ export default function PresentationCreator() {
     const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
     const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
     const chartRef = useRef<HTMLDivElement | null>(null);
-
+    const [isGenerating, setIsGenerating] = useState(false);
     const renderCompleteResolver = useRef<(() => void) | null>(null);
     const handleRenderComplete = () => {
         renderCompleteResolver.current?.();
@@ -298,11 +298,15 @@ export default function PresentationCreator() {
 
     const getPresentation = async () => {
 
+
         const form = new FormData();
         let filesToUpload = 0;
 
         const renderTimeout = 5000;
         const metadataArray = [];
+
+        setIsGenerating(true);
+
 
         for (const [si, slide] of slides.entries()) {
             setSelectedSlideId(slide.id);
@@ -393,6 +397,8 @@ export default function PresentationCreator() {
 
         } catch (err) {
             toast.error(`Error generating presentation: ${err}`);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -421,6 +427,8 @@ export default function PresentationCreator() {
             graph: null,
             color: COLORS[0]
         };
+        const slide = slides.find((slide)=> slide.id == slideId);
+        if(slide && slide.graphs.length >= 4) return;
         setSlides(prevSlides =>
             prevSlides.map(slide => {
                 if (slide.id === slideId && slide.graphs.length < 4) {
@@ -498,8 +506,16 @@ export default function PresentationCreator() {
                 >
                     Get Presentation
                 </Button>
-                <div className="flex w-full gap-4 h-[60vh]">
+                <div className="flex w-full gap-4 h-[60vh]" >
                     <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                        {isGenerating && (
+                            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
+                                <Loader2 className="h-16 w-16 animate-spin text-white" />
+                                <p className="text-white text-lg mt-4 font-semibold">
+                                    Generating Presentation...
+                                </p>
+                            </div>
+                        )}
                         <div className="flex justify-between items-center w-full px-1 py-1">
                             <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
                             <Button
