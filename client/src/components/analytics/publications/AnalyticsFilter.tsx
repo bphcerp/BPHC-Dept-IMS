@@ -25,15 +25,17 @@ const fetchFacultyList = async (): Promise<
   return response.data;
 };
 
+type FilterProps = {
+  startMonth: number;
+  startYear: number;
+  endMonth: number;
+  endYear: number;
+  grouping: "monthly" | "yearly";
+  authorIds: string[];
+}
 interface Props {
-  onSubmit: (filters: {
-    startMonth: number;
-    startYear: number;
-    endMonth: number;
-    endYear: number;
-    grouping: "monthly" | "yearly";
-    authorIds: string[];
-  }) => void;
+  onSubmit: (filters: FilterProps) => void;
+  filterValues?: FilterProps;
 }
 
 const MONTHS = [
@@ -57,7 +59,7 @@ const getYears = () => {
 };
 
 // eslint-disable-next-line react/prop-types
-export const AnalyticsFilters: React.FC<Props> = ({ onSubmit }) => {
+export const AnalyticsFilters: React.FC<Props> = ({ onSubmit, filterValues }) => {
   const { data: faculty, isLoading } = useQuery({
     queryKey: ["faculty:list"],
     queryFn: fetchFacultyList,
@@ -66,7 +68,7 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit }) => {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1; // 1-based
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(filterValues ?? {
     startMonth: 1,
     startYear: 2010,
     endMonth: currentMonth,
@@ -76,6 +78,12 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit }) => {
   });
 
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (filterValues) {
+      setFilters(filterValues);
+    }
+  }, [filterValues]);
 
   // Select all authors when faculty list loads
   useEffect(() => {
@@ -134,6 +142,8 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit }) => {
   const startDate = new Date(filters.startYear, filters.startMonth - 1);
   const endDate = new Date(filters.endYear, filters.endMonth - 1);
   const isInvalid = startDate > endDate || filters.authorIds.length === 0;
+
+  if (!filterValues) onSubmit(filters);
 
   return (
     <Card className="w-full">
