@@ -85,6 +85,7 @@ router.post(
             subject:
                 "IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
             html: htmlBody,
+            priority: 'high'
         };
 
         await createTodos(todos);

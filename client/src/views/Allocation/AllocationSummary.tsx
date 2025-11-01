@@ -46,6 +46,9 @@ import { Terminal } from "lucide-react";
 import { PhdStudent } from "node_modules/lib/src/schemas/Phd";
 import { Faculty } from "node_modules/lib/src/types/inventory";
 import { useReactToPrint } from "react-to-print";
+import { TTD_DEPARTMENT_NAME } from "@/lib/constants";
+import axios from "axios";
+import { allocationTypes } from "lib";
 
 type InstructorOption = {
   email: string;
@@ -182,6 +185,21 @@ export const AllocationSummary = () => {
 
   if (latestSemester?.summaryHidden && !checkAccess("allocation:write"))
     return <NotFoundPage />;
+
+  const { data: timetableRooms } = useQuery({
+      queryKey: ["timetable", "rooms"],
+      queryFn: async () => {
+        if (!latestSemester) return null;
+        const response = await axios<allocationTypes.TTDRoom[]>(
+          `${import.meta.env.VITE_TTD_API_URL}/${latestSemester.semesterType}/rooms/dept/${TTD_DEPARTMENT_NAME}`
+        );
+        return response.data.reduce((acc, room) => {
+          acc[room._id] = room.roomNumber
+          return acc 
+        },{} as Record<string, string>)
+      },
+      enabled: !!latestSemester,
+    });
 
   const handleSummaryPrint = useReactToPrint({
     contentRef: componentRef,
@@ -609,8 +627,8 @@ export const AllocationSummary = () => {
                               {section.type.charAt(0)}
                               {getSectionNumber(data, section.id, section.type)}
                               {section.type === "PRACTICAL" &&
-                                section.timetableRoomId &&
-                                ` - ${section.timetableRoomId}`}
+                                section.timetableRoomId && timetableRooms &&
+                                ` - ${timetableRooms[section.timetableRoomId]}`}
                             </p>
                           </div>
 
