@@ -94,7 +94,7 @@ export const emailWorker = new Worker<SendMailOptions & { body?: string }>( // A
             mailOptions.text = body; 
         }
         const mailOptionsWithDefaults: SendMailOptions = {
-            from: environment.BPHCERP_EMAIL,
+            from: `${environment.DEPARTMENT_NAME_FULL} ${environment.BPHCERP_EMAIL}`,
             ...mailOptions,
             text: mailOptions.text
                 ? `${mailOptions.text}${footerText}`

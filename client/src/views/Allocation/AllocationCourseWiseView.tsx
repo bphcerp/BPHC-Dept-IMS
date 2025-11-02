@@ -80,11 +80,9 @@ const AllocationCourseWiseView = () => {
     queryFn: async () => {
       if (!selectedCourse || !currentSemester) return null;
       const response = await axios<allocationTypes.TTDRoom[]>(
-        `${import.meta.env.VITE_TTD_API_URL}/${currentSemester.semesterType}/rooms`
+        `${import.meta.env.VITE_TTD_API_URL}/${currentSemester.semesterType}/rooms/dept/${TTD_DEPARTMENT_NAME}`
       );
-      return response.data.filter((room) =>
-        room.departmentSpecification.includes(TTD_DEPARTMENT_NAME)
-      );
+      return response.data
     },
     enabled: !!selectedCourse && !!currentSemester,
   });

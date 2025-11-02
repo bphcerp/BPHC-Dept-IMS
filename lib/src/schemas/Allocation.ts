@@ -191,3 +191,8 @@ export const bulkModifyChangeSchema = z.object({
 });
 
 export const bulkModifySchema = z.array(bulkModifyChangeSchema);
+
+export const pushToTDSchema = z.object({
+    sendMultiDepartmentCourses: z.boolean(),
+    idToken: z.string()
+})
