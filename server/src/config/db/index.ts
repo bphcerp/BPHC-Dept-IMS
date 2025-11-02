@@ -28,6 +28,8 @@ import * as allocation from "./schema/allocation.ts";
 import * as allocationRelations from "./schema/allocationRelations.ts";
 import * as allocationFormBuilder from "./schema/allocationFormBuilder.ts";
 import * as allocationFormBuilderRelations from "./schema/allocationFormBuilderRelations.ts";
+import * as analytics from "./schema/analytics.ts";
+import * as analyticsRelations from "./schema/analyticsRelations.ts";
 import env from "../environment.ts";
 import pg from "pg";
 
@@ -73,6 +75,8 @@ const db = drizzle(pool, {
         ...allocationRelations,
         ...allocationFormBuilder,
         ...allocationFormBuilderRelations,
+        ...analytics,
+        ...analyticsRelations
     },
 });
 

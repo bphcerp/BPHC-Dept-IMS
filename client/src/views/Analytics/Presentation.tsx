@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, forwardRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,40 +35,14 @@ import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const GRAPH_OPTIONS = [
-    { value: "line", label: "Line Chart", component: LineChart },
-    { value: "pie", label: "Pie Chart", component: PieChart },
-    { value: "bar", label: "Bar Chart", component: BarChart },
-] as const;
-
-type GraphTypes = (typeof GRAPH_OPTIONS)[number]["component"];
-type GraphValue = (typeof GRAPH_OPTIONS)[number]['value'];
-
-const Y_AXIS_ALLOWED_TYPES = {
-    "Publications": ["bar"],
-    "Publications Over Time": ["bar", "line"],
-    "Citations": ["bar"],
-    "Citations Over Time": ["bar", "line"],
-    "Publication Type Breakdown": ["pie", "bar"],
-    "Author Contributions": ["pie", "bar"]
-} as const;
-
-const COLORS = [
-    "#3b82f6", // blue
-    "#22c55e", // green
-    "#f97316", // orange
-    "#a855f7", // violet
-    "#ec4899", // pink
-    "#14b8a6", // teal
-    "#facc15", // yellow
-] as const;
+const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS, graphEnumValues } = analyticsSchemas
+type GraphValue = analyticsSchemas.GraphValue;
 
 interface GraphConfig {
     id: string;
     yAxis: keyof typeof Y_AXIS_ALLOWED_TYPES | null;
-    graphType: (typeof GRAPH_OPTIONS)[number]['value'] | null;
+    graphType: GraphValue | null
     filters: analyticsSchemas.AnalyticsQuery | null;
-    graph: GraphTypes | null;
     color: (typeof COLORS)[number]
 }
 
@@ -256,14 +230,74 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
     }
 )
 
+const fetchTemplates = async (): Promise<
+    { id: string, title: string, slides: string }[]
+> => {
+    const response = await api.get<{ id: string, title: string, slides: string }[]>(
+        "/analytics/presentation/templates/"
+    );
+    return response.data;
+};
+
+const fetchTemplate = async (templateID: string): Promise<
+    analyticsSchemas.Template
+> => {
+    const response = await api.get<analyticsSchemas.Template>(
+        `/analytics/presentation/templates/${templateID}`
+    )
+
+    return response.data;
+}
+
+type UpdateTemplateProps = {
+    id: string,
+    template: analyticsSchemas.Template
+}
+const updateTemplate = async ({ id, template }: UpdateTemplateProps): Promise<
+    { id: string }[]
+> => {
+    const response = await api.patch<{ id: string }[]>(
+        `/analytics/presentation/templates/update/${id}`, template
+    );
+    return response.data;
+};
+
+const deleteTemplate = async (id: string): Promise<
+    { id: string }[]
+> => {
+    const response = await api.delete<{ id: string }[]>(
+        `/analytics/presentation/templates/delete/${id}`
+    );
+    return response.data;
+};
+
+const createTemplate = async (template: analyticsSchemas.Template): Promise<
+    { id: string }[]
+> => {
+    const response = await api.post<{ id: string }[]>(
+        "/analytics/presentation/templates/create", template
+    );
+    return response.data;
+};
+
 export default function PresentationCreator() {
+
+    const queryClient = useQueryClient();
+
+    const { data: templates, isLoading: templatesLoading } = useQuery({
+        queryKey: ["presentation:templates"],
+        queryFn: fetchTemplates,
+    });
+
     const [title, setTitle] = useState("Enter Title..");
     const [slides, setSlides] = useState<Slide[]>([]);
     const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
     const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
     const chartRef = useRef<HTMLDivElement | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [currentTemplate, setCurrentTemplate] = useState<string | null>(null);
     const renderCompleteResolver = useRef<(() => void) | null>(null);
+
     const handleRenderComplete = () => {
         renderCompleteResolver.current?.();
     };
@@ -272,6 +306,50 @@ export default function PresentationCreator() {
         return slides.find((slide) => (slide.id == slideId))?.graphs.find((graph) => (graph.id == graphId))
     }
 
+    useEffect(() => {
+        let ignore = false;
+
+        const loadTemplate = async () => {
+            if (currentTemplate) {
+                try {
+                    const template = await fetchTemplate(currentTemplate);
+                    if (ignore) {
+                        return;
+                    }
+                    const newSlides: Slide[] = Array.from({ length: template.slides }, () => ({
+                        id: crypto.randomUUID(),
+                        graphs: []
+                    }));
+
+                    template.graphs.forEach((graph) => {
+                        if (newSlides[graph.slideNumber]) {
+                            newSlides[graph.slideNumber].graphs.push({
+                                id: crypto.randomUUID(),
+                                yAxis: graph.yAxis,
+                                graphType: graph.graphType,
+                                filters: null,
+                                color: graph.color ?? COLORS[0]
+                            });
+                        }
+                    });
+
+                    setTitle(template.title);
+                    setSlides(newSlides);
+
+                } catch (error) {
+                    console.error("Failed to load template:", error);
+                }
+            }
+        };
+
+        loadTemplate();
+
+        return () => {
+            ignore = true;
+        };
+
+    }, [currentTemplate]);
+
     const selectedGraph = useMemo(() => {
         if (selectedGraphId && selectedSlideId) {
             return getGraphConfig(selectedSlideId, selectedGraphId) ?? null;
@@ -279,13 +357,45 @@ export default function PresentationCreator() {
         return null;
     }, [selectedGraphId, selectedSlideId, slides])
 
+    const createTemplateMutation = useMutation({
+        mutationFn: createTemplate,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template created!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to create: ${err.message}`);
+        }
+    });
+
+    const updateTemplateMutation = useMutation({
+        mutationFn: updateTemplate,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template updated!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to update: ${err.message}`);
+        }
+    });
+
+    const deleteTemplateMutation = useMutation({
+        mutationFn: deleteTemplate, // Takes an id
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template deleted!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to delete: ${err.message}`);
+        }
+    });
+
     const addSlide = () => {
         const newGraph: GraphConfig = {
             id: crypto.randomUUID(),
             yAxis: null,
             graphType: null,
             filters: null,
-            graph: null,
             color: COLORS[0]
         };
         const newSlide: Slide = {
@@ -424,11 +534,10 @@ export default function PresentationCreator() {
             yAxis: null,
             graphType: null,
             filters: null,
-            graph: null,
             color: COLORS[0]
         };
-        const slide = slides.find((slide)=> slide.id == slideId);
-        if(slide && slide.graphs.length >= 4) return;
+        const slide = slides.find((slide) => slide.id == slideId);
+        if (slide && slide.graphs.length >= 4) return;
         setSlides(prevSlides =>
             prevSlides.map(slide => {
                 if (slide.id === slideId && slide.graphs.length < 4) {
@@ -636,12 +745,9 @@ export default function PresentationCreator() {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {
-                                                            selectedGraph?.yAxis &&
-                                                            GRAPH_OPTIONS.filter((obj) =>
-                                                                // Cast the array to 'readonly GraphValue[]'
-                                                                (Y_AXIS_ALLOWED_TYPES[selectedGraph?.yAxis as keyof typeof Y_AXIS_ALLOWED_TYPES] as readonly GraphValue[]).includes(obj.value)
-                                                            ).map((opt) => (
-                                                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                                            selectedGraph?.yAxis != null &&
+                                                            graphEnumValues.map((val) => (
+                                                                (selectedGraph.yAxis && Y_AXIS_ALLOWED_TYPES[selectedGraph.yAxis].includes(val)) ? <SelectItem key={val} value={val}>{GRAPH_OPTIONS.filter((opt) => opt.value == val)[0].label}</SelectItem> : undefined
                                                             ))
                                                         }
                                                     </SelectContent>
@@ -711,6 +817,85 @@ export default function PresentationCreator() {
                         </div>
                     </div>
 
+                </div>
+                <div className="flex-1 w-[50vw] h-[10vh] overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                    {
+                        templatesLoading ?
+                            <Loader2 className="h-16 w-16 animate-spin text-white" /> :
+                            <>
+                                <Button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        createTemplateMutation.mutate({
+                                            title: title,
+                                            slides: slides.length,
+                                            graphs: slides.flatMap((slide, index) => {
+                                                return slide.graphs.map((graph) => {
+                                                    const { id, filters, ...rest } = graph;
+                                                    return { slideNumber: index, ...rest };
+                                                });
+                                            })
+                                        });
+                                    }}
+                                    className="w-full text-1xl  px-1 py-1"
+                                >
+                                    Create New Template
+                                </Button>
+                                {
+                                    templates?.map((template, index) => {
+                                        return (
+                                            <div className={cn(" text-1xl border-2 flex items-center justify-between rounded-xl w-full px-5 py-2", (template.id == currentTemplate) ? "bg-blue-100" : "bg-white")} key={template.id}>
+                                                <div className="w-[50%]">
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            deleteTemplateMutation.mutate(template.id)
+                                                        }}
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label="Delete template"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                    <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>  
+                                                </div>
+                                                <div className="justify-right space-x-2">
+                                                    <span className="font-clear font-muted text-xs">{template.slides} slides</span>
+                                                    <Button onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCurrentTemplate(template.id)
+                                                    }}
+                                                        className="px-2 py-1">
+                                                        Select
+                                                    </Button>
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            updateTemplateMutation.mutate({
+                                                                id: template.id,
+                                                                template: {
+                                                                    title: title,
+                                                                    slides: slides.length,
+                                                                    graphs: slides.flatMap((slide, index) => {
+                                                                        return slide.graphs.map((graph) => {
+                                                                            const { id, filters, ...rest } = graph;
+                                                                            return { slideNumber: index, ...rest };
+                                                                        });
+                                                                    })
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="px-2 py-1"
+                                                    >
+                                                        Update To Current
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </>
+                    }
                 </div>
             </div>
         </div >
