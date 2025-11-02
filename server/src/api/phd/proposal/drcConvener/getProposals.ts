@@ -7,7 +7,6 @@ import { phdProposals } from "@/config/db/schema/phd.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 
 const router = express.Router();
-
 router.get(
     "/:proposalSemesterId",
     checkAccess(),
@@ -19,6 +18,7 @@ router.get(
                 "Invalid Proposal Semester ID"
             );
         }
+
         const proposals = await db.query.phdProposals.findMany({
             where: eq(phdProposals.proposalSemesterId, proposalSemesterId),
             with: {
@@ -62,10 +62,12 @@ router.get(
                 status: true,
                 updatedAt: true,
                 supervisorEmail: true,
+                seminarDate: true,
+                seminarTime: true,
+                seminarVenue: true,
             },
         });
         res.status(200).json(proposals);
     })
 );
-
 export default router;

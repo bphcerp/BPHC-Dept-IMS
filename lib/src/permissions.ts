@@ -297,6 +297,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
     "/phd/proposal/dacMember/viewProposal": "phd:dac:proposal",
     "/phd/proposal/dacMember/submitReview": "phd:dac:proposal",
+    "/phd/proposal/dacMember/cancelSeminarBooking": "phd:dac:proposal",
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",

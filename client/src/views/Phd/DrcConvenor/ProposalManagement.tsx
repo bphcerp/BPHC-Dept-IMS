@@ -1,4 +1,3 @@
-// client/src/views/Phd/DrcConvenor/ProposalManagement.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
@@ -35,7 +34,7 @@ import {
   Check,
   Trash2,
   RotateCcw,
-  Info, // Added Info
+  Info,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import ProposalSemesterSelector from "@/components/phd/proposal/ProposalSemesterSelector";
@@ -55,7 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Added Label
+import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import {
   Tooltip,
@@ -72,9 +71,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"; // Removed AlertDialogTrigger as it's not used directly here
+} from "@/components/ui/alert-dialog";
 
-// Interfaces remain the same
 interface ProposalSemester {
   id: number;
   semesterId: number;
@@ -87,7 +85,6 @@ interface ProposalSemester {
     semesterNumber: number;
   };
 }
-
 interface DacMemberInfo {
   dacMemberEmail: string;
   dacMemberName: string | null;
@@ -96,17 +93,18 @@ interface DacMemberInfo {
     email: string;
   } | null;
 }
-
 interface DacReviewInfo {
   dacMemberEmail: string;
   approved: boolean;
 }
-
 interface ProposalListItem {
   id: number;
   title: string;
   status: (typeof phdSchemas.phdProposalStatuses)[number];
   updatedAt: string;
+  seminarDate: string | null;
+  seminarTime: string | null;
+  seminarVenue: string | null;
   supervisorEmail: string;
   student: {
     name: string | null;
@@ -120,11 +118,8 @@ interface ProposalListItem {
   dacReviews: DacReviewInfo[] | null;
   proposalSemester: ProposalSemester | null;
 }
-
 type SortField = "studentName" | "updatedAt";
 type SortDirection = "asc" | "desc";
-
-// DeadlinesCard component remains the same
 const DeadlinesCard = ({
   deadlines,
   highlight,
@@ -171,7 +166,6 @@ const DeadlinesCard = ({
     </Card>
   );
 };
-
 const DrcProposalManagement: React.FC = () => {
   const navigate = useNavigate();
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
@@ -190,7 +184,6 @@ const DrcProposalManagement: React.FC = () => {
   const [proposalToReject, setProposalToReject] =
     useState<ProposalListItem | null>(null);
   const [rejectComments, setRejectComments] = useState("");
-
   const { data: semesters } = useQuery({
     queryKey: ["proposal-semesters"],
     queryFn: async () => {
@@ -200,14 +193,11 @@ const DrcProposalManagement: React.FC = () => {
       return response.data;
     },
   });
-
   useEffect(() => {
     if (semesters && semesters.length > 0 && selectedSemesterId === null) {
-      // Added null check
       setSelectedSemesterId(semesters[0].id);
     }
   }, [semesters, selectedSemesterId]);
-
   const {
     data: proposals = [],
     isLoading,
@@ -217,16 +207,14 @@ const DrcProposalManagement: React.FC = () => {
   } = useQuery({
     queryKey: ["drc-proposals", selectedSemesterId],
     queryFn: async () => {
-      if (selectedSemesterId === null) return []; // Check for null
+      if (selectedSemesterId === null) return [];
       const response = await api.get<ProposalListItem[]>(
         `/phd/proposal/drcConvener/getProposals/${selectedSemesterId}`
       );
       return response.data;
     },
-    enabled: selectedSemesterId !== null, // Check for null
+    enabled: selectedSemesterId !== null,
   });
-
-  // Mutation for rejecting a proposal
   const rejectProposalMutation = useMutation({
     mutationFn: ({
       proposalId,
@@ -252,8 +240,6 @@ const DrcProposalManagement: React.FC = () => {
       );
     },
   });
-
-  // Mutation for re-enabling a proposal
   const reenableProposalMutation = useMutation({
     mutationFn: (proposalId: number) =>
       api.post(`/phd/proposal/drcConvener/reenableProposal/${proposalId}`, {}),
@@ -268,7 +254,6 @@ const DrcProposalManagement: React.FC = () => {
       );
     },
   });
-
   const filteredAndSortedProposals = useMemo(() => {
     let filtered = proposals;
     if (statusFilter.length > 0) {
@@ -292,7 +277,6 @@ const DrcProposalManagement: React.FC = () => {
         compareA = (a.student.name || a.student.email).toLowerCase();
         compareB = (b.student.name || b.student.email).toLowerCase();
       } else {
-        // updatedAt
         compareA = new Date(a.updatedAt);
         compareB = new Date(b.updatedAt);
       }
@@ -305,7 +289,6 @@ const DrcProposalManagement: React.FC = () => {
       return 0;
     });
   }, [proposals, statusFilter, sortField, sortDirection, searchTerm]);
-
   const downloadNoticeMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -329,7 +312,6 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download notice."),
   });
-
   const downloadPackagesMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post(
@@ -352,7 +334,6 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: () => toast.error("Failed to download packages."),
   });
-
   const finalizeProposalsMutation = useMutation({
     mutationFn: (proposalIds: number[]) =>
       api.post("/phd/proposal/drcConvener/finalizeProposals", { proposalIds }),
@@ -363,28 +344,23 @@ const DrcProposalManagement: React.FC = () => {
     },
     onError: (err) =>
       toast.error(
-        (err as { response?: { data?: { message?: string } } }).response?.data
+        (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to finalize."
       ),
   });
-
   const handleSelectProposal = (id: number, checked: boolean) => {
     setSelectedProposalIds((prev) =>
       checked ? [...prev, id] : prev.filter((pId) => pId !== id)
     );
   };
   const handleSelectAll = (checked: boolean | "indeterminate") => {
-    // Accept indeterminate state
     if (checked === true) {
       const visibleSelectableIds = filteredAndSortedProposals.map((p) => p.id);
       setSelectedProposalIds(visibleSelectableIds);
     } else {
-      // checked is false or indeterminate
       setSelectedProposalIds([]);
     }
   };
-
-  // Helper to get selected proposals by status (remains the same)
   const getSelectedProposalsByStatus = (statuses: string[]) => {
     return (
       proposals?.filter(
@@ -392,7 +368,6 @@ const DrcProposalManagement: React.FC = () => {
       ) ?? []
     );
   };
-
   const openRequestDialog = () => {
     const selected = getSelectedProposalsByStatus([
       "seminar_pending",
@@ -421,7 +396,6 @@ const DrcProposalManagement: React.FC = () => {
     setProposalsForDialog([proposal]);
     setIsReminderDialogOpen(true);
   };
-
   const semesterDeadlines = proposals?.find(
     (p) => p.proposalSemester
   )?.proposalSemester;
@@ -442,8 +416,6 @@ const DrcProposalManagement: React.FC = () => {
     (p) => p.status === "finalising_documents"
   );
   const canSendGeneralReminder = selectedProposalIds.length > 0;
-
-  // Correct calculation for checkbox states
   const numVisibleProposals = filteredAndSortedProposals.length;
   const numSelectedVisibleProposals = filteredAndSortedProposals.filter((p) =>
     selectedProposalIds.includes(p.id)
@@ -456,7 +428,6 @@ const DrcProposalManagement: React.FC = () => {
         : numSelectedVisibleProposals > 0
           ? "indeterminate"
           : false;
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -465,7 +436,6 @@ const DrcProposalManagement: React.FC = () => {
       setSortDirection("desc");
     }
   };
-
   const allStatuses = phdSchemas.phdProposalStatuses;
   const getDacMemberReviewStatus = (
     memberEmail: string,
@@ -480,14 +450,10 @@ const DrcProposalManagement: React.FC = () => {
     }
     return review.approved ? "approved" : "reverted";
   };
-
-  // Handler to initiate rejection process
   const startRejectProposal = (proposal: ProposalListItem) => {
     setProposalToReject(proposal);
-    setRejectComments(""); // Reset comments when opening dialog
+    setRejectComments("");
   };
-
-  // Handler to confirm rejection
   const confirmRejectProposal = () => {
     if (!proposalToReject) return;
     if (!rejectComments.trim()) {
@@ -499,7 +465,6 @@ const DrcProposalManagement: React.FC = () => {
       comments: rejectComments,
     });
   };
-
   return (
     <div className="space-y-6">
       {/* Header and Timeline */}
@@ -775,7 +740,7 @@ const DrcProposalManagement: React.FC = () => {
                       className="h-24 text-center text-red-600"
                     >
                       Error:{" "}
-                      {(error as { response?: { data?: string } })?.response
+                      {(error as { response: { data: string } })?.response
                         ?.data || "Failed to load proposals"}
                     </TableCell>
                   </TableRow>
@@ -884,16 +849,48 @@ const DrcProposalManagement: React.FC = () => {
                         </TableCell>
 
                         <TableCell>
-                          <Badge
-                            className={getProposalStatusVariant(
-                              proposal.status
-                            )}
-                          >
-                            {formatStatus(proposal.status)}
-                          </Badge>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {new Date(proposal.updatedAt).toLocaleDateString()}
-                          </div>
+                          {proposal.status === "finalising_documents" &&
+                          proposal.seminarDate ? (
+                            <>
+                              <Badge
+                                className={getProposalStatusVariant(
+                                  proposal.status
+                                )}
+                              >
+                                {formatStatus(proposal.status)}
+                              </Badge>
+                              <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                                <p>
+                                  {new Date(
+                                    proposal.seminarDate
+                                  ).toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                                <p>{proposal.seminarTime}</p>
+                                <p className="font-medium">
+                                  {proposal.seminarVenue}
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <Badge
+                                className={getProposalStatusVariant(
+                                  proposal.status
+                                )}
+                              >
+                                {formatStatus(proposal.status)}
+                              </Badge>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {new Date(
+                                  proposal.updatedAt
+                                ).toLocaleDateString()}
+                              </div>
+                            </>
+                          )}
                         </TableCell>
                         <TableCell className="flex justify-end gap-1 text-right">
                           <Button
