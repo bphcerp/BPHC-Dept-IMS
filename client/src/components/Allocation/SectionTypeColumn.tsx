@@ -274,8 +274,8 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                                   </SelectTrigger>
                                   <SelectContent>
                                     {rooms?.map((room) => (
-                                      <SelectItem key={room.id} value={room.id}>
-                                        {room.id}
+                                      <SelectItem key={room._id} value={room._id}>
+                                        {room.roomNumber}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>

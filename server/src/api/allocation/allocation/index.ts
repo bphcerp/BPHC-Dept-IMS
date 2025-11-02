@@ -9,6 +9,7 @@ import getStatusRouter from "./getStatus.ts";
 import getInstructorListWithPrefRouter from "./getInstructorListWithPref.ts";
 import sectionRouter from "./section/index.ts";
 import instructorRouter from "./instructor/index.ts";
+import pushToTDRouter from "./pushToTD.ts";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/getAll", getAllRouter);
 router.use("/getStatus", getStatusRouter);
 router.use("/section", sectionRouter);
 router.use("/instructor", instructorRouter);
+router.use("/pushToTD", pushToTDRouter);
 
 export default router;
