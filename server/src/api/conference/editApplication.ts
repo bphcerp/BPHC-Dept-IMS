@@ -132,11 +132,7 @@ router.post(
             });
 
             await tx
-                .update(conferenceApplicationMembers)
-                .set({
-                    reviewStatus: null,
-                    comments: null,
-                })
+                .delete(conferenceApplicationMembers)
                 .where(eq(conferenceApplicationMembers.applicationId, id));
 
             await tx
@@ -179,14 +175,15 @@ router.post(
                           tx
                       )
                   ).map((convener) => convener.email)
-                : (
-                      await tx.query.conferenceApplicationMembers.findMany({
-                          columns: {
-                              memberEmail: true,
-                          },
-                          where: (cols, { eq }) => eq(cols.applicationId, id),
-                      })
-                  ).map((member) => member.memberEmail);
+                : [];
+            // : (
+            //       await tx.query.conferenceApplicationMembers.findMany({
+            //           columns: {
+            //               memberEmail: true,
+            //           },
+            //           where: (cols, { eq }) => eq(cols.applicationId, id),
+            //       })
+            //   ).map((member) => member.memberEmail);
 
             await createTodos(
                 todoAssignees.map((assignee) => ({
