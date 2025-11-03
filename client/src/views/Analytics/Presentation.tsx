@@ -35,8 +35,9 @@ import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS, graphEnumValues } = analyticsSchemas
+const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS} = analyticsSchemas;
 type GraphValue = analyticsSchemas.GraphValue;
+const graphLabelMap = Object.fromEntries(GRAPH_OPTIONS.map(opt => [opt.value, opt.label]));
 
 interface GraphConfig {
     id: string;
@@ -44,12 +45,12 @@ interface GraphConfig {
     graphType: GraphValue | null
     filters: analyticsSchemas.AnalyticsQuery | null;
     color: (typeof COLORS)[number]
-}
+};
 
 interface Slide {
     id: string;
     graphs: GraphConfig[];
-}
+};
 
 const fetchAnalytics = async (
     params: analyticsSchemas.AnalyticsQuery
@@ -231,9 +232,9 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
 )
 
 const fetchTemplates = async (): Promise<
-    { id: string, title: string, slides: string }[]
+    { id: string, title: string, slides: number }[]
 > => {
-    const response = await api.get<{ id: string, title: string, slides: string }[]>(
+    const response = await api.get<{ id: string, title: string, slides: number }[]>(
         "/analytics/presentation/templates/"
     );
     return response.data;
@@ -303,8 +304,8 @@ export default function PresentationCreator() {
     };
 
     const getGraphConfig = (slideId: string, graphId: string) => {
-        return slides.find((slide) => (slide.id == slideId))?.graphs.find((graph) => (graph.id == graphId))
-    }
+        return slides.find((slide) => (slide.id == slideId))?.graphs.find((graph) => (graph.id == graphId));
+    };
 
     useEffect(() => {
         let ignore = false;
@@ -355,7 +356,7 @@ export default function PresentationCreator() {
             return getGraphConfig(selectedSlideId, selectedGraphId) ?? null;
         }
         return null;
-    }, [selectedGraphId, selectedSlideId, slides])
+    }, [selectedGraphId, selectedSlideId, slides]);
 
     const createTemplateMutation = useMutation({
         mutationFn: createTemplate,
@@ -380,7 +381,7 @@ export default function PresentationCreator() {
     });
 
     const deleteTemplateMutation = useMutation({
-        mutationFn: deleteTemplate, // Takes an id
+        mutationFn: deleteTemplate,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
             toast.success("Template deleted!");
@@ -745,9 +746,8 @@ export default function PresentationCreator() {
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {
-                                                            selectedGraph?.yAxis != null &&
-                                                            graphEnumValues.map((val) => (
-                                                                (selectedGraph.yAxis && Y_AXIS_ALLOWED_TYPES[selectedGraph.yAxis].includes(val)) ? <SelectItem key={val} value={val}>{GRAPH_OPTIONS.filter((opt) => opt.value == val)[0].label}</SelectItem> : undefined
+                                                            selectedGraph?.yAxis && Y_AXIS_ALLOWED_TYPES[selectedGraph.yAxis].map((val) => (
+                                                                <SelectItem key={val} value={val}>{graphLabelMap[val]}</SelectItem>
                                                             ))
                                                         }
                                                     </SelectContent>
@@ -860,7 +860,7 @@ export default function PresentationCreator() {
                                                     <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>  
                                                 </div>
                                                 <div className="justify-right space-x-2">
-                                                    <span className="font-clear font-muted text-xs">{template.slides} slides</span>
+                                                    <span className="font-normal font-muted text-xs">{template.slides} slides</span>
                                                     <Button onClick={(e) => {
                                                         e.stopPropagation();
                                                         setCurrentTemplate(template.id)

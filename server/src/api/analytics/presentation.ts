@@ -11,7 +11,7 @@ import { analyticsSchemas } from "lib";
 import db from "@/config/db/index.ts";
 import { graphs, presentationTemplates } from "@/config/db/schema/analytics.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
-import {  eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -140,7 +140,7 @@ router.patch(
             .returning()
 
         await db.delete(graphs).where(eq(graphs.templateId, id));
-        for (var graph of template.graphs) {
+        for (const graph of template.graphs) {
             await db.insert(graphs).values({
                 templateId: id,
                 ...graph,
@@ -164,7 +164,7 @@ router.get(
                 graphs: true,
             },
             where: (presentationTemplates, { eq }) =>
-                eq(presentationTemplates.id, id),
+                and(eq(presentationTemplates.id, id),eq(presentationTemplates.facultyEmail, email)),
         });
 
         if (!templates.length)
@@ -196,7 +196,7 @@ router.delete(
         if (!email)
             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        await db.delete(presentationTemplates).where(eq(presentationTemplates.id, id))
+        await db.delete(presentationTemplates).where(and(eq(presentationTemplates.id, id),eq(presentationTemplates.facultyEmail, email)) )
 
         res.status(200).json({message: "Successfully Deleted Template"});
     })
@@ -223,8 +223,6 @@ router.get(
     })
 );
 
-router.use(express.json());
-
 router.post(
     "/templates/create",
     asyncHandler(async (req, res) => {
@@ -248,7 +246,7 @@ router.post(
                 .returning()
         )[0];
 
-        for (var graph of template.graphs) {
+        for (const graph of template.graphs) {
             await db.insert(graphs).values({
                 templateId: insertedId,
                 ...graph,
