@@ -589,6 +589,13 @@
       "when": 1762170253173,
       "tag": "0083_chemical_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1762175564914,
+      "tag": "0084_outgoing_silver_sable",
+      "breakpoints": true
     }
   ]
 }
