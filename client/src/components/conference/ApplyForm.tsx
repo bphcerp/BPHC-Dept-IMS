@@ -70,6 +70,48 @@ const getRequiredFileFields = (
     return [
       "letterOfInvitation",
       "firstPageOfPaper",
+      "detailsOfEvent",
+      // reviewersComments and otherDocuments are optional
+    ];
+  }
+
+  if (
+    purposeLower.includes("conference") ||
+    purposeLower.includes("workshop")
+  ) {
+    return ["detailsOfEvent"];
+  }
+
+  return [];
+};
+
+// Helper function to get all visible file fields (including optional ones)
+const getVisibleFileFields = (
+  purpose: string
+): (typeof conferenceSchemas.fileFieldNames)[number][] => {
+  if (!purpose) return [];
+
+  const purposeLower = purpose.toLowerCase();
+
+  if (purposeLower.includes("invited speaker")) {
+    return ["letterOfInvitation"];
+  }
+
+  if (
+    purposeLower.includes("keynote lecture") ||
+    purposeLower.includes("chairing session")
+  ) {
+    return ["letterOfInvitation", "detailsOfEvent"];
+  }
+
+  if (
+    purposeLower.includes("presenting paper") ||
+    purposeLower.includes("presenting poster") ||
+    purposeLower.includes("journal page")
+  ) {
+    return [
+      "letterOfInvitation",
+      "firstPageOfPaper",
       "reviewersComments",
       "detailsOfEvent",
       "otherDocuments",
@@ -166,13 +208,9 @@ export const ApplyForm = ({
         0
       ) ?? 0;
 
-  // Determine which file fields to show based on purpose
-  const getVisibleFileFields =
-    (): (typeof conferenceSchemas.fileFieldNames)[number][] => {
-      return getRequiredFileFields(purpose || "");
-    };
-
-  const visibleFileFields = getVisibleFileFields();
+  // Get visible and required file fields
+  const visibleFileFields = getVisibleFileFields(purpose || "");
+  const requiredFileFields = getRequiredFileFields(purpose || "");
 
   useEffect(() => {
     const reimbursements = form.getValues("reimbursements") || [];
@@ -516,6 +554,7 @@ export const ApplyForm = ({
             <>
               Enclosures:
               {visibleFileFields.map((fieldName) => {
+                const isRequired = requiredFileFields.includes(fieldName);
                 return (
                   <FormField
                     key={fieldName}
@@ -525,7 +564,13 @@ export const ApplyForm = ({
                       <FormItem>
                         <FormLabel className="font-semibold">
                           {conferenceSchemas.fieldsToFrontend[fieldName]}
-                          <span className="ml-1 text-red-500">*</span>
+                          {isRequired ? (
+                            <span className="ml-1 text-red-500">*</span>
+                          ) : (
+                            <span className="ml-1 text-sm text-muted-foreground">
+                              (optional)
+                            </span>
+                          )}
                           <ChangedIndicator
                             isChanged={isFieldChanged(fieldName)}
                           />
