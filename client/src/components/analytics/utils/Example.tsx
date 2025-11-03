@@ -4,8 +4,9 @@ import HistogramChart from "./graphs/HistogramChart";
 import LineChart from "./graphs/LineChart";
 import PieChart from "./graphs/PieChart";
 import ScatterPlot from "./graphs/ScatterPlot";
+import "./config/setup"
 
-function App() {
+function Example() {
   return (
     <>
       <div
@@ -47,4 +48,4 @@ function App() {
   );
 }
 
-export default App;
+export default Example;
