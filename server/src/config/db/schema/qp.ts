@@ -55,7 +55,7 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     ),
     review: jsonb("review"),
     documentsUploaded: boolean("documents_uploaded").notNull().default(false),
-    status: qpStatusEnum("status").notNull().default("notsubmitted"),
+    status: qpStatusEnum("status").notNull().default("not initiated"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),

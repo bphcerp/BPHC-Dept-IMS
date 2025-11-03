@@ -22,9 +22,11 @@ import { QpFilterBar } from "@/components/qp_review/qpFilterBar";
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isAxiosError } from "axios";
+import { InitiateQPDialog } from "@/components/qp_review/initiateQPDialog";
 
 const STATUS_COLORS: Record<string, string> = {
-  "review pending": "text-yellow-600 bg-yellow-100 p-3",
+  "review pending": "text-blue-600 bg-yellow-100 p-3",
+  "not initiated": "text-yellow-600 bg-gray-100 p-3",
   reviewed: "text-green-600 bg-green-100 p-3",
   notsubmitted: "text-red-600 bg-red-100 p-3 ",
 };
@@ -69,10 +71,10 @@ export const DCAConvenercourses: React.FC = () => {
 
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
-  const [isCreateRequestDialogOpen, setIsCreateRequestDialogOpen] =
-    useState(false);
+  const [isAddCourseDialogOpen, setIsAddCourseDialogOpen] = useState(false);
   const [currentcourseId, setCurrentcourseId] = useState<string | null>(null);
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -370,8 +372,6 @@ export const DCAConvenercourses: React.FC = () => {
     coursesData: CreateRequestData[],
     requestType: string
   ) => {
- 
-
     // Validate data
     if (!coursesData || coursesData.length === 0) {
       toast.error("No course data provided");
@@ -391,7 +391,7 @@ export const DCAConvenercourses: React.FC = () => {
     // Call mutation with proper structure
     createRequestMutation.mutate({
       courses: coursesData,
-      requestType: requestType as "Mid Sem" | "Comprehensive" | "Both",
+      requestType,
     });
   };
 
@@ -472,7 +472,6 @@ export const DCAConvenercourses: React.FC = () => {
           timeout: 90000, // 1.5 minutes for zip generation
         }
       );
-
 
       // Dismiss loading toast
       toast.dismiss("pdf-generation");
@@ -565,11 +564,17 @@ export const DCAConvenercourses: React.FC = () => {
   };
 
   // Handler: Select course
-  const handleSelectcourse = (courseId: string, isSelected: boolean) => {
+  const handleSelectcourse = (
+    courseId: string,
+    isSelected: boolean,
+    status: string
+  ) => {
     if (isSelected) {
       setSelectedcourses((prev) => [...prev, courseId]);
+      setSelectedStatuses((prev) => [...prev, status]);
     } else {
       setSelectedcourses((prev) => prev.filter((id) => id !== courseId));
+      setSelectedStatuses((prev) => prev.filter((s) => s !== status));
     }
   };
 
@@ -649,10 +654,18 @@ export const DCAConvenercourses: React.FC = () => {
                 variant="default"
                 type="button"
                 className="bg-primary text-white"
-                onClick={() => setIsCreateRequestDialogOpen(true)}
+                onClick={() => setIsAddCourseDialogOpen(true)}
               >
-                Create Request
+                Add Courses
               </Button>
+              <InitiateQPDialog
+                disabled={
+                  selectedStatuses.filter((el) => el !== "not initiated")
+                    .length > 0 || selectedStatuses.length == 0
+                }
+                ids={selectedcourses}
+                setSelectedStatuses={setSelectedStatuses}
+              />
               {selectedcourses.length > 0 && (
                 <div className="flex gap-2">
                   <Button
@@ -666,19 +679,14 @@ export const DCAConvenercourses: React.FC = () => {
 
                   <SendReminderDialog
                     trigger={
-                      <Button
-                        type="button"
-                        className="flex items-center gap-2"
-                      >
+                      <Button type="button" className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
                         {`Send Reminders (${selectedcourses.length})`}
                       </Button>
                     }
                     onConfirm={handleSendReminders}
                     recipientCount={recipientCount}
-                    disabled={
-                      recipientCount === 0 
-                    }
+                    disabled={recipientCount === 0}
                   />
 
                   <Button
@@ -773,7 +781,11 @@ export const DCAConvenercourses: React.FC = () => {
                       <Checkbox
                         checked={selectedcourses.includes(course.id)}
                         onCheckedChange={(checked) =>
-                          handleSelectcourse(course.id, !!checked)
+                          handleSelectcourse(
+                            course.id,
+                            !!checked,
+                            course.status
+                          )
                         }
                         aria-label={`Select ${course.courseName}`}
                       />
@@ -879,8 +891,8 @@ export const DCAConvenercourses: React.FC = () => {
       />
 
       <CreateRequestDialog
-        isOpen={isCreateRequestDialogOpen}
-        setIsOpen={setIsCreateRequestDialogOpen}
+        isOpen={isAddCourseDialogOpen}
+        setIsOpen={setIsAddCourseDialogOpen}
         onSubmit={handleCreateRequest}
       />
     </div>

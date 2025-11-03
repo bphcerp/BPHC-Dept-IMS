@@ -1,6 +1,9 @@
+import { STATIC_DIR } from "@/config/environment.ts";
 import logger from "@/config/logger.ts";
+import { encodeImageToBase64 } from "@/lib/common/index.ts";
 import htmlPdf from "html-pdf-node";
 import JSZip from "jszip";
+import path from "path";
 
 interface ReviewCriteria {
     length?: string;
@@ -333,7 +336,6 @@ const getCommonStyles = (): string => {
 const generateReviewSection = (request: ReviewRequest): string => {
     return `
     <div class="review-section">
-
       <!-- Course Details with FIC -->
       <div class="course-details-section">
         <div class="section-title">Course Information</div>
@@ -858,24 +860,204 @@ export async function generateSummaryReviewPDF(
 export async function generateSingleReviewPDF(
     reviewRequest: ReviewRequest
 ): Promise<Buffer> {
+    const logoBase64 = await encodeImageToBase64({
+        filePath: path.join(STATIC_DIR, "logo.svg"),
+    });
     const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Review - ${reviewRequest.courseCode}</title>
-      ${getCommonStyles()}
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Question Paper Peer Review Form - ${reviewRequest.courseCode}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 11pt;
+          margin: 0;
+          padding: 0;
+          color: #000000;
+        }
+        .container {
+          width: 100%;
+          margin: auto;
+          padding: 20px;
+        }
+        .main-title {
+          text-align: center;
+          font-size: 16pt;
+          font-weight: 600;
+          color: #000000;
+          margin-bottom: 25px;
+          border-bottom: 2px solid #000000;
+          padding-bottom: 10px;
+        }
+        
+        .info-table {
+          width: 95%;
+          margin-bottom: 25px;
+          border-collapse: collapse;
+          font-size: 11pt;
+          background-color: #F8FAFC;
+          border: 1px solid #000000;
+          border-radius: 8px;
+          padding: 30px;
+        }
+        .info-table td {
+          padding: 6px 4px;
+        }
+        .info-table .label {
+          font-weight: 600;
+          color: #000000;
+          width: 160px;
+        }
+        .info-table .value {
+          color: #6B7280;
+        }
+
+        .review-table-container {
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          border: 1px solid #E5E7EB;
+        }
+        .review-table {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+        }
+        .review-table th, .review-table td {
+          border-bottom: 1px solid #E5E7EB;
+          padding: 10px 8px;
+          text-align: center;
+          vertical-align: top;
+          word-wrap: break-word;
+        }
+        .review-table th {
+          background-color: #F3F4F6;
+          font-size: 10pt;
+          font-weight: 600;
+          color: #000000;
+          vertical-align: middle;
+        }
+        .review-table .col-component {
+          width: 14%;
+          text-align: left;
+          font-weight: 600;
+        }
+        .review-table .col-remarks {
+          width: 20%;
+          text-align: left;
+          font-size: 10pt;
+          line-height: 1.4;
+        }
+        .review-table tr:last-child td {
+          border-bottom: none;
+        }
+         .review-table tr:nth-child(even) td:not(.col-component) {
+          background-color: #000000;
+        }
+         .review-table td {
+            height: 35px;
+            font-size: 10pt;
+         }
+
+        .footnote {
+          font-size: 9pt;
+          font-style: italic;
+          color: #000000;
+          margin-top: 20px;
+          text-align: center;
+        }
+
+        .signature-table {
+          width: 100%;
+          margin-top: 50px;
+          font-size: 11pt;
+          border-top: 1px solid #000000;
+          padding-top: 20px;
+        }
+        .signature-table tr {
+          display: flex;
+          flex-direction: column; 
+        }
+        .signature-table td {
+          width: auto; 
+        }
+        .signature-table .signature-line {
+          padding-top: 40px; 
+          color: #000000;
+        }
+      </style>
     </head>
     <body>
-      <div class="main-header">
-        <div class="main-title">Question Paper Review Report</div>
-        <div class="summary-info">${reviewRequest.courseName} (${reviewRequest.courseCode})</div>
-      </div>
-      
-      ${generateReviewSection(reviewRequest)}
-      
-      <div class="footer">
-        <div class="generated-date">Generated on: ${new Date().toLocaleString()}</div>
+      <div class="container">
+        <img src=${logoBase64} alt="Institute Logo" style="width: 100px; height: auto;">
+        <div class="main-title">QUESTION PAPER PEER REVIEW FORM</div>
+
+        <table class="info-table">
+          <tr>
+            <td class="label">Course No. & Name</td>
+            <td class="value">: ${reviewRequest.courseCode || ""} - ${reviewRequest.courseName || ""}</td>
+          </tr>
+          <tr>
+            <td class="label">Instructor-in-charge</td>
+            <td class="value">: ${reviewRequest.professorName || ""}</td>
+          </tr>
+          <tr>
+            <td class="label">Reviewer</td>
+            <td class="value">: ${reviewRequest.reviewerName || ""}</td>
+          </tr>
+        </table>
+
+        <div class="review-table-container">
+          <table class="review-table">
+            <thead>
+              <tr>
+                <th class="col-component">Evaluation Component</th>
+                <th>Language is simple and clear*</th>
+                <th>Length of the paper is appropriate*</th>
+                <th>Has a good mix of questions*</th>
+                <th>Covers learning objectives*</th>
+                <th>Solution is well prepared*</th>
+                <th class="col-remarks">Remarks (if any)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-component">Mid-sem Exam</td>
+                <td>${formatScore(reviewRequest.review.MidSem?.language)}</td>
+                <td>${formatScore(reviewRequest.review.MidSem?.length)}</td>
+                <td>${formatScore(reviewRequest.review.MidSem?.mixOfQuestions)}</td>
+                <td>${formatScore(reviewRequest.review.MidSem?.coverLearning)}</td>
+                <td>${formatScore(reviewRequest.review.MidSem?.solution)}</td>
+                <td class="col-remarks">${formatRemarks(reviewRequest.review.MidSem?.remarks)}</td>
+              </tr>
+              <tr>
+                <td class="col-component">Compre Exam</td>
+                <td>${formatScore(reviewRequest.review.Compre?.language)}</td>
+                <td>${formatScore(reviewRequest.review.Compre?.length)}</td>
+                <td>${formatScore(reviewRequest.review.Compre?.mixOfQuestions)}</td>
+                <td>${formatScore(reviewRequest.review.Compre?.coverLearning)}</td>
+                <td>${formatScore(reviewRequest.review.Compre?.solution)}</td>
+                <td classid="col-remarks">${formatRemarks(reviewRequest.review.Compre?.remarks)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footnote">
+          *Rating on scale of 1 to 10 (10 being excellent and 1 being poor)
+        </div>
+
+        <table class="signature-table">
+          <tr>
+            <td>Date: _________________</td>
+            <td class="signature-line">Signature of the Reviewer: _________________</td>
+            <td class="signature-line">Signature of the DCA Convenor: _________________</td>
+            <td class="signature-line">Signature of the HOD: _________________</td>
+          </tr>
+        </table>
+
       </div>
     </body>
     </html>
