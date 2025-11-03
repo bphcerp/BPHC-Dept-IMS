@@ -53,12 +53,26 @@ export const authorContributionSchema = z.object({
     count: z.number().int(),
 });
 
+export const qualityIndexSchema = z.object({
+    year: z.number().int(),
+    q1Percent: z.number(),
+    q2Percent: z.number(),
+    q3Percent: z.number(),
+    q4Percent: z.number(),
+    noQuartilePercent: z.number(),
+    avgImpactFactor: z.number(),
+    highestImpactFactor: z.number(),
+    avgCiteScore: z.number(),
+    highestCiteScore: z.number(),
+});
+
 export const analyticsResponseSchema = z.object({
     publicationTimeSeries: z.array(timeSeriesDataSchema),
     citationTimeSeries: z.array(timeSeriesDataSchema),
     publicationTypeBreakdown: z.array(publicationTypeCountSchema),
     singleMetrics: singleMetricsSchema,
     authorContributions: z.array(authorContributionSchema),
+    qualityIndex: z.array(qualityIndexSchema),
 });
 
 export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;
@@ -66,4 +80,5 @@ export type TimeSeriesData = z.infer<typeof timeSeriesDataSchema>;
 export type PublicationTypeCount = z.infer<typeof publicationTypeCountSchema>;
 export type SingleMetrics = z.infer<typeof singleMetricsSchema>;
 export type AuthorContribution = z.infer<typeof authorContributionSchema>;
+export type QualityIndex = z.infer<typeof qualityIndexSchema>;
 export type AnalyticsResponse = z.infer<typeof analyticsResponseSchema>;

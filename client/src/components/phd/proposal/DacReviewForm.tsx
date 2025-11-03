@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { DacReviewFormData } from "../../../../../lib/src/schemas/Phd";
+import { DacReviewFormData } from "../../../../../lib/src/schemas/Phd"; // Ensure correct import
 
 interface DacReviewFormProps {
   onSubmit: (formData: FormData) => void;
@@ -34,60 +34,24 @@ interface DacReviewFormProps {
   } | null;
 }
 
-const FormBooleanRadioGroup = ({
-  control,
-  name,
-  label,
-  error,
-  disabled,
-}: {
-  control: Control<any>;
-  name: string;
-  label: string;
-  error?: { message?: string };
-  disabled: boolean;
-}) => (
-  <div className="space-y-2">
-    <Label>{label}</Label>
-    <Controller
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <RadioGroup
-          onValueChange={(val) => field.onChange(val === "true")}
-          value={String(field.value)}
-          className="flex items-center space-x-4"
-          disabled={disabled}
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="true" id={`${name}-yes`} />
-            <Label htmlFor={`${name}-yes`}>Yes</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="false" id={`${name}-no`} />
-            <Label htmlFor={`${name}-no`}>No</Label>
-          </div>
-        </RadioGroup>
-      )}
-    />
-    {error && <p className="text-xs text-destructive">{error.message}</p>}
-  </div>
-);
-
+// Re-usable FormEnumRadioGroup
 const FormEnumRadioGroup = ({
   control,
   name,
+  label, // Added label prop
   items,
   error,
   disabled,
 }: {
   control: Control<any>;
   name: string;
+  label?: string; // Label is now optional, can be provided
   items: { value: string; label: string }[];
   error?: { message?: string };
   disabled: boolean;
 }) => (
-  <div>
+  <div className="space-y-2">
+    {label && <Label>{label}</Label>}
     <Controller
       control={control}
       name={name}
@@ -111,6 +75,7 @@ const FormEnumRadioGroup = ({
   </div>
 );
 
+// Re-usable FormEnumCheckboxGroup
 const FormEnumCheckboxGroup = ({
   control,
   name,
@@ -157,6 +122,39 @@ const FormEnumCheckboxGroup = ({
   </div>
 );
 
+// Define option sets for new enums
+const yesNoOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+];
+const q4bOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "notapp", label: "Not Applicable" },
+];
+const q4cOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "notiden", label: "Not Identified" },
+  { value: "noapp", label: "Not Applicable" },
+];
+const q4dOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "notyet", label: "Not Yet Identified" },
+  { value: "notapp", label: "Not Applicable" },
+];
+const q4fOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "judge", label: "Not Able to Judge" },
+  { value: "notapp", label: "Not Applicable" },
+];
+const q5bOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "partially", label: "Partially" },
+];
+
 export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   onSubmit,
   isSubmitting,
@@ -169,6 +167,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
   const memoizedDefaultValues = useMemo(() => {
     if (existingReview?.reviewForm?.formData) {
       const formData = existingReview.reviewForm.formData;
+      // Just spread existing data, ensure arrays are arrays
       return {
         ...formData,
         q1d: Array.isArray(formData.q1d)
@@ -183,29 +182,29 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
             : [],
       };
     }
-    // With the schema fixed, no type assertions are needed here.
+    // Default to 'no' or the first option for enums
     return {
-      q1a: false,
-      q1b: false,
-      q1c: false,
+      q1a: "no",
+      q1b: "no",
+      q1c: "no",
       q1d: [],
-      q2a: false,
-      q2b: false,
-      q2c: false,
+      q2a: "no",
+      q2b: "no",
+      q2c: "no",
       q2d: [],
-      q3a: false,
-      q3b: false,
-      q3c: false,
-      q4a: false,
-      q4b: false,
-      q4c: false,
-      q4d: false,
-      q4e: false,
-      q4f: false,
-      q4g: false,
-      q5a: false,
-      q5b: false,
-      q5c: false,
+      q3a: "no",
+      q3b: "no",
+      q3c: "no",
+      q4a: "no",
+      q4b: "notapp",
+      q4c: "noapp",
+      q4d: "notapp",
+      q4e: "no",
+      q4f: "notapp",
+      q4g: "no",
+      q5a: "no",
+      q5b: "no",
+      q5c: "no",
       q6: "accepted",
       q7_reasons: "",
       q8_comments: "",
@@ -216,9 +215,11 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<phdSchemas.DacReviewFormData>({
+  } = useForm<DacReviewFormData>({
+    // Use correct type
     resolver: zodResolver(phdSchemas.dacReviewFormSchema),
-    values: memoizedDefaultValues as unknown as phdSchemas.DacReviewFormData,
+    // 'values' is better than 'defaultValues' if you want the form to update when existingReview changes
+    values: memoizedDefaultValues as DacReviewFormData,
   });
 
   const [finalDecision, setFinalDecision] = useState<
@@ -232,7 +233,7 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
     }
   }, [existingReview]);
 
-  const onFormSubmit = (data: phdSchemas.DacReviewFormData) => {
+  const onFormSubmit = (data: DacReviewFormData) => {
     if (!finalDecision) {
       toast.error("Please select a final decision (Approve or Revert).");
       return;
@@ -271,29 +272,34 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
             only.
           </AlertDescription>
         </Alert>
+
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
+          {/* --- Section 1 --- */}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               1. Proposed Topic of Research
             </h3>
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q1a"
               label="a) Is the proposed topic in one of the research areas of the Institute?"
+              items={yesNoOptions}
               error={errors.q1a}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q1b"
               label="b) Does the proposed topic reflect the theme propounded in the proposal write up?"
+              items={yesNoOptions}
               error={errors.q1b}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q1c"
               label="c) Is the proposed topic relevant to the needs of the immediate environment?"
+              items={yesNoOptions}
               error={errors.q1c}
               disabled={isDeadlinePassed}
             />
@@ -323,28 +329,33 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
+
+          {/* --- Section 2 --- */}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               2. Objective of the proposed research
             </h3>
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q2a"
               label="a) Are objectives clearly spelt out?"
+              items={yesNoOptions}
               error={errors.q2a}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q2b"
               label="b) Are objectives derived based on the literature survey?"
+              items={yesNoOptions}
               error={errors.q2b}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q2c"
               label="c) Is the outcome of the work clearly visualized?"
+              items={yesNoOptions}
               error={errors.q2c}
               disabled={isDeadlinePassed}
             />
@@ -372,104 +383,121 @@ export const DacReviewForm: React.FC<DacReviewFormProps> = ({
               />
             </div>
           </div>
+
+          {/* --- Section 3 --- */}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">
               3. Background of the Proposed Research
             </h3>
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q3a"
               label="a) Is the literature survey up-to-date and adequately done?"
+              items={yesNoOptions}
               error={errors.q3a}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q3b"
               label="b) Is a broad summary of the present status given?"
+              items={yesNoOptions}
               error={errors.q3b}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q3c"
               label="c) Are unsolved academic issues in the area highlighted?"
+              items={yesNoOptions}
               error={errors.q3c}
               disabled={isDeadlinePassed}
             />
           </div>
+
+          {/* --- Section 4 --- */}
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">4. Methodology</h3>
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4a"
               label="a) Is the methodology for literature survey given?"
+              items={yesNoOptions}
               error={errors.q4a}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4b"
               label="b) Are data sources identified?"
+              items={q4bOptions}
               error={errors.q4b}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4c"
               label="c) Are experimental facilities clearly envisaged?"
+              items={q4cOptions}
               error={errors.q4c}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4d"
               label="d) Are envisaged experimental set-ups available?"
+              items={q4dOptions}
               error={errors.q4d}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4e"
               label="e) If not available, is it explained how work will be carried out?"
+              items={yesNoOptions}
               error={errors.q4e}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4f"
               label="f) Are required computing facilities available?"
+              items={q4fOptions}
               error={errors.q4f}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q4g"
               label="g) Is methodology for completion clearly spelt out?"
+              items={yesNoOptions}
               error={errors.q4g}
               disabled={isDeadlinePassed}
             />
           </div>
           <div className="space-y-4 rounded-md border p-4">
             <h3 className="text-lg font-semibold">5. Literature References</h3>
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q5a"
               label="a) Is citation done in a standard format?"
+              items={yesNoOptions}
               error={errors.q5a}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q5b"
               label="b) Is cited literature referred in the text?"
+              items={q5bOptions}
               error={errors.q5b}
               disabled={isDeadlinePassed}
             />
-            <FormBooleanRadioGroup
+            <FormEnumRadioGroup
               control={control}
               name="q5c"
               label="c) Is cited literature relevant to the proposed work?"
+              items={yesNoOptions}
               error={errors.q5c}
               disabled={isDeadlinePassed}
             />

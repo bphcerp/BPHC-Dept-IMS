@@ -4,13 +4,15 @@ import db from "@/config/db/index.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { getPreferenceSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
+    checkAccess("allocation:write"),
     asyncHandler(async (req, res, next) => {
-        const { code, sectionType } = getPreferenceSchema.parse(req.query);
+        const { code, sectionType, userType } = getPreferenceSchema.parse(req.query);
         const currentAllocationSemester = await getLatestSemester();
 
         if (!currentAllocationSemester)
@@ -25,10 +27,10 @@ router.get(
             where: (users, { eq, and, sql }) =>
                 and(
                     sql`${currentAllocationSemester.form?.isPublishedToRoleId} = ANY(${users.roles})`,
-                    eq(users.deactivated, false)
+                    eq(users.deactivated, false),
+                    (userType ? eq(users.type, userType) : undefined)
                 ),
             columns: { email: true, type: true, name: true },
-            orderBy: (cols, { asc }) => asc(cols.name),
             with: {
                 phd: {
                     columns: { name: true, phdType: true },
@@ -39,13 +41,16 @@ router.get(
             },
         });
 
-        const facultiesPrefs = (
+        const filterEmails = results.map((result) => result.email)
+
+        const instructorPrefs = (
             await db.query.allocationFormResponse.findMany({
-                where: (response, { eq, and, isNull }) =>
+                where: (response, { eq, and, isNull, inArray }) =>
                     and(
                         eq(response.courseCode, code),
                         eq(response.formId, currentAllocationSemester.formId!),
-                        isNull(response.teachingAllocation)
+                        isNull(response.teachingAllocation),
+                        inArray(response.submittedByEmail, filterEmails),
                     ),
                 orderBy: (response, { asc }) => asc(response.preference),
                 with: {
@@ -54,6 +59,14 @@ router.get(
                 },
             })
         ).filter((pref) => pref.templateField?.preferenceType === sectionType);
+
+        const instructorPrefEmailsMap = instructorPrefs.reduce(
+            (acc, pref) => {
+                acc[pref.submittedByEmail] = pref.preference!;
+                return acc;
+            },
+            {} as Record<string, number>
+        );
 
         res.status(200).json(
             results
@@ -65,13 +78,11 @@ router.get(
                 .map((user) => ({
                     email: user.email,
                     name:
-                        (user.name ?? user.type === "phd")
+                        user.name ??
+                        (user.type === "phd"
                             ? (user.phd?.name ?? null)
-                            : (user.faculty?.name ?? null),
-                    preference:
-                        facultiesPrefs.find(
-                            (pref) => pref.submittedByEmail === user.email
-                        )?.preference ?? null,
+                            : (user.faculty?.name ?? null)),
+                    preference: instructorPrefEmailsMap[user.email] ?? null,
                     type: user.type,
                 }))
                 .sort((facultyA, facultyB) =>

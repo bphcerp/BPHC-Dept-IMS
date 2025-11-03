@@ -11,11 +11,11 @@ type ReseargencePublication = typeof researgencePublications.$inferSelect;
 type Publication = typeof publicationsTable.$inferSelect;
 
 function monthNameToIndexSafe(
-    monthName: string | null | undefined,
+    monthName: string | null | undefined
 ): number | null {
     if (!monthName) return null;
     const idx = publicationsSchemas.months.indexOf(
-        monthName as (typeof publicationsSchemas.months)[number],
+        monthName as (typeof publicationsSchemas.months)[number]
     );
     return idx === -1 ? null : idx + 1; // 1..12 or null
 }
@@ -32,7 +32,7 @@ function isWithinRangeInclusive(
     startYear: number,
     startMonth: number,
     endYear: number,
-    endMonth: number,
+    endMonth: number
 ) {
     // If publication year out of bounds -> false quickly
     if (pubYear < startYear || pubYear > endYear) return false;
@@ -68,7 +68,7 @@ export function generateTimePeriods(
     startYear: number,
     endMonth: number,
     endYear: number,
-    grouping: analyticsSchemas.TimeGrouping,
+    grouping: analyticsSchemas.TimeGrouping
 ): Array<{ period: string; year: number; month: number | null }> {
     const periods: Array<{
         period: string;
@@ -113,7 +113,7 @@ export async function getValidatedPublications(
     startMonth: number,
     startYear: number,
     endMonth: number,
-    endYear: number,
+    endYear: number
 ) {
     // Query researgence rows joining publications and author_publications; filter by year range and authorIds.
     // We avoid month SQL filtering here; we'll filter months in JS using a robust helper above.
@@ -128,28 +128,28 @@ export async function getValidatedPublications(
             publicationsTable,
             eq(
                 researgencePublications.publicationTitle,
-                publicationsTable.title,
-            ),
+                publicationsTable.title
+            )
         )
         .innerJoin(
             authorPublicationsTable,
             and(
                 eq(
                     authorPublicationsTable.citationId,
-                    publicationsTable.citationId,
+                    publicationsTable.citationId
                 ),
                 or(
                     not(eq(authorPublicationsTable.status, "ARCHIVED")),
-                    isNull(authorPublicationsTable.status),
-                ),
-            ),
+                    isNull(authorPublicationsTable.status)
+                )
+            )
         )
         .where(
             and(
                 inArray(authorPublicationsTable.authorId, authorIds),
                 gte(researgencePublications.year, startYear),
-                lte(researgencePublications.year, endYear),
-            ),
+                lte(researgencePublications.year, endYear)
+            )
         );
 
     // Deduplicate by citationId to ensure each publication counted once.
@@ -181,9 +181,9 @@ export async function getValidatedPublications(
                 startYear,
                 startMonth,
                 endYear,
-                endMonth,
+                endMonth
             );
-        },
+        }
     );
 
     return publications;
@@ -206,7 +206,7 @@ export function calculateTimeSeries(
     valueExtractor: (pub: {
         researgence: ReseargencePublication;
         publication: Publication;
-    }) => number,
+    }) => number
 ): analyticsSchemas.TimeSeriesData[] {
     const dataMap = new Map<string, number>();
 
@@ -220,9 +220,10 @@ export function calculateTimeSeries(
         // For monthly grouping, skip publications with unknown month
         if (grouping === "monthly" && pubMonth === null) continue;
 
-        const periodKey = grouping === "yearly"
-            ? `${pubYear}`
-            : `${pubYear}-${String(pubMonth).padStart(2, "0")}`;
+        const periodKey =
+            grouping === "yearly"
+                ? `${pubYear}`
+                : `${pubYear}-${String(pubMonth).padStart(2, "0")}`;
 
         if (!dataMap.has(periodKey)) {
             // Publication falls outside the requested period set (e.g., month missing or not in the requested range)
@@ -232,7 +233,7 @@ export function calculateTimeSeries(
         const current = dataMap.get(periodKey) ?? 0;
         dataMap.set(
             periodKey,
-            current + valueExtractor({ researgence, publication }),
+            current + valueExtractor({ researgence, publication })
         );
     }
 
@@ -261,7 +262,7 @@ export function calculatePublicationTypeBreakdown(
     publications: Array<{
         researgence: ReseargencePublication;
         publication: Publication;
-    }>,
+    }>
 ): analyticsSchemas.PublicationTypeCount[] {
     const typeCount = new Map<string, number>();
     for (const { researgence } of publications) {
@@ -287,7 +288,7 @@ export function calculatePublicationTypeBreakdown(
  *    averageCitationsPerPaper: average of max(scs, wos) over deduped publications (0 if none).
  */
 export async function calculateSingleMetrics(
-    authorIds: string[],
+    authorIds: string[]
 ): Promise<analyticsSchemas.SingleMetrics> {
     // Fetch validated rows joined with publications and author_publications for these authors (all years).
     const rows = await db
@@ -301,21 +302,21 @@ export async function calculateSingleMetrics(
             publicationsTable,
             eq(
                 researgencePublications.publicationTitle,
-                publicationsTable.title,
-            ),
+                publicationsTable.title
+            )
         )
         .innerJoin(
             authorPublicationsTable,
             and(
                 eq(
                     authorPublicationsTable.citationId,
-                    publicationsTable.citationId,
+                    publicationsTable.citationId
                 ),
                 or(
                     not(eq(authorPublicationsTable.status, "ARCHIVED")),
-                    isNull(authorPublicationsTable.status),
-                ),
-            ),
+                    isNull(authorPublicationsTable.status)
+                )
+            )
         )
         .where(inArray(authorPublicationsTable.authorId, authorIds));
 
@@ -344,7 +345,7 @@ export async function calculateSingleMetrics(
 
     // last year (calendar year = previous year)
     const totalPublicationsLastYear = publications.filter(
-        (p) => p.researgence.year === currentYear - 1,
+        (p) => p.researgence.year === currentYear - 1
     ).length;
 
     // last month: previous calendar month
@@ -367,10 +368,11 @@ export async function calculateSingleMetrics(
         return acc + Math.max(scs, wos);
     }, 0);
 
-    const averageCitationsPerPaper = totalPublicationsAllTime > 0
-        ? Math.round((totalCitations / totalPublicationsAllTime) * 100) /
-            100
-        : 0;
+    const averageCitationsPerPaper =
+        totalPublicationsAllTime > 0
+            ? Math.round((totalCitations / totalPublicationsAllTime) * 100) /
+              100
+            : 0;
 
     return {
         totalPublicationsAllTime,
@@ -389,7 +391,7 @@ export async function calculateAuthorContributions(
     startMonth: number,
     startYear: number,
     endMonth: number,
-    endYear: number,
+    endYear: number
 ): Promise<Array<{ authorId: string; name: string; count: number }>> {
     const rows = await db
         .select({
@@ -403,32 +405,32 @@ export async function calculateAuthorContributions(
             publicationsTable,
             eq(
                 researgencePublications.publicationTitle,
-                publicationsTable.title,
-            ),
+                publicationsTable.title
+            )
         )
         .innerJoin(
             authorPublicationsTable,
             and(
                 eq(
                     authorPublicationsTable.citationId,
-                    publicationsTable.citationId,
+                    publicationsTable.citationId
                 ),
                 or(
                     not(eq(authorPublicationsTable.status, "ARCHIVED")),
-                    isNull(authorPublicationsTable.status),
-                ),
-            ),
+                    isNull(authorPublicationsTable.status)
+                )
+            )
         )
         .innerJoin(
             faculty,
-            eq(authorPublicationsTable.authorId, faculty.authorId),
+            eq(authorPublicationsTable.authorId, faculty.authorId)
         )
         .where(
             and(
                 inArray(authorPublicationsTable.authorId, authorIds),
                 gte(researgencePublications.year, startYear),
-                lte(researgencePublications.year, endYear),
-            ),
+                lte(researgencePublications.year, endYear)
+            )
         );
 
     // Deduplicate by publication + authorId, and filter by month range
@@ -453,7 +455,7 @@ export async function calculateAuthorContributions(
                 startYear,
                 startMonth,
                 endYear,
-                endMonth,
+                endMonth
             )
         ) {
             continue;
@@ -473,4 +475,96 @@ export async function calculateAuthorContributions(
     }
 
     return Array.from(authorCounts.values()).sort((a, b) => b.count - a.count);
+}
+
+export async function calculateQualityIndex() {
+  const rows = await db.select().from(researgencePublications);
+
+  const byYear = new Map<number, typeof rows>();
+  for (const r of rows) {
+    const year = r.year;
+    if (!byYear.has(year)) byYear.set(year, []);
+    byYear.get(year)!.push(r);
+  }
+
+  const results = [];
+
+  for (const [year, pubs] of byYear.entries()) {
+    const total = pubs.length;
+    if (total === 0) continue;
+
+    const qCounts = { Q1: 0, Q2: 0, Q3: 0, Q4: 0, none: 0 };
+
+    let impactSum = 0;
+    let impactCount = 0;
+    let impactMax = 0;
+
+    let citeSum = 0;
+    let citeCount = 0;
+    let citeMax = 0;
+
+    for (const p of pubs) {
+      // ✅ Pick whichever quartile is available
+      const q =
+        (p.qRankScs?.trim()?.toUpperCase() ??
+        p.qRankWos?.trim()?.toUpperCase()) ??
+        null;
+
+      if (q === "Q1" || q === "Q2" || q === "Q3" || q === "Q4") {
+        qCounts[q]++;
+      } else {
+        qCounts.none++;
+      }
+
+      // --- Impact Factor stats ---
+      if (p.impactFactor !== null && p.impactFactor !== undefined) {
+        const val = Number(p.impactFactor);
+        if (!isNaN(val)) {
+          impactSum += val;
+          impactCount++;
+          impactMax = Math.max(impactMax, val);
+        }
+      }
+
+      // --- Cite Score stats ---
+      if (p.citeScore !== null && p.citeScore !== undefined) {
+        const val = Number(p.citeScore);
+        if (!isNaN(val)) {
+          citeSum += val;
+          citeCount++;
+          citeMax = Math.max(citeMax, val);
+        }
+      }
+    }
+
+    // --- Percentages ---
+    const pct = {
+      Q1: (qCounts.Q1 / total) * 100,
+      Q2: (qCounts.Q2 / total) * 100,
+      Q3: (qCounts.Q3 / total) * 100,
+      Q4: (qCounts.Q4 / total) * 100,
+      None: (qCounts.none / total) * 100,
+    };
+
+    // --- Average metrics ---
+    const avgImpact = impactCount ? impactSum / impactCount : 0;
+    const avgCite = citeCount ? citeSum / citeCount : 0;
+
+    results.push({
+      year,
+      totalPublications: total,
+      q1Percent: +pct.Q1.toFixed(2),
+      q2Percent: +pct.Q2.toFixed(2),
+      q3Percent: +pct.Q3.toFixed(2),
+      q4Percent: +pct.Q4.toFixed(2),
+      noQuartilePercent: +pct.None.toFixed(2),
+      avgImpactFactor: +avgImpact.toFixed(3),
+      highestImpactFactor: +impactMax.toFixed(3),
+      avgCiteScore: +avgCite.toFixed(3),
+      highestCiteScore: +citeMax.toFixed(3),
+    });
+  }
+
+  results.sort((a, b) => b.year - a.year);
+  return results;
 }

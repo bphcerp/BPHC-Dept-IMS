@@ -10,6 +10,7 @@ import {
     calculatePublicationTypeBreakdown,
     calculateSingleMetrics,
     calculateAuthorContributions,
+    calculateQualityIndex,
 } from "@/lib/analytics/publications.ts";
 
 import { analyticsSchemas } from "lib";
@@ -101,6 +102,8 @@ router.get(
             endYear
         );
 
+        const result = await calculateQualityIndex();
+
         // Final response
         const response: analyticsSchemas.AnalyticsResponse = {
             publicationTimeSeries,
@@ -108,6 +111,7 @@ router.get(
             publicationTypeBreakdown,
             singleMetrics,
             authorContributions,
+            qualityIndex: result,
         };
 
         res.status(200).json(response);

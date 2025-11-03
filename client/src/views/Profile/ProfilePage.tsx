@@ -6,10 +6,12 @@ import api from "@/lib/axios-instance";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import type { ProjectItem, PatentItem, PublicationItem } from "./TabSwitcher";
+import { adminSchemas } from "lib";
 
 interface ProfileData {
-  name?: string;
-  email?: string;
+  name: string | null;
+  email: string;
+  type: (typeof adminSchemas.userTypes)[number];
   phone?: string | null;
   designation?: string | null;
   department?: string | null;
@@ -25,10 +27,6 @@ interface ProfileData {
   scopusID?: string | null;
   googleScholar?: string | null;
   additionalLinks?: string | null;
-}
-
-interface ProfileImageData {
-  profileImage: string | null;
 }
 
 interface ProfessorProfilePageProps {
@@ -47,15 +45,6 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
     refetchOnWindowFocus: false,
   });
 
-  const { data: profileImageData, isLoading: isLoadingImage } = useQuery<ProfileImageData>({
-    queryKey: ["my-profile-image"],
-    queryFn: async () => {
-      const res = await api.get<ProfileImageData>("/profile/profile-image");
-      return res.data;
-    },
-    refetchOnWindowFocus: false,
-  });
-
   const editMutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       await api.put("/profile/edit", data);
@@ -67,32 +56,11 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
     onError: () => toast.error("Failed to update profile"),
   });
 
-  const imageUploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("profileImage", file);
-      await api.post("/profile/profile-image", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-    },
-    onSuccess: () => {
-      toast.success("Profile image updated");
-      void queryClient.invalidateQueries({ queryKey: ["my-profile-image"] });
-    },
-    onError: () => toast.error("Failed to update profile image"),
-  });
-
   const handleEditProfile = (payload: Record<string, unknown>) => {
     editMutation.mutate(payload);
   };
 
-  const handleImageChange = (file: File) => {
-    imageUploadMutation.mutate(file);
-  };
-
-  const isLoading = isLoadingProfile || isLoadingImage;
+  const isLoading = isLoadingProfile;
 
   // Type guards for runtime validation
   function isProjectItem(item: unknown): item is ProjectItem {
@@ -108,18 +76,14 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
     if (typeof item !== "object" || item === null) return false;
     const obj = item as Record<string, unknown>;
     return (
-      typeof obj.title === "string" &&
-      typeof obj.patentNumber === "string"
+      typeof obj.title === "string" && typeof obj.patentNumber === "string"
     );
   }
 
   function isPublicationItem(item: unknown): item is PublicationItem {
     if (typeof item !== "object" || item === null) return false;
     const obj = item as Record<string, unknown>;
-    return (
-      typeof obj.title === "string" &&
-      typeof obj.journal === "string"
-    );
+    return typeof obj.title === "string" && typeof obj.journal === "string";
   }
 
   function filterProjectItems(arr: unknown[]): ProjectItem[] {
@@ -144,7 +108,7 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
 
         <div className="flex-1 bg-muted/20 p-6">
           <div className="mx-auto max-w-6xl space-y-6">
-            {isLoading ? (
+            {isLoading || !profile ? (
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner />
               </div>
@@ -152,27 +116,48 @@ const ProfessorProfilePage = ({ sidebarItems }: ProfessorProfilePageProps) => {
               <>
                 <ProfileHeader
                   name={profile?.name ?? ""}
-                  email={profile?.email ?? ""}
+                  email={profile.email}
+                  type={profile?.type}
                   designation={profile?.designation ?? undefined}
                   department={profile?.department ?? undefined}
                   description={profile?.description || undefined}
-                  education={profile?.education ? [profile.education] : undefined}
-                  researchInterests={profile?.researchInterests ? [profile.researchInterests] : undefined}
+                  education={
+                    profile?.education ? [profile.education] : undefined
+                  }
+                  researchInterests={
+                    profile?.researchInterests
+                      ? [profile.researchInterests]
+                      : undefined
+                  }
                   courses={profile?.courses ? [profile.courses] : undefined}
                   linkedin={profile?.linkedin || undefined}
                   orchidID={profile?.orchidID || undefined}
                   scopusID={profile?.scopusID || undefined}
                   googleScholar={profile?.googleScholar || undefined}
-                  additionalLinks={profile?.additionalLinks ? [profile.additionalLinks] : undefined}
+                  additionalLinks={
+                    profile?.additionalLinks
+                      ? [profile.additionalLinks]
+                      : undefined
+                  }
                   phone={profile?.phone || undefined}
-                  imageUrl={profileImageData?.profileImage ?? null}
                   onEditProfile={handleEditProfile}
-                  onImageChange={handleImageChange}
                 />
                 <TabSwitcher
-                  projects={Array.isArray(profile?.projects) ? filterProjectItems(profile.projects) : []}
-                  patents={Array.isArray(profile?.patents) ? filterPatentItems(profile.patents) : []}
-                  publications={Array.isArray(profile?.publications) ? filterPublicationItems(profile.publications) : []}
+                  projects={
+                    Array.isArray(profile?.projects)
+                      ? filterProjectItems(profile.projects)
+                      : []
+                  }
+                  patents={
+                    Array.isArray(profile?.patents)
+                      ? filterPatentItems(profile.patents)
+                      : []
+                  }
+                  publications={
+                    Array.isArray(profile?.publications)
+                      ? filterPublicationItems(profile.publications)
+                      : []
+                  }
                 />
               </>
             )}

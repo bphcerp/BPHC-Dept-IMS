@@ -19,7 +19,7 @@ export const phdExamApplicationStatuses = [
 export const phdProposalStatuses = [
     "draft",
     "deleted",
-    "rejected", 
+    "rejected",
     "supervisor_review",
     "supervisor_revert",
     "drc_review",
@@ -30,7 +30,7 @@ export const phdProposalStatuses = [
     "seminar_pending",
     "finalising_documents",
     "completed",
-    "draft_expired", 
+    "draft_expired",
 ] as const;
 
 export const inactivePhdProposalStatuses: (typeof phdProposalStatuses)[number][] =
@@ -327,27 +327,27 @@ export const drcProposalRejectSchema = z.object({
 export const drcProposalReenableSchema = z.object({}); // No body needed, just the ID in path
 
 export const dacReviewFormSchema = z.object({
-    q1a: z.boolean(),
-    q1b: z.boolean(),
-    q1c: z.boolean(),
+    q1a: z.enum(["yes", "no"]),
+    q1b: z.enum(["yes", "no"]),
+    q1c: z.enum(["yes", "no"]),
     q1d: z.array(z.enum(["product", "process", "frontier"])),
-    q2a: z.boolean(),
-    q2b: z.boolean(),
-    q2c: z.boolean(),
+    q2a: z.enum(["yes", "no"]),
+    q2b: z.enum(["yes", "no"]),
+    q2c: z.enum(["yes", "no"]),
     q2d: z.array(z.enum(["improve", "academic", "industry"])),
-    q3a: z.boolean(),
-    q3b: z.boolean(),
-    q3c: z.boolean(),
-    q4a: z.boolean(),
-    q4b: z.boolean(),
-    q4c: z.boolean(),
-    q4d: z.boolean(),
-    q4e: z.boolean(),
-    q4f: z.boolean(),
-    q4g: z.boolean(),
-    q5a: z.boolean(),
-    q5b: z.boolean(),
-    q5c: z.boolean(),
+    q3a: z.enum(["yes", "no"]),
+    q3b: z.enum(["yes", "no"]),
+    q3c: z.enum(["yes", "no"]),
+    q4a: z.enum(["yes", "no"]),
+    q4b: z.enum(["yes", "no", "notapp"]),
+    q4c: z.enum(["yes", "no", "notiden", "noapp"]),
+    q4d: z.enum(["yes", "no", "notyet", "notapp"]),
+    q4e: z.enum(["yes", "no"]),
+    q4f: z.enum(["yes", "judge", "notapp"]),
+    q4g: z.enum(["yes", "no"]),
+    q5a: z.enum(["yes", "no"]),
+    q5b: z.enum(["yes", "no", "partially"]),
+    q5c: z.enum(["yes", "no"]),
     q6: z.enum(["accepted", "minor", "revision"]),
     q7_reasons: z.string().trim().min(1),
     q8_comments: z.string().trim().optional(),
@@ -628,6 +628,7 @@ export interface PhdStudent {
     idNumber: string | null;
     coSupervisor1: string | null;
     coSupervisor2: string | null;
+    phdType: (typeof phdTypes)[number]
 }
 export interface QualifyingExamApplication {
     id: number;

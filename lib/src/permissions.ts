@@ -12,13 +12,9 @@ export const allPermissions = {
 
     "conference:application:create": "Create operations on applications",
     "conference:application:submitted": "View submitted applications",
-    "conference:application:view-pending": "View pending applications",
-    "conference:application:review-application-member":
-        "Review application as DRC Member",
-    "conference:application:review-application-convener":
-        "Review application as DRC convener",
-    "conference:application:review-application-hod":
-        "Review application as HOD",
+    "conference:application:member": "Review application as DRC Member",
+    "conference:application:convener": "Review application as DRC convener",
+    "conference:application:hod": "Review application as HOD",
     "conference:application:get-flow":
         "Get conference application approval flow",
     "conference:application:set-flow":
@@ -231,15 +227,13 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/conference/createApplication": "conference:application:create",
     "/conference/editApplication": "conference:application:submitted",
-    "/conference/applications/pending": "conference:application:view-pending",
     "/conference/applications/my": "conference:application:submitted",
-    "/conference/applications/view": "conference:application:submitted",
-    "/conference/applications/reviewMember":
-        "conference:application:review-application-member",
+    "/conference/applications/getMembers": "conference:application:convener",
+    "/conference/applications/setMembers": "conference:application:convener",
+    "/conference/applications/reviewMember": "conference:application:member",
     "/conference/applications/reviewConvener":
-        "conference:application:review-application-convener",
-    "/conference/applications/reviewHod":
-        "conference:application:review-application-hod",
+        "conference:application:convener",
+    "/conference/applications/reviewHod": "conference:application:hod",
     "/conference/getFlow": "conference:application:get-flow",
     "/conference/setFlow": "conference:application:set-flow",
 
@@ -303,6 +297,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/phd/proposal/dacMember/getProposals": "phd:dac:proposal",
     "/phd/proposal/dacMember/viewProposal": "phd:dac:proposal",
     "/phd/proposal/dacMember/submitReview": "phd:dac:proposal",
+    "/phd/proposal/dacMember/cancelSeminarBooking": "phd:dac:proposal",
     "/phd/supervisor/suggestExaminers": "phd:supervisor:suggest-examiners",
     "/phd/supervisor/getApplicationsForSuggestion":
         "phd:supervisor:suggest-examiners",
@@ -498,8 +493,17 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     // Course Load Allocation
     "/allocation/allocation/delete": "allocation:write",
-    "/allocation/allocation/update": "allocation:write",
+    "/allocation/allocation/create": "allocation:write",
     "/allocation/allocation/getStatus": "allocation:write",
+    "/allocation/allocation/bulkModify": "allocation:write",
+    "/allocation/allocation/getPrefsCourse": "allocation:write",
+    "/allocation/allocation/pushToTD": "allocation:write",
+
+    "/allocation/allocation/section/add": "allocation:write",
+    "/allocation/allocation/section/assignInstructor": "allocation:write",
+    "/allocation/allocation/section/dismissInstructor": "allocation:write",
+    "/allocation/allocation/section/remove": "allocation:write",
+    "/allocation/allocation/section/setRoom": "allocation:write",
 
     "/allocation/course/get": "allocation:courses:view",
     "/allocation/course/getAll": "allocation:courses:view",
@@ -515,9 +519,6 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/update": "allocation:semesters:write",
     "/allocation/semester/linkForm": "allocation:semesters:write",
     "/allocation/semester/unlinkForm": "allocation:semesters:write",
-
-    "/allocation/allocation/getPrefsCourse": "allocation:write",
-    "/allocation/allocation/create": "allocation:write",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
     "/allocation/builder/template/delete": "allocation:builder:template:write",

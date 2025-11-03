@@ -33,7 +33,13 @@ export interface SidebarMenuGroup {
   items: SidebarMenuItem[];
 }
 
-export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
+export const AppSidebar = ({
+  items,
+  sort = true,
+}: {
+  items: SidebarMenuGroup[];
+  sort?: boolean;
+}) => {
   const { authState, logOut, setNewAuthToken, checkAccessAnyOne } = useAuth();
   const { pathname } = useLocation();
   const { state, isMobile } = useSidebar();
@@ -93,22 +99,25 @@ export const AppSidebar = ({ items }: { items: SidebarMenuGroup[] }) => {
                 <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {filteredGroupItems
-                      .sort((a, b) => a.title.localeCompare(b.title))
-                      .map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={pathname.includes(item.url)}
-                            className="items-start"
-                          >
-                            <Link to={item.url}>
-                              {item.icon}
-                              <span>{item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
+                    {(sort
+                      ? filteredGroupItems.sort((a, b) =>
+                          a.title.localeCompare(b.title)
+                        )
+                      : filteredGroupItems
+                    ).map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname.includes(item.url)}
+                          className="items-start"
+                        >
+                          <Link to={item.url}>
+                            {item.icon}
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>

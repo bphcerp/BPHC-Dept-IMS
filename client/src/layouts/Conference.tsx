@@ -37,7 +37,9 @@ const ConferenceLayout = () => {
                 icon: <FileText />,
                 url: "/conference/pending",
                 requiredPermissions: [
-                  permissions["/conference/applications/pending"],
+                  permissions["/conference/applications/reviewConvener"],
+                  permissions["/conference/applications/reviewHod"],
+                  permissions["/conference/applications/reviewMember"],
                 ],
               },
             ],

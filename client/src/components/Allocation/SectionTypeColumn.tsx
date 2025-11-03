@@ -15,12 +15,21 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { toast } from "sonner";
+import { TTDRoom } from "node_modules/lib/src/types/allocation";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 interface SectionTypeColumnProps {
   sectionType: (typeof allocationSchemas.sectionTypes)[number];
   allocationData: allocationTypes.AllocationResponse;
   isLoading: boolean;
   onAssignInstructor: (sectionId: string) => void;
+  rooms?: TTDRoom[] | null;
 }
 
 const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
@@ -28,12 +37,30 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
   allocationData,
   isLoading,
   onAssignInstructor,
+  rooms,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const queryClient = useQueryClient();
 
-  // Add section mutation
+  const setRoomMuatation = useMutation({
+    mutationFn: async (data: { sectionId: string; roomId: string }) => {
+      await api.post("/allocation/allocation/section/setRoom", data);
+    },
+    onSuccess: () => {
+      toast.success("Section updated successfully");
+      void queryClient.invalidateQueries({
+        queryKey: ["allocation"],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        (error as { response: { data: string } }).response?.data ||
+          "Failed to update section"
+      );
+    },
+  });
+
   const addSectionMutation = useMutation({
     mutationFn: async (data: { masterId: string; sectionType: string }) => {
       await api.post("/allocation/allocation/section/add", data);
@@ -52,7 +79,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     },
   });
 
-  // Remove section mutation
   const removeSectionMutation = useMutation({
     mutationFn: async (sectionId: string) => {
       await api.delete("/allocation/allocation/section/remove", {
@@ -73,7 +99,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
     },
   });
 
-  // Dismiss instructor mutation
   const dismissInstructorMutation = useMutation({
     mutationFn: async (data: {
       sectionId: string;
@@ -144,7 +169,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
         isCollapsed ? "w-12 flex-shrink-0" : "min-w-0 flex-1"
       }`}
     >
-      {/* Collapse/Expand Button */}
       <div
         className={`absolute top-2 z-10 ${isCollapsed ? "left-1/2 -translate-x-1/2" : "right-2"}`}
       >
@@ -163,7 +187,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
       </div>
 
       {isCollapsed ? (
-        // Collapsed state - just show the icon and section type vertically
         <div className="flex h-full flex-col items-center justify-center p-1 pt-8">
           <div className="flex flex-col items-center gap-8">
             <div className="origin-center rotate-90 whitespace-nowrap text-xs font-medium tracking-wider">
@@ -179,9 +202,7 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
           </div>
         </div>
       ) : (
-        // Expanded state - full content with scrolling
         <div className="flex h-full flex-col">
-          {/* Header */}
           <div className="flex-shrink-0 border-b bg-background p-3 pr-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -215,7 +236,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
             </div>
           </div>
 
-          {/* Scrollable Content */}
           <ScrollArea className="flex-1">
             <div className="space-y-2 p-3 pr-2">
               {isLoading ? (
@@ -223,7 +243,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                   <LoadingSpinner />
                 </div>
               ) : (
-                // Show existing sections for this section type
                 <div className="space-y-2">
                   {allocationData?.sections
                     ?.filter((section) => section.type === sectionType)
@@ -232,17 +251,40 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                         key={section.id}
                         className="space-y-3 rounded-lg border p-3"
                       >
-                        {/* Section Header */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className="flex-shrink-0 text-sm font-medium">
                               {getSectionLabel(index)}
                             </span>
-                            <Badge variant="outline" className="text-xs">
-                              {section.instructors?.length || 0} instructors
-                            </Badge>
+
+                            {sectionType === "PRACTICAL" && (
+                              <div className="flex flex-shrink items-center gap-1 overflow-hidden">
+                                <Select
+                                  defaultValue={section.timetableRoomId ?? undefined}
+                                  onValueChange={(roomId) => {
+                                    if (roomId !== section.timetableRoomId)
+                                      setRoomMuatation.mutate({
+                                        sectionId: section.id,
+                                        roomId,
+                                      });
+                                  }}
+                                >
+                                  <SelectTrigger className="h-7 w-[90px] max-w-[90px] text-xs">
+                                    <SelectValue placeholder="Room" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {rooms?.map((room) => (
+                                      <SelectItem key={room._id} value={room._id}>
+                                        {room.roomNumber}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex gap-1">
+
+                          <div className="flex flex-shrink-0 gap-1">
                             <Button
                               onClick={() => onAssignInstructor(section.id)}
                               size="sm"
@@ -263,7 +305,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                           </div>
                         </div>
 
-                        {/* Instructors List */}
                         {section.instructors &&
                         section.instructors.length > 0 ? (
                           <div className="space-y-2">
@@ -278,8 +319,18 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                                     className="flex items-center justify-between rounded-md border bg-card p-2 text-sm transition-colors hover:bg-accent"
                                   >
                                     <div className="flex flex-col">
-                                      <span className={allocationData.ic?.email === instructor.email ? "font-semibold" : "font-medium"}>
-                                        {instructor.name ?? "Unknown Name"} - {instructor.type === 'faculty' ? 'Faculty' : 'PhD'}
+                                      <span
+                                        className={
+                                          allocationData.ic?.email ===
+                                          instructor.email
+                                            ? "font-semibold"
+                                            : "font-medium"
+                                        }
+                                      >
+                                        {instructor.name ?? "Unknown Name"} -{" "}
+                                        {instructor.type === "faculty"
+                                          ? "Faculty"
+                                          : "PhD"}
                                       </span>
                                     </div>
                                     <Button
@@ -311,7 +362,6 @@ const SectionTypeColumn: React.FC<SectionTypeColumnProps> = ({
                       </div>
                     ))}
 
-                  {/* If no sections of this type exist in the allocation */}
                   {!allocationData?.sections?.some(
                     (s) => s.type === sectionType
                   ) && (

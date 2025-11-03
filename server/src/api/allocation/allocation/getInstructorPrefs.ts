@@ -3,12 +3,13 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.get(
     "/",
-    // checkAccess(),
+    checkAccess("allocation:write"),
     asyncHandler(async (req, res, next) => {
         const { email } = req.query
 
@@ -16,7 +17,7 @@ router.get(
         
         if (!currentAllocationSemester) return next(new HttpError(HttpCode.BAD_REQUEST, "There is no semester whose allocation is ongoing currently"))
 
-        const faculties = await db.query.allocationFormResponse.findMany({
+        const instructorPrefs = await db.query.allocationFormResponse.findMany({
             where: (response, { eq, and, isNull, not }) => and(eq(response.submittedByEmail, email as string), eq(response.formId, currentAllocationSemester.formId!), not(isNull(response.courseCode))),
             with: {
                 submittedBy: true,
@@ -25,7 +26,7 @@ router.get(
             },
         });
 
-        res.status(200).json(faculties);
+        res.status(200).json(instructorPrefs);
     })
 );
 

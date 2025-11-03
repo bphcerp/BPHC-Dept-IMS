@@ -11,6 +11,7 @@ import seminarSlots from './seminarSlots.ts';
 import sendBulkReminder from './sendBulkReminder.ts';
 import getBulkDetails from "./getBulkDetails.ts";
 import reenableProposal from "./reenableProposal.ts";
+import cancelSeminarBookingRouter from "./cancelSeminarBooking.ts";
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use('/seminarSlots', seminarSlots);
 router.use('/sendBulkReminder', sendBulkReminder);
 router.use("/getBulkDetails", getBulkDetails);
 router.use("/reenableProposal", reenableProposal);
+router.use("/cancelSeminarBooking", cancelSeminarBookingRouter);
 
 export default router;

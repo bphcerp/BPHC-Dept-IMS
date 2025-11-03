@@ -118,6 +118,7 @@ import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import PresentationCreator from "@/views/Analytics/Presentation";
+import PublicationsAnalytics2 from "@/views/Analytics/Publications2";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
 import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
@@ -337,7 +338,11 @@ const Routing = () => {
                   />
                 </>
               )}
-              {checkAccess(permissions["/conference/applications/pending"]) && (
+              {checkAccessAnyOne([
+                permissions["/conference/applications/reviewConvener"],
+                permissions["/conference/applications/reviewHod"],
+                permissions["/conference/applications/reviewMember"],
+              ]) && (
                 <>
                   <Route
                     path="pending"
@@ -449,16 +454,16 @@ const Routing = () => {
                     {checkAccess(
                       permissions["/handout/dcaconvenor/exportSummary"]
                     ) && (
-                        <Route path="summary" element={<DCAConvenerSummary />} />
-                      )}
+                      <Route path="summary" element={<DCAConvenerSummary />} />
+                    )}
                     {checkAccess(
                       permissions["/handout/dcaconvenor/finalDecision"]
                     ) && (
-                        <Route
-                          path="dcaconvenor/review/:id"
-                          element={<DCAConvenorReview />}
-                        />
-                      )}
+                      <Route
+                        path="dcaconvenor/review/:id"
+                        element={<DCAConvenorReview />}
+                      />
+                    )}
                   </>
                 )}
             </Route>
@@ -472,41 +477,41 @@ const Routing = () => {
                 permissions["/phd/staff/emailTemplates"],
                 permissions["/phd-request/staff/getAllRequests"],
               ]) && (
-                  <Route path="staff" element={<Outlet />}>
-                    {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+                <Route path="staff" element={<Outlet />}>
+                  {checkAccess(permissions["/phd/staff/getAllSem"]) && (
+                    <Route
+                      path="update-semester-dates"
+                      element={<UpdateSemesterDates />}
+                    />
+                  )}
+                  {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
+                    <>
                       <Route
-                        path="update-semester-dates"
-                        element={<UpdateSemesterDates />}
+                        path="update-deadlines"
+                        element={<UpdateDeadlinesPage />}
                       />
-                    )}
-                    {checkAccess(permissions["/phd/staff/qualifyingExams"]) && (
-                      <>
-                        <Route
-                          path="update-deadlines"
-                          element={<UpdateDeadlinesPage />}
-                        />
-                        <Route
-                          path="update-subareas"
-                          element={<UpdateSubAreasPage />}
-                        />
-                      </>
-                    )}
-                    {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
                       <Route
-                        path="manage-email-templates"
-                        element={<ManageEmailTemplates />}
+                        path="update-subareas"
+                        element={<UpdateSubAreasPage />}
                       />
-                    )}
-                    {checkAccess(
-                      permissions["/phd-request/staff/getAllRequests"]
-                    ) && (
-                        <Route
-                          path="all-requests"
-                          element={<PhdRequestsArchive />}
-                        />
-                      )}
-                  </Route>
-                )}
+                    </>
+                  )}
+                  {checkAccess(permissions["/phd/staff/emailTemplates"]) && (
+                    <Route
+                      path="manage-email-templates"
+                      element={<ManageEmailTemplates />}
+                    />
+                  )}
+                  {checkAccess(
+                    permissions["/phd-request/staff/getAllRequests"]
+                  ) && (
+                    <Route
+                      path="all-requests"
+                      element={<PhdRequestsArchive />}
+                    />
+                  )}
+                </Route>
+              )}
 
               {/* Student */}
               {checkAccess(permissions["/phd/student/getQualifyingExams"]) && (
@@ -527,76 +532,76 @@ const Routing = () => {
                 permissions["/phd/drcMember/getAvailableExams"],
                 permissions["/phd/proposal/drcConvener/getProposals"],
               ]) && (
-                  <Route path="drc-convenor" element={<Outlet />}>
-                    {checkAccess(
-                      permissions["/phd/drcMember/getAvailableExams"]
-                    ) && (
-                        <Route
-                          path="qualifying-exam-management"
-                          element={<QualifyingExamManagement />}
-                        />
-                      )}
-                    {checkAccess(
-                      permissions["/phd/proposal/drcConvener/getProposals"]
-                    ) && (
-                        <>
-                          <Route
-                            path="proposal-management"
-                            element={<DrcProposalManagement />}
-                          />
-                          <Route
-                            path="proposal-management/:id"
-                            element={<DrcViewProposal />}
-                          />
-                          <Route
-                            path="seminar-scheduling"
-                            element={<SeminarScheduling />}
-                          />
-                        </>
-                      )}
-                  </Route>
-                )}
+                <Route path="drc-convenor" element={<Outlet />}>
+                  {checkAccess(
+                    permissions["/phd/drcMember/getAvailableExams"]
+                  ) && (
+                    <Route
+                      path="qualifying-exam-management"
+                      element={<QualifyingExamManagement />}
+                    />
+                  )}
+                  {checkAccess(
+                    permissions["/phd/proposal/drcConvener/getProposals"]
+                  ) && (
+                    <>
+                      <Route
+                        path="proposal-management"
+                        element={<DrcProposalManagement />}
+                      />
+                      <Route
+                        path="proposal-management/:id"
+                        element={<DrcViewProposal />}
+                      />
+                      <Route
+                        path="seminar-scheduling"
+                        element={<SeminarScheduling />}
+                      />
+                    </>
+                  )}
+                </Route>
+              )}
               {checkAccess(
                 permissions["/phd/proposal/dacMember/getProposals"]
               ) && (
-                  <Route path="dac" element={<Outlet />}>
-                    <Route path="proposals" element={<DacProposalManagement />} />
-                    <Route path="proposals/:id" element={<DacViewProposal />} />
-                  </Route>
-                )}
+                <Route path="dac" element={<Outlet />}>
+                  <Route path="proposals" element={<DacProposalManagement />} />
+                  <Route path="proposals/:id" element={<DacViewProposal />} />
+                </Route>
+              )}
               {checkAccessAnyOne([
                 permissions["/phd/proposal/supervisor/getProposals"],
                 permissions["/phd/supervisor/suggestExaminers"],
               ]) && (
-                  <Route path="supervisor" element={<Outlet />}>
-                    {checkAccess(
-                      permissions["/phd/proposal/supervisor/getProposals"]
-                    ) && (
-                        <>
-                          <Route
-                            path="proposals"
-                            element={<SupervisorProposal />}
-                          />
-                          <Route
-                            path="proposal/:id"
-                            element={<SupervisorViewProposal />}
-                          />
-                        </>
-                      )}
-                    {checkAccess(
-                      permissions["/phd/supervisor/suggestExaminers"]
-                    ) && (
-                        <Route
-                          path="examiner-suggestions"
-                          element={<ExaminerSuggestions />}
-                        />
-                      )}
+                <Route path="supervisor" element={<Outlet />}>
+                  {checkAccess(
+                    permissions["/phd/proposal/supervisor/getProposals"]
+                  ) && (
+                    <>
+                      <Route
+                        path="proposals"
+                        element={<SupervisorProposal />}
+                      />
+                      <Route
+                        path="proposal/:id"
+                        element={<SupervisorViewProposal />}
+                      />
+                    </>
+                  )}
+                  {checkAccess(
+                    permissions["/phd/supervisor/suggestExaminers"]
+                  ) && (
                     <Route
-                      path="student-history/:studentEmail"
-                      element={<StudentHistory />}
+                      path="examiner-suggestions"
+                      element={<ExaminerSuggestions />}
                     />
-                  </Route>
-                )}
+                  )}
+                  <Route
+                    path="student-history/:studentEmail"
+                    element={<StudentHistory />}
+                  />
+                </Route>
+              )}
               {checkAccess(permissions["/phd/examiner/assignments"]) && (
                 <Route path="examiner" element={<Outlet />}>
                   <Route path="assignments" element={<ExaminerAssignments />} />
@@ -795,30 +800,30 @@ const Routing = () => {
             </Route>
           )}
           {checkAccessAnyOne(analyticsModulePermissions) && (
-            <>
-              <Route path="/analytics" element={<AnalyticsLayout />}>
-                <Route
-                  index
-                  element={
-                    <Navigate to="/analytics/publications" replace={true} />
-                  }
-                />
-                {checkAccess(permissions["/analytics/publications"]) && (
-                  <>
-                    <Route
-                      path="publications"
-                      element={<PublicationsAnalytics />}
-                    />
-                  </>
-                )}
-                <Route
-                  path="presentation"
-                  element={
-                    <PresentationCreator/>
-                  }
-                />
-              </Route>
-            </>
+            <Route path="/analytics" element={<AnalyticsLayout />}>
+              <Route
+                index
+                element={
+                  <Navigate to="/analytics/publications" replace={true} />
+                }
+              />
+              {checkAccess(permissions["/analytics/publications"]) && (
+                <>
+                  <Route
+                    path="publications"
+                    element={<PublicationsAnalytics />}
+                  />
+                  <Route
+                    path="presentation"
+                    element={<PresentationCreator />}
+                  />
+                  <Route
+                    path="publications2"
+                    element={<PublicationsAnalytics2 />}
+                  />
+                </>
+              )}
+            </Route>
           )}
           {checkAccessAnyOne(gradesModulePermissions) && (
             <Route path="/grades" element={<GradesLayout />}>
@@ -861,15 +866,11 @@ const Routing = () => {
                 <Route path="creditmatrix" element={<AllocationMatrixView />} />
               )}
 
-              {checkAccess("allocation:view") && (
-                <>
-                  {checkAccess("allocation:summary:view") && (
-                    <Route
-                      path="/allocation/summary"
-                      element={<AllocationSummary />}
-                    />
-                  )}
-                </>
+              {checkAccess("allocation:summary:view") && (
+                <Route
+                  path="/allocation/summary"
+                  element={<AllocationSummary />}
+                />
               )}
 
               {/* summary moved to a top-level unprotected route */}
@@ -878,25 +879,25 @@ const Routing = () => {
                 "allocation:builder:template:view",
                 "allocation:write",
               ]) && (
-                  <>
-                    <Route path="templates" element={<FormTemplateList />} />
-                    <Route path="templates/new" element={<FormTemplateView />} />
-                    <Route
-                      path="templates/:id"
-                      element={<FormTemplateView create={false} />}
-                    />
-                  </>
-                )}
+                <>
+                  <Route path="templates" element={<FormTemplateList />} />
+                  <Route path="templates/new" element={<FormTemplateView />} />
+                  <Route
+                    path="templates/:id"
+                    element={<FormTemplateView create={false} />}
+                  />
+                </>
+              )}
 
               {checkAccessAnyOne([
                 "allocation:form:response:view",
                 "allocation:write",
               ]) && (
-                  <>
-                    <Route path="forms" element={<FormList />} />
-                    <Route path="forms/:id/preview" element={<FormResponse />} />
-                  </>
-                )}
+                <>
+                  <Route path="forms" element={<FormList />} />
+                  <Route path="forms/:id/preview" element={<FormResponse />} />
+                </>
+              )}
 
               {checkAccess("allocation:form:response:submit") && (
                 <>
@@ -933,14 +934,14 @@ const Routing = () => {
                 "allocation:semesters:view",
                 "allocation:write",
               ]) && (
-                  <>
-                    <Route
-                      path="semesters/new"
-                      element={<RegisterNewSemester />}
-                    />
-                    <Route path="semesters" element={<SemesterList />} />
-                  </>
-                )}
+                <>
+                  <Route
+                    path="semesters/new"
+                    element={<RegisterNewSemester />}
+                  />
+                  <Route path="semesters" element={<SemesterList />} />
+                </>
+              )}
             </Route>
           )}
           <Route path="*" element={<NotFoundPage />} />

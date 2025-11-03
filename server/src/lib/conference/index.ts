@@ -67,5 +67,6 @@ export const getApplicationWithFileUrls = async (id: number) => {
 export const getApplicationById = async (id: number) => {
     return await db.query.conferenceApprovalApplications.findFirst({
         where: (app, { eq }) => eq(app.id, id),
+        with: { user: true },
     });
 };

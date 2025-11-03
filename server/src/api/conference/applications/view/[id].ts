@@ -2,7 +2,6 @@ import { HttpCode, HttpError } from "@/config/errors.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { authUtils } from "lib";
-import { checkAccess } from "@/middleware/auth.ts";
 import { getApplicationWithFileUrls } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
 
@@ -10,91 +9,141 @@ const router = express.Router();
 
 router.get(
     "/:id",
-    checkAccess(),
     asyncHandler(async (req, res, next) => {
+        if (!req.user)
+            throw new HttpError(HttpCode.UNAUTHORIZED, "Unauthorized");
+
         const id = parseInt(req.params.id);
         if (isNaN(id) || id <= 0)
             return next(new HttpError(HttpCode.BAD_REQUEST, "Invalid id"));
 
         const isMember = authUtils.checkAccess(
-            "conference:application:review-application-member",
+            "conference:application:member",
             req.user!.permissions
         );
         const isHoD = authUtils.checkAccess(
-            "conference:application:review-application-hod",
+            "conference:application:hod",
             req.user!.permissions
         );
         const isConvener = authUtils.checkAccess(
-            "conference:application:review-application-convener",
+            "conference:application:convener",
             req.user!.permissions
         );
 
-        const application = await getApplicationWithFileUrls(id);
+        const _application = await getApplicationWithFileUrls(id);
 
-        if (!application)
+        if (!_application)
             return next(
                 new HttpError(HttpCode.NOT_FOUND, "Application not found")
             );
 
-        const reviews = await db.query.conferenceMemberReviews.findMany({
-            where: (review, { eq }) => eq(review.applicationId, application.id),
-            orderBy: (cols, { desc }) => desc(cols.createdAt),
-        });
-        const isReviewed = reviews.filter(
-            (r) => r.reviewerEmail === req.user?.email
-        ).length;
+        const application = {
+            ..._application,
+            createdAt: _application.createdAt.toLocaleString(),
+        };
 
-        if (
-            !(application.userEmail === req.user!.email) &&
-            isMember &&
-            (application.state !== "DRC Member" || isReviewed)
-        )
-            return next(
-                new HttpError(
-                    HttpCode.FORBIDDEN,
-                    "You are not allowed to view this application"
-                )
-            );
-
-        const current = await db.query.conferenceGlobal.findFirst({
-            where: (conferenceGlobal, { eq }) =>
-                eq(conferenceGlobal.key, "directFlow"),
+        const reviews = await db.query.conferenceApplicationMembers.findMany({
+            where: (cols, { eq }) => eq(cols.applicationId, application.id),
         });
 
-        const isDirect = isConvener
-            ? ((current && current.value === "true") ?? false)
-            : undefined;
+        const statusLog = await db.query.conferenceStatusLog.findMany({
+            where: (cols, { eq }) => eq(cols.applicationId, application.id),
+            orderBy: (cols, { desc }) => [desc(cols.timestamp)],
+        });
 
-        const response = {
-            application: {
-                ...application,
-                createdAt: application.createdAt.toLocaleString(),
-            },
-            reviews:
-                (isConvener && application.state === "DRC Convener") ||
-                (isHoD && application.state === "HoD")
-                    ? reviews.map((x) => {
-                          return {
-                              status: x.status,
-                              comments: x.comments,
-                              createdAt: x.createdAt,
-                          };
-                      })
-                    : application.userEmail === req.user!.email &&
-                        application.state === "Faculty" &&
-                        reviews[0]
-                      ? [
-                            {
-                                comments: reviews[0].comments,
-                                status: reviews[0].status,
-                                createdAt: reviews[0].createdAt,
-                            },
-                        ]
-                      : [],
+        const isDirect =
+            (
+                await db.query.conferenceGlobal.findFirst({
+                    where: (conferenceGlobal, { eq }) =>
+                        eq(conferenceGlobal.key, "directFlow"),
+                })
+            )?.value === "true";
+
+        const forbiddenError = new HttpError(
+            HttpCode.FORBIDDEN,
+            "You are not allowed to view this application"
+        );
+
+        const baseConvenerResponse = {
+            application,
+            reviews: reviews.map((x) => {
+                return {
+                    status: x.reviewStatus,
+                    comments: x.comments,
+                    createdAt: x.updatedAt,
+                };
+            }),
             isDirect,
         };
 
-        res.status(200).send(response);
+        if (application.state === "Faculty") {
+            if (!(isHoD || application.userEmail === req.user!.email))
+                throw forbiddenError;
+
+            res.status(200).send({
+                application,
+                reviews: [
+                    {
+                        comments: statusLog[0]?.comments,
+                        status: false,
+                        createdAt: statusLog[0]
+                            ? statusLog[0].timestamp.toLocaleString()
+                            : undefined,
+                    },
+                ],
+                ...(isHoD ? { statusLog } : {}),
+            });
+            return;
+        } else if (application.state === "DRC Member") {
+            const pendingReviewAsMember =
+                await db.query.conferenceApplicationMembers.findFirst({
+                    where: (cols, { eq, and, isNull }) =>
+                        and(
+                            eq(cols.applicationId, application.id),
+                            eq(cols.memberEmail, req.user!.email),
+                            isNull(cols.reviewStatus)
+                        ),
+                });
+            if (isHoD) {
+                res.status(200).send({
+                    ...baseConvenerResponse,
+                    pendingReviewAsMember: !!pendingReviewAsMember,
+                    statusLog,
+                });
+                return;
+            } else if (isConvener) {
+                res.status(200).send({
+                    ...baseConvenerResponse,
+                    pendingReviewAsMember: !!pendingReviewAsMember,
+                });
+                return;
+            } else if (isMember && pendingReviewAsMember) {
+                res.status(200).send({
+                    application,
+                    pendingReviewAsMember: !!pendingReviewAsMember,
+                });
+                return;
+            } else if (application.userEmail !== req.user!.email)
+                throw forbiddenError;
+        } else if (application.state === "DRC Convener") {
+            if (isHoD) {
+                res.status(200).send({ ...baseConvenerResponse, statusLog });
+                return;
+            } else if (isConvener) {
+                res.status(200).send(baseConvenerResponse);
+                return;
+            } else if (application.userEmail !== req.user!.email) {
+                throw forbiddenError;
+            }
+        } else {
+            if (isHoD) {
+                res.status(200).send({ ...baseConvenerResponse, statusLog });
+                return;
+            } else if (application.userEmail !== req.user!.email) {
+                throw forbiddenError;
+            }
+        }
+        res.status(200).send({ application });
     })
 );
 

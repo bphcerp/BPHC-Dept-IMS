@@ -16,6 +16,7 @@ services:
         condition: service_healthy
     volumes:
       - ./server:/usr/local/app/server
+      - ./lib:/usr/local/app/lib
       - /usr/local/app/server/node_modules
     profiles:
       - "dev"
@@ -111,6 +112,7 @@ services:
       - .env
     volumes:
       - ./client:/usr/local/app/client
+      - ./lib:/usr/local/app/lib
       - /usr/local/app/client/node_modules
     profiles:
       - "dev"

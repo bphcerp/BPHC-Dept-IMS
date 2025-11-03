@@ -2,7 +2,6 @@ import db from "@/config/db/index.ts";
 import {
     conferenceApprovalApplications,
     conferenceGlobal,
-    conferenceMemberReviews,
 } from "@/config/db/schema/conference.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -43,23 +42,20 @@ router.post(
         await db.transaction(async (tx) => {
             if (body.directFlow) {
                 // If we are moving to direct flow, DRC Member states must be set to DRC Convener, and HoD states must be set to Completed
-                const memberApplications = tx
-                    .select({
-                        applicationId: conferenceApprovalApplications.id,
-                    })
-                    .from(conferenceApprovalApplications)
-                    .where(
-                        eq(conferenceApprovalApplications.state, "DRC Member")
-                    );
-                await tx
-                    .delete(conferenceMemberReviews)
-                    .where(
-                        inArray(
-                            conferenceMemberReviews.applicationId,
-                            memberApplications
+                const memberApplications = (
+                    await tx
+                        .select({
+                            applicationId: conferenceApprovalApplications.id,
+                        })
+                        .from(conferenceApprovalApplications)
+                        .where(
+                            eq(
+                                conferenceApprovalApplications.state,
+                                "DRC Member"
+                            )
                         )
-                    );
-                const convenerApplications = await tx
+                ).map((appl) => appl.applicationId);
+                await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "DRC Convener" })
                     .where(
@@ -67,8 +63,13 @@ router.post(
                             conferenceApprovalApplications.id,
                             memberApplications
                         )
-                    )
-                    .returning();
+                    );
+                const convenerApplications =
+                    await tx.query.conferenceApprovalApplications.findMany({
+                        where: (cols, { inArray }) =>
+                            inArray(cols.id, memberApplications),
+                        with: { user: true },
+                    });
                 if (convenerApplications.length) {
                     await completeTodo(
                         {
@@ -80,7 +81,7 @@ router.post(
                         tx
                     );
                     const todoAssignees = await getUsersWithPermission(
-                        "conference:application:review-application-convener",
+                        "conference:application:convener",
                         tx
                     );
                     const todos: Parameters<typeof createTodos>[0] = [];
@@ -91,7 +92,7 @@ router.post(
                                 title: "Conference Application",
                                 createdBy: inserted.userEmail,
                                 completionEvent: `review ${inserted.id} convener`,
-                                description: `Review conference application id ${inserted.id} by ${inserted.userEmail}`,
+                                description: `Review conference application id ${inserted.id} by ${inserted.user.name || inserted.userEmail}`,
                                 assignedTo: assignee.email,
                                 link: `/conference/view/${inserted.id}`,
                             });
@@ -106,14 +107,6 @@ router.post(
                     })
                     .from(conferenceApprovalApplications)
                     .where(eq(conferenceApprovalApplications.state, "HoD"));
-                await tx
-                    .delete(conferenceMemberReviews)
-                    .where(
-                        inArray(
-                            conferenceMemberReviews.applicationId,
-                            hodApplications
-                        )
-                    );
                 const completedApplications = await tx
                     .update(conferenceApprovalApplications)
                     .set({ state: "Completed" })
@@ -139,7 +132,61 @@ router.post(
                     );
                 }
             }
-            // If we are moving to normal flow, everything can stay as it is
+            // If we are moving to normal flow, move all DRC Convener states to DRC Member state for applications that don't have members selected
+            // or for those applications where there are pending member reviews
+            else {
+                const applications =
+                    await tx.query.conferenceApprovalApplications.findMany({
+                        where: (cols, { eq }) => eq(cols.state, "DRC Convener"),
+                        with: {
+                            members: true,
+                            user: true,
+                        },
+                    });
+                const toBeUpdated = applications.filter(
+                    (app) =>
+                        app.members.length === 0 ||
+                        app.members.some(
+                            (member) => member.reviewStatus === null
+                        )
+                );
+                await tx
+                    .update(conferenceApprovalApplications)
+                    .set({
+                        state: "DRC Member",
+                    })
+                    .where(
+                        inArray(
+                            conferenceApprovalApplications.id,
+                            toBeUpdated.map((app) => app.id)
+                        )
+                    );
+                await createTodos(
+                    toBeUpdated.flatMap((app) =>
+                        app.members
+                            .filter((member) => member.reviewStatus === null)
+                            .map((member) => ({
+                                module: modules[0],
+                                title: "Conference Application",
+                                createdBy: app.userEmail,
+                                completionEvent: `review ${app.id} member`,
+                                description: `Review conference application id ${app.id} by ${app.user.name || app.userEmail}`,
+                                assignedTo: member.memberEmail,
+                                link: `/conference/view/${app.id}`,
+                            }))
+                    ),
+                    tx
+                );
+                await completeTodo(
+                    {
+                        module: modules[0],
+                        completionEvent: toBeUpdated.map(
+                            (app) => `review ${app.id} convener`
+                        ),
+                    },
+                    tx
+                );
+            }
 
             return await tx.update(conferenceGlobal).set({
                 key: "directFlow",

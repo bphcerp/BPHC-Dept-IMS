@@ -8,6 +8,7 @@ import assert from "assert";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { getLatestSemester } from "./getLatest.ts";
 import environment from "@/config/environment.ts";
+import { notInArray } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -49,7 +50,8 @@ router.post(
                 where: (users, { and, sql, eq }) =>
                     and(
                         sql`${latestSemester.form?.isPublishedToRoleId} = ANY(${users.roles})`,
-                        eq(users.deactivated, false)
+                        eq(users.deactivated, false),
+                        notInArray(users.email, Array.from(seenEmails))
                     ),
             })
         ).map((el) => el.email);
@@ -90,6 +92,7 @@ router.post(
             bcc: recipients,
             inReplyTo: latestSemester.form.emailMsgId!,
             references: latestSemester.form.emailMsgId!,
+            priority: 'high',
             subject:
                 "Re: IMPORTANT: Teaching Allocation Submission For the Upcoming Semester",
             text: "This is a reminder to the previous mail regarding submission of course preferences for the upcoming semester. Please submit your preferences before the deadline.",

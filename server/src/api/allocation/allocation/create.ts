@@ -9,11 +9,13 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { courseAllocateSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 import { getLatestSemester } from "../semester/getLatest.ts";
+import { checkAccess } from "@/middleware/auth.ts";
 
 const router = express.Router();
 
 router.post(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         let { courseCode, ic, sections, semesterId } =
             courseAllocateSchema.parse(req.body);
@@ -35,7 +37,7 @@ router.post(
                       .insert(masterAllocation)
                       .values({
                           courseCode,
-                          ic,
+                          icEmail: ic,
                           semesterId,
                       })
                       .returning()
@@ -45,7 +47,7 @@ router.post(
                               masterAllocation.semesterId,
                           ],
                           set: {
-                              ic: ic,
+                              icEmail: ic,
                           },
                       })
                 : await tx.insert(masterAllocation).values({

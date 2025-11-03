@@ -11,7 +11,8 @@ import multer from "multer";
 import {
     conferenceApprovalApplications,
     conferenceGlobal,
-    conferenceMemberReviews,
+    conferenceApplicationMembers,
+    conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { unlink } from "fs/promises";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
@@ -36,7 +37,7 @@ router.post(
         )
     ),
     asyncHandler(async (req, res, next) => {
-        const newFileIds: Partial<Record<string, number | null>> = {};
+        const newFileIds: Record<string, number | null> = {};
 
         const body = conferenceSchemas.upsertApplicationBodySchema.parse(
             req.body
@@ -69,6 +70,7 @@ router.post(
                     letterOfInvitation: true,
                     otherDocuments: true,
                     reviewersComments: true,
+                    user: true,
                 },
             });
         if (!application) {
@@ -90,7 +92,6 @@ router.post(
         }
         let insertedFiles: (typeof files.$inferInsert)[] = [];
 
-        // TODO: Cleanup files in case of errors in transaction
         await db.transaction(async (tx) => {
             if (Array.isArray(req.files)) throw new Error("Invalid files");
             if (req.files && Object.entries(req.files).length) {
@@ -127,12 +128,16 @@ router.post(
             );
 
             insertedFiles.forEach((file) => {
-                newFileIds[file.fieldName! + "FileId"] = file.id;
+                newFileIds[file.fieldName! + "FileId"] = file.id!;
             });
 
             await tx
-                .delete(conferenceMemberReviews)
-                .where(eq(conferenceMemberReviews.applicationId, id));
+                .update(conferenceApplicationMembers)
+                .set({
+                    reviewStatus: null,
+                    comments: null,
+                })
+                .where(eq(conferenceApplicationMembers.applicationId, id));
 
             await tx
                 .update(conferenceApprovalApplications)
@@ -145,6 +150,12 @@ router.post(
                 .where(eq(conferenceApprovalApplications.id, id))
                 .returning();
 
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: id,
+                userEmail: req.user!.email,
+                action: `Application updated`,
+            });
+
             const deleted = await tx
                 .delete(files)
                 .where(inArray(files.id, fileIdsToDelete))
@@ -153,17 +164,29 @@ router.post(
                 void unlink(file.filePath).catch(() => undefined);
             }
 
-            await completeTodo({
-                module: modules[0],
-                completionEvent: `edit ${id}`,
-            });
-
-            const todoAssignees = await getUsersWithPermission(
-                isDirect
-                    ? "conference:application:review-application-convener"
-                    : "conference:application:review-application-member",
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `edit ${id}`,
+                },
                 tx
             );
+
+            const todoAssignees = isDirect
+                ? (
+                      await getUsersWithPermission(
+                          "conference:application:convener",
+                          tx
+                      )
+                  ).map((convener) => convener.email)
+                : (
+                      await tx.query.conferenceApplicationMembers.findMany({
+                          columns: {
+                              memberEmail: true,
+                          },
+                          where: (cols, { eq }) => eq(cols.applicationId, id),
+                      })
+                  ).map((member) => member.memberEmail);
 
             await createTodos(
                 todoAssignees.map((assignee) => ({
@@ -171,8 +194,8 @@ router.post(
                     title: "Conference Application",
                     createdBy: req.user!.email,
                     completionEvent: `review ${id} ${isDirect ? "convener" : "member"}`,
-                    description: `Review conference application id ${id} by ${req.user!.email}`,
-                    assignedTo: assignee.email,
+                    description: `Review conference application id ${id} by ${application.user.name || application.userEmail}`,
+                    assignedTo: assignee,
                     link: `/conference/view/${id}`,
                 })),
                 tx
