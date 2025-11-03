@@ -1,8 +1,7 @@
-// Make sure to add this at the top of your file
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useRef, useEffect, forwardRef } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +9,10 @@ import {
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue,
+    SelectValue
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
-import {
-    Collapsible,
-} from "@/components/ui/collapsible";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, X, Plus, Trash2, LayoutGrid } from "lucide-react";
 import { AnalyticsFilters } from "@/components/analytics/publications/AnalyticsFilter";
 import { analyticsSchemas } from "lib";
 import { ChartTooltip, ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
@@ -38,44 +33,24 @@ import {
 import api from "@/lib/axios-instance";
 import { toBlob } from "html-to-image";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const GRAPH_OPTIONS = [
-    { value: "line", label: "Line Chart", component: LineChart },
-    { value: "pie", label: "Pie Chart", component: PieChart },
-    { value: "bar", label: "Bar Chart", component: BarChart },
-] as const;
+const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS} = analyticsSchemas;
+type GraphValue = analyticsSchemas.GraphValue;
+const graphLabelMap = Object.fromEntries(GRAPH_OPTIONS.map(opt => [opt.value, opt.label]));
 
-type GraphTypes = (typeof GRAPH_OPTIONS)[number]["component"];
-type GraphValue = (typeof GRAPH_OPTIONS)[number]['value'];
-
-const Y_AXIS_ALLOWED_TYPES = {
-    "Publications": ["bar"],
-    "Publications Over Time": ["bar", "line"],
-    "Citations": ["bar"],
-    "Citations Over Time": ["bar", "line"],
-    "Publication Type Breakdown": ["pie", "bar"],
-    "Author Contributions": ["pie", "bar"]
-} as const;
-
-const COLORS = [
-    "#3b82f6", // blue
-    "#22c55e", // green
-    "#f97316", // orange
-    "#a855f7", // violet
-    "#ec4899", // pink
-    "#14b8a6", // teal
-    "#facc15", // yellow
-] as const;
+interface GraphConfig {
+    id: string;
+    yAxis: keyof typeof Y_AXIS_ALLOWED_TYPES | null;
+    graphType: GraphValue | null
+    filters: analyticsSchemas.AnalyticsQuery | null;
+    color: (typeof COLORS)[number]
+};
 
 interface Slide {
     id: string;
-    yAxis: keyof typeof Y_AXIS_ALLOWED_TYPES | null;
-    graphType: (typeof GRAPH_OPTIONS)[number]['value'] | null;
-    isGraphVisible: boolean;
-    filters: analyticsSchemas.AnalyticsQuery | null;
-    graph: GraphTypes | null;
-    color: (typeof COLORS)[number]
-}
+    graphs: GraphConfig[];
+};
 
 const fetchAnalytics = async (
     params: analyticsSchemas.AnalyticsQuery
@@ -84,315 +59,547 @@ const fetchAnalytics = async (
     return response.data as analyticsSchemas.AnalyticsResponse;
 };
 
-interface SlideGraphProps {
-    slide: Slide;
-    chartRefCallback: (el: HTMLDivElement | null) => void;
+interface GraphRendererProps {
+    config: GraphConfig;
+    onRender?: () => void;
 }
 
-// This component is responsible for its own data fetching
-function SlideGraph({ slide, chartRefCallback }: SlideGraphProps) {
+const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
+    ({ config, onRender }, ref) => {
 
-    const chartRef = useRef<HTMLDivElement>(null);
+        const { data, isLoading, error: _error, isError } = useQuery<
+            analyticsSchemas.AnalyticsResponse | null,
+            Error
+        >({
+            queryKey: ["analytics", config.filters, config.yAxis],
+            queryFn: () => {
+                if (config.filters)
+                    return fetchAnalytics(config.filters);
+                return null;
+            }
+        });
 
-    useEffect(() => {
-        chartRefCallback(chartRef.current);
-    }, [chartRef.current]);
+        const chartConfig = useMemo(() => {
+            if (!data || !config.yAxis) return null;
+            const { yAxis } = config;
 
-    const { data, isLoading, error: _error, isError } = useQuery<
-        analyticsSchemas.AnalyticsResponse,
-        Error
-    >({
-        queryKey: ["analytics", slide.filters],
-        queryFn: () => fetchAnalytics(slide.filters!),
-        enabled: !!slide.filters,
-    });
-
-    if (isError || !data) {
-
-    }
-    const chartConfig = useMemo(() => {
-        if (!data || !slide.yAxis) return null;
-
-        const { yAxis } = slide;
-
-        if (yAxis === "Publications Over Time" || yAxis === "Publications") {
-            return {
-                chartData: data.publicationTimeSeries,
-                xKey: "period",
-                yKey: yAxis === "Publications" ? "total" : "cumulative",
-            };
-        }
-        if (yAxis === "Citations Over Time" || yAxis === "Citations") {
-            return {
-                chartData: data.citationTimeSeries,
-                xKey: "period",
-                yKey: yAxis === "Citations" ? "total" : "cumulative",
-            };
-        }
-        if (yAxis === "Author Contributions") {
-            return {
-                chartData: data.authorContributions,
-                xKey: "name",
-                yKey: "count",
-            };
-        }
-        if (yAxis === "Publication Type Breakdown") {
-            return {
-                chartData: data.publicationTypeBreakdown,
-                xKey: "type",
-                yKey: "count",
-            };
-        }
-        return null;
-    }, [data, slide.yAxis]);
-
-    const subtitle = useMemo(() => {
-
-        if (!chartConfig || !slide.filters) {
+            if (yAxis === "Publications Over Time" || yAxis === "Publications") {
+                return {
+                    chartData: data.publicationTimeSeries,
+                    xKey: "period",
+                    yKey: yAxis === "Publications" ? "total" : "cumulative",
+                };
+            }
+            if (yAxis === "Citations Over Time" || yAxis === "Citations") {
+                return {
+                    chartData: data.citationTimeSeries,
+                    xKey: "period",
+                    yKey: yAxis === "Citations" ? "total" : "cumulative",
+                };
+            }
+            if (yAxis === "Author Contributions") {
+                return {
+                    chartData: data.authorContributions,
+                    xKey: "name",
+                    yKey: "count",
+                };
+            }
+            if (yAxis === "Publication Type Breakdown") {
+                return {
+                    chartData: data.publicationTypeBreakdown,
+                    xKey: "type",
+                    yKey: "count",
+                };
+            }
             return null;
+        }, [data, config.yAxis]);
+
+        const subtitle = useMemo(() => {
+            if (!chartConfig || !config.filters) return null;
+            const { startYear, startMonth, endYear, endMonth } = config.filters ?? {};
+            if (!startYear || !endYear) return null;
+            const formatDate = (year: number, month: number) => {
+                const date = new Date(year, month - 1); // month is 0-indexed
+                return date.toLocaleString('default', { month: 'short' }) + ` ${year}`;
+            };
+            return `${formatDate(startYear, startMonth)} – ${formatDate(endYear, endMonth)}`;
+        }, [chartConfig, config.filters]);
+
+        useEffect(() => {
+            if (!isLoading && onRender) {
+                setTimeout(onRender, 100);
+            }
+        }, [isLoading, onRender]);
+
+        if (isLoading) {
+            return (
+                <div className="flex h-full w-full items-center justify-center min-h-[400px]" ref={ref}>
+                    <Loader2 className="mr-2 h-10 w-10 animate-spin" />
+                </div>
+            )
         }
 
-        const { startYear, startMonth, endYear, endMonth } = slide.filters;
+        if (isError) {
+            return (
+                <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]" ref={ref}>
+                    <Card className="border-0 shadow-xl">
+                        <CardContent className="p-8 text-center min-w-[300px]">
+                            <p className="mb-2 text-xl font-semibold text-destructive">
+                                Error loading data
+                            </p>
+                            <p className="text-sm p-15 text-muted-foreground">
+                                Could not load graph. Check filters.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            );
+        }
 
-        // Helper function to format the date
-        const formatDate = (year: number, month: number) => {
-            const date = new Date(year, month - 1); // month is 0-indexed
-            return date.toLocaleString('default', { month: 'short' }) + ` ${year}`;
-        };
+        if (!data || !chartConfig) {
+            return (
+                <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]" ref={ref}>
+                    <Card className="border-0 shadow-xl">
+                        <CardContent className="p-8 text-center min-w-[300px]">
+                            <p className="mb-2 text-xl font-semibold text-destructive">
+                                Error processing data
+                            </p>
+                            <p className="text-sm p-15 text-muted-foreground">
+                                The data received could not be processed.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            );
+        }
 
-        // Create the string: "Jan 2023 – Oct 2025"
-        return `${formatDate(startYear, startMonth)} – ${formatDate(endYear, endMonth)}`;
-    }, [chartConfig, slide.filters]);
+        const { chartData, xKey, yKey } = chartConfig;
 
-    if (isLoading) {
         return (
-            <div className="flex h-full w-full items-center justify-center">
-                <Loader2 className="mr-2 h-20 w-20 animate-spin" />
-            </div>
-        )
-    }
-
-    if (isError || !data || !chartConfig) {
-        return (
-            <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30">
-                <Card className="border-0 shadow-xl">
-                    <CardContent className="p-8 text-center min-w-[300px]">
-                        <p className="mb-2 text-xl font-semibold text-destructive">
-                            Error loading data
-                        </p>
-                        <p className="text-sm p-15 text-muted-foreground">
-                            Something went wrong. Please try again later.
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
-    const { chartData, xKey, yKey } = chartConfig;
-
-    return (
-        <div className="flex flex-col items-center w-full" ref={chartRef}>
-            <h1 className="text-lg font-medium text-black">{slide.yAxis}</h1>
-            {subtitle && (
-                <h2 className="text-sm text-muted-foreground mb-2">{subtitle}</h2>
-            )}
-            {(slide.graphType == 'bar') ?
-
-                <ChartContainer config={{ [yKey]: { label: slide.yAxis, color: "#22c55e" } }} className="w-full">
-                    <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey={xKey} />
-                            <YAxis />
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Bar dataKey={yKey} fill={slide.color} isAnimationActive={false}/>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-                : (slide.graphType == "line") ?
-                    <ChartContainer config={{ [yKey]: { label: slide.yAxis, color: "#10b981" } }} className="w-full">
+            <div className="flex flex-col items-center w-full shadow-md border rounded-lg p-4 bg-white" ref={ref}>
+                <h1 className="text-lg font-medium text-black">{config.yAxis}</h1>
+                {subtitle && (
+                    <h2 className="text-sm text-muted-foreground mb-2">{subtitle}</h2>
+                )}
+                {(config.graphType == 'bar') ?
+                    <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#22c55e" } }} className="w-full">
                         <ResponsiveContainer width="100%" height={400}>
-                            <LineChart data={chartData}>
+                            <BarChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey={xKey} />
                                 <YAxis />
                                 <ChartTooltip content={<ChartTooltipContent />} />
-                                <Line type="monotone" dataKey={yKey} stroke={slide.color} strokeWidth={3} dot={false} isAnimationActive={false} />
-                            </LineChart>
+                                <Bar dataKey={yKey} fill={config.color} isAnimationActive={false} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </ChartContainer>
-                    : (slide.graphType == "pie") ?
-                        <ChartContainer config={{ [yKey]: { label: slide.yAxis, color: "#a855f7" } }} className="w-full">
+                    : (config.graphType == "line") ?
+                        <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#10b981" } }} className="w-full">
                             <ResponsiveContainer width="100%" height={400}>
-                                <PieChart>
-                                    <Pie
-                                        data={chartData}
-                                        dataKey={yKey}
-                                        nameKey={xKey}
-                                        isAnimationActive={false}
-                                    >
-                                        {chartData.map((_, idx) => (
-                                            <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Legend />
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey={xKey} />
+                                    <YAxis />
                                     <ChartTooltip content={<ChartTooltipContent />} />
-                                </PieChart>
+                                    <Line type="monotone" dataKey={yKey} stroke={config.color} strokeWidth={3} dot={false} isAnimationActive={false} />
+                                </LineChart>
                             </ResponsiveContainer>
                         </ChartContainer>
-                        :
-                        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30">
-                            <Card className="border-0 shadow-xl">
-                                <CardContent className="p-8 text-center min-w-[300px]">
-                                    <p className="text-lg font-medium text-muted-foreground">
-                                        Please select a graph type to generate
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
-            }
-        </div>
+                        : (config.graphType == "pie") ?
+                            <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#a855f7" } }} className="w-full">
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <PieChart>
+                                        <Pie
+                                            data={chartData}
+                                            dataKey={yKey}
+                                            nameKey={xKey}
+                                            isAnimationActive={false}
+                                        >
+                                            {chartData.map((_, idx) => (
+                                                <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Legend />
+                                        <ChartTooltip content={<ChartTooltipContent />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
+                            : null
+                }
+            </div>
+        )
+    }
+)
+
+const fetchTemplates = async (): Promise<
+    { id: string, title: string, slides: number }[]
+> => {
+    const response = await api.get<{ id: string, title: string, slides: number }[]>(
+        "/analytics/presentation/templates/"
+    );
+    return response.data;
+};
+
+const fetchTemplate = async (templateID: string): Promise<
+    analyticsSchemas.Template
+> => {
+    const response = await api.get<analyticsSchemas.Template>(
+        `/analytics/presentation/templates/${templateID}`
     )
+
+    return response.data;
 }
 
+type UpdateTemplateProps = {
+    id: string,
+    template: analyticsSchemas.Template
+}
+const updateTemplate = async ({ id, template }: UpdateTemplateProps): Promise<
+    { id: string }[]
+> => {
+    const response = await api.patch<{ id: string }[]>(
+        `/analytics/presentation/templates/update/${id}`, template
+    );
+    return response.data;
+};
+
+const deleteTemplate = async (id: string): Promise<
+    { id: string }[]
+> => {
+    const response = await api.delete<{ id: string }[]>(
+        `/analytics/presentation/templates/delete/${id}`
+    );
+    return response.data;
+};
+
+const createTemplate = async (template: analyticsSchemas.Template): Promise<
+    { id: string }[]
+> => {
+    const response = await api.post<{ id: string }[]>(
+        "/analytics/presentation/templates/create", template
+    );
+    return response.data;
+};
+
 export default function PresentationCreator() {
+
+    const queryClient = useQueryClient();
+
+    const { data: templates, isLoading: templatesLoading } = useQuery({
+        queryKey: ["presentation:templates"],
+        queryFn: fetchTemplates,
+    });
+
     const [title, setTitle] = useState("Enter Title..");
     const [slides, setSlides] = useState<Slide[]>([]);
-    const [openSlides, setOpenSlides] = useState<Record<string, boolean>>({});
-    const chartRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
+    const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+    const chartRef = useRef<HTMLDivElement | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [currentTemplate, setCurrentTemplate] = useState<string | null>(null);
+    const renderCompleteResolver = useRef<(() => void) | null>(null);
+
+    const handleRenderComplete = () => {
+        renderCompleteResolver.current?.();
+    };
+
+    const getGraphConfig = (slideId: string, graphId: string) => {
+        return slides.find((slide) => (slide.id == slideId))?.graphs.find((graph) => (graph.id == graphId));
+    };
+
+    useEffect(() => {
+        let ignore = false;
+
+        const loadTemplate = async () => {
+            if (currentTemplate) {
+                try {
+                    const template = await fetchTemplate(currentTemplate);
+                    if (ignore) {
+                        return;
+                    }
+                    const newSlides: Slide[] = Array.from({ length: template.slides }, () => ({
+                        id: crypto.randomUUID(),
+                        graphs: []
+                    }));
+
+                    template.graphs.forEach((graph) => {
+                        if (newSlides[graph.slideNumber]) {
+                            newSlides[graph.slideNumber].graphs.push({
+                                id: crypto.randomUUID(),
+                                yAxis: graph.yAxis,
+                                graphType: graph.graphType,
+                                filters: null,
+                                color: graph.color ?? COLORS[0]
+                            });
+                        }
+                    });
+
+                    setTitle(template.title);
+                    setSlides(newSlides);
+
+                } catch (error) {
+                    console.error("Failed to load template:", error);
+                }
+            }
+        };
+
+        loadTemplate();
+
+        return () => {
+            ignore = true;
+        };
+
+    }, [currentTemplate]);
+
+    const selectedGraph = useMemo(() => {
+        if (selectedGraphId && selectedSlideId) {
+            return getGraphConfig(selectedSlideId, selectedGraphId) ?? null;
+        }
+        return null;
+    }, [selectedGraphId, selectedSlideId, slides]);
+
+    const createTemplateMutation = useMutation({
+        mutationFn: createTemplate,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template created!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to create: ${err.message}`);
+        }
+    });
+
+    const updateTemplateMutation = useMutation({
+        mutationFn: updateTemplate,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template updated!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to update: ${err.message}`);
+        }
+    });
+
+    const deleteTemplateMutation = useMutation({
+        mutationFn: deleteTemplate,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
+            toast.success("Template deleted!");
+        },
+        onError: (err: any) => {
+            toast.error(`Failed to delete: ${err.message}`);
+        }
+    });
 
     const addSlide = () => {
-        const newSlide: Slide = {
+        const newGraph: GraphConfig = {
             id: crypto.randomUUID(),
             yAxis: null,
             graphType: null,
-            isGraphVisible: false,
             filters: null,
-            graph: null,
-            color: "#14b8a6"
+            color: COLORS[0]
         };
-        setSlides([...slides, newSlide]);
+        const newSlide: Slide = {
+            id: crypto.randomUUID(),
+            graphs: [newGraph]
+        };
+
+        setSlides((prvs) => [...prvs, newSlide]);
     };
 
     const getPresentation = async () => {
-        const allOpenState = slides.reduce((acc, slide) => {
-            acc[slide.id] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
 
-        setOpenSlides(allOpenState);
 
-        setTimeout(async () => {
-            const form = new FormData();
-            let filesToUpload = 0;
+        const form = new FormData();
+        let filesToUpload = 0;
 
-            for (const [index, slide] of slides.entries()) {
-                const ref = chartRefs.current[slide.id];
-                if (!ref) {
-                    console.warn(`Skipping slide ${index + 1}: chart not rendered.`);
-                    continue;
-                }
+        const renderTimeout = 5000;
+        const metadataArray = [];
 
-                try {
-                    const blob = await toBlob(ref, {
-                        cacheBust: true,
-                        backgroundColor: "white",
-                        filter: (node) => {
-                            if (!(node instanceof HTMLElement)) {
+        setIsGenerating(true);
+
+
+        for (const [si, slide] of slides.entries()) {
+            setSelectedSlideId(slide.id);
+
+            for (const [gi, graph] of slide.graphs.entries()) {
+
+                const waitForRender = new Promise<void>((resolve) => {
+                    renderCompleteResolver.current = resolve;
+                });
+                setSelectedGraphId(graph.id);
+
+                await Promise.race([
+                    waitForRender,
+                    new Promise(resolve => setTimeout(resolve, renderTimeout))
+                ]);
+
+                renderCompleteResolver.current = null;
+                const node = chartRef.current;
+
+                if (node != null) {
+                    try {
+                        const blob = await toBlob(node, {
+                            cacheBust: true,
+                            backgroundColor: "white",
+                            filter: (node) => {
+                                if (!(node instanceof HTMLElement)) {
+                                    return true;
+                                }
+                                if (node.classList.contains("recharts-tooltip-wrapper")) {
+                                    return false;
+                                }
                                 return true;
-                            }
-                            if (node.classList.contains("recharts-tooltip-wrapper")) {
-                                return false; 
-                            }
-                            return true; 
-                        },
-                        skipFonts: true
-                    });
+                            },
+                            skipFonts: true
+                        });
 
-                    if (!blob) {
-                        // Use `index + 1` for a readable number
-                        toast.error(`Could not render chart for slide ${index + 1}`);
-                        continue;
+                        if (!blob) {
+                            toast.error(`Could not render chart ${gi + 1} for slide ${si + 1}`);
+                        } else {
+                            form.append(`images`, blob, graph.id);
+                            metadataArray.push({
+                                slideIndex: si,
+                                graphIndex: gi,
+                                totalSlides: slide.graphs.length
+                            });
+                            filesToUpload++;
+                        }
+                    } catch (err) {
+                        toast.error(`Failed to render slide ${si + 1} : ${err}`);
                     }
-
-                    form.append('image', blob, slide.id);
-                    filesToUpload++;
-
-                } catch (err) {
-                    toast.error(`Failed to render slide ${index + 1} : ${err}`);
+                } else {
+                    console.warn(`Skipping chart ${gi + 1} for slide ${si + 1} container not rendered.`);
                 }
             }
+        }
 
-            if (filesToUpload === 0) {
-                toast.error("No charts are rendered. Cannot create presentation.");
+
+        if (filesToUpload === 0) {
+            toast.error("No charts are rendered. Cannot create presentation.");
+            return;
+        }
+
+        form.append('metadata', JSON.stringify(metadataArray));
+
+        try {
+            const res = await api.post("/analytics/presentation", form, {
+                params: {
+                    title
+                },
+                responseType: 'blob'
+            });
+
+            if (res.status !== 200) {
+                toast.error("Failed to generate presentation");
                 return;
             }
 
-            try {
-                const res = await api.post("/analytics/presentation", form, {
-                    params: {
-                        title
-                    },
-                    responseType: 'blob'
-                });
+            const blob = res.data;
+            const url = window.URL.createObjectURL(blob);
 
-                if (res.status !== 200) {
-                    toast.error("Failed to generate presentation");
-                    return;
-                }
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "presentation.pptx";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
 
-                const blob = res.data;
-                const url = window.URL.createObjectURL(blob);
-
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "presentation.pptx";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-
-            } catch (err) {
-                toast.error(`Error generating presentation: ${err}`);
-            }
-        }, 500);
+        } catch (err) {
+            toast.error(`Error generating presentation: ${err}`);
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const deleteSlide = (id: string) => {
-        setSlides(slides.filter((slide) => { return slide.id !== id }));
-        delete chartRefs.current[id];
+        let wasSelectedGraphDeleted = false;
+
+        const slideToDelete = slides.find(s => s.id === id);
+        if (slideToDelete) {
+            wasSelectedGraphDeleted = slideToDelete.graphs.some(g => g.id === selectedGraphId);
+        }
+
+        setSlides(prevSlides => prevSlides.filter(slide => slide.id !== id));
+
+        if (wasSelectedGraphDeleted) {
+            setSelectedGraphId(null);
+            setSelectedSlideId(null);
+        }
     };
 
-    const updateSlide = (id: string, field: keyof Slide, value: any) => {
+    const addGraphToSlide = (slideId: string) => {
+        const newGraph: GraphConfig = {
+            id: crypto.randomUUID(),
+            yAxis: null,
+            graphType: null,
+            filters: null,
+            color: COLORS[0]
+        };
+        const slide = slides.find((slide) => slide.id == slideId);
+        if (slide && slide.graphs.length >= 4) return;
         setSlides(prevSlides =>
             prevSlides.map(slide => {
-                let updatedSlide = slide; 
-
-                if (slide.id === id) {
-                    updatedSlide = { ...slide, [field]: value };
+                if (slide.id === slideId && slide.graphs.length < 4) {
+                    return { ...slide, graphs: [...slide.graphs, newGraph] };
                 }
+                return slide;
+            })
+        );
+        setSelectedGraphId(newGraph.id);
+        setSelectedSlideId(slideId);
+    };
 
-                if (updatedSlide.yAxis && updatedSlide.graphType) {
-                    const allowedTypes = Y_AXIS_ALLOWED_TYPES[updatedSlide.yAxis] as readonly GraphValue[];
+    const deleteGraphFromSlide = (slideId: string, graphId: string) => {
+        const slide = slides.find(s => s.id === slideId);
+        if (!slide || slide.graphs.length <= 1) {
+            toast.warning("Each slide must have at least one graph.");
+            return;
+        }
 
-                    if (!allowedTypes.includes(updatedSlide.graphType)) {
-
-                        updatedSlide = {
-                            ...updatedSlide,
-                            graphType: allowedTypes[0] ?? null
-                        };
-                    }
+        setSlides(prevSlides =>
+            prevSlides.map(s => {
+                if (s.id === slideId) {
+                    return { ...s, graphs: s.graphs.filter(g => g.id !== graphId) };
                 }
+                return s;
+            })
+        );
 
-                return updatedSlide;
+        if (selectedGraphId === graphId) {
+            setSelectedGraphId(null);
+            setSelectedSlideId(null);
+        }
+    };
+
+    const updateGraphConfig = (slideId: string, graphId: string, field: keyof GraphConfig, value: any) => {
+        setSlides(prevSlides =>
+            prevSlides.map(slide => {
+                if (slide.id === slideId) {
+                    let newGraphs = slide.graphs.map(graph => {
+                        if (graph.id === graphId) {
+                            let updatedGraph = { ...graph, [field]: value };
+
+                            if (field === "yAxis" && updatedGraph.yAxis) {
+                                const allowedTypes = Y_AXIS_ALLOWED_TYPES[updatedGraph.yAxis] as readonly GraphValue[];
+                                if (!allowedTypes.includes(updatedGraph.graphType!)) {
+                                    updatedGraph.graphType = allowedTypes[0] ?? null;
+                                }
+                            }
+                            return updatedGraph;
+                        }
+                        return graph;
+                    });
+                    return { ...slide, graphs: newGraphs };
+                }
+                return slide;
             })
         );
     };
-    // --- Render ---
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-4 py-16">
+        <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 ">
             <div className="flex flex-col items-center space-y-4">
                 <Input
                     type="text"
@@ -401,121 +608,295 @@ export default function PresentationCreator() {
                     className="w-full max-w-lg bg-transparent border-0 border-b-2 border-slate-300 dark:border-slate-700 rounded-none shadow-none p-6 text-center text-3xl md:text-4xl font-bold tracking-tight focus-visible:ring-0 focus:border-indigo-500 transition-all"
                 />
                 <Button
-                    onClick={addSlide}
-                    variant="outline"
-                    size="icon"
-                    className="mt-6 rounded-full w-12 h-12 shadow-sm"
-                    aria-label="Add new slide"
-                >
-                    <Plus className="h-6 w-6" />
-                </Button>
-                <div className="w-full max-w-4xl mt-10 space-y-4">
-                    {slides.map((slide, index) => (
-                        <Collapsible
-                            key={slide.id}
-                            titleClassName="flex flex-wrap justify-between items-center p-4 border rounded-lg bg-card shadow-sm dark:bg-slate-800"
-                            // forceMount={true}
-                            title={
-                                <div className="flex flex-wrap items-center gap-3">
-                                    <span className="text-lg font-semibold text-muted-foreground mr-2">
-                                        {index + 1}.
-                                    </span>
-                                    <Button
-                                        onClick={() => deleteSlide(slide.id)}
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="Delete slide"
-                                    >
-                                        <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
-
-                                    <Select
-                                        value={slide.yAxis ?? ""}
-                                        onValueChange={(value) =>
-                                            updateSlide(slide.id, "yAxis", value)
-                                        }
-                                    >
-                                        <SelectTrigger className="w-[150px]">
-                                            <SelectValue placeholder="Y-Axis" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                (Object.keys(Y_AXIS_ALLOWED_TYPES)).map((opt) =>
-                                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                    <Select
-                                        value={slide.graphType ?? ""}
-                                        onValueChange={(value) =>
-                                            updateSlide(slide.id, "graphType", value)
-                                        }
-                                        disabled={!slide.yAxis}
-                                    >
-                                        <SelectTrigger className="w-[150px]" disabled={!slide.yAxis}>
-                                            <SelectValue placeholder="Graph Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                slide.yAxis &&
-                                                GRAPH_OPTIONS.filter((obj) =>
-                                                    // Cast the array to 'readonly GraphValue[]'
-                                                    (Y_AXIS_ALLOWED_TYPES[slide.yAxis as keyof typeof Y_AXIS_ALLOWED_TYPES] as readonly GraphValue[]).includes(obj.value)
-                                                ).map((opt) => (
-                                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                                ))
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                    <Select
-                                        value={slide.color}
-                                        onValueChange={(value) =>
-                                            updateSlide(slide.id, "color", value)
-                                        }
-                                    >
-                                        <SelectTrigger className="w-[150px]">
-                                            <SelectValue placeholder="Color" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {
-                                                (COLORS.map((opt) =>
-                                                    <SelectItem className={`bg-[${opt}]`} key={opt} value={opt}>{opt}</SelectItem>
-                                                )
-                                                )
-                                            }
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            }
-                            open={openSlides[slide.id] || false}
-                            onOpenChange={(isOpen) =>
-                                setOpenSlides(prev => ({ ...prev, [slide.id]: isOpen }))
-                            }
-                        >
-                            <div className="lg:col-span-2">
-                                <AnalyticsFilters
-                                    onSubmit={(filters) =>
-                                        updateSlide(slide.id, "filters", {
-                                            ...filters,
-                                            authorIds: filters.authorIds as [string, ...string[]],
-                                        })
-                                    }
-                                />
-                            </div>
-                            <SlideGraph slide={slide} chartRefCallback={(el) => (chartRefs.current[slide.id] = el)} />
-                        </Collapsible>
-                    ))}
-                </div>
-
-                <Button
                     onClick={getPresentation}
-                    className="py-2"
+                    className="py-2 mt-8 px-6 text-lg"
                     type="submit"
                     aria-label="Get Presentation"
+                    disabled={slides.length === 0}
                 >
                     Get Presentation
                 </Button>
+                <div className="flex w-full gap-4 h-[60vh]" >
+                    <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                        {isGenerating && (
+                            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
+                                <Loader2 className="h-16 w-16 animate-spin text-white" />
+                                <p className="text-white text-lg mt-4 font-semibold">
+                                    Generating Presentation...
+                                </p>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center w-full px-1 py-1">
+                            <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
+                            <Button
+                                onClick={addSlide}
+                                variant="outline"
+                                size="icon"
+                                className="rounded-full w-12 h-12 shadow-sm"
+                                aria-label="Add new slide"
+                            >
+                                <Plus className="h-6 w-6" />
+                            </Button>
+                        </div>
+                        {
+                            slides.map((slide, index) => {
+                                return (
+                                    <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
+                                        <div className="px-3 flex justify-center items-center">
+                                            <h4 className="font-bold">{index + 1} .</h4>
+                                            <Button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    deleteSlide(slide.id)
+                                                }}
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label="Delete slide"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                            </Button>
+                                        </div>
+                                        <div className="space-x-1">
+                                            {
+                                                slide.graphs.map((graph, gIndex) => {
+                                                    return (
+                                                        <Button
+                                                            key={graph.id}
+                                                            variant={selectedGraphId === graph.id ? "default" : "outline"}
+                                                            size="sm"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSelectedGraphId(graph.id)
+                                                                setSelectedSlideId(slide.id)
+                                                            }}
+                                                            className="shadow-sm px-2 py-0"
+                                                        >
+                                                            <LayoutGrid className="h-4 w-4 mr-1" />
+                                                            Graph {gIndex + 1}
+                                                            <Button
+                                                                onClick={(_e) => deleteGraphFromSlide(slide.id, graph.id)}
+                                                                className="h-4 w-2 px-0 py-0 hover:bg-background"
+                                                                variant="ghost"
+                                                            >
+                                                                <X className="h-4 w-4 mr-1" />
+                                                            </Button>
+                                                        </Button>
+                                                    )
+                                                })
+                                            }
+                                            <Button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    addGraphToSlide(slide.id)
+                                                }}
+                                                className="h-6 w-6 px-1 py-1"
+                                                variant="outline"
+                                            >
+                                                <Plus className="h-5 w-5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div>
+                    <div className="flex-1 flex flex-col shadow-xl border rounded-2xl px-4 py-4">
+                        <div className="flex justify-between items-center w-full px-1 py-1 flex-shrink-0">
+                            <h2 className="text-2xl md:text-4xl font-bold">Graph Config</h2>
+                        </div>
+                        <div className="flex-1 overflow-y-auto mt-6">
+                            {
+
+                                (selectedGraphId && selectedSlideId) ?
+                                    (
+                                        <div className="space-y-4">
+                                            <AnalyticsFilters
+                                                onSubmit={(filters) => updateGraphConfig(selectedSlideId, selectedGraphId, 'filters', filters)}
+                                                filterValues={selectedGraph?.filters ?? undefined}
+                                            >
+
+                                            </AnalyticsFilters>
+                                            <div className="justify-between space-x-4 w-full flex">
+                                                <Select
+                                                    value={selectedGraph?.yAxis ?? ""}
+                                                    onValueChange={(value) =>
+                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "yAxis", value)
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Y-Axis" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {
+                                                            (Object.keys(Y_AXIS_ALLOWED_TYPES)).map((opt) =>
+                                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                                            )
+                                                        }
+                                                    </SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={selectedGraph?.graphType ?? ""}
+                                                    onValueChange={(value) =>
+                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "graphType", value)
+                                                    }
+                                                    disabled={!selectedGraph?.yAxis}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Graph Type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {
+                                                            selectedGraph?.yAxis && Y_AXIS_ALLOWED_TYPES[selectedGraph.yAxis].map((val) => (
+                                                                <SelectItem key={val} value={val}>{graphLabelMap[val]}</SelectItem>
+                                                            ))
+                                                        }
+                                                    </SelectContent>
+                                                </Select>
+                                                <Select
+                                                    value={selectedGraph?.color}
+                                                    onValueChange={(value) =>
+                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "color", value)
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        {selectedGraph?.color ? (
+                                                            <div className="flex items-center w-full gap-2">
+                                                                <div
+                                                                    className="h-5 w-5 rounded border border-gray-300"
+                                                                    style={{ backgroundColor: selectedGraph.color }}
+                                                                />
+                                                                <span className="text-sm">{selectedGraph.color}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <SelectValue placeholder="Color" />
+                                                        )}
+                                                    </SelectTrigger>
+                                                    <SelectContent className="p-0">
+                                                        {COLORS.map((opt) => (
+                                                            <SelectItem
+                                                                key={opt}
+                                                                value={opt}
+                                                                className="h-8 cursor-pointer border border-gray-300 rounded-sm transition-transform hover:scale-[1.02] p-0 focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                                style={{ backgroundColor: opt }}
+                                                            >
+                                                                <span className="sr-only">{opt}</span>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            {
+                                                selectedGraph ? (
+                                                    <GraphRenderer config={selectedGraph} onRender={handleRenderComplete} ref={el => {
+                                                        chartRef.current = el;
+                                                    }} />
+                                                ) : (
+                                                    <Card className="border-0 shadow-xl">
+                                                        <CardContent className="p-8 text-center min-w-[300px]">
+                                                            <p>Unable to find graph</p>
+                                                        </CardContent>
+                                                    </Card>
+                                                )
+                                            }
+
+                                        </div>
+                                    )
+                                    : (
+                                        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]">
+                                            <Card className="border-0 shadow-xl w-full h-full">
+                                                <CardContent className="p-8 text-center min-w-[300px]">
+                                                    <p className="mb-2 text-xl font-semibold text-destructive">
+                                                        Please select a Graph.
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    )
+                            }
+                        </div>
+                    </div>
+
+                </div>
+                <div className="flex-1 w-[50vw] h-[10vh] overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                    {
+                        templatesLoading ?
+                            <Loader2 className="h-16 w-16 animate-spin text-white" /> :
+                            <>
+                                <Button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        createTemplateMutation.mutate({
+                                            title: title,
+                                            slides: slides.length,
+                                            graphs: slides.flatMap((slide, index) => {
+                                                return slide.graphs.map((graph) => {
+                                                    const { id, filters, ...rest } = graph;
+                                                    return { slideNumber: index, ...rest };
+                                                });
+                                            })
+                                        });
+                                    }}
+                                    className="w-full text-1xl  px-1 py-1"
+                                >
+                                    Create New Template
+                                </Button>
+                                {
+                                    templates?.map((template, index) => {
+                                        return (
+                                            <div className={cn(" text-1xl border-2 flex items-center justify-between rounded-xl w-full px-5 py-2", (template.id == currentTemplate) ? "bg-blue-100" : "bg-white")} key={template.id}>
+                                                <div className="w-[50%]">
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            deleteTemplateMutation.mutate(template.id)
+                                                        }}
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label="Delete template"
+                                                    >
+                                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                                    </Button>
+                                                    <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>  
+                                                </div>
+                                                <div className="justify-right space-x-2">
+                                                    <span className="font-normal font-muted text-xs">{template.slides} slides</span>
+                                                    <Button onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCurrentTemplate(template.id)
+                                                    }}
+                                                        className="px-2 py-1">
+                                                        Select
+                                                    </Button>
+                                                    <Button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            updateTemplateMutation.mutate({
+                                                                id: template.id,
+                                                                template: {
+                                                                    title: title,
+                                                                    slides: slides.length,
+                                                                    graphs: slides.flatMap((slide, index) => {
+                                                                        return slide.graphs.map((graph) => {
+                                                                            const { id, filters, ...rest } = graph;
+                                                                            return { slideNumber: index, ...rest };
+                                                                        });
+                                                                    })
+                                                                }
+                                                            });
+                                                        }}
+                                                        className="px-2 py-1"
+                                                    >
+                                                        Update To Current
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </>
+                    }
+                </div>
             </div>
         </div >
     );

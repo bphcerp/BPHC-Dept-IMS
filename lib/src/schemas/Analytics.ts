@@ -5,6 +5,36 @@ export type TimeGrouping = (typeof timeGrouping)[number];
 
 const timeGroupingEnum = z.enum(timeGrouping);
 
+export const graphEnumValues = ['line', 'pie', 'bar'] as const;
+export const yAxisEnumValues = ["Publications","Publications Over Time","Citations","Citations Over Time","Publication Type Breakdown","Author Contributions"] as const
+
+export const GRAPH_OPTIONS : [{value: typeof graphEnumValues[number], label: string}, ...{value: string, label:string}[]] = [
+    { value: "line", label: "Line Chart" },
+    { value: "pie", label: "Pie Chart",  },
+    { value: "bar", label: "Bar Chart" },
+] as const;
+
+export type GraphValue = (typeof graphEnumValues)[number];
+
+export const Y_AXIS_ALLOWED_TYPES : Record<typeof yAxisEnumValues[number], [string, ...string[]]> = {
+    "Publications": ["bar"],
+    "Publications Over Time": ["bar", "line"],
+    "Citations": ["bar"],
+    "Citations Over Time": ["bar", "line"],
+    "Publication Type Breakdown": ["pie", "bar"],
+    "Author Contributions": ["pie", "bar"]
+} as const;
+
+export const COLORS = [
+    "#3b82f6", // blue
+    "#22c55e", // green
+    "#f97316", // orange
+    "#a855f7", // violet
+    "#ec4899", // pink
+    "#14b8a6", // teal
+    "#facc15", // yellow
+] as const;
+
 export const analyticsQuerySchema = z
     .object({
         startMonth: z.number().int().min(1).max(12),
@@ -34,6 +64,17 @@ export const timeSeriesDataSchema = z.object({
     total: z.number().int(),
     cumulative: z.number().int(),
 });
+
+export const presentationTemplateSchema = z.object({
+    title: z.string(),
+    slides: z.number(),
+    graphs: z.array(z.object({
+        slideNumber: z.number(),
+        yAxis: z.enum(yAxisEnumValues).nullable(),
+        graphType: z.enum(graphEnumValues).nullable(),
+        color: z.enum(COLORS).nullable(),
+    }))
+})
 
 export const publicationTypeCountSchema = z.object({
     type: z.string(),
@@ -75,6 +116,7 @@ export const analyticsResponseSchema = z.object({
     qualityIndex: z.array(qualityIndexSchema),
 });
 
+export type Template = z.infer<typeof presentationTemplateSchema>;
 export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;
 export type TimeSeriesData = z.infer<typeof timeSeriesDataSchema>;
 export type PublicationTypeCount = z.infer<typeof publicationTypeCountSchema>;
