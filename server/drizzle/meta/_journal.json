@@ -575,6 +575,27 @@
       "when": 1761815134878,
       "tag": "0081_red_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1762170236271,
+      "tag": "0082_talented_the_call",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1762170253173,
+      "tag": "0083_chemical_sunfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1762175564914,
+      "tag": "0084_outgoing_silver_sable",
+      "breakpoints": true
     }
   ]
 }

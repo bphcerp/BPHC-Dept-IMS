@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { qpReviewRequests } from "./qp.ts";
 import { users } from "./admin.ts";
-import { fileFields } from "./form.ts";
+import { files } from "./form.ts";
 
 export const qpReviewRequestsRelations = relations(
     qpReviewRequests,
@@ -16,24 +16,24 @@ export const qpReviewRequestsRelations = relations(
             references: [users.email],
             relationName: "qpFaculty1",
         }),
-        midSemQpFilePath: one(fileFields, {
+        midSemQpFilePath: one(files, {
             fields: [qpReviewRequests.midSemQpFilePath],
-            references: [fileFields.id],
+            references: [files.id],
             relationName: "qpMidSemFilePath",
         }),
-        midSemSolFilePath: one(fileFields, {
+        midSemSolFilePath: one(files, {
             fields: [qpReviewRequests.midSemSolFilePath],
-            references: [fileFields.id],
+            references: [files.id],
             relationName: "qpMidSemSolFile",
         }),
-        compreQpFilePath: one(fileFields, {
+        compreQpFilePath: one(files, {
             fields: [qpReviewRequests.compreQpFilePath],
-            references: [fileFields.id],
+            references: [files.id],
             relationName: "qpCompreFilePath",
         }),
-        compreSolFilePath: one(fileFields, {
+        compreSolFilePath: one(files, {
             fields: [qpReviewRequests.compreSolFilePath],
-            references: [fileFields.id],
+            references: [files.id],
             relationName: "qpCompreSolFile",
         }),
     })
