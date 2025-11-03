@@ -136,7 +136,7 @@ router.patch(
                 title: template.title,
                 slides: template.slides,
                 facultyEmail: email,
-            }).where(eq(presentationTemplates.id, id))
+            }).where(and(eq(presentationTemplates.id, id), eq(presentationTemplates.facultyEmail, email)))
             .returning()
 
         await db.delete(graphs).where(eq(graphs.templateId, id));
