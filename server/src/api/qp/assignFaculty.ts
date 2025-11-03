@@ -10,6 +10,11 @@ import { eq } from "drizzle-orm";
 import { sendEmail as sendEmailFunction } from "@/lib/common/email.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import logger from "@/config/logger.ts";
+import {
+    completeTodo,
+    createNotifications,
+    createTodos,
+} from "@/lib/todos/index.ts";
 
 const router = express.Router();
 
@@ -128,6 +133,13 @@ router.post(
             );
         }
 
+        if (reviewRequest.reviewerEmail != null) {
+            completeTodo({
+                module: "Question Paper",
+                completionEvent: `question paper review ${reviewRequest.courseCode} by ${reviewRequest.reviewerEmail}`,
+            });
+        }
+
         // Update the review request with reviewer email
         const updatedRequest = await db
             .update(qpReviewRequests)
@@ -185,6 +197,26 @@ BITS Pilani Hyderabad Campus
                 };
 
                 await sendEmailFunction(emailOptions);
+                await createTodos([
+                    {
+                        module: "Question Paper",
+                        title: "Question Paper Review Assignment",
+                        description: `You have been assigned to review the question paper for ${reviewRequest.courseName} (Course Code: ${reviewRequest.courseCode})`,
+                        assignedTo: reviewerEmail,
+                        link: "/qpReview/facultyReview",
+                        completionEvent: `question paper review ${reviewRequest.courseCode} by ${reviewerEmail}`,
+                        createdBy: req.user?.email || "system",
+                    },
+                ]);
+                await createNotifications([
+                    {
+                        module: "Question Paper",
+                        link: "/qpReview/facultyReview",
+                        title: "Question Paper Review Assignment",
+                        userEmail: reviewerEmail,
+                        content: `You have been assigned to review the question paper for ${reviewRequest.courseName} (Course Code: ${reviewRequest.courseCode})`,
+                    },
+                ]);
                 emailSent = true;
             } catch (error) {
                 emailError = error;
