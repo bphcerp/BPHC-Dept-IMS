@@ -5,6 +5,7 @@ import {
   investigators,
   fundingAgencies,
   projectCoPIs,
+  projectPIs,
 } from "../../config/db/schema/project.ts";
 import { eq, and } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -20,6 +21,7 @@ router.post(
       title,
       pi,
       coPIs = [],
+      PIs = [],
       fundingAgency,
       fundingAgencyNature,
       sanctionedAmount,
@@ -91,6 +93,21 @@ router.post(
       }
       coPIRecords.push(coPIRecord);
     }
+    const PIRecords: any[] = [];
+    for (const PI of PIs) {
+      let [PIRecord] = await db
+        .insert(investigators)
+        .values(PI)
+        .onConflictDoUpdate({
+          target: [investigators.email],
+          set: PI,
+        })
+        .returning();
+      if (!PIRecord) {
+        [PIRecord] = await db.select().from(investigators).where(eq(investigators.email, PI.email));
+      }
+      PIRecords.push(PIRecord);
+    }
 
     const [project] = await db
       .insert(projects)
@@ -116,11 +133,18 @@ router.post(
         investigatorId: coPIRecord.id,
       }).onConflictDoNothing();
     }
+    for (const PIRecord of PIRecords) {
+      await db.insert(projectPIs).values({
+        projectId: project.id,
+        investigatorId: PIRecord.id,
+      }).onConflictDoNothing();
+    }
 
     res.status(201).json({
       ...project,
       pi: piRecord,
       coPIs: coPIRecords,
+      PIs: PIRecords,
       fundingAgency: agencyRecord,
     });
   })

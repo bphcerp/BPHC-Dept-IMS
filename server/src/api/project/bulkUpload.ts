@@ -8,6 +8,7 @@ import {
   investigators,
   fundingAgencies,
   projectCoPIs,
+  projectPIs,
 } from "@/config/db/schema/project.ts";
 import { eq, and } from "drizzle-orm";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
@@ -22,6 +23,7 @@ interface ProjectRow {
   piCampus?: string;
   piAffiliation?: string;
   coPIs?: string; // Comma-separated emails
+  PIs?: string; // Comma-separated emails
   fundingAgency: string;
   fundingAgencyNature: "public_sector" | "private_industry";
   sanctionedAmount: number;
@@ -111,6 +113,7 @@ const validateProjectRow = (row: any): ProjectRow | null => {
     piCampus: row.piCampus?.toString().trim(),
     piAffiliation: row.piAffiliation?.toString().trim(),
     coPIs: row.coPIs?.toString().trim(),
+    PIs: row.otherPIs?.toString().trim(),
     fundingAgency: row.fundingAgency.toString().trim(),
     fundingAgencyNature: row.fundingAgencyNature || "public_sector",
     sanctionedAmount: Number(row.sanctionedAmount),
@@ -255,6 +258,43 @@ router.post(
                 .values({
                   projectId: project.id,
                   investigatorId: coPI.id,
+                });
+            }
+          }
+        }
+        if (validatedRow.PIs) {
+          const PIsEmails = String(validatedRow.PIs).split(',').map(e => e.trim()).filter(Boolean);
+          const PINames = String(row['OtherPINames'] || '').split(',').map(n => n.trim());
+          const PIs = PIsEmails.map((email, idx) => {
+            let name = PINames[idx] || undefined;
+            if (name && typeof name === 'string' && email && name.trim().toLowerCase() === email.split('@')[0].toLowerCase()) {
+              name = undefined;
+            }
+            return {
+              email,
+              name,
+            };
+          });
+          for (const { email, name } of PIs) {
+            if (email) {
+              let [PI] = await db
+                .select()
+                .from(investigators)
+                .where(eq(investigators.email, email));
+              if (!PI) {
+                [PI] = await db
+                  .insert(investigators)
+                  .values({
+                    name: name || email.split("@")[0],
+                    email: email,
+                  })
+                  .returning();
+              }
+              await db
+                .insert(projectPIs)
+                .values({
+                  projectId: project.id,
+                  investigatorId: PI.id,
                 });
             }
           }
