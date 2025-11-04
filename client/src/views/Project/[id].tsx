@@ -16,7 +16,7 @@ interface FieldDisplayProps {
   isDate?: boolean;
 }
 
-interface CoPI {
+interface PI {
   id: string;
   name: string;
   email: string;
@@ -40,7 +40,8 @@ interface Project {
   startDate: string;
   endDate: string;
   hasExtension: boolean;
-  coPIs?: CoPI[];
+  coPIs?: PI[];
+  PIs?: PI[];
 }
 
 const FieldDisplay = ({ label, value, icon, isAmount, isDate }: FieldDisplayProps) => {
@@ -163,21 +164,29 @@ export default function ProjectDetails() {
           icon={<FileText className="h-4 w-4 text-muted-foreground" />}
         />
 
-        <FieldDisplay 
-          label="Principal Investigator" 
-          value={project.piName} 
-          icon={<Users className="h-4 w-4 text-muted-foreground" />}
-        />
-
-        <FieldDisplay 
-          label="PI Email" 
-          value={project.piEmail} 
-        />
+        {project.PIs && project.PIs.length > 0 && (
+          <>
+            <div className="text-lg font-semibold text-muted-foreground">Principal Investigators</div>
+            {project.PIs.map((PI: PI, index: number) => (
+              <div key={index} className="space-y-2">
+                <FieldDisplay 
+                  label={`PI ${index + 1} Name`} 
+                  value={PI.name} 
+                  icon={<Users className="h-4 w-4 text-muted-foreground" />}
+                />
+                <FieldDisplay 
+                  label={`PI ${index + 1} Email`} 
+                  value={PI.email} 
+                />
+              </div>
+            ))}
+          </>
+        )}
 
         {project.coPIs && project.coPIs.length > 0 && (
           <>
             <div className="text-lg font-semibold text-muted-foreground">Co-Principal Investigators</div>
-            {project.coPIs.map((coPI: CoPI, index: number) => (
+            {project.coPIs.map((coPI: PI, index: number) => (
               <div key={index} className="space-y-2">
                 <FieldDisplay 
                   label={`Co-PI ${index + 1} Name`} 
