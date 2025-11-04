@@ -61,6 +61,7 @@ function getAffiliationFromCampus(campus: string) {
 export default function AddProject() {
   const { authState, checkAccess } = useAuth();
   const [uploadMode, setUploadMode] = useState<UploadMode>("single");
+  const [isInternal, setIsInternal] = useState(false);
   const form = useForm<projectSchemas.ProjectFormValues>({
     resolver: zodResolver(projectSchemas.projectSchema),
     defaultValues: {
@@ -461,12 +462,36 @@ export default function AddProject() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Funding Information
+                   Funding Information
                 </CardTitle>
+                <FormField
+                    name="fundingAgencyType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type of Funding Agency *</FormLabel>
+                        <FormControl>
+                          <select {...field} className="w-full border rounded-md p-3 text-base">
+                            <option value="external" onClick={()=>{
+                              setIsInternal(false);
+                              form.setValue("fundingAgency", "");
+                              form.setValue("fundingAgencyNature", "public_sector");
+                            }}>External</option>
+                            <option value="internal" onClick={()=>{
+                              setIsInternal(true);
+                              form.setValue("fundingAgency", "BITS Pilani Hyderabad Campus");
+                              form.setValue("fundingAgencyNature", "private_industry");
+                            }}>Internal</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
+                    disabled={isInternal}
                     control={form.control}
                     name="fundingAgency"
                     render={({ field }) => (
@@ -480,6 +505,7 @@ export default function AddProject() {
                     )}
                   />
                   <FormField
+                    disabled={isInternal}
                     control={form.control}
                     name="fundingAgencyNature"
                     render={({ field }) => (
