@@ -265,7 +265,7 @@ router.post(
         if (validatedRow.PIs) {
           const PIsEmails = String(validatedRow.PIs).split(',').map(e => e.trim()).filter(Boolean);
           const PINames = String(row['otherPINames'] || '').split(',').map(n => n.trim());
-          const PIs = PIsEmails.map((email, idx) => {
+          let PIs = PIsEmails.map((email, idx) => {
             let name = PINames[idx] || undefined;
             if (name && typeof name === 'string' && email && name.trim().toLowerCase() === email.split('@')[0].toLowerCase()) {
               name = undefined;
@@ -299,6 +299,26 @@ router.post(
             }
           }
         }
+        let [mainPI] = await db
+          .select()
+          .from(investigators)
+          .where(eq(investigators.email, validatedRow.piEmail));
+        if (!mainPI) {
+          [mainPI] = await db
+            .insert(investigators)
+            .values({
+              name: validatedRow.piName || validatedRow.piEmail.split("@")[0],
+              email: validatedRow.piEmail,
+            })
+            .returning();
+        }
+        await db
+          .insert(projectPIs)
+          .values({
+            projectId: project.id,
+            investigatorId: mainPI.id,
+          });
+          
         results.successful++;
       } catch (error) {
         results.failed++;

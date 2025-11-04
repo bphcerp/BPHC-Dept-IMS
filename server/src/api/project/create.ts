@@ -94,6 +94,7 @@ router.post(
       coPIRecords.push(coPIRecord);
     }
     const PIRecords: any[] = [];
+    PIs.push(pi);
     for (const PI of PIs) {
       let [PIRecord] = await db
         .insert(investigators)
