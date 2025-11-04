@@ -264,7 +264,7 @@ router.post(
         }
         if (validatedRow.PIs) {
           const PIsEmails = String(validatedRow.PIs).split(',').map(e => e.trim()).filter(Boolean);
-          const PINames = String(row['OtherPINames'] || '').split(',').map(n => n.trim());
+          const PINames = String(row['otherPINames'] || '').split(',').map(n => n.trim());
           const PIs = PIsEmails.map((email, idx) => {
             let name = PINames[idx] || undefined;
             if (name && typeof name === 'string' && email && name.trim().toLowerCase() === email.split('@')[0].toLowerCase()) {
