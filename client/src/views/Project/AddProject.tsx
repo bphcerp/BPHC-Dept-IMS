@@ -68,6 +68,7 @@ export default function AddProject() {
       title: "",
       pi: { name: "", email: "", department: "", campus: "", affiliation: "" },
       coPIs: [],
+      PIs: [],
       fundingAgency: "",
       fundingAgencyNature: "public_sector",
       sanctionedAmount: "",
@@ -80,11 +81,15 @@ export default function AddProject() {
       hasExtension: false,
     },
   });
-  const { fields, append, remove } = useFieldArray({
+  const { fields: fieldsCoPI, append: appendCoPI, remove: removeCoPI } = useFieldArray({
     control: form.control,
     name: "coPIs",
   });
-  const [piLoading, setPiLoading] = useState(false);
+  const { fields: fieldsPI, append: appendPI, remove: removePI } = useFieldArray({
+    control: form.control,
+    name: "PIs",
+  });
+  const [piLoading, setPiLoading] = useState<number | null>(null);
   const [coPiLoading, setCoPiLoading] = useState<number | null>(null);
 
   const onSubmit = async (data: projectSchemas.ProjectFormValues) => {
@@ -92,6 +97,14 @@ export default function AddProject() {
       await api.post("/project/create", data);
       toast.success("Project created successfully!");
       form.reset();
+      appendPI({
+        name: "",
+        email: "",
+        department: "",
+        campus: "",
+        affiliation: "",
+      });
+      setIsInternal(false);
     } catch (err) {
       const error = err as { response?: { status?: number; data?: { error?: string } } };
       if (error?.response?.status === 409 && error?.response?.data?.error === "Project already exists") {
@@ -102,45 +115,69 @@ export default function AddProject() {
     }
   };
 
-  const fetchPiDetails = async (email: string) => {
-    if (!email) return;
-    setPiLoading(true);
-    try {
-      const res = await api.get<FacultyResponse>("/project/faculty/by-email", { params: { email } });
-      const data = res.data;
-      if (data && data.success && data.faculty) {
-        form.setValue("pi.name", data.faculty.name || "");
-        form.setValue("pi.department", data.faculty.department || "");
-        const campus = extractCampusFromEmail(data.faculty.email) || data.faculty.room || "";
-        form.setValue("pi.campus", campus);
-        form.setValue("pi.affiliation", getAffiliationFromCampus(campus));
-      } else {
-        form.setValue("pi.name", "");
-        form.setValue("pi.department", "");
-        form.setValue("pi.campus", "");
-        form.setValue("pi.affiliation", "");
+  const fetchPiDetails = useCallback(
+    async (email: string, idx: number) => {
+      if (!email) return;
+      setPiLoading(idx);
+      try {
+        const res = await api.get<FacultyResponse>("/project/faculty/by-email", { params: { email } });
+        const data = res.data;
+        if (data && data.success && data.faculty) {
+          form.setValue(`PIs.${idx}.name`, data.faculty.name || "");
+          form.setValue(`PIs.${idx}.department`, data.faculty.department || "");
+          const campus = extractCampusFromEmail(data.faculty.email) || data.faculty.room || "";
+          form.setValue(`PIs.${idx}.campus`, campus);
+          form.setValue(`PIs.${idx}.affiliation`, getAffiliationFromCampus(campus));
+        } else {
+          form.setValue(`PIs.${idx}.name`, "");
+          form.setValue(`PIs.${idx}.department`, "");
+          form.setValue(`PIs.${idx}.campus`, "");
+          form.setValue(`PIs.${idx}.affiliation`, "");
+        }
+      } catch {
+        form.setValue(`PIs.${idx}.name`, "");
+        form.setValue(`PIs.${idx}.department`, "");
+        form.setValue(`PIs.${idx}.campus`, "");
+        form.setValue(`PIs.${idx}.affiliation`, "");
       }
-    } catch {
-      form.setValue("pi.name", "");
-      form.setValue("pi.department", "");
-      form.setValue("pi.campus", "");
-      form.setValue("pi.affiliation", "");
-    }
-    setPiLoading(false);
-  };
-
-  const debouncedFetchPiDetails = useRef(debounce((email: string) => { void fetchPiDetails(email); }, 500)).current;
-
+      setPiLoading(null);
+    },
+    [form]
+  );
+  const PiDebouncers = useRef<{ [idx: number]: (email: string) => void }>({});
   useEffect(() => {
-    const sub = form.watch((values, { name }) => {
-      if (name === "pi.email") {
-        if (values.pi && typeof values.pi.email === 'string') {
-          debouncedFetchPiDetails(values.pi.email);
+    updateMainPI();
+    fieldsPI.forEach((_field, idx) => {
+      if (!PiDebouncers.current[idx]) {
+        PiDebouncers.current[idx] = debounce((email: string) => { void fetchPiDetails(email, idx); }, 500);
+      }
+    });
+  }, [fieldsPI, fetchPiDetails]);
+  useEffect(() => {
+    const sub = form.watch((values, { name }) => {      
+      if (name && name.startsWith("PIs.")) {
+        updateMainPI();
+        const match = name.match(/^PIs\.(\d+)\.email$/);
+        if (match) {
+          const idx = Number(match[1]);
+          if (values.PIs && typeof values.PIs[idx]?.email === 'string') {
+            PiDebouncers.current[idx]?.(values.PIs[idx].email);
+          }
         }
       }
     });
     return () => sub.unsubscribe();
-  }, [form, debouncedFetchPiDetails]);
+  }, [form, fieldsPI]);
+  function updateMainPI() {
+    if (form.getValues("PIs").length > 0){
+      const mainPI = form.getValues("PIs.0");
+      form.setValue("pi.name", mainPI.name ?? "");
+      form.setValue("pi.email", mainPI.email ?? "");
+      form.setValue("pi.department", mainPI.department ?? "");
+      form.setValue("pi.campus", mainPI.campus ?? "");
+      form.setValue("pi.affiliation", mainPI.affiliation ?? "");
+    }
+  }
 
   const fetchCoPiDetails = useCallback(
     async (email: string, idx: number) => {
@@ -171,16 +208,14 @@ export default function AddProject() {
     },
     [form]
   );
-
   const coPiDebouncers = useRef<{ [idx: number]: (email: string) => void }>({});
   useEffect(() => {
-    fields.forEach((_field, idx) => {
+    fieldsCoPI.forEach((_field, idx) => {
       if (!coPiDebouncers.current[idx]) {
         coPiDebouncers.current[idx] = debounce((email: string) => { void fetchCoPiDetails(email, idx); }, 500);
       }
     });
-  }, [fields, fetchCoPiDetails]);
-
+  }, [fieldsCoPI, fetchCoPiDetails]);
   useEffect(() => {
     const sub = form.watch((values, { name }) => {
       if (name && name.startsWith("coPIs.")) {
@@ -194,7 +229,27 @@ export default function AddProject() {
       }
     });
     return () => sub.unsubscribe();
-  }, [form, fields]);
+  }, [form, fieldsCoPI]);
+
+  useEffect(() => {
+    appendPI({
+      name: "",
+      email: "",
+      department: "",
+      campus: "",
+      affiliation: "",
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isInternal) {
+      form.setValue("fundingAgency", "BITS Pilani Hyderabad Campus");
+      form.setValue("fundingAgencyNature", "private_industry");
+    } else {
+      form.setValue("fundingAgency", "");
+      form.setValue("fundingAgencyNature", "public_sector");
+    }
+  },[isInternal]);
 
   if (!authState) return <Navigate to="/" replace />;
   if (!checkAccess("project:create")) return <Navigate to="/404" replace />;
@@ -262,82 +317,120 @@ export default function AddProject() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Principal Investigator (PI)
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Principal Investigators
+                  </CardTitle>
+                  <Button 
+                    type="button" 
+                    onClick={() => appendPI({ name: "", email: "", department: "", campus: "", affiliation: "" })}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add PI
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="pi.email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address *</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input {...field} type="email" placeholder="Enter email address" />
-                            {piLoading && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pi.name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name *</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter full name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pi.department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter department" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pi.campus"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Campus</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter campus" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="pi.affiliation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Affiliation</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter affiliation" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {fieldsPI.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No PIs added yet. Click &quot;Add PI&quot; to add one.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {fieldsPI.map((field, idx) => (
+                      <div key={field.id} className="relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-medium text-gray-900">PI #{idx + 1}</h4>
+                          {fieldsPI.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removePI(idx)}
+                              className="flex items-center gap-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-gray-50 rounded-lg border">
+                          <FormField
+                            control={form.control}
+                            name={`PIs.${idx}.email` as const}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address *</FormLabel>
+                                <FormControl>
+                                  <div className="relative">
+                                    <Input {...field} type="email" placeholder="Enter email address" />
+                                    {piLoading === idx && <span className="absolute right-2 top-2 text-xs text-blue-500">Loading...</span>}
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`PIs.${idx}.name` as const}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Enter full name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`PIs.${idx}.department` as const}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Department</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Enter department" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`PIs.${idx}.campus` as const}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Campus</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Enter campus" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`PIs.${idx}.affiliation` as const}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Affiliation</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Enter affiliation" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -350,7 +443,7 @@ export default function AddProject() {
                   </CardTitle>
                   <Button 
                     type="button" 
-                    onClick={() => append({ name: "", email: "", department: "", campus: "", affiliation: "" })}
+                    onClick={() => appendCoPI({ name: "", email: "", department: "", campus: "", affiliation: "" })}
                     className="flex items-center gap-2"
                   >
                     <Plus className="h-4 w-4" />
@@ -359,14 +452,14 @@ export default function AddProject() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {fields.length === 0 ? (
+                {fieldsCoPI.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>No Co-PIs added yet. Click &quot;Add Co-PI&quot; to add one.</p>
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {fields.map((field, idx) => (
+                    {fieldsCoPI.map((field, idx) => (
                       <div key={field.id} className="relative">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-lg font-medium text-gray-900">Co-PI #{idx + 1}</h4>
@@ -374,7 +467,7 @@ export default function AddProject() {
                             type="button" 
                             variant="destructive" 
                             size="sm"
-                            onClick={() => remove(idx)}
+                            onClick={() => removeCoPI(idx)}
                             className="flex items-center gap-2"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -470,17 +563,12 @@ export default function AddProject() {
                       <FormItem>
                         <FormLabel>Type of Funding Agency *</FormLabel>
                         <FormControl>
-                          <select {...field} className="w-full border rounded-md p-3 text-base">
-                            <option value="external" onClick={()=>{
-                              setIsInternal(false);
-                              form.setValue("fundingAgency", "");
-                              form.setValue("fundingAgencyNature", "public_sector");
-                            }}>External</option>
-                            <option value="internal" onClick={()=>{
-                              setIsInternal(true);
-                              form.setValue("fundingAgency", "BITS Pilani Hyderabad Campus");
-                              form.setValue("fundingAgencyNature", "private_industry");
-                            }}>Internal</option>
+                          <select
+                            {...field}
+                            value={isInternal ? "internal" : "external"} 
+                            className="w-full border rounded-md p-3 text-base">
+                            <option value="external" onClick={() => setIsInternal(false)}>External</option>
+                            <option value="internal" onClick={() => setIsInternal(true)}>Internal</option>
                           </select>
                         </FormControl>
                         <FormMessage />

@@ -9,6 +9,16 @@ export const projectSchema = z.object({
     campus: z.string().optional(),
     affiliation: z.string().optional(),
   }),
+  PIs: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        email: z.string().email("Invalid email"),
+        department: z.string().optional(),
+        campus: z.string().optional(),
+        affiliation: z.string().optional(),
+      })
+    ),
   coPIs: z
     .array(
       z.object({
@@ -55,10 +65,11 @@ export type Project = {
   startDate: string;
   endDate: string;
   hasExtension: boolean;
-  coPIs?: CoPI[];
+  coPIs?: PI[];
+  PIs?: PI[];
 }
 
-export type CoPI = {
+export type PI = {
   id: string;
   name: string;
   email: string;
