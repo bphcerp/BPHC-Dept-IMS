@@ -249,7 +249,7 @@ export default function AddProject() {
       form.setValue("fundingAgency", "");
       form.setValue("fundingAgencyNature", "public_sector");
     }
-  },[isInternal]);
+  }, [isInternal]);
 
   if (!authState) return <Navigate to="/" replace />;
   if (!checkAccess("project:create")) return <Navigate to="/404" replace />;
@@ -557,24 +557,19 @@ export default function AddProject() {
                   <DollarSign className="h-5 w-5" />
                    Funding Information
                 </CardTitle>
-                <FormField
-                    name="fundingAgencyType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Type of Funding Agency *</FormLabel>
-                        <FormControl>
-                          <select
-                            {...field}
-                            value={isInternal ? "internal" : "external"} 
-                            className="w-full border rounded-md p-3 text-base">
-                            <option value="external" onClick={() => setIsInternal(false)}>External</option>
-                            <option value="internal" onClick={() => setIsInternal(true)}>Internal</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">
+                    Type of Funding Agency *
+                  </label>
+                  <select
+                    value={isInternal ? "internal" : "external"}
+                    onChange={e => setIsInternal(e.target.value === "internal")}
+                    className="w-full border rounded-md p-3 text-base"
+                  >
+                    <option value="external">External</option>
+                    <option value="internal">Internal</option>
+                  </select>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
