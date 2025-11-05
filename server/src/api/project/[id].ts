@@ -5,6 +5,7 @@ import {
   investigators,
   fundingAgencies,
   projectCoPIs,
+  projectPIs,
 } from "@/config/db/schema/project.ts";
 import { eq, inArray } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -52,7 +53,13 @@ router.get(
     if (coPIIds.length) {
       coPIs = await db.select().from(investigators).where(inArray(investigators.id, coPIIds));
     }
-    res.json({ ...project, coPIs });
+    const PILinks = await db.select().from(projectPIs).where(eq(projectPIs.projectId, id));
+    const PIIds = PILinks.map((link) => link.investigatorId).filter((id): id is string => !!id);
+    let PIs: any[] = [];
+    if (PIIds.length) {
+      PIs = await db.select().from(investigators).where(inArray(investigators.id, PIIds));
+    }
+    res.json({ ...project, coPIs, PIs });
   })
 );
 
