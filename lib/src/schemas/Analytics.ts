@@ -5,12 +5,13 @@ export type TimeGrouping = (typeof timeGrouping)[number];
 
 const timeGroupingEnum = z.enum(timeGrouping);
 
-export const graphEnumValues = ['line', 'pie', 'bar'] as const;
+export const graphEnumValues = ['line', 'bar'] as const;
+export const graphDataType = ['total', 'cumulative'] as const;
+export const graphMetricType = ['publications', 'citations', 'both'] as const;
 export const yAxisEnumValues = ["Publications","Publications Over Time","Citations","Citations Over Time","Publication Type Breakdown","Author Contributions"] as const
 
 export const GRAPH_OPTIONS : [{value: typeof graphEnumValues[number], label: string}, ...{value: string, label:string}[]] = [
     { value: "line", label: "Line Chart" },
-    { value: "pie", label: "Pie Chart",  },
     { value: "bar", label: "Bar Chart" },
 ] as const;
 
@@ -21,8 +22,8 @@ export const Y_AXIS_ALLOWED_TYPES : Record<typeof yAxisEnumValues[number], [stri
     "Publications Over Time": ["bar", "line"],
     "Citations": ["bar"],
     "Citations Over Time": ["bar", "line"],
-    "Publication Type Breakdown": ["pie", "bar"],
-    "Author Contributions": ["pie", "bar"]
+    "Publication Type Breakdown": ["bar"],
+    "Author Contributions": ["bar"]
 } as const;
 
 export const COLORS = [
@@ -73,6 +74,8 @@ export const presentationTemplateSchema = z.object({
         yAxis: z.enum(yAxisEnumValues).nullable(),
         graphType: z.enum(graphEnumValues).nullable(),
         color: z.enum(COLORS).nullable(),
+        dataType: z.enum(graphDataType).nullable(),
+        metricType: z.enum(graphMetricType).nullable()
     }))
 })
 

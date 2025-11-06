@@ -85,23 +85,27 @@ export const AnalyticsFilters: React.FC<Props> = ({ onSubmit, filterValues }) =>
     }
   }, [filterValues]);
 
-  // Select all authors when faculty list loads
   useEffect(() => {
     if (faculty && faculty.length > 0) {
-      setFilters((prev) => ({
-        ...prev,
-        authorIds: faculty.map((f) => f.authorId),
-      }));
-    }
-  }, [faculty]);
 
-  // Auto-submit once when defaults + faculty loaded
-  useEffect(() => {
-    if (faculty && faculty.length > 0 && filters.authorIds.length > 0) {
-      onSubmit(filters);
+      setFilters((prevFilters) => {
+    
+        if (prevFilters.authorIds.length > 0) {
+          return prevFilters; // No change needed
+        }
+
+        const newFilters = {
+          ...prevFilters,
+          authorIds: faculty.map((f) => f.authorId),
+        };
+
+        onSubmit(newFilters);
+
+        return newFilters;
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [faculty, filters.authorIds.length, filterValues]);
+  }, [faculty, onSubmit]);
+
 
   const toggleAuthor = (id: string) => {
     setFilters((prev) => ({

@@ -4,51 +4,44 @@ import { useState, useMemo, useRef, useEffect, forwardRef } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, X, Plus, Trash2, LayoutGrid } from "lucide-react";
 import { AnalyticsFilters } from "@/components/analytics/publications/AnalyticsFilter";
 import { analyticsSchemas } from "lib";
-import { ChartTooltip, ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
+import BarChart from "@/components/analytics/utils/graphs/BarChart";
+import ChartControls from "@/components/analytics/publications/ChartControls";
+import LineChart from "@/components/analytics/utils/graphs/LineChart";
+import { chartColors } from "@/components/analytics/utils/config/colors";
 import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    BarChart,
-    Bar,
-    Legend,
-} from "recharts";
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
 import api from "@/lib/axios-instance";
 import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS} = analyticsSchemas;
+const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS } = analyticsSchemas;
 type GraphValue = analyticsSchemas.GraphValue;
-const graphLabelMap = Object.fromEntries(GRAPH_OPTIONS.map(opt => [opt.value, opt.label]));
+
+export type DataType = "total" | "cumulative";
+export type MetricType = "publications" | "citations" | "both";
 
 interface GraphConfig {
     id: string;
     yAxis: keyof typeof Y_AXIS_ALLOWED_TYPES | null;
-    graphType: GraphValue | null
+    graphType: GraphValue | null;
     filters: analyticsSchemas.AnalyticsQuery | null;
-    color: (typeof COLORS)[number]
+    color: (typeof COLORS)[number];
+    dataType: DataType; // <-- Add this
+    metricType: MetricType; // <-- Add this
 };
 
 interface Slide {
     id: string;
+    title: string;
     graphs: GraphConfig[];
 };
 
@@ -60,95 +53,46 @@ const fetchAnalytics = async (
 };
 
 interface GraphRendererProps {
-    config: GraphConfig;
+    gConfig: GraphConfig;
     onRender?: () => void;
+    onConfigChange: (
+        field: keyof GraphConfig,
+        value: any
+    ) => void;
 }
 
 const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
-    ({ config, onRender }, ref) => {
 
-        const { data, isLoading, error: _error, isError } = useQuery<
-            analyticsSchemas.AnalyticsResponse | null,
+
+    ({ gConfig, onRender, onConfigChange }, ref) => {
+
+        const { data, isLoading, error, isError } = useQuery<
+            analyticsSchemas.AnalyticsResponse,
             Error
         >({
-            queryKey: ["analytics", config.filters, config.yAxis],
-            queryFn: () => {
-                if (config.filters)
-                    return fetchAnalytics(config.filters);
-                return null;
-            }
+            queryKey: ["analytics", gConfig.filters],
+            queryFn: () => fetchAnalytics(gConfig.filters!),
+            enabled: !!gConfig.filters,
         });
 
-        const chartConfig = useMemo(() => {
-            if (!data || !config.yAxis) return null;
-            const { yAxis } = config;
-
-            if (yAxis === "Publications Over Time" || yAxis === "Publications") {
-                return {
-                    chartData: data.publicationTimeSeries,
-                    xKey: "period",
-                    yKey: yAxis === "Publications" ? "total" : "cumulative",
-                };
-            }
-            if (yAxis === "Citations Over Time" || yAxis === "Citations") {
-                return {
-                    chartData: data.citationTimeSeries,
-                    xKey: "period",
-                    yKey: yAxis === "Citations" ? "total" : "cumulative",
-                };
-            }
-            if (yAxis === "Author Contributions") {
-                return {
-                    chartData: data.authorContributions,
-                    xKey: "name",
-                    yKey: "count",
-                };
-            }
-            if (yAxis === "Publication Type Breakdown") {
-                return {
-                    chartData: data.publicationTypeBreakdown,
-                    xKey: "type",
-                    yKey: "count",
-                };
-            }
-            return null;
-        }, [data, config.yAxis]);
-
-        const subtitle = useMemo(() => {
-            if (!chartConfig || !config.filters) return null;
-            const { startYear, startMonth, endYear, endMonth } = config.filters ?? {};
-            if (!startYear || !endYear) return null;
-            const formatDate = (year: number, month: number) => {
-                const date = new Date(year, month - 1); // month is 0-indexed
-                return date.toLocaleString('default', { month: 'short' }) + ` ${year}`;
-            };
-            return `${formatDate(startYear, startMonth)} – ${formatDate(endYear, endMonth)}`;
-        }, [chartConfig, config.filters]);
-
         useEffect(() => {
-            if (!isLoading && onRender) {
-                setTimeout(onRender, 100);
+            // Call onRender when loading is finished (success or error)
+            // This signals to the parent that the component is ready to be captured
+            if (!isLoading) {
+                onRender?.();
             }
         }, [isLoading, onRender]);
 
-        if (isLoading) {
-            return (
-                <div className="flex h-full w-full items-center justify-center min-h-[400px]" ref={ref}>
-                    <Loader2 className="mr-2 h-10 w-10 animate-spin" />
-                </div>
-            )
-        }
-
         if (isError) {
             return (
-                <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]" ref={ref}>
-                    <Card className="border-0 shadow-xl">
-                        <CardContent className="p-8 text-center min-w-[300px]">
+                <div ref={ref} className="flex h-[60vh] w-full items-center justify-center bg-gradient-to-br from-background to-muted/30">
+                    <Card className="w-full max-w-md border-0 shadow-xl">
+                        <CardContent className="p-8 text-center">
                             <p className="mb-2 text-xl font-semibold text-destructive">
                                 Error loading data
                             </p>
-                            <p className="text-sm p-15 text-muted-foreground">
-                                Could not load graph. Check filters.
+                            <p className="text-sm text-muted-foreground">
+                                {error.message || "Something went wrong. Please try again later."}
                             </p>
                         </CardContent>
                     </Card>
@@ -156,79 +100,153 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
             );
         }
 
-        if (!data || !chartConfig) {
-            return (
-                <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]" ref={ref}>
-                    <Card className="border-0 shadow-xl">
-                        <CardContent className="p-8 text-center min-w-[300px]">
-                            <p className="mb-2 text-xl font-semibold text-destructive">
-                                Error processing data
-                            </p>
-                            <p className="text-sm p-15 text-muted-foreground">
-                                The data received could not be processed.
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-            );
+        const { graphType, dataType, metricType } = gConfig;
+
+        const publications = data?.publicationTimeSeries ?? [];
+        const citations = data?.citationTimeSeries ?? [];
+
+        const chartConfig = {
+            publications: {
+                color: chartColors.blue,
+                label: "Publications",
+                totalLabel: "Publications Per Period",
+                cumulativeLabel: "Cumulative Publications",
+            },
+            citations: {
+                color: chartColors.green,
+                label: "Citations",
+                totalLabel: "Citations Per Period",
+                cumulativeLabel: "Cumulative Citations",
+            },
+        };
+
+        const config = chartConfig[metricType === "citations" ? "citations" : "publications"];
+        const chartTitle =
+            dataType === "total"
+                ? (metricType === "both"
+                    ? "Publications & Citations Per Period"
+                    : config.totalLabel)
+                : (metricType === "both"
+                    ? "Cumulative Publications & Citations"
+                    : config.cumulativeLabel);
+        const chartDescription =
+            dataType === "total"
+                ? "Metric count per selected time interval"
+                : "Metric growth over time";
+
+        // --- Build Chart.js Dataset ---
+        let chartJsData;
+
+        if (metricType === "both") {
+            chartJsData = {
+                labels: publications.map((d) => d.period),
+                datasets: [
+                    {
+                        label: chartConfig.publications.label,
+                        data: publications.map((d) => d[dataType]),
+                        backgroundColor: chartConfig.publications.color.background,
+                        borderColor: chartConfig.publications.color.border,
+                    },
+                    {
+                        label: chartConfig.citations.label,
+                        data: citations.map((d) => d[dataType]),
+                        backgroundColor: chartConfig.citations.color.background,
+                        borderColor: chartConfig.citations.color.border,
+                    },
+                ],
+            };
+        } else {
+            const chartSource =
+                metricType === "publications" ? publications : citations;
+
+            chartJsData = {
+                labels: chartSource.map((d) => d.period),
+                datasets: [
+                    {
+                        label: config.label,
+                        data: chartSource.map((d) => d[dataType]),
+                        backgroundColor: config.color.background,
+                        borderColor: config.color.border,
+                    },
+                ],
+            };
         }
-
-        const { chartData, xKey, yKey } = chartConfig;
-
+        console.log("I")
         return (
-            <div className="flex flex-col items-center w-full shadow-md border rounded-lg p-4 bg-white" ref={ref}>
-                <h1 className="text-lg font-medium text-black">{config.yAxis}</h1>
-                {subtitle && (
-                    <h2 className="text-sm text-muted-foreground mb-2">{subtitle}</h2>
-                )}
-                {(config.graphType == 'bar') ?
-                    <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#22c55e" } }} className="w-full">
-                        <ResponsiveContainer width="100%" height={400}>
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey={xKey} />
-                                <YAxis />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Bar dataKey={yKey} fill={config.color} isAnimationActive={false} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </ChartContainer>
-                    : (config.graphType == "line") ?
-                        <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#10b981" } }} className="w-full">
-                            <ResponsiveContainer width="100%" height={400}>
-                                <LineChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey={xKey} />
-                                    <YAxis />
-                                    <ChartTooltip content={<ChartTooltipContent />} />
-                                    <Line type="monotone" dataKey={yKey} stroke={config.color} strokeWidth={3} dot={false} isAnimationActive={false} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                        : (config.graphType == "pie") ?
-                            <ChartContainer config={{ [yKey]: { label: config.yAxis, color: "#a855f7" } }} className="w-full">
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <PieChart>
-                                        <Pie
-                                            data={chartData}
-                                            dataKey={yKey}
-                                            nameKey={xKey}
-                                            isAnimationActive={false}
-                                        >
-                                            {chartData.map((_, idx) => (
-                                                <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Legend />
-                                        <ChartTooltip content={<ChartTooltipContent />} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
-                            : null
-                }
+            <div ref={ref} className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+                <div className="lg:col-span-2">
+                    <AnalyticsFilters
+                        filterValues={gConfig.filters ?? undefined}
+                        onSubmit={(filters) =>
+                            onConfigChange("filters", {
+                                ...filters,
+                                authorIds: filters.authorIds as [string, ...string[]],
+                            })
+                        }
+                    />
+                </div>
+                <div className="container w-full mx-auto px-4 py-12 sm:px-6 lg:px-8 rounded-3xl">
+                    <div className="mx-auto space-y-12 rounded-2xl">
+                        <div className="gap-6">
+
+                            <div className="w-full space-y-10">
+                                {isLoading && (
+                                    <div className="flex h-full w-full items-center justify-center">
+                                        <Loader2 className="mr-2 h-20 w-20 animate-spin" />
+                                    </div>
+                                )}
+
+                                {data && (
+                                    <div className="space-y-4">
+                                        <Card className="border-0 shadow-xl">
+                                            <CardHeader>
+                                                <CardTitle className="text-lg font-semibold">
+                                                    Chart Configuration
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ChartControls
+                                                    chartType={graphType ?? "bar"}
+                                                    setChartType={(value) => onConfigChange("graphType", value)}
+                                                    dataType={dataType}
+                                                    setDataType={(value) => onConfigChange("dataType", value)}
+                                                    metricType={metricType}
+                                                    setMetricType={(value) => onConfigChange("metricType", value)}
+                                                />
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="border-0 shadow-xl">
+                                            <CardHeader>
+                                                <CardTitle className="text-2xl font-bold">
+                                                    {chartTitle}
+                                                </CardTitle>
+                                                <CardDescription>{chartDescription}</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {graphType === "bar" ? (
+                                                    <BarChart title={chartTitle} data={chartJsData} />
+                                                ) : (
+                                                    <LineChart
+                                                        title={chartTitle}
+                                                        data={chartJsData}
+                                                        smooth
+                                                        fill={dataType === "cumulative"}
+                                                    />
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        )
+        );
+
     }
+
+
 )
 
 const fetchTemplates = async (): Promise<
@@ -319,6 +337,7 @@ export default function PresentationCreator() {
                     }
                     const newSlides: Slide[] = Array.from({ length: template.slides }, () => ({
                         id: crypto.randomUUID(),
+                        title: "Slide",
                         graphs: []
                     }));
 
@@ -329,7 +348,9 @@ export default function PresentationCreator() {
                                 yAxis: graph.yAxis,
                                 graphType: graph.graphType,
                                 filters: null,
-                                color: graph.color ?? COLORS[0]
+                                color: graph.color ?? COLORS[0],
+                                dataType: graph.dataType ?? analyticsSchemas.graphDataType[0],
+                                metricType: graph.metricType ?? analyticsSchemas.graphMetricType[0]
                             });
                         }
                     });
@@ -394,17 +415,22 @@ export default function PresentationCreator() {
     const addSlide = () => {
         const newGraph: GraphConfig = {
             id: crypto.randomUUID(),
-            yAxis: null,
-            graphType: null,
+            yAxis: "Publications", // Set a default
+            graphType: "bar",      // Set a default
             filters: null,
-            color: COLORS[0]
+            color: COLORS[0],
+            dataType: "total",     // <-- Set default
+            metricType: "publications" // <-- Set default
         };
         const newSlide: Slide = {
             id: crypto.randomUUID(),
+            title: "Slide",
             graphs: [newGraph]
         };
 
         setSlides((prvs) => [...prvs, newSlide]);
+        setSelectedGraphId(newGraph.id);
+        setSelectedSlideId(newSlide.id);
     };
 
     const getPresentation = async () => {
@@ -532,10 +558,12 @@ export default function PresentationCreator() {
     const addGraphToSlide = (slideId: string) => {
         const newGraph: GraphConfig = {
             id: crypto.randomUUID(),
-            yAxis: null,
-            graphType: null,
+            yAxis: "Publications", // Set a default
+            graphType: "bar",      // Set a default
             filters: null,
-            color: COLORS[0]
+            color: COLORS[0],
+            dataType: "total",     // <-- Set default
+            metricType: "publications" // <-- Set default
         };
         const slide = slides.find((slide) => slide.id == slideId);
         if (slide && slide.graphs.length >= 4) return;
@@ -580,7 +608,6 @@ export default function PresentationCreator() {
                     let newGraphs = slide.graphs.map(graph => {
                         if (graph.id === graphId) {
                             let updatedGraph = { ...graph, [field]: value };
-
                             if (field === "yAxis" && updatedGraph.yAxis) {
                                 const allowedTypes = Y_AXIS_ALLOWED_TYPES[updatedGraph.yAxis] as readonly GraphValue[];
                                 if (!allowedTypes.includes(updatedGraph.graphType!)) {
@@ -597,6 +624,16 @@ export default function PresentationCreator() {
             })
         );
     };
+
+    const setSlideTitle = (slideId: string, title: string) => {
+        setSlides(prevSlides => prevSlides.map(
+            slide => {
+                if (slide.id == slideId) {
+                    return { ...slide, title: title };
+                } else return slide;
+            }
+        ))
+    }
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 ">
@@ -642,8 +679,8 @@ export default function PresentationCreator() {
                             slides.map((slide, index) => {
                                 return (
                                     <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
-                                        <div className="px-3 flex justify-center items-center">
-                                            <h4 className="font-bold">{index + 1} .</h4>
+                                        <div className="px-3 flex justify-center items-center overflow-x-auto">
+                                            <h4 className="font-bold flex-shrink-0">{index + 1} .</h4>
                                             <Button
                                                 onClick={(e) => {
                                                     e.stopPropagation()
@@ -655,8 +692,14 @@ export default function PresentationCreator() {
                                             >
                                                 <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
+                                            <Input
+                                                type="text"
+                                                value={slide.title}
+                                                onChange={(e) => setSlideTitle(slide.id, e.target.value)}
+                                                className="bg-transparent border"
+                                            />
                                         </div>
-                                        <div className="space-x-1">
+                                        <div className="space-x-1 flex justify-center items-center">
                                             {
                                                 slide.graphs.map((graph, gIndex) => {
                                                     return (
@@ -706,100 +749,20 @@ export default function PresentationCreator() {
                         </div>
                         <div className="flex-1 overflow-y-auto mt-6">
                             {
-
-                                (selectedGraphId && selectedSlideId) ?
+                                (selectedGraphId && selectedSlideId && selectedGraph) ? // Make sure selectedGraph is not null
                                     (
                                         <div className="space-y-4">
-                                            <AnalyticsFilters
-                                                onSubmit={(filters) => updateGraphConfig(selectedSlideId, selectedGraphId, 'filters', filters)}
-                                                filterValues={selectedGraph?.filters ?? undefined}
-                                            >
-
-                                            </AnalyticsFilters>
-                                            <div className="justify-between space-x-4 w-full flex">
-                                                <Select
-                                                    value={selectedGraph?.yAxis ?? ""}
-                                                    onValueChange={(value) =>
-                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "yAxis", value)
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Y-Axis" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {
-                                                            (Object.keys(Y_AXIS_ALLOWED_TYPES)).map((opt) =>
-                                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                                            )
-                                                        }
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select
-                                                    value={selectedGraph?.graphType ?? ""}
-                                                    onValueChange={(value) =>
-                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "graphType", value)
-                                                    }
-                                                    disabled={!selectedGraph?.yAxis}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Graph Type" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {
-                                                            selectedGraph?.yAxis && Y_AXIS_ALLOWED_TYPES[selectedGraph.yAxis].map((val) => (
-                                                                <SelectItem key={val} value={val}>{graphLabelMap[val]}</SelectItem>
-                                                            ))
-                                                        }
-                                                    </SelectContent>
-                                                </Select>
-                                                <Select
-                                                    value={selectedGraph?.color}
-                                                    onValueChange={(value) =>
-                                                        updateGraphConfig(selectedSlideId, selectedGraphId, "color", value)
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        {selectedGraph?.color ? (
-                                                            <div className="flex items-center w-full gap-2">
-                                                                <div
-                                                                    className="h-5 w-5 rounded border border-gray-300"
-                                                                    style={{ backgroundColor: selectedGraph.color }}
-                                                                />
-                                                                <span className="text-sm">{selectedGraph.color}</span>
-                                                            </div>
-                                                        ) : (
-                                                            <SelectValue placeholder="Color" />
-                                                        )}
-                                                    </SelectTrigger>
-                                                    <SelectContent className="p-0">
-                                                        {COLORS.map((opt) => (
-                                                            <SelectItem
-                                                                key={opt}
-                                                                value={opt}
-                                                                className="h-8 cursor-pointer border border-gray-300 rounded-sm transition-transform hover:scale-[1.02] p-0 focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                                style={{ backgroundColor: opt }}
-                                                            >
-                                                                <span className="sr-only">{opt}</span>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            {
-                                                selectedGraph ? (
-                                                    <GraphRenderer config={selectedGraph} onRender={handleRenderComplete} ref={el => {
-                                                        chartRef.current = el;
-                                                    }} />
-                                                ) : (
-                                                    <Card className="border-0 shadow-xl">
-                                                        <CardContent className="p-8 text-center min-w-[300px]">
-                                                            <p>Unable to find graph</p>
-                                                        </CardContent>
-                                                    </Card>
-                                                )
-                                            }
-
+                                            <GraphRenderer
+                                                key={selectedGraph.id} // Add a key to force re-mount
+                                                gConfig={selectedGraph}
+                                                onRender={handleRenderComplete}
+                                                ref={el => {
+                                                    chartRef.current = el;
+                                                }}
+                                                onConfigChange={(field, value) => {
+                                                    updateGraphConfig(selectedSlideId, selectedGraphId, field, value);
+                                                }}
+                                            />
                                         </div>
                                     )
                                     : (
@@ -857,7 +820,7 @@ export default function PresentationCreator() {
                                                     >
                                                         <Trash2 className="h-4 w-4 text-red-500" />
                                                     </Button>
-                                                    <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>  
+                                                    <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>
                                                 </div>
                                                 <div className="justify-right space-x-2">
                                                     <span className="font-normal font-muted text-xs">{template.slides} slides</span>
