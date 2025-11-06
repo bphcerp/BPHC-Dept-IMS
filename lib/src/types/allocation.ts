@@ -78,6 +78,7 @@ export type SemesterMinimal = NewSemester & {
     createdAt: Date;
     updatedAt: Date;
     summaryHidden: boolean;
+    active: boolean
 };
 
 export type Semester = SemesterMinimal & {

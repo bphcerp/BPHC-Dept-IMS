@@ -38,7 +38,7 @@ const serverSchema = z.object({
     DEPARTMENT_EMAIL: z.string().email().optional(),
     TTD_API_URL: z.string().url().min(1),
     TTD_DEPARTMENT_NAME: z.string(),
-    IS_STAGING: z.string().optional()
+    IS_STAGING: z.coerce.boolean().optional()
 });
 
 const parsed = serverSchema.parse(process.env);

@@ -2,7 +2,6 @@ import express from "express";
 import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { allocationForm } from "@/config/db/schema/allocationFormBuilder.ts";
 import { eq } from "drizzle-orm";
 import assert from "assert";
 import { getLatestSemester } from "./getLatest.ts";
@@ -13,7 +12,7 @@ const router = express.Router();
 
 router.post(
     "/",
-    checkAccess("allocation:form:publish"),
+    checkAccess(),
     asyncHandler(async (req, res, next) => {
         assert(req.user);
         const latestSemester = await getLatestSemester();
@@ -33,30 +32,13 @@ router.post(
             );
         }
 
-        if (latestSemester.allocationStatus !== "formCollection") {
-            return next(
-                new HttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Semester not in form collection phase"
-                )
-            );
-        }
+        await db
+            .update(semester)
+            .set({ allocationStatus: "completed" })
+            .where(eq(semester.id, latestSemester.id))
+            .returning();
 
-        await db.transaction(async (tx) => {
-            const semesterUpdated = await tx
-                .update(semester)
-                .set({ allocationStatus: "inAllocation" })
-                .where(eq(semester.id, latestSemester.id))
-                .returning();
-            await tx
-                .update(allocationForm)
-                .set({
-                    formDeadline: new Date(),
-                })
-                .where(eq(allocationForm.id, semesterUpdated[0].formId!));
-        });
-
-        res.send("Form ended successfully");
+        res.send("Semester marked as completed successfully");
     })
 );
 

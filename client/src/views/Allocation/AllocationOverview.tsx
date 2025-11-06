@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -40,19 +41,23 @@ import {
   DEPARTMENT_NAME_FULL,
   FRONTEND_URL,
 } from "@/lib/constants";
-import { Maximize2Icon } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, Maximize2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { AxiosError } from "axios";
 import { Role } from "@/components/admin/RoleList";
 import PushToTDDialog from "@/components/allocation/PushToTDDialog";
+import { degreeTypes } from "../../../../lib/src/schemas/Allocation";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export const getFormattedAY = (year: number) => `${year}-${year + 1}`;
 
 export const AllocationOverview = () => {
   const queryClient = useQueryClient();
   const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
+  const [isFinishDialogOpen, setIsFinishDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [emailPreviewed, setEmailPreviewed] = useState(false);
   const editorTheme = useTheme();
@@ -121,16 +126,32 @@ export const AllocationOverview = () => {
         }),
   });
 
-  const endMutation = useMutation({
+  const endFormMutation = useMutation({
     mutationFn: () =>
       api
-        .post("/allocation/semester/end")
+        .post("/allocation/semester/endForm")
         .then(() => {
-          toast.success("Reminder successfully sent");
+          toast.success("Form successfully closed");
           queryClient.invalidateQueries(["semester"]);
         })
         .catch((e) => {
-          console.error("Error while sending reminder", e);
+          console.error("Error while closing form", e);
+          toast.error("Something went wrong");
+        }),
+  });
+  
+
+  const endSemesterMutation = useMutation({
+    mutationFn: () =>
+      api
+        .post("/allocation/semester/end")
+        .then(async () => {
+          toast.success("Semester marked as completed successfully");
+          queryClient.invalidateQueries(["allocation", "semester"]);
+          setIsFinishDialogOpen(false);
+        })
+        .catch((e) => {
+          console.error("Error while marking semester as complete", e);
           toast.error("Something went wrong");
         }),
   });
@@ -475,7 +496,7 @@ Hyderabad Campus<span>
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => endMutation.mutate()}
+                onClick={() => endFormMutation.mutate()}
               >
                 End Responses Collection
               </Button>
@@ -487,6 +508,157 @@ Hyderabad Campus<span>
                 <Link to="/allocation/summary">View Current Allocation</Link>
               </Button>
               <PushToTDDialog />
+              <Dialog
+                open={isFinishDialogOpen}
+                onOpenChange={(open) => {
+                  setIsFinishDialogOpen(open);
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button className="bg-green-600 text-white hover:bg-green-600/90">
+                    Finish Allocation
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-5xl">
+                  <DialogHeader>
+                    <DialogTitle>Confirm Finish Allocation</DialogTitle>
+                    <DialogDescription>
+                      This operation will mark the allocation as completed and
+                      trigger handout requests. Please review the status below
+                      before proceeding.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid max-h-[60vh] grid-cols-1 gap-6 overflow-y-auto p-1">
+                    {/* Stats summary cards */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      {degreeTypes.map((degree) => {
+                        const stats = latestSemester.allocationStats?.[
+                          degree
+                        ] || {
+                          notStarted: 0,
+                          pending: 0,
+                          completed: 0,
+                        };
+                        return (
+                          <Card key={degree}>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-lg font-semibold text-primary">
+                                {degree}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-1.5">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Not Started:
+                                </span>
+                                <span className="font-bold text-foreground">
+                                  {stats.notStarted}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Pending:
+                                </span>
+                                <span className="font-bold text-orange-600">
+                                  {stats.pending}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Allocated:
+                                </span>
+                                <span className="font-bold text-green-600">
+                                  {stats.completed}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+
+                    {/* Totals and confirmation message */}
+                    {(() => {
+                      const statsArr = degreeTypes.map(
+                        (degree) =>
+                          latestSemester.allocationStats?.[degree] || {
+                            notStarted: 0,
+                            pending: 0,
+                          }
+                      );
+                      const totalNotStarted = statsArr.reduce(
+                        (acc, s) => acc + (s.notStarted ?? 0),
+                        0
+                      );
+                      const totalPending = statsArr.reduce(
+                        (acc, s) => acc + (s.pending ?? 0),
+                        0
+                      );
+
+                      if (totalNotStarted > 0 || totalPending > 0) {
+                        return (
+                          <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Warning</AlertTitle>
+                            <AlertDescription>
+                              There are{" "}
+                              <span className="font-bold">
+                                {totalNotStarted}
+                              </span>{" "}
+                              courses not started and{" "}
+                              <span className="font-bold">{totalPending}</span>{" "}
+                              courses pending allocation. Please ensure all
+                              courses are properly allocated.
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      }
+
+                      return (
+                        <Alert className="border-green-600 text-green-700 dark:border-green-500 dark:text-green-400">
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500" />
+                          <AlertTitle className="text-green-700 dark:text-green-400">
+                            Allocation Complete
+                          </AlertTitle>
+                          <AlertDescription>
+                            All courses marked for allocation have been
+                            successfully allocated.
+                          </AlertDescription>
+                        </Alert>
+                      );
+                    })()}
+
+                    {/* Handout creation notice */}
+                    <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                      <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <AlertTitle className="text-blue-800 dark:text-blue-300">
+                        Automatic Handout Creation
+                      </AlertTitle>
+                      <AlertDescription className="text-blue-700 dark:text-blue-300/90">
+                        By confirming, the system will automatically initiate
+                        handout request creation for all courses with an
+                        Instructor-in-Charge (IC).
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+
+                  <DialogFooter className="border-t pt-4">
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button
+                      className="bg-green-600 text-white hover:bg-green-600/90"
+                      disabled={endSemesterMutation.isLoading}
+                      onClick={() => endSemesterMutation.mutate()}
+                    >
+                      {endSemesterMutation.isLoading
+                        ? "Finishing..."
+                        : "Confirm & Finish Allocation"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>
@@ -630,7 +802,7 @@ Hyderabad Campus<span>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            latestSemester.allocationStatus === 'inAllocation' ? <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {(["FD", "HD", "PhD"] as const).map((degree) => {
                 const stats = latestSemester.allocationStats?.[degree];
                 return (
@@ -662,6 +834,13 @@ Hyderabad Campus<span>
                   </div>
                 );
               })}
+            </div> :  <div className="flex h-full items-center justify-center">
+              <div className="rounded-xl border border-primary/30 bg-white p-8 text-center shadow-md">
+                <p className="text-lg font-medium text-gray-600">
+                  Allocation Complete
+                </p>
+                <span className="text-sm font-bold">Semester is still active</span>
+              </div>
             </div>
           )
         ) : (

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
 import { useState, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/Auth";
-import AssignInstructorDialog from "@/components/Allocation/AssignInstructorDialog";
+import AssignInstructorDialog from "@/components/allocation/AssignInstructorDialog";
 import NotFoundPage from "@/layouts/404";
 import {
   Select,

@@ -121,6 +121,7 @@ export const semester = pgTable(
         }),
 
         summaryHidden: boolean("summary_hidden").default(true).notNull(),
+        active: boolean("active").default(false).notNull(),
 
         startDate: timestamp("start_date").notNull(),
         endDate: timestamp("end_date").notNull(),
