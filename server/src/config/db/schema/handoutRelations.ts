@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import { files } from "./form.ts";
 import { courseHandoutRequests } from "./handout.ts";
 import { users } from "./admin.ts";
+import { semester } from "./allocation.ts";
 
 export const fileFieldsHandoutsRelations = relations(files, ({ one }) => ({
     filePath: one(courseHandoutRequests, {
@@ -33,6 +34,11 @@ export const courseHandoutRequestsRelations = relations(
             fields: [courseHandoutRequests.previousSubmissionId],
             references: [courseHandoutRequests.id],
             relationName: "previousSubmission",
+        }),
+        semester: one(semester, {
+            fields: [courseHandoutRequests.semesterId],
+            references: [semester.id],
+            relationName: "handoutSemester",
         }),
     })
 );

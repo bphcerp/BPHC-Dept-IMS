@@ -6,10 +6,12 @@ import {
     timestamp,
     boolean,
     pgEnum,
+    uuid
 } from "drizzle-orm/pg-core";
 import { users } from "./admin.ts";
 import { handoutSchemas } from "lib";
 import { files } from "./form.ts";
+import { semester } from "./allocation.ts";
 
 export const handoutStatusEnum = pgEnum(
     "handout_status_enum",
@@ -53,4 +55,7 @@ export const courseHandoutRequests = pgTable("course_handout_requests", {
     deadline: timestamp("deadline", { withTimezone: true }),
     comments: text("comments"),
     category: categoryEnum("category").notNull(),
+    semesterId: uuid("semester_id").references(()=> semester.id, {
+        onDelete: "cascade",
+    }),
 });

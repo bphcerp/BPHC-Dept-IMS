@@ -7,6 +7,7 @@ import assert from "assert";
 import { getLatestSemester } from "./getLatest.ts";
 import { HttpError, HttpCode } from "@/config/errors.ts";
 import { semester } from "@/config/db/schema/allocation.ts";
+import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 
 const router = express.Router();
 
@@ -37,6 +38,24 @@ router.post(
             .set({ allocationStatus: "completed" })
             .where(eq(semester.id, latestSemester.id))
             .returning();
+
+        const curr_allocations = await db.query.masterAllocation.findMany({
+            where: (master) => eq(master.semesterId, latestSemester.id),
+            with: {
+                course: true,
+            },
+        });
+
+        for (const allocation of curr_allocations) {
+            if (allocation.course && allocation.course.offeredTo != "PhD")
+                await db.insert(courseHandoutRequests).values({
+                    courseName: allocation.course.name,
+                    courseCode: allocation.course.code,
+                    icEmail: allocation.icEmail!,
+                    semesterId: latestSemester.id,
+                    category: allocation.course.offeredTo,
+                });
+        }
 
         res.send("Semester marked as completed successfully");
     })

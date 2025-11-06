@@ -14,6 +14,7 @@ import updateReviewer from "./updateReviewer.ts";
 import getAllDCAMember from "./getAllDCAMember.ts";
 import reminder from "./reminder.ts";
 import exportSummary from "./exportSummary.ts";
+import semester from "./getLatestCompletedSemester.ts";
 
 const router = express.Router();
 
@@ -32,5 +33,6 @@ router.use("/dcaconvenor/getAllDCAMember", getAllDCAMember);
 router.use("/dcaconvenor/finalDecision", finalDecision);
 router.use("/dcaconvenor/reminder", reminder);
 router.use("/dcaconvenor/exportSummary", exportSummary);
+router.use("/semester", semester);
 
 export default router;

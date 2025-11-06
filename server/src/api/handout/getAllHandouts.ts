@@ -2,12 +2,20 @@ import db from "@/config/db/index.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import { getLatestCompletedSemester } from "./getLatestCompletedSemester.ts";
 const router = express.Router();
 
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (_req, res, _next) => {
+    asyncHandler(async (_req, res, next) => {
+        const semester = await getLatestCompletedSemester();
+        if (!semester) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "No completed semester found")
+            );
+        }
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
                 with: {
@@ -22,6 +30,7 @@ router.get(
                         },
                     },
                 },
+                where: (handout, { eq }) => eq(handout.semesterId, semester.id),
             })
         ).map((handout) => {
             return {

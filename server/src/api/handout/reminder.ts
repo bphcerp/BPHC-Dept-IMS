@@ -1,7 +1,7 @@
 import db from "@/config/db/index.ts";
 import { courseHandoutRequests } from "@/config/db/schema/handout.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import express from "express";
 import { handoutSchemas } from "lib";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -10,14 +10,22 @@ import assert from "assert";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
+import { HttpCode, HttpError } from "@/config/errors.ts";
+import { getLatestCompletedSemester } from "./getLatestCompletedSemester.ts";
 
 const router = express.Router();
 
 router.post(
     "/",
     checkAccess(),
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req, res, next) => {
         assert(req.user);
+        const semester = await getLatestCompletedSemester();
+        if (!semester) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "No completed semester found")
+            );
+        }
         const parsed = handoutSchemas.deadlineBodySchema.parse({
             time: new Date((req.body as { time: string }).time),
             emailBody: req.body.emailBody,
@@ -27,7 +35,12 @@ router.post(
         const handouts = await db
             .update(courseHandoutRequests)
             .set({ deadline: parsed.time })
-            .where(eq(courseHandoutRequests.status, "notsubmitted"))
+            .where(
+                and(
+                    eq(courseHandoutRequests.status, "notsubmitted"),
+                    eq(courseHandoutRequests.semesterId, semester.id)
+                )
+            )
             .returning();
         const todos: Parameters<typeof createTodos>[0] = [];
         const notifications: Parameters<typeof createNotifications>[0] = [];

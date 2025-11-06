@@ -10,8 +10,9 @@ import {
     allocationCourseGroup,
     allocationCourseGroupMapping,
 } from "./allocation.ts";
+import { courseHandoutRequests } from "./handout.ts";
 
-export const semesterRelations = relations(semester, ({ one }) => ({
+export const semesterRelations = relations(semester, ({ one, many }) => ({
     dcaConvenerAtStartOfSem: one(faculty, {
         fields: [semester.dcaConvenerAtStartOfSemEmail],
         references: [faculty.email],
@@ -24,6 +25,7 @@ export const semesterRelations = relations(semester, ({ one }) => ({
         fields: [semester.formId],
         references: [allocationForm.id],
     }),
+    handouts: many(courseHandoutRequests),
 }));
 
 export const masterAllocationRelations = relations(
@@ -77,13 +79,16 @@ export const coursesRelations = relations(course, ({ many }) => ({
     groups: many(allocationCourseGroupMapping),
 }));
 
-export const coursesToGroupsRelations = relations(allocationCourseGroupMapping, ({ one }) => ({
-  group: one(allocationCourseGroup, {
-    fields: [allocationCourseGroupMapping.groupId],
-    references: [allocationCourseGroup.id],
-  }),
-  course: one(course, {
-    fields: [allocationCourseGroupMapping.courseCode],
-    references: [course.code],
-  }),
-}));
+export const coursesToGroupsRelations = relations(
+    allocationCourseGroupMapping,
+    ({ one }) => ({
+        group: one(allocationCourseGroup, {
+            fields: [allocationCourseGroupMapping.groupId],
+            references: [allocationCourseGroup.id],
+        }),
+        course: one(course, {
+            fields: [allocationCourseGroupMapping.courseCode],
+            references: [course.code],
+        }),
+    })
+);
