@@ -173,7 +173,7 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
         }
         console.log("I")
         return (
-            <div ref={ref} className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+            <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                 <div className="lg:col-span-2">
                     <AnalyticsFilters
                         filterValues={gConfig.filters ?? undefined}
@@ -222,9 +222,9 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
                                                 </CardTitle>
                                                 <CardDescription>{chartDescription}</CardDescription>
                                             </CardHeader>
-                                            <CardContent>
+                                            <CardContent ref={ref}>
                                                 {graphType === "bar" ? (
-                                                    <BarChart title={chartTitle} data={chartJsData} />
+                                                    <BarChart  title={chartTitle} data={chartJsData} />
                                                 ) : (
                                                     <LineChart
                                                         title={chartTitle}
