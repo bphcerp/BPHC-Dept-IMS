@@ -8,7 +8,7 @@ export const getLatestCompletedSemester = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
-        where: (semester, { eq }) => eq(semester.active, false),
+        where: (semester, { eq }) => eq(semester.allocationStatus, "completed"),
     });
 };
 
