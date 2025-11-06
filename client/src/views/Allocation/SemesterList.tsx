@@ -5,7 +5,7 @@ import {
   semesterTypeMap,
 } from "../../../../lib/src/types/allocation.ts";
 import { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import api from "@/lib/axios-instance";
 import { Button } from "@/components/ui/button.tsx";

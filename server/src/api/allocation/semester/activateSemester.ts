@@ -3,9 +3,6 @@ import db from "@/config/db/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { eq } from "drizzle-orm";
-import assert from "assert";
-import { getLatestSemester } from "./getLatest.ts";
-import { HttpError, HttpCode } from "@/config/errors.ts";
 import { semester } from "@/config/db/schema/allocation.ts";
 import { updateSemesterSchema } from "node_modules/lib/src/schemas/Allocation.ts";
 
