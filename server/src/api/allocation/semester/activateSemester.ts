@@ -11,7 +11,7 @@ const router = express.Router();
 router.post(
     "/:semesterId",
     checkAccess("allocation:write"),
-    asyncHandler(async (req, res, next) => {
+    asyncHandler(async (req, res, _next) => {
         const { semesterId } = updateSemesterSchema.parse(req.params);
 
         await db.transaction(async (tx) => {
