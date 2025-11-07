@@ -9,11 +9,21 @@ import { faculty } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 import { analyticsSchemas } from "lib";
 
-export const colorsEnum = pgEnum("template_colors_enum", analyticsSchemas.COLORS);
 export const graphTypeEnum = pgEnum(
     "graph_type_enum",
     analyticsSchemas.graphEnumValues
 );
+
+export const graphDataTypeEnum = pgEnum(
+    "graph_data_type_enum",
+    analyticsSchemas.graphDataType
+);
+
+export const graphMetricEnum = pgEnum(
+    "graph_metric_enum",
+    analyticsSchemas.graphMetricType
+);
+
 export const yAxisEnum = pgEnum(
     "y_axis_enum",
     analyticsSchemas.yAxisEnumValues
@@ -36,6 +46,7 @@ export const graphs = pgTable("graphs", {
     slideNumber: integer("slide_number").notNull(),
     yAxis: yAxisEnum("y_axis"),
     graphType: graphTypeEnum("graph_type"),
-    color: colorsEnum("color"),
+    dataType: graphDataTypeEnum("data_type"),
+    metricType: graphMetricEnum("graph_metric"), 
 });
 

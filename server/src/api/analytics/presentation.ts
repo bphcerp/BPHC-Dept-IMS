@@ -7,12 +7,153 @@ import { imageUpload } from "@/config/multer.ts";
 import path from "path";
 import { STATIC_DIR } from "@/config/environment.ts";
 import logger from "@/config/logger.ts";
-import { analyticsSchemas } from "lib";
-import db from "@/config/db/index.ts";
-import { graphs, presentationTemplates } from "@/config/db/schema/analytics.ts";
-import { HttpCode, HttpError } from "@/config/errors.ts";
-import { and, eq } from "drizzle-orm";
+import { marked, type Token } from 'marked';
 
+type PptxTextOptions = {
+    bold?: boolean;
+    italic?: boolean;
+    strike?: boolean;
+    fontFace?: string;
+    fontSize?: number;
+    color?: string;
+    underline?: boolean;
+    hyperlink?: { url: string; tooltip?: string };
+};
+
+type PptxTextObject = {
+    text: string;
+    options: PptxTextOptions;
+};
+
+function parseInlineTokens(
+    tokens: Token[],
+    currentOptions: PptxTextOptions = {}
+): PptxTextObject[] {
+    const pptxArray: PptxTextObject[] = [];
+
+    function walk(tokens: Token[], options: PptxTextOptions) {
+        for (const token of tokens) {
+            switch (token.type) {
+                // STYLES
+                case 'strong':
+                    token.tokens && walk(token.tokens, { ...options, bold: true });
+                    break;
+                case 'em':
+                    token.tokens && walk(token.tokens, { ...options, italic: true });
+                    break;
+                case 'del':
+                    token.tokens && walk(token.tokens, { ...options, strike: true });
+                    break;
+
+                case 'link':
+                    token.tokens && walk(token.tokens, {
+                        ...options,
+                        color: '0000FF',
+                        underline: true,
+                        hyperlink: { url: token.href, tooltip: token.title || token.href }
+                    });
+                    break;
+
+                case 'codespan':
+                    pptxArray.push({
+                        text: token.text,
+                        options: {
+                            ...options,
+                            fontFace: 'Courier New',
+                            color: 'C0504D'
+                        }
+                    });
+                    break;
+
+                case 'text':
+                    pptxArray.push({ text: token.text, options });
+                    break;
+
+                case 'br':
+                    pptxArray.push({ text: '\n', options: {} });
+                    break;
+
+                default:
+                    if ('tokens' in token && token.tokens) {
+                        walk(token.tokens, options);
+                    } else if ('text' in token) {
+                        pptxArray.push({ text: token.text, options });
+                    }
+            }
+        }
+    }
+
+    // Start the walk
+    walk(tokens, currentOptions);
+    return pptxArray;
+}
+
+
+export function markdownToPptx(markdown: string): PptxTextObject[] {
+    const tokens = marked.lexer(markdown);
+    const pptxOutput: PptxTextObject[] = [];
+
+    for (const token of tokens) {
+        switch (token.type) {
+            case 'heading':
+                token.tokens && pptxOutput.push(...parseInlineTokens(token.tokens, {
+                    bold: true,
+                    fontSize: 32 - (token.depth * 2),
+                }));
+                pptxOutput.push({ text: '\n', options: { fontSize: 12 } });
+                break;
+
+            case 'paragraph':
+                token.tokens && pptxOutput.push(...parseInlineTokens(token.tokens, {}));
+                pptxOutput.push({ text: '\n', options: {} });
+                break;
+
+            // BLOCKQUOTE
+            case 'blockquote':
+                token.tokens && pptxOutput.push(...parseInlineTokens(token.tokens, {
+                    italic: true,
+                    color: '595959'
+                }));
+                pptxOutput.push({ text: '\n', options: {} });
+                break;
+
+            case 'code':
+                pptxOutput.push({
+                    text: token.text,
+                    options: {
+                        fontFace: 'Courier New',
+                        fontSize: 10,
+                        color: '333333',
+                    }
+                });
+                pptxOutput.push({ text: '\n', options: {} });
+                break;
+
+            case 'list':
+                for (const item of token.items) {
+                    const prefix = token.ordered ? `${item.task ? '[ ]' : ''}1. ` : '• ';
+                    pptxOutput.push({ text: prefix, options: { bold: true } });
+
+                    pptxOutput.push(...parseInlineTokens(item.tokens, {}));
+                    pptxOutput.push({ text: '\n', options: {} });
+                }
+                break;
+
+            case 'hr':
+                pptxOutput.push({
+                    text: '______________________________\n',
+                    options: { color: 'C0C0C0', bold: true }
+                });
+                break;
+
+            case 'space':
+                pptxOutput.push({ text: '\n', options: {} });
+                break;
+        }
+    }
+
+    return pptxOutput;
+}
 const router = express.Router();
 
 router.post(
@@ -25,6 +166,16 @@ router.post(
                 [fieldname: string]: Express.Multer.File[];
             };
             const metadata = JSON.parse(req.body.metadata || "[]");
+            const {
+                totalSlides,
+                slideData,
+            }: {
+                totalSlides: number;
+                slideData: {
+                    title: string;
+                    sections: { title: string; text?: string }[];
+                }[];
+            } = JSON.parse(req.body.slides || []);
             const slides: any[] = [];
             const { title } = req.query;
             logger.info("parsed title");
@@ -74,27 +225,107 @@ router.post(
                     });
                 }
                 const imageBase64 = file.buffer.toString("base64");
-                const totalSlides = meta.totalSlides;
+                const totalSections = meta.totalSections;
                 slides[meta.slideIndex].addImage({
                     data: `data:${file.mimetype};base64,${imageBase64}`,
-                    x: !(totalSlides % 2)
+                    x: !(totalSections % 2)
                         ? meta.graphIndex % 2
                             ? 5
                             : 1
-                        : totalSlides == 1
+                        : totalSections == 1
                           ? 1
                           : 1 + (8 / 3) * meta.graphIndex,
-                    y: !(totalSlides % 2)
+                    y: !(totalSections % 2)
                         ? meta.graphIndex > 1
                             ? 3.2
-                            : totalSlides == 2
+                            : totalSections == 2
                               ? 2.2
                               : 1.2
-                        : totalSlides == 1
+                        : totalSections == 1
                           ? 1.2
                           : 2.533,
-                    w: !(totalSlides % 2) ? 4 : totalSlides == 1 ? 8 : 8 / 3,
-                    h: !(totalSlides % 2) ? 2 : totalSlides == 1 ? 4 : 4 / 3,
+                    w: !(totalSections % 2)
+                        ? 4
+                        : totalSections == 1
+                          ? 8
+                          : 8 / 3,
+                    h: !(totalSections % 2)
+                        ? 2
+                        : totalSections == 1
+                          ? 4
+                          : 4 / 3,
+                });
+            });
+
+            slideData.forEach((slide, si) => {
+                slides[si].addText(slide.title, {
+                    x: 0.1,
+                    y: 0.1,
+                    w: "100%",
+                    h: 1,
+                    fontSize: 42,
+                });
+                slide.sections.forEach((section, seci) => {
+                    const totalSections = slide.sections.length;
+                    if (section.text) {
+                        slides[si].addText( markdownToPptx(section.text), {
+                            x: !(totalSections % 2)
+                                ? seci % 2
+                                    ? 5
+                                    : 1
+                                : totalSections == 1
+                                  ? 1
+                                  : 1 + (8 / 3) * seci,
+                            y: !(totalSections % 2)
+                                ? seci > 1
+                                    ? 3.2
+                                    : totalSections == 2
+                                      ? 2.2
+                                      : 1.2
+                                : totalSections == 1
+                                  ? 1.2
+                                  : 2.533,
+                            w: !(totalSections % 2)
+                                ? 4
+                                : totalSections == 1
+                                  ? 8
+                                  : 8 / 3,
+                            h: !(totalSections % 2)
+                                ? 2
+                                : totalSections == 1
+                                  ? 4
+                                  : 4 / 3,
+                            fontSize: 8,
+                            align: 'left',
+                            valign: 'top'
+                        });
+                    }
+                    slides[si].addText(section.title, {
+                        x: !(totalSections % 2)
+                            ? seci % 2
+                                ? 5
+                                : 1
+                            : totalSections == 1
+                              ? 1
+                              : 1 + (8 / 3) * seci,
+                        y: !(totalSections % 2)
+                            ? seci > 1
+                                ? 5.1
+                                : totalSections == 2
+                                  ? 2
+                                  : 1.2
+                            : totalSections == 1
+                              ? 1.0
+                              : 2.333,
+                        w: !(totalSections % 2)
+                            ? 4
+                            : totalSections == 1
+                              ? 8
+                              : 8 / 3,
+                        h: 0.2,
+                        fontSize: 12,
+                        bold: true
+                    });
                 });
             });
 
@@ -117,144 +348,164 @@ router.post(
     })
 );
 
-router.patch(
-    "/templates/update/:id",
-    asyncHandler(async (req, res) => {
-        const email = req.user?.email;
-        const {id} = req.params;
+// router.patch(
+//     "/templates/update/:id",
+//     asyncHandler(async (req, res) => {
+//         const email = req.user?.email;
+//         const { id } = req.params;
 
-        if (!email)
-            throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
+//         if (!email)
+//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        const template = analyticsSchemas.presentationTemplateSchema.parse(
-            req.body
-        );
+//         const template = analyticsSchemas.presentationTemplateSchema.parse(
+//             req.body
+//         );
 
-        await db
-            .update(presentationTemplates)
-            .set({
-                title: template.title,
-                slides: template.slides,
-                facultyEmail: email,
-            }).where(and(eq(presentationTemplates.id, id), eq(presentationTemplates.facultyEmail, email)))
-            .returning()
+//         await db
+//             .update(presentationTemplates)
+//             .set({
+//                 title: template.title,
+//                 slides: template.slides,
+//                 facultyEmail: email,
+//             })
+//             .where(
+//                 and(
+//                     eq(presentationTemplates.id, id),
+//                     eq(presentationTemplates.facultyEmail, email)
+//                 )
+//             )
+//             .returning();
 
-        await db.delete(graphs).where(eq(graphs.templateId, id));
-        for (const graph of template.graphs) {
-            await db.insert(graphs).values({
-                templateId: id,
-                ...graph,
-            });
-        }
-        res.status(200).json({ message: "Successfully updated template." });
-    })
-);
+//         await db.delete(graphs).where(eq(graphs.templateId, id));
+//         for (const graph of template.graphs) {
+//             await db.insert(graphs).values({
+//                 templateId: id,
+//                 ...graph,
+//             });
+//         }
+//         res.status(200).json({ message: "Successfully updated template." });
+//     })
+// );
 
-router.get(
-    "/templates/:id",
-    asyncHandler(async (req, res) => {
-        const email = req.user?.email;
-        const { id } = req.params;
+// router.get(
+//     "/templates/:id",
+//     asyncHandler(async (req, res) => {
+//         const email = req.user?.email;
+//         const { id } = req.params;
 
-        if (!email)
-            throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
+//         if (!email)
+//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        const templates = await db.query.presentationTemplates.findMany({
-            with: {
-                graphs: true,
-            },
-            where: (presentationTemplates, { eq }) =>
-                and(eq(presentationTemplates.id, id),eq(presentationTemplates.facultyEmail, email)),
-        });
+//         const templates = await db.query.presentationTemplates.findMany({
+//             with: {
+//                 graphs: true,
+//             },
+//             where: (presentationTemplates, { eq }) =>
+//                 and(
+//                     eq(presentationTemplates.id, id),
+//                     eq(presentationTemplates.facultyEmail, email)
+//                 ),
+//         });
 
-        if (!templates.length)
-            throw new HttpError(
-                HttpCode.NOT_FOUND,
-                "No template found with that id"
-            );
+//         if (!templates.length)
+//             throw new HttpError(
+//                 HttpCode.NOT_FOUND,
+//                 "No template found with that id"
+//             );
 
-        const formattedTemplate : analyticsSchemas.Template = templates.map(({ graphs, id, facultyEmail, ...rest }) => {
-            return {
-                ...rest,
-                graphs: graphs.map((graph) => {
-                    const { id: gid, templateId, ...remaining } = graph;
-                    return remaining;
-                }),
-            };
-        })[0];
+//         const formattedTemplate: analyticsSchemas.Template = templates.map(
+//             ({ graphs, id, facultyEmail, ...rest }) => {
+//                 return {
+//                     ...rest,
+//                     graphs: graphs.map((graph) => {
+//                         const { id: gid, templateId, ...remaining } = graph;
+//                         return remaining;
+//                     }),
+//                 };
+//             }
+//         )[0];
 
-        res.status(200).json(formattedTemplate);
-    })
-);
+//         res.status(200).json(formattedTemplate);
+//     })
+// );
 
-router.delete(
-    "/templates/delete/:id",
-    asyncHandler(async (req, res) => {
-        const email = req.user?.email;
-        const { id } = req.params;
+// router.delete(
+//     "/templates/delete/:id",
+//     asyncHandler(async (req, res) => {
+//         const email = req.user?.email;
+//         const { id } = req.params;
 
-        if (!email)
-            throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
+//         if (!email)
+//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        await db.delete(presentationTemplates).where(and(eq(presentationTemplates.id, id),eq(presentationTemplates.facultyEmail, email)) )
+//         await db
+//             .delete(presentationTemplates)
+//             .where(
+//                 and(
+//                     eq(presentationTemplates.id, id),
+//                     eq(presentationTemplates.facultyEmail, email)
+//                 )
+//             );
 
-        res.status(200).json({message: "Successfully Deleted Template"});
-    })
-);
+//         res.status(200).json({ message: "Successfully Deleted Template" });
+//     })
+// );
 
-router.get(
-    "/templates",
-    asyncHandler(async (req, res) => {
-        const email = req.user?.email;
+// router.get(
+//     "/templates",
+//     asyncHandler(async (req, res) => {
+//         const email = req.user?.email;
 
-        if (!email)
-            throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
+//         if (!email)
+//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        const templates = await db
-            .select({
-                id: presentationTemplates.id,
-                title: presentationTemplates.title,
-                slides: presentationTemplates.slides
-            })
-            .from(presentationTemplates)
-            .where(eq(presentationTemplates.facultyEmail, email));
+//         const templates = await db
+//             .select({
+//                 id: presentationTemplates.id,
+//                 title: presentationTemplates.title,
+//                 slides: presentationTemplates.slides,
+//             })
+//             .from(presentationTemplates)
+//             .where(eq(presentationTemplates.facultyEmail, email));
 
-        res.status(200).json(templates);
-    })
-);
+//         res.status(200).json(templates);
+//     })
+// );
 
-router.post(
-    "/templates/create",
-    asyncHandler(async (req, res) => {
-        const email = req.user?.email;
+// router.post(
+//     "/templates/create",
+//     asyncHandler(async (req, res) => {
+//         const email = req.user?.email;
 
-        if (!email)
-            throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
+//         if (!email)
+//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
 
-        const template = analyticsSchemas.presentationTemplateSchema.parse(
-            req.body
-        );
+//         const template = analyticsSchemas.presentationTemplateSchema.parse(
+//             req.body
+//         );
 
-        const { id: insertedId } = (
-            await db
-                .insert(presentationTemplates)
-                .values({
-                    title: template.title,
-                    slides: template.slides,
-                    facultyEmail: email,
-                })
-                .returning()
-        )[0];
+//         const { id: insertedId } = (
+//             await db
+//                 .insert(presentationTemplates)
+//                 .values({
+//                     title: template.title,
+//                     slides: template.slides,
+//                     facultyEmail: email,
+//                 })
+//                 .returning()
+//         )[0];
 
-        for (const graph of template.graphs) {
-            await db.insert(graphs).values({
-                templateId: insertedId,
-                ...graph,
-            });
-        }
-        res.status(200).json({ message: "Successfully created template.", id: insertedId });
-    })
-);
-
+//         for (const graph of template.graphs) {
+//             await db.insert(graphs).values({
+//                 templateId: insertedId,
+//                 ...graph,
+//             });
+//         }
+//         res.status(200).json({
+//             message: "Successfully created template.",
+//             id: insertedId,
+//         });
+//     })
+// );
 
 export default router;

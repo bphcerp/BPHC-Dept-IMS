@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect, forwardRef } from "react";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useState, useMemo, useRef, useEffect, forwardRef, lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Plus, Trash2, LayoutGrid } from "lucide-react";
+import { Loader2, X, Plus, Trash2, LayoutGrid, BarChart2, Text } from "lucide-react";
 import { AnalyticsFilters } from "@/components/analytics/publications/AnalyticsFilter";
 import { analyticsSchemas } from "lib";
 import BarChart from "@/components/analytics/utils/graphs/BarChart";
@@ -23,26 +23,38 @@ import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const { Y_AXIS_ALLOWED_TYPES, COLORS, GRAPH_OPTIONS } = analyticsSchemas;
+const { Y_AXIS_ALLOWED_TYPES } = analyticsSchemas;
 type GraphValue = analyticsSchemas.GraphValue;
 
 export type DataType = "total" | "cumulative";
 export type MetricType = "publications" | "citations" | "both";
 
 interface GraphConfig {
-    id: string;
+    type: 'graph';
     yAxis: keyof typeof Y_AXIS_ALLOWED_TYPES | null;
     graphType: GraphValue | null;
     filters: analyticsSchemas.AnalyticsQuery | null;
-    color: (typeof COLORS)[number];
-    dataType: DataType; // <-- Add this
-    metricType: MetricType; // <-- Add this
+    dataType: DataType;
+    metricType: MetricType;
 };
+
+interface TextConfig {
+    type: 'text',
+    body: string,
+}
+
+interface Section {
+    type: (TextConfig | GraphConfig)['type'],
+    title: string,
+    id: string,
+    graph: GraphConfig,
+    text: TextConfig
+}
 
 interface Slide {
     id: string;
     title: string;
-    graphs: GraphConfig[];
+    sections: Section[];
 };
 
 const fetchAnalytics = async (
@@ -51,6 +63,8 @@ const fetchAnalytics = async (
     const response = await api.get("/analytics/publications", { params });
     return response.data as analyticsSchemas.AnalyticsResponse;
 };
+
+const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 
 interface GraphRendererProps {
     gConfig: GraphConfig;
@@ -85,7 +99,7 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
 
         if (isError) {
             return (
-                <div ref={ref} className="flex h-[60vh] w-full items-center justify-center bg-gradient-to-br from-background to-muted/30">
+                <div ref={ref} className="flex h-[60vh] w-full items-center justify-center">
                     <Card className="w-full max-w-md border-0 shadow-xl">
                         <CardContent className="p-8 text-center">
                             <p className="mb-2 text-xl font-semibold text-destructive">
@@ -224,7 +238,7 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
                                             </CardHeader>
                                             <CardContent ref={ref}>
                                                 {graphType === "bar" ? (
-                                                    <BarChart  title={chartTitle} data={chartJsData} />
+                                                    <BarChart title={chartTitle} data={chartJsData} />
                                                 ) : (
                                                     <LineChart
                                                         title={chartTitle}
@@ -246,190 +260,65 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
 
     }
 
-
 )
-
-const fetchTemplates = async (): Promise<
-    { id: string, title: string, slides: number }[]
-> => {
-    const response = await api.get<{ id: string, title: string, slides: number }[]>(
-        "/analytics/presentation/templates/"
-    );
-    return response.data;
-};
-
-const fetchTemplate = async (templateID: string): Promise<
-    analyticsSchemas.Template
-> => {
-    const response = await api.get<analyticsSchemas.Template>(
-        `/analytics/presentation/templates/${templateID}`
-    )
-
-    return response.data;
-}
-
-type UpdateTemplateProps = {
-    id: string,
-    template: analyticsSchemas.Template
-}
-const updateTemplate = async ({ id, template }: UpdateTemplateProps): Promise<
-    { id: string }[]
-> => {
-    const response = await api.patch<{ id: string }[]>(
-        `/analytics/presentation/templates/update/${id}`, template
-    );
-    return response.data;
-};
-
-const deleteTemplate = async (id: string): Promise<
-    { id: string }[]
-> => {
-    const response = await api.delete<{ id: string }[]>(
-        `/analytics/presentation/templates/delete/${id}`
-    );
-    return response.data;
-};
-
-const createTemplate = async (template: analyticsSchemas.Template): Promise<
-    { id: string }[]
-> => {
-    const response = await api.post<{ id: string }[]>(
-        "/analytics/presentation/templates/create", template
-    );
-    return response.data;
-};
 
 export default function PresentationCreator() {
 
-    const queryClient = useQueryClient();
-
-    const { data: templates, isLoading: templatesLoading } = useQuery({
-        queryKey: ["presentation:templates"],
-        queryFn: fetchTemplates,
-    });
-
     const [title, setTitle] = useState("Enter Title..");
     const [slides, setSlides] = useState<Slide[]>([]);
-    const [selectedGraphId, setSelectedGraphId] = useState<string | null>(null);
+    const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
     const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
     const chartRef = useRef<HTMLDivElement | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [currentTemplate, setCurrentTemplate] = useState<string | null>(null);
     const renderCompleteResolver = useRef<(() => void) | null>(null);
 
     const handleRenderComplete = () => {
         renderCompleteResolver.current?.();
     };
 
-    const getGraphConfig = (slideId: string, graphId: string) => {
-        return slides.find((slide) => (slide.id == slideId))?.graphs.find((graph) => (graph.id == graphId));
-    };
-
-    useEffect(() => {
-        let ignore = false;
-
-        const loadTemplate = async () => {
-            if (currentTemplate) {
-                try {
-                    const template = await fetchTemplate(currentTemplate);
-                    if (ignore) {
-                        return;
-                    }
-                    const newSlides: Slide[] = Array.from({ length: template.slides }, () => ({
-                        id: crypto.randomUUID(),
-                        title: "Slide",
-                        graphs: []
-                    }));
-
-                    template.graphs.forEach((graph) => {
-                        if (newSlides[graph.slideNumber]) {
-                            newSlides[graph.slideNumber].graphs.push({
-                                id: crypto.randomUUID(),
-                                yAxis: graph.yAxis,
-                                graphType: graph.graphType,
-                                filters: null,
-                                color: graph.color ?? COLORS[0],
-                                dataType: graph.dataType ?? analyticsSchemas.graphDataType[0],
-                                metricType: graph.metricType ?? analyticsSchemas.graphMetricType[0]
-                            });
-                        }
-                    });
-
-                    setTitle(template.title);
-                    setSlides(newSlides);
-
-                } catch (error) {
-                    console.error("Failed to load template:", error);
-                }
-            }
-        };
-
-        loadTemplate();
-
-        return () => {
-            ignore = true;
-        };
-
-    }, [currentTemplate]);
-
-    const selectedGraph = useMemo(() => {
-        if (selectedGraphId && selectedSlideId) {
-            return getGraphConfig(selectedSlideId, selectedGraphId) ?? null;
+    const getSectionConfig = (slideId: string, sectionId: string) => {
+        const section = slides.find((slide) => (slide.id == slideId))?.sections.find((section) => (section.id == sectionId));
+        if (section) {
+            const { graph, text, ...rest } = section;
+            if (section.type == 'graph') return { ...rest, ...graph }
+            else if (section.type == "text") return { ...rest, ...text }
         }
         return null;
-    }, [selectedGraphId, selectedSlideId, slides]);
+    };
 
-    const createTemplateMutation = useMutation({
-        mutationFn: createTemplate,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
-            toast.success("Template created!");
-        },
-        onError: (err: any) => {
-            toast.error(`Failed to create: ${err.message}`);
+    const selectedSection = useMemo(() => {
+        if (selectedSectionId && selectedSlideId) {
+            return getSectionConfig(selectedSlideId, selectedSectionId) ?? null;
         }
-    });
-
-    const updateTemplateMutation = useMutation({
-        mutationFn: updateTemplate,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
-            toast.success("Template updated!");
-        },
-        onError: (err: any) => {
-            toast.error(`Failed to update: ${err.message}`);
-        }
-    });
-
-    const deleteTemplateMutation = useMutation({
-        mutationFn: deleteTemplate,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["presentation:templates"] });
-            toast.success("Template deleted!");
-        },
-        onError: (err: any) => {
-            toast.error(`Failed to delete: ${err.message}`);
-        }
-    });
+        return null;
+    }, [selectedSectionId, selectedSlideId, slides]);
 
     const addSlide = () => {
-        const newGraph: GraphConfig = {
+        const newSection: Section = {
+            title: "Section",
+            type: 'graph',
             id: crypto.randomUUID(),
-            yAxis: "Publications", // Set a default
-            graphType: "bar",      // Set a default
-            filters: null,
-            color: COLORS[0],
-            dataType: "total",     // <-- Set default
-            metricType: "publications" // <-- Set default
+            graph: {
+                type: 'graph',
+                yAxis: "Publications",
+                graphType: "bar",
+                filters: null,
+                dataType: "total",
+                metricType: "publications"
+            },
+            text: {
+                type: "text",
+                body: ""
+            }
         };
         const newSlide: Slide = {
             id: crypto.randomUUID(),
             title: "Slide",
-            graphs: [newGraph]
+            sections: [newSection]
         };
 
         setSlides((prvs) => [...prvs, newSlide]);
-        setSelectedGraphId(newGraph.id);
+        setSelectedSectionId(newSection.id);
         setSelectedSlideId(newSlide.id);
     };
 
@@ -448,12 +337,14 @@ export default function PresentationCreator() {
         for (const [si, slide] of slides.entries()) {
             setSelectedSlideId(slide.id);
 
-            for (const [gi, graph] of slide.graphs.entries()) {
+            for (const [sei, section] of slide.sections.entries()) {
+
+                if(section.type == 'text') continue;
 
                 const waitForRender = new Promise<void>((resolve) => {
                     renderCompleteResolver.current = resolve;
                 });
-                setSelectedGraphId(graph.id);
+                setSelectedSectionId(section.id);
 
                 await Promise.race([
                     waitForRender,
@@ -481,37 +372,52 @@ export default function PresentationCreator() {
                         });
 
                         if (!blob) {
-                            toast.error(`Could not render chart ${gi + 1} for slide ${si + 1}`);
+                            toast.error(`Could not render chart ${sei + 1} for slide ${si + 1}`);
                         } else {
-                            form.append(`images`, blob, graph.id);
-                            metadataArray.push({
-                                slideIndex: si,
-                                graphIndex: gi,
-                                totalSlides: slide.graphs.length
-                            });
+                            form.append(`images`, blob, section.id);
                             filesToUpload++;
                         }
+
+                        metadataArray.push({
+                            slideIndex: si,
+                            graphIndex: sei,
+                            totalSections : slide.sections.length,
+                            type: section.type
+                        });
                     } catch (err) {
-                        toast.error(`Failed to render slide ${si + 1} : ${err}`);
+                        toast.error(`Failed to render section ${sei + 1} for slide ${si + 1} : ${err}`);
                     }
                 } else {
-                    console.warn(`Skipping chart ${gi + 1} for slide ${si + 1} container not rendered.`);
+                    console.warn(`Skipping chart ${sei + 1} for slide ${si + 1} container not rendered.`);
                 }
             }
         }
 
 
         if (filesToUpload === 0) {
-            toast.error("No charts are rendered. Cannot create presentation.");
+            toast.error("No charts are rendered. Please make sure atleast one chart exists.");
+            setIsGenerating(false);
             return;
         }
 
         form.append('metadata', JSON.stringify(metadataArray));
+        form.append('slides', JSON.stringify({
+            totalSlides: slides.length, 
+            slideData: slides.map((slide) => {
+                const formattedSections = slide.sections.map((section) => {
+                    if (section.type == 'text') return { title: section.title, text: section.text.body };
+                    else if (section.type == 'graph') return { title: section.title };
+                })
+
+                return { title: slide.title, sections: formattedSections }
+            })
+        }))
 
         try {
             const res = await api.post("/analytics/presentation", form, {
                 params: {
                     title
+
                 },
                 responseType: 'blob'
             });
@@ -544,44 +450,52 @@ export default function PresentationCreator() {
 
         const slideToDelete = slides.find(s => s.id === id);
         if (slideToDelete) {
-            wasSelectedGraphDeleted = slideToDelete.graphs.some(g => g.id === selectedGraphId);
+            wasSelectedGraphDeleted = slideToDelete.sections.some(s => s.id === selectedSectionId);
         }
 
         setSlides(prevSlides => prevSlides.filter(slide => slide.id !== id));
 
         if (wasSelectedGraphDeleted) {
-            setSelectedGraphId(null);
+            setSelectedSectionId(null);
             setSelectedSlideId(null);
         }
     };
 
     const addGraphToSlide = (slideId: string) => {
-        const newGraph: GraphConfig = {
+        const newSection: Section = {
+            title: "Section",
+            type: 'graph',
             id: crypto.randomUUID(),
-            yAxis: "Publications", // Set a default
-            graphType: "bar",      // Set a default
-            filters: null,
-            color: COLORS[0],
-            dataType: "total",     // <-- Set default
-            metricType: "publications" // <-- Set default
+            graph: {
+                type: 'graph',
+                yAxis: "Publications",
+                graphType: "bar",
+                filters: null,
+                dataType: "total",
+                metricType: "publications"
+            },
+            text: {
+                type: "text",
+                body: ""
+            }
         };
         const slide = slides.find((slide) => slide.id == slideId);
-        if (slide && slide.graphs.length >= 4) return;
+        if (slide && slide.sections.length >= 4) return;
         setSlides(prevSlides =>
             prevSlides.map(slide => {
-                if (slide.id === slideId && slide.graphs.length < 4) {
-                    return { ...slide, graphs: [...slide.graphs, newGraph] };
+                if (slide.id === slideId && slide.sections.length < 4) {
+                    return { ...slide, sections: [...slide.sections, newSection] };
                 }
                 return slide;
             })
         );
-        setSelectedGraphId(newGraph.id);
+        setSelectedSectionId(newSection.id);
         setSelectedSlideId(slideId);
     };
 
     const deleteGraphFromSlide = (slideId: string, graphId: string) => {
         const slide = slides.find(s => s.id === slideId);
-        if (!slide || slide.graphs.length <= 1) {
+        if (!slide || slide.sections.length <= 1) {
             toast.warning("Each slide must have at least one graph.");
             return;
         }
@@ -589,41 +503,59 @@ export default function PresentationCreator() {
         setSlides(prevSlides =>
             prevSlides.map(s => {
                 if (s.id === slideId) {
-                    return { ...s, graphs: s.graphs.filter(g => g.id !== graphId) };
+                    return { ...s, sections: s.sections.filter(sec => sec.id !== graphId) };
                 }
                 return s;
             })
         );
 
-        if (selectedGraphId === graphId) {
-            setSelectedGraphId(null);
+        if (selectedSectionId === graphId) {
+            setSelectedSectionId(null);
             setSelectedSlideId(null);
         }
     };
 
-    const updateGraphConfig = (slideId: string, graphId: string, field: keyof GraphConfig, value: any) => {
+    const updateGraphConfig = (slideId: string, sectionId: string, field: keyof GraphConfig, value: any) => {
         setSlides(prevSlides =>
             prevSlides.map(slide => {
                 if (slide.id === slideId) {
-                    let newGraphs = slide.graphs.map(graph => {
-                        if (graph.id === graphId) {
-                            let updatedGraph = { ...graph, [field]: value };
+                    let newSections = slide.sections.map(section => {
+                        if (section.id === sectionId) {
+                            let updatedGraph = { ...section.graph, [field]: value };
                             if (field === "yAxis" && updatedGraph.yAxis) {
                                 const allowedTypes = Y_AXIS_ALLOWED_TYPES[updatedGraph.yAxis] as readonly GraphValue[];
                                 if (!allowedTypes.includes(updatedGraph.graphType!)) {
                                     updatedGraph.graphType = allowedTypes[0] ?? null;
                                 }
                             }
-                            return updatedGraph;
+
+                            return { ...section, graph: updatedGraph };
                         }
-                        return graph;
+                        return section;
                     });
-                    return { ...slide, graphs: newGraphs };
+                    return { ...slide, sections: newSections };
                 }
                 return slide;
             })
         );
     };
+
+    const updateSectionText = (slideId: string, sectionId: string, body: string) => {
+        setSlides(prevSlides =>
+            prevSlides.map(slide => {
+                if (slide.id === slideId) {
+                    let newSections = slide.sections.map(section => {
+                        if (section.id === sectionId) {
+                            return { ...section, text: { type: "text" as const, body: body } };
+                        }
+                        return section;
+                    });
+                    return { ...slide, sections: newSections };
+                }
+                return slide;
+            })
+        );
+    }
 
     const setSlideTitle = (slideId: string, title: string) => {
         setSlides(prevSlides => prevSlides.map(
@@ -635,232 +567,221 @@ export default function PresentationCreator() {
         ))
     }
 
-    return (
-        <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 ">
-            <div className="flex flex-col items-center space-y-4">
-                <Input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full max-w-lg bg-transparent border-0 border-b-2 border-slate-300 dark:border-slate-700 rounded-none shadow-none p-6 text-center text-3xl md:text-4xl font-bold tracking-tight focus-visible:ring-0 focus:border-indigo-500 transition-all"
-                />
-                <Button
-                    onClick={getPresentation}
-                    className="py-2 mt-8 px-6 text-lg"
-                    type="submit"
-                    aria-label="Get Presentation"
-                    disabled={slides.length === 0}
-                >
-                    Get Presentation
-                </Button>
-                <div className="flex w-full gap-4 h-[60vh]" >
-                    <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
-                        {isGenerating && (
-                            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
-                                <Loader2 className="h-16 w-16 animate-spin text-white" />
-                                <p className="text-white text-lg mt-4 font-semibold">
-                                    Generating Presentation...
-                                </p>
-                            </div>
-                        )}
-                        <div className="flex justify-between items-center w-full px-1 py-1">
-                            <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
-                            <Button
-                                onClick={addSlide}
-                                variant="outline"
-                                size="icon"
-                                className="rounded-full w-12 h-12 shadow-sm"
-                                aria-label="Add new slide"
-                            >
-                                <Plus className="h-6 w-6" />
-                            </Button>
-                        </div>
-                        {
-                            slides.map((slide, index) => {
-                                return (
-                                    <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
-                                        <div className="px-3 flex justify-center items-center overflow-x-auto">
-                                            <h4 className="font-bold flex-shrink-0">{index + 1} .</h4>
-                                            <Button
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    deleteSlide(slide.id)
-                                                }}
-                                                variant="ghost"
-                                                size="icon"
-                                                aria-label="Delete slide"
-                                            >
-                                                <Trash2 className="h-4 w-4 text-red-500" />
-                                            </Button>
-                                            <Input
-                                                type="text"
-                                                value={slide.title}
-                                                onChange={(e) => setSlideTitle(slide.id, e.target.value)}
-                                                className="bg-transparent border"
-                                            />
-                                        </div>
-                                        <div className="space-x-1 flex justify-center items-center">
-                                            {
-                                                slide.graphs.map((graph, gIndex) => {
-                                                    return (
-                                                        <Button
-                                                            key={graph.id}
-                                                            variant={selectedGraphId === graph.id ? "default" : "outline"}
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setSelectedGraphId(graph.id)
-                                                                setSelectedSlideId(slide.id)
-                                                            }}
-                                                            className="shadow-sm px-2 py-0"
-                                                        >
-                                                            <LayoutGrid className="h-4 w-4 mr-1" />
-                                                            Graph {gIndex + 1}
-                                                            <Button
-                                                                onClick={(_e) => deleteGraphFromSlide(slide.id, graph.id)}
-                                                                className="h-4 w-2 px-0 py-0 hover:bg-background"
-                                                                variant="ghost"
-                                                            >
-                                                                <X className="h-4 w-4 mr-1" />
-                                                            </Button>
-                                                        </Button>
-                                                    )
-                                                })
-                                            }
-                                            <Button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    addGraphToSlide(slide.id)
-                                                }}
-                                                className="h-6 w-6 px-1 py-1"
-                                                variant="outline"
-                                            >
-                                                <Plus className="h-5 w-5" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )
-                            })
+    const setSelectedSectionTitle = (title: string) => {
+        setSlides(prevSlides =>
+            prevSlides.map(slide => {
+                if (slide.id === selectedSlideId) {
+                    let newSections = slide.sections.map(section => {
+                        if (section.id === selectedSectionId) {
+                            return { ...section, title: title };
                         }
-                    </div>
-                    <div className="flex-1 flex flex-col shadow-xl border rounded-2xl px-4 py-4">
-                        <div className="flex justify-between items-center w-full px-1 py-1 flex-shrink-0">
-                            <h2 className="text-2xl md:text-4xl font-bold">Graph Config</h2>
-                        </div>
-                        <div className="flex-1 overflow-y-auto mt-6">
-                            {
-                                (selectedGraphId && selectedSlideId && selectedGraph) ? // Make sure selectedGraph is not null
-                                    (
-                                        <div className="space-y-4">
-                                            <GraphRenderer
-                                                key={selectedGraph.id} // Add a key to force re-mount
-                                                gConfig={selectedGraph}
-                                                onRender={handleRenderComplete}
-                                                ref={el => {
-                                                    chartRef.current = el;
-                                                }}
-                                                onConfigChange={(field, value) => {
-                                                    updateGraphConfig(selectedSlideId, selectedGraphId, field, value);
-                                                }}
-                                            />
-                                        </div>
-                                    )
-                                    : (
-                                        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-background to-muted/30 min-h-[400px]">
-                                            <Card className="border-0 shadow-xl w-full h-full">
-                                                <CardContent className="p-8 text-center min-w-[300px]">
-                                                    <p className="mb-2 text-xl font-semibold text-destructive">
-                                                        Please select a Graph.
-                                                    </p>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    )
-                            }
-                        </div>
-                    </div>
+                        return section;
+                    });
+                    return { ...slide, sections: newSections };
+                }
+                return slide;
+            })
+        );
+    }
 
-                </div>
-                <div className="flex-1 w-[50vw] h-[10vh] overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+    const toggleSelectedSectionType = () => {
+        setSlides(prevSlides =>
+            prevSlides.map(slide => {
+                if (slide.id === selectedSlideId) {
+                    let newSections = slide.sections.map(section => {
+                        if (section.id === selectedSectionId) {
+                            return { ...section, type: (section.type == "text" ? "graph" as const : "text" as const) };
+                        }
+                        return section;
+                    });
+                    return { ...slide, sections: newSections };
+                }
+                return slide;
+            })
+        );
+    }
+
+    return (
+        <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 flex flex-col items-center space-y-4">
+            <Input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full max-w-lg bg-transparent border-0 border-b-2 border-slate-300 dark:border-slate-700 rounded-none shadow-none p-6 text-center text-3xl md:text-4xl font-bold tracking-tight focus-visible:ring-0 focus:border-indigo-500 transition-all"
+            />
+            <Button
+                onClick={getPresentation}
+                className="py-2 mt-8 px-6 text-lg"
+                type="submit"
+                aria-label="Get Presentation"
+                disabled={slides.length === 0}
+            >
+                Get Presentation
+            </Button>
+            <div className="flex w-full gap-4 h-[60vh]" >
+                <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                    {isGenerating && (
+                        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
+                            <Loader2 className="h-16 w-16 animate-spin text-white" />
+                            <p className="text-white text-lg mt-4 font-semibold">
+                                Generating Presentation...
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex justify-between items-center w-full px-1 py-1">
+                        <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
+                        <Button
+                            onClick={addSlide}
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full w-12 h-12 shadow-sm"
+                            aria-label="Add new slide"
+                        >
+                            <Plus className="h-6 w-6" />
+                        </Button>
+                    </div>
                     {
-                        templatesLoading ?
-                            <Loader2 className="h-16 w-16 animate-spin text-white" /> :
-                            <>
-                                <Button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        createTemplateMutation.mutate({
-                                            title: title,
-                                            slides: slides.length,
-                                            graphs: slides.flatMap((slide, index) => {
-                                                return slide.graphs.map((graph) => {
-                                                    const { id, filters, ...rest } = graph;
-                                                    return { slideNumber: index, ...rest };
-                                                });
-                                            })
-                                        });
-                                    }}
-                                    className="w-full text-1xl  px-1 py-1"
-                                >
-                                    Create New Template
-                                </Button>
-                                {
-                                    templates?.map((template, index) => {
-                                        return (
-                                            <div className={cn(" text-1xl border-2 flex items-center justify-between rounded-xl w-full px-5 py-2", (template.id == currentTemplate) ? "bg-blue-100" : "bg-white")} key={template.id}>
-                                                <div className="w-[50%]">
+                        slides.map((slide, index) => {
+                            return (
+                                <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
+                                    <div className="px-3 flex justify-center items-center overflow-x-auto">
+                                        <h4 className="font-bold flex-shrink-0">{index + 1} .</h4>
+                                        <Button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                deleteSlide(slide.id)
+                                            }}
+                                            variant="ghost"
+                                            size="icon"
+                                            aria-label="Delete slide"
+                                        >
+                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                        </Button>
+                                        <Input
+                                            type="text"
+                                            value={slide.title}
+                                            onChange={(e) => setSlideTitle(slide.id, e.target.value)}
+                                            className="bg-transparent border focus-visible:ring-0"
+                                        />
+                                    </div>
+                                    <div className="space-x-1 flex justify-center items-center">
+                                        {
+                                            slide.sections.map((section, sIndex) => {
+                                                return (
                                                     <Button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            deleteTemplateMutation.mutate(template.id)
-                                                        }}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        aria-label="Delete template"
-                                                    >
-                                                        <Trash2 className="h-4 w-4 text-red-500" />
-                                                    </Button>
-                                                    <span className="text-left">{index} . <span className="font-bold">{template.title}</span> </span>
-                                                </div>
-                                                <div className="justify-right space-x-2">
-                                                    <span className="font-normal font-muted text-xs">{template.slides} slides</span>
-                                                    <Button onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setCurrentTemplate(template.id)
-                                                    }}
-                                                        className="px-2 py-1">
-                                                        Select
-                                                    </Button>
-                                                    <Button
+                                                        key={section.id}
+                                                        variant={selectedSectionId === section.id ? "default" : "outline"}
+                                                        size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            updateTemplateMutation.mutate({
-                                                                id: template.id,
-                                                                template: {
-                                                                    title: title,
-                                                                    slides: slides.length,
-                                                                    graphs: slides.flatMap((slide, index) => {
-                                                                        return slide.graphs.map((graph) => {
-                                                                            const { id, filters, ...rest } = graph;
-                                                                            return { slideNumber: index, ...rest };
-                                                                        });
-                                                                    })
-                                                                }
-                                                            });
+                                                            setSelectedSectionId(section.id)
+                                                            setSelectedSlideId(slide.id)
                                                         }}
-                                                        className="px-2 py-1"
+                                                        className="shadow-sm px-2 py-0"
                                                     >
-                                                        Update To Current
+                                                        <LayoutGrid className="h-4 w-4 mr-1" />
+                                                        Section {sIndex + 1}
+                                                        <Button
+                                                            onClick={(_e) => deleteGraphFromSlide(slide.id, section.id)}
+                                                            className="h-4 w-2 px-0 py-0 hover:bg-background"
+                                                            variant="ghost"
+                                                        >
+                                                            <X className="h-4 w-4 mr-1" />
+                                                        </Button>
                                                     </Button>
-                                                </div>
-                                            </div>
-                                        )
-                                    })
-                                }
-                            </>
+                                                )
+                                            })
+                                        }
+                                        <Button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                addGraphToSlide(slide.id)
+                                            }}
+                                            className="h-6 w-6 px-1 py-1"
+                                            variant="outline"
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            )
+                        })
                     }
                 </div>
+                <div className="flex-1 flex flex-col shadow-xl border rounded-2xl px-4 py-4">
+                    <div className="flex justify-between items-center w-full px-1 py-3 flex-shrink-0">
+
+                        {
+                            selectedSection &&
+                            <>
+                                <Input
+                                    key={selectedSectionId}
+                                    type="text"
+                                    value={selectedSection.title}
+                                    onChange={(e) => setSelectedSectionTitle(e.target.value)}
+                                    className="w-[30%] bg-transparent border-0 text-3xl md:text-4xl font-bold"
+                                />
+                                <Button className="px-3" onClick={toggleSelectedSectionType}>
+                                    {
+                                        selectedSection.type == 'graph' ?
+                                            <BarChart2 className="w-12 h-12" />
+                                            : <Text className="w-12 h-12" />
+                                    }
+                                </Button>
+                            </>
+                        }
+                    </div>
+                    <div className="flex-1 overflow-y-auto mt-6">
+                        {
+                            (selectedSectionId && selectedSlideId && selectedSection) ? // Make sure selectedGraph is not null
+                                (
+                                    <div className="space-y-4">
+                                        {
+                                            selectedSection.type == 'graph' ?
+                                                <GraphRenderer
+                                                    key={selectedSectionId} // Add a key to force re-mount
+                                                    gConfig={selectedSection}
+                                                    onRender={handleRenderComplete}
+                                                    ref={el => {
+                                                        chartRef.current = el;
+                                                    }}
+                                                    onConfigChange={(field, value) => {
+                                                        updateGraphConfig(selectedSlideId, selectedSectionId, field, value);
+                                                    }}
+                                                /> : <Suspense
+                                                    fallback={
+                                                        <div className="w-full py-8 text-center">
+                                                            Loading editor...
+                                                        </div>
+                                                    }
+                                                >
+                                                    <MDEditor
+                                                        value={selectedSection.body}
+                                                        data-color-mode="light"
+                                                        onChange={(value) => updateSectionText(selectedSlideId, selectedSectionId, value || "")}
+                                                        height={300}
+                                                        preview="live"
+                                                        className="border shadow-5xl"
+                                                    />
+                                                </Suspense>
+                                        }
+                                    </div>
+                                )
+                                : (
+                                    <div className="flex items-center justify-center p-12 min-h-[400px]">
+                                        <Card className="border shadow-xl w-full h-full">
+                                            <CardContent className="p-8 text-center min-w-[300px]">
+                                                <p className="mb-2 text-xl font-semibold text-destructive">
+                                                    Please select a Graph.
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )
+                        }
+                    </div>
+                </div>
             </div>
-        </div >
+        </div>
     );
 }
