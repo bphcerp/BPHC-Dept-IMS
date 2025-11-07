@@ -40,6 +40,10 @@ export const masterAllocationRelations = relations(
             references: [course.code],
         }),
         sections: many(allocationSection),
+        semester: one(semester, {
+            fields: [masterAllocation.semesterId],
+            references: [semester.id],
+        }),
     })
 );
 

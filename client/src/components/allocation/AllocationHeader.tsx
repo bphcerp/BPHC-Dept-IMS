@@ -249,7 +249,7 @@ const AllocationHeader: React.FC<AllocationHeaderProps> = ({
                   ? !!allocationData.ic
                     ? "Update IC"
                     : "Set IC"
-                  : "Begin Allocation"}
+                  : selectedIC ? "Set IC & Begin" : "Begin Allocation"}
               </Button>
             ) : (
               <></>

@@ -3,6 +3,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { asyncHandler } from "@/middleware/routeHandler.ts";
 import express from "express";
 import { allocationSchemas, allocationTypes } from "lib";
+import { getLatestSemesterMinimal } from "../../semester/getLatest.ts";
 
 const router = express.Router();
 
@@ -13,6 +14,8 @@ router.get(
         let { email } = allocationSchemas.getInstructorDetailsQuerySchema.parse(
             req.query
         );
+
+        const latestSemester = await getLatestSemesterMinimal()
 
         const { courseAllocationSections: userAllocatedSections } =
             (await db.query.users.findFirst({
@@ -57,6 +60,9 @@ router.get(
                                         with: {
                                             course: {
                                                 columns: { name: true, lectureUnits: true, practicalUnits: true, code: true },
+                                            },
+                                            semester: {
+                                                columns: { id: true, semesterType: true, year: true },
                                             },
                                             ic: {
                                                 with: {
@@ -115,7 +121,7 @@ router.get(
 
                 return accum;
             },
-            {} as allocationTypes.InstructorAllocationDetails
+            {} as allocationTypes.InstructorAllocationDetail
         );
 
         Object.keys(userAllocatedSectionsGrouped).forEach((sectionType) => {
@@ -124,7 +130,30 @@ router.get(
             ].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
         });
 
-        res.status(200).json(userAllocatedSectionsGrouped);
+        const userAllocationResponse: allocationTypes.InstructorAllocationDetailsResponse = {
+            pastAllocation: latestSemester 
+                ? Object.fromEntries(
+                    Object.entries(userAllocatedSectionsGrouped)
+                        .map(([key, allocs]) => [
+                            key,
+                            allocs.filter(alloc => alloc.master.semester.id !== latestSemester.id)
+                        ])
+                        .filter(([_, allocs]) => allocs.length > 0)
+                )
+                : userAllocatedSectionsGrouped,
+            currentAllocation: latestSemester 
+                ? Object.fromEntries(
+                    Object.entries(userAllocatedSectionsGrouped)
+                        .map(([key, allocs]) => [
+                            key,
+                            allocs.filter(alloc => alloc.master.semester.id === latestSemester.id)
+                        ])
+                        .filter(([_, allocs]) => allocs.length > 0)
+                )
+                : {},
+        }
+
+        res.status(200).json(userAllocationResponse);
     })
 );
 

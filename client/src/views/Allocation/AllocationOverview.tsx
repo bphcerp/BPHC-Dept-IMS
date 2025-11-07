@@ -100,7 +100,7 @@ export const AllocationOverview = () => {
         formId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["semester"] });
+      await queryClient.invalidateQueries(["allocation", "semester"]);
     },
   });
 
@@ -108,7 +108,8 @@ export const AllocationOverview = () => {
     mutationFn: () =>
       api.post(`/allocation/semester/unlinkForm/${latestSemester?.id}`),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["semester"] });
+      await queryClient.invalidateQueries(["all-forms-for-linking"]);
+      await queryClient.invalidateQueries(["allocation", "semester"]);
     },
   });
 
@@ -132,6 +133,7 @@ export const AllocationOverview = () => {
         .post("/allocation/semester/endForm")
         .then(() => {
           toast.success("Form successfully closed");
+          queryClient.invalidateQueries(["allocation", "semester"]);
           queryClient.invalidateQueries(["semester"]);
         })
         .catch((e) => {
@@ -172,7 +174,7 @@ export const AllocationOverview = () => {
         isPublishedToRoleId,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["semester"] });
+      await queryClient.invalidateQueries({ queryKey: ["allocation", "semester"] });
       setIsPublishDialogOpen(false); // Close dialog on success
     },
   });

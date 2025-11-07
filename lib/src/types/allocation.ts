@@ -221,7 +221,7 @@ export type InstructorWithPreference = {
     type: "faculty" | "phd";
 };
 
-export type InstructorAllocationDetails = Record<
+export type InstructorAllocationDetail = Record<
     (typeof sectionTypes)[number],
     {
         id: string;
@@ -241,9 +241,15 @@ export type InstructorAllocationDetails = Record<
                 code: string;
             };
             ic: string | null;
+            semester: Pick<Semester, "id" | "semesterType" | "year">;
         };
     }[]
 >;
+
+export type InstructorAllocationDetailsResponse = {
+    pastAllocation: InstructorAllocationDetail;
+    currentAllocation: InstructorAllocationDetail;
+}
 
 export type NewCourseGroup = z.infer<typeof courseGroupSchema>;
 export type CourseGroup = NewCourseGroup & {
