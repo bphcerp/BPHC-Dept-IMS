@@ -171,7 +171,7 @@ const CoursesPage = () => {
         )}
       </div>
       <h4 className="text-sm italic text-muted-foreground">
-        *All courses are fetched from the TimeTable Division.
+        *All courses can be fetched from the TimeTable Division.
       </h4>
       <DataTable
         idColumn="code"

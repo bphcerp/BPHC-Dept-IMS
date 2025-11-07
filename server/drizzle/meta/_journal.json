@@ -610,6 +610,13 @@
       "when": 1762410033672,
       "tag": "0086_nebulous_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1762495648987,
+      "tag": "0087_tranquil_trauma",
+      "breakpoints": true
     }
   ]
 }

@@ -94,6 +94,7 @@ const SemesterList = () => {
         .then(async () => {
           toast.success("Semester marked as active successfully");
           queryClient.invalidateQueries(["semester"]);
+          queryClient.invalidateQueries(["allocation"]);
         })
         .catch((e) => {
           console.error("Error while marking semester as active", e);
