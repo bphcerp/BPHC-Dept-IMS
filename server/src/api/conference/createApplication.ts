@@ -7,6 +7,7 @@ import {
 import { files } from "@/config/db/schema/form.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { createTodos } from "@/lib/todos/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
@@ -102,25 +103,37 @@ router.post(
                 action: `Application created`,
             });
 
-            if (isDirect) {
-                const conveners = await getUsersWithPermission(
+            const todoAssignees = (
+                await getUsersWithPermission(
                     "conference:application:convener",
                     tx
-                );
+                )
+            ).map((convener) => convener.email);
 
-                await createTodos(
-                    conveners.map((assignee) => ({
-                        module: modules[0],
-                        title: "Conference Application",
-                        createdBy: req.user!.email,
-                        completionEvent: `review ${inserted.id} convener`,
-                        description: `Review conference application id ${inserted.id} by ${user.name || req.user!.email}`,
-                        assignedTo: assignee.email,
-                        link: `/conference/view/${inserted.id}`,
-                    })),
-                    tx
-                );
-            }
+            await createTodos(
+                todoAssignees.map((assignee) => ({
+                    module: modules[0],
+                    title: "Conference Application",
+                    createdBy: req.user!.email,
+                    completionEvent: isDirect
+                        ? `review ${inserted.id} convener`
+                        : `assign members ${inserted.id}`,
+                    description: isDirect
+                        ? `Review conference application id ${inserted.id} by ${user.name || user.email}`
+                        : `Assign members to conference application id ${inserted.id} by ${user.name || user.email}`,
+                    assignedTo: assignee,
+                    link: `/conference/view/${inserted.id}`,
+                })),
+                tx
+            );
+
+            void sendBulkEmails(
+                todoAssignees.map((assignee) => ({
+                    to: assignee,
+                    subject: `New Conference Approval Request`,
+                    text: `You have received a conference approval request by ${user.name || user.email}. To process it please log in to the IMS system.\n\nLink: ${process.env.FRONTEND_URL}`,
+                }))
+            );
         });
 
         res.status(200).send();

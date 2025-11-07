@@ -4,11 +4,15 @@ import express from "express";
 import { conferenceSchemas, modules } from "lib";
 import { getApplicationById } from "@/lib/conference/index.ts";
 import db from "@/config/db/index.ts";
-import { conferenceApplicationMembers } from "@/config/db/schema/conference.ts";
+import {
+    conferenceApplicationMembers,
+    conferenceStatusLog,
+} from "@/config/db/schema/conference.ts";
 import { notInArray, eq, and } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
+import { sendBulkEmails } from "@/lib/common/email.ts";
 
 const router = express.Router();
 
@@ -80,6 +84,14 @@ router.post(
                 tx
             );
 
+            void sendBulkEmails(
+                newlyAddedMembers.map((member) => ({
+                    to: member.memberEmail,
+                    subject: `New Conference Approval Request`,
+                    text: `The DRC Convener has forwarded a conference approval request. To evaluate it, please log in to the IMS system.\n\nLink: ${process.env.FRONTEND_URL}`,
+                }))
+            );
+
             const deletedMembers = await tx
                 .delete(conferenceApplicationMembers)
                 .where(
@@ -101,6 +113,20 @@ router.post(
                 },
                 tx
             );
+
+            await completeTodo(
+                {
+                    module: modules[0],
+                    completionEvent: `assign members ${id}`,
+                },
+                tx
+            );
+
+            await tx.insert(conferenceStatusLog).values({
+                applicationId: application.id,
+                userEmail: req.user!.email,
+                action: `Members Assigned/Updated`,
+            });
         });
         res.status(200).send();
     })

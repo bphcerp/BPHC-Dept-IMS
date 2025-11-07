@@ -17,7 +17,7 @@ import crypto from "crypto";
 import { files } from "@/config/db/schema/form.ts";
 import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
-import { sendBulkEmails } from "../common/email.ts";
+import { sendBulkEmails, sendEmail } from "../common/email.ts";
 import { Queue, Worker } from "bullmq";
 import { redisConfig } from "@/config/redis.ts";
 import logger from "@/config/logger.ts";
@@ -43,7 +43,7 @@ const formQueue = new Queue(QUEUE_NAME, {
 const formWorker = new Worker<number>(
     QUEUE_NAME,
     async (job) => {
-        return await generateAndMailForm(job.data);
+        return await processGenerateAndMailForm(job.data);
     },
     {
         connection: redisConfig,
@@ -67,6 +67,10 @@ export const bulkGenerateAndMailForms = async (ids: number[]) => {
 };
 
 export const generateAndMailForm = async (id: number) => {
+    return await formQueue.add("generateAndMailConferenceForm", id);
+};
+
+export const processGenerateAndMailForm = async (id: number) => {
     const application = await getApplicationById(id);
 
     if (!application)
@@ -109,25 +113,14 @@ export const generateAndMailForm = async (id: number) => {
         return inserted.id;
     });
 
-    const mailData = {
+    void sendEmail({
+        to: environment.DEPARTMENT_EMAIL
+            ? [environment.DEPARTMENT_EMAIL, application.userEmail]
+            : application.userEmail,
         subject: `Conference Application ID ${application.id} - Approved`,
         html: `<p>Conference application ID <strong>${application.id}</strong> has been approved.</p>
                    <p><a href="${environment.SERVER_URL}/f/${fileId}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: 500;">View Application Form</a></p>`,
-    };
-
-    const emailsToSend = [
-        {
-            to: application.userEmail,
-            ...mailData,
-        },
-    ];
-    if (environment.DEPARTMENT_EMAIL)
-        emailsToSend.push({
-            to: environment.DEPARTMENT_EMAIL,
-            ...mailData,
-        });
-
-    await sendBulkEmails(emailsToSend);
+    });
 };
 
 export const generateApplicationFormPdf = async (

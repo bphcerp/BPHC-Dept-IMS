@@ -11,6 +11,7 @@ import {
 import { eq } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
+import { sendEmail } from "@/lib/common/email.ts";
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ router.post(
                 },
                 tx
             );
-            if (!status)
+            if (!status) {
                 await createTodos(
                     [
                         {
@@ -83,6 +84,12 @@ router.post(
                     ],
                     tx
                 );
+                void sendEmail({
+                    to: application.userEmail,
+                    subject: `Conference Approval: Action Required`,
+                    text: `Your conference approval application has been reviewed and requires changes. Please log in to the IMS system to take action.\n\nLink: ${process.env.FRONTEND_URL}`,
+                });
+            }
         });
         res.status(200).send();
     })
