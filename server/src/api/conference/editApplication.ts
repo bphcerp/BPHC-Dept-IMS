@@ -18,6 +18,7 @@ import { unlink } from "fs/promises";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
