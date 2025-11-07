@@ -39,7 +39,7 @@ const RegisterNewSemester = () => {
     } as NewSemester,
   });
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const { mutate: addSemester, isLoading } = useMutation({
     mutationFn: (newSemester: NewSemester) =>
@@ -47,11 +47,14 @@ const RegisterNewSemester = () => {
     onSuccess: () => {
       toast.success("Semester added successfully!");
       form.reset();
-      navigate(-1)
+      navigate(-1);
     },
     onError: (error) => {
       console.error("Error adding semester:", error);
-      toast.error(((error as AxiosError).response?.data as string) ?? "An error occurred while adding the semester.");
+      toast.error(
+        ((error as AxiosError).response?.data as string) ??
+          "An error occurred while adding the semester."
+      );
     },
   });
 
@@ -73,7 +76,11 @@ const RegisterNewSemester = () => {
                 <FormItem>
                   <FormLabel>Year</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -128,7 +135,10 @@ const RegisterNewSemester = () => {
               )}
             />
           </section>
-          <h4 className="text-sm text-muted-foreground italic">* HoD and DCA Convener are automatically fetched from the TimeTable Division</h4>
+          <h4 className="text-sm italic text-muted-foreground">
+            * HoD and DCA Convener are automatically fetched from the TimeTable
+            Division
+          </h4>
           <Button type="submit" disabled={isLoading}>
             {isLoading ? "Creating..." : "Register Semester"}
           </Button>

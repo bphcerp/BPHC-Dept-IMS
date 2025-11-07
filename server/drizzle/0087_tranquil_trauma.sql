@@ -1,0 +1,2 @@
+ALTER TABLE "course_handout_requests" ADD COLUMN "semester_id" uuid;--> statement-breakpoint
+ALTER TABLE "course_handout_requests" ADD CONSTRAINT "course_handout_requests_semester_id_allocation_semester_id_fk" FOREIGN KEY ("semester_id") REFERENCES "public"."allocation_semester"("id") ON DELETE cascade ON UPDATE no action;

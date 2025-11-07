@@ -25,9 +25,12 @@ import { PreferredFaculty } from "node_modules/lib/src/types/allocationFormBuild
 import { toast } from "sonner";
 import { sectionTypes } from "../../../../lib/src/schemas/Allocation";
 import {
-  InstructorAllocationDetails,
+  InstructorAllocationDetailsResponse,
+  InstructorAllocationDetail,
   InstructorWithPreference,
-} from "node_modules/lib/src/types/allocation";
+  semesterTypeMap,
+} from "../../../../lib/src/types/allocation";
+import { getFormattedAY } from "@/views/Allocation/AllocationOverview";
 
 interface AssignInstructorDialogProps {
   isOpen: boolean;
@@ -43,7 +46,7 @@ interface AssignInstructorDialogProps {
 
 export const getAllocatedCourseLoad = (
   instructorDetails:
-    | allocationTypes.InstructorAllocationDetails
+    | allocationTypes.InstructorAllocationDetail
     | undefined
     | null,
   sectionType?: (typeof sectionTypes)[number]
@@ -52,7 +55,7 @@ export const getAllocatedCourseLoad = (
     ? (
         Object.values(
           instructorDetails
-        ) as InstructorAllocationDetails[keyof InstructorAllocationDetails][]
+        ) as InstructorAllocationDetail[keyof InstructorAllocationDetail][]
       )
         .flat()
         .filter((section) =>
@@ -183,7 +186,7 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
       queryFn: async () => {
         if (!selectedInstructorEmail) return null;
         const response =
-          await api.get<allocationTypes.InstructorAllocationDetails>(
+          await api.get<InstructorAllocationDetailsResponse>(
             `/allocation/allocation/instructor/details?email=${encodeURIComponent(selectedInstructorEmail)}`
           );
         return response.data;
@@ -246,7 +249,8 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
   const getSectionNumber = (
     sectionId: string,
     masterId: string,
-    type: (typeof sectionTypes)[number]
+    type: (typeof sectionTypes)[number],
+    instructorDetails: InstructorAllocationDetail | undefined | null
   ) =>
     instructorDetails
       ? instructorDetails[type]
@@ -383,112 +387,178 @@ const AssignInstructorDialog: React.FC<AssignInstructorDialogProps> = ({
                         <LoadingSpinner />
                       </div>
                     ) : instructorDetails ? (
-                      <>
+                      <div className="space-y-4">
                         {/* Current Allocations */}
-                        {Object.keys(instructorDetails ?? {}).length > 0 && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                Current Allocations
-                              </CardTitle>
-                              <CardDescription>
-                                Sections currently allocated to this instructor
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              {Object.entries(instructorDetails).map(
-                                ([sectionType, sections]) => (
-                                  <div
-                                    key={sectionType}
-                                    className="flex flex-col space-y-2"
-                                  >
-                                    <div>
-                                      {sections.map((section, index) => (
-                                        <div
-                                          key={index}
-                                          className="rounded bg-gray-50 text-sm"
-                                        >
-                                          <div className={`py-1 font-medium`}>
-                                            <span
-                                              className={
-                                                getSectionTypeColor(
-                                                  section.type
-                                                ) + " p-1"
-                                              }
-                                            >
-                                              {section.type.charAt(0)}
-                                              {getSectionNumber(
-                                                section.id,
-                                                section.master.id,
-                                                section.type
-                                              )}
-                                            </span>
-                                            {" - "}
-                                            <span>
-                                              {section.master.course.name} -{" "}
-                                              {section.master.course.code}
-                                            </span>
-                                          </div>
-                                          <div className="text-xs text-gray-600">
-                                            IC: {section.master.ic ?? "Not Set"}
-                                          </div>
-                                          <div className="mt-1 text-sm">
-                                            <div className="font-medium">
-                                              Instructors:
-                                            </div>
-                                            <ol className="ml-3 mt-1 list-inside list-decimal space-y-0.5 text-xs">
-                                              {section.instructors.map(
-                                                (i, idx) => (
-                                                  <li
-                                                    key={i.email ?? idx}
-                                                    className="truncate"
-                                                  >
-                                                    <span className="font-light">
-                                                      {i.name ?? "N/A"}
-                                                    </span>
-                                                  </li>
-                                                )
-                                              )}
-                                            </ol>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                    { userTypeViewMode === 'faculty' && <Badge
-                                      variant="outline"
-                                      className="w-fit text-sm"
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              Current Allocations
+                            </CardTitle>
+                            <CardDescription>
+                              Current semester allocations
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {Object.keys(instructorDetails.currentAllocation || {}).length > 0 ? (
+                              <>
+                                {Object.entries(instructorDetails.currentAllocation).map(
+                                  ([sectionType, sections]) => (
+                                    <div
+                                      key={sectionType}
+                                      className="flex flex-col space-y-2"
                                     >
-                                      {sectionType} Credit Load:{" "}
-                                      {getAllocatedCourseLoad(
-                                        instructorDetails,
-                                        sectionType as (typeof sectionTypes)[number]
+                                      <div>
+                                        {sections.map((section, index) => (
+                                          <div
+                                            key={index}
+                                            className="rounded bg-gray-50 text-sm"
+                                          >
+                                            <div className={`py-1 font-medium`}>
+                                              <span
+                                                className={
+                                                  getSectionTypeColor(
+                                                    section.type
+                                                  ) + " p-1"
+                                                }
+                                              >
+                                                {section.type.charAt(0)}
+                                                {getSectionNumber(
+                                                  section.id,
+                                                  section.master.id,
+                                                  section.type,
+                                                  instructorDetails.currentAllocation,
+                                                )}
+                                              </span>
+                                              {" - "}
+                                              <span>
+                                                {section.master.course.name} -{" "}
+                                                {section.master.course.code}
+                                              </span>
+                                            </div>
+                                            <div className="text-xs text-gray-600">
+                                              IC: {section.master.ic ?? "Not Set"}
+                                            </div>
+                                            <div className="mt-1 text-sm">
+                                              <div className="font-medium">
+                                                Instructors:
+                                              </div>
+                                              <ol className="ml-3 mt-1 list-inside list-decimal space-y-0.5 text-xs">
+                                                {section.instructors.map(
+                                                  (i, idx) => (
+                                                    <li
+                                                      key={i.email ?? idx}
+                                                      className="truncate"
+                                                    >
+                                                      <span className="font-light">
+                                                        {i.name ?? "N/A"}
+                                                      </span>
+                                                    </li>
+                                                  )
+                                                )}
+                                              </ol>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {userTypeViewMode === 'faculty' && (
+                                        <Badge
+                                          variant="outline"
+                                          className="w-fit text-sm"
+                                        >
+                                          {sectionType} Credit Load:{" "}
+                                          {getAllocatedCourseLoad(
+                                            instructorDetails.currentAllocation,
+                                            sectionType as (typeof sectionTypes)[number]
+                                          )}
+                                        </Badge>
                                       )}
-                                    </Badge> }
-                                  </div>
-                                )
-                              )}
-                              { userTypeViewMode === 'faculty' && <Badge variant="outline" className="text-md">
-                                <span>
-                                  <strong>Total Allocated Load</strong>:{" "}
-                                  {getAllocatedCourseLoad(instructorDetails)}
-                                </span>
-                              </Badge> }
-                            </CardContent>
-                          </Card>
-                        )}
-
-                        {Object.keys(instructorDetails ?? {}).length === 0 && (
-                          <Card>
-                            <CardContent className="p-8 text-center">
-                              <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-                              <div className="text-gray-600">
-                                No current allocations found for this instructor
+                                    </div>
+                                  )
+                                )}
+                                {userTypeViewMode === 'faculty' && (
+                                  <Badge variant="outline" className="text-md">
+                                    <span>
+                                      <strong>Current Total Load</strong>:{" "}
+                                      {getAllocatedCourseLoad(instructorDetails.currentAllocation)}
+                                    </span>
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-center text-gray-600">
+                                No current allocations
                               </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </>
+                            )}
+                          </CardContent>
+                        </Card>
+
+                        {/* Past Allocations */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              Past Allocations
+                            </CardTitle>
+                            <CardDescription>
+                              Previous semester allocations
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {Object.keys(instructorDetails.pastAllocation || {}).length > 0 ? (
+                              <>
+                                {Object.entries(instructorDetails.pastAllocation).map(
+                                  ([sectionType, sections]) => (
+                                    <div
+                                      key={sectionType}
+                                      className="flex flex-col space-y-2"
+                                    >
+                                      <div className="space-y-2">
+                                        {sections.map((section, index) => (
+                                          <div
+                                            key={index}
+                                            className="rounded bg-gray-50/50 text-sm"
+                                          >
+                                            <div className={`py-1 font-medium`}>
+                                              <span
+                                                className={
+                                                  getSectionTypeColor(
+                                                    section.type
+                                                  ) + " p-1"
+                                                }
+                                              >
+                                                {section.type.charAt(0)}
+                                                {getSectionNumber(
+                                                  section.id,
+                                                  section.master.id,
+                                                  section.type,
+                                                  instructorDetails.pastAllocation,
+                                                )}
+                                              </span>
+                                              {" - "}
+                                              <span>
+                                                {section.master.course.name} -{" "}
+                                                {section.master.course.code}
+                                              </span>
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                              Semester: {semesterTypeMap[section.master.semester.semesterType]} {getFormattedAY(section.master.semester.year)}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-center text-gray-600">
+                                No past allocations found
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
                     ) : (
                       <Card>
                         <CardContent className="p-8 text-center">

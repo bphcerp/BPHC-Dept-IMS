@@ -19,6 +19,15 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
+        if (environment.IS_STAGING) {
+            return next(
+                new HttpError(
+                    HttpCode.FORBIDDEN,
+                    "Operation not allowed in staging environment"
+                )
+            );
+        }
+
         const { sendMultiDepartmentCourses, idToken } = pushToTDSchema.parse(
             req.body
         );

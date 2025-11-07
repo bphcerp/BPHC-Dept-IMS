@@ -92,7 +92,7 @@ const ContributorsPage = () => {
           <div className="mb-12">
             <div className="mb-4 flex flex-col items-center space-y-2 text-center text-primary">
               <h1 className="text-3xl font-semibold tracking-tight">
-                Information Management Service (IMS)
+                Information Management System (IMS)
               </h1>
               <h2 className="text-lg text-muted-foreground">
                 An initiative by the Departments of Electrical & Electronics

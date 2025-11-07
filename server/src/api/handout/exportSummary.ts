@@ -6,6 +6,8 @@ import JSZip from "jszip";
 import ExcelJS from "exceljs";
 import { promises as fs } from "fs";
 import logger from "@/config/logger.ts";
+import { getLatestCompletedSemester } from "./getLatestCompletedSemester.ts";
+import { HttpCode, HttpError } from "@/config/errors.ts";
 
 function generateExcel(
     headers: string[],
@@ -26,7 +28,14 @@ const router = express.Router();
 router.get(
     "/",
     checkAccess(),
-    asyncHandler(async (_req, res, _next) => {
+    asyncHandler(async (_req, res, next) => {
+        const semester = await getLatestCompletedSemester();
+        if (!semester) {
+            return next(
+                new HttpError(HttpCode.NOT_FOUND, "No completed semester found")
+            );
+        }
+
         const headers = [
             "S.No",
             "Course Code",
@@ -41,7 +50,11 @@ router.get(
         ];
 
         const allHandouts = await db.query.courseHandoutRequests.findMany({
-            where: (handout, { eq }) => eq(handout.status, "approved"),
+            where: (handout, { eq, and }) =>
+                and(
+                    eq(handout.status, "approved"),
+                    eq(handout.semesterId, semester.id)
+                ),
             with: {
                 ic: {
                     with: {
@@ -110,7 +123,11 @@ router.get(
             columns: {
                 handoutFilePath: false,
             },
-            where: (handout, { eq }) => eq(handout.status, "approved"),
+            where: (handout, { eq, and }) =>
+                and(
+                    eq(handout.status, "approved"),
+                    eq(handout.semesterId, semester.id)
+                ),
             with: {
                 handoutFilePath: {
                     columns: {

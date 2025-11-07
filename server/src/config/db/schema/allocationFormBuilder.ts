@@ -98,10 +98,10 @@ export const allocationFormTemplateField = pgTable(
             allocationFormTemplatePreferenceFieldType("preference_type"),
         type: allocationFormTemplateFieldType("type"),
         groupId: uuid("group_id").references(() => allocationCourseGroup.id, {
-            onDelete: "set null",
+            onDelete: "restrict",
         }),
         viewableByRoleId: integer("viewable_by_role_id").references(() => roles.id, {
-            onDelete: "set null",
+            onDelete: "restrict",
         }),
         noOfRequiredPreferences: integer("no_of_required_preferences"),
     }

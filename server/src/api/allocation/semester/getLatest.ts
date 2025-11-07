@@ -20,7 +20,7 @@ export const getLatestSemesterMinimal = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
-        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
+        where: (semester, { eq }) => eq(semester.active, true),
     });
 };
 
@@ -30,7 +30,7 @@ export const getLatestSemester = async () => {
             desc(semester.year),
             desc(semester.semesterType),
         ],
-        where: (semester, { ne }) => ne(semester.allocationStatus, "completed"),
+        where: (semester, { eq }) => eq(semester.active, true),
         with: {
             dcaConvenerAtStartOfSem: {
                 columns: {
@@ -196,7 +196,8 @@ router.get(
                     );
 
                     const courses = await db.query.course.findMany({
-                        where: ((course, { eq }) => eq(course.markedForAllocation, true))
+                        where: (course, { eq }) =>
+                            eq(course.markedForAllocation, true),
                     });
 
                     const statusMap = {
@@ -244,7 +245,7 @@ router.get(
                         allocationStats,
                     };
                     res.status(200).json(semesterDataWithStats);
-                    return
+                    return;
                 }
             }
             res.status(200).json(semesterData);

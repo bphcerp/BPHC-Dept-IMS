@@ -287,7 +287,7 @@ export const DCAConvenerHandouts: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="mx-auto flex h-screen items-center justify-center text-xl">
         Loading...
       </div>
     );
@@ -295,8 +295,16 @@ export const DCAConvenerHandouts: React.FC = () => {
 
   if (isError) {
     return (
-      <div className="flex h-screen items-center justify-center text-red-500">
+      <div className="mx-auto flex h-screen items-center justify-center text-xl text-red-500">
         Error fetching handouts
+      </div>
+    );
+  }
+
+  if (!handouts) {
+    return (
+      <div className="mx-auto flex h-screen items-center justify-center text-xl text-red-500">
+        No Allocated Semester Found
       </div>
     );
   }
