@@ -3,6 +3,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import { sendEmail } from "@/lib/common/email.ts";
 import { createLogger } from "winston";
 import { checkAccess } from "@/middleware/auth.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 const logger = createLogger();
@@ -104,7 +105,7 @@ function generateInstructorReminderTemplate(
                 </div>
 
                 <div style="margin: 25px 0;">
-                    <a href="${process.env.FRONTEND_URL || "https://your-app-url.com"}/qpReview/instructor" 
+                    <a href="${environment.FRONTEND_URL || "https://your-app-url.com"}/qpReview/instructor" 
                        style="
                            display: inline-block; 
                            background-color: #dc2626; 
@@ -217,7 +218,7 @@ function generateReviewerReminderTemplate(
                 </div>
 
                 <div style="margin: 25px 0;">
-                    <a href="${process.env.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty" 
+                    <a href="${environment.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty" 
                        style="
                            display: inline-block; 
                            background-color: #1e40af; 

@@ -7,17 +7,29 @@ export const ProgressStatus = ({
   currentStage,
   currentStatus,
   approvalForm,
+  membersAssigned,
 }: {
   currentStage: (typeof conferenceSchemas.states)[number];
   currentStatus: "pending" | "accepted";
   approvalForm?: string;
+  membersAssigned?: boolean;
 }) => {
-  const currentStep = conferenceSchemas.states.indexOf(currentStage);
-  const progressValue =
-    (currentStep / (conferenceSchemas.states.length - 1)) * 100;
+  // Create modified states array based on whether we need to show extra DRC Convener
+  const states = [...conferenceSchemas.states];
+  let currentStep = states.indexOf(currentStage);
+
+  // If current stage is DRC Member but members not assigned, insert extra DRC Convener
+  if (currentStage === "DRC Member" && membersAssigned === false) {
+    const drcMemberIndex = states.indexOf("DRC Member");
+    // Insert "DRC Convener" before "DRC Member"
+    states.splice(drcMemberIndex, 0, "DRC Convener");
+    // Current step is now at the inserted DRC Convener position
+    currentStep = drcMemberIndex;
+  }
+
+  const progressValue = (currentStep / (states.length - 1)) * 100;
   const isCompleted =
-    currentStatus === "accepted" &&
-    currentStep === conferenceSchemas.states.length - 1;
+    currentStatus === "accepted" && currentStep === states.length - 1;
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border bg-white p-4 shadow-md">
@@ -44,9 +56,9 @@ export const ProgressStatus = ({
       </div>
       <Progress value={progressValue} className="h-3" />
       <div className="flex justify-between text-sm text-gray-500">
-        {conferenceSchemas.states.map((stage, index) => (
+        {states.map((stage, index) => (
           <span
-            key={index}
+            key={`${stage}-${index}`}
             className={
               index === currentStep
                 ? "font-bold text-foreground"

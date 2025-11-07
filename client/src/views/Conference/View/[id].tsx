@@ -799,7 +799,6 @@ const ConferenceViewApplicationView = () => {
       void queryClient.refetchQueries({
         queryKey: ["conference", "applications", parseInt(id!)],
       });
-      toast.success("Approval form generated and mailed");
     },
     onError: (err) => {
       if (isAxiosError(err))
@@ -834,13 +833,7 @@ const ConferenceViewApplicationView = () => {
       {data && (
         <>
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold">
-              Application No. {data.application.id}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Status:{" "}
-              <span className="font-medium">{data.application.state}</span>
-            </p>
+            <h2 className="text-3xl">Application No. {data.application.id}</h2>
           </div>
           <ViewApplication data={data} />
           <Separator />

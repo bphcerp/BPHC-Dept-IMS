@@ -25,11 +25,13 @@ const TodoCard: React.FC<TodoCardProps> = ({
   deadline,
   link,
 }) => {
-  const formattedDeadline = new Date(deadline).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const formattedDeadline = deadline?.length
+    ? new Date(deadline).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <Card className="flex h-full w-full max-w-md flex-col">
@@ -41,9 +43,11 @@ const TodoCard: React.FC<TodoCardProps> = ({
         <p className="text-gray-700">{description}</p>
       </CardContent>
       <CardFooter className="flex flex-col items-stretch gap-4 pb-4 pr-4">
-        <span className="text-sm text-destructive">
-          Deadline: {formattedDeadline}
-        </span>
+        {formattedDeadline && (
+          <span className="text-sm text-destructive">
+            Deadline: {formattedDeadline}
+          </span>
+        )}
         {link && (
           <Link to={link} className={buttonVariants({ className: "self-end" })}>
             Go to Task
