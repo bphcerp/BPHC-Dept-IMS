@@ -7,6 +7,7 @@ import { createTodos, createNotifications } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import { eq, and, inArray } from "drizzle-orm";
 import { z } from "zod";
+import environment from "@/config/environment.ts";
 
 const router = Router();
 
@@ -149,7 +150,7 @@ router.post(
                 return {
                     to: email,
                     subject: subject,
-                    text: `${body}\n\nCourses:\n  - ${courseList}\n\nPlease log in to the system to submit midsem grades: ${process.env.FRONTEND_URL}/grades/assign-grades`,
+                    text: `${body}\n\nCourses:\n  - ${courseList}\n\nPlease log in to the system to submit midsem grades: ${environment.FRONTEND_URL}/grades/assign-grades`,
                 };
             }
         );

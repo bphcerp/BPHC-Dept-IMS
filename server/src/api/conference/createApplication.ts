@@ -5,6 +5,7 @@ import {
     conferenceStatusLog,
 } from "@/config/db/schema/conference.ts";
 import { files } from "@/config/db/schema/form.ts";
+import environment from "@/config/environment.ts";
 import { HttpCode, HttpError } from "@/config/errors.ts";
 import { pdfUpload } from "@/config/multer.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
@@ -131,7 +132,7 @@ router.post(
                 todoAssignees.map((assignee) => ({
                     to: assignee,
                     subject: `New Conference Approval Request`,
-                    text: `You have received a conference approval request by ${user.name || user.email}. To process it please log in to the IMS system.\n\nLink: ${process.env.FRONTEND_URL}`,
+                    text: `You have received a conference approval request by ${user.name || user.email}. To process it please log in to the IMS system.\n\nLink: ${environment.FRONTEND_URL}`,
                 }))
             );
         });

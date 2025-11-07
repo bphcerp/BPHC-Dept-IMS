@@ -14,6 +14,7 @@ import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -105,7 +106,7 @@ router.post(
                     todoAssignees.map((assignee) => ({
                         to: assignee.email,
                         subject: `Review Conference Approval Request`,
-                        text: `All reviews have been received for a conference approval application. Please log in to the IMS system to take action.\n\nLink: ${process.env.FRONTEND_URL}`,
+                        text: `All reviews have been received for a conference approval application. Please log in to the IMS system to take action.\n\nLink: ${environment.FRONTEND_URL}`,
                     }))
                 );
             }

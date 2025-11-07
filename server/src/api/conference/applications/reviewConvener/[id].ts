@@ -13,6 +13,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails, sendEmail } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -98,7 +99,7 @@ router.post(
                     todoAssignees.map((assignee) => ({
                         to: assignee.email,
                         subject: `Review Conference Approval Request`,
-                        text: `All reviews have been received for a conference approval application. Please log in to the IMS system to take action.\n\nLink: ${process.env.FRONTEND_URL}`,
+                        text: `All reviews have been received for a conference approval application. Please log in to the IMS system to take action.\n\nLink: ${environment.FRONTEND_URL}`,
                     }))
                 );
             } else if (!status) {
@@ -119,7 +120,7 @@ router.post(
                 void sendEmail({
                     to: application.userEmail,
                     subject: `Conference Approval: Action Required`,
-                    text: `Your conference approval application has been reviewed and requires changes. Please log in to the IMS system to take action.\n\nLink: ${process.env.FRONTEND_URL}`,
+                    text: `Your conference approval application has been reviewed and requires changes. Please log in to the IMS system to take action.\n\nLink: ${environment.FRONTEND_URL}`,
                 });
             }
         });

@@ -13,6 +13,7 @@ import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -88,7 +89,7 @@ router.post(
                 newlyAddedMembers.map((member) => ({
                     to: member.memberEmail,
                     subject: `New Conference Approval Request`,
-                    text: `The DRC Convener has forwarded a conference approval request. To evaluate it, please log in to the IMS system.\n\nLink: ${process.env.FRONTEND_URL}`,
+                    text: `The DRC Convener has forwarded a conference approval request. To evaluate it, please log in to the IMS system.\n\nLink: ${environment.FRONTEND_URL}`,
                 }))
             );
 

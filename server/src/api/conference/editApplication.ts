@@ -197,7 +197,7 @@ router.post(
                 todoAssignees.map((assignee) => ({
                     to: assignee,
                     subject: `New Conference Approval Request`,
-                    text: `You have received a conference approval request by ${application.user.name || application.userEmail}. To process it please log in to the IMS system.\n\nLink: ${process.env.FRONTEND_URL}`,
+                    text: `You have received a conference approval request by ${application.user.name || application.userEmail}. To process it please log in to the IMS system.\n\nLink: ${environment.FRONTEND_URL}`,
                 }))
             );
         });

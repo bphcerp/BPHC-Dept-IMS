@@ -15,6 +15,7 @@ import {
     createNotifications,
     createTodos,
 } from "@/lib/todos/index.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -68,7 +69,7 @@ function generateReviewerAssignmentTemplate(
                 </div>
 
                 <div style="margin: 25px 0;">
-                    <a href="${process.env.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty" 
+                    <a href="${environment.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty" 
                        style="
                            display: inline-block; 
                            background-color: #1e40af; 
@@ -185,7 +186,7 @@ ${courseDetails.instructorName ? `- Instructor: ${courseDetails.instructorName}`
 
 Please access the review portal to complete your assignment once the question papers are submitted by the instructor.
 
-Review Portal: ${process.env.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty
+Review Portal: ${environment.FRONTEND_URL || "https://your-app-url.com"}/qpReview/faculty
 
 If you have any questions about this assignment, please contact the DCA Convenor or the examination office.
 

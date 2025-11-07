@@ -12,6 +12,7 @@ import { eq } from "drizzle-orm";
 import { checkAccess } from "@/middleware/auth.ts";
 import { completeTodo, createTodos } from "@/lib/todos/index.ts";
 import { sendEmail } from "@/lib/common/email.ts";
+import environment from "@/config/environment.ts";
 
 const router = express.Router();
 
@@ -87,7 +88,7 @@ router.post(
                 void sendEmail({
                     to: application.userEmail,
                     subject: `Conference Approval: Action Required`,
-                    text: `Your conference approval application has been reviewed and requires changes. Please log in to the IMS system to take action.\n\nLink: ${process.env.FRONTEND_URL}`,
+                    text: `Your conference approval application has been reviewed and requires changes. Please log in to the IMS system to take action.\n\nLink: ${environment.FRONTEND_URL}`,
                 });
             }
         });
