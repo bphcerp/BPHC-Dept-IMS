@@ -17,7 +17,7 @@ import crypto from "crypto";
 import { files } from "@/config/db/schema/form.ts";
 import { conferenceApprovalApplications } from "@/config/db/schema/conference.ts";
 import { eq } from "drizzle-orm";
-import { sendBulkEmails, sendEmail } from "../common/email.ts";
+import { sendEmail } from "../common/email.ts";
 import { Queue, Worker } from "bullmq";
 import { redisConfig } from "@/config/redis.ts";
 import logger from "@/config/logger.ts";

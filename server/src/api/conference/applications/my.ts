@@ -20,6 +20,7 @@ router.get(
                             phd: true,
                         },
                     },
+                    members: true,
                 },
                 where: ({ userEmail }, { and, eq }) =>
                     and(eq(userEmail, req.user!.email)),
@@ -28,6 +29,7 @@ router.get(
             id: appl.id,
             state: appl.state,
             createdAt: appl.createdAt.toLocaleString(),
+            hasMembersAssigned: appl.members.length > 0,
         }));
 
         const response: conferenceSchemas.submittedApplicationsResponse = {

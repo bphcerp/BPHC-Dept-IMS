@@ -35,6 +35,7 @@ type ApplicationRow = {
   };
   state: (typeof conferenceSchemas.states)[number];
   createdAt: string;
+  areMembersAssigned: boolean;
   membersAssigned?: number;
   membersReviewed?: number;
 };
@@ -91,13 +92,19 @@ const createColumns = (
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex w-full items-center justify-start p-0 font-semibold text-foreground"
       >
-        Status
+        State
       </Button>
     ),
     accessorKey: "state",
     cell: ({ row }) => {
       const state: string = row.getValue("state");
-      return <Badge variant="outline">{state}</Badge>;
+      const { areMembersAssigned } = row.original;
+
+      // If state is DRC Member but no members assigned, show DRC Convener
+      const displayState =
+        state === "DRC Member" && !areMembersAssigned ? "DRC Convener" : state;
+
+      return <Badge variant="outline">{displayState}</Badge>;
     },
   },
   ...(showMemberProgress
@@ -111,8 +118,17 @@ const createColumns = (
           accessorKey: "reviewProgress",
           cell: ({ row }: { row: { original: ApplicationRow } }) => {
             const { membersAssigned = 0, membersReviewed = 0 } = row.original;
-            const allReviewed =
-              membersAssigned > 0 && membersReviewed === membersAssigned;
+
+            // If no members assigned, show "assign members" in red
+            if (membersAssigned === 0) {
+              return (
+                <span className="text-sm font-medium text-red-500">
+                  Assign members
+                </span>
+              );
+            }
+
+            const allReviewed = membersReviewed === membersAssigned;
             return (
               <div className="flex items-center gap-2">
                 <span
@@ -120,11 +136,6 @@ const createColumns = (
                 >
                   {membersReviewed} / {membersAssigned}
                 </span>
-                {allReviewed && (
-                  <Badge variant="default" className="text-xs">
-                    Complete
-                  </Badge>
-                )}
               </div>
             );
           },
