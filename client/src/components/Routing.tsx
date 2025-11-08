@@ -531,6 +531,7 @@ const Routing = () => {
               {checkAccessAnyOne([
                 permissions["/phd/drcMember/getAvailableExams"],
                 permissions["/phd/proposal/drcConvener/getProposals"],
+                permissions["/phd-request/drc-member/requests"],
               ]) && (
                 <Route path="drc-convenor" element={<Outlet />}>
                   {checkAccess(

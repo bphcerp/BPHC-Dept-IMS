@@ -151,18 +151,6 @@ router.post(
                         "phd:drc:proposal",
                         tx
                     );
-                    await createTodos(
-                        drcConveners.map((drc) => ({
-                            assignedTo: drc.email,
-                            createdBy: req.user!.email,
-                            title: `Set Seminar Details for ${proposal.student.name}'s Proposal`,
-                            description: `The DAC has approved the proposal for ${proposal.student.name}. Please set the seminar details.`,
-                            module: modules[3],
-                            completionEvent: `proposal:set-seminar-details:${proposalId}`,
-                            link: `/phd/drc-convenor/proposal-management/${proposalId}`,
-                        })),
-                        tx
-                    );
                     await Promise.all(
                         drcConveners.map((drc) =>
                             sendEmail({
