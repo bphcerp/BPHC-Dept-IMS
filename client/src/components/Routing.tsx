@@ -117,7 +117,8 @@ import AssignGradesView from "@/views/Grades/AssignGrades";
 import GradesDefaultRedirect from "./GradesDefaultRedirect";
 import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
-import PresentationCreator from "@/views/Analytics/Presentation";
+import PresentationCreator from "@/views/Analytics/Templates/[id]";
+import PresentationTemplates from "@/views/Analytics/Templates";
 import PublicationsAnalytics2 from "@/views/Analytics/Publications2";
 import PublicationsAnalytics3 from "@/views/Analytics/Publications3";
 import TestingView from "@/views/Admin/Testing";
@@ -815,7 +816,11 @@ const Routing = () => {
                     element={<PublicationsAnalytics />}
                   />
                   <Route
-                    path="presentation"
+                    path="templates"
+                    element={<PresentationTemplates />}
+                  />
+                  <Route
+                    path="templates/:id"
                     element={<PresentationCreator />}
                   />
                   <Route

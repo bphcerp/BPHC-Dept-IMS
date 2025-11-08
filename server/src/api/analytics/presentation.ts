@@ -6,7 +6,6 @@ const PptxGenJS = (PptxGenJSImport as any).default || PptxGenJSImport;
 import { imageUpload } from "@/config/multer.ts";
 import path from "path";
 import { STATIC_DIR } from "@/config/environment.ts";
-import logger from "@/config/logger.ts";
 import { marked, type Token } from 'marked';
 
 type PptxTextOptions = {
@@ -162,6 +161,8 @@ router.post(
     imageUpload.fields([{ name: "images" }]),
     asyncHandler(async (req, res) => {
         try {
+            const pptx = new PptxGenJS();
+
             const files = req.files as {
                 [fieldname: string]: Express.Multer.File[];
             };
@@ -176,16 +177,13 @@ router.post(
                     sections: { title: string; text?: string }[];
                 }[];
             } = JSON.parse(req.body.slides || []);
-            const slides: any[] = [];
+
             const { title } = req.query;
-            logger.info("parsed title");
 
             if (!files || !files.images || files.images.length === 0) {
                 res.status(400).json({ message: "No 'image' files provided" });
                 return;
             }
-
-            const pptx = new PptxGenJS();
 
             const titleSlide = pptx.addSlide();
             titleSlide.addImage({
@@ -212,18 +210,20 @@ router.post(
                 fontSize: 48,
             });
 
-            files.images.forEach((file, i) => {
-                const meta = metadata[i];
-                while (meta.slideIndex >= slides.length) {
-                    slides.push(pptx.addSlide());
-                    slides[slides.length - 1].addImage({
+            const slides: any[] = Array.from({length: totalSlides}, ()=>{
+                    const slide = pptx.addSlide();
+                    slide.addImage({
                         path: path.join(STATIC_DIR, "analytics", "SlideBG.png"),
                         x: 0,
                         y: 0,
                         w: "100%",
                         h: "100%",
                     });
-                }
+                    return slide
+                });
+
+            files.images.forEach((file, i) => {
+                const meta = metadata[i];
                 const imageBase64 = file.buffer.toString("base64");
                 const totalSections = meta.totalSections;
                 slides[meta.slideIndex].addImage({
@@ -339,7 +339,6 @@ router.post(
                 "Content-Type",
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation"
             );
-            logger.info("sent buffer of size", buffer.length);
             res.send(buffer);
         } catch (err) {
             console.error(err);
@@ -347,165 +346,5 @@ router.post(
         }
     })
 );
-
-// router.patch(
-//     "/templates/update/:id",
-//     asyncHandler(async (req, res) => {
-//         const email = req.user?.email;
-//         const { id } = req.params;
-
-//         if (!email)
-//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
-
-//         const template = analyticsSchemas.presentationTemplateSchema.parse(
-//             req.body
-//         );
-
-//         await db
-//             .update(presentationTemplates)
-//             .set({
-//                 title: template.title,
-//                 slides: template.slides,
-//                 facultyEmail: email,
-//             })
-//             .where(
-//                 and(
-//                     eq(presentationTemplates.id, id),
-//                     eq(presentationTemplates.facultyEmail, email)
-//                 )
-//             )
-//             .returning();
-
-//         await db.delete(graphs).where(eq(graphs.templateId, id));
-//         for (const graph of template.graphs) {
-//             await db.insert(graphs).values({
-//                 templateId: id,
-//                 ...graph,
-//             });
-//         }
-//         res.status(200).json({ message: "Successfully updated template." });
-//     })
-// );
-
-// router.get(
-//     "/templates/:id",
-//     asyncHandler(async (req, res) => {
-//         const email = req.user?.email;
-//         const { id } = req.params;
-
-//         if (!email)
-//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
-
-//         const templates = await db.query.presentationTemplates.findMany({
-//             with: {
-//                 graphs: true,
-//             },
-//             where: (presentationTemplates, { eq }) =>
-//                 and(
-//                     eq(presentationTemplates.id, id),
-//                     eq(presentationTemplates.facultyEmail, email)
-//                 ),
-//         });
-
-//         if (!templates.length)
-//             throw new HttpError(
-//                 HttpCode.NOT_FOUND,
-//                 "No template found with that id"
-//             );
-
-//         const formattedTemplate: analyticsSchemas.Template = templates.map(
-//             ({ graphs, id, facultyEmail, ...rest }) => {
-//                 return {
-//                     ...rest,
-//                     graphs: graphs.map((graph) => {
-//                         const { id: gid, templateId, ...remaining } = graph;
-//                         return remaining;
-//                     }),
-//                 };
-//             }
-//         )[0];
-
-//         res.status(200).json(formattedTemplate);
-//     })
-// );
-
-// router.delete(
-//     "/templates/delete/:id",
-//     asyncHandler(async (req, res) => {
-//         const email = req.user?.email;
-//         const { id } = req.params;
-
-//         if (!email)
-//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
-
-//         await db
-//             .delete(presentationTemplates)
-//             .where(
-//                 and(
-//                     eq(presentationTemplates.id, id),
-//                     eq(presentationTemplates.facultyEmail, email)
-//                 )
-//             );
-
-//         res.status(200).json({ message: "Successfully Deleted Template" });
-//     })
-// );
-
-// router.get(
-//     "/templates",
-//     asyncHandler(async (req, res) => {
-//         const email = req.user?.email;
-
-//         if (!email)
-//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
-
-//         const templates = await db
-//             .select({
-//                 id: presentationTemplates.id,
-//                 title: presentationTemplates.title,
-//                 slides: presentationTemplates.slides,
-//             })
-//             .from(presentationTemplates)
-//             .where(eq(presentationTemplates.facultyEmail, email));
-
-//         res.status(200).json(templates);
-//     })
-// );
-
-// router.post(
-//     "/templates/create",
-//     asyncHandler(async (req, res) => {
-//         const email = req.user?.email;
-
-//         if (!email)
-//             throw new HttpError(HttpCode.BAD_REQUEST, "No email provided");
-
-//         const template = analyticsSchemas.presentationTemplateSchema.parse(
-//             req.body
-//         );
-
-//         const { id: insertedId } = (
-//             await db
-//                 .insert(presentationTemplates)
-//                 .values({
-//                     title: template.title,
-//                     slides: template.slides,
-//                     facultyEmail: email,
-//                 })
-//                 .returning()
-//         )[0];
-
-//         for (const graph of template.graphs) {
-//             await db.insert(graphs).values({
-//                 templateId: insertedId,
-//                 ...graph,
-//             });
-//         }
-//         res.status(200).json({
-//             message: "Successfully created template.",
-//             id: insertedId,
-//         });
-//     })
-// );
 
 export default router;

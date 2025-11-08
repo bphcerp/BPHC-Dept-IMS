@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useEffect, forwardRef, lazy, Suspense } from
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Plus, Trash2, LayoutGrid, BarChart2, Text } from "lucide-react";
+import { Loader2, X, Plus, Trash2, LayoutGrid, BarChart2, Text, Download, Save } from "lucide-react";
 import { AnalyticsFilters } from "@/components/analytics/publications/AnalyticsFilter";
 import { analyticsSchemas } from "lib";
 import BarChart from "@/components/analytics/utils/graphs/BarChart";
@@ -22,6 +22,7 @@ import api from "@/lib/axios-instance";
 import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useParams } from "react-router-dom";
 
 const { Y_AXIS_ALLOWED_TYPES } = analyticsSchemas;
 type GraphValue = analyticsSchemas.GraphValue;
@@ -262,6 +263,30 @@ const GraphRenderer = forwardRef<HTMLDivElement, GraphRendererProps>(
 
 )
 
+
+const fetchTemplate = async (templateID: string): Promise<
+    analyticsSchemas.Template
+> => {
+    const response = await api.get<analyticsSchemas.Template>(
+        `/analytics/templates/${templateID}`
+    )
+
+    return response.data;
+}
+
+type UpdateTemplateProps = {
+    id: string,
+    template: analyticsSchemas.Template
+}
+const updateTemplate = async ({ id, template }: UpdateTemplateProps): Promise<
+    { id: string }[]
+> => {
+    const response = await api.patch<{ id: string }[]>(
+        `/analytics/templates/update/${id}`, template
+    );
+    return response.data;
+};
+
 export default function PresentationCreator() {
 
     const [title, setTitle] = useState("Enter Title..");
@@ -271,6 +296,55 @@ export default function PresentationCreator() {
     const chartRef = useRef<HTMLDivElement | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const renderCompleteResolver = useRef<(() => void) | null>(null);
+    const { id } = useParams<{ id: string }>();
+
+    const { data, isLoading, isError, error } = useQuery<analyticsSchemas.Template, Error>({
+        queryKey: ["presentation:templates"],
+        queryFn: () => fetchTemplate(id ?? ""),
+    });
+
+    useEffect(() => {
+        const loadTemplate = async () => {
+            if (data) {
+                try {
+                    const newSlides: Slide[] = [];
+
+                    data.slides.forEach((slide) => {
+                        newSlides.push({
+                            id: crypto.randomUUID(),
+                            title: slide.title,
+                            sections: []
+                        })
+                        slide.sections.forEach((section) => {
+                            newSlides[newSlides.length - 1].sections.push({
+                                id: crypto.randomUUID(),
+                                type: section.type,
+                                title: section.title,
+                                text: {
+                                    type: 'text',
+                                    ...section.text
+                                },
+                                graph: {
+                                    type: 'graph',
+                                    filters: null,
+                                    ...section.graph
+                                }
+                            });
+                        })
+                    });
+
+                    setTitle(data.title);
+                    setSlides(newSlides);
+
+                } catch (error) {
+                    console.error("Failed to load template:", error);
+                }
+            }
+        };
+
+        loadTemplate();
+
+    }, [data]);
 
     const handleRenderComplete = () => {
         renderCompleteResolver.current?.();
@@ -292,6 +366,37 @@ export default function PresentationCreator() {
         }
         return null;
     }, [selectedSectionId, selectedSlideId, slides]);
+
+    if (isError) {
+        return (
+            <div className="flex h-[60vh] w-full items-center justify-center">
+                <Card className="w-full max-w-md border-0 shadow-xl">
+                    <CardContent className="p-8 text-center">
+                        <p className="mb-2 text-xl font-semibold text-destructive">
+                            Error loading data
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            {error.message || "Something went wrong. Please try again later."}
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+    if (!id) {
+        return (
+            <div className="flex h-[60vh] w-full items-center justify-center">
+                <Card className="w-full max-w-md border-0 shadow-xl">
+                    <CardContent className="p-8 text-center">
+                        <p className="mb-2 text-xl font-semibold text-destructive">
+                            No ID provided
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     const addSlide = () => {
         const newSection: Section = {
@@ -333,13 +438,12 @@ export default function PresentationCreator() {
 
         setIsGenerating(true);
 
-
         for (const [si, slide] of slides.entries()) {
             setSelectedSlideId(slide.id);
 
             for (const [sei, section] of slide.sections.entries()) {
 
-                if(section.type == 'text') continue;
+                if (section.type == 'text') continue;
 
                 const waitForRender = new Promise<void>((resolve) => {
                     renderCompleteResolver.current = resolve;
@@ -381,7 +485,7 @@ export default function PresentationCreator() {
                         metadataArray.push({
                             slideIndex: si,
                             graphIndex: sei,
-                            totalSections : slide.sections.length,
+                            totalSections: slide.sections.length,
                             type: section.type
                         });
                     } catch (err) {
@@ -393,6 +497,9 @@ export default function PresentationCreator() {
             }
         }
 
+        setSelectedSlideId(null);
+        setSelectedSectionId(null);
+
 
         if (filesToUpload === 0) {
             toast.error("No charts are rendered. Please make sure atleast one chart exists.");
@@ -402,7 +509,7 @@ export default function PresentationCreator() {
 
         form.append('metadata', JSON.stringify(metadataArray));
         form.append('slides', JSON.stringify({
-            totalSlides: slides.length, 
+            totalSlides: slides.length,
             slideData: slides.map((slide) => {
                 const formattedSections = slide.sections.map((section) => {
                     if (section.type == 'text') return { title: section.title, text: section.text.body };
@@ -417,7 +524,6 @@ export default function PresentationCreator() {
             const res = await api.post("/analytics/presentation", form, {
                 params: {
                     title
-
                 },
                 responseType: 'blob'
             });
@@ -602,186 +708,234 @@ export default function PresentationCreator() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 flex flex-col items-center space-y-4">
-            <Input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full max-w-lg bg-transparent border-0 border-b-2 border-slate-300 dark:border-slate-700 rounded-none shadow-none p-6 text-center text-3xl md:text-4xl font-bold tracking-tight focus-visible:ring-0 focus:border-indigo-500 transition-all"
-            />
-            <Button
-                onClick={getPresentation}
-                className="py-2 mt-8 px-6 text-lg"
-                type="submit"
-                aria-label="Get Presentation"
-                disabled={slides.length === 0}
-            >
-                Get Presentation
-            </Button>
-            <div className="flex w-full gap-4 h-[60vh]" >
-                <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
-                    {isGenerating && (
-                        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
-                            <Loader2 className="h-16 w-16 animate-spin text-white" />
-                            <p className="text-white text-lg mt-4 font-semibold">
-                                Generating Presentation...
-                            </p>
-                        </div>
-                    )}
-                    <div className="flex justify-between items-center w-full px-1 py-1">
-                        <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
+        <>
+            {isLoading && (
+                <div className="flex h-full w-full items-center justify-center">
+                    <Loader2 className="mr-2 h-20 w-20 animate-spin" />
+                </div>
+            )}
+            {data && (
+                <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 flex flex-col items-center space-y-4">
+                    <Input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full max-w-lg bg-transparent border-0 border-b-2 border-slate-300 dark:border-slate-700 rounded-none shadow-none p-6 text-center text-3xl md:text-4xl font-bold tracking-tight focus-visible:ring-0 focus:border-indigo-500 transition-all"
+                    />
+                    <div className="flex space-x-10">
                         <Button
-                            onClick={addSlide}
-                            variant="outline"
-                            size="icon"
-                            className="rounded-full w-12 h-12 shadow-sm"
-                            aria-label="Add new slide"
+                            onClick={getPresentation}
+                            className="py-2 mt-8 px-6 text-lg"
+                            type="submit"
+                            aria-label="Get Presentation"
+                            disabled={slides.length === 0}
                         >
-                            <Plus className="h-6 w-6" />
+                            <Download className="w-10 h-10" />
+                        </Button>
+                        <Button
+                            onClick={() => updateTemplate({
+                                id: id,
+                                template: {
+                                    title,
+                                    slides: slides.flatMap(
+                                        (slide,) => {
+                                            return {
+                                                title: slide.title,
+                                                sections: slide.sections.map(section => {
+                                                    return {
+                                                        title: section.title,
+                                                        type: section.type,
+                                                        text: {
+                                                            body: section.text.body
+                                                        },
+                                                        graph: {
+                                                            yAxis: section.graph.yAxis,
+                                                            graphType: section.graph.graphType,
+                                                            dataType: section.graph.dataType,
+                                                            metricType: section.graph.metricType
+                                                        }
+                                                    }
+                                                }
+                                                )
+                                            }
+                                        }
+                                    )
+                                }
+                            })}
+                            className="py-2 mt-8 px-6 text-lg"
+                            type="submit"
+                            aria-label="Save Template"
+                            disabled={slides.length === 0}
+                        >
+                            <Save className="w-10 h-10" />
                         </Button>
                     </div>
-                    {
-                        slides.map((slide, index) => {
-                            return (
-                                <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
-                                    <div className="px-3 flex justify-center items-center overflow-x-auto">
-                                        <h4 className="font-bold flex-shrink-0">{index + 1} .</h4>
-                                        <Button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                deleteSlide(slide.id)
-                                            }}
-                                            variant="ghost"
-                                            size="icon"
-                                            aria-label="Delete slide"
-                                        >
-                                            <Trash2 className="h-4 w-4 text-red-500" />
-                                        </Button>
-                                        <Input
-                                            type="text"
-                                            value={slide.title}
-                                            onChange={(e) => setSlideTitle(slide.id, e.target.value)}
-                                            className="bg-transparent border focus-visible:ring-0"
-                                        />
-                                    </div>
-                                    <div className="space-x-1 flex justify-center items-center">
-                                        {
-                                            slide.sections.map((section, sIndex) => {
-                                                return (
-                                                    <Button
-                                                        key={section.id}
-                                                        variant={selectedSectionId === section.id ? "default" : "outline"}
-                                                        size="sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setSelectedSectionId(section.id)
-                                                            setSelectedSlideId(slide.id)
-                                                        }}
-                                                        className="shadow-sm px-2 py-0"
-                                                    >
-                                                        <LayoutGrid className="h-4 w-4 mr-1" />
-                                                        Section {sIndex + 1}
-                                                        <Button
-                                                            onClick={(_e) => deleteGraphFromSlide(slide.id, section.id)}
-                                                            className="h-4 w-2 px-0 py-0 hover:bg-background"
-                                                            variant="ghost"
-                                                        >
-                                                            <X className="h-4 w-4 mr-1" />
-                                                        </Button>
-                                                    </Button>
-                                                )
-                                            })
-                                        }
-                                        <Button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                addGraphToSlide(slide.id)
-                                            }}
-                                            className="h-6 w-6 px-1 py-1"
-                                            variant="outline"
-                                        >
-                                            <Plus className="h-5 w-5" />
-                                        </Button>
-                                    </div>
+                    <div className="flex w-full gap-4 h-[60vh]" >
+                        <div className="flex-1 overflow-y-auto border space-y-4 rounded-2xl px-4 py-4 shadow-xl">
+                            {isGenerating && (
+                                <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
+                                    <Loader2 className="h-16 w-16 animate-spin text-white" />
+                                    <p className="text-white text-lg mt-4 font-semibold">
+                                        Generating Presentation...
+                                    </p>
                                 </div>
-                            )
-                        })
-                    }
-                </div>
-                <div className="flex-1 flex flex-col shadow-xl border rounded-2xl px-4 py-4">
-                    <div className="flex justify-between items-center w-full px-1 py-3 flex-shrink-0">
-
-                        {
-                            selectedSection &&
-                            <>
-                                <Input
-                                    key={selectedSectionId}
-                                    type="text"
-                                    value={selectedSection.title}
-                                    onChange={(e) => setSelectedSectionTitle(e.target.value)}
-                                    className="w-[30%] bg-transparent border-0 text-3xl md:text-4xl font-bold"
-                                />
-                                <Button className="px-3" onClick={toggleSelectedSectionType}>
-                                    {
-                                        selectedSection.type == 'graph' ?
-                                            <BarChart2 className="w-12 h-12" />
-                                            : <Text className="w-12 h-12" />
-                                    }
+                            )}
+                            <div className="flex justify-between items-center w-full px-1 py-1">
+                                <h2 className="text-2xl md:text-4xl font-bold">Slides</h2>
+                                <Button
+                                    onClick={addSlide}
+                                    variant="outline"
+                                    size="icon"
+                                    className="rounded-full w-12 h-12 shadow-sm"
+                                    aria-label="Add new slide"
+                                >
+                                    <Plus className="h-6 w-6" />
                                 </Button>
-                            </>
-                        }
-                    </div>
-                    <div className="flex-1 overflow-y-auto mt-6">
-                        {
-                            (selectedSectionId && selectedSlideId && selectedSection) ? // Make sure selectedGraph is not null
-                                (
-                                    <div className="space-y-4">
-                                        {
-                                            selectedSection.type == 'graph' ?
-                                                <GraphRenderer
-                                                    key={selectedSectionId} // Add a key to force re-mount
-                                                    gConfig={selectedSection}
-                                                    onRender={handleRenderComplete}
-                                                    ref={el => {
-                                                        chartRef.current = el;
+                            </div>
+                            {
+                                slides.map((slide, index) => {
+                                    return (
+                                        <div className={cn("border-2 flex items-center justify-between rounded-xl w-full px-1 py-2", (slide.id == selectedSlideId) ? "bg-blue-100" : "bg-white")} key={slide.id}>
+                                            <div className="px-3 flex justify-center items-center overflow-x-auto">
+                                                <h4 className="font-bold flex-shrink-0">{index + 1} .</h4>
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        deleteSlide(slide.id)
                                                     }}
-                                                    onConfigChange={(field, value) => {
-                                                        updateGraphConfig(selectedSlideId, selectedSectionId, field, value);
-                                                    }}
-                                                /> : <Suspense
-                                                    fallback={
-                                                        <div className="w-full py-8 text-center">
-                                                            Loading editor...
-                                                        </div>
-                                                    }
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label="Delete slide"
                                                 >
-                                                    <MDEditor
-                                                        value={selectedSection.body}
-                                                        data-color-mode="light"
-                                                        onChange={(value) => updateSectionText(selectedSlideId, selectedSectionId, value || "")}
-                                                        height={300}
-                                                        preview="live"
-                                                        className="border shadow-5xl"
-                                                    />
-                                                </Suspense>
-                                        }
-                                    </div>
-                                )
-                                : (
-                                    <div className="flex items-center justify-center p-12 min-h-[400px]">
-                                        <Card className="border shadow-xl w-full h-full">
-                                            <CardContent className="p-8 text-center min-w-[300px]">
-                                                <p className="mb-2 text-xl font-semibold text-destructive">
-                                                    Please select a Graph.
-                                                </p>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                )
-                        }
+                                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                                </Button>
+                                                <Input
+                                                    type="text"
+                                                    value={slide.title}
+                                                    onChange={(e) => setSlideTitle(slide.id, e.target.value)}
+                                                    className="bg-transparent border focus-visible:ring-0"
+                                                />
+                                            </div>
+                                            <div className="space-x-1 flex justify-center items-center">
+                                                {
+                                                    slide.sections.map((section, sIndex) => {
+                                                        return (
+                                                            <Button
+                                                                key={section.id}
+                                                                variant={selectedSectionId === section.id ? "default" : "outline"}
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setSelectedSectionId(section.id)
+                                                                    setSelectedSlideId(slide.id)
+                                                                }}
+                                                                className="shadow-sm px-2 py-0"
+                                                            >
+                                                                <LayoutGrid className="h-4 w-4 mr-1" />
+                                                                Section {sIndex + 1}
+                                                                <Button
+                                                                    onClick={(_e) => deleteGraphFromSlide(slide.id, section.id)}
+                                                                    className="h-4 w-2 px-0 py-0 hover:bg-background"
+                                                                    variant="ghost"
+                                                                >
+                                                                    <X className="h-4 w-4 mr-1" />
+                                                                </Button>
+                                                            </Button>
+                                                        )
+                                                    })
+                                                }
+                                                <Button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        addGraphToSlide(slide.id)
+                                                    }}
+                                                    className="h-6 w-6 px-1 py-1"
+                                                    variant="outline"
+                                                >
+                                                    <Plus className="h-5 w-5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            }
+                        </div>
+                        <div className="flex-1 flex flex-col shadow-xl border rounded-2xl px-4 py-4">
+                            <div className="flex justify-between items-center w-full px-1 py-3 flex-shrink-0">
+
+                                {
+                                    selectedSection &&
+                                    <>
+                                        <Input
+                                            key={selectedSectionId}
+                                            type="text"
+                                            value={selectedSection.title}
+                                            onChange={(e) => setSelectedSectionTitle(e.target.value)}
+                                            className="bg-transparent border-0 text-3xl md:text-4xl font-bold"
+                                        />
+                                        <Button className="px-3" onClick={toggleSelectedSectionType}>
+                                            {
+                                                selectedSection.type == 'graph' ?
+                                                    <BarChart2 className="w-12 h-12" />
+                                                    : <Text className="w-12 h-12" />
+                                            }
+                                        </Button>
+                                    </>
+                                }
+                            </div>
+                            <div className="flex-1 overflow-y-auto mt-6">
+                                {
+                                    (selectedSectionId && selectedSlideId && selectedSection) ? // Make sure selectedGraph is not null
+                                        (
+                                            <div className="space-y-4">
+                                                {
+                                                    selectedSection.type == 'graph' ?
+                                                        <GraphRenderer
+                                                            key={selectedSectionId} // Add a key to force re-mount
+                                                            gConfig={selectedSection}
+                                                            onRender={handleRenderComplete}
+                                                            ref={el => {
+                                                                chartRef.current = el;
+                                                            }}
+                                                            onConfigChange={(field, value) => {
+                                                                updateGraphConfig(selectedSlideId, selectedSectionId, field, value);
+                                                            }}
+                                                        /> : <Suspense
+                                                            fallback={
+                                                                <div className="w-full py-8 text-center">
+                                                                    Loading editor...
+                                                                </div>
+                                                            }
+                                                        >
+                                                            <MDEditor
+                                                                value={selectedSection.body}
+                                                                data-color-mode="light"
+                                                                onChange={(value) => updateSectionText(selectedSlideId, selectedSectionId, value || "")}
+                                                                height={300}
+                                                                preview="live"
+                                                                className="border shadow-5xl"
+                                                            />
+                                                        </Suspense>
+                                                }
+                                            </div>
+                                        )
+                                        : (
+                                            <div className="flex items-center justify-center p-12 min-h-[400px]">
+                                                <Card className="border shadow-xl w-full h-full">
+                                                    <CardContent className="p-8 text-center min-w-[300px]">
+                                                        <p className="mb-2 text-xl font-semibold text-destructive">
+                                                            Please select a Graph.
+                                                        </p>
+                                                    </CardContent>
+                                                </Card>
+                                            </div>
+                                        )
+                                }
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    );
+                </div>)
+            }
+        </>
+    )
 }

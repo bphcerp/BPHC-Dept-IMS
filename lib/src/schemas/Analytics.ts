@@ -5,20 +5,30 @@ export type TimeGrouping = (typeof timeGrouping)[number];
 
 const timeGroupingEnum = z.enum(timeGrouping);
 
-export const graphEnumValues = ['line', 'bar'] as const;
-export const graphDataType = ['total', 'cumulative'] as const;
-export const graphMetricType = ['publications', 'citations', 'both'] as const;
-export const yAxisEnumValues = ["Publications","Publications Over Time","Citations","Citations Over Time","Publication Type Breakdown","Author Contributions"] as const
+export const graphEnumValues = ["line", "bar"] as const;
+export const graphDataType = ["total", "cumulative"] as const;
+export const graphMetricType = ["publications", "citations", "both"] as const;
+export const yAxisEnumValues = [
+    "Publications",
+    "Publications Over Time",
+    "Citations",
+    "Citations Over Time",
+    "Publication Type Breakdown",
+    "Author Contributions",
+] as const;
 
 export type GraphValue = (typeof graphEnumValues)[number];
 
-export const Y_AXIS_ALLOWED_TYPES : Record<typeof yAxisEnumValues[number], [string, ...string[]]> = {
-    "Publications": ["bar"],
+export const Y_AXIS_ALLOWED_TYPES: Record<
+    (typeof yAxisEnumValues)[number],
+    [string, ...string[]]
+> = {
+    Publications: ["bar"],
     "Publications Over Time": ["bar", "line"],
-    "Citations": ["bar"],
+    Citations: ["bar"],
     "Citations Over Time": ["bar", "line"],
     "Publication Type Breakdown": ["bar"],
-    "Author Contributions": ["bar"]
+    "Author Contributions": ["bar"],
 } as const;
 
 export const analyticsQuerySchema = z
@@ -53,22 +63,27 @@ export const timeSeriesDataSchema = z.object({
 
 export const presentationTemplateSchema = z.object({
     title: z.string(),
-    slides: z.number(),
-    sections: z.array(z.object({
-        type: z.enum(["text", "graph"]),
-        slideNumber: z.number(),
-        graph: z.object({
-            yAxis: z.enum(yAxisEnumValues).nullable(),
-            graphType: z.enum(graphEnumValues).nullable(),
-            dataType: z.enum(graphDataType),
-            metricType: z.enum(graphMetricType)
-        }),
-        text: z.object({
-            body: z.string()
+    slides: z.array(
+        z.object({
+            title: z.string(),
+            sections: z.array(
+                z.object({
+                    type: z.enum(["text", "graph"]),
+                    title: z.string(),
+                    graph: z.object({
+                        yAxis: z.enum(yAxisEnumValues).nullable(),
+                        graphType: z.enum(graphEnumValues).nullable(),
+                        dataType: z.enum(graphDataType),
+                        metricType: z.enum(graphMetricType),
+                    }),
+                    text: z.object({
+                        body: z.string(),
+                    }),
+                })
+            ),
         })
-        
-    }))
-})
+    ),
+});
 
 export const publicationTypeCountSchema = z.object({
     type: z.string(),
