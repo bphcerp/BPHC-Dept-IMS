@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useEffect, forwardRef, lazy, Suspense } from
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, X, Plus, Trash2, LayoutGrid, BarChart2, Text, Download, Save } from "lucide-react";
+import { Loader2, X, Plus, Trash2, LayoutGrid, BarChart2, Text, Download, Save, ArrowLeft } from "lucide-react";
 import { AnalyticsFilters } from "@/components/analytics/publications/AnalyticsFilter";
 import { analyticsSchemas } from "lib";
 import BarChart from "@/components/analytics/utils/graphs/BarChart";
@@ -23,6 +23,8 @@ import { toBlob } from "html-to-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 const { Y_AXIS_ALLOWED_TYPES } = analyticsSchemas;
 type GraphValue = analyticsSchemas.GraphValue;
@@ -297,6 +299,7 @@ export default function PresentationCreator() {
     const [isGenerating, setIsGenerating] = useState(false);
     const renderCompleteResolver = useRef<(() => void) | null>(null);
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
 
     const { data, isLoading, isError, error } = useQuery<analyticsSchemas.Template, Error>({
         queryKey: ["presentation:templates"],
@@ -714,6 +717,12 @@ export default function PresentationCreator() {
                     <Loader2 className="mr-2 h-20 w-20 animate-spin" />
                 </div>
             )}
+            <Button
+                onClick={()=> navigate("/analytics/templates")}
+                className="ml-3 mt-3"
+            >
+                <ArrowLeft className="w-8 h-8"/>
+            </Button>
             {data && (
                 <div className="min-h-screen w-full bg-gradient-to-br px-4 py-16 flex flex-col items-center space-y-4">
                     <Input
