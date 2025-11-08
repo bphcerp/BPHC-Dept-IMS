@@ -184,6 +184,7 @@ router.delete(
 
 router.get(
     "/",
+    checkAccess(),
     asyncHandler(async (req, res) => {
         const email = req.user?.email;
 
