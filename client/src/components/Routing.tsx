@@ -623,7 +623,9 @@ const Routing = () => {
               )}
 
               {/* DRC Member Routes */}
-              {checkAccess("phd-request:drc-member:view") && (
+              {checkAccessAnyOne([
+                permissions["/phd-request/drc-member/requests"],
+              ]) && (
                 <Route
                   path="drc-member/requests"
                   element={<DrcMemberPhdRequestsDashboard />}
