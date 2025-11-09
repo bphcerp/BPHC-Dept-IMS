@@ -27,9 +27,9 @@ import { analyticsSchemas } from "lib";
 import { Plus, Trash2 } from "lucide-react";
 
 const fetchTemplates = async (): Promise<
-    { id: string, title: string, slides: number }[]
+    { id: string, title: string }[]
 > => {
-    const response = await api.get<{ id: string, title: string, slides: number }[]>(
+    const response = await api.get<{ id: string, title: string }[]>(
         "/analytics/templates/"
     );
     return response.data;
@@ -38,7 +38,7 @@ const fetchTemplates = async (): Promise<
 const deleteTemplate = async (id: string): Promise<
     { id: string }[]
 > => {
-    const response = await api.delete<{ id: string }[]>(
+    const response = await api.delete(
         `/analytics/templates/delete/${id}`
     );
     return response.data;
@@ -90,7 +90,6 @@ export default function PresentationTemplates() {
     const columns: ColumnDef<{
         id: string;
         title: string;
-        slides: number;
     }>[] = [
             {
                 header: () => {
