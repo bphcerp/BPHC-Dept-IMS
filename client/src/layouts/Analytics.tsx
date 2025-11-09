@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/AppSidebar";
-import { LibraryBig, List, Presentation } from "lucide-react";
+import { LibraryBig, List } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { permissions } from "lib";
 
