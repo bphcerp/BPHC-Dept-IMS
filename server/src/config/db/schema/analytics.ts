@@ -42,7 +42,7 @@ export const presentationSlides = pgTable("presentation_slides", {
         .$defaultFn(() => uuidv4()),
     templateId: uuid("slide_id").notNull().references(() => presentationTemplates.id, {onDelete: 'cascade'}), 
     title: text("slide_title").notNull()
-})
+});
 
 export const graphs = pgTable("graphs", {
     id: uuid("id")
@@ -63,5 +63,5 @@ export const textBoxes = pgTable("textboxes", {
     title: text('text_title').notNull(),
     slideId: uuid("slide_id").notNull().references(() => presentationSlides.id, {onDelete: 'cascade'}),
     body: text("body").notNull()
-})
+});
 

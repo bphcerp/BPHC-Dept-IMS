@@ -42,33 +42,40 @@ router.patch(
             .delete(presentationSlides)
             .where(eq(presentationSlides.templateId, id));
 
-        for (const slide of template.slides) {
-            const { id: sid } = (
-                await db
+        await Promise.all(
+            template.slides.map(async (slide) => {
+                const [{ id: sid }] = await db
                     .insert(presentationSlides)
                     .values({
                         title: slide.title,
                         templateId: id,
                     })
-                    .returning()
-            )[0];
+                    .returning();
 
-            for (const section of slide.sections) {
-                if (section.type == "graph") {
-                    await db.insert(graphs).values({
+                const graphSections = slide.sections
+                    .filter((s) => s.type === "graph")
+                    .map((s) => ({
                         slideId: sid,
-                        title: section.title,
-                        ...section.graph,
-                    });
-                } else {
-                    await db.insert(textBoxes).values({
+                        title: s.title,
+                        ...s.graph,
+                    }));
+
+                const textSections = slide.sections
+                    .filter((s) => s.type !== "graph")
+                    .map((s) => ({
                         slideId: sid,
-                        title: section.title,
-                        ...section.text,
-                    });
-                }
-            }
-        }
+                        title: s.title,
+                        ...s.text,
+                    }));
+
+                await Promise.all([
+                    graphSections.length &&
+                        db.insert(graphs).values(graphSections),
+                    textSections.length &&
+                        db.insert(textBoxes).values(textSections),
+                ]);
+            })
+        );
         res.status(200).json({ message: "Successfully updated template." });
     })
 );
@@ -118,12 +125,8 @@ router.get(
                         title: slide.title,
                         sections: [
                             ...slide.graphs.map((graph) => {
-                                const {
-                                    id,
-                                    slideId,
-                                    title,
-                                    ...remaining
-                                } = graph;
+                                const { id, slideId, title, ...remaining } =
+                                    graph;
                                 return {
                                     type: "graph" as const,
                                     title: title,
@@ -132,12 +135,8 @@ router.get(
                                 };
                             }),
                             ...slide.textBoxes.map((textBox) => {
-                                const {
-                                    id,
-                                    slideId,
-                                    title,
-                                    ...remaining
-                                } = textBox;
+                                const { id, slideId, title, ...remaining } =
+                                    textBox;
                                 return {
                                     type: "text" as const,
                                     title: title,
@@ -194,7 +193,7 @@ router.get(
         const templates = await db
             .select({
                 id: presentationTemplates.id,
-                title: presentationTemplates.title
+                title: presentationTemplates.title,
             })
             .from(presentationTemplates)
             .where(eq(presentationTemplates.facultyEmail, email));
@@ -215,7 +214,7 @@ router.post(
             req.body
         );
 
-        const { id: insertedId } = (
+        const [{ id: insertedId }] = (
             await db
                 .insert(presentationTemplates)
                 .values({
@@ -223,35 +222,42 @@ router.post(
                     facultyEmail: email,
                 })
                 .returning()
-        )[0];
+        );
 
-        for (const slide of template.slides) {
-            const { id: sid } = (
-                await db
+        await Promise.all(
+            template.slides.map(async (slide) => {
+                const [{ id: sid }] = await db
                     .insert(presentationSlides)
                     .values({
                         title: slide.title,
                         templateId: insertedId,
                     })
-                    .returning()
-            )[0];
+                    .returning();
 
-            for (const section of slide.sections) {
-                if (section.type == "graph") {
-                    await db.insert(graphs).values({
+                const graphSections = slide.sections
+                    .filter((s) => s.type === "graph")
+                    .map((s) => ({
                         slideId: sid,
-                        title: section.title,
-                        ...section.graph,
-                    });
-                } else {
-                    await db.insert(textBoxes).values({
+                        title: s.title,
+                        ...s.graph,
+                    }));
+
+                const textSections = slide.sections
+                    .filter((s) => s.type !== "graph")
+                    .map((s) => ({
                         slideId: sid,
-                        title: section.title,
-                        ...section.text,
-                    });
-                }
-            }
-        }
+                        title: s.title,
+                        ...s.text,
+                    }));
+
+                await Promise.all([
+                    graphSections.length &&
+                        db.insert(graphs).values(graphSections),
+                    textSections.length &&
+                        db.insert(textBoxes).values(textSections),
+                ]);
+            })
+        );
         res.status(200).json({
             message: "Successfully created template.",
             id: insertedId,

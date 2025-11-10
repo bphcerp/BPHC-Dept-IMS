@@ -1,4 +1,4 @@
-'use-client'
+'use client'
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -72,7 +72,7 @@ export default function PresentationTemplates() {
             toast.success("Template created!");
         },
         onError: (err: any) => {
-            toast.error(`Failed to create: ${err.message}`);
+            toast.error((err as { response: { data: string } })?.response?.data || "An error occurred")
         }
     });
 
@@ -83,7 +83,7 @@ export default function PresentationTemplates() {
             toast.success("Template deleted!");
         },
         onError: (err: any) => {
-            toast.error(`Failed to delete: ${err.message}`);
+            toast.error((err as { response: { data: string } })?.response?.data || "An error occurred")
         }
     });
 
@@ -134,7 +134,7 @@ export default function PresentationTemplates() {
                         variant="ghost"
                         onClick={(e) => {
                             e.stopPropagation();
-                            deleteTemplateMutation.mutate(row.id);
+                            deleteTemplateMutation.mutate(row.original.id);
                         }}
                         className="items-center justify-start p-0 font-semibold text-foreground"
                     >
