@@ -62,3 +62,12 @@ export const projectCoPIs = pgTable(
   },
   (table) => [primaryKey({ columns: [table.projectId, table.investigatorId] })]
 ); 
+
+export const projectPIs = pgTable(
+  "project_pis",
+  {
+    projectId: uuid("project_id").references(() => projects.id),
+    investigatorId: uuid("investigator_id").references(() => investigators.id),
+  },
+  (table) => [primaryKey({ columns: [table.projectId, table.investigatorId] })]
+); 

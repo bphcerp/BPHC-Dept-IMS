@@ -38,11 +38,13 @@ const serverSchema = z.object({
     DEPARTMENT_EMAIL: z.string().email().optional(),
     TTD_API_URL: z.string().url().min(1),
     TTD_DEPARTMENT_NAME: z.string(),
+    IS_STAGING: z.coerce.boolean().optional()
 });
 
 const parsed = serverSchema.parse(process.env);
 
 export const PROD = parsed.NODE_ENV === "production";
+export const IS_STAGING = !!parsed.IS_STAGING
 export const REFRESH_TOKEN_COOKIE = "amogus";
 export const ACCESS_TOKEN_EXPIRY: StringValue = "1d";
 export const REFRESH_TOKEN_EXPIRY: StringValue = "7d";

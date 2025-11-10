@@ -88,7 +88,7 @@ export const semesterSchema = z.object({
 });
 
 export const updateSemesterSchema = semesterSchema.partial().extend({
-    id: z.string().uuid(),
+    semesterId: z.string().uuid(),
 });
 
 export const deleteSemesterSchema = z.object({

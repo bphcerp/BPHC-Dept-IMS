@@ -90,7 +90,14 @@ const AddCourseForm = ({
         <DialogHeader>
           <DialogTitle>Add a New Course</DialogTitle>
           <DialogDescription>
-            Fill in the details of the new course
+            <div className="flex flex-col space-y-2">
+              <span>
+              Fill in the details of the new course
+              </span>
+            <h4 className="text-xs italic text-muted-foreground">
+              * You <strong>CANNOT</strong> edit the course once created. Please ensure you enter all the required details along with the <strong>TimeTable Division's Comp Code</strong>
+            </h4>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -105,7 +112,10 @@ const AddCourseForm = ({
                     <FormItem>
                       <FormLabel>Course Code</FormLabel>
                       <FormControl>
-                        <Input placeholder={`e.g. ${TTD_DEPARTMENT_NAME} F211`} {...field} />
+                        <Input
+                          placeholder={`e.g. ${TTD_DEPARTMENT_NAME} F211`}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

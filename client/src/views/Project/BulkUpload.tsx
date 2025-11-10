@@ -91,7 +91,10 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
         piDepartment: "Computer Science",
         piCampus: "Main Campus",
         piAffiliation: "Professor",
+        coPINames: "Jane Smith, Bob Wilson",
         coPIs: "jane.smith@example.com, bob.wilson@example.com",
+        otherPIsNames: "",
+        otherPIs: "",
         fundingAgency: "Department of Science and Technology",
         fundingAgencyNature: "public_sector",
         sanctionedAmount: 1000000,
@@ -110,7 +113,10 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
         piDepartment: "Mechanical Engineering",
         piCampus: "Main Campus",
         piAffiliation: "Professor",
+        coPINames: "Alice Brown",
         coPIs: "alice.brown@example.com",
+        otherPIsNames: "Chris Lee, Taylor Brown",
+        otherPIs: "chris.lee@example.com, taylor.brown@example.com",
         fundingAgency: "Council of Scientific and Industrial Research",
         fundingAgencyNature: "public_sector",
         sanctionedAmount: 1800000,
@@ -126,7 +132,7 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
 
     const columns = [
       'title', 'piName', 'piEmail', 'piDepartment', 'piCampus', 'piAffiliation',
-      'coPINames', 'coPIs', 'fundingAgency', 'fundingAgencyNature', 'sanctionedAmount',
+      'coPINames', 'coPIs', 'otherPINames', 'otherPIs', 'fundingAgency', 'fundingAgencyNature', 'sanctionedAmount',
       'capexAmount', 'opexAmount', 'manpowerAmount', 'approvalDate',
       'startDate', 'endDate', 'hasExtension'
     ];
@@ -143,12 +149,6 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
       columns.join(','),
       ...templateData.map(row => 
         columns.map(col => {
-          if (col === 'coPINames') {
-            return escapeCSV('Jane Smith, Bob Wilson');
-          }
-          if (col === 'coPIs') {
-            return escapeCSV('jane.smith@example.com, bob.wilson@example.com');
-          }
           return escapeCSV(row[col as keyof typeof row] ?? '');
         }).join(',')
       )
@@ -254,6 +254,8 @@ export default function BulkUpload({ onBack }: BulkUploadProps) {
                   <li>• piAffiliation (optional)</li>
                   <li>• coPINames (optional, comma-separated, order matches coPIs)</li>
                   <li>• coPIs (optional, comma-separated emails)</li>
+                  <li>• otherPINames (optional, comma-separated, order matches otherPIs)</li>
+                  <li>• otherPIs (optional, comma-separated emails)</li>
                   <li>• fundingAgency (<span className="text-red-600">required</span>)</li>
                   <li>• fundingAgencyNature (public_sector or private_industry)</li>
                   <li>• sanctionedAmount (<span className="text-red-600">required</span>, number)</li>

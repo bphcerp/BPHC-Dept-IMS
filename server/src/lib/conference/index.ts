@@ -8,6 +8,7 @@ export const getApplicationWithFilePaths = async (id: number) => {
             where: (app, { eq }) => eq(app.id, id),
             with: {
                 user: true,
+                members: true,
                 letterOfInvitation: true,
                 firstPageOfPaper: true,
                 reviewersComments: true,
@@ -18,8 +19,11 @@ export const getApplicationWithFilePaths = async (id: number) => {
     );
     if (!application) return undefined;
 
+    const { members, ...rest } = application;
+
     return {
-        ...application,
+        ...rest,
+        membersAssigned: members.length > 0,
         modeOfEvent:
             application.modeOfEvent as (typeof conferenceSchemas.modesOfEvent)[number],
         approvalForm: application.approvalFormFileId

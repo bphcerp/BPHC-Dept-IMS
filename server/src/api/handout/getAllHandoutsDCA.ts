@@ -3,6 +3,7 @@ import { asyncHandler } from "@/middleware/routeHandler.ts";
 import assert from "assert";
 import express from "express";
 import { checkAccess } from "@/middleware/auth.ts";
+import { getLatestCompletedSemester } from "./getLatestCompletedSemester.ts";
 const router = express.Router();
 
 router.get(
@@ -10,10 +11,18 @@ router.get(
     checkAccess(),
     asyncHandler(async (req, res, _next) => {
         assert(req.user);
+        const semester = await getLatestCompletedSemester();
+        if (!semester) {
+            res.status(200).json({ success: true, handouts: null });
+            return;
+        }
         const handouts = (
             await db.query.courseHandoutRequests.findMany({
-                where: (handout, { eq }) =>
-                    eq(handout.reviewerEmail, req.user!.email),
+                where: (handout, { and, eq }) =>
+                    and(
+                        eq(handout.reviewerEmail, req.user!.email),
+                        eq(handout.semesterId, semester.id)
+                    ),
                 with: {
                     ic: {
                         with: {

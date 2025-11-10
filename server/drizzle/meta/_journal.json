@@ -596,6 +596,27 @@
       "when": 1762175564914,
       "tag": "0084_outgoing_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1762319295907,
+      "tag": "0085_exotic_paper_doll",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1762410033672,
+      "tag": "0086_nebulous_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1762495648987,
+      "tag": "0087_tranquil_trauma",
+      "breakpoints": true
     }
   ]
 }

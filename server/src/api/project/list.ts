@@ -24,6 +24,11 @@ router.get(
             investigator: true,
           },
         },
+        PIs: {
+          with: {
+            investigator: true,
+          },
+        },
       },
       columns: {
         id: true,
@@ -45,6 +50,7 @@ router.get(
     const filtered = result.filter(project => {
       if (project.pi?.email === userEmail) return true;
       if (project.coPIs?.some(copi => copi.investigator?.email === userEmail)) return true;
+      if (project.PIs?.some(pi => pi.investigator?.email === userEmail)) return true;
       return false;
     });
 
@@ -60,6 +66,14 @@ router.get(
         campus: copi.investigator?.campus,
         affiliation: copi.investigator?.affiliation,
       })) ?? [],
+      PIs: project.PIs?.map(pi => ({
+        name: pi.investigator?.name,
+        email: pi.investigator?.email,
+        department: pi.investigator?.department,
+        campus: pi.investigator?.campus,
+        affiliation: pi.investigator?.affiliation,
+      }
+    )) ?? [],
     }));
     res.json(flatResult);
   })

@@ -56,6 +56,7 @@ router.get(
                           createdAt: application.createdAt.toLocaleString(),
                           userEmail: user.email,
                           userName: user.name,
+                          areMembersAssigned: true,
                       }))
                       .filter(({ state }) => state === "DRC Member")
                 : (
@@ -83,6 +84,7 @@ router.get(
                       membersReviewed: appl.members.filter(
                           (m) => m.reviewStatus !== null
                       ).length,
+                      areMembersAssigned: appl.members.length > 0,
                   }));
 
         const isDirect =

@@ -201,6 +201,7 @@ export type submittedApplicationsResponse = {
         id: number;
         state: (typeof states)[number];
         createdAt: string;
+        hasMembersAssigned: boolean;
     }[];
 };
 
@@ -211,6 +212,7 @@ export type pendingApplicationsResponse = {
         createdAt: string;
         userEmail: string;
         userName: string | null;
+        areMembersAssigned: boolean;
         membersAssigned?: number;
         membersReviewed?: number;
     }[];
@@ -228,6 +230,7 @@ export type ViewApplicationResponse = {
         createdAt: Date | string;
         userEmail: string;
         state: (typeof states)[number];
+        membersAssigned: boolean;
         approvalForm?: string;
         purpose: string;
         contentTitle: string;
