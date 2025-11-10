@@ -6,7 +6,6 @@ export function StatCard({
   value,
   label,
   icon: Icon,
-  color = "primary",
 }: {
   value: number | string;
   label: string;
@@ -27,9 +26,9 @@ export function StatCard({
             </p>
           </div>
           <div
-            className={`rounded-2xl bg-${color}/10 p-4 ring-1 ring-${color}/20 transition-all duration-300 group-hover:scale-110`}
+            className={`rounded-2xl bg-primary/10 p-4 ring-1 ring-primary/20 transition-all duration-300 group-hover:scale-110`}
           >
-            <Icon className={`h-7 w-7 text-${color}`} />
+            <Icon className={`h-7 w-7 text-primary`} />
           </div>
         </div>
       </CardContent>
@@ -48,25 +47,21 @@ export default function StatCardRow({
         label="Total Publications"
         value={singleMetrics.totalPublicationsAllTime}
         icon={BookOpen}
-        color="blue"
       />
       <StatCard
         label="Last Year"
         value={singleMetrics.totalPublicationsLastYear}
         icon={Award}
-        color="emerald"
       />
       <StatCard
         label="Last Month"
         value={singleMetrics.totalPublicationsLastMonth}
         icon={Users}
-        color="amber"
       />
       <StatCard
         label="Avg Citations/Paper"
         value={singleMetrics.averageCitationsPerPaper.toFixed(1)}
         icon={TrendingUp}
-        color="purple"
       />
     </div>
   );

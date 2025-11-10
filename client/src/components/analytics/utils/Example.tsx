@@ -4,7 +4,7 @@ import HistogramChart from "./graphs/HistogramChart";
 import LineChart from "./graphs/LineChart";
 import PieChart from "./graphs/PieChart";
 import ScatterPlot from "./graphs/ScatterPlot";
-import "./config/setup"
+import "./config/setup";
 
 function Example() {
   return (

@@ -1,4 +1,4 @@
-// chartConfig.ts
+// setup.ts
 import {
   Chart as ChartJS,
   CategoryScale,
