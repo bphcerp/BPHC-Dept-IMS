@@ -44,7 +44,7 @@ export default router.post(
             completionEvent: proposalIds.map(
                 (id) => `proposal:set-seminar-details:${id}`
             ),
-            assignedTo: req.user!.email,
+            
         });
         res.status(200).json({
             success: true,

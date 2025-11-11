@@ -51,7 +51,6 @@ export default router.post(
         await completeTodo({
             module: modules[3],
             completionEvent: `proposal:set-seminar-details:${proposalId}`,
-            assignedTo: req.user!.email,
         });
 
         res.status(200).json({

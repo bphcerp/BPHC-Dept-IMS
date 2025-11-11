@@ -49,7 +49,6 @@ router.post(
                 {
                     module: modules[2],
                     completionEvent: `phd-request:drc-convener-review:${requestId}`,
-                    assignedTo: convenerEmail,
                 },
                 tx
             );

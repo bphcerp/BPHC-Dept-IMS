@@ -92,7 +92,6 @@ export default router.post(
                     {
                         module: modules[3],
                         completionEvent: completionEventForCurrentState,
-                        assignedTo: req.user!.email, // Assuming DRC convenor is the assignee
                     },
                     tx
                 );

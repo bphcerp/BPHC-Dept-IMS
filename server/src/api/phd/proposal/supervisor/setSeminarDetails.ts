@@ -95,7 +95,6 @@ export default router.post(
                 {
                     module: modules[3],
                     completionEvent: `proposal:set-seminar-details:${proposalId}`,
-                    assignedTo: req.user!.email,
                 },
                 tx
             );

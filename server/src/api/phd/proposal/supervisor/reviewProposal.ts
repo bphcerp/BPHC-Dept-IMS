@@ -79,7 +79,6 @@ export default router.post(
                 {
                     module: modules[3], // PhD Proposal module
                     completionEvent: `proposal:supervisor-review:${proposalId}`,
-                    assignedTo: req.user!.email,
                 },
                 tx
             );

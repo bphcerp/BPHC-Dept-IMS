@@ -62,7 +62,6 @@ export default router.post(
                 {
                     module: modules[2],
                     completionEvent: `phd-request:hod-review:${requestId}`,
-                    assignedTo: hodEmail,
                 },
                 tx
             );
