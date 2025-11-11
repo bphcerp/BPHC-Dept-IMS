@@ -111,7 +111,7 @@ router.post(
                     await createTodos(
                         drcConveners.map((c) => ({
                             assignedTo: c.email,
-                            createdBy: "system",
+                            createdBy: request.supervisorEmail,
                             title: `DRC Review Complete for ${studentName}`,
                             description: `All assigned DRC members have submitted their feedback for the request for ${studentName}. Please provide the final decision.`,
                             module: modules[2],

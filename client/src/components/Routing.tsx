@@ -119,6 +119,7 @@ import AnalyticsLayout from "@/layouts/Analytics";
 import PublicationsAnalytics from "@/views/Analytics/Publications";
 import PresentationCreator from "@/views/Analytics/Presentation";
 import PublicationsAnalytics2 from "@/views/Analytics/Publications2";
+import PublicationsAnalytics3 from "@/views/Analytics/Publications3";
 import TestingView from "@/views/Admin/Testing";
 import TestingPopup from "./admin/TestingPopup";
 import ProjectDefaultRedirect from "./ProjectDefaultRedirect";
@@ -823,6 +824,10 @@ const Routing = () => {
                   <Route
                     path="publications2"
                     element={<PublicationsAnalytics2 />}
+                  />
+                  <Route
+                    path="publications3"
+                    element={<PublicationsAnalytics3 />}
                   />
                 </>
               )}

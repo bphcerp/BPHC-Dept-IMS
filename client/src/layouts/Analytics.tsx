@@ -23,6 +23,12 @@ const AnalyticsLayout = () => {
                 url: "/analytics/publications2",
                 requiredPermissions: [permissions["/analytics/publications"]],
               },
+              {
+                title: "Publications Charts-JS",
+                icon: <LibraryBig />,
+                url: "/analytics/publications3",
+                requiredPermissions: [permissions["/analytics/publications"]],
+              },
             ],
           },
           {
