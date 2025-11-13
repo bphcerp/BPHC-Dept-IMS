@@ -117,6 +117,10 @@ export const phd = pgTable("phd", {
     supervisorEmail: text("supervisor_email").references(() => users.email, {
         onDelete: "set null",
     }),
+    dacMember1Email: text("dac_member_1_email"),
+    dacMember1Name: text("dac_member_1_name"),
+    dacMember2Email: text("dac_member_2_email"),
+    dacMember2Name: text("dac_member_2_name"),
     qeAttemptCount: integer("qe_attempt_count").default(0).notNull(),
     hasPassedQe: boolean("has_passed_qe").default(false).notNull(),
     qualificationDate: timestamp("qualification_date", { withTimezone: true }),
@@ -133,7 +137,6 @@ export const staff = pgTable("staff", {
     department: text("department"),
     phone: text("phone"),
     designation: text("designation"),
-
     profileFileId: integer("profile_file_id").references(() => files.id, {
         onDelete: "set null",
     }),

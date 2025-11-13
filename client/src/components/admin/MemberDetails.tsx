@@ -59,6 +59,10 @@ const editableFields = [
   "supervisorEmail",
   "emergencyPhoneNumber",
   "phdType",
+  "dacMember1Email",
+  "dacMember1Name",
+  "dacMember2Email",
+  "dacMember2Name",
 ] as const;
 
 export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
@@ -122,7 +126,10 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
         ["member", data.email],
         (oldData) => {
           if (!oldData) return oldData;
-          return { ...oldData, ...data };
+          return {
+            ...oldData,
+            ...data,
+          };
         }
       );
       return { previousData };
@@ -199,8 +206,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
       <Card className="mx-auto max-w-5xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profile Image
+            <User className="h-5 w-5" /> Profile Image
           </CardTitle>
           <p className="text-sm text-gray-600">
             Manage user&apos;s profile image
@@ -211,12 +217,10 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
         </CardContent>
       </Card>
 
-      {/* User Details Section */}
       <Card className="mx-auto max-w-5xl">
         <CardHeader className="flex items-center justify-between">
           <CardTitle className="text-2xl font-bold">User Details</CardTitle>
         </CardHeader>
-
         {isEditing ? (
           <Form {...form}>
             <form
@@ -229,12 +233,10 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                   {Object.keys(data).map((key) => {
                     const fieldName = key as (typeof editableFields)[number];
                     if (!editableFields.includes(fieldName)) return null;
-
                     if (data.type === "phd" && fieldName === "designation")
                       return null;
                     if (data.type !== "phd" && fieldName === "phdType")
                       return null;
-
                     return (
                       <div key={fieldName} className="space-y-1">
                         <FormField
@@ -325,7 +327,6 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
                   if (key === "name" || key === "type") return null;
                   if (data.type === "phd" && key === "designation") return null;
                   if (data.type !== "phd" && key === "phdType") return null;
-
                   return (
                     <div key={key} className="space-y-1">
                       <div className="flex gap-2 text-sm uppercase text-muted-foreground">
@@ -388,5 +389,4 @@ export const UserDetails: React.FC<UserDetailsProps> = ({ data }) => {
     </div>
   );
 };
-
 export default UserDetails;

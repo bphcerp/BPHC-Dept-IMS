@@ -26,6 +26,7 @@ export const roleNameSchema = z
     .nonempty()
     .regex(/^[a-zA-Z0-9 _-]+$/)
     .max(64);
+
 export const permissionNameSchema = z
     .string()
     .trim()
@@ -100,6 +101,7 @@ const optionalString = z
     .trim()
     .nullish()
     .transform((val) => (val?.length ? val : null));
+
 const optionalEmail = z
     .string()
     .trim()
@@ -136,6 +138,10 @@ export const editDetailsBodySchema = z.intersection(
             supervisorEmail: optionalEmail,
             emergencyPhoneNumber: optionalString,
             phdType: z.enum(phdTypes).nullish(),
+            dacMember1Email: optionalEmail,
+            dacMember1Name: optionalString,
+            dacMember2Email: optionalEmail,
+            dacMember2Name: optionalString,
         }),
         z.object({
             type: z.literal(userTypes[2]), // Staff
@@ -167,9 +173,12 @@ export interface MemberDetailsResponse {
     emergencyPhoneNumber?: string | null;
     phdType?: (typeof phdTypes)[number] | null;
     currentStatus?: string | null;
+    dacMember1Email?: string | null;
+    dacMember1Name?: string | null;
+    dacMember2Email?: string | null;
+    dacMember2Name?: string | null;
 }
 
-// testing schemas
 export const startTestingBodySchema = z.object({
     testerRoles: z
         .array(z.string().trim().nonempty())
