@@ -2,17 +2,16 @@ import db from "@/config/db/index.ts";
 import { phd } from "@/config/db/schema/admin.ts";
 import { phdProposals, phdProposalDacMembers } from "@/config/db/schema/phd.ts";
 import { and, eq, desc } from "drizzle-orm";
-import logger from "@/config/logger.ts";
 
 async function backfillDacMembers() {
-    logger.info("Starting DAC member backfill script...");
+    console.log("Starting DAC member backfill script...");
 
     // 1. Get all students.
     const allStudents = await db.select({ email: phd.email }).from(phd);
     let updatedCount = 0;
     let skippedCount = 0;
 
-    logger.info(`Found ${allStudents.length} total PhD students to check.`);
+    console.log(`Found ${allStudents.length} total PhD students to check.`);
 
     for (const student of allStudents) {
         // 2. For each student, find their *latest* completed proposal.
@@ -69,19 +68,19 @@ async function backfillDacMembers() {
             .where(eq(phd.email, student.email));
 
         updatedCount++;
-        logger.info(`Updated DAC members for ${student.email}.`);
+        console.log(`Updated DAC members for ${student.email}.`);
     }
 
-    logger.info("------------------------------------");
-    logger.info("DAC Member Backfill Complete.");
-    logger.info(`Successfully updated: ${updatedCount}`);
-    logger.info(`Skipped (no completed proposal/DAC): ${skippedCount}`);
-    logger.info("------------------------------------");
+    console.log("------------------------------------");
+    console.log("DAC Member Backfill Complete.");
+    console.log(`Successfully updated: ${updatedCount}`);
+    console.log(`Skipped (no completed proposal/DAC): ${skippedCount}`);
+    console.log("------------------------------------");
 }
 
 backfillDacMembers()
     .catch((e) => {
-        logger.error("Error in backfillDacMembers script:", e);
+        console.log("Error in backfillDacMembers script:", e);
         process.exit(1);
     })
     .finally(() => {
