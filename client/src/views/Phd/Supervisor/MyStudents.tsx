@@ -60,6 +60,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Textarea } from "@/components/ui/textarea";
 
 interface StudentStatus {
   email: string;
@@ -86,6 +87,7 @@ const MyStudents: React.FC = () => {
   const [editRequestTarget, setEditRequestTarget] = useState<number | null>(
     null
   );
+  const [editRequestComments, setEditRequestComments] = useState("");
 
   const {
     data: students = [],
@@ -100,11 +102,14 @@ const MyStudents: React.FC = () => {
   });
 
   const requestEditMutation = useMutation({
-    mutationFn: (requestId: number) =>
-      api.post(`/phd-request/supervisor/request-edit/${requestId}`),
+    mutationFn: (data: { requestId: number; comments?: string }) =>
+      api.post(`/phd-request/supervisor/request-edit/${data.requestId}`, {
+        comments: data.comments,
+      }),
     onSuccess: () => {
       toast.success("Edit request submitted to DRC Convener.");
       setEditRequestTarget(null);
+      setEditRequestComments("");
       void refetch();
     },
     onError: (error: any) => {
@@ -127,6 +132,15 @@ const MyStudents: React.FC = () => {
     setIsRequestDialogOpen(false);
     setSelectedStudent(null);
     setSelectedRequestType("");
+  };
+
+  const handleConfirmEditRequest = () => {
+    if (editRequestTarget) {
+      requestEditMutation.mutate({
+        requestId: editRequestTarget,
+        comments: editRequestComments,
+      });
+    }
   };
 
   return (
@@ -233,9 +247,8 @@ const MyStudents: React.FC = () => {
                               </Link>
                             </Button>
                           )}
-                        {student.currentStatus
-                          .toLowerCase()
-                          .endsWith("supervisor review final thesis") && (
+                        {student.currentRequestStatus ===
+                          "supervisor_review_final_thesis" && (
                           <Button variant="default" size="sm" asChild>
                             <Link to={`/phd/requests/${student.requestId}`}>
                               <FileCheck2 className="mr-2 h-4 w-4" /> Review
@@ -325,7 +338,12 @@ const MyStudents: React.FC = () => {
 
       <AlertDialog
         open={!!editRequestTarget}
-        onOpenChange={(open) => !open && setEditRequestTarget(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditRequestTarget(null);
+            setEditRequestComments("");
+          }
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -335,13 +353,19 @@ const MyStudents: React.FC = () => {
               submission will be reverted to an editable state.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="edit-comments">Comments (Optional)</Label>
+            <Textarea
+              id="edit-comments"
+              placeholder="Provide a reason or comments for the DRC Convener..."
+              value={editRequestComments}
+              onChange={(e) => setEditRequestComments(e.target.value)}
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() =>
-                editRequestTarget &&
-                requestEditMutation.mutate(editRequestTarget)
-              }
+              onClick={handleConfirmEditRequest}
               disabled={requestEditMutation.isLoading}
             >
               {requestEditMutation.isLoading && (

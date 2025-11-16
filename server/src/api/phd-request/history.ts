@@ -5,7 +5,7 @@ import { HttpError, HttpCode } from "@/config/errors.ts";
 import { eq, desc } from "drizzle-orm";
 import { phdRequests } from "@/config/db/schema/phdRequest.ts";
 import { phd } from "@/config/db/schema/admin.ts";
-import { authUtils } from "lib";
+import { authUtils, phdRequestSchemas } from "lib";
 
 const router = express.Router();
 
@@ -88,10 +88,17 @@ router.get(
             );
         }
 
+        const lockedForSupervisorStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+            [
+                "supervisor_submitted",
+                "drc_convener_review",
+                "drc_member_review",
+                "hod_review",
+                "supervisor_review_final_thesis",
+            ];
+
         const finalRequests = requests.map((request) => {
             let reviewsToProcess = request.reviews;
-
-        
             if (isSupervisor && !isPrivilegedViewer) {
                 reviewsToProcess = request.reviews.filter(
                     (review) => review.reviewerRole !== "DRC_MEMBER"
@@ -104,7 +111,6 @@ router.get(
                 const actionText = review.approved
                     ? "Approved by "
                     : "Reverted by ";
-
                 switch (review.reviewerRole) {
                     case "HOD":
                         roleTitle = "HOD";
@@ -140,7 +146,6 @@ router.get(
                         roleTitle = review.reviewerRole;
                         break;
                 }
-
                 const nameSuffix = isPrivilegedViewer
                     ? ` (${reviewer.name || reviewer.email})`
                     : "";
@@ -148,7 +153,15 @@ router.get(
                 return { ...review, reviewerDisplayName };
             });
 
-            const finalRequest = { ...request, reviews: augmentedReviews };
+            const canRequestEdit =
+                isSupervisor &&
+                lockedForSupervisorStatuses.includes(request.status);
+
+            const finalRequest = {
+                ...request,
+                reviews: augmentedReviews,
+                canRequestEdit,
+            };
 
             if (isSelf) {
                 finalRequest.documents = finalRequest.documents.filter(
@@ -158,7 +171,6 @@ router.get(
                     delete review.supervisorComments;
                 });
             }
-
             return finalRequest;
         });
 

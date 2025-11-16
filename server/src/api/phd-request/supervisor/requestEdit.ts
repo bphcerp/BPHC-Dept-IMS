@@ -31,6 +31,9 @@ router.post(
         if (isNaN(requestId)) {
             throw new HttpError(HttpCode.BAD_REQUEST, "Invalid request ID.");
         }
+        const { comments } = phdRequestSchemas.requestEditSchema.parse(
+            req.body
+        );
         const supervisorEmail = req.user!.email;
 
         await db.transaction(async (tx) => {
@@ -57,6 +60,7 @@ router.post(
                 .set({
                     status: "pending_edit_approval",
                     status_before_edit_request: request.status,
+                    comments: comments || null, // Store the edit request comments
                 })
                 .where(eq(phdRequests.id, requestId));
 
@@ -66,11 +70,18 @@ router.post(
             );
             if (drcConveners.length > 0) {
                 const link = `${environment.FRONTEND_URL}/phd/requests/${requestId}`;
+                const description = [
+                    `The supervisor has requested to edit the '${request.requestType}' submission. Please review and approve or reject the edit request.`,
+                    comments ? `Comments: ${comments}` : "",
+                ]
+                    .filter(Boolean)
+                    .join("\n");
+
                 const todos = drcConveners.map((convener) => ({
                     assignedTo: convener.email,
                     createdBy: supervisorEmail,
                     title: `Edit Request for PhD Submission (Student: ${request.student.name})`,
-                    description: `The supervisor has requested to edit the '${request.requestType}' submission. Please review and approve or reject the edit request.`,
+                    description,
                     module: modules[2],
                     completionEvent: `phd-request:edit-approval:${requestId}`,
                     link,
@@ -81,7 +92,7 @@ router.post(
                     drcConveners.map((convener) => ({
                         to: convener.email,
                         subject: `PhD Request Edit Approval Needed`,
-                        text: `Dear DRC Convener,\n\nA supervisor has requested to edit a '${request.requestType}' submission for ${request.student.name}. Please log in to the portal to approve or reject this request.\n\n${link}`,
+                        text: `Dear DRC Convener,\n\nA supervisor has requested to edit a '${request.requestType}' submission for ${request.student.name}. Please log in to the portal to approve or reject this request.\n\n${description}\n\n${link}`,
                     }))
                 );
             }

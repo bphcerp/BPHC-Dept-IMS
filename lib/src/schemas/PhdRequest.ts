@@ -123,6 +123,11 @@ export type HodFinalThesisReviewerBody = z.infer<
     typeof hodFinalThesisReviewerSchema
 >;
 
+export const requestEditSchema = z.object({
+    comments: z.string().optional(),
+});
+export type RequestEditBody = z.infer<typeof requestEditSchema>;
+
 export const approveEditRequestSchema = z.object({
     approve: z.boolean(),
     comments: z.string().optional(),

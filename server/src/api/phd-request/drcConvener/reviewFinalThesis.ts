@@ -144,6 +144,13 @@ router.post(
                     })),
                     tx
                 );
+                await sendBulkEmails(
+                    body.assignedDrcMembers.map((email) => ({
+                        to: email,
+                        subject: `Final Thesis Review for ${request.student.name}`,
+                        text: `Dear DRC Member,\n\nYou have been assigned to review a PhD request for '${request.student.name}'.\n\nPlease review the request here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                    }))
+                );
             } else if (body.action === "approve") {
                 await tx
                     .update(phdRequests)
@@ -166,6 +173,13 @@ router.post(
                             link: `/phd/requests/${requestId}`,
                         })),
                         tx
+                    );
+                    await sendBulkEmails(
+                        hods.map((hod) => ({
+                            to: hod.email,
+                            subject: `Final Thesis Approval for ${request.student.name}`,
+                            text: `Dear HOD,\n\nA final thesis submission for '${request.student.name}' is awaiting your final approval.\n\nPlease review it here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
+                        }))
                     );
                 }
             }

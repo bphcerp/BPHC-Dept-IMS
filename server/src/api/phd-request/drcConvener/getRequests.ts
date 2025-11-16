@@ -21,7 +21,12 @@ router.get(
 
         if (filter === "pending") {
             const statusesForReview: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
-                ["supervisor_submitted", "drc_convener_review"];
+                [
+                    "supervisor_submitted",
+                    "drc_convener_review",
+                    "drc_member_review",
+                    "pending_edit_approval",
+                ];
             requests = await db.query.phdRequests.findMany({
                 where: inArray(phdRequests.status, statusesForReview),
                 with: {
