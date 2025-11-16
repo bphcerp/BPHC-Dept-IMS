@@ -22,21 +22,67 @@ const seedData = async (email?: string) => {
             }))
         )
         .onConflictDoNothing();
+
+    const facultyPermissions = [
+        "phd:faculty:proposal",
+        "handout:faculty:submit",
+        "handout:faculty:get-all-handouts",
+        "publications:view",
+        "project:create",
+        "project:view",
+        "patent:create",
+        "patent:view",
+        "wilp:project:view-selected",
+        "grades:supervisor:view",
+        "qp:faculty:submit",
+        "qp:faculty:review",
+        "allocation:form:response:submit",
+        "contribution:submit",
+    ];
+
+    const hodPermissions = [
+        ...facultyPermissions,
+        "conference:application:hod",
+        "phd-request:hod:view",
+        "phd-request:hod:review",
+        "contribution:review",
+    ];
+
     const insertedRoles = await db
         .insert(roles)
-        .values({
-            roleName: "developer",
-            allowed: ["*"],
+        .values([
+            {
+                roleName: "developer",
+                allowed: ["*"],
+            },
+            {
+                roleName: "faculty",
+                allowed: facultyPermissions,
+            },
+            {
+                roleName: "HOD",
+                allowed: hodPermissions,
+            },
+        ])
+        .onConflictDoUpdate({
+            target: roles.roleName,
+            set: {
+                allowed: roles.roleName.eq("developer")
+                    ? ["*"]
+                    : roles.roleName.eq("faculty")
+                    ? facultyPermissions
+                    : hodPermissions,
+            },
         })
-        .onConflictDoNothing()
         .returning();
+
     if (email) {
         await db
             .insert(users)
             .values({
                 email,
                 type: "faculty",
-                roles: [insertedRoles[0]?.id ?? 1],
+                roles: insertedRoles.map((r) => r.id),
             })
             .onConflictDoNothing();
         await db

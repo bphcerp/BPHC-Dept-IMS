@@ -193,12 +193,15 @@ export const allPermissions = {
 
     "allocation:builder:form:write": "Create a form instance of a template",
     "allocation:builder:form:view": "View form details",
-    "allocation:form:response:submit": "Can submit responses to forms",
-    "allocation:form:response:view": "Can view responses to forms",
-} as const;
-
-export const permissions: { [key: string]: keyof typeof allPermissions } = {
-    // Admin
+        "allocation:form:response:submit": "Can submit responses to forms",
+        "allocation:form:response:view": "Can view responses to forms",
+    
+        "contribution:submit": "Allow faculty to submit their contributions",
+        "contribution:review": "Allow HOD to review faculty contributions",
+    } as const;
+    
+    export const permissions: { [key: string]: keyof typeof allPermissions } = {
+        // Admin
 
     "/admin/member/invite": "admin:member:create",
     "/admin/member/search": "admin:member:read",
@@ -533,4 +536,10 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
         "allocation:form:response:submit",
     "/allocation/builder/form/response/view": "allocation:form:response:view",
     "/allocation/builder/form/response/getAll": "allocation:form:response:view",
+
+    // Faculty Contribution
+    "/contribution/submit": "contribution:submit",
+    "/contribution/all": "contribution:review",
+    "/contribution/approve": "contribution:review",
+    "/contribution/reject": "contribution:review",
 } as const;
