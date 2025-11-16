@@ -2,7 +2,7 @@ import { relations } from "drizzle-orm";
 import { users, faculty } from "./admin.ts";
 import { laboratories, inventoryItems } from "./inventory.ts";
 import {
-    masterBudget,
+    masterbudget,
     budgetHead,
     budgetHeadAllocation,
     headItems,
@@ -10,14 +10,14 @@ import {
 } from "./budget.ts";
 
 // Relations for Master Budget
-export const masterBudgetRelations = relations(masterBudget, ({ one, many }) => ({
+export const masterBudgetRelations = relations(masterbudget, ({ one, many }) => ({
     initiatedBy: one(users, {
-        fields: [masterBudget.initiatedByEmail],
+        fields: [masterbudget.initiatedByEmail],
         references: [users.email],
         relationName: "masterBudgetInitiatedBy",
     }),
     convener: one(faculty, {
-        fields: [masterBudget.convenerEmail],
+        fields: [masterbudget.convenerEmail],
         references: [faculty.email],
         relationName: "masterBudgetConvener",
     }),
@@ -33,9 +33,9 @@ export const budgetHeadRelations = relations(budgetHead, ({ many }) => ({
 export const budgetHeadAllocationRelations = relations(
     budgetHeadAllocation,
     ({ one, many }) => ({
-        budget: one(masterBudget, {
+        budget: one(masterbudget, {
             fields: [budgetHeadAllocation.budgetId],
-            references: [masterBudget.id],
+            references: [masterbudget.id],
             relationName: "allocationBudgetMaster",
         }),
         head: one(budgetHead, {

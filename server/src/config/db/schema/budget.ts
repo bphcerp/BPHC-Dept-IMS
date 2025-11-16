@@ -28,8 +28,8 @@ export const nfaRequestStatusEnum = pgEnum("nfa_request_status", [
 
 // --- Tables ---
 
-export const masterBudget = pgTable(
-    "budget_master",
+export const masterbudget = pgTable(
+    "master_budget",
     {
         id: uuid("id")
             .primaryKey()
@@ -40,10 +40,10 @@ export const masterBudget = pgTable(
             scale: 2,
         }).notNull(),
         initiatedByEmail: text("initiated_by_email")
-            .references(() => users.email, { onDelete: "set null" })
+            .references(() => users.email, { onDelete: "cascade" })
             .notNull(),
         convenerEmail: text("convener_email")
-            .references(() => faculty.email, { onDelete: "set null" })
+            .references(() => faculty.email, { onDelete: "cascade" })
             .notNull(),
         createdAt: timestamp("created_at", { withTimezone: true })
             .defaultNow()
@@ -51,7 +51,6 @@ export const masterBudget = pgTable(
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .notNull()
-            .$onUpdate(() => new Date()),
     },
     (table) => [
         index().on(table.initiatedByEmail),
@@ -59,20 +58,13 @@ export const masterBudget = pgTable(
     ]
 );
 
-export const budgetHead = pgTable("budget_heads", {
+export const budgetHead = pgTable("budget_head", {
     id: uuid("id")
         .primaryKey()
         .$defaultFn(() => uuidv4()),
     name: text("name").notNull(),
     description: text("description"),
     type: budgetHeadTypeEnum("type").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-        .defaultNow()
-        .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-        .defaultNow()
-        .notNull()
-        .$onUpdate(() => new Date()),
 });
 
 export const budgetHeadAllocation = pgTable(
@@ -82,7 +74,7 @@ export const budgetHeadAllocation = pgTable(
             .primaryKey()
             .$defaultFn(() => uuidv4()),
         budgetId: uuid("budget_id")
-            .references(() => masterBudget.id, { onDelete: "cascade" })
+            .references(() => masterbudget.id, { onDelete: "cascade" })
             .notNull(),
         headId: uuid("head_id")
             .references(() => budgetHead.id, { onDelete: "restrict" })
@@ -93,13 +85,6 @@ export const budgetHeadAllocation = pgTable(
         }).notNull(),
         budgetCode: integer("budget_code"),
         analysisCode: integer("analysis_code"),
-        createdAt: timestamp("created_at", { withTimezone: true })
-            .defaultNow()
-            .notNull(),
-        updatedAt: timestamp("updated_at", { withTimezone: true })
-            .defaultNow()
-            .notNull()
-            .$onUpdate(() => new Date()),
     },
     (table) => [index().on(table.budgetId), index().on(table.headId)]
 );
@@ -111,23 +96,19 @@ export const headItems = pgTable(
             .primaryKey()
             .$defaultFn(() => uuidv4()),
         itemName: text("item_name").notNull(),
+        //check if this is correct or not  
         headAllocId: uuid("head_alloc_id")
             .references(() => budgetHeadAllocation.id, { onDelete: "cascade" })
             .notNull(),
+        //check if this is correct or not  
         grantedAmt: decimal("granted_amt", {
             precision: 15,
             scale: 2,
         }).notNull(),
+        //check if this is correct or not
         labId: uuid("lab_id")
             .references(() => laboratories.id, { onDelete: "restrict" })
             .notNull(),
-        createdAt: timestamp("created_at", { withTimezone: true })
-            .defaultNow()
-            .notNull(),
-        updatedAt: timestamp("updated_at", { withTimezone: true })
-            .defaultNow()
-            .notNull()
-            .$onUpdate(() => new Date()),
     },
     (table) => [index().on(table.headAllocId), index().on(table.labId)]
 );
@@ -152,7 +133,6 @@ export const nfaRequest = pgTable(
         updatedAt: timestamp("updated_at", { withTimezone: true })
             .defaultNow()
             .notNull()
-            .$onUpdate(() => new Date()),
     },
     (table) => [index().on(table.createdByEmail), index().on(table.itemId)]
 );
