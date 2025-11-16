@@ -88,6 +88,7 @@ router.get(
 
             const lockedForSupervisorStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
                 [
+                    "supervisor_submitted", // Added this status
                     "drc_convener_review",
                     "drc_member_review",
                     "hod_review",
