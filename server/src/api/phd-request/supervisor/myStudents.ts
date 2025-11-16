@@ -14,13 +14,13 @@ import { phdRequestSchemas } from "lib";
 const router = express.Router();
 
 type PhdRequestType = (typeof phdRequestSchemas.phdRequestTypes)[number];
-
 const postProposalRequestSequence: (PhdRequestType | PhdRequestType[])[] = [
     "pre_submission",
     "draft_notice",
     ["change_of_title", "pre_thesis_submission"],
     "final_thesis_submission",
 ];
+
 const anytimeRequests: PhdRequestType[] = [
     "jrf_recruitment",
     "jrf_to_phd_conversion",
@@ -66,8 +66,12 @@ router.get(
         });
 
         const studentStatuses = students.map((student) => {
-            let currentStatus = student.currentStatus; // Start with the baseline status
+            let currentStatusLabel = student.currentStatus;
+            let currentRequestStatus:
+                | (typeof phdRequestSchemas.phdRequestStatuses)[number]
+                | null = null;
             let canResubmitRequest = false;
+            let canRequestEdit = false;
             let reversionComments: string | null = null;
             let requestId: number | null = null;
 
@@ -82,39 +86,56 @@ router.get(
                     "reverted_by_hod",
                 ];
 
-            // PRIORITY 1: Check for any active request (highest priority)
+            const lockedForSupervisorStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+                [
+                    "drc_convener_review",
+                    "drc_member_review",
+                    "hod_review",
+                    "supervisor_review_final_thesis",
+                ];
+
             const latestActiveRequest = allRequests.find(
                 (req) => !["completed", "deleted"].includes(req.status)
             );
 
             if (latestActiveRequest) {
-                currentStatus = `Request: ${latestActiveRequest.requestType.replace(/_/g, " ")} - ${latestActiveRequest.status.replace(/_/g, " ")}`;
+                currentStatusLabel = `Request: ${latestActiveRequest.requestType.replace(
+                    /_/g,
+                    " "
+                )}- ${latestActiveRequest.status.replace(/_/g, " ")}`;
+                currentRequestStatus = latestActiveRequest.status;
                 requestId = latestActiveRequest.id;
+
                 if (revertableStatuses.includes(latestActiveRequest.status)) {
                     canResubmitRequest = true;
                     reversionComments =
                         latestActiveRequest.reviews[0]?.comments ||
                         "No comments provided.";
                 }
-            }
-            // PRIORITY 2: Check for an active proposal
-            else if (
+
+                if (
+                    lockedForSupervisorStatuses.includes(
+                        latestActiveRequest.status
+                    )
+                ) {
+                    canRequestEdit = true;
+                }
+            } else if (
                 latestProposal &&
                 latestProposal.status !== "completed" &&
                 latestProposal.status !== "deleted"
             ) {
-                currentStatus = `Proposal: ${latestProposal.status.replace(/_/g, " ")}`;
-            }
-            // PRIORITY 3: Check for the latest QE application status
-            else if (latestQeApplication) {
+                currentStatusLabel = `Proposal: ${latestProposal.status.replace(
+                    /_/g,
+                    " "
+                )}`;
+            } else if (latestQeApplication) {
                 const status = `QE Attempt: ${latestQeApplication.status}`;
-                currentStatus = latestQeApplication.result
+                currentStatusLabel = latestQeApplication.result
                     ? `${status} (${latestQeApplication.result})`
                     : status;
-            }
-            // Fallback to the database status if no active workflows are found
-            else {
-                currentStatus = student.currentStatus;
+            } else {
+                currentStatusLabel = student.currentStatus;
             }
 
             const availableRequestTypes: PhdRequestType[] = [
@@ -143,8 +164,10 @@ router.get(
                 email: student.email,
                 name: student.name,
                 idNumber: student.idNumber,
-                currentStatus,
+                currentStatus: currentStatusLabel,
+                currentRequestStatus,
                 canResubmitRequest,
+                canRequestEdit,
                 reversionComments,
                 requestId,
                 availableRequestTypes,

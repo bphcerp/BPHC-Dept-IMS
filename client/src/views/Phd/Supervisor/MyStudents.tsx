@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import {
   Card,
@@ -31,12 +31,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { phdRequestSchemas } from "lib";
 import { SupervisorRequestForm } from "@/components/phd/phd-request/SupervisorRequestForm";
-import { UserPlus, MessageCircleWarning, Edit, FileCheck2 } from "lucide-react";
+import {
+  UserPlus,
+  MessageCircleWarning,
+  Edit,
+  FileCheck2,
+  ShieldAlert,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Tooltip,
@@ -50,7 +66,11 @@ interface StudentStatus {
   name: string | null;
   idNumber: string | null;
   currentStatus: string;
+  currentRequestStatus:
+    | (typeof phdRequestSchemas.phdRequestStatuses)[number]
+    | null;
   canResubmitRequest: boolean;
+  canRequestEdit: boolean;
   reversionComments: string | null;
   requestId: number | null;
   availableRequestTypes: string[];
@@ -63,12 +83,32 @@ const MyStudents: React.FC = () => {
     null
   );
   const [selectedRequestType, setSelectedRequestType] = useState<string>("");
+  const [editRequestTarget, setEditRequestTarget] = useState<number | null>(
+    null
+  );
 
-  const { data: students = [], isLoading } = useQuery<StudentStatus[]>({
+  const {
+    data: students = [],
+    isLoading,
+    refetch,
+  } = useQuery<StudentStatus[]>({
     queryKey: ["supervisor-my-students"],
     queryFn: async () => {
       const res = await api.get("/phd-request/supervisor/my-students");
       return res.data;
+    },
+  });
+
+  const requestEditMutation = useMutation({
+    mutationFn: (requestId: number) =>
+      api.post(`/phd-request/supervisor/request-edit/${requestId}`),
+    onSuccess: () => {
+      toast.success("Edit request submitted to DRC Convener.");
+      setEditRequestTarget(null);
+      void refetch();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit request.");
     },
   });
 
@@ -97,6 +137,7 @@ const MyStudents: React.FC = () => {
           View the status of your PhD students and initiate new requests.
         </p>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Student Dashboard</CardTitle>
@@ -209,6 +250,18 @@ const MyStudents: React.FC = () => {
                             </Link>
                           </Button>
                         )}
+                        {student.canRequestEdit && student.requestId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setEditRequestTarget(student.requestId)
+                            }
+                          >
+                            <ShieldAlert className="mr-2 h-4 w-4" /> Request
+                            Edit
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -226,6 +279,7 @@ const MyStudents: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
       <Dialog open={isRequestDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -268,6 +322,36 @@ const MyStudents: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!editRequestTarget}
+        onOpenChange={(open) => !open && setEditRequestTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Request Edit Access?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a request to the DRC Convener. If approved, the
+              submission will be reverted to an editable state.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                editRequestTarget &&
+                requestEditMutation.mutate(editRequestTarget)
+              }
+              disabled={requestEditMutation.isLoading}
+            >
+              {requestEditMutation.isLoading && (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              )}
+              Send Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
