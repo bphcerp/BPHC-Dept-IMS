@@ -10,7 +10,7 @@ import {
     phdRequestDrcAssignments,
 } from "@/config/db/schema/phdRequest.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
-import { eq } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
@@ -30,11 +30,23 @@ router.post(
 
         await db.transaction(async (tx) => {
             const request = await tx.query.phdRequests.findFirst({
-                where: eq(phdRequests.id, requestId),
+                where: and(
+                    eq(phdRequests.id, requestId),
+                    inArray(phdRequests.status, [
+                        "supervisor_submitted",
+                        "drc_convener_review",
+                        "drc_member_review",
+                    ])
+                ),
                 with: { student: true, supervisor: true },
             });
-            if (!request)
-                throw new HttpError(HttpCode.NOT_FOUND, "Request not found.");
+
+            if (!request) {
+                throw new HttpError(
+                    HttpCode.NOT_FOUND,
+                    "Request not found or not in a valid state for this action."
+                );
+            }
 
             await tx.insert(phdRequestReviews).values({
                 requestId,
@@ -49,9 +61,25 @@ router.post(
                 {
                     module: modules[2],
                     completionEvent: `phd-request:drc-convener-review:${requestId}`,
+                    assignedTo: convenerEmail,
                 },
                 tx
             );
+
+            // If bypassing, complete the bypassed todos
+            if (
+                (body.action === "approve" ||
+                    body.action === "forward_to_hod") &&
+                request.status === "drc_member_review"
+            ) {
+                await completeTodo(
+                    {
+                        module: modules[2],
+                        completionEvent: `phd-request:drc-member-review:${requestId}`,
+                    },
+                    tx
+                );
+            }
 
             switch (body.action) {
                 case "revert":

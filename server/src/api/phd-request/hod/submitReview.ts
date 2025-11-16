@@ -14,9 +14,10 @@ import {
     completeTodo,
     createNotifications,
 } from "@/lib/todos/index.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import { phdRequestStatuses } from "../../../../../lib/src/schemas/PhdRequest.ts";
 
 const router = express.Router();
 
@@ -37,7 +38,12 @@ export default router.post(
             const request = await tx.query.phdRequests.findFirst({
                 where: and(
                     eq(phdRequests.id, requestId),
-                    eq(phdRequests.status, "hod_review")
+                    inArray(phdRequests.status, [
+                        "supervisor_submitted",
+                        "drc_convener_review",
+                        "drc_member_review",
+                        "hod_review",
+                    ])
                 ),
                 with: { student: true, supervisor: true },
             });
@@ -49,6 +55,43 @@ export default router.post(
                 );
             }
 
+            // Store all events to be cleared
+            const eventsToClear: string[] = [];
+            eventsToClear.push(`phd-request:hod-review:${requestId}`);
+
+            // Add events to clear based on bypass
+            const bypassableStatuses: (typeof phdRequestStatuses)[number][] = [
+                "supervisor_submitted",
+                "drc_convener_review",
+                "drc_member_review",
+            ];
+
+            if (bypassableStatuses.includes(request.status)) {
+                if (
+                    request.status === "supervisor_submitted" ||
+                    request.status === "drc_convener_review" ||
+                    request.status === "drc_member_review"
+                ) {
+                    eventsToClear.push(
+                        `phd-request:drc-convener-review:${requestId}`
+                    );
+                }
+                if (request.status === "drc_member_review") {
+                    eventsToClear.push(
+                        `phd-request:drc-member-review:${requestId}`
+                    );
+                }
+            }
+
+            // Complete all identified todos
+            await completeTodo(
+                {
+                    module: modules[2],
+                    completionEvent: eventsToClear,
+                },
+                tx
+            );
+
             await tx.insert(phdRequestReviews).values({
                 requestId,
                 reviewerEmail: hodEmail,
@@ -58,20 +101,11 @@ export default router.post(
                 status_at_review: request.status,
             });
 
-            await completeTodo(
-                {
-                    module: modules[2],
-                    completionEvent: `phd-request:hod-review:${requestId}`,
-                },
-                tx
-            );
-
             if (approved) {
                 await tx
                     .update(phdRequests)
                     .set({ status: "completed" })
                     .where(eq(phdRequests.id, requestId));
-
                 let nextStatus: string | undefined = undefined;
                 switch (request.requestType) {
                     case "pre_submission":
@@ -116,29 +150,16 @@ export default router.post(
                     },
                 ];
                 await createNotifications(notificationsToCreate, false, tx);
-
                 await sendBulkEmails([
                     {
                         to: request.studentEmail,
                         subject: `Your PhD Request has been Approved`,
-                        text: `Dear ${
-                            request.student.name
-                        },\n\nYour PhD request for '${request.requestType.replace(
-                            /_/g,
-                            " "
-                        )}' has been approved by the HOD.`,
+                        text: `Dear ${request.student.name},\n\nYour PhD request for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
                     },
                     {
                         to: request.supervisorEmail,
                         subject: `PhD Request for ${request.student.name} Approved`,
-                        text: `Dear ${
-                            request.supervisor.name
-                        },\n\nThe PhD request for your student, ${
-                            request.student.name
-                        }, for '${request.requestType.replace(
-                            /_/g,
-                            " "
-                        )}' has been approved by the HOD.`,
+                        text: `Dear ${request.supervisor.name},\n\nThe PhD request for your student, ${request.student.name}, for '${request.requestType.replace(/_/g, " ")}' has been approved by the HOD.`,
                     },
                 ]);
             } else {
@@ -146,7 +167,6 @@ export default router.post(
                     .update(phdRequests)
                     .set({ status: "reverted_by_hod" })
                     .where(eq(phdRequests.id, requestId));
-
                 await createTodos(
                     [
                         {
@@ -161,18 +181,11 @@ export default router.post(
                     ],
                     tx
                 );
-
                 await sendBulkEmails([
                     {
                         to: request.supervisorEmail,
                         subject: `PhD Request Reverted by HOD`,
-                        text: `Dear ${
-                            request.supervisor.name
-                        },\n\nYour PhD request for '${
-                            request.student.name
-                        }' has been reverted by the HOD.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${
-                            environment.FRONTEND_URL
-                        }/phd/requests/${requestId}`,
+                        text: `Dear ${request.supervisor.name},\n\nYour PhD request for '${request.student.name}' has been reverted by the HOD.\n\nComments: ${comments}\n\nPlease review and resubmit here: ${environment.FRONTEND_URL}/phd/requests/${requestId}`,
                     },
                 ]);
             }

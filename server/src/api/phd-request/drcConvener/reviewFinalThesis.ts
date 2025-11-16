@@ -10,10 +10,11 @@ import {
     phdRequestDrcAssignments,
 } from "@/config/db/schema/phdRequest.ts";
 import { createTodos, completeTodo } from "@/lib/todos/index.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getUsersWithPermission } from "@/lib/common/index.ts";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import { phdRequestStatuses } from "../../../../../lib/src/schemas/PhdRequest.ts";
 
 const router = express.Router();
 
@@ -28,15 +29,31 @@ router.post(
         );
 
         await db.transaction(async (tx) => {
+            const validStatuses: (typeof phdRequestStatuses)[number][] = [
+                "supervisor_review_final_thesis",
+                "drc_convener_review",
+                "drc_member_review",
+            ];
+
             const request = await tx.query.phdRequests.findFirst({
-                where: eq(phdRequests.id, requestId),
+                where: and(
+                    eq(phdRequests.id, requestId),
+                    eq(phdRequests.requestType, "final_thesis_submission")
+                ),
                 with: { student: true, supervisor: true },
             });
 
-            if (!request || request.requestType !== "final_thesis_submission") {
+            if (!request) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
                     "Final thesis request not found."
+                );
+            }
+
+            if (!validStatuses.includes(request.status)) {
+                throw new HttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Request is not in a valid state for DRC convener review."
                 );
             }
 
@@ -48,10 +65,25 @@ router.post(
                 comments: body.comments,
             });
 
+            // Clear todos for current and bypassed steps
+            const eventsToClear: string[] = [];
+            eventsToClear.push(`phd-request:drc-convener-review:${requestId}`);
+
+            if (request.status === "supervisor_review_final_thesis") {
+                eventsToClear.push(
+                    `phd-request:supervisor-review-final-thesis:${requestId}`
+                );
+            }
+            if (request.status === "drc_member_review") {
+                eventsToClear.push(
+                    `phd-request:drc-member-review:${requestId}`
+                );
+            }
+
             await completeTodo(
                 {
                     module: modules[2],
-                    completionEvent: `phd-request:drc-convener-review:${requestId}`,
+                    completionEvent: eventsToClear,
                 },
                 tx
             );

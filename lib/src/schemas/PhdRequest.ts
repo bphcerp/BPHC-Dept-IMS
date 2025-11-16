@@ -32,6 +32,7 @@ export const phdRequestStatuses = [
     "reverted_by_hod",
     "student_review",
     "supervisor_review_final_thesis",
+    "pending_edit_approval",
 ] as const;
 
 export const phdRequestTypeEnum = z.enum(phdRequestTypes);
@@ -121,3 +122,9 @@ export const hodFinalThesisReviewerSchema = z.discriminatedUnion("action", [
 export type HodFinalThesisReviewerBody = z.infer<
     typeof hodFinalThesisReviewerSchema
 >;
+
+export const approveEditRequestSchema = z.object({
+    approve: z.boolean(),
+    comments: z.string().optional(),
+});
+export type ApproveEditRequestBody = z.infer<typeof approveEditRequestSchema>;

@@ -31,9 +31,8 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
   const [selectedDrcMembers, setSelectedDrcMembers] = useState<string[]>([]);
 
   const { data: facultyList = [] } = useQuery<ComboboxOption[]>({
-    queryKey: ["facultyList", "drc"], // Use a specific query key for caching
+    queryKey: ["facultyList", "drc"],
     queryFn: async () => {
-      // Add the ?role=drc query parameter to the request
       const res = await api.get("/phd/proposal/getFacultyList?role=drc");
       return res.data.map((f: { name: string; email: string }) => ({
         label: `${f.name} (${f.email})`,
@@ -92,6 +91,17 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             </AlertDescription>
           </Alert>
         )}
+        {request.status === "drc_member_review" && (
+          <Alert variant="destructive">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Bypass Option</AlertTitle>
+            <AlertDescription>
+              This request is currently with DRC members for review. You can
+              wait for their feedback or choose "Bypass & Forward to HOD" to
+              approve it immediately.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="space-y-2">
           <Label htmlFor="comments">Comments</Label>
           <Textarea
@@ -145,12 +155,15 @@ export const DrcConvenerReviewPanel: React.FC<DrcConvenerReviewPanelProps> = ({
             </Button>
           )}
 
-          {request.status === "drc_convener_review" && (
+          {(request.status === "drc_convener_review" ||
+            request.status === "drc_member_review") && (
             <Button
               onClick={() => handleSubmit("approve")}
               disabled={mutation.isLoading}
             >
-              Approve and Forward to HOD
+              {request.status === "drc_member_review"
+                ? "Bypass & Forward to HOD"
+                : "Approve and Forward to HOD"}
             </Button>
           )}
         </div>

@@ -14,9 +14,10 @@ import {
     completeTodo,
     createNotifications,
 } from "@/lib/todos/index.ts";
-import { eq } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { sendBulkEmails } from "@/lib/common/email.ts";
 import environment from "@/config/environment.ts";
+import { phdRequestStatuses } from "../../../../../lib/src/schemas/PhdRequest.ts";
 
 const router = express.Router();
 
@@ -32,20 +33,66 @@ export default router.post(
 
         await db.transaction(async (tx) => {
             const request = await tx.query.phdRequests.findFirst({
-                where: eq(phdRequests.id, requestId),
+                where: and(
+                    eq(phdRequests.id, requestId),
+                    eq(phdRequests.requestType, "final_thesis_submission"),
+                    inArray(phdRequests.status, [
+                        "supervisor_review_final_thesis",
+                        "drc_convener_review",
+                        "drc_member_review",
+                        "hod_review",
+                    ])
+                ),
                 with: { student: true, supervisor: true },
             });
 
-            if (
-                !request ||
-                request.requestType !== "final_thesis_submission" ||
-                request.status !== "hod_review"
-            ) {
+            if (!request) {
                 throw new HttpError(
                     HttpCode.NOT_FOUND,
-                    "Final thesis request not found or not awaiting HOD review."
+                    "Final thesis request not found or not in a valid state for HOD review."
                 );
             }
+
+            // Store all events to be cleared
+            const eventsToClear: string[] = [];
+            eventsToClear.push(`phd-request:hod-review:${requestId}`);
+
+            // Add events to clear based on bypass
+            const bypassableStatuses: (typeof phdRequestStatuses)[number][] = [
+                "supervisor_review_final_thesis",
+                "drc_convener_review",
+                "drc_member_review",
+            ];
+
+            if (bypassableStatuses.includes(request.status)) {
+                if (request.status === "supervisor_review_final_thesis") {
+                    eventsToClear.push(
+                        `phd-request:supervisor-review-final-thesis:${requestId}`
+                    );
+                }
+                if (
+                    request.status === "drc_convener_review" ||
+                    request.status === "drc_member_review"
+                ) {
+                    eventsToClear.push(
+                        `phd-request:drc-convener-review:${requestId}`
+                    );
+                }
+                if (request.status === "drc_member_review") {
+                    eventsToClear.push(
+                        `phd-request:drc-member-review:${requestId}`
+                    );
+                }
+            }
+
+            // Complete all identified todos
+            await completeTodo(
+                {
+                    module: modules[2],
+                    completionEvent: eventsToClear,
+                },
+                tx
+            );
 
             await tx.insert(phdRequestReviews).values({
                 requestId,
@@ -54,14 +101,6 @@ export default router.post(
                 approved: body.action === "approve",
                 comments: body.comments,
             });
-
-            await completeTodo(
-                {
-                    module: modules[2],
-                    completionEvent: `phd-request:hod-review:${requestId}`,
-                },
-                tx
-            );
 
             if (body.action === "revert") {
                 const todosToCreate = [];

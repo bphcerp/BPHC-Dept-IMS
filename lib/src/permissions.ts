@@ -334,6 +334,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // PhD Requests
     "/phd-request/supervisor/create": "phd-request:supervisor:create",
     "/phd-request/supervisor/resubmit": "phd-request:supervisor:create",
+    "/phd-request/supervisor/request-edit": "phd-request:supervisor:create",
     "/phd-request/supervisor/my-students": "phd-request:supervisor:view",
     "/phd-request/supervisor/review-final-thesis":
         "phd-request:supervisor:view",
@@ -343,6 +344,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
 
     "/phd-request/drc-convener/requests": "phd-request:drc-convener:view",
     "/phd-request/drc-convener/review": "phd-request:drc-convener:review",
+    "/phd-request/drc-convener/review-edit": "phd-request:drc-convener:review",
 
     "/phd-request/drc-member/requests": "phd-request:drc-member:view",
     "/phd-request/drc-member/review": "phd-request:drc-member:review",

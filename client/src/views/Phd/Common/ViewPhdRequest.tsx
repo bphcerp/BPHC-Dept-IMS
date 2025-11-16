@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import api from "@/lib/axios-instance";
 import { useAuth } from "@/hooks/Auth";
 import { LoadingSpinner } from "@/components/ui/spinner";
@@ -23,10 +23,29 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye } from "lucide-react";
+import { Edit, Eye, ShieldAlert, Check, X } from "lucide-react";
 import { FinalThesisPreview } from "@/components/phd/phd-request/FinalThesisPreview";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 
 interface PhdRequestDetails {
   id: number;
@@ -63,6 +82,8 @@ const ViewPhdRequest: React.FC = () => {
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isEditRequestOpen, setIsEditRequestOpen] = useState(false);
+  const [editRequestComments, setEditRequestComments] = useState("");
 
   const {
     data: request,
@@ -91,28 +112,91 @@ const ViewPhdRequest: React.FC = () => {
     });
   };
 
-  const handleFinalSubmit = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("submissionType", "final");
-      formData.append("comments", request?.comments ?? "");
-
-      await api.post(
-        `/phd-request/student/submit-final-thesis/${id}`,
+  const finalSubmitMutation = useMutation({
+    mutationFn: (formData: FormData) => {
+      if (!request) throw new Error("Request data not loaded");
+      return api.post(
+        `/phd-request/student/submit-final-thesis/${request.id}`,
         formData
       );
+    },
+    onSuccess: () => {
       toast.success("Final thesis documents submitted for supervisor review.");
       handleSuccess();
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast.error(error.response?.data?.message || "Submission failed.");
-    }
+    },
+  });
+
+  const handleFinalSubmit = async () => {
+    if (!request) return;
+    const formData = new FormData();
+    formData.append("submissionType", "final");
+    formData.append("comments", request.comments || "");
+    finalSubmitMutation.mutate(formData);
   };
+
+  const requestEditMutation = useMutation({
+    mutationFn: () => api.post(`/phd-request/supervisor/request-edit/${id}`),
+    onSuccess: () => {
+      toast.success("Edit request submitted to DRC Convener.");
+      setIsEditRequestOpen(false);
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit request.");
+    },
+  });
+
+  const reviewEditMutation = useMutation({
+    mutationFn: (data: { approve: boolean; comments?: string }) =>
+      api.post(`/phd-request/drc-convener/review-edit/${id}`, data),
+    onSuccess: () => {
+      toast.success("Edit request reviewed.");
+      setEditRequestComments("");
+      void handleSuccess();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to review request.");
+    },
+  });
 
   const renderActionPanel = () => {
     if (!request || !authState) return null;
     const { status, student, supervisor, requestType, id: requestId } = request;
 
-    if (authState.email === student.email && status === "student_review") {
+    const isSupervisor = authState.email === supervisor.email;
+    const isStudent = authState.email === student.email;
+    const isDRC = checkAccess("phd-request:drc-convener:review");
+    const isHOD = checkAccess("phd-request:hod:review");
+
+    const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+      ["reverted_by_drc_convener", "reverted_by_drc_member", "reverted_by_hod"];
+    const lockedForSupervisorStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+      [
+        "drc_convener_review",
+        "drc_member_review",
+        "hod_review",
+        "supervisor_review_final_thesis",
+      ];
+    const hodOverrideStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+      [
+        "supervisor_submitted",
+        "drc_convener_review",
+        "drc_member_review",
+        "hod_review",
+      ];
+    const hodOverrideFinalThesisStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
+      [
+        "supervisor_review_final_thesis",
+        "drc_convener_review",
+        "drc_member_review",
+        "hod_review",
+      ];
+
+    // 1. Student Actions
+    if (isStudent && status === "student_review") {
       if (requestType === "final_thesis_submission") {
         return (
           <div className="flex gap-4">
@@ -131,13 +215,8 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    if (authState.email === supervisor.email) {
-      const revertableStatuses: (typeof phdRequestSchemas.phdRequestStatuses)[number][] =
-        [
-          "reverted_by_drc_convener",
-          "reverted_by_drc_member",
-          "reverted_by_hod",
-        ];
+    // 2. Supervisor Actions
+    if (isSupervisor) {
       if (revertableStatuses.includes(status)) {
         return (
           <SupervisorResubmitForm
@@ -154,15 +233,71 @@ const ViewPhdRequest: React.FC = () => {
           />
         );
       }
+      if (lockedForSupervisorStatuses.includes(status)) {
+        return (
+          <Button variant="outline" onClick={() => setIsEditRequestOpen(true)}>
+            <ShieldAlert className="mr-2 h-4 w-4" /> Request Edit Access from
+            DRC
+          </Button>
+        );
+      }
     }
 
-    if (checkAccess("phd-request:drc-convener:review")) {
+    // 3. DRC Convenor Actions
+    if (isDRC) {
+      if (status === "pending_edit_approval") {
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Review Edit Request</CardTitle>
+              <CardDescription>
+                The supervisor has requested to edit this submission. Approving
+                will revert it to an editable state.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Label htmlFor="edit-comments">Comments (Optional)</Label>
+              <Textarea
+                id="edit-comments"
+                placeholder="Add comments for the supervisor..."
+                value={editRequestComments}
+                onChange={(e) => setEditRequestComments(e.target.value)}
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    reviewEditMutation.mutate({
+                      approve: false,
+                      comments: editRequestComments,
+                    })
+                  }
+                  disabled={reviewEditMutation.isLoading}
+                >
+                  <X className="mr-2 h-4 w-4" /> Reject Edit
+                </Button>
+                <Button
+                  onClick={() =>
+                    reviewEditMutation.mutate({
+                      approve: true,
+                      comments: editRequestComments,
+                    })
+                  }
+                  disabled={reviewEditMutation.isLoading}
+                >
+                  <Check className="mr-2 h-4 w-4" /> Approve Edit
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
       if (requestType === "final_thesis_submission") {
         if (
           [
             "drc_convener_review",
             "drc_member_review",
-            "supervisor_submitted",
+            "supervisor_review_final_thesis",
           ].includes(status)
         ) {
           return (
@@ -173,7 +308,13 @@ const ViewPhdRequest: React.FC = () => {
           );
         }
       } else {
-        if (["supervisor_submitted", "drc_convener_review"].includes(status)) {
+        if (
+          [
+            "supervisor_submitted",
+            "drc_convener_review",
+            "drc_member_review",
+          ].includes(status)
+        ) {
           return (
             <DrcConvenerReviewPanel
               request={request}
@@ -184,6 +325,7 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
+    // 4. DRC Member Actions
     if (
       checkAccess("phd-request:drc-member:review") &&
       status === "drc_member_review"
@@ -193,12 +335,20 @@ const ViewPhdRequest: React.FC = () => {
       );
     }
 
-    if (checkAccess("phd-request:hod:review") && status === "hod_review") {
-      if (requestType === "final_thesis_submission") {
+    // 5. HOD Actions (Bypass)
+    if (isHOD) {
+      if (
+        requestType === "final_thesis_submission" &&
+        hodOverrideFinalThesisStatuses.includes(status)
+      ) {
         return (
           <HodFinalThesisForm request={request} onSuccess={handleSuccess} />
         );
-      } else {
+      }
+      if (
+        requestType !== "final_thesis_submission" &&
+        hodOverrideStatuses.includes(status)
+      ) {
         return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
       }
     }
@@ -226,11 +376,10 @@ const ViewPhdRequest: React.FC = () => {
     <div className="space-y-6">
       <BackButton />
       <RequestDetailsCard request={request} />
-      {/* The stepper now receives the already-filtered reviews from the server */}
       <RequestStatusStepper reviews={request.reviews} request={request} />
       <div className="mt-6">{renderActionPanel()}</div>
 
-      {/* Edit Dialog */}
+      {/* Dialog for Student Edit (Final Thesis) */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
@@ -244,7 +393,7 @@ const ViewPhdRequest: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
+      {/* Dialog for Student Preview (Final Thesis) */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
@@ -260,15 +409,47 @@ const ViewPhdRequest: React.FC = () => {
               .map((doc) => ({
                 label: doc.documentType,
                 fileName: doc.file.originalName,
-                fileId: doc.file.id, 
+                fileId: doc.file.id,
               }))}
             comments={request.comments || ""}
           />
-          <Button onClick={handleFinalSubmit} className="mt-4 w-full">
+          <Button
+            onClick={handleFinalSubmit}
+            className="mt-4 w-full"
+            disabled={finalSubmitMutation.isLoading}
+          >
+            {finalSubmitMutation.isLoading && (
+              <LoadingSpinner className="mr-2 h-4 w-4" />
+            )}
             Submit to Supervisor
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog for Supervisor to Request Edit */}
+      <AlertDialog open={isEditRequestOpen} onOpenChange={setIsEditRequestOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Request Edit Access?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a request to the DRC Convener. If approved, the
+              submission will be reverted to an editable state.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => requestEditMutation.mutate()}
+              disabled={requestEditMutation.isLoading}
+            >
+              {requestEditMutation.isLoading && (
+                <LoadingSpinner className="mr-2 h-4 w-4" />
+              )}
+              Send Request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

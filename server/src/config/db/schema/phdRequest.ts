@@ -40,6 +40,9 @@ export const phdRequests = pgTable("phd_requests", {
         .references(() => phdSemesters.id, { onDelete: "restrict" }),
     requestType: phdRequestTypeEnum("request_type").notNull(),
     status: phdRequestStatusEnum("status").notNull(),
+    status_before_edit_request: phdRequestStatusEnum(
+        "status_before_edit_request"
+    ),
     comments: text("comments"),
     createdAt: timestamp("created_at", { withTimezone: true })
         .defaultNow()
