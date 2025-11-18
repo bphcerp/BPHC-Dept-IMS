@@ -44,10 +44,18 @@ export default router.get(
                 orderBy: desc(phdExamApplications.createdAt),
             });
 
-        const supervisorTodosExist = await todoExists(
+        const supervisorTodosArea1Exist = await todoExists(
             verifiedApplications.map((app) => ({
                 module: modules[4],
-                completionEvent: `supervisor-suggest-for-${app.id}-exam-${app.examId}`,
+                completionEvent: `supervisor-suggest-${app.qualifyingArea1}-for-${app.id}-exam-${app.examId}`,
+                assignedTo: app.student.supervisorEmail ?? "",
+            }))
+        );
+
+        const supervisorTodosArea2Exist = await todoExists(
+            verifiedApplications.map((app) => ({
+                module: modules[4],
+                completionEvent: `supervisor-suggest-${app.qualifyingArea2}-for-${app.id}-exam-${app.examId}`,
                 assignedTo: app.student.supervisorEmail ?? "",
             }))
         );
@@ -102,7 +110,8 @@ export default router.get(
                 qualificationDate: app.student.qualificationDate
                     ? app.student.qualificationDate.toISOString()
                     : null,
-                supervisorTodoExists: supervisorTodosExist[index],
+                supervisorTodoExistsArea1: supervisorTodosArea1Exist[index],
+                supervisorTodoExistsArea2: supervisorTodosArea2Exist[index],
             }));
         res.json(transformedApplications);
     })

@@ -31,6 +31,7 @@ interface RequestSuggestionsDialogProps {
   setIsOpen: (val: boolean) => void;
   application: phdSchemas.VerifiedApplication;
   toSuggest: number;
+  preselectedAreas?: string[];
 }
 
 const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
@@ -38,16 +39,30 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
   setIsOpen,
   application,
   toSuggest,
+  preselectedAreas,
 }) => {
   const editorTheme = useTheme();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [deadline, setDeadline] = useState<string>("");
+  
+  const selectedAreas = useMemo(
+    () => preselectedAreas || [application.qualifyingArea1, application.qualifyingArea2],
+    [preselectedAreas, application.qualifyingArea1, application.qualifyingArea2]
+  );
+
   const areExaminersSuggested = useMemo(
     () => !!Object.keys(application.examinerSuggestions).length,
     [application.examinerSuggestions]
   );
   const queryClient = useQueryClient();
-  const isReminder = !areExaminersSuggested && application.supervisorTodoExists;
+  const isReminder = !areExaminersSuggested && 
+    (application.supervisorTodoExistsArea1 || application.supervisorTodoExistsArea2);
+
+  const isBothAreas = useMemo(
+    () => selectedAreas.length === 2,
+    [selectedAreas]
+  );
 
   const { data: templates = [] } = useQuery({
     queryKey: ["email-templates"],
@@ -60,8 +75,12 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
   });
 
   const templateName = isReminder
-    ? "reminder_examiner_suggestions"
-    : "request_examiner_suggestions";
+    ? isBothAreas
+      ? "reminder_examiner_suggestions_both"
+      : "reminder_examiner_suggestions_single"
+    : isBothAreas
+      ? "request_examiner_suggestions_both"
+      : "request_examiner_suggestions_single";
   const template = useMemo(
     () =>
       templates && templates.length
@@ -83,18 +102,26 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
           : "Please suggest examiners for this application."
       );
     } else {
-      const view = {
-        supervisorName: "Supervisor",
-        studentName: application.student.name,
-        examinerCount: toSuggest,
-        qualifyingArea1: application.qualifyingArea1,
-        qualifyingArea2: application.qualifyingArea2,
-        link: FRONTEND_URL + "/phd/supervisor/examiner-suggestions",
-      };
+      const view = isBothAreas
+        ? {
+            supervisorName: "Supervisor",
+            studentName: application.student.name,
+            examinerCount: toSuggest,
+            qualifyingArea1: application.qualifyingArea1,
+            qualifyingArea2: application.qualifyingArea2,
+            link: FRONTEND_URL + "/phd/supervisor/examiner-suggestions",
+          }
+        : {
+            supervisorName: "Supervisor",
+            studentName: application.student.name,
+            examinerCount: toSuggest,
+            qualifyingArea: selectedAreas[0],
+            link: FRONTEND_URL + "/phd/supervisor/examiner-suggestions",
+          };
       setSubject(Mustache.render(template.subject, view));
       setBody(Mustache.render(template.body, view));
     }
-  }, [isReminder, template, application, toSuggest]);
+  }, [isReminder, template, application, toSuggest, selectedAreas, isBothAreas]);
 
   const sendNotificationMutation = useMutation({
     mutationFn: (payload: phdSchemas.requestExaminerSuggestionsBody) =>
@@ -116,6 +143,8 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
       subject,
       body,
       applicationId: application.id,
+      areas: selectedAreas,
+      deadline: deadline ? new Date(deadline).toISOString() : undefined,
     };
     const parseResult =
       phdSchemas.requestExaminerSuggestionsBodySchema.safeParse(data);
@@ -142,6 +171,15 @@ const RequestSuggestionsDialog: React.FC<RequestSuggestionsDialogProps> = ({
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="deadline">Deadline (Optional)</Label>
+            <Input
+              id="deadline"
+              type="datetime-local"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
             />
           </div>
           <div className="space-y-2">
