@@ -332,7 +332,9 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
                           {hasSupervisor && (
                             <>
                               {/* Request/Remind/Re-request button */}
-                              {!hasAssignmentArea1 && !hasRejectedArea1 && (
+                              {(!hasAssignmentArea1 || 
+                                app.examinerAssignments[app.qualifyingArea1]?.hasAccepted === null) && 
+                               !hasRejectedArea1 && (
                                 <Button
                                   size="sm"
                                   variant={
@@ -501,7 +503,9 @@ const ExaminerManagementPanel: React.FC<ExaminerManagementPanelProps> = ({
                             )}
                             
                             {/* Request/Remind/Re-request button */}
-                            {!hasAssignmentArea2 && !hasRejectedArea2 && (
+                            {(!hasAssignmentArea2 || 
+                              app.examinerAssignments[app.qualifyingArea2]?.hasAccepted === null) && 
+                             !hasRejectedArea2 && (
                               <Button
                                 size="sm"
                                 variant={

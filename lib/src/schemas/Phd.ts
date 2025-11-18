@@ -74,10 +74,24 @@ export type SetQualificationDateBody = z.infer<
     typeof setQualificationDateSchema
 >;
 
-export const updateApplicationStatusDRCSchema = z.object({
-    status: z.enum(phdExamApplicationStatuses),
-    comments: optionalString,
-});
+export const updateApplicationStatusDRCSchema = z
+    .object({
+        status: z.enum(phdExamApplicationStatuses),
+        comments: optionalString,
+    })
+    .refine(
+        (data) => {
+            // Comments are required when status is "resubmit"
+            if (data.status === "resubmit") {
+                return data.comments && data.comments.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Comments are required when requesting resubmission",
+            path: ["comments"],
+        }
+    );
 
 export const createSuggestExaminersSchema = (examinerCount: number) =>
     z
