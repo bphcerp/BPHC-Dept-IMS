@@ -11,7 +11,7 @@ import {
     phdExaminerSuggestions,
     phdExaminerAssignments,
 } from "@/config/db/schema/phd.ts";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res) => {
-        const { subject, body, applicationId } =
+        const { subject, body, applicationId, areas, deadline } =
             phdSchemas.requestExaminerSuggestionsBodySchema.parse(req.body);
         const application = await db.query.phdExamApplications.findFirst({
             where: eq(phdExamApplications.id, applicationId),
@@ -37,35 +37,63 @@ router.post(
                 "Student does not have a supervisor assigned."
             );
         }
+
+        // Validate areas match the application's areas
+        if (
+            !areas.every(
+                (area) =>
+                    area === application.qualifyingArea1 ||
+                    area === application.qualifyingArea2
+            )
+        ) {
+            throw new HttpError(HttpCode.BAD_REQUEST, "Invalid area selected");
+        }
+
         await sendEmail({
             to: application.student.supervisorEmail,
             subject,
             text: body,
         });
         await db.transaction(async (tx) => {
-            await tx
-                .delete(phdExaminerSuggestions)
-                .where(
-                    eq(phdExaminerSuggestions.applicationId, application.id)
-                );
-            await tx
-                .delete(phdExaminerAssignments)
-                .where(
-                    eq(phdExaminerAssignments.applicationId, application.id)
-                );
-            await createTodos(
-                [
-                    {
-                        assignedTo: application.student.supervisorEmail!,
-                        createdBy: req.user!.email,
-                        title: `Suggest Examiners for ${application.student.name}`,
-                        module: modules[4],
-                        completionEvent: `supervisor-suggest-for-${application.id}-exam-${application.examId}`,
-                        link: "/phd/supervisor/examiner-suggestions",
-                    },
-                ],
-                tx
-            );
+            // Delete suggestions and assignments only for requested areas
+            for (const area of areas) {
+                await tx
+                    .delete(phdExaminerSuggestions)
+                    .where(
+                        and(
+                            eq(
+                                phdExaminerSuggestions.applicationId,
+                                application.id
+                            ),
+                            eq(phdExaminerSuggestions.qualifyingArea, area)
+                        )
+                    );
+
+                await tx
+                    .delete(phdExaminerAssignments)
+                    .where(
+                        and(
+                            eq(
+                                phdExaminerAssignments.applicationId,
+                                application.id
+                            ),
+                            eq(phdExaminerAssignments.qualifyingArea, area)
+                        )
+                    );
+            }
+
+            // Create separate TODOs for each area
+            const todos = areas.map((area) => ({
+                assignedTo: application.student.supervisorEmail!,
+                createdBy: req.user!.email,
+                title: `Suggest Examiners for ${application.student.name} - ${area}`,
+                module: modules[4],
+                completionEvent: `supervisor-suggest-${area}-for-${application.id}-exam-${application.examId}`,
+                link: "/phd/supervisor/examiner-suggestions",
+                deadline: deadline ? new Date(deadline) : undefined,
+            }));
+
+            await createTodos(todos, tx);
         });
         res.status(200).json({ success: true, message: "Notification sent." });
     })

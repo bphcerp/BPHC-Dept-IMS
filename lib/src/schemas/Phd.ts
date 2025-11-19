@@ -74,26 +74,46 @@ export type SetQualificationDateBody = z.infer<
     typeof setQualificationDateSchema
 >;
 
-export const updateApplicationStatusDRCSchema = z.object({
-    status: z.enum(phdExamApplicationStatuses),
-    comments: optionalString,
-});
+export const updateApplicationStatusDRCSchema = z
+    .object({
+        status: z.enum(phdExamApplicationStatuses),
+        comments: optionalString,
+    })
+    .refine(
+        (data) => {
+            // Comments are required when status is "resubmit"
+            if (data.status === "resubmit") {
+                return data.comments && data.comments.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Comments are required when requesting resubmission",
+            path: ["comments"],
+        }
+    );
 
 export const createSuggestExaminersSchema = (examinerCount: number) =>
-    z.object({
-        suggestionsArea1: z
-            .array(z.string().email())
-            .length(
-                examinerCount,
-                `Must suggest exactly ${examinerCount} examiners`
-            ),
-        suggestionsArea2: z
-            .array(z.string().email())
-            .length(
-                examinerCount,
-                `Must suggest exactly ${examinerCount} examiners`
-            ),
-    });
+    z
+        .object({
+            suggestionsArea1: z
+                .array(z.string().email())
+                .length(
+                    examinerCount,
+                    `Must suggest exactly ${examinerCount} examiners`
+                )
+                .optional(),
+            suggestionsArea2: z
+                .array(z.string().email())
+                .length(
+                    examinerCount,
+                    `Must suggest exactly ${examinerCount} examiners`
+                )
+                .optional(),
+        })
+        .refine((data) => data.suggestionsArea1 || data.suggestionsArea2, {
+            message: "At least one area must have suggestions",
+        });
 
 export const updateExaminerCountSchema = z.object({
     examId: z.number().int().positive(),
@@ -101,11 +121,15 @@ export const updateExaminerCountSchema = z.object({
 });
 export type UpdateExaminerCountBody = z.infer<typeof updateExaminerCountSchema>;
 
-export const assignExaminersSchema = z.object({
-    applicationId: z.number().int().positive(),
-    examinerArea1: z.string().email(),
-    examinerArea2: z.string().email(),
-});
+export const assignExaminersSchema = z
+    .object({
+        applicationId: z.number().int().positive(),
+        examinerArea1: z.string().email().optional(),
+        examinerArea2: z.string().email().optional(),
+    })
+    .refine((data) => data.examinerArea1 || data.examinerArea2, {
+        message: "At least one examiner must be provided",
+    });
 export type AssignExaminersBody = z.infer<typeof assignExaminersSchema>;
 
 export const updateProposalDeadlineSchema = z.object({
@@ -540,6 +564,8 @@ export const requestExaminerSuggestionsBodySchema = z.object({
     applicationId: z.number().int().positive(),
     subject: z.string().min(1, "Subject is required for emails."),
     body: z.string().min(1, "Body cannot be empty."),
+    areas: z.array(z.string()).min(1, "At least one area must be selected"),
+    deadline: z.string().datetime().optional(),
 });
 export type requestExaminerSuggestionsBody = z.infer<
     typeof requestExaminerSuggestionsBodySchema
@@ -628,7 +654,7 @@ export interface PhdStudent {
     idNumber: string | null;
     coSupervisor1: string | null;
     coSupervisor2: string | null;
-    phdType: (typeof phdTypes)[number]
+    phdType: (typeof phdTypes)[number];
 }
 export interface QualifyingExamApplication {
     id: number;
@@ -684,7 +710,8 @@ export interface VerifiedApplication {
     >;
     result: "pass" | "fail" | null;
     qualificationDate: string | null;
-    supervisorTodoExists: boolean;
+    supervisorTodoExistsArea1: boolean;
+    supervisorTodoExistsArea2: boolean;
 }
 export interface QualifyingExamApplicationsResponse {
     exam: {

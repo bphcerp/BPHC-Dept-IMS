@@ -40,7 +40,7 @@ import { Check, ChevronsUpDown, UserPlus, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isAxiosError } from "axios";
-import { phdSchemas } from "lib";
+import { z } from "zod";
 
 interface ApplicationForSuggestion {
   id: number;
@@ -49,7 +49,10 @@ interface ApplicationForSuggestion {
   qualifyingArea1: string;
   qualifyingArea2: string;
   examinerCount: number;
-  hasSuggestions: boolean;
+  hasSuggestionsArea1: boolean;
+  hasSuggestionsArea2: boolean;
+  hasTodoArea1: boolean;
+  hasTodoArea2: boolean;
 }
 
 interface FacultyMember {
@@ -109,7 +112,6 @@ const ExaminerSuggestions: React.FC = () => {
                   <TableHead>Student</TableHead>
                   <TableHead>Area 1</TableHead>
                   <TableHead>Area 2</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
@@ -123,22 +125,47 @@ const ExaminerSuggestions: React.FC = () => {
                           {app.studentEmail}
                         </div>
                       </TableCell>
-                      <TableCell>{app.qualifyingArea1}</TableCell>
-                      <TableCell>{app.qualifyingArea2}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant={app.hasSuggestions ? "default" : "secondary"}
-                          className={
-                            app.hasSuggestions
-                              ? "bg-green-100 text-green-800"
-                              : ""
-                          }
-                        >
-                          {app.hasSuggestions ? "Submitted" : "Pending"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{app.qualifyingArea1}</span>
+                          {app.hasTodoArea1 && (
+                            <Badge
+                              variant={
+                                app.hasSuggestionsArea1 ? "default" : "secondary"
+                              }
+                              className={
+                                app.hasSuggestionsArea1
+                                  ? "bg-green-100 text-green-800"
+                                  : ""
+                              }
+                            >
+                              {app.hasSuggestionsArea1 ? "✓ Submitted" : "Pending"}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{app.qualifyingArea2}</span>
+                          {app.hasTodoArea2 && (
+                            <Badge
+                              variant={
+                                app.hasSuggestionsArea2 ? "default" : "secondary"
+                              }
+                              className={
+                                app.hasSuggestionsArea2
+                                  ? "bg-green-100 text-green-800"
+                                  : ""
+                              }
+                            >
+                              {app.hasSuggestionsArea2 ? "✓ Submitted" : "Pending"}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        {!app.hasSuggestions && (
+                        {((app.hasTodoArea1 && !app.hasSuggestionsArea1) ||
+                          (app.hasTodoArea2 && !app.hasSuggestionsArea2)) && (
                           <Button
                             size="sm"
                             onClick={() => {
@@ -155,7 +182,7 @@ const ExaminerSuggestions: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={4} className="h-24 text-center">
                       No applications awaiting suggestions.
                     </TableCell>
                   </TableRow>
@@ -206,41 +233,59 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({
     },
   });
 
-  const suggestExaminersSchema = phdSchemas.createSuggestExaminersSchema(
-    application.examinerCount
-  );
-
   const validateInput = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
-    try {
-      suggestExaminersSchema.parse({
-        suggestionsArea1: suggestions1,
-        suggestionsArea2: suggestions2,
-      });
-      setValidationErrors([]);
-      return { isValid: true, errors: [] };
-    } catch (error) {
-      if (error && typeof error === "object" && "issues" in error) {
-        const zodError = error as {
-          issues: Array<{ message: string; path: (string | number)[] }>;
-        };
-        zodError.issues.forEach((issue) => {
-          errors.push(issue.message);
-        });
-      } else if (error instanceof Error) {
-        errors.push(error.message);
+    // Only validate areas that have TODOs and need suggestions
+    if (application.hasTodoArea1 && !application.hasSuggestionsArea1) {
+      try {
+        z.array(z.string().email())
+          .length(
+            application.examinerCount,
+            `Area 1 requires exactly ${application.examinerCount} examiners`
+          )
+          .parse(suggestions1);
+      } catch (error) {
+        if (error && typeof error === "object" && "issues" in error) {
+          const zodError = error as {
+            issues: Array<{ message: string }>;
+          };
+          zodError.issues.forEach((issue) => {
+            errors.push(`Area 1: ${issue.message}`);
+          });
+        }
       }
-      setValidationErrors(errors);
-      return { isValid: false, errors };
     }
+
+    if (application.hasTodoArea2 && !application.hasSuggestionsArea2) {
+      try {
+        z.array(z.string().email())
+          .length(
+            application.examinerCount,
+            `Area 2 requires exactly ${application.examinerCount} examiners`
+          )
+          .parse(suggestions2);
+      } catch (error) {
+        if (error && typeof error === "object" && "issues" in error) {
+          const zodError = error as {
+            issues: Array<{ message: string }>;
+          };
+          zodError.issues.forEach((issue) => {
+            errors.push(`Area 2: ${issue.message}`);
+          });
+        }
+      }
+    }
+
+    setValidationErrors(errors);
+    return { isValid: errors.length === 0, errors };
   };
 
   const mutation = useMutation({
     mutationFn: (data: {
       applicationId: number;
-      suggestionsArea1: string[];
-      suggestionsArea2: string[];
+      suggestionsArea1?: string[];
+      suggestionsArea2?: string[];
     }) =>
       api.post(`/phd/supervisor/suggestExaminers/${data.applicationId}`, data),
     onSuccess: () => {
@@ -270,8 +315,14 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({
 
     mutation.mutate({
       applicationId: application.id,
-      suggestionsArea1: suggestions1,
-      suggestionsArea2: suggestions2,
+      suggestionsArea1:
+        application.hasTodoArea1 && !application.hasSuggestionsArea1
+          ? suggestions1
+          : undefined,
+      suggestionsArea2:
+        application.hasTodoArea2 && !application.hasSuggestionsArea2
+          ? suggestions2
+          : undefined,
     });
   };
 
@@ -310,28 +361,57 @@ const SuggestionDialog: React.FC<SuggestionDialogProps> = ({
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-6 py-6 lg:grid-cols-2">
-          <ExaminerSelector
-            title={`Area 1: ${application.qualifyingArea1}`}
-            selected={suggestions1}
-            setSelected={setSuggestions1}
-            facultyList={facultyList}
-            isLoading={isLoadingFaculty}
-            maxCount={application.examinerCount}
-            hasError={validationErrors.some((error) =>
-              error.includes("suggestionsArea1")
-            )}
-          />
-          <ExaminerSelector
-            title={`Area 2: ${application.qualifyingArea2}`}
-            selected={suggestions2}
-            setSelected={setSuggestions2}
-            facultyList={facultyList}
-            isLoading={isLoadingFaculty}
-            maxCount={application.examinerCount}
-            hasError={validationErrors.some((error) =>
-              error.includes("suggestionsArea2")
-            )}
-          />
+          {application.hasTodoArea1 && !application.hasSuggestionsArea1 ? (
+            <ExaminerSelector
+              title={`Area 1: ${application.qualifyingArea1}`}
+              selected={suggestions1}
+              setSelected={setSuggestions1}
+              facultyList={facultyList}
+              isLoading={isLoadingFaculty}
+              maxCount={application.examinerCount}
+              hasError={validationErrors.some((error) =>
+                error.includes("Area 1")
+              )}
+            />
+          ) : application.hasTodoArea1 && application.hasSuggestionsArea1 ? (
+            <div className="space-y-4 rounded-lg border border-green-500 bg-green-50 p-4">
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-600" />
+                <Label className="text-base font-semibold text-green-800">
+                  Area 1: {application.qualifyingArea1}
+                </Label>
+              </div>
+              <p className="text-sm text-green-700">
+                Suggestions already submitted for this area
+              </p>
+            </div>
+          ) : null}
+
+          {application.hasTodoArea2 && !application.hasSuggestionsArea2 ? (
+            <ExaminerSelector
+              title={`Area 2: ${application.qualifyingArea2}`}
+              selected={suggestions2}
+              setSelected={setSuggestions2}
+              facultyList={facultyList}
+              isLoading={isLoadingFaculty}
+              maxCount={application.examinerCount}
+              hasError={validationErrors.some((error) =>
+                error.includes("Area 2")
+              )}
+            />
+          ) : application.hasTodoArea2 && application.hasSuggestionsArea2 ? (
+            <div className="space-y-4 rounded-lg border border-green-500 bg-green-50 p-4">
+              <div className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-green-600" />
+                <Label className="text-base font-semibold text-green-800">
+                  Area 2: {application.qualifyingArea2}
+                </Label>
+              </div>
+              <p className="text-sm text-green-700">
+                Suggestions already submitted for this area
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <DialogFooter className="flex flex-col gap-3 border-t pt-6 sm:flex-row">

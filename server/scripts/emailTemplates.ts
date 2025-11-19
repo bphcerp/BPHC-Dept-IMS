@@ -8,18 +8,30 @@ const createLoginPrompt = (context?: string) =>
 
 const defaultTemplates = [
     {
-        name: "request_examiner_suggestions",
+        name: "request_examiner_suggestions_both",
         subject: "Request for Examiner Suggestions for PhD Qualifying Exam",
-        body: `Dear {{supervisorName}},\n\nPlease suggest a panel of examiners for the PhD qualifying exam for your student, **{{studentName}}**.\n\nYou are required to suggest **{{examinerCount}}** examiners for each of the two qualifying areas:\n1. **{{qualifyingArea1}}**\n2. **{{qualifyingArea2}}**\n\n${createLoginPrompt("to complete this task")}\n\nBest regards,\nDRC Committee`,
+        body: `Dear {{supervisorName}},\n\nPlease suggest a panel of examiners for the PhD qualifying exam for your student, **{{studentName}}**.\n\nYou are required to suggest **{{examinerCount}}** examiners for each of the following qualifying areas:\n1. **{{qualifyingArea1}}**\n2. **{{qualifyingArea2}}**\n\n${createLoginPrompt("to complete this task")}\n\nBest regards,\nDRC Committee`,
         description:
-            "Sent to a supervisor to request examiner suggestions for the first time.",
+            "Sent to a supervisor to request examiner suggestions for both areas.",
     },
     {
-        name: "reminder_examiner_suggestions",
+        name: "request_examiner_suggestions_single",
+        subject: "Request for Examiner Suggestions for PhD Qualifying Exam",
+        body: `Dear {{supervisorName}},\n\nPlease suggest a panel of examiners for the PhD qualifying exam for your student, **{{studentName}}**.\n\nYou are required to suggest **{{examinerCount}}** examiners for the following qualifying area: **{{qualifyingArea}}**\n\n${createLoginPrompt("to complete this task")}\n\nBest regards,\nDRC Committee`,
+        description:
+            "Sent to a supervisor to request examiner suggestions for a single area.",
+    },
+    {
+        name: "reminder_examiner_suggestions_both",
         subject: "Reminder: Examiner Suggestions for PhD Qualifying Exam",
         body: `Dear {{supervisorName}},\n\nThis is a friendly reminder to please submit your suggestions for the examiner panel for your student, **{{studentName}}**.\n\nThe qualifying areas are:\n1. **{{qualifyingArea1}}**\n2. **{{qualifyingArea2}}**\n\n${createLoginPrompt("as soon as possible to complete this task")}\n\nBest regards,\nDRC Committee`,
-        description:
-            "Sent to a supervisor as a reminder if they have not submitted suggestions.",
+        description: "Sent to a supervisor as a reminder for both areas.",
+    },
+    {
+        name: "reminder_examiner_suggestions_single",
+        subject: "Reminder: Examiner Suggestions for PhD Qualifying Exam",
+        body: `Dear {{supervisorName}},\n\nThis is a friendly reminder to please submit your suggestions for the examiner panel for your student, **{{studentName}}**.\n\nThe qualifying area is: **{{qualifyingArea}}**\n\n${createLoginPrompt("as soon as possible to complete this task")}\n\nBest regards,\nDRC Committee`,
+        description: "Sent to a supervisor as a reminder for a single area.",
     },
     {
         name: "notify_examiner_assignment",

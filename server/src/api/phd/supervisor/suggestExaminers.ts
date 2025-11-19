@@ -51,36 +51,49 @@ export default router.post(
             suggestExaminersSchema.parse(req.body);
 
         await db.transaction(async (tx) => {
+            const insertions = [];
+            const completionEvents = [];
+
+            if (suggestionsArea1) {
+                insertions.push({
+                    applicationId: application.id,
+                    qualifyingArea: application.qualifyingArea1,
+                    suggestedExaminers: suggestionsArea1,
+                });
+                completionEvents.push({
+                    module: modules[4],
+                    completionEvent: `supervisor-suggest-${application.qualifyingArea1}-for-${application.id}-exam-${application.examId}`,
+                });
+            }
+
+            if (suggestionsArea2) {
+                insertions.push({
+                    applicationId: application.id,
+                    qualifyingArea: application.qualifyingArea2,
+                    suggestedExaminers: suggestionsArea2,
+                });
+                completionEvents.push({
+                    module: modules[4],
+                    completionEvent: `supervisor-suggest-${application.qualifyingArea2}-for-${application.id}-exam-${application.examId}`,
+                });
+            }
+
             try {
-                await tx.insert(phdExaminerSuggestions).values([
-                    {
-                        applicationId: application.id,
-                        qualifyingArea: application.qualifyingArea1,
-                        suggestedExaminers: suggestionsArea1,
-                    },
-                    {
-                        applicationId: application.id,
-                        qualifyingArea: application.qualifyingArea2,
-                        suggestedExaminers: suggestionsArea2,
-                    },
-                ]);
+                await tx.insert(phdExaminerSuggestions).values(insertions);
             } catch (e) {
                 if ((e as any).code === "23505") {
                     throw new HttpError(
                         HttpCode.CONFLICT,
-                        "Suggestions for this application already exist"
+                        "Suggestions for this area already exist"
                     );
                 }
                 throw e;
             }
 
-            await completeTodo(
-                {
-                    module: modules[4],
-                    completionEvent: `supervisor-suggest-for-${application.id}-exam-${application.examId}`,
-                },
-                tx
-            );
+            // Complete TODOs for submitted areas
+            for (const event of completionEvents) {
+                await completeTodo(event, tx);
+            }
         });
 
         res.status(200).json({

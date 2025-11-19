@@ -30,64 +30,91 @@ export default router.post(
             );
         }
 
-        const suggestionsArea1 =
-            await db.query.phdExaminerSuggestions.findFirst({
-                where: and(
-                    eq(phdExaminerSuggestions.applicationId, applicationId),
-                    eq(
-                        phdExaminerSuggestions.qualifyingArea,
-                        application.qualifyingArea1
-                    )
-                ),
-            });
+        // Build assignments array based on provided examiners
+        const assignmentsToInsert: {
+            applicationId: number;
+            qualifyingArea: string;
+            examinerEmail: string;
+        }[] = [];
 
-        const suggestionsArea2 =
-            await db.query.phdExaminerSuggestions.findFirst({
-                where: and(
-                    eq(phdExaminerSuggestions.applicationId, applicationId),
-                    eq(
-                        phdExaminerSuggestions.qualifyingArea,
-                        application.qualifyingArea2
-                    )
-                ),
-            });
+        if (examinerArea1) {
+            const suggestionsArea1 =
+                await db.query.phdExaminerSuggestions.findFirst({
+                    where: and(
+                        eq(phdExaminerSuggestions.applicationId, applicationId),
+                        eq(
+                            phdExaminerSuggestions.qualifyingArea,
+                            application.qualifyingArea1
+                        )
+                    ),
+                });
 
-        if (!suggestionsArea1 || !suggestionsArea2) {
-            return next(
-                new HttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Suggestions not found for both areas"
-                )
-            );
+            if (!suggestionsArea1) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Suggestions not found for Area 1"
+                    )
+                );
+            }
+
+            if (!suggestionsArea1.suggestedExaminers.includes(examinerArea1)) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Selected examiner for Area 1 is not in the suggested list"
+                    )
+                );
+            }
+
+            assignmentsToInsert.push({
+                applicationId,
+                qualifyingArea: application.qualifyingArea1,
+                examinerEmail: examinerArea1,
+            });
         }
 
-        if (
-            !suggestionsArea1.suggestedExaminers.includes(examinerArea1) ||
-            !suggestionsArea2.suggestedExaminers.includes(examinerArea2)
-        ) {
-            return next(
-                new HttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Selected examiner is not in the suggested list"
-                )
-            );
+        if (examinerArea2) {
+            const suggestionsArea2 =
+                await db.query.phdExaminerSuggestions.findFirst({
+                    where: and(
+                        eq(phdExaminerSuggestions.applicationId, applicationId),
+                        eq(
+                            phdExaminerSuggestions.qualifyingArea,
+                            application.qualifyingArea2
+                        )
+                    ),
+                });
+
+            if (!suggestionsArea2) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Suggestions not found for Area 2"
+                    )
+                );
+            }
+
+            if (!suggestionsArea2.suggestedExaminers.includes(examinerArea2)) {
+                return next(
+                    new HttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Selected examiner for Area 2 is not in the suggested list"
+                    )
+                );
+            }
+
+            assignmentsToInsert.push({
+                applicationId,
+                qualifyingArea: application.qualifyingArea2,
+                examinerEmail: examinerArea2,
+            });
         }
 
         try {
             await db
                 .insert(phdExaminerAssignments)
-                .values([
-                    {
-                        applicationId,
-                        qualifyingArea: application.qualifyingArea1,
-                        examinerEmail: examinerArea1,
-                    },
-                    {
-                        applicationId,
-                        qualifyingArea: application.qualifyingArea2,
-                        examinerEmail: examinerArea2,
-                    },
-                ])
+                .values(assignmentsToInsert)
                 .onConflictDoUpdate({
                     target: [
                         phdExaminerAssignments.applicationId,
