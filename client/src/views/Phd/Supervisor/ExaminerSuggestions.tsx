@@ -40,7 +40,7 @@ import { Check, ChevronsUpDown, UserPlus, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { isAxiosError } from "axios";
-import z from "zod";
+import { z } from "zod";
 
 interface ApplicationForSuggestion {
   id: number;
