@@ -26,6 +26,7 @@ import {
   File,
   ChartNoAxesCombined,
   ListOrderedIcon,
+  Briefcase,
 } from "lucide-react";
 import {
   BrowserRouter,
@@ -137,6 +138,9 @@ import { AllocationSummary } from "@/views/Allocation/AllocationSummary";
 import HelpButton from "./HelpButton";
 import CourseGroups from "@/views/Allocation/CourseGroups";
 import { AllocationMatrixView } from "@/views/Allocation/AllocationMatrixView";
+import FacultyContributionLayout from "@/layouts/FacultyContribution";
+import SubmissionPage from "@/views/FacultyContribution/SubmissionPage";
+import HodReviewPage from "@/views/FacultyContribution/HodReviewPage";
 
 const adminModulePermissions = [
   permissions["/admin/member/search"],
@@ -183,6 +187,10 @@ const analyticsModulePermissions: string[] = Object.keys(allPermissions).filter(
 const courseLoadAllocationModulePermissions: string[] = Object.keys(
   allPermissions
 ).filter((permission) => permission.startsWith("allocation:"));
+
+const facultyContributionModulePermissions: string[] = Object.keys(
+  allPermissions
+).filter((permission) => permission.startsWith("contribution:"));
 
 const Routing = () => {
   const { authState, checkAccess, checkAccessAnyOne } = useAuth();
@@ -270,6 +278,12 @@ const Routing = () => {
       icon: <ListOrderedIcon />,
       url: "/allocation",
       requiredPermissions: courseLoadAllocationModulePermissions,
+    },
+    {
+      title: "Faculty Institute Contribution",
+      icon: <Briefcase />,
+      url: "/contribution",
+      requiredPermissions: facultyContributionModulePermissions,
     },
   ];
 
@@ -949,6 +963,29 @@ const Routing = () => {
                   />
                   <Route path="semesters" element={<SemesterList />} />
                 </>
+              )}
+            </Route>
+          )}
+          {checkAccessAnyOne(facultyContributionModulePermissions) && (
+            <Route path="/contribution" element={<FacultyContributionLayout />}>
+              <Route
+                index
+                element={
+                  <Navigate
+                    to={
+                      checkAccess("contribution:submit")
+                        ? "/contribution/submit"
+                        : "/contribution/review"
+                    }
+                    replace={true}
+                  />
+                }
+              />
+              {checkAccess("contribution:submit") && (
+                <Route path="submit" element={<SubmissionPage />} />
+              )}
+              {checkAccess("contribution:review") && (
+                <Route path="review" element={<HodReviewPage />} />
               )}
             </Route>
           )}

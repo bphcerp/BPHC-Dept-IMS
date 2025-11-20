@@ -24,6 +24,7 @@ import readNotificationsRoute from "./readNotifications.ts";
 import publicProfileRouter from "./profile/[id].ts";
 import meetingRouter from "./meeting/index.ts";
 import phdRequestRouter from "./phd-request/index.ts";
+import contributionRouter from "./contribution/index.ts";
 import { testingMiddleware } from "@/middleware/testing.ts";
 
 const favicon = Buffer.from(
@@ -80,5 +81,6 @@ router.use("/wilpProject", wilpProjectRouter);
 router.use("/grades", gradesRouter);
 router.use("/meeting", meetingRouter);
 router.use("/phd-request", phdRequestRouter);
+router.use("/contribution", contributionRouter);
 
 export default router;
