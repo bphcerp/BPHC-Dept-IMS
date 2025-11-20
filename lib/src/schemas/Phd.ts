@@ -223,6 +223,7 @@ export type QualifyingExamApplicationBody = z.infer<
 
 export const fileFieldNames = [
     "applicationForm",
+    "courseworkGradeSheet",
     "qualifyingArea1Syllabus",
     "qualifyingArea2Syllabus",
     "tenthReport",
@@ -234,6 +235,7 @@ export const fileFieldNames = [
 export const fileFieldLabels: Record<(typeof fileFieldNames)[number], string> =
     {
         applicationForm: "Application Form",
+        courseworkGradeSheet: "Coursework Grade Sheet",
         qualifyingArea1Syllabus: "Qualifying Area 1 Syllabus",
         qualifyingArea2Syllabus: "Qualifying Area 2 Syllabus",
         tenthReport: "10th Grade Report",
@@ -675,6 +677,7 @@ export interface QualifyingExamApplication {
     };
     files: {
         applicationForm: string | null;
+        courseworkGradeSheet: string | null;
         qualifyingArea1Syllabus: string | null;
         qualifyingArea2Syllabus: string | null;
         tenthReport: string | null;

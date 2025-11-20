@@ -61,6 +61,9 @@ export default router.get(
                 applicationForm: app.applicationFormFileId
                     ? `${environment.SERVER_URL}/f/${app.applicationFormFileId}`
                     : null,
+                courseworkGradeSheet: app.courseworkGradeSheetFileId
+                    ? `${environment.SERVER_URL}/f/${app.courseworkGradeSheetFileId}`
+                    : null,
                 qualifyingArea1Syllabus: app.qualifyingArea1SyllabusFileId
                     ? `${environment.SERVER_URL}/f/${app.qualifyingArea1SyllabusFileId}`
                     : null,

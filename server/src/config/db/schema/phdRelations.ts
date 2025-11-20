@@ -86,6 +86,14 @@ export const phdExamApplicationsRelations = relations(
         examinerAssignments: many(phdExaminerAssignments, {
             relationName: "applicationAssignments",
         }),
+        applicationFormFile: one(files, {
+            fields: [phdExamApplications.applicationFormFileId],
+            references: [files.id],
+        }),
+        courseworkGradeSheetFile: one(files, {
+            fields: [phdExamApplications.courseworkGradeSheetFileId],
+            references: [files.id],
+        }),
         qualifyingArea1SyllabusFile: one(files, {
             fields: [phdExamApplications.qualifyingArea1SyllabusFileId],
             references: [files.id],

@@ -101,6 +101,8 @@ router.post(
                     ),
                     with: {
                         student: { columns: { name: true, erpId: true } },
+                        applicationFormFile: true,
+                        courseworkGradeSheetFile: true,
                         qualifyingArea1SyllabusFile: true,
                         qualifyingArea2SyllabusFile: true,
                         tenthReportFile: true,
@@ -128,6 +130,11 @@ router.post(
                 if (!studentFolder) continue;
 
                 const fileFields = [
+                    { name: "Application-Form", file: app.applicationFormFile },
+                    {
+                        name: "Coursework-Grade-Sheet",
+                        file: app.courseworkGradeSheetFile,
+                    },
                     {
                         name: "Syllabus-Area1",
                         file: app.qualifyingArea1SyllabusFile,

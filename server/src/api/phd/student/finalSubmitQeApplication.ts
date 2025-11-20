@@ -53,6 +53,7 @@ router.post(
         // Validate required files are present
         const requiredFiles = [
             application.applicationFormFileId,
+            application.courseworkGradeSheetFileId,
             application.qualifyingArea1SyllabusFileId,
             application.qualifyingArea2SyllabusFileId,
             application.tenthReportFileId,

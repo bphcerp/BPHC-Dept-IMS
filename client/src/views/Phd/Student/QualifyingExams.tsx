@@ -5,6 +5,7 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import {
 import QualifyingExamApplication from "@/components/phd/StudentQualifyingExam/QualifyingExamApplication";
 import { toast } from "sonner";
 import { AlertCircle, Edit, Eye } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 interface QualifyingExam {
   id: number;
@@ -55,6 +57,7 @@ const QualifyingExams = () => {
     useState<ApplicationStatus | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [supervisorConsent, setSupervisorConsent] = useState(false);
 
   const {
     data: examsData,
@@ -137,6 +140,7 @@ const QualifyingExams = () => {
       (e) => e.id === application.examId
     );
     setSelectedExam(examForPreview || null);
+    setSupervisorConsent(false);
     setIsPreviewOpen(true);
   };
 
@@ -179,10 +183,15 @@ const QualifyingExams = () => {
   };
 
   const handleApplicationSuccess = async () => {
+    const isResubmission = selectedApplication?.status === "resubmit";
     setIsEditOpen(false);
     await refetchExams();
     await refetchApplications();
-    toast.success("Changes saved successfully!");
+    toast.success(
+      isResubmission
+        ? "Application resubmitted successfully!"
+        : "Changes saved successfully!"
+    );
   };
 
   if (isLoadingExams || isLoadingApplications) {
@@ -419,18 +428,23 @@ const QualifyingExams = () => {
                                       openEditDialog(exam!, application)
                                     }
                                   >
-                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                    <Edit className="mr-2 h-4 w-4" />{" "}
+                                    {application.status === "resubmit"
+                                      ? "Edit & Resubmit"
+                                      : "Edit"}
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      openPreviewDialog(application)
-                                    }
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" /> Preview &
-                                    Submit
-                                  </Button>
+                                  {application.status === "draft" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        openPreviewDialog(application)
+                                      }
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" /> Preview
+                                      & Submit
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -454,15 +468,14 @@ const QualifyingExams = () => {
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedApplication ? "Edit Application" : "Apply for"}{" "}
-              {selectedExam?.examName}
+              {selectedApplication ? "Edit Application" : "Apply for " + selectedExam?.examName}
             </DialogTitle>
           </DialogHeader>
           {selectedExam && (
             <QualifyingExamApplication
               exam={selectedExam}
               existingApplication={selectedApplication}
-              onSuccess={handleApplicationSuccess}
+              onSuccess={() => void handleApplicationSuccess()}
               onCancel={() => setIsEditOpen(false)}
             />
           )}
@@ -511,12 +524,51 @@ const QualifyingExams = () => {
                   </ul>
                 </CardContent>
               </Card>
-              <Button
-                onClick={handleFinalSubmit}
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                Final Submit
-              </Button>
+              <div className="flex items-start space-x-2 rounded-md border border-blue-200 bg-blue-50 p-4">
+                <Checkbox
+                  id="supervisor-consent"
+                  checked={supervisorConsent}
+                  onCheckedChange={(checked) =>
+                    setSupervisorConsent(checked === true)
+                  }
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label
+                    htmlFor="supervisor-consent"
+                    className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I confirm that I have consulted with my supervisor
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    You must obtain your supervisor&apos;s consent before
+                    submitting this application.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setIsPreviewOpen(false);
+                    const exam = examsData?.exams.find(
+                      (e) => e.id === selectedApplication.examId
+                    );
+                    if (exam) {
+                      openEditDialog(exam, selectedApplication);
+                    }
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Edit Application
+                </Button>
+                <Button
+                  onClick={() => void handleFinalSubmit()}
+                  disabled={!supervisorConsent}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Final Submit
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

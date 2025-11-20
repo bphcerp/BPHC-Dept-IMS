@@ -157,7 +157,7 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
 
     for (const key of phdSchemas.fileFieldNames) {
       if (files[key]) {
-        submitData.append(key, files[key] as File);
+        submitData.append(key, files[key]);
       }
     }
 
@@ -347,6 +347,8 @@ const QualifyingExamApplication: React.FC<QualifyingExamApplicationProps> = ({
                   <>
                     <LoadingSpinner className="mr-2 h-4 w-4" /> Saving...
                   </>
+                ) : existingApplication?.status === "resubmit" ? (
+                  "Resubmit"
                 ) : (
                   "Save Changes"
                 )}

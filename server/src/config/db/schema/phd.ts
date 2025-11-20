@@ -146,6 +146,9 @@ export const phdExamApplications = pgTable("phd_exam_applications", {
         () => files.id,
         { onDelete: "set null" }
     ),
+    courseworkGradeSheetFileId: integer(
+        "coursework_grade_sheet_file_id"
+    ).references(() => files.id, { onDelete: "set null" }),
     qualifyingArea1SyllabusFileId: integer(
         "qualifying_area_1_syllabus_file_id"
     ).references(() => files.id, { onDelete: "set null" }),

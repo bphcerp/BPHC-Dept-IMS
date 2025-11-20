@@ -125,6 +125,9 @@ router.post(
                             applicationFormFileId:
                                 newFileIds.applicationForm ??
                                 existingApplication.applicationFormFileId,
+                            courseworkGradeSheetFileId:
+                                newFileIds.courseworkGradeSheet ??
+                                existingApplication.courseworkGradeSheetFileId,
                             qualifyingArea1SyllabusFileId:
                                 newFileIds.qualifyingArea1Syllabus ??
                                 existingApplication.qualifyingArea1SyllabusFileId,
@@ -195,6 +198,8 @@ router.post(
                     qualifyingArea2: body.qualifyingArea2,
                     status: "draft", // Set initial status to draft
                     applicationFormFileId: insertedFileIds.applicationForm,
+                    courseworkGradeSheetFileId:
+                        insertedFileIds.courseworkGradeSheet,
                     qualifyingArea1SyllabusFileId:
                         insertedFileIds.qualifyingArea1Syllabus,
                     qualifyingArea2SyllabusFileId:
