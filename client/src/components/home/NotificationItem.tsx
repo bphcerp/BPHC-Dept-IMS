@@ -28,9 +28,12 @@ export const NotificationItem = ({
         {title}
       </CardHeader>
       <CardContent className="p-0">
-        <p className="overflow-hidden text-ellipsis whitespace-pre-wrap text-sm text-muted-foreground">
-          {content ?? "No content available"}
-        </p>
+        <div
+          className="overflow-hidden text-ellipsis whitespace-pre-wrap text-sm text-muted-foreground"
+          dangerouslySetInnerHTML={{
+            __html: content ?? "No content available",
+          }}
+        />
       </CardContent>
       <CardFooter className="justify-end p-0 pt-2 text-sm text-muted-foreground">
         {createdAt}

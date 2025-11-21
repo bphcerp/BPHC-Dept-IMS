@@ -44,7 +44,7 @@ router.post(
                     userEmail: user.email,
                     module: modules[4], // PhD QE
                     title: subject,
-                    content: body,
+                    content: emailBody,
                 }))
             );
         }
