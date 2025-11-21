@@ -383,6 +383,9 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                       <th className="px-4 py-3 text-left font-medium text-gray-700">
                         Status
                       </th>
+                      <th className="px-4 py-3 text-left font-medium text-gray-700">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -416,6 +419,38 @@ const UpdateQualifyingExamDeadline: React.FC = () => {
                             >
                               {isActive ? "Active" : "Expired"}
                             </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setViewData({
+                                  examName: exam.examName,
+                                  semesterYear:
+                                    currentSemesterData?.semester.year ?? "",
+                                  semesterNumber:
+                                    currentSemesterData?.semester.semesterNumber.toString() ??
+                                    "",
+                                  submissionDeadline: new Date(
+                                    exam.submissionDeadline
+                                  ).toLocaleString(),
+                                  examStartDate: new Date(
+                                    exam.examStartDate
+                                  ).toLocaleString(),
+                                  examEndDate: new Date(
+                                    exam.examEndDate
+                                  ).toLocaleString(),
+                                  vivaDate: exam.vivaDate
+                                    ? new Date(exam.vivaDate).toLocaleString()
+                                    : "N/A",
+                                });
+                                setShowNotifyDialog(true);
+                              }}
+                              className="h-8"
+                            >
+                              Notify
+                            </Button>
                           </td>
                         </tr>
                       );
