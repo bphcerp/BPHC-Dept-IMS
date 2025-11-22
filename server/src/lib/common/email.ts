@@ -25,11 +25,11 @@ const emailQueue = new Queue(QUEUE_NAME, {
             delay: 15000,
         },
         removeOnComplete: {
-            age: 3600,
+            age: 5 * 24 * 3600,
             count: 1000,
         },
         removeOnFail: {
-            age: 24 * 3600,
+            age: 5 * 24 * 3600,
             count: 5000,
         },
     },
@@ -91,7 +91,7 @@ export const emailWorker = new Worker<SendMailOptions & { body?: string }>( // A
             "</p>";
 
         if (!mailOptions.text && !mailOptions.html && body) {
-            mailOptions.text = body; 
+            mailOptions.text = body;
         }
         const mailOptionsWithDefaults: SendMailOptions = {
             from: `${environment.DEPARTMENT_NAME_FULL} ${environment.BPHCERP_EMAIL}`,
