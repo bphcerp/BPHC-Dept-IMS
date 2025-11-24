@@ -1,0 +1,1 @@
+ALTER TYPE "public"."phd_request_type" ADD VALUE 'any_other_request';

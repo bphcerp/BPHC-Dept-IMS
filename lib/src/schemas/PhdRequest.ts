@@ -19,7 +19,9 @@ export const phdRequestTypes = [
     "endorsements",
     "phd_aspire_application",
     "not_registered_student",
+    "any_other_request",
 ] as const;
+
 export const phdRequestStatuses = [
     "supervisor_draft",
     "supervisor_submitted",

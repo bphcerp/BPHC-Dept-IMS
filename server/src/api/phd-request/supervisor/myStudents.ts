@@ -35,6 +35,7 @@ const anytimeRequests: PhdRequestType[] = [
     "endorsements",
     "phd_aspire_application",
     "not_registered_student",
+    "any_other_request",
 ];
 
 router.get(

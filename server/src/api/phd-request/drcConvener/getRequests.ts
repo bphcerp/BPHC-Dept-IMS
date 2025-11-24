@@ -47,6 +47,7 @@ router.get(
 
             if (reviewedRequestIds.length === 0) {
                 res.status(200).json([]);
+                return;
             }
 
             requests = await db.query.phdRequests.findMany({
