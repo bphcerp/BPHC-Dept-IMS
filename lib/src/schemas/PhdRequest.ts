@@ -49,7 +49,7 @@ export type CreateRequestBody = z.infer<typeof createRequestSchema>;
 
 export const drcConvenerReviewSchema = z.object({
     comments: z.string().optional(),
-    assignedDrcMembers: z.array(z.string().email()).max(8).optional(),
+    assignedDrcMembers: z.array(z.string().email()).max(50).optional(),
     action: z.enum(["forward_to_drc", "forward_to_hod", "revert", "approve"]),
 });
 export type DrcConvenerReviewBody = z.infer<typeof drcConvenerReviewSchema>;
