@@ -1,5 +1,4 @@
 import z from "zod";
-import { semesterTypes } from "./Allocation.ts";
 
 export const qpReviewStatuses = [
     "not initiated",
