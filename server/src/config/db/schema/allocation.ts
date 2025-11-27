@@ -14,6 +14,7 @@ import { faculty, users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 import { allocationForm } from "./allocationFormBuilder.ts";
 import { allocationSchemas } from "lib";
+import { version } from "node:os";
 
 const {
     allocationStatuses,
@@ -135,6 +136,7 @@ export const semester = pgTable(
         allocationStatus: allocationStatus("allocation_status")
             .default("notStarted")
             .notNull(),
+        allocationVersion: integer("version").notNull().default(1),
 
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 

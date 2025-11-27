@@ -78,6 +78,7 @@ router.get(
                                         columns: {
                                             id: true,
                                             courseCode: true,
+                                            version: true,
                                         },
                                     },
                                 },
