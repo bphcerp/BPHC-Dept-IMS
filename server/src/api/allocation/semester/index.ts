@@ -11,6 +11,7 @@ import endLatestSemFormRouter from "./endForm.ts";
 import toggleSemesterSummary from "./toggleSummary.ts";
 import endSemesterAllocationRouter from "./endAllocation.ts";
 import activateSemesterRouter from "./activateSemester.ts";
+import getCompletedSemesterRouter from "./getCompletedSemester.ts";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/endForm", endLatestSemFormRouter);
 router.use("/toggleSummary", toggleSemesterSummary);
 router.use("/end", endSemesterAllocationRouter);
 router.use("/activate", activateSemesterRouter);
+router.use("/getCompleted", getCompletedSemesterRouter);
 
 export default router;

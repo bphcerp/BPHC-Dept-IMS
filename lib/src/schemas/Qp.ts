@@ -1,4 +1,5 @@
 import z from "zod";
+import { semesterTypes } from "./Allocation.ts";
 
 export const qpReviewStatuses = [
     "not initiated",
@@ -176,3 +177,9 @@ export const requestIdSchema = z.object({
 });
 
 export type RequestId = z.infer<typeof requestIdSchema>;
+
+export const createQPSemesterSchema = z.object({
+    semesterId: z.string().nonempty(),
+});
+
+export type CreateQPSemesterSchema = z.infer<typeof createQPSemesterSchema>;

@@ -11,6 +11,7 @@ import {
     allocationCourseGroupMapping,
 } from "./allocation.ts";
 import { courseHandoutRequests } from "./handout.ts";
+import { qpReviewRequests } from "./qp.ts";
 
 export const semesterRelations = relations(semester, ({ one, many }) => ({
     dcaConvenerAtStartOfSem: one(faculty, {
@@ -26,6 +27,7 @@ export const semesterRelations = relations(semester, ({ one, many }) => ({
         references: [allocationForm.id],
     }),
     handouts: many(courseHandoutRequests),
+    qps: many(qpReviewRequests),
 }));
 
 export const masterAllocationRelations = relations(
