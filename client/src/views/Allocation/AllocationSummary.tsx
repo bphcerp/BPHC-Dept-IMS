@@ -126,6 +126,37 @@ const getSectionNumber = (
     .filter((section) => section.type === sectionType)
     .findIndex((section) => section.id === sectionId) + 1;
 
+const PrintLogoHeader = ({ semesterType, semesterYear, semesterTypeMap }: {
+  semesterType?: string;
+  semesterYear?: number;
+  semesterTypeMap?: Record<string, string>;
+}) => (
+  <div className="hidden print:mb-8 print:flex print:w-full print:items-start print:gap-4">
+    <img
+      src="/logo/bitspilanilogo.png"
+      alt="BITS Logo"
+      className="print:mr-4 print:mt-2 print:block print:h-20 print:w-20"
+      style={{ objectFit: "contain" }}
+    />
+    <div className="print:flex print:w-full print:flex-col print:items-center">
+      <h1 className="print:mb-1 print:mt-2 print:text-3xl print:font-bold">
+        Information Management System
+      </h1>
+      <h2 className="print:mb-1 print:text-xl print:font-semibold">
+        BITS Pilani, Hyderabad Campus
+      </h2>
+      <h3 className="print:mb-1 print:text-lg print:font-medium">
+        {import.meta.env.VITE_DEPARTMENT_NAME_FULL || import.meta.env.VITE_DEPARTMENT_NAME}
+      </h3>
+      {semesterType && semesterYear && (
+        <div className="print:mb-2 print:text-base print:font-normal">
+          {`${semesterTypeMap?.[semesterType] || semesterType} Semester AY ${semesterYear}`}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const BulkModifyDialog = ({
   isOpen,
   onOpenChange,
@@ -163,33 +194,7 @@ const BulkModifyDialog = ({
         </DialogHeader>
 
         <div ref={printRef} className="print:p-8">
-          {/* Print-only header, hidden on web, visible when printing */}
-          <div className="hidden print:mb-8 print:flex print:w-full print:items-start print:gap-4">
-            <img
-              src="/logo/bitspilanilogo.png"
-              alt="BITS Logo"
-              className="print:mr-4 print:mt-2 print:block print:h-20 print:w-20"
-              style={{ objectFit: "contain" }}
-            />
-            <div className="print:flex print:w-full print:flex-col print:items-center">
-              <h1 className="print:mb-1 print:mt-2 print:text-3xl print:font-bold">
-                Information Management System
-              </h1>
-              <h2 className="print:mb-1 print:text-xl print:font-semibold">
-                BITS Pilani, Hyderabad Campus
-              </h2>
-              <h3 className="print:mb-1 print:text-lg print:font-medium">
-                {import.meta.env.VITE_DEPARTMENT_NAME_FULL ||
-                  import.meta.env.VITE_DEPARTMENT_NAME}
-              </h3>
-
-              {semesterType && semesterYear && (
-                <div className="print:mb-2 print:text-base print:font-normal">
-                  {`${semesterTypeMap?.[semesterType] || semesterType} Semester AY ${semesterYear}`}
-                </div>
-              )}
-            </div>
-          </div>
+          <PrintLogoHeader semesterType={semesterType} semesterYear={semesterYear} semesterTypeMap={semesterTypeMap} />
           <div className="flex items-center gap-4 border-b px-2 py-2 text-sm text-muted-foreground">
             <span>
               <strong>Version:</strong> {version} →{" "}
@@ -610,6 +615,11 @@ export const AllocationSummary = () => {
     <Skeleton className="m-10 h-[80vh] w-full" />
   ) : (
     <div ref={componentRef} className="allocationSummary gap-y-2 px-2 py-5">
+      <PrintLogoHeader
+        semesterType={latestSemester?.semesterType}
+        semesterYear={latestSemester?.year}
+        semesterTypeMap={semesterTypeMap}
+      />
       <AssignInstructorDialog
         isOpen={isAssignInstructorDialogOpen}
         onOpenChange={(open) => {

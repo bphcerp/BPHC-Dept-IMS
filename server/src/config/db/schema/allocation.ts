@@ -14,7 +14,6 @@ import { faculty, users } from "./admin.ts";
 import { v4 as uuidv4 } from "uuid";
 import { allocationForm } from "./allocationFormBuilder.ts";
 import { allocationSchemas } from "lib";
-import { version } from "node:os";
 
 const {
     allocationStatuses,
