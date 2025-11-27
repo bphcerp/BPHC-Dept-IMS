@@ -135,6 +135,7 @@ export const semester = pgTable(
         allocationStatus: allocationStatus("allocation_status")
             .default("notStarted")
             .notNull(),
+        allocationVersion: integer("version").notNull().default(1),
 
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 

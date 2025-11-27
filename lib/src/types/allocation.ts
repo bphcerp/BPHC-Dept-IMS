@@ -79,6 +79,7 @@ export type SemesterMinimal = NewSemester & {
     updatedAt: Date;
     summaryHidden: boolean;
     active: boolean
+    allocationVersion: number
 };
 
 export type Semester = SemesterMinimal & {
