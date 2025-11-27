@@ -19,11 +19,11 @@ router.post(
     "/",
     checkAccess(),
     asyncHandler(async (req, res, next) => {
-        if (environment.IS_STAGING) {
+        if (environment.IS_STAGING || environment.NODE_ENV === 'development') {
             return next(
                 new HttpError(
                     HttpCode.FORBIDDEN,
-                    "Operation not allowed in staging environment"
+                    "Operation not allowed in this environment"
                 )
             );
         }
