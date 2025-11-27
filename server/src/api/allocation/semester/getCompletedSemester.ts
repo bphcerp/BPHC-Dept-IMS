@@ -10,7 +10,11 @@ router.get(
     checkAccess(),
     asyncHandler(async (_req, res, _next) => {
         const completedSemesters = await db.query.semester.findMany({
-            where: (sem, { eq }) => eq(sem.allocationStatus, "completed"),
+            where: (sem, { eq, and }) =>
+                and(
+                    eq(sem.allocationStatus, "completed"),
+                    eq(sem.active, false)
+                ),
         });
         res.status(200).json(completedSemesters);
     })
