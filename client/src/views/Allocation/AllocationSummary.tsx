@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { sectionTypes } from "node_modules/lib/src/schemas/Allocation";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, type RefObject } from "react";
 import { useAuth } from "@/hooks/Auth";
 import AssignInstructorDialog from "@/components/allocation/AssignInstructorDialog";
 import NotFoundPage from "@/layouts/404";
@@ -24,6 +24,56 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+const BulkInstructorSearchDropdown = ({
+  value,
+  options,
+  onSelect,
+  placeholder,
+}: {
+  value: string;
+  options: InstructorOption[];
+  onSelect: (email: string) => void;
+  placeholder?: string;
+}) => {
+  const [search, setSearch] = useState("");
+  const filteredOptions = options.filter(
+    (opt) =>
+      opt.name.toLowerCase().includes(search.toLowerCase()) ||
+      opt.email.toLowerCase().includes(search.toLowerCase())
+  );
+  return (
+    <Select value={value} onValueChange={onSelect}>
+      <SelectTrigger className="w-full text-xs">
+        <SelectValue placeholder={placeholder || "Select instructor"} />
+      </SelectTrigger>
+      <SelectContent className="p-0" style={{ zIndex: 50 }}>
+        <div className="sticky top-0 z-10 bg-popover px-2 pb-1 pt-2">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search instructor..."
+            className="mb-2 h-7 text-xs"
+            autoFocus
+          />
+        </div>
+        <div className="max-h-[120px] overflow-y-auto">
+          {filteredOptions.length === 0 ? (
+            <div className="px-2 py-2 text-xs text-muted-foreground">
+              No instructor found.
+            </div>
+          ) : (
+            filteredOptions.map((opt) => (
+              <SelectItem key={opt.email} value={opt.email} className="text-xs">
+                {opt.name}
+              </SelectItem>
+            ))
+          )}
+        </div>
+      </SelectContent>
+    </Select>
+  );
+};
 import {
   Dialog,
   DialogContent,
@@ -82,12 +132,24 @@ const BulkModifyDialog = ({
   pendingChanges,
   onConfirm,
   isModifying,
+  version,
+  printRef,
+  onPrint,
+  semesterType,
+  semesterYear,
+  semesterTypeMap,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   pendingChanges: BulkChange[];
   onConfirm: () => void;
   isModifying: boolean;
+  version: number;
+  printRef?: RefObject<HTMLDivElement>;
+  onPrint?: () => void;
+  semesterType?: string;
+  semesterYear?: number;
+  semesterTypeMap?: Record<string, string>;
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -99,41 +161,106 @@ const BulkModifyDialog = ({
             confirming.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="h-[60vh]">
-          <Table>
-            <TableHeader className="sticky top-0 bg-background">
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead>Section</TableHead>
-                <TableHead>Old Instructor</TableHead>
-                <TableHead>New Instructor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pendingChanges.map((change, idx) => (
-                <TableRow
-                  key={`${change.sectionId}-${change.oldInstructorEmail}-${idx}`}
-                >
-                  <TableCell>
-                    {change.courseCode} - {change.courseName ?? "Unnamed"}
-                  </TableCell>
-                  <TableCell>
-                    {change.sectionType.charAt(0)}
-                    {change.sectionNumber}
-                  </TableCell>
-                  <TableCell>
-                    {change.oldInstructorName ?? (
-                      <span className="italic text-muted-foreground">TBA</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {change.newInstructorName}
-                  </TableCell>
+
+        <div ref={printRef} className="print:p-8">
+          {/* Print-only header, hidden on web, visible when printing */}
+          <div className="hidden print:mb-8 print:flex print:w-full print:items-start print:gap-4">
+            <img
+              src="/logo/bitspilanilogo.png"
+              alt="BITS Logo"
+              className="print:mr-4 print:mt-2 print:block print:h-20 print:w-20"
+              style={{ objectFit: "contain" }}
+            />
+            <div className="print:flex print:w-full print:flex-col print:items-center">
+              <h1 className="print:mb-1 print:mt-2 print:text-3xl print:font-bold">
+                Information Management System
+              </h1>
+              <h2 className="print:mb-1 print:text-xl print:font-semibold">
+                BITS Pilani, Hyderabad Campus
+              </h2>
+              <h3 className="print:mb-1 print:text-lg print:font-medium">
+                {import.meta.env.VITE_DEPARTMENT_NAME_FULL ||
+                  import.meta.env.VITE_DEPARTMENT_NAME}
+              </h3>
+
+              {semesterType && semesterYear && (
+                <div className="print:mb-2 print:text-base print:font-normal">
+                  {`${semesterTypeMap?.[semesterType] || semesterType} Semester AY ${semesterYear}`}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 border-b px-2 py-2 text-sm text-muted-foreground">
+            <span>
+              <strong>Version:</strong> {version} →{" "}
+              <span className="font-semibold text-primary">{version + 1}</span>
+            </span>
+            <span className="ml-2 text-xs italic text-muted-foreground print:hidden">
+              (Bulk update will increment allocation version. Please verify
+              changes before confirming.)
+            </span>
+            <Button
+              variant="default"
+              size="sm"
+              className="ml-auto flex items-center gap-1 print:hidden"
+              onClick={() => onPrint && onPrint()}
+              disabled={!onPrint}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mr-1 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 9V2h12v7M6 18v4h12v-4M6 14h12"
+                />
+              </svg>
+              Print Changes
+            </Button>
+          </div>
+          <ScrollArea className="h-[60vh]">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background">
+                <TableRow>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Section</TableHead>
+                  <TableHead>Old Instructor</TableHead>
+                  <TableHead>New Instructor</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+              </TableHeader>
+              <TableBody>
+                {pendingChanges.map((change, idx) => (
+                  <TableRow
+                    key={`${change.sectionId}-${change.oldInstructorEmail}-${idx}`}
+                  >
+                    <TableCell>
+                      {change.courseCode} - {change.courseName ?? "Unnamed"}
+                    </TableCell>
+                    <TableCell>
+                      {change.sectionType.charAt(0)}
+                      {change.sectionNumber}
+                    </TableCell>
+                    <TableCell>
+                      {change.oldInstructorName ?? (
+                        <span className="italic text-muted-foreground">
+                          TBA
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {change.newInstructorName}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
         <DialogFooter>
           <Button
             variant="outline"
@@ -172,6 +299,9 @@ export const AllocationSummary = () => {
 
   const componentRef = useRef<HTMLDivElement | null>(null);
 
+  // Ref and print handler for bulk modify dialog (so its change table can be printed)
+  const bulkComponentRef = useRef<HTMLDivElement | null>(null);
+
   const { checkAccess } = useAuth();
   const queryClient = useQueryClient();
 
@@ -187,19 +317,22 @@ export const AllocationSummary = () => {
     return <NotFoundPage />;
 
   const { data: timetableRooms } = useQuery({
-      queryKey: ["timetable", "rooms"],
-      queryFn: async () => {
-        if (!latestSemester) return null;
-        const response = await axios<allocationTypes.TTDRoom[]>(
-          `${import.meta.env.VITE_TTD_API_URL}/${latestSemester.semesterType}/rooms/dept/${TTD_DEPARTMENT_NAME}`
-        );
-        return response.data.reduce((acc, room) => {
-          acc[room._id] = room.roomNumber
-          return acc 
-        },{} as Record<string, string>)
-      },
-      enabled: !!latestSemester,
-    });
+    queryKey: ["timetable", "rooms"],
+    queryFn: async () => {
+      if (!latestSemester) return null;
+      const response = await axios<allocationTypes.TTDRoom[]>(
+        `${import.meta.env.VITE_TTD_API_URL}/${latestSemester.semesterType}/rooms/dept/${TTD_DEPARTMENT_NAME}`
+      );
+      return response.data.reduce(
+        (acc, room) => {
+          acc[room._id] = room.roomNumber;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+    },
+    enabled: !!latestSemester,
+  });
 
   const handleSummaryPrint = useReactToPrint({
     contentRef: componentRef,
@@ -208,13 +341,20 @@ export const AllocationSummary = () => {
       : "Allocation Summary",
   });
 
+  const handleBulkPrint = useReactToPrint({
+    contentRef: bulkComponentRef,
+    documentTitle: latestSemester
+      ? `${semesterTypeMap[latestSemester.semesterType]} SEMESTER AY ${getFormattedAY(latestSemester.year)} - Bulk Changes`
+      : "Bulk Allocation Changes",
+  });
+
   const { data: facultyData } = useQuery({
     queryKey: ["faculty"],
     queryFn: async () => {
       const res = await api.get<Faculty[]>("/admin/member/getAllFaculty");
       return res.data;
     },
-    enabled: isBulkModifyDialogOpen,
+    enabled: isBulkModifyActive,
   });
 
   const { data: phdData } = useQuery({
@@ -223,7 +363,7 @@ export const AllocationSummary = () => {
       const res = await api.get<PhdStudent[]>("/admin/member/getAllPhD");
       return res.data;
     },
-    enabled: isBulkModifyDialogOpen,
+    enabled: isBulkModifyActive,
   });
 
   const facultyInstructors = useMemo<InstructorOption[]>(() => {
@@ -277,7 +417,10 @@ export const AllocationSummary = () => {
 
   const bulkModifyMutation = useMutation({
     mutationFn: (changes: BulkChange[]) =>
-      api.post("/allocation/allocation/bulkModify", changes),
+      api.post("/allocation/allocation/bulkModify", {
+        semesterId: latestSemester?.id,
+        changes,
+      }),
     onSuccess: () => {
       toast.success("Bulk modifications applied successfully!");
       queryClient.invalidateQueries([
@@ -487,10 +630,16 @@ export const AllocationSummary = () => {
         pendingChanges={pendingChanges}
         isModifying={bulkModifyMutation.isLoading}
         onConfirm={() => bulkModifyMutation.mutate(pendingChanges)}
+        version={latestSemester.allocationVersion}
+        printRef={bulkComponentRef}
+        onPrint={handleBulkPrint}
+        semesterType={latestSemester?.semesterType}
+        semesterYear={latestSemester?.year}
+        semesterTypeMap={semesterTypeMap}
       />
       <div className="sticky left-0 top-0 z-10 flex flex-col items-center bg-background py-2">
         <h1 className="text-3xl font-bold text-primary">Allocation Summary</h1>
-        <div className="flex w-full justify-between px-20 text-lg">
+        <div className="my-2 flex w-full justify-between px-20">
           <div>
             <span>Semester:</span>{" "}
             <span>{semesterTypeMap[latestSemester.semesterType]}</span>
@@ -498,6 +647,10 @@ export const AllocationSummary = () => {
           <div>
             <span>Academic Year:</span>{" "}
             <span>{getFormattedAY(latestSemester.year)}</span>
+          </div>
+          <div>
+            <span>Version:</span>{" "}
+            <span>{latestSemester.allocationVersion}</span>
           </div>
         </div>
         <div className="flex w-full flex-col justify-center print:hidden">
@@ -545,13 +698,15 @@ export const AllocationSummary = () => {
                 >
                   {isBulkModifyActive ? "Verify & Modify" : "Begin Bulk Modify"}
                 </Button>
-                <Button
-                  onClick={() => handleSummaryPrint()}
-                  size="sm"
-                  className="bg-success"
-                >
-                  Print
-                </Button>
+                {!isBulkModifyActive && (
+                  <Button
+                    onClick={() => handleSummaryPrint()}
+                    size="sm"
+                    className="bg-success"
+                  >
+                    Print
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -627,7 +782,8 @@ export const AllocationSummary = () => {
                               {section.type.charAt(0)}
                               {getSectionNumber(data, section.id, section.type)}
                               {section.type === "PRACTICAL" &&
-                                section.timetableRoomId && timetableRooms &&
+                                section.timetableRoomId &&
+                                timetableRooms &&
                                 ` - ${timetableRooms[section.timetableRoomId]}`}
                             </p>
                           </div>
@@ -641,12 +797,13 @@ export const AllocationSummary = () => {
                                 >
                                   {isBulkModifyActive &&
                                   inst.type === "faculty" ? (
-                                    <Select
+                                    <BulkInstructorSearchDropdown
                                       value={getInstructorDisplayValue(
                                         section.id,
                                         inst.email
                                       )}
-                                      onValueChange={(newEmail) => {
+                                      options={appropriateInstructorList}
+                                      onSelect={(newEmail) => {
                                         handleBulkChange(
                                           section.id,
                                           inst.email,
@@ -662,23 +819,7 @@ export const AllocationSummary = () => {
                                           newEmail
                                         );
                                       }}
-                                    >
-                                      <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select instructor" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {appropriateInstructorList.map(
-                                          (opt) => (
-                                            <SelectItem
-                                              key={opt.email}
-                                              value={opt.email}
-                                            >
-                                              {opt.name}
-                                            </SelectItem>
-                                          )
-                                        )}
-                                      </SelectContent>
-                                    </Select>
+                                    />
                                   ) : (
                                     <span
                                       className={
@@ -728,12 +869,13 @@ export const AllocationSummary = () => {
                             ) : (
                               <div className="flex items-center justify-between border-b px-3 py-2 text-sm">
                                 {isBulkModifyActive ? (
-                                  <Select
+                                  <BulkInstructorSearchDropdown
                                     value={getInstructorDisplayValue(
                                       section.id,
                                       null
                                     )}
-                                    onValueChange={(newEmail) => {
+                                    options={appropriateInstructorList}
+                                    onSelect={(newEmail) => {
                                       handleBulkChange(
                                         section.id,
                                         null,
@@ -749,21 +891,8 @@ export const AllocationSummary = () => {
                                         newEmail
                                       );
                                     }}
-                                  >
-                                    <SelectTrigger className="w-full">
-                                      <SelectValue placeholder="TBA - Assign Instructor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {appropriateInstructorList.map((opt) => (
-                                        <SelectItem
-                                          key={opt.email}
-                                          value={opt.email}
-                                        >
-                                          {opt.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    placeholder="TBA - Assign Instructor"
+                                  />
                                 ) : (
                                   <span className="font-bold">TBA</span>
                                 )}

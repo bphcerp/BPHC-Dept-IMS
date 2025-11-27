@@ -190,7 +190,12 @@ export const bulkModifyChangeSchema = z.object({
   courseName: z.string().nullable(),
 });
 
-export const bulkModifySchema = z.array(bulkModifyChangeSchema);
+export const bulkModifySchema = z.object({
+    semesterId: z.string().uuid(),
+    changes: z.array(bulkModifyChangeSchema),
+}).refine((data) => data.changes.length > 0, {
+    message: "At least one change must be provided.",
+});
 
 export const pushToTDSchema = z.object({
     sendMultiDepartmentCourses: z.boolean(),
