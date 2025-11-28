@@ -9,7 +9,24 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
+import api from "@/lib/axios-instance";
+import { Laboratory } from "../../../../lib/src/types/inventory";
+
+type Allocation = {
+  budgetCode: number;
+  analysisCode: number;
+  allocationAmount: number;
+  items: {
+    id: string;
+    itemName: string;
+    grantedAmount: number;
+    labId: string;
+    [key: string]: any;
+  }[];
+  [key: string]: any;
+};
 
 const CreateBudget = () => {
   const [heads, setHeads] = useState([
@@ -17,40 +34,30 @@ const CreateBudget = () => {
     { id: '2', name: 'Head B', description: 'Description for Head B', type: 'COPEX' },
   ]);
 
-  const [allocations, setAllocations] = useState<{ [key: string]: { budgetCode: number; analysisCode: number; allocationAmount: number; items: { id: string; itemName: string; grantedAmount: number; labId: string; }[] } }>({
+  const [allocations, setAllocations] = useState<{ [key: string]: Allocation }>({
     '1': {
-      budgetCode: 123,
-      analysisCode: 456,
-      allocationAmount: 10000,
-      items: [
-        {
-          id: 'i1',
-          itemName: 'Item 1',
-          grantedAmount: 500,
-          labId: 'Lab X',
-        },
-        {
-          id: 'i2',
-          itemName: 'Item 2',
-          grantedAmount: 700,
-          labId: 'Lab Y',
-        },
-      ],
+      budgetCode: 0,
+      analysisCode: 0,
+      allocationAmount: 0,
+      items: [],
     },
     '2': {
-      budgetCode: 789,
-      analysisCode: 987,
-      allocationAmount: 20000,
-      items: [
-        {
-          id: 'i3',
-          itemName: 'Item 3',
-          grantedAmount: 1200,
-          labId: 'Lab Z',
-        },
-      ],
+      budgetCode: 0,
+      analysisCode: 0,
+      allocationAmount: 0,
+      items: [],
     },
   });
+
+  const [labs, setLabs] = useState<Laboratory[]>([]);
+
+  useEffect(() => {
+    const fetchLabs = async () => {
+      const response = await api.get('/inventory/labs/get');
+      setLabs(response.data);
+    };
+    fetchLabs();
+  }, []);
 
   const addHead = () => {
     const newId = `head-${Date.now()}`;
@@ -72,7 +79,7 @@ const CreateBudget = () => {
       id: `item-${Date.now()}`,
       itemName: 'New Item',
       grantedAmount: 0,
-      labId: 'New Lab',
+      labId: '',
     });
     setAllocations(newAllocations);
   };
@@ -100,7 +107,7 @@ const CreateBudget = () => {
       <h2 className="text-xl font-semibold mb-2">Heads</h2>
       <div className="space-y-4 mb-8">
         {heads.map((head) => (
-          <div key={head.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+          <div key={head.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <Select defaultValue={head.id}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a head" />
@@ -109,26 +116,32 @@ const CreateBudget = () => {
                 {heads.map(h => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input
-              id={`budget-code-${head.id}`}
-              placeholder="Budget Code"
-              value={allocations[head.id]?.budgetCode || ''}
-              onChange={(e) => handleAllocationChange(head.id, 'budgetCode', e.target.value)}
-            />
-            <Input
-              id={`analysis-code-${head.id}`}
-              placeholder="Analysis Code"
-              value={allocations[head.id]?.analysisCode || ''}
-              onChange={(e) => handleAllocationChange(head.id, 'analysisCode', e.target.value)}
-            />
-            <Input
-              id={`total-sanctioned-${head.id}`}
-              placeholder="Total Sanctioned Amount"
-              value={
-                allocations[head.id]?.allocationAmount || ''
-              }
-              onChange={(e) => handleAllocationChange(head.id, 'allocationAmount', e.target.value)}
-            />
+            <div>
+              <Label htmlFor={`budget-code-${head.id}`}>Budget Code</Label>
+              <Input
+                id={`budget-code-${head.id}`}
+                value={allocations[head.id]?.budgetCode || ''}
+                onChange={(e) => handleAllocationChange(head.id, 'budgetCode', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`analysis-code-${head.id}`}>Analysis Code</Label>
+              <Input
+                id={`analysis-code-${head.id}`}
+                value={allocations[head.id]?.analysisCode || ''}
+                onChange={(e) => handleAllocationChange(head.id, 'analysisCode', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`total-sanctioned-${head.id}`}>Total Sanctioned Amount</Label>
+              <Input
+                id={`total-sanctioned-${head.id}`}
+                value={
+                  allocations[head.id]?.allocationAmount || ''
+                }
+                onChange={(e) => handleAllocationChange(head.id, 'allocationAmount', e.target.value)}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -155,23 +168,30 @@ const CreateBudget = () => {
                 <TableRow key={item.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <Input 
-                      value={item.itemName} 
+                    <Input
+                      value={item.itemName}
                       onChange={(e) => handleItemChange(head.id, index, 'itemName', e.target.value)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Input 
-                      value={item.grantedAmount} 
+                    <Input
+                      value={item.grantedAmount}
                       type="number"
                       onChange={(e) => handleItemChange(head.id, index, 'grantedAmount', e.target.value)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Input 
-                      value={item.labId} 
-                      onChange={(e) => handleItemChange(head.id, index, 'labId', e.target.value)}
-                    />
+                    <Select
+                      value={item.labId}
+                      onValueChange={(value) => handleItemChange(head.id, index, 'labId', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a lab" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {labs.map(lab => <SelectItem key={lab.id} value={lab.id}>{lab.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                 </TableRow>
               ))}
