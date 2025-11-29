@@ -215,7 +215,9 @@ const ViewPhdRequest: React.FC = () => {
       }
     }
 
-    // 2. Supervisor Actions
+    // 2. Supervisor Actions (ACTIVE ACTIONS ONLY)
+    // We check only for actions where the supervisor needs to DO something (resubmit, initial review).
+    // We moved the "Request Edit" logic (where supervisor is waiting) to the END.
     if (isSupervisor) {
       if (revertableStatuses.includes(status)) {
         return (
@@ -233,17 +235,9 @@ const ViewPhdRequest: React.FC = () => {
           />
         );
       }
-      if (lockedForSupervisorStatuses.includes(status)) {
-        return (
-          <Button variant="outline" onClick={() => setIsEditRequestOpen(true)}>
-            <ShieldAlert className="mr-2 h-4 w-4" /> Request Edit Access from
-            DRC
-          </Button>
-        );
-      }
     }
 
-    // 3. DRC Convenor Actions
+    // 3. DRC Convener Actions
     if (isDRC) {
       if (status === "pending_edit_approval") {
         return (
@@ -336,6 +330,8 @@ const ViewPhdRequest: React.FC = () => {
     }
 
     // 5. HOD Actions (Bypass)
+    // Placed here so that if a user is BOTH Supervisor/DRC and HOD, they see the HOD action
+    // when the request is at the HOD stage, instead of the Supervisor "Request Edit" button.
     if (isHOD) {
       if (
         requestType === "final_thesis_submission" &&
@@ -350,6 +346,20 @@ const ViewPhdRequest: React.FC = () => {
         hodOverrideStatuses.includes(status)
       ) {
         return <HodReviewPanel request={request} onSuccess={handleSuccess} />;
+      }
+    }
+
+    // 6. Supervisor Actions (PASSIVE/LOCKED)
+    // This is the catch-all for supervisors who are waiting.
+    // We place it last so it doesn't block HOD/DRC actions if the user has multiple roles.
+    if (isSupervisor) {
+      if (lockedForSupervisorStatuses.includes(status)) {
+        return (
+          <Button variant="outline" onClick={() => setIsEditRequestOpen(true)}>
+            <ShieldAlert className="mr-2 h-4 w-4" /> Request Edit Access from
+            DRC
+          </Button>
+        );
       }
     }
 
