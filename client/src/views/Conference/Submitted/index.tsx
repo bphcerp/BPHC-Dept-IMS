@@ -22,11 +22,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 const columns: ColumnDef<{
   id: number;
   state: string;
   createdAt: string;
+  requestEdit?: boolean;
+  requestDelete?: boolean;
 }>[] = [
   {
     header: ({ column }) => {
@@ -63,6 +66,34 @@ const columns: ColumnDef<{
         : conferenceSchemas.states.indexOf(state) < 4
           ? "Pending"
           : "Accepted";
+    },
+  },
+  {
+    header: () => {
+      return (
+        <p className="flex w-full items-center justify-start p-0 font-semibold">
+          Requests
+        </p>
+      );
+    },
+    id: "requests",
+    cell: ({ row }) => {
+      const { requestEdit, requestDelete } = row.original;
+      if (!requestEdit && !requestDelete) return null;
+      return (
+        <div className="flex gap-1">
+          {requestEdit && (
+            <Badge variant="outline" className="text-yellow-600">
+              Edit Requested
+            </Badge>
+          )}
+          {requestDelete && (
+            <Badge variant="outline" className="text-red-600">
+              Delete Requested
+            </Badge>
+          )}
+        </div>
+      );
     },
   },
   {

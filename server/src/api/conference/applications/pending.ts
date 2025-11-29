@@ -57,6 +57,8 @@ router.get(
                           userEmail: user.email,
                           userName: user.name,
                           areMembersAssigned: true,
+                          requestEdit: application.requestEdit,
+                          requestDelete: application.requestDelete,
                       }))
                       .filter(({ state }) => state === "DRC Member")
                 : (
@@ -85,6 +87,8 @@ router.get(
                           (m) => m.reviewStatus !== null
                       ).length,
                       areMembersAssigned: appl.members.length > 0,
+                      requestEdit: appl.requestEdit,
+                      requestDelete: appl.requestDelete,
                   }));
 
         const isDirect =

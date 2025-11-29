@@ -37,6 +37,8 @@ export const getApplicationWithFilePaths = async (id: number) => {
             source: string;
             amount: string;
         }>,
+        requestEdit: application.requestEdit,
+        requestDelete: application.requestDelete,
     };
 };
 

@@ -38,6 +38,8 @@ type ApplicationRow = {
   areMembersAssigned: boolean;
   membersAssigned?: number;
   membersReviewed?: number;
+  requestEdit?: boolean;
+  requestDelete?: boolean;
 };
 
 const createColumns = (
@@ -105,6 +107,32 @@ const createColumns = (
         state === "DRC Member" && !areMembersAssigned ? "DRC Convener" : state;
 
       return <Badge variant="outline">{displayState}</Badge>;
+    },
+  },
+  {
+    header: () => (
+      <p className="flex w-full items-center justify-start p-0 font-semibold">
+        Requests
+      </p>
+    ),
+    id: "requests",
+    cell: ({ row }) => {
+      const { requestEdit, requestDelete } = row.original;
+      if (!requestEdit && !requestDelete) return null;
+      return (
+        <div className="flex gap-1">
+          {requestEdit && (
+            <Badge variant="outline" className="text-yellow-600">
+              Edit
+            </Badge>
+          )}
+          {requestDelete && (
+            <Badge variant="outline" className="text-red-600">
+              Delete
+            </Badge>
+          )}
+        </div>
+      );
     },
   },
   ...(showMemberProgress
@@ -219,13 +247,17 @@ const ConferencePendingApplicationsView = () => {
 
   const tableData = useMemo(
     () =>
-      data?.applications?.map(({ userEmail, userName, ...appl }) => ({
-        ...appl,
-        user: {
-          name: userName,
-          email: userEmail,
-        },
-      })) ?? [],
+      data?.applications?.map(
+        ({ userEmail, userName, requestEdit, requestDelete, ...appl }) => ({
+          ...appl,
+          user: {
+            name: userName,
+            email: userEmail,
+          },
+          requestEdit,
+          requestDelete,
+        })
+      ) ?? [],
     [data?.applications]
   );
 

@@ -17,6 +17,8 @@ import {
 import { ViewApplication } from "@/components/conference/ViewApplication";
 import { isEqual } from "date-fns";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const getChangedFields = (
   formData: Schema,
@@ -142,9 +144,41 @@ const ConferenceEditView: React.FC = () => {
     },
   });
 
+  const requestActionMutation = useMutation({
+    mutationFn: async (action: "edit" | "delete") => {
+      return await api.post(`/conference/applications/requestAction/${id}`, {
+        action,
+      });
+    },
+    onError: (err) => {
+      if (isAxiosError(err))
+        toast.error((err.response?.data as string) ?? "An error occurred");
+    },
+    onSuccess: (_data, action) => {
+      toast.success(
+        action === "edit"
+          ? "Edit request submitted"
+          : "Delete request submitted"
+      );
+      void queryClient.invalidateQueries({
+        queryKey: ["conference", "applications", parseInt(id!)],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["conference", "submitted"],
+      });
+    },
+  });
+
   const isEditable = useMemo(() => {
     if (!data) return false;
     return data.application.state === conferenceSchemas.states[0];
+  }, [data]);
+
+  // Can request edit/delete when application is not in Faculty or Completed state
+  const canRequestAction = useMemo(() => {
+    if (!data) return false;
+    const state = data.application.state;
+    return state !== "Faculty" && state !== "Completed";
   }, [data]);
 
   useEffect(() => {
@@ -204,6 +238,57 @@ const ConferenceEditView: React.FC = () => {
     <div className="relative flex min-h-screen w-full flex-col gap-6 p-8">
       <BackButton />
       <h2 className="self-start text-3xl">Application No. {id}</h2>
+
+      {/* Show request status badges */}
+      {(data.application.requestEdit || data.application.requestDelete) && (
+        <div className="flex gap-2">
+          {data.application.requestEdit && (
+            <Badge variant="outline" className="text-yellow-600">
+              Edit Request Pending
+            </Badge>
+          )}
+          {data.application.requestDelete && (
+            <Badge variant="outline" className="text-red-600">
+              Delete Request Pending
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Request Action Buttons for applicant */}
+      {canRequestAction &&
+        !data.application.requestEdit &&
+        !data.application.requestDelete && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => requestActionMutation.mutate("edit")}
+              disabled={requestActionMutation.isLoading}
+            >
+              {requestActionMutation.isLoading
+                ? "Submitting..."
+                : "Request Edit"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to request deletion of this application?"
+                  )
+                ) {
+                  requestActionMutation.mutate("delete");
+                }
+              }}
+              disabled={requestActionMutation.isLoading}
+            >
+              {requestActionMutation.isLoading
+                ? "Submitting..."
+                : "Request Delete"}
+            </Button>
+          </div>
+        )}
+
       {isEditable ? (
         <>
           <div className="flex w-full max-w-3xl flex-col gap-2 rounded-md border bg-destructive/20 p-2">

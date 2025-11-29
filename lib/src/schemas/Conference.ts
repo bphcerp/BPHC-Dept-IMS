@@ -202,6 +202,8 @@ export type submittedApplicationsResponse = {
         state: (typeof states)[number];
         createdAt: string;
         hasMembersAssigned: boolean;
+        requestEdit?: boolean;
+        requestDelete?: boolean;
     }[];
 };
 
@@ -215,6 +217,8 @@ export type pendingApplicationsResponse = {
         areMembersAssigned: boolean;
         membersAssigned?: number;
         membersReviewed?: number;
+        requestEdit?: boolean;
+        requestDelete?: boolean;
     }[];
     isDirect?: boolean;
 };
@@ -231,6 +235,8 @@ export type ViewApplicationResponse = {
         userEmail: string;
         state: (typeof states)[number];
         membersAssigned: boolean;
+        requestEdit?: boolean;
+        requestDelete?: boolean;
         approvalForm?: string;
         purpose: string;
         contentTitle: string;
