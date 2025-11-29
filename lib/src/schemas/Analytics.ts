@@ -5,35 +5,31 @@ export type TimeGrouping = (typeof timeGrouping)[number];
 
 const timeGroupingEnum = z.enum(timeGrouping);
 
-export const graphEnumValues = ['line', 'pie', 'bar'] as const;
-export const yAxisEnumValues = ["Publications","Publications Over Time","Citations","Citations Over Time","Publication Type Breakdown","Author Contributions"] as const
-
-export const GRAPH_OPTIONS : [{value: typeof graphEnumValues[number], label: string}, ...{value: string, label:string}[]] = [
-    { value: "line", label: "Line Chart" },
-    { value: "pie", label: "Pie Chart",  },
-    { value: "bar", label: "Bar Chart" },
+export const graphEnumValues = ["line", "bar"] as const;
+export const graphDataType = ["total", "cumulative"] as const;
+export const graphMetricType = ["publications", "citations", "both"] as const;
+export const yAxisEnumValues = [
+    "Publications",
+    "Publications Over Time",
+    "Citations",
+    "Citations Over Time",
+    "Publication Type Breakdown",
+    "Author Contributions",
 ] as const;
 
 export type GraphValue = (typeof graphEnumValues)[number];
 
-export const Y_AXIS_ALLOWED_TYPES : Record<typeof yAxisEnumValues[number], [string, ...string[]]> = {
-    "Publications": ["bar"],
+export const Y_AXIS_ALLOWED_TYPES: Record<
+    (typeof yAxisEnumValues)[number],
+    [string, ...string[]]
+> = {
+    Publications: ["bar"],
     "Publications Over Time": ["bar", "line"],
-    "Citations": ["bar"],
+    Citations: ["bar"],
     "Citations Over Time": ["bar", "line"],
-    "Publication Type Breakdown": ["pie", "bar"],
-    "Author Contributions": ["pie", "bar"]
+    "Publication Type Breakdown": ["bar"],
+    "Author Contributions": ["bar"],
 } as const;
-
-export const COLORS = [
-    "#3b82f6", // blue
-    "#22c55e", // green
-    "#f97316", // orange
-    "#a855f7", // violet
-    "#ec4899", // pink
-    "#14b8a6", // teal
-    "#facc15", // yellow
-] as const;
 
 export const analyticsQuerySchema = z
     .object({
@@ -67,14 +63,27 @@ export const timeSeriesDataSchema = z.object({
 
 export const presentationTemplateSchema = z.object({
     title: z.string(),
-    slides: z.number(),
-    graphs: z.array(z.object({
-        slideNumber: z.number(),
-        yAxis: z.enum(yAxisEnumValues).nullable(),
-        graphType: z.enum(graphEnumValues).nullable(),
-        color: z.enum(COLORS).nullable(),
-    }))
-})
+    slides: z.array(
+        z.object({
+            title: z.string(),
+            sections: z.array(
+                z.object({
+                    type: z.enum(["text", "graph"]),
+                    title: z.string(),
+                    graph: z.object({
+                        yAxis: z.enum(yAxisEnumValues).nullable(),
+                        graphType: z.enum(graphEnumValues).nullable(),
+                        dataType: z.enum(graphDataType),
+                        metricType: z.enum(graphMetricType),
+                    }),
+                    text: z.object({
+                        body: z.string(),
+                    }),
+                })
+            ),
+        })
+    ),
+});
 
 export const publicationTypeCountSchema = z.object({
     type: z.string(),

@@ -139,7 +139,9 @@ export const allPermissions = {
 
     // ANALYTICS
     "analytics:publications": "View publications analytics",
-    "analytics:presentation": "Create presentations of analytics",
+    "analytics:presentation": "Manage presentations",
+    "analytics:templates": "View templates",
+    "analytics:templates:manage" : "Manage templates",
 
     // qp review module permissions
     "qp:faculty:submit": "Submit paper for review",
@@ -478,6 +480,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     // Analytics
     "/analytics/publications": "analytics:publications",
     "/analytics/presentation": "analytics:presentation",
+    "/analytics/templates" : "analytics:templates",
 
     // qp review module
     "/qp/uploadDocuments": "qp:faculty:submit",
