@@ -30,6 +30,8 @@ router.get(
             state: appl.state,
             createdAt: appl.createdAt.toLocaleString(),
             hasMembersAssigned: appl.members.length > 0,
+            requestEdit: appl.requestEdit,
+            requestDelete: appl.requestDelete,
         }));
 
         const response: conferenceSchemas.submittedApplicationsResponse = {

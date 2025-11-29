@@ -29,7 +29,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Users, Clock, User, FileText } from "lucide-react";
+import { Users, Clock, User, FileText, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface StatusLogEntry {
   applicationId: number;
@@ -534,6 +535,161 @@ interface AssignMembersProps {
   onSuccess?: () => void;
 }
 
+// Handle Requests Card Component (for Conveners to handle edit/delete requests)
+interface HandleRequestsCardProps {
+  id: string;
+  requestEdit?: boolean;
+  requestDelete?: boolean;
+}
+
+const HandleRequestsCard: FC<HandleRequestsCardProps> = ({
+  id,
+  requestEdit,
+  requestDelete,
+}) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const handleRequestMutation = useMutation({
+    mutationFn: async ({
+      action,
+      accept,
+    }: {
+      action: "edit" | "delete";
+      accept: boolean;
+    }) => {
+      return await api.post(`/conference/applications/handleRequest/${id}`, {
+        action,
+        accept,
+      });
+    },
+    onSuccess: (_, { action, accept }) => {
+      if (accept && action === "delete") {
+        toast.success("Application deleted successfully");
+        navigate("/conference/pending");
+      } else {
+        toast.success(
+          accept
+            ? `${action === "edit" ? "Edit" : "Delete"} request accepted`
+            : `${action === "edit" ? "Edit" : "Delete"} request rejected`
+        );
+        void queryClient.invalidateQueries({
+          queryKey: ["conference", "applications", parseInt(id)],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ["conference", "pending"],
+        });
+      }
+    },
+    onError: (error) => {
+      const errorMessage =
+        isAxiosError(error) && typeof error.response?.data === "string"
+          ? error.response.data
+          : "Failed to process request. Please try again.";
+      toast.error(errorMessage);
+    },
+  });
+
+  if (!requestEdit && !requestDelete) return null;
+
+  return (
+    <Card className="border-orange-200 bg-orange-50/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-orange-800">
+          {requestEdit && <Edit className="h-5 w-5" />}
+          {requestDelete && <Trash2 className="h-5 w-5" />}
+          Applicant Requests
+        </CardTitle>
+        <CardDescription className="text-orange-700">
+          The applicant has requested the following action(s) on their
+          application
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {requestEdit && (
+          <div className="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-yellow-700">
+                Edit Request
+              </Badge>
+              <span className="text-sm text-yellow-800">
+                Applicant wants to edit this application
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  handleRequestMutation.mutate({ action: "edit", accept: false })
+                }
+                disabled={handleRequestMutation.isLoading}
+              >
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                onClick={() =>
+                  handleRequestMutation.mutate({ action: "edit", accept: true })
+                }
+                disabled={handleRequestMutation.isLoading}
+              >
+                Accept
+              </Button>
+            </div>
+          </div>
+        )}
+        {requestDelete && (
+          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-red-700">
+                Delete Request
+              </Badge>
+              <span className="text-sm text-red-800">
+                Applicant wants to delete this application
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  handleRequestMutation.mutate({
+                    action: "delete",
+                    accept: false,
+                  })
+                }
+                disabled={handleRequestMutation.isLoading}
+              >
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Are you sure you want to delete this application? This action cannot be undone."
+                    )
+                  ) {
+                    handleRequestMutation.mutate({
+                      action: "delete",
+                      accept: true,
+                    });
+                  }
+                }}
+                disabled={handleRequestMutation.isLoading}
+              >
+                Accept & Delete
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const AssignMembers: FC<AssignMembersProps> = ({ id }) => {
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(
     new Set()
@@ -790,6 +946,15 @@ const ConferenceViewApplicationView = () => {
     return data.application.state === "DRC Member" && canReviewAsConvener;
   }, [data, canReviewAsConvener]);
 
+  // Show request handling for conveners when there are pending requests
+  const shouldShowRequestHandling = useMemo(() => {
+    if (!data) return false;
+    return (
+      canReviewAsConvener &&
+      (data.application.requestEdit || data.application.requestDelete)
+    );
+  }, [data, canReviewAsConvener]);
+
   const generateFormMutation = useMutation({
     mutationFn: async () => {
       if (!id) throw new Error("No application ID provided");
@@ -837,6 +1002,15 @@ const ConferenceViewApplicationView = () => {
           </div>
           <ViewApplication data={data} />
           <Separator />
+
+          {/* Handle Requests Card - Show to conveners when there are pending requests */}
+          {shouldShowRequestHandling && (
+            <HandleRequestsCard
+              id={id}
+              requestEdit={data.application.requestEdit}
+              requestDelete={data.application.requestDelete}
+            />
+          )}
 
           {/* Member Review - Show if user has pending review as member */}
           {shouldShowMemberReview && <MemberReview id={id} />}

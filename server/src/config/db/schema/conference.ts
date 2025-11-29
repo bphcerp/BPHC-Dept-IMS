@@ -125,5 +125,8 @@ export const conferenceApprovalApplications = pgTable(
             () => files.id,
             { onDelete: "set null" }
         ),
+        // Flags set by applicant to request convener action
+        requestEdit: boolean("request_edit").notNull().default(false),
+        requestDelete: boolean("request_delete").notNull().default(false),
     }
 );
