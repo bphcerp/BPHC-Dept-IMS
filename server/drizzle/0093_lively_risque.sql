@@ -1,0 +1,2 @@
+ALTER TABLE "conference_approval_applications" ADD COLUMN "request_edit" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "conference_approval_applications" ADD COLUMN "request_delete" boolean DEFAULT false NOT NULL;
