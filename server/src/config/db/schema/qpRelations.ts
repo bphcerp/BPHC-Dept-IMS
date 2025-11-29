@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import { qpReviewRequests } from "./qp.ts";
 import { users } from "./admin.ts";
 import { files } from "./form.ts";
+import { semester } from "./allocation.ts";
 
 export const qpReviewRequestsRelations = relations(
     qpReviewRequests,
@@ -35,6 +36,11 @@ export const qpReviewRequestsRelations = relations(
             fields: [qpReviewRequests.compreSolFilePath],
             references: [files.id],
             relationName: "qpCompreSolFile",
+        }),
+        semester: one(semester, {
+            fields: [qpReviewRequests.semesterId],
+            references: [semester.id],
+            relationName: "qpSemester",
         }),
     })
 );

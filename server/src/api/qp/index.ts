@@ -14,6 +14,7 @@ import saveReviewRouter from "./saveReview.ts";
 import sendReminders from "./sendReminders.ts";
 import downloadReviewPdfRouter from "./downloadReviewPdf.ts";
 import initiateRequestRouter from "./initateRequest.ts";
+import createRequestSemesterRouter from "./createRequestSemester.ts";
 import { authMiddleware } from "@/middleware/auth.ts";
 
 const router = express.Router();
@@ -35,5 +36,6 @@ router.use("/updateFaculty", updateFacultyRouter);
 router.use("/sendReminders", sendReminders);
 router.use("/downloadReviewPdf", downloadReviewPdfRouter);
 router.use("/initiateRequest", initiateRequestRouter);
+router.use("/semester/create", createRequestSemesterRouter);
 
 export default router;

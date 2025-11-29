@@ -6,11 +6,13 @@ import {
     timestamp,
     boolean,
     pgEnum,
+    uuid,
 } from "drizzle-orm/pg-core";
 import { files } from "./form.ts";
 import { users } from "./admin.ts";
 import { jsonb } from "drizzle-orm/pg-core";
 import { qpSchemas } from "lib";
+import { semester } from "./allocation.ts";
 
 export const qpStatusEnum = pgEnum(
     "qp_status_enum",
@@ -62,4 +64,7 @@ export const qpReviewRequests = pgTable("qp_review_requests", {
     category: categoryEnum("category").notNull(),
     submittedOn: timestamp("submitted_on", { withTimezone: true }),
     requestType: requestTypeEnum("request_type").notNull(),
+    semesterId: uuid("semester_id").references(() => semester.id, {
+        onDelete: "cascade",
+    }),
 });

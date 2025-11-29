@@ -162,6 +162,7 @@ export const allPermissions = {
     "qp:dca:create-request": "Create a new question paper review request",
     "qp:dca:get-all-requests": "Get all requests",
     "qp:dca:get-all-courses": "Get all courses",
+    "qp:dca-convenor:create-semester-requests": "Sync All Semester Courses",
 
     // Course Load Allocation module permissions
     "allocation:settings:start": "Start a new course load allocation",
@@ -494,6 +495,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/qp/updateFaculty": "qp:dca-convenor:update-reviewer",
     "/qp/sendReminders": "qp:dca-convenor:reminder",
     "/qp/downloadReviewPdf": "qp:dca-convenor:download-review",
+    "/qp/semester/create": "qp:dca-convenor:create-semester-requests",
 
     // Course Load Allocation
     "/allocation/allocation/delete": "allocation:write",
@@ -523,6 +525,7 @@ export const permissions: { [key: string]: keyof typeof allPermissions } = {
     "/allocation/semester/linkForm": "allocation:semesters:write",
     "/allocation/semester/end": "allocation:semesters:write",
     "/allocation/semester/unlinkForm": "allocation:semesters:write",
+    "/allocation/semester/getCompleted": "allocation:semesters:view",
 
     "/allocation/builder/template/create": "allocation:builder:template:write",
     "/allocation/builder/template/delete": "allocation:builder:template:write",

@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { isAxiosError } from "axios";
 import { InitiateQPDialog } from "@/components/qp_review/initiateQPDialog";
+import { SyncCourseDialog } from "@/components/qp_review/SyncCourseDialog";
 
 const STATUS_COLORS: Record<string, string> = {
   "review pending": "text-blue-600 bg-yellow-100 p-3",
@@ -72,6 +73,7 @@ export const DCAConvenercourses: React.FC = () => {
   const [isICDialogOpen, setIsICDialogOpen] = useState(false);
   const [isReviewerDialogOpen, setIsReviewerDialogOpen] = useState(false);
   const [isAddCourseDialogOpen, setIsAddCourseDialogOpen] = useState(false);
+  const [isSyncCourseDialogOpen, setIsSyncCourseDialogOpen] = useState(false);
   const [currentcourseId, setCurrentcourseId] = useState<string | null>(null);
   const [selectedcourses, setSelectedcourses] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -654,10 +656,19 @@ export const DCAConvenercourses: React.FC = () => {
                 variant="default"
                 type="button"
                 className="bg-primary text-white"
+                onClick={() => setIsSyncCourseDialogOpen(true)}
+              >
+                Sync Courses
+              </Button>
+              <Button
+                variant="default"
+                type="button"
+                className="bg-primary text-white"
                 onClick={() => setIsAddCourseDialogOpen(true)}
               >
                 Add Courses
               </Button>
+
               <InitiateQPDialog
                 disabled={
                   selectedStatuses.filter((el) => el !== "not initiated")
@@ -894,6 +905,10 @@ export const DCAConvenercourses: React.FC = () => {
         isOpen={isAddCourseDialogOpen}
         setIsOpen={setIsAddCourseDialogOpen}
         onSubmit={handleCreateRequest}
+      />
+      <SyncCourseDialog
+        isOpen={isSyncCourseDialogOpen}
+        setIsOpen={setIsSyncCourseDialogOpen}
       />
     </div>
   );
